@@ -255,6 +255,7 @@ def capture(
     thread_path: str | None,
     attach_thread_path: str | None,
     session: str,
+    only: set[str] | None = None,
 ) -> int:
     # Selenium lives only in the capture env (see the AGENTS run recipe
     # and mypy.ini) — never in the lint shell.
@@ -310,6 +311,8 @@ def capture(
             # these two shots, restore it after.
             driver.delete_cookie("webphone_session")
             for name, path in ANONYMOUS_SURFACES:
+                if only is not None and name not in only:
+                    continue
                 driver.get(base + path)
                 if name == "login-card":
                     # The island reveals the card once the anonymous resume
@@ -341,6 +344,8 @@ def capture(
                 shots += 1
             driver.add_cookie({"name": "webphone_session", "value": session})
             for name, path in TABS:
+                if only is not None and name not in only:
+                    continue
                 if name == "thread":
                     path = thread_path
                 if name == "media-transcribe":
@@ -403,6 +408,15 @@ def main() -> int:
     parser.add_argument("--binary", default="/tmp/webphone-bin")  # nosec B108 - LOCAL-ONLY visual harness by budget decision (AGENTS T23)
     parser.add_argument("--port", type=int, default=18097)
     parser.add_argument("--out-dir", default="ui-shots")
+    parser.add_argument(
+        "--surface",
+        action="append",
+        metavar="NAME",
+        # A single surface re-shot in seconds instead of a 24-shot pass.
+        # Repeatable: --surface thread --surface messages. Unknown names are
+        # rejected below so a typo cannot silently shoot nothing.
+        help="shoot only this surface (repeatable); default shoots the matrix",
+    )
     args = parser.parse_args()
 
     data_dir = "/tmp/wp-visual-data"  # nosec B108 - LOCAL-ONLY visual harness by budget decision (AGENTS T23)
@@ -411,8 +425,9 @@ def main() -> int:
     # A failed run must not leave a mixed matrix: stale shots from an
     # earlier pass masquerade as completeness (the 2026-10-18 settings
     # abort left 10 fresh light shots beside 8 stale ones).
-    for stale in glob.glob(os.path.join(args.out_dir, "*.png")):
-        os.remove(stale)
+    if not args.surface:
+        for stale in glob.glob(os.path.join(args.out_dir, "*.png")):
+            os.remove(stale)
     base = f"http://127.0.0.1:{args.port}"
     # A CONFIG FILE, not env: the browser posts carry Origin/Referer, and
     # the CSRF middleware only trusts them with the fronted shape
@@ -472,8 +487,27 @@ def main() -> int:
         if not session:
             print("seed did not mint a session cookie", file=sys.stderr)
             return 1
-        shots = capture(base, args.out_dir, thread_path, attach_thread_path, session)
+        only = set(args.surface) if args.surface else None
+        if only is not None:
+            # A typo must fail loudly: a filtered run that matches nothing
+            # would print "0 shots" and look like a clean pass.
+            known = {name for name, _ in TABS} | {name for name, _ in ANONYMOUS_SURFACES}
+            unknown = sorted(only - known)
+            if unknown:
+                print(
+                    f"unknown surface(s): {', '.join(unknown)}; known: "
+                    f"{', '.join(sorted(known))}",
+                    file=sys.stderr,
+                )
+                return 2
+        shots = capture(
+            base, args.out_dir, thread_path, attach_thread_path, session, only
+        )
         print(f"ui-capture: {shots} shots in {args.out_dir}/")
+        if only is not None:
+            # Every requested surface must have produced BOTH theme shots.
+            expected = len(only) * 2
+            return 0 if shots == expected else 1
         return 0 if shots >= 22 else 1
     finally:
         server.terminate()
