@@ -177,6 +177,11 @@ in this repo was executed, adjudicated, or closed-as-already-done with source ev
 22. Visual-harness matrix eyeball + persistence policy. ✋
 23. `Rule accepts` decision for FLAG_PARAM if new sites appear.
 24. Re-baseline branching-flow from any moved checkout (upstream #13 follow-up).
+    *(Annotated 2026-10-29 12:30: measured 164 live findings vs the governed 78 —
+    a re-record would bless ~86 ungoverned ones from the dialer/docpin/review
+    trains; the refresh is BLOCKED on the 2026-11-05 triage cadence, not just on
+    a checkout move. Items 25/26 shipped same day: crush-config 4468af5 + the
+    AGENTS Formatting bullet.)*
 25. crush-config lessons candidates from this session: backgrounded-gate read-back;
     daemon-race at the tool-call boundary (add+commit in one call still loses).
 26. Add the `nix fmt`/`build-tw-css.sh` habit line to the view-edit train checklist
