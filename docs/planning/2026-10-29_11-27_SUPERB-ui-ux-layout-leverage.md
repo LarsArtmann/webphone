@@ -138,7 +138,7 @@ ingredient was container queries, not structure.
 | `layout.Base`                            | **already adopted**         | Head tags, skip link, `NoThemeScript`.                                                                                                        |
 | `display.Button`, `forms.Input/Textarea` | **already adopted**         | Composer + fax form.                                                                                                                          |
 | `icons.*`                                | **already adopted**         | All row actions. No platform emoji left.                                                                                                      |
-| `display.DataState`                      | **ADOPTED NOW (P3)**        | The disabled→unavailable→empty→content ladder is exactly the History/Fax/Voicemail shape; unifies the three renderings found in §2.5.         |
+| `display.DataState`                      | **REJECTED (was planned as P3)** | Considered for the disabled→unavailable→empty→content ladder and then rejected **during** implementation: the disabled rung must name the config key in a monospace `<code>phone_api_url</code>`, and `DataState` can only carry plain `Title`/`Description` text. Adopting it would have been an information-design *downgrade* to buy uniformity. The real defect was the ladder ORDERING (an error banner joined by an "empty" claim), fixed in place with a `Error == ""` gate. |
 | `display.CommandPalette`                 | **REJECTED**                | The shell's palette is JS-built (keeps the served DOM contract untouched) and covers nav + dial + shell actions. Adopting the component means shipping its `data-tc-palette` runtime and moving palette markup into served bytes to gain grouping/hints we do not need. |
 | `layout.Split` / `display.Split`         | **REJECTED**                | See D2: our markup is token-styled `app.css`, and the split must answer a container query.                                                    |
 | `forms.FilterBar` / `FilterChips` / `SegmentedControl` | **DEFERRED** | History's filter is a 4-control GET form that already submits + pushes URL. Rewriting it is a net-neutral style swap with real regression risk (it is pinned by `history_test.go`). Trigger: the next time History's filter needs a *new* control. |
@@ -161,7 +161,8 @@ ingredient was container queries, not structure.
 
 **The honest summary:** cqrs-htmx has no further *UI/UX* leverage to give this
 app. Its remaining value is `adminui` as a product feature, gated on a second
-actor. templ-components has one clean win left (`DataState`) and the rest is
+actor. cqrs-htmx and templ-components have no further clean UI win at HEAD:
+`DataState` was tried and rejected (see the D5 row), and everything else is
 either already mined or deliberately repo-inappropriate.
 
 ---
@@ -172,12 +173,30 @@ either already mined or deliberately repo-inappropriate.
 | -- | --------------------------------------------------------------------------------------------- | ----------------------------------------------- |
 | P1 | Messages master–detail: `ThreadView` carries the conversation rail; split via container query. | `templ generate`, Go suite, island suite, type gate |
 | P2 | Island collapse (header toggle, pre-paint persistence, call force-expand).                      | `theme-preload.test.mjs`, shell tests, type gate   |
-| P3 | `display.DataState` adoption for the disabled/unavailable rungs (History, Fax, Voicemail).      | `panels_test.go`, `tw.css` rebuild                 |
+| P3 | Honesty-ladder fix: History + Voicemail stop asserting "empty" / "0 new · 0 saved" beside an error banner (the empty rung and the count line gate on `Error == ""`). | `go test ./internal/server/`, `go test ./internal/web/views/` |
 | P4 | Nav iconography (per-tab icons) — not shipped this train.                                       | —                                               |
 
 P4 was scoped and dropped: once the island can collapse the strip has room, so
 icons buy scannability rather than correctness. Left in TODO_LIST as a polish
 item rather than smuggled in unverified.
+
+### 4.1 Corrections applied after the fact (2026-10-29 15:48)
+
+Two rows above were **wrong when this doc was first committed**, and are
+corrected rather than quietly rewritten — a silent edit destroys the same
+trust a stale claim does:
+
+1. **D5 `display.DataState`** said "ADOPTED NOW (P3)". It was never adopted.
+   During implementation it became clear the disabled rung must name the
+   config key in a monospace `<code>phone_api_url</code>`, which `DataState`
+   cannot carry; adopting it would have traded real information design for
+   uniformity. Rejected, with the reasoning now in the row.
+2. **§4 P3** said "`DataState` adoption for the disabled/unavailable rungs".
+   What actually shipped is the *ladder-ordering* fix: History and Voicemail
+   no longer assert "no calls" / "0 new · 0 saved" beside an error banner,
+   because an unreachable provider means *unknown*, not *empty*.
+
+No other row in this doc was found to disagree with the code.
 
 ---
 
