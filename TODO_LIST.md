@@ -522,8 +522,12 @@ Remaining, unscheduled:
   open: matrix group rooms (model spike DONE 2026-10-29 —
   `docs/planning/2026-10-29_12-20_matrix-group-rooms-model-spike.md`
   recommends A1: room-shaped `!…` remotes + nullable `Message.Sender`,
-  awaiting the owner ruling before any execution), matrix E2EE (needs
-  olm/megolm — big), signal inbound attachments (signal-cli side plumbing),
+  awaiting the owner ruling before any execution), matrix E2EE (research
+  DONE 2026-10-29 — `docs/research/2026-10-29_12-35_matrix-e2ee-go-story.md`:
+  mautrix-go goolm is the only pure-Go path, no official rust-sdk Go
+  bindings exist (verified at source); recommends P2 OlmMachine-bridge,
+  decrypt-first; owner owes P1/P2/P3 + crypto-store-backup + trust-posture
+  rulings), signal inbound attachments (signal-cli side plumbing),
   signal groups (inherit the spike's Sender design verbatim once ruled).
   **Priority:** Low · **Effort:** M each.
 
