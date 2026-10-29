@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/larsartmann/webphone/internal/crm"
+	"github.com/larsartmann/webphone/internal/domain"
 )
 
 // TestCRMContactsProjectsNameAndDeepLink pins the seam-to-view boundary: the
@@ -122,5 +123,127 @@ func TestThreadPanelToleratesAnUnreachableCRM(t *testing.T) {
 	}
 	if strings.Contains(view, "wp-error") {
 		t.Fatalf("a decorative seam failure must not surface as an error banner:\n%.1200s", view)
+	}
+}
+
+// TestCRMContextRefusesNonPhoneShapedRemotes pins the telephony guard at the
+// seam's door: the CRM indexes phone numbers, so a Matrix user id or a Session
+// id must never cost a request. Signal IS phone-shaped (its addresses are
+// numbers), so it stays eligible — otherwise a Signal conversation would show
+// a linked name from the identity product and no context, for no reason a user
+// could understand.
+func TestCRMContextRefusesNonPhoneShapedRemotes(t *testing.T) {
+	t.Parallel()
+
+	session := "05" + strings.Repeat("ab", 32)
+
+	cases := []struct {
+		name    string
+		network domain.Network
+		raw     string
+		wantNil bool
+	}{
+		{"matrix", domain.NetworkMatrix, "@ada:example.org", true},
+		{"session", domain.NetworkSession, session, true},
+		{"sms", domain.NetworkSMS, "+493012345678", false},
+		{"signal", domain.NetworkSignal, "+493012345678", false},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			stub := &crmStub{contextJSON: stubContextJSON, contextStatus: http.StatusOK}
+			h := &handlers{deps: Deps{CRM: crmResolverFor(t, stub)}}
+			addr := domain.MustParseAddress(tc.network, tc.raw)
+
+			got := h.crmContextFor(t.Context(), addr)
+
+			if tc.wantNil && got != nil {
+				t.Fatalf("%s must yield no strip, got %+v", tc.name, got)
+			}
+			if !tc.wantNil && got == nil {
+				t.Fatalf("%s must yield a strip", tc.name)
+			}
+
+			stub.mu.Lock()
+			lookups := len(stub.lookupNumbers)
+			stub.mu.Unlock()
+
+			wantLookups := 1
+			if tc.wantNil {
+				wantLookups = 0
+			}
+			if lookups != wantLookups {
+				t.Fatalf("%s made %d CRM lookups, want %d", tc.name, lookups, wantLookups)
+			}
+		})
+	}
+}
+
+// TestCRMNumberForAnswersOnlyPhoneShapedRemotes keeps the identity feed and the
+// context strip on ONE rule. Before this, a Matrix thread's raw address reached
+// /api/contacts/by-phone, which answers 400 for a value with no digits — a
+// failure the resolver does not cache, so every render repeated it.
+func TestCRMNumberForAnswersOnlyPhoneShapedRemotes(t *testing.T) {
+	t.Parallel()
+
+	if got := crmNumberFor(domain.MustParseAddress(domain.NetworkMatrix, "@ada:example.org")); got != "" {
+		t.Fatalf("matrix remote must not be asked about, got %q", got)
+	}
+	if got := crmNumberFor(domain.MustParseAddress(domain.NetworkSMS, "+49 30 12345678")); got != "+493012345678" {
+		t.Fatalf("sms remote = %q", got)
+	}
+	if got := crmNumberFor(domain.MustParseAddress(domain.NetworkSignal, "+493012345678")); got != "+493012345678" {
+		t.Fatalf("signal remote = %q", got)
+	}
+}
+
+// TestMatrixThreadNeverReachesTheCRM is the wiring pin: crmNumberFor being
+// correct is worth nothing if a panel still passes raw remotes. A Matrix
+// conversation renders through the real partial path here, and the stub must
+// see ZERO lookups.
+func TestMatrixThreadNeverReachesTheCRM(t *testing.T) {
+	stub := &crmStub{}
+	resolver := crmResolverFor(t, stub)
+
+	var deps *Deps
+
+	server := newTestServerWithPhoneAPI(t, "", func(d *Deps) {
+		d.CRM = resolver
+		deps = d
+	})
+	c := signIn(t, server)
+
+	matrix := domain.MustParseAddress(domain.NetworkMatrix, "@ada:example.org")
+	if _, err := deps.Messaging.Receive(t.Context(), domain.InboundMessage{
+		Owner: domain.MustParseExtension("1001"),
+		From:  matrix,
+		Body:  "hello from a chat network",
+	}); err != nil {
+		t.Fatalf("seed matrix thread: %v", err)
+	}
+
+	deliverInbound(t, server, "+493012345678", "hello from a phone")
+
+	resp, list := c.do(http.MethodGet, "/partials/messages", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("messages panel: %d", resp.StatusCode)
+	}
+	if !strings.Contains(string(list), "hello from a chat network") {
+		t.Fatalf("the matrix thread must render:\n%.800s", list)
+	}
+
+	stub.mu.Lock()
+	asked := append([]string(nil), stub.lookupNumbers...)
+	stub.mu.Unlock()
+
+	for _, number := range asked {
+		if number == matrix.String() {
+			t.Fatalf("the matrix address reached the CRM lookup: %v", asked)
+		}
+	}
+	if len(asked) != 1 || asked[0] != "+493012345678" {
+		t.Fatalf("lookups = %v, want exactly the phone-shaped remote", asked)
 	}
 }

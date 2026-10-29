@@ -70,9 +70,9 @@ const fullContextJSON = `{
 }`
 
 // TestContactContextDecodesTheProducersShape pins the wire contract the CRM
-// publishes: every fact the strip renders, and no identity hijack — the ref is
-// the one the caller asked for, never one echoed by the payload. A field rename
-// on the producer side must break THIS test, not a customer's page.
+// publishes: every fact the strip renders, decoded from the producer's exact
+// field names. A field rename on the producer side must break THIS test, not a
+// customer's page.
 func TestContactContextDecodesTheProducersShape(t *testing.T) {
 	t.Parallel()
 
@@ -81,10 +81,6 @@ func TestContactContextDecodesTheProducersShape(t *testing.T) {
 	got, err := client.ContactContext(context.Background(), NewContactRef("01M"))
 	if err != nil {
 		t.Fatalf("context: %v", err)
-	}
-
-	if got.Ref.Get() != "01M" {
-		t.Fatalf("ref must be the requested one, got %q", got.Ref.Get())
 	}
 
 	if got.Company != "Analytical Engines Ltd" {

@@ -45,3 +45,41 @@ func TestParseComposedAddress(t *testing.T) {
 		t.Fatalf("a non-hex session shape must not parse as session, got %v err=%v", got, err)
 	}
 }
+
+// IsPhoneShaped is the ONE home of "a phone-number index could match this".
+// SMS and Signal carry phone numbers; Matrix user ids and Session ids do not,
+// so a consumer that asks a phone book about them spends a request on a
+// guaranteed miss. Both chat networks are pinned here so the rule cannot drift
+// into a per-consumer enumeration.
+func TestAddressIsPhoneShaped(t *testing.T) {
+	t.Parallel()
+
+	cases := []struct {
+		network Network
+		raw     string
+		want    bool
+	}{
+		{NetworkSMS, "+44 1632 960961", true},
+		{NetworkSignal, "+441632960961", true},
+		{NetworkMatrix, "@peer:example.org", false},
+		{
+			NetworkSession,
+			"05" + "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+			false,
+		},
+	}
+
+	for _, tc := range cases {
+		addr, err := ParseAddress(tc.network, tc.raw)
+		if err != nil {
+			t.Fatalf("ParseAddress(%v, %q): %v", tc.network, tc.raw, err)
+		}
+		if got := addr.IsPhoneShaped(); got != tc.want {
+			t.Errorf("%v/%q IsPhoneShaped = %v, want %v", tc.network, tc.raw, got, tc.want)
+		}
+	}
+
+	if (Address{}).IsPhoneShaped() {
+		t.Errorf("the zero address is not phone-shaped")
+	}
+}

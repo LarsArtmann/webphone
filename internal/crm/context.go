@@ -27,11 +27,13 @@ var ErrNoContext = errors.New("crm has no context for this contact")
 // Every field is optional; a CRM that publishes less simply yields a thinner
 // answer, and the view renders fewer chips.
 //
-// Identity is deliberately ABSENT here. The strip's job is context; who the
-// caller is arrives from the identity product as a crm.Person, so a name field
-// on this type would be a second, disagreeable home for the same fact.
+// Identity is deliberately ABSENT here — no ref, no name. The strip's job is
+// context; who the caller is (and the id that addresses them in the CRM)
+// arrives from the identity product as a crm.Person, so a second home for
+// either fact would eventually disagree with the first. Dropping the ref also
+// means a payload can never redirect a strip onto another contact: the value
+// is not addressable from the wire at all.
 type Context struct {
-	Ref       ContactRef
 	Company   string
 	Deals     []Deal
 	DealCount int
@@ -114,15 +116,14 @@ func (c *Client) ContactContext(ctx context.Context, ref ContactRef) (Context, e
 		return Context{}, errorfamily.WrapTransientf(err, "crm.context_decode", "crm: decode context response")
 	}
 
-	return parsed.toContext(ref), nil
+	return parsed.toContext(), nil
 }
 
 // toContext maps the wire shape onto the seam's type. Optional fields degrade
 // individually: a malformed timestamp or a negative count costs that one chip,
 // never the whole strip, because the phone must render whatever arrived.
-func (w contextWire) toContext(ref ContactRef) Context {
+func (w contextWire) toContext() Context {
 	out := Context{
-		Ref:       ref,
 		Company:   w.Company,
 		DealCount: max(w.OpenDealCount, len(w.OpenDeals)),
 		OpenTasks: max(w.OpenTasks, 0),
