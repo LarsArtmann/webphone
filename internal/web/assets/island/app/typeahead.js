@@ -4,7 +4,11 @@
 // contacts, no dial form, no JS). Pure client-side over config data.
 
 import { sharedContacts } from "./config.js";
-import { cooldownFor, cooldownRemainder, refreshDialSlots } from "./dialgate.js";
+import {
+  cooldownFor,
+  cooldownRemainder,
+  refreshDialSlots,
+} from "./dialgate.js";
 import { t } from "./i18n.js";
 import { els } from "./ui.js";
 

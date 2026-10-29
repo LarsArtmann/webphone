@@ -147,12 +147,17 @@ function normalizeDialable(value) {
 }
 
 /**
- * The wait left in a slot's window ("43m"), or "" when it has run out.
- * Neutral labels, the agoLabel convention.
- * @param {{last_at: number, window: number}} slot
+ * The wait left in a slot's window ("43m"), or "" when it has run out
+ * (or the slot lacks the stamp/window pair — the allowed verdict's
+ * shape rides the same optional fields). Neutral labels, the agoLabel
+ * convention.
+ * @param {{last_at?: number, window?: number}} slot
  * @returns {string}
  */
 export function cooldownRemainder(slot) {
+  if (typeof slot.last_at !== "number" || typeof slot.window !== "number") {
+    return "";
+  }
   const left = slot.window - (Date.now() / 1000 - slot.last_at);
   if (left <= 0) return "";
   if (left < 3600) return `${Math.ceil(left / 60)}m`;

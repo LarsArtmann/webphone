@@ -71,26 +71,6 @@ test("agoLabel phrases stamps the draftAge way", () => {
   assert.equal(dialgate.agoLabel(now - 26 * 3600), "1d");
 });
 
-// The 404 latch is module state, so this test runs LAST: earlier
-// tests still exercise the live gate.
-test("404 pins the seam off: later asks never round-trip", async () => {
-  let calls = 0;
-  useFetch(() => {
-    calls += 1;
-    return { ok: false, status: 404, json: async () => ({}) };
-  });
-  assert.equal(await dialgate.consultDialGate("+1715"), null);
-  assert.equal(await dialgate.consultDialGate("+1715"), null);
-  assert.equal(calls, 1, "the 404 is learned, not re-asked");
-});
-
-// The chip render lives in calls.js (placeCall's flow); its phrasing is
-// pinned here so both languages keep the state line honest.
-test("the cooldown notice names the wait", () => {
-  assert.equal(t("cooldownNotice")("47m", "13m"), "Last call 47m ago — redial paused (13m left).");
-  assert.equal(t("dialAnyway"), "Dial anyway");
-});
-
 test("the slots cache feeds cooldownFor with normalized matching", async () => {
   const now = Math.floor(Date.now() / 1000);
   let slotsFetched = 0;
@@ -134,4 +114,24 @@ test("the slots cache feeds cooldownFor with normalized matching", async () => {
   });
   await dialgate.refreshDialSlots(true);
   assert.ok(dialgate.cooldownFor("+4989123456"), "failed refresh keeps server truth");
+});
+
+// The 404 latch is module state, so this test runs LAST: earlier
+// tests still exercise the live gate.
+test("404 pins the seam off: later asks never round-trip", async () => {
+  let calls = 0;
+  useFetch(() => {
+    calls += 1;
+    return { ok: false, status: 404, json: async () => ({}) };
+  });
+  assert.equal(await dialgate.consultDialGate("+1715"), null);
+  assert.equal(await dialgate.consultDialGate("+1715"), null);
+  assert.equal(calls, 1, "the 404 is learned, not re-asked");
+});
+
+// The chip render lives in calls.js (placeCall's flow); its phrasing is
+// pinned here so both languages keep the state line honest.
+test("the cooldown notice names the wait", () => {
+  assert.equal(t("cooldownNotice")("47m", "13m"), "Last call 47m ago — redial paused (13m left).");
+  assert.equal(t("dialAnyway"), "Dial anyway");
 });

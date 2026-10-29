@@ -166,3 +166,43 @@ test("the typeahead boots from personal contacts alone", () => {
   assert.equal(list.children[0].children[0].textContent, "Nur Persönlich");
   setExtraContacts([]);
 });
+
+test("a contact inside its cooldown window says so in the row", async () => {
+  // Server truth for the decoration: Anna Licht's number is inside a
+  // 1h window (dialled 1m ago); everyone else is clean.
+  const now = Math.floor(Date.now() / 1000);
+  globalThis.fetch = async (url) => {
+    if (url === "/api/dials") {
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          slots: [{ remote: "+4930123456", last_at: now - 60, window: 3600 }],
+        }),
+      };
+    }
+    throw new Error("unexpected fetch " + url);
+  };
+  const dialgate = await import("../island/app/dialgate.js");
+  await dialgate.refreshDialSlots(true);
+
+  els.dest.value = "ann";
+  fire(els.dest, "input");
+  const list = els.dialForm.children.find((el) => el.id === "dial-suggest");
+  assert.equal(list.hidden, false);
+  const lit = list.children.find(
+    (row) => row.children[0] && row.children[0].textContent === "Anna Licht",
+  );
+  assert.ok(lit, "Anna Licht is suggested");
+  const badge = lit.children.find((el) => el.className === "typeahead-cooldown");
+  assert.ok(badge, "the cooling row carries the state");
+  assert.match(badge.textContent, /left|noch/);
+  assert.ok(
+    list.children.every(
+      (row) =>
+        row === lit ||
+        !row.children.some((el) => el.className === "typeahead-cooldown"),
+    ),
+    "clean contacts decorate nothing",
+  );
+});

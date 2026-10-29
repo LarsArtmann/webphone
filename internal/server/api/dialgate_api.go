@@ -42,6 +42,7 @@ type DialGateResponse struct {
 //   - 503 when the window store is nil (test compositions).
 //   - 502 on a store failure: the island dials anyway (the gate is
 //     advisory — a phone must dial), but the failure is logged.
+//
 // DialSlotView is one active cooldown window in the typeahead's
 // decoration payload.
 // brandid-lint:ignore(BD003) wire DTO: the remote is the dialable string (strong-id wire ruling)

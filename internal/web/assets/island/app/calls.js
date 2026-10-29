@@ -1451,9 +1451,7 @@ function showDialCooldown(target, verdict) {
   const lastAgo = verdict.last_at ? agoLabel(verdict.last_at) : "";
   line.textContent = t("cooldownNotice")(
     lastAgo,
-    verdict.window && verdict.last_at
-      ? cooldownRemainder(verdict)
-      : "",
+    verdict.window && verdict.last_at ? cooldownRemainder(verdict) : "",
   );
   const anyway = document.createElement("button");
   anyway.type = "button";
