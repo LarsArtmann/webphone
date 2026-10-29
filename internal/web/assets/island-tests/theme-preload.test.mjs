@@ -58,3 +58,32 @@ test("an undismissed or garbage welcome flag never sets the class", () => {
   assert.deepEqual(preloadWith(localStorageReturning(null)).classes, []);
   assert.deepEqual(preloadWith(localStorageThrowing()).classes, []);
 });
+
+// The collapsible island (P2): the grid column count changes with this
+// class, so it must land before first paint or the wide grid flashes.
+test("a collapsed island collapses before first paint", () => {
+  assert.deepEqual(
+    preloadWith({ getItem: (key) => (key === "wp-island-collapsed" ? "1" : null) }).classes,
+    ["wp-island-collapsed"],
+  );
+});
+
+test("an expanded or garbage island flag never sets the class", () => {
+  assert.deepEqual(
+    preloadWith({ getItem: (key) => (key === "wp-island-collapsed" ? "0" : null) }).classes,
+    [],
+  );
+  assert.deepEqual(preloadWith(localStorageReturning(null)).classes, []);
+  assert.deepEqual(preloadWith(localStorageThrowing()).classes, []);
+});
+
+test("theme, welcome and island preferences survive together", () => {
+  const flags = {
+    "wp-theme": "dark",
+    "wp-welcome-dismissed": "1",
+    "wp-island-collapsed": "1",
+  };
+  const result = preloadWith({ getItem: (key) => flags[key] ?? null });
+  assert.deepEqual(result.applied, [["data-theme", "dark"]]);
+  assert.deepEqual(result.classes, ["wp-welcome-dismissed", "wp-island-collapsed"]);
+});

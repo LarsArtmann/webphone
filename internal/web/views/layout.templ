@@ -1,5 +1,6 @@
 package views
 
+import 	"github.com/larsartmann/templ-components/icons"
 import 	"github.com/larsartmann/templ-components/layout"
 import 	"github.com/larsartmann/webphone/internal/web/assets"
 
@@ -112,11 +113,31 @@ templ ShellBody(props ShellProps) {
 					}
 				</span>
 			}
+			// The phone panel collapses on desktop (P2) so a wide tab — a
+			// master-detail Messages view, a long fax list, settings — gets
+			// the full width. Rendered only when signed in: signed out the
+			// island IS the login card, and hiding it would hide the only
+			// actionable thing on the page. shell.js §4b owns the toggle;
+			// theme-preload.js applies the stored state before first paint.
+			if props.SignedIn != "" {
+				<button
+					id="wp-island-toggle"
+					class="wp-icon-toggle"
+					type="button"
+					aria-controls="wp-island"
+					aria-expanded="true"
+					title={ T(props.Lang, "shell.island.toggle") }
+				>
+					<span class="wp-island-toggle-hide">@icons.Icon(icons.ChevronLeft, "wp-icon")</span>
+					<span class="wp-island-toggle-show">@icons.Icon(icons.ChevronRight, "wp-icon")</span>
+					<span class="sr-only">{ T(props.Lang, "shell.island.toggle") }</span>
+				</button>
+			}
 			<button id="theme-toggle" class="wp-theme-toggle" type="button" title="Color theme (auto, light, dark)">Theme: auto</button>
 		</div>
 	</header>
 	<div class="wp-body">
-		<aside class="wp-island" aria-label="Phone">
+		<aside class="wp-island" id="wp-island" aria-label="Phone">
 			@PhoneIsland(PhoneIslandProps{Passkey: props.Passkey, SSO: props.SSO})
 		</aside>
 		<div class="wp-main-col">
