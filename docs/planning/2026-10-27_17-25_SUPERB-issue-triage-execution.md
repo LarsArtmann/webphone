@@ -397,6 +397,7 @@ re-derive it from the code:
 - **T24 is deploy-gated**, not code-gated: the acceptance bar needs a
   deployed host, a real token and a real call. Harvested into
   TODO_LIST's issue-#9 row with the owner steps spelled out.
-- **The M62 95s budget and the T17 §g placement question remain the
-  two unanswered owner items** from the session-3 report §g; defaults
-  recorded there stand until answered.
+- **The M62 95s budget reference is DROPPED** (owner ruling
+  2026-10-29, third asking — no decision ever existed to await); the
+  T17 §g placement question is ANSWERED and shipped (the typeahead-row
+  state, above). No §g items remain open.
