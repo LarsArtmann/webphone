@@ -164,23 +164,30 @@ missing optional fields tolerated):
 
 ```json
 {
-  "id": "01J…",
-  "name": "Ada Lovelace",
   "company": "Analytical Engines Ltd",
-  "tags": ["lead", "conference"],
   "open_deals": [
     { "title": "Retainer 2027", "stage": "proposal", "value_cents": 1200000, "currency": "EUR" }
   ],
+  "open_deal_count": 4,
   "open_tasks": 2,
   "next_task": { "title": "Send the revised offer", "due_at": "2026-11-02T09:00:00Z" },
   "last_activity_at": "2026-10-24T11:03:00Z"
 }
 ```
 
-Consumption rules: `id` and `name` required; everything else optional and
-individually skippable; `404` means "no context for this contact / not
-published"; any 5xx or transport error is a *degradation*, never an error
-surface in the phone's UI.
+Consumption rules: every field is optional and individually skippable; `404`
+means "no context for this contact / not published"; any 5xx or transport
+error is a *degradation*, never an error surface in the phone's UI. The ref
+comes from the REQUEST, never from a payload field, so a CRM cannot redirect
+a strip onto another contact.
+
+**Deliberate asymmetry (2026-10-29, post-train):** the producer also publishes
+`id`, `name`, `email` and `tags`. webphone decodes none of them. Identity
+arrives from the identity product as a `crm.Person`, so a name carried here
+would be a second, disagreeable home for the same fact — and the strip renders
+context, not a contact card. The consumer-side fixture in `crm/context_test.go`
+keeps those fields precisely BECAUSE they are unknown to it: that makes the
+forward-compatibility rule a test rather than a promise.
 
 ---
 

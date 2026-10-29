@@ -51,6 +51,10 @@ func newContextClient(t *testing.T, stub *contextStub) (*Client, *Resolver) {
 	return client, NewResolver(client, "", nil)
 }
 
+// fullContextJSON is the producer's published shape, extra identity fields
+// included. The phone ignores id/name/tags on purpose (identity arrives from
+// the lookup product), so this fixture doubles as the forward-compatibility
+// proof: unknown fields decode without a complaint.
 const fullContextJSON = `{
   "id": "01M",
   "name": "Ada Lovelace",
@@ -66,8 +70,9 @@ const fullContextJSON = `{
 }`
 
 // TestContactContextDecodesTheProducersShape pins the wire contract the CRM
-// publishes: id and name always, everything else optional. A field rename on
-// the producer side must break THIS test, not a customer's page.
+// publishes: every fact the strip renders, and no identity hijack — the ref is
+// the one the caller asked for, never one echoed by the payload. A field rename
+// on the producer side must break THIS test, not a customer's page.
 func TestContactContextDecodesTheProducersShape(t *testing.T) {
 	t.Parallel()
 
@@ -78,8 +83,8 @@ func TestContactContextDecodesTheProducersShape(t *testing.T) {
 		t.Fatalf("context: %v", err)
 	}
 
-	if got.Ref.Get() != "01M" || got.Name != "Ada Lovelace" {
-		t.Fatalf("identity fields: %+v", got)
+	if got.Ref.Get() != "01M" {
+		t.Fatalf("ref must be the requested one, got %q", got.Ref.Get())
 	}
 
 	if got.Company != "Analytical Engines Ltd" {
@@ -152,7 +157,7 @@ func TestContactContextToleratesAMinimalAnswer(t *testing.T) {
 		t.Fatalf("minimal context: %v", err)
 	}
 
-	if got.Name != "Ada" || got.Company != "" || len(got.Deals) != 0 || got.NextTask != nil {
+	if got.Company != "" || len(got.Deals) != 0 || got.NextTask != nil {
 		t.Fatalf("minimal answer: %+v", got)
 	}
 
