@@ -55,6 +55,7 @@ func TestOpenAPISeamSurfacesMatchHandlers(t *testing.T) {
 		{"/api/calls/{id}/disposition", "post", []string{"204", "400", "401", "403", "409", "429", "500", "502", "503"}, "429"},
 		{"/api/calls/{id}/review", "post", []string{"202", "400", "401", "403", "404", "429", "500", "503"}, "429"},
 		{"/api/calls/{id}/review", "get", []string{"200", "400", "401", "403", "404", "429", "500", "503"}, "429"},
+		{"/api/dials", "post", []string{"200", "400", "401", "403", "404", "429", "502", "503"}, "429"},
 	} {
 		op, ok := doc.Paths[w.path][w.method]
 		if !ok {
