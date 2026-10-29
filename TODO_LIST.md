@@ -492,10 +492,13 @@ Remaining, unscheduled:
 - **Lane v2 fences**: read receipts (matrix `m.read` → delivered) and the
   compose-new-DM affordance are SHIPPED 2026-10-28 (`ParseComposedAddress`
   shape routing + `chatloop.Sink.RemoteRead`; CHANGELOG [Unreleased]). Still
-  open: matrix group rooms (threads key (owner, network, remote) one-peer —
-  groups need a thread-model change, not a fence lift), matrix E2EE (needs
+  open: matrix group rooms (model spike DONE 2026-10-29 —
+  `docs/planning/2026-10-29_12-20_matrix-group-rooms-model-spike.md`
+  recommends A1: room-shaped `!…` remotes + nullable `Message.Sender`,
+  awaiting the owner ruling before any execution), matrix E2EE (needs
   olm/megolm — big), signal inbound attachments (signal-cli side plumbing),
-  signal groups (same model issue). **Priority:** Low · **Effort:** M each.
+  signal groups (inherit the spike's Sender design verbatim once ruled).
+  **Priority:** Low · **Effort:** M each.
 
 ### /health operator surface (2026-10-23 — stack option shipped, deploy pending)
 
