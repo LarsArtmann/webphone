@@ -10,6 +10,14 @@ the work; the 06 files of it are in `HEAD`).
 above. Anything about CI, remote state, or the consuming stack rots fastest —
 re-check before relying on it.
 
+> **SUPERSEDED IN PART (same day, 17:0x):** the closeout train
+> [2026-10-29_15-48_SUPERB-ui-ux-layout-closeout.md](../planning/2026-10-29_15-48_SUPERB-ui-ux-layout-closeout.md)
+> closed most of this report's (b)/(c)/(d) items: the plan-doc drift is
+> corrected, CHANGELOG/AGENTS/dom-contract carry the train, `buildflow` is
+> exit 0, the collapsed layout is browser-proved, `ui-shots/` is untracked,
+> and `island-js` can finally fail. Read that doc's ledger (§4) for current
+> state; this file stays as the point-in-time audit that motivated it.
+
 ---
 
 ## a) FULLY DONE
