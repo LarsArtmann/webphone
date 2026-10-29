@@ -38,9 +38,16 @@
    * content ceiling live here so the collapse (P2), the grid and the
    * Messages split cannot disagree — one number, one home. The collapsed
    * state removes the column outright rather than shrinking it to a sliver:
-   * a 40px strip of dead chrome is worse than no strip. */
+   * a 40px strip of dead chrome is worse than no strip.
+   *
+   * --island-col wraps the minmax() pair in ONE token on purpose: the bare
+   * two-value form is long enough that prettier has to decide WHERE to break
+   * it, and the flake's format check and the local formatter picked
+   * different breaks — an artifact that cannot satisfy both. A short
+   * declaration has nothing to decide. */
   --island-w-min: 320px;
   --island-w-max: 400px;
+  --island-col: minmax(var(--island-w-min), var(--island-w-max));
   --content-max: 1400px;
   --shell-gap: 28px;
 }
@@ -286,9 +293,7 @@ h3 {
 
 .wp-body {
   display: grid;
-  grid-template-columns:
-    minmax(var(--island-w-min), var(--island-w-max))
-    minmax(0, 1fr);
+  grid-template-columns: var(--island-col) minmax(0, 1fr);
   gap: var(--shell-gap);
   padding: 28px 32px;
   align-items: start;
@@ -341,9 +346,7 @@ h3 {
    * :has() keeps the evaluation in CSS, so toggling the preference can
    * never strand a call in a `display: none` column. */
   .wp-island-collapsed .wp-body:has(.wp-island .call-card) {
-    grid-template-columns:
-      minmax(var(--island-w-min), var(--island-w-max))
-      minmax(0, 1fr);
+    grid-template-columns: var(--island-col) minmax(0, 1fr);
   }
 
   .wp-island-collapsed .wp-body:has(.wp-island .call-card) .wp-island {
