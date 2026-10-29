@@ -7,7 +7,7 @@ was still in flight at the minute this was written; see §9.1).
 This report covers **this session** (2026-10-27 22:00 → 2026-10-28 10:30, with a break overnight). The
 previous two reports (`2026-10-27_22-00_…`, `2026-10-28_02-40_…`, `2026-10-28_03-45_…`) hold the
 detailed analysis of the type-gate campaign; this one adds what happened after 03:45 — and the answer to
-*"what did you forget?"* is not flattering:
+_"what did you forget?"_ is not flattering:
 
 > **While I slept, main went red again, and the watcher I trust did not say a word.** A dependency bump
 > landed at 04:14 CET without its vendored-module hash; CI failed on both `nix build` and `fast flake
@@ -26,18 +26,18 @@ wait.
 
 ## 2. The numbers
 
-| Metric | 03:45 (last report) | **10:30** | How measured |
-|---|---|---|---|
-| `origin/main` | `3ebfff3` | **`8edd0ea`** | `git rev-parse` |
-| CI on main | 5/5 green | **5/5 green** | run 40662665439 @ `b43d1ab` |
-| Main red window | — | **~6 h 05 min** (04:14 → 10:20 CET) | ci.yml run 40625533810 created 03:14Z, fixed by `b43d1ab` at 09:2xZ |
-| Cause | — | **missing vendorHash after `go-health v0.8.1`** (3rd occurrence of this class in this repo) | CI log: `specified sha256-CbfEd3… got sha256-3Jos…` |
-| Red-main watcher | reports NONE | **scoped to `ci.yml`**, self-test 9/9 | `scripts/main-red-watch.sh --self-test` |
-| `nix build .#webphone` | green (pre-bump) | **green on the bumped tree** | `nix build .#webphone --no-link` |
-| Live smoke | 48 / 4 / 8 | **48 / 4 / 8, 0 failed** on the bumped binary | `scripts/webphone-smoke.py --bin <nix store path>` |
-| `go mod tidy` | — | **one cleanup** (retired `go-health v0.7.0` go.sum lines) | `git diff go.sum` |
-| `scripts/error-context.py --self-test` | never run this leg | **37/37 passed** | direct run |
-| Type gate / island specs / flake check / buildflow | 0 errors / 261 / passed / 69 steps 0 failed | unchanged (nothing touched since) | prior runs |
+| Metric                                             | 03:45 (last report)                         | **10:30**                                                                                   | How measured                                                        |
+| -------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| `origin/main`                                      | `3ebfff3`                                   | **`8edd0ea`**                                                                               | `git rev-parse`                                                     |
+| CI on main                                         | 5/5 green                                   | **5/5 green**                                                                               | run 40662665439 @ `b43d1ab`                                         |
+| Main red window                                    | —                                           | **~6 h 05 min** (04:14 → 10:20 CET)                                                         | ci.yml run 40625533810 created 03:14Z, fixed by `b43d1ab` at 09:2xZ |
+| Cause                                              | —                                           | **missing vendorHash after `go-health v0.8.1`** (3rd occurrence of this class in this repo) | CI log: `specified sha256-CbfEd3… got sha256-3Jos…`                 |
+| Red-main watcher                                   | reports NONE                                | **scoped to `ci.yml`**, self-test 9/9                                                       | `scripts/main-red-watch.sh --self-test`                             |
+| `nix build .#webphone`                             | green (pre-bump)                            | **green on the bumped tree**                                                                | `nix build .#webphone --no-link`                                    |
+| Live smoke                                         | 48 / 4 / 8                                  | **48 / 4 / 8, 0 failed** on the bumped binary                                               | `scripts/webphone-smoke.py --bin <nix store path>`                  |
+| `go mod tidy`                                      | —                                           | **one cleanup** (retired `go-health v0.7.0` go.sum lines)                                   | `git diff go.sum`                                                   |
+| `scripts/error-context.py --self-test`             | never run this leg                          | **37/37 passed**                                                                            | direct run                                                          |
+| Type gate / island specs / flake check / buildflow | 0 errors / 261 / passed / 69 steps 0 failed | unchanged (nothing touched since)                                                           | prior runs                                                          |
 
 ---
 
@@ -45,8 +45,8 @@ wait.
 
 ### 3.1 The overnight red, fixed and verified
 
-- **Diagnosed**: `go-health v0.8.1` landed as a `deps:` commit whose message says *"Verified: build and
-  vet green"* — `go build` and `go vet` **cannot** see a Nix fixed-output hash, so the verification
+- **Diagnosed**: `go-health v0.8.1` landed as a `deps:` commit whose message says _"Verified: build and
+  vet green"_ — `go build` and `go vet` **cannot** see a Nix fixed-output hash, so the verification
   looked complete and was structurally unable to catch the failure. Both `nix build .#webphone` and
   `fast flake checks` died on `webphone-2.9.0-go-modules`.
 - **Fixed with the documented recipe**: `go mod tidy` (dropped the retired v0.7.0 go.sum lines), then
@@ -83,16 +83,16 @@ pre-bump tree). Island specs 261. `go test ./...` green (31 packages).
 
 ## 4. PARTIALLY DONE
 
-| Item | State | Missing |
-|---|---|---|
-| **Red-main monitoring** | watcher scoped to `ci.yml`, pinned by a self-test | the scoping is *asserted*, not *demonstrated live* — defeating it needs a fresh red CI run (see §9.1) |
-| `nix flake check` on the **bumped** tree | not run; CI's `fast-checks` ran the equivalent set (format, island js/lint/type, statix, deadnix, vulnix-triage, module eval, package build) | the KVM VM tests are excluded from CI by design; a local `nix flake check` would cover them |
-| buildflow | 0 failures (last run pre-bump) | not re-run since the `go-health` bump + hash re-pin; the changed inputs are the module set and one Nix pin |
-| branching-flow findings | baseline retired (suppressed nothing) | the 104 findings still need a rule-family triage |
-| shared `GOMODCACHE` | isolated cache used for every command here | the shared cache's state is unknown (see §9.3) |
-| the other session's review train | 6 breaks healed earlier | still in flight; `app.css` gained its review-artifact styles mid-session (not mine, untouched) |
-| `nix flake check --all-systems` | x86_64 green | aarch64 not evaluated |
-| visual matrix / stack browser E2E | not run | no behavioral served-markup change |
+| Item                                     | State                                                                                                                                        | Missing                                                                                                    |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| **Red-main monitoring**                  | watcher scoped to `ci.yml`, pinned by a self-test                                                                                            | the scoping is _asserted_, not _demonstrated live_ — defeating it needs a fresh red CI run (see §9.1)      |
+| `nix flake check` on the **bumped** tree | not run; CI's `fast-checks` ran the equivalent set (format, island js/lint/type, statix, deadnix, vulnix-triage, module eval, package build) | the KVM VM tests are excluded from CI by design; a local `nix flake check` would cover them                |
+| buildflow                                | 0 failures (last run pre-bump)                                                                                                               | not re-run since the `go-health` bump + hash re-pin; the changed inputs are the module set and one Nix pin |
+| branching-flow findings                  | baseline retired (suppressed nothing)                                                                                                        | the 104 findings still need a rule-family triage                                                           |
+| shared `GOMODCACHE`                      | isolated cache used for every command here                                                                                                   | the shared cache's state is unknown (see §9.3)                                                             |
+| the other session's review train         | 6 breaks healed earlier                                                                                                                      | still in flight; `app.css` gained its review-artifact styles mid-session (not mine, untouched)             |
+| `nix flake check --all-systems`          | x86_64 green                                                                                                                                 | aarch64 not evaluated                                                                                      |
+| visual matrix / stack browser E2E        | not run                                                                                                                                      | no behavioral served-markup change                                                                         |
 
 ---
 
@@ -102,14 +102,14 @@ pre-bump tree). Island specs 261. `go test ./...` green (31 packages).
    false within 30 minutes. Nothing in my workflow re-checked it — and the one mechanism that exists for
    exactly that (`main-red-watch`) was silently broken. **The report should have carried the watcher's
    health as a fact, not just the run's.** This is the single biggest takeaway of the leg.
-2. **The dependency bump's "verification" was structurally unable to catch its own failure.** *"build and
-   vet green"* is true and irrelevant: neither tool reads `vendorHash`. My fix was correct, but the
+2. **The dependency bump's "verification" was structurally unable to catch its own failure.** _"build and
+   vet green"_ is true and irrelevant: neither tool reads `vendorHash`. My fix was correct, but the
    commit that caused six hours of red is exactly the case AGENTS.md warns about ("bumps do NOT ride the
    daemon") — and the hook that enforces that binds humans only, because the daemon overrides
    `core.hooksPath`. So the guard exists, is documented, and cannot fire.
 3. **The watcher bug is mine to own in a subtler sense**: it was written with the right intent
    ("independent of the push lane") and the wrong query, and its own self-test only exercised the
-   *decision core*, never the *argument*. A test of a pure function cannot catch a wrong input.
+   _decision core_, never the _argument_. A test of a pure function cannot catch a wrong input.
 4. **I still cannot commit a narrative.** Every commit I made tonight and this morning lost its message
    to the daemon (`chore: auto-commit N changed files`), including the vendorHash fix. The only commits
    carrying my text are the ones small enough to beat the race.
@@ -129,7 +129,7 @@ pre-bump tree). Island specs 261. `go test ./...` green (31 packages).
 
 1. **Monitoring must observe the thing it claims to observe.** `main-red-watch` is now scoped; the next
    trap is the same shape — a query without a `--workflow` filter, a status API that reports the caller.
-   Rule: every watcher names its subject explicitly, and its self-test covers the *invocation*, not only
+   Rule: every watcher names its subject explicitly, and its self-test covers the _invocation_, not only
    the decision.
 2. **A dependency bump owes a `nix build`, not a `go build`.** The one-line fix to the bump ritual: the
    claim in the commit message should be `nix build .#webphone` + smoke, because only that reads the
@@ -161,6 +161,7 @@ entry point.
 ## 8. THE PLAN — next actions, ordered
 
 ### P0 — do not let this happen a fourth time (~30 min)
+
 1. Extend `scripts/bump-preflight.sh` to print the **mandatory bump tail** (`go mod tidy` →
    `nix build .#webphone.goModules --rebuild` → pin → `nix build .#webphone` → smoke) at the end of every
    run, whatever the bump.
@@ -171,6 +172,7 @@ entry point.
    closes it — verify the close path).
 
 ### P1 — process fixes (this week)
+
 5. File the daemon-detach + commit-swallowing defect against the pma unit.
 6. Rewrite the whitespace-drift hook around `treefmt --ci` (formatter output is not drift).
 7. Decide whether `tsc` also runs in the Go CI job; record the decision where CI lives.
@@ -180,12 +182,14 @@ entry point.
     tonight were build-level).
 
 ### P2 — type the rest of the shell's DOM surface
+
 11. `ShellDomIds` for shell-owned ids (`wp-live`, `wp-tab-skeleton`, `wp-tab-error`, `wp-lightbox`).
 12. `inputElement`/`formElement` twins; retire the last inline casts in `shell.js`.
 13. `hasMethod` as a type predicate, then drop the follow-on casts.
 14. Type-check the `.mjs` specs (third tsconfig, `@types/node`) or record the final NO.
 
 ### P3 — evidence
+
 15. Fold this leg into `FEATURES.md` (type gate row: "CI-enforced"; watcher row: "scoped").
 16. Cross-link `docs/type-gate.md` ↔ `docs/dom-contract.md`.
 17. Incident note: "the watch lane reported green while CI was red" with the two `gh run list` proofs.
@@ -195,6 +199,7 @@ entry point.
 21. Re-run `scripts/error-context.py --self-test` after every code-table change (37 checks; green today).
 
 ### P4 — payload (next train)
+
 22. Split `shell.js` (voicemail player / palette / composer / notes), load order unchanged, E2E budgeted.
 23. Typed key map for the shell copy with an explicit "island failed to load" fallback.
 24. Injectable `now()` at construction; delete `window.__wpClock`.
@@ -251,10 +256,10 @@ the `art-dupl` job is **green**.
 
 `ci.yml` run 40666424112 (`3584652`) fails two jobs, and **neither is a defect I introduced**:
 
-| Job | Failure | Owner |
-|---|---|---|
-| `fast flake checks` | `treefmt-check` wants to reformat `internal/server/server.go` | the concurrent session is editing that file right now (it is +26/−? lines past HEAD in my working tree) |
-| `go test -race` | `TestErrorCodeRegistryIsFresh`: new error codes from the same train are not in the contract | same train; regenerating the registry now would describe code that is not in HEAD |
+| Job                 | Failure                                                                                     | Owner                                                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `fast flake checks` | `treefmt-check` wants to reformat `internal/server/server.go`                               | the concurrent session is editing that file right now (it is +26/−? lines past HEAD in my working tree) |
+| `go test -race`     | `TestErrorCodeRegistryIsFresh`: new error codes from the same train are not in the contract | same train; regenerating the registry now would describe code that is not in HEAD                       |
 
 Concrete in-flight signals in the working tree at 10:55 CET — none of them mine:
 
@@ -281,7 +286,7 @@ report is the hand-off.
 
 ### 10.4 The one thing I would do differently, restated
 
-I wrote "CI green" before the run finished for the *next* commit. A status report should carry, per
+I wrote "CI green" before the run finished for the _next_ commit. A status report should carry, per
 claim, the run id **and** "verified at HH:MM"; mine carried the run id for the previous commit and the
 greenness of a tree that had already moved. That is the same class of error as the six-hour red: a true
 statement about the past presented as a statement about now.

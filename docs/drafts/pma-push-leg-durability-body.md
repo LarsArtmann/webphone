@@ -1,4 +1,3 @@
-
 ## Problem
 
 A fleet deploy bounce of the daemon service turns into a silent push stall:

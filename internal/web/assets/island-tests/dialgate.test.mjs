@@ -20,8 +20,7 @@ const dialError = doc.createElement("p");
 dialError.id = "dial-error";
 dialForm.append(dialError);
 doc.body.append(dialForm);
-doc.querySelector = (selector) =>
-  selector === "#dial-form" ? dialForm : null;
+doc.querySelector = (selector) => (selector === "#dial-form" ? dialForm : null);
 
 function useFetch(handler) {
   globalThis.fetch = async (url, opts) => handler(url, opts);
@@ -85,13 +84,9 @@ test("404 pins the seam off: later asks never round-trip", async () => {
   assert.equal(calls, 1, "the 404 is learned, not re-asked");
 });
 
-
 // The chip render lives in calls.js (placeCall's flow); its phrasing is
 // pinned here so both languages keep the state line honest.
 test("the cooldown notice names the wait", () => {
-  assert.equal(
-    t("cooldownNotice")("47m", "13m"),
-    "Last call 47m ago — redial paused (13m left).",
-  );
+  assert.equal(t("cooldownNotice")("47m", "13m"), "Last call 47m ago — redial paused (13m left).");
   assert.equal(t("dialAnyway"), "Dial anyway");
 });

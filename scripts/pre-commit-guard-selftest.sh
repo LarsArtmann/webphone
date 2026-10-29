@@ -111,14 +111,14 @@ printf 'package x\n\ntype S struct {\nA int\nBB string\n}\n' >"$scratch/a.go"
 run_ws_case() { # name expect staged-content
 	local name="$1" expect="$2" content="$3" got=0
 	printf '%s' "$content" >"$scratch/a.go"
-	(cd "$scratch" && unset GIT_INDEX_FILE && git add a.go && \
+	(cd "$scratch" && unset GIT_INDEX_FILE && git add a.go &&
 		bash "$repo/scripts/whitespace-drift.sh") \
 		>/dev/null 2>&1 || got=$?
 	if [ "$got" -ne "$expect" ]; then
 		fail "$name: expected exit $expect, got $got"
 	fi
 }
-if command -v nix >/dev/null 2>&1 && \
+if command -v nix >/dev/null 2>&1 &&
 	(cd "$repo" && nix eval --raw .#formatter.x86_64-linux >/dev/null 2>&1); then
 	# Staged = gofmt-canonical alignment of the dirty base (formatter
 	# output, whitespace-only delta) => acquit. Canonical bytes verified

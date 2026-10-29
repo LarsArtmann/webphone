@@ -272,10 +272,10 @@ per-row.
    WARNs, never blocks the action) + the Settings "Recent agent
    actions" section (`wp-agent-audit-*`, rows-or-seam conditional,
    actor resolved to the login email). Pins: agentaudit_test.go (store)
-   + TestAgentAuditDualWritesTheDurableRow + TestSettingsAgentAuditSection.
-   The LOGIN-event durable journal stays usermgmt's (identity seam
-   untouched); an in-UI login-history surface would need an upstream
-   read API — reopen on an operator ask.
+   - TestAgentAuditDualWritesTheDurableRow + TestSettingsAgentAuditSection.
+     The LOGIN-event durable journal stays usermgmt's (identity seam
+     untouched); an in-UI login-history surface would need an upstream
+     read API — reopen on an operator ask.
 6. **Branching-flow baseline staleness (observed 2026-10-28 train-start
    buildflow)** — VERIFIED HEALTHY at HEAD (2026-10-28 evening, whole-list
    session): the 11:20 re-establishment (`ba6e189`, 78 entries) is LIVE —
@@ -303,12 +303,12 @@ provider (127.0.0.1:52625) refused connections 13:06→20:59 — ~8h of
 heuristic-only messages fleet-wide, though the commit leg itself stayed
 fast (177 ms fails). FLEET ASK FILED 2026-10-28 as
 projects-management-automation#348 (verified at source first: Stop()
-  drops pending batches with no drain, Start() has no unpushed sweep,
-  per-push logging already exists — so the ask is the SIGTERM flush, the
-  startup sweep, and a shutdown-completion line; draft in
-  docs/drafts/pma-push-leg-durability-issue-2026-10-28.md). Until it
-  lands, a fleet deploy window predicts a push stall — run
-  `scripts/push-stall-watch.sh` after every `switch-to-configuration`.
+drops pending batches with no drain, Start() has no unpushed sweep,
+per-push logging already exists — so the ask is the SIGTERM flush, the
+startup sweep, and a shutdown-completion line; draft in
+docs/drafts/pma-push-leg-durability-issue-2026-10-28.md). Until it
+lands, a fleet deploy window predicts a push stall — run
+`scripts/push-stall-watch.sh` after every `switch-to-configuration`.
 
 ### Multi-call dock + agent-UX train (2026-10-26/27 SUPERB plan — SHIPPED, two tails)
 

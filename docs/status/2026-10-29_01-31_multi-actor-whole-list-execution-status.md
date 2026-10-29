@@ -95,4 +95,4 @@ Scope of this report: THIS session's run only (the whole-list execution evening:
 
 ---
 
-*Report written from the session's own run log; no unrelated research was performed. The (d) section is complete to the best of my reconstruction — the island-lint source line is the one open unknown.*
+_Report written from the session's own run log; no unrelated research was performed. The (d) section is complete to the best of my reconstruction — the island-lint source line is the one open unknown._

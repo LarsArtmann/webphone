@@ -23,21 +23,21 @@ the two P0 blockers it named (the red `art-dupl` clone, the never-clean `buildfl
 
 ## 2. The numbers, 22:00 → now
 
-| Metric | 22:00 | **Now** | How measured |
-|---|---|---|---|
-| CI on `main` | **red** (`art-dupl`, 1 clone group) | **green, 5/5 jobs** | `gh run view 40611371774` (CI) + `40612197597` (watch) at `b8a12fe` |
-| `art-dupl` new groups (`-t 1`, pinned v0.7.2) | 1 group / 7 rows | **0** | `art-dupl check . -t 1 --baseline-path …` |
-| `art-dupl` baseline | 79 entries, 1 dead | **78, re-recorded with the PINNED tool, 0 hashes added** | set-diff of both files |
-| Type gate in CI | not run by any job | **`fast-checks`** | `.github/workflows/ci.yml` |
-| Type-gate pins (`typecheck_pin_test.go`) | 6 | **10** (exclude cardinality, include-is-a-glob, DOM-id mirror, globMatcher table test) | `go test ./internal/web/assets -v` |
-| Served files under a green gate | 26 | **26** | `tsc -p . --listFiles \| grep -c assets` |
-| Pre-commit gates | 1 (whitespace) | **2** (+ `node --check` on staged assets) | `.githooks/pre-commit` |
-| Pre-commit selftest cases | 3 | **6** | `bash scripts/pre-commit-guard-selftest.sh` |
-| Island specs (`node --test`) | 260 | **261 pass** | full glob run |
-| `go test -count=1 ./...` | green | **green, 31 packages** | full suite |
-| `nix flake check` | 32 checks green | **all checks passed** | `nix flake check` |
-| Live smoke | 48 / 4 / 8 | **48 / 4 / 8, 0 failed** | `scripts/webphone-smoke.py --bin /tmp/webphone-bin` |
-| `buildflow` | 1 of 58 steps failed (transient, load 287) | **69 success, 0 failed, 0 skipped** (6m29s) | `BUILDFLOW_NO_RESULT_CACHE=1 scripts/buildflow.sh` |
+| Metric                                        | 22:00                                      | **Now**                                                                                | How measured                                                        |
+| --------------------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| CI on `main`                                  | **red** (`art-dupl`, 1 clone group)        | **green, 5/5 jobs**                                                                    | `gh run view 40611371774` (CI) + `40612197597` (watch) at `b8a12fe` |
+| `art-dupl` new groups (`-t 1`, pinned v0.7.2) | 1 group / 7 rows                           | **0**                                                                                  | `art-dupl check . -t 1 --baseline-path …`                           |
+| `art-dupl` baseline                           | 79 entries, 1 dead                         | **78, re-recorded with the PINNED tool, 0 hashes added**                               | set-diff of both files                                              |
+| Type gate in CI                               | not run by any job                         | **`fast-checks`**                                                                      | `.github/workflows/ci.yml`                                          |
+| Type-gate pins (`typecheck_pin_test.go`)      | 6                                          | **10** (exclude cardinality, include-is-a-glob, DOM-id mirror, globMatcher table test) | `go test ./internal/web/assets -v`                                  |
+| Served files under a green gate               | 26                                         | **26**                                                                                 | `tsc -p . --listFiles \| grep -c assets`                            |
+| Pre-commit gates                              | 1 (whitespace)                             | **2** (+ `node --check` on staged assets)                                              | `.githooks/pre-commit`                                              |
+| Pre-commit selftest cases                     | 3                                          | **6**                                                                                  | `bash scripts/pre-commit-guard-selftest.sh`                         |
+| Island specs (`node --test`)                  | 260                                        | **261 pass**                                                                           | full glob run                                                       |
+| `go test -count=1 ./...`                      | green                                      | **green, 31 packages**                                                                 | full suite                                                          |
+| `nix flake check`                             | 32 checks green                            | **all checks passed**                                                                  | `nix flake check`                                                   |
+| Live smoke                                    | 48 / 4 / 8                                 | **48 / 4 / 8, 0 failed**                                                               | `scripts/webphone-smoke.py --bin /tmp/webphone-bin`                 |
+| `buildflow`                                   | 1 of 58 steps failed (transient, load 287) | **69 success, 0 failed, 0 skipped** (6m29s)                                            | `BUILDFLOW_NO_RESULT_CACHE=1 scripts/buildflow.sh`                  |
 
 ---
 
@@ -51,7 +51,7 @@ the two P0 blockers it named (the red `art-dupl` clone, the never-clean `buildfl
   move — pinned by `TestHistoryVerdictFilterRendersEveryOption`, which asserts all six verdict rows,
   the `selected` attribute on exactly the echoed filter, and that `unknown` never becomes a row.
 - **The baseline was re-recorded with the CI-pinned detector** (`art-dupl@v0.7.2`, built from source;
-  the host's `~/go/bin/art-dupl` is v0.9.1 and reports a *different* group set — 43 "new" against the
+  the host's `~/go/bin/art-dupl` is v0.9.1 and reports a _different_ group set — 43 "new" against the
   same baseline). Set-diff of both baselines: **one dead hash dropped, zero added**, so the refresh
   blessed nothing. Registry sweep-log line + a standing ruling row added.
 - **`buildflow` passes** on a quieter box: 69 steps success, 0 failed (`govulncheck` finished in 10 s
@@ -61,7 +61,7 @@ the two P0 blockers it named (the red `art-dupl` clone, the never-clean `buildfl
 
 - `island-typecheck` **joined CI's `fast-checks` job**. This was the single highest-value finding of
   the leg: the gate had been green since 22:00 and **no CI job ran it**, so a red served asset would
-  have shipped with every job green. `typecheck_pin_test.go` guards the *config*, never the compiler
+  have shipped with every job green. `typecheck_pin_test.go` guards the _config_, never the compiler
   verdict.
 - The pre-commit hook grew **gate 2**: `node --check` over every staged blob under
   `internal/web/assets/` (vendored bundle skipped, node missing = WARN + fail-open). It parses the
@@ -70,7 +70,7 @@ the two P0 blockers it named (the red `art-dupl` clone, the never-clean `buildfl
 
 ### 3.3 The pins got stronger, not looser
 
-- **Exclude cardinality**: the one carve-out must reach `sip.min.js` *and* nothing outside the vendored
+- **Exclude cardinality**: the one carve-out must reach `sip.min.js` _and_ nothing outside the vendored
   dir (a glob that also caught a hand-written asset would silently un-type it).
 - **Include must stay a glob**: any non-`**` entry under the asset tree fails, with the reason in the
   message. Demonstrated live: narrowing `include` to `internal/web/assets/shell.js` made **both**
@@ -113,10 +113,10 @@ the two P0 blockers it named (the red `art-dupl` clone, the never-clean `buildfl
   undocumented ids.
 - **`docs/release-runbook.md`**: the gate is a release blocker with the exact command + the
   stack-visible consequence.
-- **`docs/lessons.md`**: three entries — *a subset gate drags its imports in fully* (the plan's
-  unmeasured claim cost two hours), *nothing gated the served JS at commit time* (the daemon committed
-  a broken file twice), *the shared module cache is shared state and a full disk corrupts it
-  invisibly* (zero-byte `.mod` reads as a checksum mismatch, i.e. like a supply-chain attack).
+- **`docs/lessons.md`**: three entries — _a subset gate drags its imports in fully_ (the plan's
+  unmeasured claim cost two hours), _nothing gated the served JS at commit time_ (the daemon committed
+  a broken file twice), _the shared module cache is shared state and a full disk corrupts it
+  invisibly_ (zero-byte `.mod` reads as a checksum mismatch, i.e. like a supply-chain attack).
 - **The 16:04 plan carries the ERRATUM** the 19:20 plan got: its per-file `@ts-check` recommendation is
   impossible in a verbatim-served tree.
 - **`AGENTS.md`**: the two-gate pre-commit contract, the corrected island-lint rule list (four rules,
@@ -132,29 +132,29 @@ the two P0 blockers it named (the red `art-dupl` clone, the never-clean `buildfl
 
 ### 3.6 The cross-session repairs (the tree was red when I found it)
 
-Three separate breaks arrived from the concurrent session / the daemon *after* my green push. Each is
+Three separate breaks arrived from the concurrent session / the daemon _after_ my green push. Each is
 fixed so the tree builds; none was a design change on my side:
 
-| Break | Fix |
-|---|---|
-| `settleEndedCall` read `card` that is not in scope | read `entry.dom` with a null guard |
-| `t("reviewQueued")` referenced a key no dictionary had | key added (it landed twice — see §5.3) |
-| `api.Server` gained `AuditAgent`, the fuzz fake did not implement it | fake implements it (no-op, with why) |
+| Break                                                                                                                   | Fix                                                                                   |
+| ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| `settleEndedCall` read `card` that is not in scope                                                                      | read `entry.dom` with a null guard                                                    |
+| `t("reviewQueued")` referenced a key no dictionary had                                                                  | key added (it landed twice — see §5.3)                                                |
+| `api.Server` gained `AuditAgent`, the fuzz fake did not implement it                                                    | fake implements it (no-op, with why)                                                  |
 | `stubReviewAPI.calls` counted **every** agent request, so "drafted exactly once" failed once a `/reviews` probe existed | `draftCalls` counter for `POST /draft`; assertions now read it and print both numbers |
-| `agent.summarize` registry row drifted | regenerated with the documented `-update` command |
+| `agent.summarize` registry row drifted                                                                                  | regenerated with the documented `-update` command                                     |
 
 ---
 
 ## 4. PARTIALLY DONE
 
-| Item | State | Missing |
-|---|---|---|
-| **buildflow warnings** | 0 failures, 860 findings across detect-only tools | the warnings are the tools' own noise floor (bandit/govulncheck/art-dupl); no triage pass was made |
-| **`.buildflow-baseline.json`** | **retired** (file deleted) | the 104 live branching-flow findings need a triage pass before any re-record; row in TODO_LIST |
-| **`nix flake check --all-systems`** | x86_64 green | aarch64 not evaluated (the cross-build is proven separately by ELF bytes) |
-| **Visual matrix + stack browser E2E** | not run | no *behavioral* served-markup change (the filter refactor is byte-identical, pinned; the three new doc ids were already rendered) — obligation unchanged, not newly incurred |
-| **`__wpClock` injectable seam** | declaration hardened | the seam itself is still an ad-hoc global; no spec installs it |
-| **AGENTS trim** | 179 lines | the "trim toward 150" item was based on a wrong premise (the cap is 377); nothing to do |
+| Item                                  | State                                             | Missing                                                                                                                                                                      |
+| ------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **buildflow warnings**                | 0 failures, 860 findings across detect-only tools | the warnings are the tools' own noise floor (bandit/govulncheck/art-dupl); no triage pass was made                                                                           |
+| **`.buildflow-baseline.json`**        | **retired** (file deleted)                        | the 104 live branching-flow findings need a triage pass before any re-record; row in TODO_LIST                                                                               |
+| **`nix flake check --all-systems`**   | x86_64 green                                      | aarch64 not evaluated (the cross-build is proven separately by ELF bytes)                                                                                                    |
+| **Visual matrix + stack browser E2E** | not run                                           | no _behavioral_ served-markup change (the filter refactor is byte-identical, pinned; the three new doc ids were already rendered) — obligation unchanged, not newly incurred |
+| **`__wpClock` injectable seam**       | declaration hardened                              | the seam itself is still an ad-hoc global; no spec installs it                                                                                                               |
+| **AGENTS trim**                       | 179 lines                                         | the "trim toward 150" item was based on a wrong premise (the cap is 377); nothing to do                                                                                      |
 
 ---
 
@@ -172,7 +172,7 @@ fixed so the tree builds; none was a design change on my side:
 2. **I shipped a wrong claim and then corrected it in a follow-up commit.** The first registry sweep
    line said the 79-entry baseline "matches nothing under v0.7.2" and had been written by v0.9.x. Wrong
    in an instructive way: `art-dupl check` prints only groups ABSENT from the baseline, so "Found
-   total 1 clone groups" meant *one new*, not *one in total*. The corrected line explains both counts
+   total 1 clone groups" meant _one new_, not _one in total_. The corrected line explains both counts
    and the trap; the intermediate (wrong) line survives in the local history.
 3. **I created duplicate i18n keys by "fixing" a file another session was fixing at the same
    moment.** I added `reviewQueued` (en+de) while the other session added its own pair; the result was
@@ -200,6 +200,7 @@ fixed so the tree builds; none was a design change on my side:
 ## 6. WHAT WE SHOULD IMPROVE
 
 **Process (highest value first)**
+
 1. **Stop the daemon from detaching HEAD.** It committed my uncommitted edits on a detached HEAD twice
    earlier in the day and swallowed four narrative commits tonight. This is the single largest source
    of lost work in this repo.
@@ -219,44 +220,46 @@ fixed so the tree builds; none was a design change on my side:
 
 **Type gate**
 7. The gate is now in CI, so **the next asset file is covered automatically** — say so in
-   docs/type-gate.md (it does) and stop treating `tsconfig.json` as something to edit.
+docs/type-gate.md (it does) and stop treating `tsconfig.json` as something to edit.
 8. `types/island.d.ts` is the island's own id set; the shell's ids are still untyped (`wp-live`,
-   `wp-tab-skeleton`, `wp-tab-error`). A second interface for shell-owned ids would type the shell's
-   own lookups.
+`wp-tab-skeleton`, `wp-tab-error`). A second interface for shell-owned ids would type the shell's
+own lookups.
 9. The `.mjs` specs remain the largest untyped surface (declined with a reason, TODO_LIST).
 
 **Verification**
 10. **Run `nix flake check` before pushing, not after** — it is the only thing that ran the type gate
-    before tonight, and the duplicate-key break was caught by it minutes after the push.
+before tonight, and the duplicate-key break was caught by it minutes after the push.
 11. The smoke script and the flake check disagree about what "the gate" means (48 HTTP probes vs 32
-    nix checks); a single `scripts/gate.sh` that names the order would help a new contributor.
+nix checks); a single `scripts/gate.sh` that names the order would help a new contributor.
 
 ---
 
 ## 7. NOT STARTED (deliberately, with reasons in TODO_LIST)
 
-| Item | Why |
-|---|---|
-| Split `shell.js` at its seams | the gate makes a split safe, but the classic-script load order is a served-byte contract the stack E2E greps; readability-only payoff |
-| Type-check `island-tests/*.mjs` | needs `@types/node` (not in the devshell) + a third project; the stubs' deliberate partial duck types are the design |
-| Typed key map for the shell's copy | the shell must work when island scripts fail — a shared map adds a load-order dependency in the one place independence is the point |
-| `tsc --explainFiles` in CI | the coverage pin derives the set from the embedded tree (proved 2026-10-28 by narrowing the include) |
-| aarch64 flake check | cross-build proven separately by ELF bytes |
-| Visual matrix (`scripts/ui-capture.py`) | local-only by budget decision; no rendered pixel changed |
-| Stack browser E2E | no behavioral markup change |
-| branching-flow triage of the 104 findings | needs a focused pass; the stale baseline was retired so they are visible |
+| Item                                      | Why                                                                                                                                   |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| Split `shell.js` at its seams             | the gate makes a split safe, but the classic-script load order is a served-byte contract the stack E2E greps; readability-only payoff |
+| Type-check `island-tests/*.mjs`           | needs `@types/node` (not in the devshell) + a third project; the stubs' deliberate partial duck types are the design                  |
+| Typed key map for the shell's copy        | the shell must work when island scripts fail — a shared map adds a load-order dependency in the one place independence is the point   |
+| `tsc --explainFiles` in CI                | the coverage pin derives the set from the embedded tree (proved 2026-10-28 by narrowing the include)                                  |
+| aarch64 flake check                       | cross-build proven separately by ELF bytes                                                                                            |
+| Visual matrix (`scripts/ui-capture.py`)   | local-only by budget decision; no rendered pixel changed                                                                              |
+| Stack browser E2E                         | no behavioral markup change                                                                                                           |
+| branching-flow triage of the 104 findings | needs a focused pass; the stale baseline was retired so they are visible                                                              |
 
 ---
 
 ## 8. THE PLAN — next actions, ordered
 
 ### P0 — protect what is now green (do first, ~20 min)
+
 1. Push this leg and watch CI to green (`gh run view --json jobs`), including the new
    `island-typecheck` step in `fast-checks` — this is the first run where CI enforces the type gate.
 2. Confirm the daemon did not re-detach HEAD (`git log --oneline -3`, `git status`).
 3. Re-run `bash scripts/pre-commit-guard-selftest.sh` after any hook edit (6 cases).
 
 ### P1 — make the process fixes (this week)
+
 4. File the daemon-detach defect against the pma unit (it also silently swallows narrative commits).
 5. Rewrite the whitespace-drift hook to consult `treefmt --ci` for staged paths; extend the selftest
    with a "formatter-produced whitespace is allowed" case.
@@ -268,6 +271,7 @@ fixed so the tree builds; none was a design change on my side:
    set), then `buildflow -s branching-flow --save-baseline`.
 
 ### P2 — type the rest of the shell's DOM surface
+
 9. Add a `ShellDomIds` interface for the shell-owned ids (`wp-live`, `wp-tab-skeleton`, `wp-tab-error`,
    `wp-lightbox`, …) and route `getElementById` calls through typed helpers.
 10. Convert the remaining `document.getElementById` + cast sites in `shell.js` to the typed helpers
@@ -278,6 +282,7 @@ fixed so the tree builds; none was a design change on my side:
     NO with the same rigor as the other declinations.
 
 ### P3 — docs and evidence
+
 13. Fold this report's §3 into `FEATURES.md` (the gate row already exists; add the CI wiring).
 14. Add a `docs/type-gate.md` section on the DOM-id mirror to `docs/dom-contract.md` (cross-link both
     ways).
@@ -290,6 +295,7 @@ fixed so the tree builds; none was a design change on my side:
     reported "slower than baseline" because the baseline was recorded on an idle box.
 
 ### P4 — payload items (next train)
+
 18. Split `shell.js`: voicemail player, palette, composer/drafts, notes — one IIFE per file, load order
     unchanged, E2E re-run budgeted.
 19. Move the shell's English copy into a typed key map with an explicit fallback path for "island
@@ -305,6 +311,7 @@ fixed so the tree builds; none was a design change on my side:
     dependency bump.
 
 ### P5 — adjacent, identified but out of scope
+
 25. `views` i18n parity test could also assert the island dictionaries' en/de key sets (the duplicate
     `reviewQueued` would have been caught at `go test` time instead of by tsc).
 26. The `#wp-error` slot and the `.wp-error` banner are two homes for "the tab failed"; consider one.
