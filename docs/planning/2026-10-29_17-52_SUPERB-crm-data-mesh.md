@@ -280,11 +280,13 @@ Filled from actual runs, never pre-filled.
 
 | # | Step | Status | Evidence |
 | --- | --- | --- | --- |
-| S1 | `Person` / `People` | ⏳ PENDING | |
-| S2 | Call-site migration | ⏳ PENDING | |
-| S3 | `crm.contact_url` | ⏳ PENDING | |
-| S4 | Link rendering | ⏳ PENDING | |
-| S5 | Context client | ⏳ PENDING | |
-| S6 | Kith `/context` | ⏳ PENDING | |
-| S7 | Strip | ⏳ PENDING | |
-| S8 | Docs + gates | ⏳ PENDING | |
+| S1 | `Person` / `People` | ✅ DONE | `crm.Person{Ref,Name}`; `Resolver.People()`; `go build ./internal/crm` green |
+| S2 | Call-site migration | ✅ DONE | notifier, panels, actions, textagent, calls_api, disposition_api; `go build ./...` green |
+| S3 | `crm.contact_url` | ⚠️ PARTIAL | field + `validateCRMContactURL` shipped; **no test**; registry entry missing |
+| S4 | Link rendering | ⚠️ PARTIAL | `CRM CRMContacts` on 5 prop structs; `crmNameLink` on thread head / fax / CDR; **no CSS** |
+| S5 | Context client | ⛔ NOT STARTED | type + strip component exist; nothing produces a `CRMContext` (dead code) |
+| S6 | Kith `/context` | ⛔ NOT STARTED | read-only research done; Kith builds |
+| S7 | Strip | ⚠️ PARTIAL | component + i18n + `ThreadViewProps.CRMContext` wired; **no producer, no CSS, no test** |
+| S8 | Docs + gates | ⛔ NOT STARTED | **test tree RED** (`panels_test.go` references the removed `TranscriptGroup.Name`) |
+
+Snapshot and the full honesty audit: [docs/status/2026-10-29_18-06_crm-data-mesh-midtrain-status.md](../status/2026-10-29_18-06_crm-data-mesh-midtrain-status.md).
