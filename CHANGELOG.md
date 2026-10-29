@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- CRM contact context beside an open conversation (2026-10-29): when the
+  optional CRM is configured and publishes context for the caller, opening a
+  conversation shows one quiet line of what is outstanding with them — their
+  company, the deals in flight with values, the number of open follow-ups and
+  the next one due, and how long since the last touch. Fetched for that one
+  contact only (never for list rows), cached for two minutes, and entirely
+  absent when the CRM is off, the number is unknown, or the CRM does not
+  publish the product — no empty shell, no error surface.
+- Caller names are links into the CRM (2026-10-29): setting `crm.contact_url`
+  to a template such as `https://crm.example/contacts/{id}` turns a resolved
+  caller's name in Messages, Fax and History into a link to that contact in the
+  CRM, opened in a new tab so a live call is never unloaded. Unset means plain
+  names, exactly as before; a number with no CRM match stays raw text.
+- CRM call outcomes now arrive in the CRM's own vocabulary (2026-10-29): the
+  phone's dispositions are translated (`answered` to `connected`, `missed` to
+  `no_answer`, `failed` to `disconnected`, voicemail and IVR verbatim, and an
+  honest `unknown` recorded as "no outcome" rather than a guess). Previously
+  the raw phone vocabulary was sent, which the CRM now rejects — every answered
+  call would have failed to journal.
+
+### Changed
+
+- The CRM seam carries contact identity, not just a name (2026-10-29): the
+  integration now returns the CRM's own contact reference alongside the display
+  name, which is what makes a resolved caller reachable at all. Views receive a
+  single projection (`CRMContacts`) rather than a bare number-to-name map, so a
+  caller's name and its link can never disagree.
+
 - Inbound Signal attachments (2026-10-29): setting `signal.attachments_dir`
   to signal-cli's received-attachment directory arms inbound media — files
   arrive in Messages like MMS (5 per message, 10 MiB each, honest

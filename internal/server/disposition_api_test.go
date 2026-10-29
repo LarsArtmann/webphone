@@ -44,7 +44,10 @@ func TestCallDispositionCorrectsTheCRM(t *testing.T) {
 	}
 	got := stub.logBodies[0]
 	stub.mu.Unlock()
-	if got["outcome"] != "answered" || got["seconds"] != float64(63) {
+	// The operator's "answered" travels as the CRM's "connected": the two
+	// sides keep closed, different vocabularies and the bridge translates
+	// (internal/crm/vocabulary.go).
+	if got["outcome"] != "connected" || got["seconds"] != float64(63) {
 		t.Fatalf("correction must carry the confirmed verdict: %+v", got)
 	}
 
@@ -107,7 +110,7 @@ func TestCallDispositionVerdictSurvivesCRMOutage(t *testing.T) {
 	if len(stub.logBodies) != 2 {
 		t.Fatalf("retry must journal the correction: %d entries", len(stub.logBodies))
 	}
-	if got := stub.logBodies[1]["outcome"]; got != "answered" {
+	if got := stub.logBodies[1]["outcome"]; got != "connected" {
 		t.Fatalf("retry verdict: %q", got)
 	}
 	// A further replay is now deduped by the recorded key.

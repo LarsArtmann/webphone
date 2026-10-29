@@ -142,7 +142,7 @@ func TestAPICallLoggingContract(t *testing.T) {
 		}
 	})
 
-	t.Run("disposition travels verbatim through to the CRM", func(t *testing.T) {
+	t.Run("disposition travels through the CRM vocabulary bridge", func(t *testing.T) {
 		stub := &crmStub{}
 		resolver := crmResolverFor(t, stub)
 		server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.CRM = resolver })
@@ -156,8 +156,11 @@ func TestAPICallLoggingContract(t *testing.T) {
 
 		stub.mu.Lock()
 		defer stub.mu.Unlock()
-		if got := stub.logBodies[0]["outcome"]; got != "missed" {
-			t.Fatalf("forwarded disposition: %q (want missed)", got)
+		// The phone says "missed", the CRM's closed vocabulary says
+		// "no_answer": the number travels verbatim, the VOCABULARY does not
+		// (internal/crm/vocabulary.go).
+		if got := stub.logBodies[0]["outcome"]; got != "no_answer" {
+			t.Fatalf("forwarded disposition: %q (want no_answer)", got)
 		}
 	})
 
@@ -177,10 +180,12 @@ func TestAPICallLoggingContract(t *testing.T) {
 		}
 
 		stub.mu.Lock()
-		got := stub.logBodies[0]["outcome"]
+		_, present := stub.logBodies[0]["outcome"]
 		stub.mu.Unlock()
-		if got != "unknown" {
-			t.Fatalf("legacy answered must demote to unknown upstream, got %q", got)
+		// "unknown" has no honest CRM counterpart, so it is recorded as "no
+		// outcome" instead of being guessed into no_answer.
+		if present {
+			t.Fatalf("a demoted legacy answered must journal no outcome, got %v", stub.logBodies[0]["outcome"])
 		}
 	})
 
@@ -406,9 +411,16 @@ func TestAPICallLoggingIslandWireContract(t *testing.T) {
 		t.Fatalf("lookup must carry the number verbatim: %q", stub.lookupNumbers)
 	}
 	got := stub.logBodies[0]
-	if len(got) != 4 || got["direction"] != "out" || got["number"] != "+493012345678" ||
-		got["seconds"] != float64(42) || got["outcome"] != "unknown" {
-		t.Fatalf("journaled body must be exactly the island contract: %+v", got)
+	// The island reports an honest "unknown" (media flowed, no human verdict
+	// yet). The CRM's closed outcome vocabulary has no such value, and
+	// guessing no_answer would write a lie into the customer's journal, so
+	// the bridge omits the field entirely: three keys, no outcome.
+	if len(got) != 3 || got["direction"] != "out" || got["number"] != "+493012345678" ||
+		got["seconds"] != float64(42) {
+		t.Fatalf("journaled body must carry the island contract's facts and no guessed outcome: %+v", got)
+	}
+	if outcome, present := got["outcome"]; present {
+		t.Fatalf("an unknown disposition must omit the outcome, got %v", outcome)
 	}
 }
 
