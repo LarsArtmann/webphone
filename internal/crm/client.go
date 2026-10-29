@@ -171,7 +171,13 @@ func (c *Client) LookupByPhone(ctx context.Context, number string) (Person, erro
 	case resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden:
 		return Person{}, ErrUnauthorized
 	case resp.StatusCode != http.StatusOK:
-		return Person{}, errorfamily.Newf(statusFamily(resp.StatusCode), "crm.http",
+		// The family rides a LOCAL variable on purpose: the error-code
+		// registry scans constructor shapes and cannot see a code whose
+		// family argument is a function call (the statusFamily extraction
+		// red-ed TestErrorCodeRegistryIsFresh once already).
+		family := statusFamily(resp.StatusCode)
+
+		return Person{}, errorfamily.Newf(family, "crm.http",
 			"crm: lookup failed with status %d", resp.StatusCode)
 	}
 

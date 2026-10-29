@@ -95,7 +95,11 @@ func (c *Client) ContactContext(ctx context.Context, ref ContactRef) (Context, e
 	case resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden:
 		return Context{}, ErrUnauthorized
 	default:
-		return Context{}, errorfamily.Newf(statusFamily(resp.StatusCode), "crm.context",
+		// Local variable, not a call argument: the registry scan needs to
+		// see the code (see the same note in client.go).
+		family := statusFamily(resp.StatusCode)
+
+		return Context{}, errorfamily.Newf(family, "crm.context",
 			"crm: context failed with status %d", resp.StatusCode)
 	}
 
