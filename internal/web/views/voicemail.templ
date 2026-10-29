@@ -38,13 +38,19 @@ templ VoicemailPanel(props VoicemailPanelProps) {
 	>
 		<header class="wp-panel-head">
 			<h2>{ T(props.Lang, "tab.voicemail") }</h2>
-			<p class="wp-panel-sub">
-				if props.Enabled {
-					{ fmtInt(props.Summary.New) } { T(props.Lang, "vm.new") } · { fmtInt(props.Summary.Old) } { T(props.Lang, "vm.saved") }
-				} else {
-					{ T(props.Lang, "vm.needsAPI") }
-				}
-			</p>
+			// The count line is a CLAIM about the mailbox, so an unreachable
+			// provider (Error set) omits it entirely: "0 new · 0 saved" beside
+			// an error banner asserts something nobody knows. Same rule as the
+			// empty state below — one ladder, applied consistently.
+			if props.Error == "" {
+				<p class="wp-panel-sub">
+					if props.Enabled {
+						{ fmtInt(props.Summary.New) } { T(props.Lang, "vm.new") } · { fmtInt(props.Summary.Old) } { T(props.Lang, "vm.saved") }
+					} else {
+						{ T(props.Lang, "vm.needsAPI") }
+					}
+				</p>
+			}
 		</header>
 		@panelError(props.Error)
 		if !props.Enabled {
@@ -55,7 +61,10 @@ templ VoicemailPanel(props VoicemailPanelProps) {
 		for _, msg := range props.Messages {
 			@VoicemailRow(msg, props.Names, props.Lang, props.ASR)
 		}
-		if props.Enabled && len(props.Messages) == 0 {
+		// The empty rung is only the truth when the read SUCCEEDED: an
+		// unreachable provider leaves the message list empty for lack of an
+		// answer, not because the mailbox is empty.
+		if props.Enabled && props.Error == "" && len(props.Messages) == 0 {
 			@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, "vm.empty"), Icon: icons.Phone})
 		}
 	</section>

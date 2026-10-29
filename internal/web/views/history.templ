@@ -85,7 +85,11 @@ templ HistoryPanel(props HistoryPanelProps) {
 		if !props.Enabled {
 			<p class="wp-empty">{ T(props.Lang, "history.needsAPI.pre") }<code>phone_api_url</code>{ T(props.Lang, "history.needsAPI.post") }</p>
 		}
-		if props.Enabled && len(props.Entries) == 0 {
+		// The empty rung is only the truth when the read SUCCEEDED: an
+		// unreachable phone API leaves the pages empty for lack of an
+		// answer, not because nothing was ever recorded — so the error
+		// banner must not be joined by a "no calls" claim.
+		if props.Enabled && props.Error == "" && len(props.Entries) == 0 {
 			// Honest empty state (M17 J8): an active filter with no rows
 			// must not claim nothing was ever recorded. The disposition
 			// filter gets its own message — it speaks about verdicts, not

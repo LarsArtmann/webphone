@@ -1786,3 +1786,22 @@ test("a failed note save relays the server's human phrasing", async () => {
     globalThis.fetch = realFetch;
   }
 });
+// The collapsible phone panel (P2). The class lives on <html> because
+// theme-preload.js applies the stored state before first paint; shell.js
+// re-asserts it on load so the button's aria-expanded describes what is
+// actually on screen, and flips the persisted preference on click.
+test("the island toggle flips the root class, the stored preference and aria-expanded", () => {
+  const html = doc.documentElement;
+  const toggle = doc.getElementById("wp-island-toggle");
+  assert.equal(toggle.getAttribute("aria-expanded"), "true", "expanded on load");
+
+  toggle.click();
+  assert.equal(html.classList.contains("wp-island-collapsed"), true);
+  assert.equal(localStorage.getItem("wp-island-collapsed"), "1");
+  assert.equal(toggle.getAttribute("aria-expanded"), "false");
+
+  toggle.click();
+  assert.equal(html.classList.contains("wp-island-collapsed"), false);
+  assert.equal(localStorage.getItem("wp-island-collapsed"), "0");
+  assert.equal(toggle.getAttribute("aria-expanded"), "true");
+});
