@@ -446,6 +446,14 @@ type Signal struct {
 	Account string `json:"account,omitempty" koanf:"account"`
 	// Owner is the webphone extension owning every signal conversation.
 	Owner string `json:"owner,omitempty" koanf:"owner"`
+	// AttachmentsDir is signal-cli's received-attachment directory (e.g.
+	// /var/lib/signal-cli/attachments — files named by their id, no
+	// extension). Empty keeps inbound attachments fenced (the v1
+	// behavior, skipped loudly); set, the receiver arms them and inbound
+	// media lands in Messages like MMS. The directory is READ-only for
+	// webphone — filesystem permissions are the trust boundary, the same
+	// posture as SocketPath.
+	AttachmentsDir string `json:"attachments_dir,omitempty" koanf:"attachments_dir"`
 }
 
 // Enabled reports whether the signal lane is configured.
@@ -954,6 +962,9 @@ func validateSignal(s Signal) error {
 	}
 	if !strings.HasPrefix(s.SocketPath, "/") {
 		return errorfamily.Newf(errorfamily.Rejection, "config.signal.socket_path", "signal.socket_path %q is not an absolute path (e.g. /run/signal-cli/socket)", s.SocketPath)
+	}
+	if s.AttachmentsDir != "" && !strings.HasPrefix(s.AttachmentsDir, "/") {
+		return errorfamily.Newf(errorfamily.Rejection, "config.signal.attachments_dir", "signal.attachments_dir %q is not an absolute path (e.g. /var/lib/signal-cli/attachments)", s.AttachmentsDir)
 	}
 	if _, err := domain.ParseExtension(s.Owner); err != nil {
 		return errorfamily.Newf(errorfamily.Rejection, "config.signal.owner", "signal.owner %q is not a valid extension", s.Owner)

@@ -50,10 +50,12 @@ type Client struct {
 }
 
 // Envelope is the slice of signal-cli's `receive` notification this
-// seam consumes: data messages (text in, attachments noted but NOT
-// fetched — they live in signal-cli's data dir, a documented v1 limit)
-// and receipt messages (delivery/read acknowledgements of OUR send
-// timestamps, which are exactly our provider refs).
+// seam consumes: data messages (text in, attachments noted — their
+// BYTES live in signal-cli's data dir under the configured attachments
+// directory, keyed by id, and only the receiver with the directory
+// configured fetches them) and receipt messages (delivery/read
+// acknowledgements of OUR send timestamps, which are exactly our
+// provider refs).
 type Envelope struct {
 	Source      string `json:"source"`
 	SourceUuid  string `json:"sourceUuid"`
@@ -64,6 +66,12 @@ type Envelope struct {
 		GroupInfo *struct {
 			GroupId string `json:"groupId"`
 		} `json:"groupInfo"`
+		Attachments []struct {
+			ID          string `json:"id"`
+			ContentType string `json:"contentType"`
+			Filename    string `json:"filename"`
+			Size        int64  `json:"size"`
+		} `json:"attachments"`
 	} `json:"dataMessage"`
 	ReceiptMessage *struct {
 		When       int64   `json:"when"`
