@@ -900,12 +900,20 @@ def run_checks(
 
     # 3b. openapi.json publishes the machine API contract (3.0.3 — the
     # go-cqrs-lite catalog exporter's spec version; upstream may emit
-    # 3.1.0 later, the pin moves with the generator's truth).
+    # 3.1.0 later, the pin moves with the generator's truth). The dialer
+    # surface must be in the published contract too: /api/dials shipped
+    # with the T19-T27 dialer train and a contract that silently drops a
+    # route is the drift class the generated doc exists to prevent.
     status, body, _ = s.request("GET", "/openapi.json")
     c.ok(
         "openapi published",
         status == 200 and b'"openapi": "3.0.3"' in body,
         f"{status} {body[:80]!r}",
+    )
+    c.ok(
+        "openapi carries /api/dials",
+        status == 200 and b"/api/dials" in body,
+        f"{status} dials={b'/api/dials' in body}",
     )
 
     # 4. config.js carries the PBX contract for the island.

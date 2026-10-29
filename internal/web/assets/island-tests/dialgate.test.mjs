@@ -81,9 +81,7 @@ test("the slots cache feeds cooldownFor with normalized matching", async () => {
         ok: true,
         status: 200,
         json: async () => ({
-          slots: [
-            { remote: "+4989123456", last_at: now - 600, window: 3600 },
-          ],
+          slots: [{ remote: "+4989123456", last_at: now - 600, window: 3600 }],
         }),
       };
     }

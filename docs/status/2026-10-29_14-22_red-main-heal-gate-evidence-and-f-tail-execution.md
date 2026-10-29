@@ -191,7 +191,7 @@ that became the session's spine.
    2026-10-29. ✋
 6. reproduce-first blocking-flip decision. ✋
 7. pma#348: owner ruling on implementation ownership, then the SIGTERM flush
-   + startup sweep + shutdown line. ✋ to rule, then M.
+   - startup sweep + shutdown line. ✋ to rule, then M.
 8. Matrix group-rooms A1 ruling → then execution train (ParseAddress `!…`
    shape, Message.Sender v6, receiver room-name cache, UI sender render). ✋
    to rule.

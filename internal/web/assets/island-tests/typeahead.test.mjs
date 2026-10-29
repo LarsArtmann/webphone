@@ -199,9 +199,7 @@ test("a contact inside its cooldown window says so in the row", async () => {
   assert.match(badge.textContent, /left|noch/);
   assert.ok(
     list.children.every(
-      (row) =>
-        row === lit ||
-        !row.children.some((el) => el.className === "typeahead-cooldown"),
+      (row) => row === lit || !row.children.some((el) => el.className === "typeahead-cooldown"),
     ),
     "clean contacts decorate nothing",
   );

@@ -21,8 +21,5 @@ doc.documentElement.classList.add("wp-island-collapsed");
 await import("../shell.js");
 
 test("a pre-paint collapsed island is reflected in aria-expanded on load", () => {
-  assert.equal(
-    doc.getElementById("wp-island-toggle").getAttribute("aria-expanded"),
-    "false",
-  );
+  assert.equal(doc.getElementById("wp-island-toggle").getAttribute("aria-expanded"), "false");
 });

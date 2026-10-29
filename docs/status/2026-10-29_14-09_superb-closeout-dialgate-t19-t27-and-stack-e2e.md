@@ -72,7 +72,7 @@ baseline lane) — their landings are marked as theirs, not mine.
    back and verified rendering (tables intact).
 8. **T26 — docs polish B.** Labels `verified` (→ #6/#7/#8), `cross-repo` +
    `blocked` (→ #9) created and applied; `.github/ISSUE_TEMPLATE/adoption-candidate.md`
-   written (the #6/#7/#8 shape, source-verification first); 
+   written (the #6/#7/#8 shape, source-verification first);
    `docs/issue-review-runbook.md` written (the T19 ritual, five steps).
 9. **T27 — harvest + tails.** TODO_LIST grew the "issue #9 + SUPERB execution
    tails" section (Kith live-e2e owner steps; stack browser E2E obligation);
@@ -226,8 +226,8 @@ baseline lane) — their landings are marked as theirs, not mine.
 
 ## f) Up to 50 things we should get done next
 
-*(Brainstorm, not commitment — docs-health HARVEST should route these;
-the first ~10 are the real queue.)*
+_(Brainstorm, not commitment — docs-health HARVEST should route these;
+the first ~10 are the real queue.)_
 
 1. **Owner: mint the Kith API token**, write it to
    `~/.pbx-prod-secrets/webphone_crm_token`, run `scripts/push-secrets.sh`.
@@ -274,7 +274,7 @@ the first ~10 are the real queue.)*
     next deliberately-unwired Deps seam appears (the test message should
     name the seam's reason).
 20. Wiring-parity for the API layer: the same class exists between
-    `server.Deps` → `api.Deps` (server.go:322 hand-copies fields) — a second
+    `server.Deps` → `api.Deps` (the `api.Deps{` literal inside the `api.New` call, server.go:322 at writing time; hand-copies fields) — a second
     pin could catch a missed hand-copy.
 21. Apidocs drift test: consider asserting the REVERSE direction (every
     mounted session-gated route must appear in the `want` list) so the

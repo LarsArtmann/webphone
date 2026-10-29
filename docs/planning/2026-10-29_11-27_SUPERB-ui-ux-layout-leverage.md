@@ -13,22 +13,22 @@ give us?"
 
 ## 1. What was audited
 
-| Surface                               | State found                                                                                                                            |
-| ------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| `views/layout.templ` (shell)          | header → grid `[island 320-400px \| main-col]` → horizontal wrapping nav strip → `#tab-content`. One grid, two breakpoints.            |
-| `views/messages.templ` (904 lines)    | Thread list and open conversation are TWO separate panel renders of the same `#messages-panel`; opening a thread replaces the whole tab. |
-| `views/history.templ` (404)           | filter form → day-grouped CDRs → transcripts section → reviews. One column, everything stacked.                                         |
-| `views/settings.templ` (406)          | `DefinitionList` + 5 conditional sections + shortcut table in one column.                                                              |
-| `assets/app.css` (2351 lines)         | Hand-rolled design system, token-based, 2 viewport media queries + 1 reduced-motion guard. Zero container queries.                      |
-| `assets/shell.js` (2355 lines)        | Palette, shortcuts, theme, skeleton, voicemail player, composer, SSE recovery. Mature.                                                 |
-| `docs/planning/2026-10-01_03-49_ui-ux-idea-catalogue.md` | 120 ideas; ~36 marked `Now`. The layout cluster (E1–E10) is the least-executed: E5 (reclaim island width) never landed. |
+| Surface                                                  | State found                                                                                                                              |
+| -------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `views/layout.templ` (shell)                             | header → grid `[island 320-400px \| main-col]` → horizontal wrapping nav strip → `#tab-content`. One grid, two breakpoints.              |
+| `views/messages.templ` (904 lines)                       | Thread list and open conversation are TWO separate panel renders of the same `#messages-panel`; opening a thread replaces the whole tab. |
+| `views/history.templ` (404)                              | filter form → day-grouped CDRs → transcripts section → reviews. One column, everything stacked.                                          |
+| `views/settings.templ` (406)                             | `DefinitionList` + 5 conditional sections + shortcut table in one column.                                                                |
+| `assets/app.css` (2351 lines)                            | Hand-rolled design system, token-based, 2 viewport media queries + 1 reduced-motion guard. Zero container queries.                       |
+| `assets/shell.js` (2355 lines)                           | Palette, shortcuts, theme, skeleton, voicemail player, composer, SSE recovery. Mature.                                                   |
+| `docs/planning/2026-10-01_03-49_ui-ux-idea-catalogue.md` | 120 ideas; ~36 marked `Now`. The layout cluster (E1–E10) is the least-executed: E5 (reclaim island width) never landed.                  |
 
 ---
 
 ## 2. Diagnosis — the six things actually wrong
 
 Ranked by user-visible damage per unit of work. Everything below is a
-*structural* complaint, not a coat of paint.
+_structural_ complaint, not a coat of paint.
 
 1. **The Messages tab has no master–detail.** Opening a conversation destroys
    the list you were reading. Every desktop messaging product (Signal Desktop,
@@ -42,7 +42,7 @@ Ranked by user-visible damage per unit of work. Everything below is a
 3. **Layout decisions are made on the viewport, not on the column.** Every
    breakpoint in `app.css` is a `@media` query. But the tab column's width is
    `viewport − island − padding`: change the island and the column changes
-   *without the viewport changing*. Any layout built on `@media` is therefore
+   _without the viewport changing_. Any layout built on `@media` is therefore
    structurally wrong for this shell. This is the root cause that makes #1 and
    #2 hard to fix independently — and fixing it makes them one change.
 4. **`History` and `Settings` are unscannable single columns.** History mixes
@@ -67,11 +67,11 @@ island lives in that document and **must never unload** (AGENTS: "The island
 never unloads"). A reload during a call tears down the `RTCPeerConnection`,
 the registration, and the microphone pre-warm. Anything that reads as
 "multipage" — addressable URLs, back/forward, deep links, shareable state —
-must therefore be delivered as *URL-addressable sub-views inside one document*,
+must therefore be delivered as _URL-addressable sub-views inside one document_,
 which is exactly what HTMX swap + `hx-push-url` already provides.
 
 So the answer to "multipage?" is: **no routes added for the sake of routes**;
-add addressable *state* (`?archived=1`, `?older=N`, `/messages/<id>`) where the
+add addressable _state_ (`?archived=1`, `?older=N`, `/messages/<id>`) where the
 state is worth restoring. The one thing a multipage architecture would have
 bought — a real master–detail URL pair (`/messages` and `/messages/:id`
 rendering differently) — we already have.
@@ -83,7 +83,7 @@ That is the price of never paging, and it is the right price for a phone.
 ### D2 — Messages becomes a master–detail split, driven by **container queries**.
 
 `ThreadView` grows a conversation rail, so the open-thread render carries both
-panes. The split engages on the *tab column's* width, not the viewport's:
+panes. The split engages on the _tab column's_ width, not the viewport's:
 
 ```
 .wp-main-col { container-type: inline-size; }
@@ -131,35 +131,35 @@ ingredient was container queries, not structure.
 
 ### D5 — templ-components leverage audit
 
-| Component                                | Verdict                     | Reasoning                                                                                                                                    |
-| ---------------------------------------- | --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| `display.DefinitionList`                 | **already adopted**         | Settings rows (M21 train).                                                                                                                    |
-| `display.EmptyState`                     | **already adopted**         | List/thread/fax/voicemail/history empties.                                                                                                    |
-| `layout.Base`                            | **already adopted**         | Head tags, skip link, `NoThemeScript`.                                                                                                        |
-| `display.Button`, `forms.Input/Textarea` | **already adopted**         | Composer + fax form.                                                                                                                          |
-| `icons.*`                                | **already adopted**         | All row actions. No platform emoji left.                                                                                                      |
-| `display.DataState`                      | **REJECTED (was planned as P3)** | Considered for the disabled→unavailable→empty→content ladder and then rejected **during** implementation: the disabled rung must name the config key in a monospace `<code>phone_api_url</code>`, and `DataState` can only carry plain `Title`/`Description` text. Adopting it would have been an information-design *downgrade* to buy uniformity. The real defect was the ladder ORDERING (an error banner joined by an "empty" claim), fixed in place with a `Error == ""` gate. |
-| `display.CommandPalette`                 | **REJECTED**                | The shell's palette is JS-built (keeps the served DOM contract untouched) and covers nav + dial + shell actions. Adopting the component means shipping its `data-tc-palette` runtime and moving palette markup into served bytes to gain grouping/hints we do not need. |
-| `layout.Split` / `display.Split`         | **REJECTED**                | See D2: our markup is token-styled `app.css`, and the split must answer a container query.                                                    |
-| `forms.FilterBar` / `FilterChips` / `SegmentedControl` | **DEFERRED** | History's filter is a 4-control GET form that already submits + pushes URL. Rewriting it is a net-neutral style swap with real regression risk (it is pinned by `history_test.go`). Trigger: the next time History's filter needs a *new* control. |
-| `feedback.Skeleton*`                     | **DEFERRED**                | The tab skeleton is 3 shimmer bars; the component adds a grid + card variants we would not use. Same trigger as the filter bar: adopt when the skeleton needs to know about content shape. |
-| `display.Table` / `DataTable`            | **REJECTED**                | Rows are conversation/fax/voicemail objects with domain affordances and SSE swap-safety constraints, not tabular data.                        |
-| `display.RelativeTime`, `display.CountBadge`, `errorpage` | **REJECTED (standing)** | Recorded rulings from the 2026-09 coexistence verdict; not reopened here.                                                                     |
-| `htmx.ViewTransitions`                   | **DEFERRED**                | Native View Transitions on tab swaps would genuinely lift the perceived quality, but `hx-swap="morph:innerHTML"` and the island's non-unloading geometry make the interaction between the two untested. Trigger: a dedicated train with the stack browser E2E in hand. |
+| Component                                                 | Verdict                          | Reasoning                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+| --------------------------------------------------------- | -------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `display.DefinitionList`                                  | **already adopted**              | Settings rows (M21 train).                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `display.EmptyState`                                      | **already adopted**              | List/thread/fax/voicemail/history empties.                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+| `layout.Base`                                             | **already adopted**              | Head tags, skip link, `NoThemeScript`.                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| `display.Button`, `forms.Input/Textarea`                  | **already adopted**              | Composer + fax form.                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `icons.*`                                                 | **already adopted**              | All row actions. No platform emoji left.                                                                                                                                                                                                                                                                                                                                                                                                                                            |
+| `display.DataState`                                       | **REJECTED (was planned as P3)** | Considered for the disabled→unavailable→empty→content ladder and then rejected **during** implementation: the disabled rung must name the config key in a monospace `<code>phone_api_url</code>`, and `DataState` can only carry plain `Title`/`Description` text. Adopting it would have been an information-design _downgrade_ to buy uniformity. The real defect was the ladder ORDERING (an error banner joined by an "empty" claim), fixed in place with a `Error == ""` gate. |
+| `display.CommandPalette`                                  | **REJECTED**                     | The shell's palette is JS-built (keeps the served DOM contract untouched) and covers nav + dial + shell actions. Adopting the component means shipping its `data-tc-palette` runtime and moving palette markup into served bytes to gain grouping/hints we do not need.                                                                                                                                                                                                             |
+| `layout.Split` / `display.Split`                          | **REJECTED**                     | See D2: our markup is token-styled `app.css`, and the split must answer a container query.                                                                                                                                                                                                                                                                                                                                                                                          |
+| `forms.FilterBar` / `FilterChips` / `SegmentedControl`    | **DEFERRED**                     | History's filter is a 4-control GET form that already submits + pushes URL. Rewriting it is a net-neutral style swap with real regression risk (it is pinned by `history_test.go`). Trigger: the next time History's filter needs a _new_ control.                                                                                                                                                                                                                                  |
+| `feedback.Skeleton*`                                      | **DEFERRED**                     | The tab skeleton is 3 shimmer bars; the component adds a grid + card variants we would not use. Same trigger as the filter bar: adopt when the skeleton needs to know about content shape.                                                                                                                                                                                                                                                                                          |
+| `display.Table` / `DataTable`                             | **REJECTED**                     | Rows are conversation/fax/voicemail objects with domain affordances and SSE swap-safety constraints, not tabular data.                                                                                                                                                                                                                                                                                                                                                              |
+| `display.RelativeTime`, `display.CountBadge`, `errorpage` | **REJECTED (standing)**          | Recorded rulings from the 2026-09 coexistence verdict; not reopened here.                                                                                                                                                                                                                                                                                                                                                                                                           |
+| `htmx.ViewTransitions`                                    | **DEFERRED**                     | Native View Transitions on tab swaps would genuinely lift the perceived quality, but `hx-swap="morph:innerHTML"` and the island's non-unloading geometry make the interaction between the two untested. Trigger: a dedicated train with the stack browser E2E in hand.                                                                                                                                                                                                              |
 
 ### D6 — cqrs-htmx leverage audit
 
-| Module        | Verdict               | Reasoning                                                                                                                                      |
-| ------------- | --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
-| root          | **already adopted**   | SSE broadcaster, CSRF/security middleware, recovery, error mapping, projection readiness, OpenAPI builder.                                     |
-| `usermgmt` + `webauthn` + `identity-model` | **already adopted** | Passkey lane, durable auth-audit journal.                                                                                                      |
-| `loginpage`   | **already adopted**   | `/login` ceremony page (nonce CSP lane).                                                                                                       |
-| `adminui`     | **DEFERRED**          | The only remaining cqrs-htmx module with *user-facing* value: an identity-ops panel (users/tenants/members/audit) over the adopted `usermgmt.Service`. It is a PRODUCT decision (do we want an in-app identity admin surface at all?) plus an authz decision (who may see it), not a UI/UX win — and it is the bundle that pushed the rejected `setup` composition root over the binary-size bar. Trigger: a second human actor actually using the system (the multi-actor substrate that landed 2026-10-28). |
-| `dashboardui` | **REJECTED**          | Event-store observability; the go-health dashboard at `/health` already owns ops read-only.                                                     |
-| `setup`       | **REJECTED (standing)** | Split-brain identity + measured +68% binary size.                                                                                            |
-| `datastar`    | **REJECTED**          | The shell is HTMX + idiomorph by design; a second transport doubles the swap model for no user-visible gain.                                    |
+| Module                                     | Verdict                 | Reasoning                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| ------------------------------------------ | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| root                                       | **already adopted**     | SSE broadcaster, CSRF/security middleware, recovery, error mapping, projection readiness, OpenAPI builder.                                                                                                                                                                                                                                                                                                                                                                                                    |
+| `usermgmt` + `webauthn` + `identity-model` | **already adopted**     | Passkey lane, durable auth-audit journal.                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| `loginpage`                                | **already adopted**     | `/login` ceremony page (nonce CSP lane).                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| `adminui`                                  | **DEFERRED**            | The only remaining cqrs-htmx module with _user-facing_ value: an identity-ops panel (users/tenants/members/audit) over the adopted `usermgmt.Service`. It is a PRODUCT decision (do we want an in-app identity admin surface at all?) plus an authz decision (who may see it), not a UI/UX win — and it is the bundle that pushed the rejected `setup` composition root over the binary-size bar. Trigger: a second human actor actually using the system (the multi-actor substrate that landed 2026-10-28). |
+| `dashboardui`                              | **REJECTED**            | Event-store observability; the go-health dashboard at `/health` already owns ops read-only.                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| `setup`                                    | **REJECTED (standing)** | Split-brain identity + measured +68% binary size.                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
+| `datastar`                                 | **REJECTED**            | The shell is HTMX + idiomorph by design; a second transport doubles the swap model for no user-visible gain.                                                                                                                                                                                                                                                                                                                                                                                                  |
 
-**The honest summary:** cqrs-htmx has no further *UI/UX* leverage to give this
+**The honest summary:** cqrs-htmx has no further _UI/UX_ leverage to give this
 app. Its remaining value is `adminui` as a product feature, gated on a second
 actor. cqrs-htmx and templ-components have no further clean UI win at HEAD:
 `DataState` was tried and rejected (see the D5 row), and everything else is
@@ -169,12 +169,12 @@ either already mined or deliberately repo-inappropriate.
 
 ## 4. Execution ledger
 
-| #  | Change                                                                                        | Verification                                    |
-| -- | --------------------------------------------------------------------------------------------- | ----------------------------------------------- |
-| P1 | Messages master–detail: `ThreadView` carries the conversation rail; split via container query. | `templ generate`, Go suite, island suite, type gate |
-| P2 | Island collapse (header toggle, pre-paint persistence, call force-expand).                      | `theme-preload.test.mjs`, shell tests, type gate   |
+| #  | Change                                                                                                                                                               | Verification                                                  |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| P1 | Messages master–detail: `ThreadView` carries the conversation rail; split via container query.                                                                       | `templ generate`, Go suite, island suite, type gate           |
+| P2 | Island collapse (header toggle, pre-paint persistence, call force-expand).                                                                                           | `theme-preload.test.mjs`, shell tests, type gate              |
 | P3 | Honesty-ladder fix: History + Voicemail stop asserting "empty" / "0 new · 0 saved" beside an error banner (the empty rung and the count line gate on `Error == ""`). | `go test ./internal/server/`, `go test ./internal/web/views/` |
-| P4 | Nav iconography (per-tab icons) — not shipped this train.                                       | —                                               |
+| P4 | Nav iconography (per-tab icons) — not shipped this train.                                                                                                            | —                                                             |
 
 P4 was scoped and dropped: once the island can collapse the strip has room, so
 icons buy scannability rather than correctness. Left in TODO_LIST as a polish
@@ -192,9 +192,9 @@ trust a stale claim does:
    cannot carry; adopting it would have traded real information design for
    uniformity. Rejected, with the reasoning now in the row.
 2. **§4 P3** said "`DataState` adoption for the disabled/unavailable rungs".
-   What actually shipped is the *ladder-ordering* fix: History and Voicemail
+   What actually shipped is the _ladder-ordering_ fix: History and Voicemail
    no longer assert "no calls" / "0 new · 0 saved" beside an error banner,
-   because an unreachable provider means *unknown*, not *empty*.
+   because an unreachable provider means _unknown_, not _empty_.
 
 No other row in this doc was found to disagree with the code.
 

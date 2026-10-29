@@ -102,7 +102,7 @@ concurrent session's work (13 files including a `flake.lock` nixpkgs bump).
 ## c) NOT STARTED (deliberately, this session)
 
 1. Config typo strictness (the sharpest filed action): koanf silently ignores unknown keys in the JSON
-   file **and** in `WEBPHONE_*` (`internal/config/config.go:594`). Design is written, nothing coded.
+   file **and** in `WEBPHONE_*` (the `koanf Unmarshal` inside `config.Load`, `internal/config/config.go:594` at writing time). Design is written, nothing coded.
 2. Caption lag signal (a provider slower than the 4 s cadence drifts captions invisibly).
 3. D3 agent liveness contract beyond the TODO note (fillers/timeouts/slot release from ai-phone's relay
    mode).
@@ -128,8 +128,8 @@ concurrent session's work (13 files including a `flake.lock` nixpkgs bump).
    - `art-dupl check (new clones only)` → **2 new clone groups** (baseline 80), both in
      `internal/web/views/settings.templ`: the D5 `AgentAuditSection` head/empty pair
      (`140-142` / `143-144`) duplicating `PasskeysSection` (`184-186` / `187-188`).
-   Both were readable in one `gh run list` call. I built, committed and reported on top of a red base
-   and would have pushed into it.
+     Both were readable in one `gh run list` call. I built, committed and reported on top of a red base
+     and would have pushed into it.
 2. **I shipped debug output into a served island module.** Commit `138a744` (01:47) contains
    `console.log('DBG segment', …)` in `internal/web/assets/island/app/transcribe.js` — one line, one
    commit, removed in `e75f56b` (01:50). Verified clean at `74bfbdc`, `e75f56b`, `faa35b1` and HEAD.
@@ -154,9 +154,9 @@ concurrent session's work (13 files including a `flake.lock` nixpkgs bump).
    with no vendorHash re-pin (unverified `nix build .#webphone`) and it lands on a base that is **still
    red** for the art-dupl clone groups (my set fixes only the lint half).
 7. **Small misfires, caught before landing:** wrote a `console.log` into source (above); a first
-   doc-pin parser trimmed backticks before whitespace (every later row parsed as `key\``), fixed; a
-   table I appended to `docs/research/README.md` was near-aligned (the repo's own churn-bait class),
-   caught by `md-table-shape.py` and rebuilt aligned; the report initially dropped its `</main></div>`
+   doc-pin parser trimmed backticks before whitespace (every later row parsed as `key\`), fixed; a
+   table I appended to``docs/research/README.md`was near-aligned (the repo's own churn-bait class),
+   caught by`md-table-shape.py`and rebuilt aligned; the report initially dropped its`</main></div>`
    pair (caught by a tag-balance pass, not by a browser).
 8. **`nix fmt` reported "0 changed" while treefmt only owns CSS/JS** — my Go test file and the two
    `.mjs` specs are owned by **oxfmt** (BuildFlow), which I only ran after noticing. `calls-transcribe.test.mjs`
@@ -171,7 +171,7 @@ concurrent session's work (13 files including a `flake.lock` nixpkgs bump).
 3. **Never instrument served source.** Put probes in a scratch copy or in the spec harness; a served
    file under a commit daemon is a delivery surface, not a workbench.
 4. **Bisect before instrumenting.** For "a test broke after my change", the first two questions are
-   (a) what does the previous revision of *this test* look like, and (b) does the test satisfy the new
+   (a) what does the previous revision of _this test_ look like, and (b) does the test satisfy the new
    premise. Both were answerable with `git show`.
 5. **When a shared guard breaks an unrelated spec, fix the spec's premise, not the guard** — and say so
    in the commit (the copy-transcript spec now establishes its own call, which is what it always
@@ -194,6 +194,7 @@ concurrent session's work (13 files including a `flake.lock` nixpkgs bump).
 ## f) NEXT — up to 50 concrete items
 
 **Push/CI integrity (do these first; they gate everything else)**
+
 1. Decide the base-red fix: `settings.templ` shared helper for the two duplicated settings section
    shapes (head/subtitle + conditional empty node) **or** `art-dupl baseline` with a
    `docs/dedup-registry.md` ruling. Verify with the CI-pinned detector (`art-dupl@v0.7.2`, not the
@@ -215,108 +216,108 @@ concurrent session's work (13 files including a `flake.lock` nixpkgs bump).
 
 **The doc pin (shipped today) — extending it**
 11. Second doc pin: every `nix/module.nix` option name appears in the AGENTS options list, and vice
-    versa (the freeform `settings` keys are the drift surface with the most operator impact).
+versa (the freeform `settings` keys are the drift surface with the most operator impact).
 12. Third doc pin: every command in AGENTS' `Commands` block exists as a flake app/script or a real
-    path (catches the "nix run .#foo" rot class).
+path (catches the "nix run .#foo" rot class).
 13. Fourth: FEATURES rows that cite a config key or route must name something that exists (start with
-    the passkey/OIDC/ASR rows).
+the passkey/OIDC/ASR rows).
 14. Add the pin's rationale to `docs/lessons.md` (why docs-versus-code tests beat review, with the
-    "eight undocumented keys on the first run" evidence).
+"eight undocumented keys on the first run" evidence).
 15. Make the pin's failure messages name the fix path (they already carry the "renamed?" hint; extend
-    to the coverage test: "add a row or an `undocumentedByDesign` entry").
+to the coverage test: "add a row or an `undocumentedByDesign` entry").
 16. Add a README row for `dashboard.*` inside the Configuration table (they are documented in prose
-    only, so the coverage test passes; the table is still the operator's list).
+only, so the coverage test passes; the table is still the operator's list).
 
 **Transcript / generation tails (today's second change)**
 17. Caption lag signal (filed): stamp each segment, warn once per streak when queue lag exceeds ~3× the
-    cadence.
+cadence.
 18. Consider the same generation discipline for `recordSegment` subscribers when a re-connect rebuilds
-    the capture graph (`connection.js` watchdog rebuild) — verify a rebuild does not leave two
-    controllers for one id.
+the capture graph (`connection.js` watchdog rebuild) — verify a rebuild does not leave two
+controllers for one id.
 19. Verify `settledCallIds` cannot grow unbounded on a long shift (call ids accumulate; a bounded LRU or
-    a delete on `startLiveTranscription` already exists — confirm the set is bounded in practice and add
-    a cap if not).
-20. Pin the "late segment does not announce" behavior on the *settle-ended-card* path too (today's spec
-    covers `teardownSession`).
+a delete on `startLiveTranscription` already exists — confirm the set is bounded in practice and add
+a cap if not).
+20. Pin the "late segment does not announce" behavior on the _settle-ended-card_ path too (today's spec
+covers `teardownSession`).
 21. Add the `closeCallSegments` reopen path to `docs/dom-contract.md`'s caption notes if served markup
-    rationale lives there.
+rationale lives there.
 22. Audit for other in-flight-race surfaces with the same shape: `saveTranscriptSegment` queue flush on
-    a settled entry, `refreshServerHistory` after logout, the SSE nudge after teardown.
+a settled entry, `refreshServerHistory` after logout, the SSE nudge after teardown.
 
 **Config typo strictness (filed, sharpest)**
 23. Implement env-warn: after `Load`, log one WARN per unknown `WEBPHONE_*` variable, with the
-    operational exclusion list (`WEBPHONE_CONFIG`, `WEBPHONE_DEBUG_TIMING`, `WEBPHONE_RELEASE_*`,
-    `WEBPHONE_SSE_OOB`, `WEBPHONE_DEBUG_FLIGHTRECORDER`, `WEBPHONE_JSON_LOGS`, `WEBPHONE_URL`,
-    `WEBPHONE_SMOKE_REEXEC`, `WEBPHONE_BUILDFLOW_REEXEC`, `WEBPHONE_VM_OK`, `WEBPHONE_STACK_DIR`).
+operational exclusion list (`WEBPHONE_CONFIG`, `WEBPHONE_DEBUG_TIMING`, `WEBPHONE_RELEASE_*`,
+`WEBPHONE_SSE_OOB`, `WEBPHONE_DEBUG_FLIGHTRECORDER`, `WEBPHONE_JSON_LOGS`, `WEBPHONE_URL`,
+`WEBPHONE_SMOKE_REEXEC`, `WEBPHONE_BUILDFLOW_REEXEC`, `WEBPHONE_VM_OK`, `WEBPHONE_STACK_DIR`).
 24. Implement file-strict: unknown keys in the JSON file are a boot refusal naming the key (owner call,
-    see (g) 3).
+see (g) 3).
 25. Reuse `configLeafPaths` (already written) as the allowed-key set — do not duplicate the reflection.
 26. Add family tests: `config.unknown_key` code registered in `docs/error-contract.md` in the SAME
-    commit (`TestErrorCodeRegistryIsFresh -update`).
+commit (`TestErrorCodeRegistryIsFresh -update`).
 27. Extend the module check's stand-in options if the module starts writing new keys.
 28. Add a smoke arm: a config file with a typo exits 1 with the boot report naming it.
 
 **Report / docs quality**
 29. Open the new report in a browser once (or add it to the UI-capture harness) — structure was validated,
-    rendering was not.
+rendering was not.
 30. Add a "what this report does not answer" line to the deep-dive template (the appendix covers it; a
-    one-line pointer at the top would too).
+one-line pointer at the top would too).
 31. Cross-link the deep dive from `docs/research/README.md`'s FIRST table's notes (it is in the peer
-    table; a reader scanning library rows may miss it).
+table; a reader scanning library rows may miss it).
 32. Add the ai-phone reference to `docs/DOMAIN_LANGUAGE.md`? No — wrong home; instead consider a
-    `docs/research/` note listing external prior-art projects per topic (ai-phone for audio agent
-    loops), which is what a future session would search for.
+`docs/research/` note listing external prior-art projects per topic (ai-phone for audio agent
+loops), which is what a future session would search for.
 33. Record the `[D]/[P]/[V]` tagging convention as an optional report convention (the 10-26 and 10-29
-    reports both invented it independently).
+reports both invented it independently).
 34. Correct the status-report habit: verify instruments BEFORE writing (this report did; the deep dive
-    could not, by nature).
+could not, by nature).
 35. Add "what was not run" to the status-report template the repo uses.
 
 **Process / tooling**
 36. Add `oxlint` (island/app + shell.js + theme-preload.js) to the local pre-commit loop, or at least to
-    the session checklist — it is the gate that red-ed main twice.
+the session checklist — it is the gate that red-ed main twice.
 37. Add `gh run list` + `push-stall-watch.sh` to the same checklist (one line each).
 38. Consider a `scripts/session-preflight.sh` that runs: git status, unpushed count, push-stall, last CI
-    verdict, `nix fmt --check` — cheap, and this session would have been 8 commits better.
+verdict, `nix fmt --check` — cheap, and this session would have been 8 commits better.
 39. Make the daemon's `chore:` commits carry the touched-file count in the subject? Not ours to change;
-    instead stage/commit per task in ONE tool call (doctrine).
+instead stage/commit per task in ONE tool call (doctrine).
 40. Investigate why the first `buildflow` run's `test-race` failed with no captured package failure
-    (suspected host-load flake): run it twice under load and compare.
+(suspected host-load flake): run it twice under load and compare.
 41. `nix flake check` on the final head after the push fixes (the KVM drill and module eval are the
-    unverified parts of this session).
+unverified parts of this session).
 42. Re-run the smoke (`python3 scripts/webphone-smoke.py --bin …`) on the final head — cheap and closes
-    the "no binary booted this session" gap.
+the "no binary booted this session" gap.
 43. Delete nothing; but verify no stray `buildflow-fsprobe-*` directories accumulate in the repo root
-    (one exists).
+(one exists).
 44. Consider documenting the "one commit may carry another session's work" hazard with today's evidence
-    (`3f8b1ca` exporting a flake bump it did not re-pin).
+(`3f8b1ca` exporting a flake bump it did not re-pin).
 45. Keep `docs/research/` free of debug artifacts (none landed; the report assembled from `/tmp`).
 
 **Cross-session hygiene**
 46. Before any push, diff the unpushed set against "what I authored" (`git log --author`/timestamps) —
-    this session's owed push is 1/8 mine-plus-mixed, 1/8 another session's.
+this session's owed push is 1/8 mine-plus-mixed, 1/8 another session's.
 47. Coordinate with the session that owns the nixpkgs bump before pushing it (or re-pin so the question
-    disappears).
+disappears).
 48. Re-check the `art-dupl` baseline is regenerated ONLY with v0.7.2 if a baseline route is chosen, and
-    log the ruling in `docs/dedup-registry.md`.
+log the ruling in `docs/dedup-registry.md`.
 49. If the settings-section duplication is fixed with a helper, add its micro-test beside `panelHead`'s
-    (the one-home helpers list in AGENTS should gain the new helper name).
+(the one-home helpers list in AGENTS should gain the new helper name).
 50. After everything lands, re-read this report's (d) section and convert each item into a guard: CI
-    check at session start, oxlint after island edits, bisect-before-instrument.
+check at session start, oxlint after island edits, bisect-before-instrument.
 
 ## g) THREE QUESTIONS I CANNOT ANSWER MYSELF
 
 1. **The red `art-dupl` clone groups are the previous session's D5 settings sections
    (`AgentAuditSection` vs `PasskeysSection`: head + subtitle + conditional empty node). Fix them with a
    shared templ helper (my preference: same shape, different ids/keys), or `art-dupl baseline` them with
-   a `docs/dedup-registry.md` ruling?** I can implement either, but this is a dedup *ruling* on another
+   a `docs/dedup-registry.md` ruling?** I can implement either, but this is a dedup _ruling_ on another
    session's code, and the registry is explicitly the owner's call per `docs/dedup-registry.md`.
 2. **The unpushed set contains another session's `flake.lock` nixpkgs bump with no `vendorHash` re-pin.
    Push it after my re-pin + verification (treating the bump as finished), or hold those commits until
    that session confirms the bump was intentional?** I cannot know whether that work is complete, and
    pushing/orphaning someone else's dependency bump is the one thing the AGENTS notes call out as
    repeated red-main history.
-3. **Config typo strictness: is a *boot refusal* on an unknown JSON key acceptable now that the NixOS
+3. **Config typo strictness: is a _boot refusal_ on an unknown JSON key acceptable now that the NixOS
    module writes a freeform `settings` map?** Strict file + warn env is my recommendation and the
    ai-phone precedent, but it changes boot semantics for any deployment that today carries a harmless
    extra key — that trade is yours.

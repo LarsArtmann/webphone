@@ -75,7 +75,7 @@ execution ledger. Every adopt/reject is argued, not asserted.
 ### 4. P2 — Collapsible island
 
 - Header control `#wp-island-toggle` (rendered only when signed in — signed
-  out the island *is* the login card), `aria-controls="wp-island"`,
+  out the island _is_ the login card), `aria-controls="wp-island"`,
   `aria-expanded` as the state channel, both chevrons rendered and swapped by
   CSS so JS never re-ships SVG paths. New i18n key
   `shell.island.toggle` in **both** dictionaries.
@@ -101,7 +101,7 @@ execution ledger. Every adopt/reject is argued, not asserted.
 state at the same time**, and voicemail additionally asserted
 `0 new · 0 saved` beside "unreachable". That is a lie about the data, not a
 style issue. Both panels now gate the empty rung and the count line on
-`Error == ""`: an unreachable provider means *unknown*, not *empty*.
+`Error == ""`: an unreachable provider means _unknown_, not _empty_.
 
 ### 6. Layout tokens + the container-query rule
 
@@ -113,17 +113,17 @@ chrome asks the viewport.
 
 ### 7. Gates actually run, and their verdicts
 
-| Gate                                                   | Verdict                                             |
-| ------------------------------------------------------ | --------------------------------------------------- |
-| `templ generate ./internal/web/views/`                  | ok (2 updates)                                      |
-| `nix develop -c go build ./...`                         | BUILD_OK                                            |
-| `nix develop -c go test -count=1 ./...`                 | **31 packages ok, 0 failures**                       |
-| `nix develop -c tsc -p . --noEmit`                      | TS_OK (the only authority per docs/type-gate.md)     |
-| `node --test … island-tests/*.test.mjs`                 | **279 tests, 279 pass, 0 fail**                      |
-| `nix fmt`                                               | 932 files, 3 formatted, 0 changed                    |
-| `nix build .#checks…island-lint/island-js/island-typecheck` | all three built green                            |
-| `nix build .#webphone`                                  | built (`webphone-2.9.0`)                             |
-| `scripts/ui-capture.py`                                 | **24/24 shots**, per-surface DOM assertions all pass |
+| Gate                                                        | Verdict                                              |
+| ----------------------------------------------------------- | ---------------------------------------------------- |
+| `templ generate ./internal/web/views/`                      | ok (2 updates)                                       |
+| `nix develop -c go build ./...`                             | BUILD_OK                                             |
+| `nix develop -c go test -count=1 ./...`                     | **31 packages ok, 0 failures**                       |
+| `nix develop -c tsc -p . --noEmit`                          | TS_OK (the only authority per docs/type-gate.md)     |
+| `node --test … island-tests/*.test.mjs`                     | **279 tests, 279 pass, 0 fail**                      |
+| `nix fmt`                                                   | 932 files, 3 formatted, 0 changed                    |
+| `nix build .#checks…island-lint/island-js/island-typecheck` | all three built green                                |
+| `nix build .#webphone`                                      | built (`webphone-2.9.0`)                             |
+| `scripts/ui-capture.py`                                     | **24/24 shots**, per-surface DOM assertions all pass |
 
 The 24-shot matrix is the strongest evidence in this report: the harness
 asserts a DOM marker per surface (`.wp-thread-row`, `#wp-thread-head`,
@@ -140,17 +140,17 @@ than producing a plausible-looking picture.
    During implementation I rejected it: `DataState`'s disabled rung can only
    carry plain `Title`/`Description` text, and the panels' disabled copy
    deliberately names the config key in a monospace `<code>phone_api_url</code>`
-   — adopting the component would have been a *downgrade* in information
-   design to buy uniformity. The real defect was the ladder *ordering*, fixed
+   — adopting the component would have been a _downgrade_ in information
+   design to buy uniformity. The real defect was the ladder _ordering_, fixed
    in place. **This is a one-edit doc fix I did not make** (the report request
    said wait). Until it is fixed, the repo contains a false claim I wrote.
 2. **P2's CSS was never seen in a browser.** Class/persistence/`aria-expanded`
-   are unit-pinned; the *layout flip* (column removed, container query
+   are unit-pinned; the _layout flip_ (column removed, container query
    re-evaluating, call force-expand) is unverified. See (d).
 3. **`nix flake check` was not run as one gate.** I ran the three island
    checks + the package individually. Not run: `webphone-module`,
    `webphone-error-drill`, `webphone-backup-drill`, `contracts-fresh`,
-   `format`/`treefmt` as *checks* (only `nix fmt`), `deadnix`, `statix`,
+   `format`/`treefmt` as _checks_ (only `nix fmt`), `deadnix`, `statix`,
    `vulnix-triage`.
 4. **`buildflow` was not run at all** — neither at train start nor at train
    end, which AGENTS calls out explicitly as a rule (the 2026-10-08 truncated
@@ -185,14 +185,14 @@ than producing a plausible-looking picture.
    with a named trigger (untested interaction with `morph:innerHTML` and the
    non-unloading island).
 3. **`forms.FilterBar` / `FilterChips` / `SegmentedControl`** adoption in
-   History — deferred with trigger (next time the filter needs a *new*
+   History — deferred with trigger (next time the filter needs a _new_
    control; rewriting today is a net-neutral style swap with real regression
    risk against `history_test.go`).
 4. **History / Settings section navigation** (the two unscannable columns).
    Diagnosis recorded, nothing built.
 5. **Rail search + new-message inside the rail** — deliberately omitted for
    scope; the "All messages" link is the way back to those affordances.
-6. **`ui-shots/` gitignore.** The 24 PNGs are *tracked* in this repo (since
+6. **`ui-shots/` gitignore.** The 24 PNGs are _tracked_ in this repo (since
    2026-10-25) and the harness deletes the output dir before every run. My
    run rewrote all 24 tracked blobs and the daemon committed them. Not
    started; see (d).
@@ -208,14 +208,14 @@ than producing a plausible-looking picture.
    (my throwaway selenium proof of the collapsed layout) never finished; the
    background job reported "no output" and I waited on it instead of
    interrogating it. Two compounding mistakes: (i) I piped its stdout through
-   `grep | tail`, which block-buffers, so a *running* script and a *hung* one
+   `grep | tail`, which block-buffers, so a _running_ script and a _hung_ one
    look identical; (ii) no per-step timeout anywhere. It left an orphan
    webphone server on port 18097 for those 3 hours — **killed at 14:52** via
    `python3 os.kill` (the shell's `kill` builtin no-ops, per AGENTS).
    Net cost: the one piece of evidence I actually wanted (P2's layout flip in
    a browser) is the one piece I do not have.
 2. **I clobbered 24 tracked PNGs as a side effect.** Running the visual
-   harness is correct practice, but in *this* repo it means rewriting tracked
+   harness is correct practice, but in _this_ repo it means rewriting tracked
    files (`ui-shots/` is not gitignored) and the daemon then commits a 24-blob
    refresh. Legitimate content, unhelpful commit.
 3. **Doc drift I authored** — the plan doc claims a `DataState` adoption that
@@ -238,7 +238,7 @@ doctrine.
 ### The thing I got structurally right, worth keeping
 
 **Ask the container, not the viewport.** Every layout bug in this shell traced
-back to `@media` queries on a column whose width is a *derived* value. Making
+back to `@media` queries on a column whose width is a _derived_ value. Making
 `.wp-main-col` a query container turned "collapse the island" and "split the
 messages tab" from two projects into one, and it means the next layout
 decision costs nothing.
@@ -266,7 +266,7 @@ doc.
 
 - The rail's number truncation hides the identity (b9).
 - The island at 1280px is 400px of mostly-empty surface while signed in with
-  no call — the collapse control is now the answer, but it is a *quiet* 30px
+  no call — the collapse control is now the answer, but it is a _quiet_ 30px
   chevron between the identity pill and the theme toggle; it may be too quiet
   to be discovered.
 - `History` still stacks two unrelated datasets (CDRs + persisted call
@@ -309,7 +309,7 @@ Ordered by (impact ÷ risk), not by area.
     affordance, or move it onto the island's own edge.
 12. Mobile collapse (currently desktop-only by design) — decide whether the
     island should collapse there too, with a reachable toggle.
-13. Defensive check: a live call must also survive a *page reload* while the
+13. Defensive check: a live call must also survive a _page reload_ while the
     preference says collapsed (CSS covers it, prove it).
 14. Persist per-device vs per-user: `localStorage` is per browser profile;
     confirm that is the intended scope.
@@ -325,7 +325,7 @@ Ordered by (impact ÷ risk), not by area.
     list has arrow-key nav today; the rail does not.
 19. Rail: `hx-target="#tab-content"` re-fetches the whole list per switch.
     Evaluate a detail-only swap with an OOB `aria-current` fix, and measure.
-20. Rail on the *list* view: a split with no conversation open (list left,
+20. Rail on the _list_ view: a split with no conversation open (list left,
     "pick a conversation" right) is the conventional desktop shape. Decide
     whether the current single-column landing is intentional.
 21. Mobile: a sticky back affordance that survives a long transcript.
@@ -357,7 +357,7 @@ Ordered by (impact ÷ risk), not by area.
 32. Verify `container-type: inline-size` does not break the sticky island or
     the jump-to-latest chip under stress (long transcripts, `position:
     sticky` + `contain: layout` interactions).
-33. Check the split at the *boundary* widths (43rem / 44rem / 45rem) for a
+33. Check the split at the _boundary_ widths (43rem / 44rem / 45rem) for a
     one-pixel oscillation.
 
 **Accessibility**
@@ -413,7 +413,7 @@ Ordered by (impact ÷ risk), not by area.
    pure switcher and "All messages" is the way back to search/compose. Adding
    them means a new bare-list partial endpoint (`GET /partials/messages/list`)
    so a rail search cannot blow away the open conversation. That is a product
-   shape decision about what the Messages tab *is* on desktop.
+   shape decision about what the Messages tab _is_ on desktop.
 
 3. **Should the island collapse on mobile too?** Right now it is desktop-only
    by design: on phones the island is in the single-column flow, its

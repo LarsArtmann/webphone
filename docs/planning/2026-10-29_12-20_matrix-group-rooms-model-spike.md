@@ -32,9 +32,9 @@ The current fence is honest: the receiver maps rooms to peers via the
 
 Extend `Address` so matrix accepts BOTH peer and room shapes (`@…` and
 `!…`); the thread key stays `(owner, network, remote)` byte-for-byte — for a
-group, `remote` is the ROOM. One rule covers both regimes: *the thread's
+group, `remote` is the ROOM. One rule covers both regimes: _the thread's
 remote is the conversation's stable wire identifier — peer id for 1:1, room
-id for multi-party* (which is exactly how the networks themselves model it).
+id for multi-party_ (which is exactly how the networks themselves model it).
 
 - DM threads keep the 10-23 property: keyed on the person, so a NEW DM room
   with the same peer continues the SAME thread.
@@ -46,6 +46,7 @@ id for multi-party* (which is exactly how the networks themselves model it).
   until room-name tracking lands; nothing dials.
 
 New surface (the real cost):
+
 1. `Message.Sender` — one nullable column + field ("" = DM-implied, so every
    existing row and both DM lanes are byte-compatible). Network-neutral:
    signal groups reuse it verbatim later.

@@ -47,6 +47,7 @@ overclaim at write time; it is TRUE —
 is viable; P1 (adopt mautrix.Client wholesale) stays rejected.
 
 **Sub-decisions bundled:**
+
 - **Crypto store home:** own sqlite db (`e2ee.db`, readmodels-adjacent, own
   DDL ladder — mirrors the usermgmt isolation precedent) vs mautrix's sqlstore
   module (one more dep, schema owned upstream). Recommendation: own db.
@@ -66,12 +67,13 @@ draft at `docs/drafts/pma-push-leg-durability-issue-2026-10-28.md`):
 The ask: SIGTERM flush + startup sweep + a shutdown-completion line.
 
 **Stall evidence (the tax):**
-| date | event | cost |
-|------|-------|------|
+
+| date       | event                                | cost                                        |
+| ---------- | ------------------------------------ | ------------------------------------------- |
 | 2026-10-27 | fleet deploy killed the push process | oldest unpushed waited 30m37s; gaps 54m/70m |
-| 2026-10-29 | webphone push stall | 62 min (bar invoked 13:05) |
-| 2026-10-29 | ~3 stalls across repos | bar invoked again ~15:10 |
-| 2026-10-29 | crush-config lessons | sat unpushed ~2 h (pushed itself by 15:53) |
+| 2026-10-29 | webphone push stall                  | 62 min (bar invoked 13:05)                  |
+| 2026-10-29 | ~3 stalls across repos               | bar invoked again ~15:10                    |
+| 2026-10-29 | crush-config lessons                 | sat unpushed ~2 h (pushed itself by 15:53)  |
 
 **Ask:** who lands it? (a) owner implements in pma, (b) **authorize me to
 implement + PR it in pma** (recommended; ~100 min, fix is fully specified),
@@ -88,6 +90,7 @@ templates (verified on run 40890346682 and predecessors). M02 (commit
 any concurrent template edit re-drifts it until the next rebuild.
 
 **Options:**
+
 1. **Keep advisory in CI + gate `release.sh` on freshness** (recommended) —
    releases can never ship stale bytes; daily concurrent-train noise stays
    non-gating.
@@ -112,6 +115,7 @@ config keys; a false reject is an outage on every deployment).
 **The genuine owner call:** the NixOS module writes a freeform `settings`
 map, so a deployment carrying an extra passthrough key today would start
 failing its boot. Options:
+
 1. **GO file-strict + env-warn** (recommended) — fail-loud doctrine; the
    module's own keys all pass; a foreign key is a real misconfiguration the
    operator wants named.
@@ -130,6 +134,7 @@ gap is the baseline rot the 10-28 retirement of `.buildflow-baseline.json`
 was supposed to end: suppression claims nothing and looks reviewed.
 
 **Options:**
+
 1. **Pull forward to this week** (recommended; M19–M20 are already planned
    as two 100-min tranches) — the standing cadence says next re-measure
    2026-11-05; six more trains of drift first.
@@ -139,5 +144,5 @@ was supposed to end: suppression claims nothing and looks reviewed.
 
 ---
 
-*Packet assembled by the 2026-10-29 SUPERB execution session; evidence
-verified same-day (CI runs, source fetches, repo states).*
+_Packet assembled by the 2026-10-29 SUPERB execution session; evidence
+verified same-day (CI runs, source fetches, repo states)._

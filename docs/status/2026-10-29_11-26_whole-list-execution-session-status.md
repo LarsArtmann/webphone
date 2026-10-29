@@ -5,12 +5,12 @@ the docs sweep landed via daemon commit `3f8b1ca` (2026-10-29 01:40) and was the
 BUILT UPON by a later session's 2026-10-29 sweep (docpin tests — not mine, untouched);
 9 overnight commits sat unpushed past the 60-min bar and were pushed manually at
 report time (`dc5a4a0..0d2fb36`, anchor 2026-10-29 01:40, ~9.7 h) — **the CI run
-for that push is IN FLIGHT and unverified**. *(Annotated 2026-10-29 12:20 by the
+for that push is IN FLIGHT and unverified**. _(Annotated 2026-10-29 12:20 by the
 follow-up session: that run, 40857662429, was RED — the daemon had committed
 `layout.templ` ahead of its i18n key (healed by the next commit) plus the first
 two clone groups; both classes were fixed and CI went green on 40862216157.
 The missing final-gate evidence also closed: full buildflow re-run with
-`--failed-only` over the fixed tree = exit 0, log `/tmp/buildflow-retry-2026-10-29.log`.)*
+`--failed-only` over the fixed tree = exit 0, log `/tmp/buildflow-retry-2026-10-29.log`.)_
 The session ran concurrent with the
 dialer train (#7/#8) in `internal/server`, `views/`, `readmodels/` — dodged by file
 selection throughout.
@@ -57,10 +57,10 @@ in this repo was executed, adjudicated, or closed-as-already-done with source ev
    statement/signature nolints across 24 files (invariant-by-construction index math,
    never-closed buffered channel, composition-root panic/MustInvoke doctrine,
    flag-pointer derefs, the phantom-string classes the strong-id/BD003 + engine-layer
-   + open-roadmap rulings already decided), then a fresh 78-entry baseline
-   (TypeDecl decided architecture: branded-id generics, typed error products, catalog
-   mirrors, the six single-implementer Deps seams + 2 nolint-immune FLAG_PARAM sites)
-   wired via the `baseline:` key — suppression verified ACTIVE.
+   - open-roadmap rulings already decided), then a fresh 78-entry baseline
+     (TypeDecl decided architecture: branded-id generics, typed error products, catalog
+     mirrors, the six single-implementer Deps seams + 2 nolint-immune FLAG_PARAM sites)
+     wired via the `baseline:` key — suppression verified ACTIVE.
 8. **Error-code registry heal** (`63e9f25`): the dial train's daemon-split commits
    left 7 `dial_*` codes unregistered (the suite's only red); regenerated, arch green,
    full `go test -count=1 ./...` green (31/31).
@@ -116,7 +116,7 @@ in this repo was executed, adjudicated, or closed-as-already-done with source ev
    class the repo's own lessons file condemns.
 2. **A botched edit deleted 5 lines of `matrix_test.go`** (replaced a block instead
    of inserting); caught and repaired one tool-call later, verified by re-view + vet
-   + suite. Process slip, zero landed damage.
+   - suite. Process slip, zero landed damage.
 3. **Three nolints initially suppressed nothing** (FLAG_PARAM ×2 ignored placement,
    one nil-deref finding pointed at a continuation line): found only by diffing the
    saved baseline against expectations and re-placing. Cost: one extra scan round.
@@ -177,11 +177,11 @@ in this repo was executed, adjudicated, or closed-as-already-done with source ev
 22. Visual-harness matrix eyeball + persistence policy. ✋
 23. `Rule accepts` decision for FLAG_PARAM if new sites appear.
 24. Re-baseline branching-flow from any moved checkout (upstream #13 follow-up).
-    *(Annotated 2026-10-29 12:30: measured 164 live findings vs the governed 78 —
+    _(Annotated 2026-10-29 12:30: measured 164 live findings vs the governed 78 —
     a re-record would bless ~86 ungoverned ones from the dialer/docpin/review
     trains; the refresh is BLOCKED on the 2026-11-05 triage cadence, not just on
     a checkout move. Items 25/26 shipped same day: crush-config 4468af5 + the
-    AGENTS Formatting bullet.)*
+    AGENTS Formatting bullet.)_
 25. crush-config lessons candidates from this session: backgrounded-gate read-back;
     daemon-race at the tool-call boundary (add+commit in one call still loses).
 26. Add the `nix fmt`/`build-tw-css.sh` habit line to the view-edit train checklist
