@@ -1,7 +1,11 @@
 package server
 
 import (
+	"go/ast"
+	"go/parser"
+	"go/token"
 	"net/http"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -245,5 +249,52 @@ func TestMatrixThreadNeverReachesTheCRM(t *testing.T) {
 	}
 	if len(asked) != 1 || asked[0] != "+493012345678" {
 		t.Fatalf("lookups = %v, want exactly the phone-shaped remote", asked)
+	}
+}
+
+// TestEveryCRMContextFieldIsRead keeps the seam's snapshot honest: a field the
+// producer publishes but no surface reads is a replica waiting to happen, and a
+// wire contract nobody can validate. The scan is AST-precise — it collects the
+// selectors taken off the ONE variable crmContextView reads (`published`), so an
+// unrelated `.Company` elsewhere in this package cannot green the test. A rename
+// of that parameter empties the set and fails LOUDLY rather than silently
+// passing.
+//
+// Adding a field to crm.Context therefore requires rendering it in the strip (or
+// deleting it). Product facts the strip will never show belong in the producer,
+// where the phone does not pay for them.
+func TestEveryCRMContextFieldIsRead(t *testing.T) {
+	t.Parallel()
+
+	file, err := parser.ParseFile(token.NewFileSet(), "crm.go", nil, 0)
+	if err != nil {
+		t.Fatalf("parse crm.go: %v", err)
+	}
+
+	read := map[string]bool{}
+
+	ast.Inspect(file, func(node ast.Node) bool {
+		sel, ok := node.(*ast.SelectorExpr)
+		if !ok {
+			return true
+		}
+		if target, ok := sel.X.(*ast.Ident); ok && target.Name == "published" {
+			read[sel.Sel.Name] = true
+		}
+
+		return true
+	})
+
+	typ := reflect.TypeOf(crm.Context{})
+	unread := make([]string, 0, typ.NumField())
+
+	for i := range typ.NumField() {
+		if name := typ.Field(i).Name; !read[name] {
+			unread = append(unread, name)
+		}
+	}
+
+	if len(unread) > 0 {
+		t.Fatalf("crm.Context fields no surface reads (render or delete them): %v", unread)
 	}
 }
