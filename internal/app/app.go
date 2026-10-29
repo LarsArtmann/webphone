@@ -185,7 +185,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		return crm.NewClient(cfg.CRM.URL, cfg.CRM.Token)
 	})
 	do.Provide(injector, func(i do.Injector) (*crm.Resolver, error) {
-		return crm.NewResolver(do.MustInvoke[*crm.Client](i), log), nil
+		return crm.NewResolver(do.MustInvoke[*crm.Client](i), cfg.CRM.ContactURL, log), nil
 	})
 	// Optional speech-to-text seam (live transcription of every audio
 	// stream). Config-absent → a disabled provider (Enabled() false):

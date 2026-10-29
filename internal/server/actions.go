@@ -590,10 +590,10 @@ func (h *handlers) setThreadFlag(w http.ResponseWriter, r *http.Request) {
 			h.notFound(w, r)
 			return
 		}
-		names := h.crmNames(r.Context(), []string{thread.Remote.String()})
+		contacts := h.crmDirectory(r.Context(), []string{thread.Remote.String()})
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		if renderErr := views.ThreadHead(views.ThreadViewProps{
-			Thread: thread, Names: names, Lang: h.lang(r),
+			Thread: thread, CRM: contacts, Lang: h.lang(r),
 		}).Render(r.Context(), w); renderErr != nil {
 			http.Error(w, "render error", http.StatusInternalServerError)
 		}

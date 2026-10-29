@@ -3,6 +3,7 @@ package crm
 import (
 	"context"
 	"log/slog"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -54,7 +55,13 @@ type lookupFlight struct {
 // renders; the operator sees one debug log per failed attempt).
 type Resolver struct {
 	client *Client
-	log    *slog.Logger
+	// profileURL is the deployment's deep-link template into the CRM's own
+	// UI ({id} = the CRM's contact id). Empty = no links, the zero-config
+	// product. Both facts a link needs — the template (config) and the id
+	// (CRM wire data) — are known only here, so the link is built here and
+	// the views merely render it.
+	profileURL string
+	log        *slog.Logger
 
 	mu       sync.Mutex
 	cache    map[string]cacheEntry
@@ -63,19 +70,34 @@ type Resolver struct {
 	lookups lookupCounters
 }
 
-// NewResolver wraps a client with the lookup cache. A disabled client
-// yields a resolver that never matches without touching the map.
-func NewResolver(client *Client, log *slog.Logger) *Resolver {
+// NewResolver wraps a client with the lookup cache and the optional
+// deep-link template. A disabled client yields a resolver that never
+// matches without touching the map. profileURL must already be validated
+// by config (absolute http(s), contains {id}); an empty one means "this
+// deployment renders names without links".
+func NewResolver(client *Client, profileURL string, log *slog.Logger) *Resolver {
 	if log == nil {
 		log = slog.Default()
 	}
 
 	return &Resolver{
-		client:   client,
-		log:      log,
-		cache:    make(map[string]cacheEntry),
-		inflight: make(map[string]*lookupFlight),
+		client:     client,
+		profileURL: profileURL,
+		log:        log,
+		cache:      make(map[string]cacheEntry),
+		inflight:   make(map[string]*lookupFlight),
 	}
+}
+
+// ProfileURL expands the configured template for one contact, or "" when
+// this deployment configured no template. Nil-safe: an absent resolver (a
+// deployment without a CRM) is a deployment without links.
+func (r *Resolver) ProfileURL(ref ContactRef) string {
+	if r == nil || r.profileURL == "" {
+		return ""
+	}
+
+	return strings.Replace(r.profileURL, "{id}", ref.Get(), 1)
 }
 
 // Enabled reports whether the underlying CRM client is wired up.

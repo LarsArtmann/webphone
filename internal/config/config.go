@@ -332,6 +332,18 @@ type CRM struct {
 	URL       string `json:"url" koanf:"url"`
 	Token     string `json:"token" koanf:"token"`
 	TokenFile string `json:"token_file,omitempty" koanf:"token_file"`
+	// ContactURL is the OPTIONAL deep-link template into the CRM's own UI,
+	// with {id} standing for the CRM's contact id (e.g.
+	// "https://crm.example/contacts/{id}"). Empty means names render
+	// without links, which is the zero-config product. It needs a
+	// configured CRM and must carry {id}: validation fails closed on a
+	// template that cannot address a contact.
+	//
+	// Deliberately separate from URL: the machine API and the human UI live
+	// on different origins in every real deployment (the API on loopback,
+	// the UI behind the reverse proxy), so deriving one from the other
+	// would mint links nobody can open.
+	ContactURL string `json:"contact_url,omitempty" koanf:"contact_url"`
 }
 
 // Paperless configures the optional Paperless-ngx archive for inbound
@@ -827,10 +839,38 @@ func validate(cfg Config) error {
 			return errorfamily.Newf(errorfamily.Rejection, "config.crm.url", "crm.url %q is not an absolute http(s) URL (e.g. http://127.0.0.1:8080)", cfg.CRM.URL)
 		}
 	}
+	if err := validateCRMContactURL(cfg.CRM); err != nil {
+		return err
+	}
 	if err := validateDial(cfg.Dial); err != nil {
 		return err
 	}
 	return validatePush(cfg.Push)
+}
+
+// validateCRMContactURL checks the optional deep-link template: it needs a
+// CRM to point at, an absolute http(s) shape, and the {id} placeholder:
+// a template without {id} would send every caller to the same page, which
+// is worse than no link at all.
+func validateCRMContactURL(cfgCRM CRM) error {
+	if cfgCRM.ContactURL == "" {
+		return nil
+	}
+
+	if cfgCRM.URL == "" {
+		return errorfamily.NewRejection("config.crm.contact_url", "crm.contact_url is set without crm.url: a link into a CRM this deployment cannot query is a dead affordance")
+	}
+
+	if !strings.Contains(cfgCRM.ContactURL, "{id}") {
+		return errorfamily.NewRejection("config.crm.contact_url", "crm.contact_url must contain the {id} placeholder (e.g. https://crm.example/contacts/{id}); without it every caller links to the same page")
+	}
+
+	u, err := url.Parse(strings.Replace(cfgCRM.ContactURL, "{id}", "x", 1))
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return errorfamily.Newf(errorfamily.Rejection, "config.crm.contact_url", "crm.contact_url %q is not an absolute http(s) URL template (e.g. https://crm.example/contacts/{id})", cfgCRM.ContactURL)
+	}
+
+	return nil
 }
 
 // Push configures the optional push seam (ring-while-closed). The

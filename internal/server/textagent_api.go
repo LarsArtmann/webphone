@@ -92,10 +92,10 @@ func (h *handlers) partialDrafts(w http.ResponseWriter, r *http.Request) {
 	h.draftPanel(w, r)
 }
 
-// draftContactNames resolves the drafts' contact numbers against the
+// draftCRMContacts resolves the drafts' contact numbers against the
 // optional CRM feed so the review list shows names like the thread rows
 // do. Nil-safe on every leg (no drafts, no resolver).
-func (h *handlers) draftContactNames(r *http.Request, reviews *textagent.Reviews) map[string]string {
+func (h *handlers) draftCRMContacts(r *http.Request, reviews *textagent.Reviews) views.CRMContacts {
 	if reviews == nil || len(reviews.Drafts) == 0 {
 		return nil
 	}
@@ -103,7 +103,7 @@ func (h *handlers) draftContactNames(r *http.Request, reviews *textagent.Reviews
 	for _, draft := range reviews.Drafts {
 		numbers = append(numbers, draft.Contact)
 	}
-	return h.crmNames(r.Context(), numbers)
+	return h.crmDirectory(r.Context(), numbers)
 }
 
 // draftPanel renders the drafts panel fragment (approve and discard
@@ -112,7 +112,7 @@ func (h *handlers) draftPanel(w http.ResponseWriter, r *http.Request) {
 	reviews, fetchErr := h.textAgentReviews(r)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := views.DraftsPanel(views.DraftsPanelProps{
-		Drafts: reviews, Error: fetchErr, Names: h.draftContactNames(r, reviews), Lang: h.lang(r),
+		Drafts: reviews, Error: fetchErr, CRM: h.draftCRMContacts(r, reviews), Lang: h.lang(r),
 	}).Render(r.Context(), w); err != nil {
 		http.Error(w, "render error", http.StatusInternalServerError)
 	}

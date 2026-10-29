@@ -62,7 +62,7 @@ func TestClientDisabledByDefault(t *testing.T) {
 		t.Fatal("empty base URL must mean disabled")
 	}
 
-	resolver := NewResolver(client, nil)
+	resolver := NewResolver(client, "", nil)
 	if resolver.Enabled() {
 		t.Fatal("resolver over a disabled client must be disabled")
 	}
@@ -206,7 +206,7 @@ func TestClientHealthCheck(t *testing.T) {
 	// The probe bypasses the resolver cache: repeat probes hit upstream
 	// every time (a cached verdict would freeze the leg's truth).
 	stub, probe := newStub(http.StatusOK)
-	resolver := NewResolver(probe, nil)
+	resolver := NewResolver(probe, "", nil)
 	_ = resolver
 	for range 3 {
 		if err := probe.HealthCheck(ctx); err != nil {
@@ -230,7 +230,7 @@ func TestResolverCachesLookups(t *testing.T) {
 		t.Fatalf("NewClient: %v", err)
 	}
 
-	resolver := NewResolver(client, nil)
+	resolver := NewResolver(client, "", nil)
 	ctx := context.Background()
 
 	for range 3 {
@@ -265,7 +265,7 @@ func TestResolverDegradesQuietly(t *testing.T) {
 		t.Fatalf("NewClient: %v", err)
 	}
 
-	resolver := NewResolver(client, nil)
+	resolver := NewResolver(client, "", nil)
 	if name := resolver.Name(context.Background(), "+493012345678"); name != "" {
 		t.Fatalf("CRM failure must degrade to empty name, got %q", name)
 	}
@@ -287,7 +287,7 @@ func TestResolveSingleFlightsConcurrentLookups(t *testing.T) {
 		t.Fatalf("NewClient: %v", err)
 	}
 
-	resolver := NewResolver(client, nil)
+	resolver := NewResolver(client, "", nil)
 
 	const racers = 10
 	var wg sync.WaitGroup
@@ -324,7 +324,7 @@ func TestResolverLookupCounters(t *testing.T) {
 		t.Fatalf("NewClient: %v", err)
 	}
 
-	resolver := NewResolver(client, nil)
+	resolver := NewResolver(client, "", nil)
 	ctx := context.Background()
 
 	if _, ok := resolver.Resolve(ctx, "+493011111111"); !ok {
@@ -355,7 +355,7 @@ func TestResolverLookupCounters(t *testing.T) {
 
 	// Counters are per-resolver: a fresh resolver starts at zero even
 	// over the same client.
-	fresh := NewResolver(client, nil)
+	fresh := NewResolver(client, "", nil)
 	if _, ok := fresh.Resolve(context.Background(), "+493044444444"); ok {
 		t.Fatal("fresh resolver over a dead CRM must not match")
 	}

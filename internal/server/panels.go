@@ -68,10 +68,10 @@ func (h *handlers) messagesPanelPrefilled(r *http.Request, sess session.Session,
 	if reviews != nil {
 		numbers = append(numbers, crmNumbers(reviews.Drafts, func(draft textagent.Draft) string { return draft.Contact })...)
 	}
-	names := h.crmNames(r.Context(), numbers)
+	contacts := h.crmDirectory(r.Context(), numbers)
 	return views.ThreadsPanel(views.ThreadsPanelProps{
 		Threads: threads, Query: query, Archived: archived, ArchivedCount: archivedCount,
-		Identity: h.identityFor(sess.Extension), Names: names, Lang: h.lang(r),
+		Identity: h.identityFor(sess.Extension), CRM: contacts, Lang: h.lang(r),
 		TextAgent: h.textAgentOn(), Drafts: reviews, DraftsError: draftsErr, PrefillBody: prefillBody,
 	}), nil
 }
@@ -112,7 +112,7 @@ func (h *handlers) threadPanelPrefilled(r *http.Request, sess session.Session, i
 		[]string{thread.Remote.String()},
 		crmNumbers(rail, func(summary store.ThreadSummary) string { return summary.Thread.Remote.String() })...,
 	)
-	names := h.crmNames(r.Context(), numbers)
+	contacts := h.crmDirectory(r.Context(), numbers)
 	// Reply snippets feed the composer's chip lane + picker (M21);
 	// nil-safe: hand-composed test Deps may carry no snippet store.
 	var snippets []domain.Snippet
@@ -123,7 +123,7 @@ func (h *handlers) threadPanelPrefilled(r *http.Request, sess session.Session, i
 	}
 	return views.ThreadView(views.ThreadViewProps{
 		Thread: thread, Messages: msgs, Page: page, HasMore: hasMore, Snippets: snippets, Rail: rail,
-		Identity: h.identityFor(sess.Extension), Names: names, Lang: h.lang(r),
+		Identity: h.identityFor(sess.Extension), CRM: contacts, Lang: h.lang(r),
 		ASR: h.asrOn(), TextAgent: h.textAgentOn(), PrefillDraft: prefillDraft,
 	}), nil
 }
@@ -165,7 +165,7 @@ func (h *handlers) faxPanel(r *http.Request, sess session.Session) (templ.Compon
 		return nil, err
 	}
 	numbers := crmNumbers(jobs, func(job domain.FaxJob) string { return job.Remote.String() })
-	return views.FaxPanel(views.FaxPanelProps{Jobs: jobs, Identity: h.identityFor(sess.Extension), Names: h.crmNames(r.Context(), numbers), Lang: h.lang(r)}), nil
+	return views.FaxPanel(views.FaxPanelProps{Jobs: jobs, Identity: h.identityFor(sess.Extension), CRM: h.crmDirectory(r.Context(), numbers), Lang: h.lang(r)}), nil
 }
 
 func (h *handlers) voicemailPanel(r *http.Request, sess session.Session) (templ.Component, error) {
@@ -181,7 +181,7 @@ func (h *handlers) voicemailPanel(r *http.Request, sess session.Session) (templ.
 	}
 	return views.VoicemailPanel(views.VoicemailPanelProps{
 		Enabled: true, Summary: summary, Messages: messages,
-		Names: h.crmNames(r.Context(), crmNumbers(messages, func(msg pbx.VoicemailMessage) string { return msg.CIDNumber })), Lang: h.lang(r),
+		CRM: h.crmDirectory(r.Context(), crmNumbers(messages, func(msg pbx.VoicemailMessage) string { return msg.CIDNumber })), Lang: h.lang(r),
 		ASR: h.asrOn(),
 	}), nil
 }
@@ -212,14 +212,18 @@ func (h *handlers) fetchVoicemail(r *http.Request, creds pbx.Credentials) (pbx.V
 	return summary, page.Messages, nil
 }
 
-// crmNames resolves numbers against the optional CRM integration for view
-// props. A disabled (or nil) resolver returns an empty map: the views'
-// displayName fallback renders the raw numbers unchanged.
-func (h *handlers) crmNames(ctx context.Context, numbers []string) map[string]string {
+// crmDirectory resolves numbers against the optional CRM integration for
+// view props: the published name plus, when a deep-link template is
+// configured, the address of that contact in the CRM's own UI.
+//
+// A disabled (or nil) resolver returns nil, so the views' displayName
+// fallback renders raw numbers with no link: zero CRM config renders
+// byte-identically to the pre-integration product.
+func (h *handlers) crmDirectory(ctx context.Context, numbers []string) views.CRMContacts {
 	if len(numbers) == 0 {
 		return nil
 	}
-	return h.deps.CRM.Names(ctx, numbers)
+	return crmContacts(h.deps.CRM.People(ctx, numbers), h.deps.CRM)
 }
 
 // asrOn is the one gate every server-rendered transcribe affordance
@@ -281,7 +285,7 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 	numbers := crmNumbers(entries, views.CDRDialTarget)
 	return views.HistoryPanel(views.HistoryPanelProps{
 		Enabled: true, Entries: entries, Query: query, Dir: dir, Outcome: outcome,
-		Names: h.crmNames(r.Context(), numbers), Lang: lang, Transcripts: transcripts,
+		CRM: h.crmDirectory(r.Context(), numbers), Lang: lang, Transcripts: transcripts,
 		AgentEnabled: h.textAgentOn(),
 	}), nil
 }
@@ -319,7 +323,7 @@ func (h *handlers) recentTranscripts(r *http.Request, sess session.Session, quer
 		return nil
 	}
 	numbers := crmNumbers(recent, func(tx domain.CallTranscript) string { return tx.Remote })
-	names := h.crmNames(r.Context(), numbers)
+	contacts := h.crmDirectory(r.Context(), numbers)
 	groups := make([]views.TranscriptGroup, 0, len(recent))
 	for _, tx := range recent {
 		note := ""

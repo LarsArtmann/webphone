@@ -71,7 +71,7 @@ func crmResolverFor(t *testing.T, stub *crmStub) *crm.Resolver {
 	if err != nil {
 		t.Fatalf("crm client: %v", err)
 	}
-	return crm.NewResolver(client, nil)
+	return crm.NewResolver(client, "", nil)
 }
 
 func TestAPICallLoggingContract(t *testing.T) {
@@ -401,7 +401,7 @@ func TestMetricsRendersCRMLookupCounters(t *testing.T) {
 	if err != nil {
 		t.Fatalf("crm client: %v", err)
 	}
-	resolver := crm.NewResolver(client, nil)
+	resolver := crm.NewResolver(client, "", nil)
 
 	server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.CRM = resolver })
 	c := signIn(t, server)
