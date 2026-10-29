@@ -493,18 +493,27 @@ templ ConversationRail(rail []store.ThreadSummary, current domain.ThreadID, name
 			>
 				<span class={ "wp-avatar", avatarHueClass(summary.Thread.Remote.String()) } aria-hidden="true">{ avatarFor(displayName(summary.Thread.Remote.String(), names)) }</span>
 				<span class="wp-rail-text">
-					<span class="wp-rail-name">{ networkLabel(summary.Thread.Remote.Network()) }{ displayName(summary.Thread.Remote.String(), names) }</span>
-					<span class="wp-rail-preview">{ threadPreview(summary, lang) }</span>
-				</span>
-				<span class="wp-rail-side">
-					<span
-						class="wp-thread-when"
-						title={ fullStamp(lang, summary.Thread.LastActivityAt) }
-						data-when={ fmtInt(int(summary.Thread.LastActivityAt.Unix())) }
-					>{ relativeTime(summary.Thread.LastActivityAt, lang) }</span>
-					if summary.Thread.Unread > 0 && !summary.Thread.Muted {
-						<span class="wp-nav-badge" aria-label={ badgeCount(lang, summary.Thread.Unread, "nav.unread") }>{ fmtInt(summary.Thread.Unread) }</span>
-					}
+					// The NAME owns the first line's width: the peer's number
+					// or contact name is the one thing that identifies a
+					// thread, and a third grid column for the timestamp
+					// squeezed it into "+44163296…". The badge stays on the
+					// name's line (the unread count is a property of the
+					// conversation), the timestamp drops to the preview line
+					// where it is context, not identity.
+					<span class="wp-rail-top">
+						<span class="wp-rail-name">{ networkLabel(summary.Thread.Remote.Network()) }{ displayName(summary.Thread.Remote.String(), names) }</span>
+						if summary.Thread.Unread > 0 && !summary.Thread.Muted {
+							<span class="wp-nav-badge" aria-label={ badgeCount(lang, summary.Thread.Unread, "nav.unread") }>{ fmtInt(summary.Thread.Unread) }</span>
+						}
+					</span>
+					<span class="wp-rail-sub">
+						<span class="wp-rail-preview">{ threadPreview(summary, lang) }</span>
+						<span
+							class="wp-thread-when"
+							title={ fullStamp(lang, summary.Thread.LastActivityAt) }
+							data-when={ fmtInt(int(summary.Thread.LastActivityAt.Unix())) }
+						>{ relativeTime(summary.Thread.LastActivityAt, lang) }</span>
+					</span>
 				</span>
 			</a>
 		}

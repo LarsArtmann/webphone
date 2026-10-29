@@ -354,22 +354,28 @@ h3 {
   }
 }
 
-/* The toggle itself: a quiet square icon button in the header actions. The
- * chevron pair is both-rendered and swapped by CSS (the collapsed class is
- * on <html>) — re-rendering icons from JS would mean shipping the SVG paths
- * a second time. Collapsed, the button points back the other way because
- * its whole job is "bring the phone back". */
+/* The toggle itself: a LABELLED control in the header actions. The chevron
+ * pair is both-rendered and swapped by CSS (the collapsed class is on
+ * <html>) — re-rendering icons from JS would mean shipping the SVG paths a
+ * second time. Collapsed, the chevron points back the other way because the
+ * control's whole job is "bring the phone back".
+ *
+ * It started life as a bare 30px glyph and that was the wrong call: nothing
+ * on screen said what it did, so the feature it guards was effectively
+ * undiscoverable. The visible label is what makes it a control. */
 .wp-icon-toggle {
   display: none;
   align-items: center;
   justify-content: center;
-  width: 30px;
+  gap: 4px;
   height: 30px;
-  padding: 0;
+  padding: 0 8px;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   background: transparent;
   color: var(--muted);
+  font: inherit;
+  font-size: 0.85em;
   cursor: pointer;
   transition:
     color 120ms ease,
@@ -388,6 +394,10 @@ h3 {
   color: var(--text);
   border-color: var(--border-strong);
   background: var(--surface-2);
+}
+
+.wp-island-toggle-label {
+  white-space: nowrap;
 }
 
 .wp-island-toggle-show {
@@ -1617,7 +1627,7 @@ a:focus-visible {
 
 .wp-rail-row {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr);
   gap: 10px;
   align-items: center;
   padding: 8px 10px;
@@ -1650,7 +1660,20 @@ a:focus-visible {
   min-width: 0;
 }
 
+/* Line 1 is identity only (name + unread badge); line 2 is context
+ * (preview + when). The name used to share its line with a timestamp
+ * column, which truncated "+441632961" into "+44163296…" — an
+ * unidentifiable thread. */
+.wp-rail-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
 .wp-rail-name {
+  flex: 1 1 auto;
+  min-width: 0;
   font-weight: 600;
   font-size: 0.92em;
   color: var(--text);
@@ -1666,7 +1689,16 @@ a:focus-visible {
   font-weight: 500;
 }
 
+.wp-rail-sub {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+
 .wp-rail-preview {
+  flex: 1 1 auto;
+  min-width: 0;
   font-size: 0.82em;
   color: var(--muted);
   overflow: hidden;
@@ -1674,11 +1706,9 @@ a:focus-visible {
   white-space: nowrap;
 }
 
-.wp-rail-side {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
+/* The rail's when-stamp matches the thread list's voice but never eats the
+ * preview: it is `flex: 0 0 auto` in a baseline row. */
+.wp-rail-sub .wp-thread-when {
   flex: 0 0 auto;
 }
 
