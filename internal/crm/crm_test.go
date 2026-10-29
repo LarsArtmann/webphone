@@ -100,12 +100,12 @@ func TestLookupByPhone(t *testing.T) {
 		t.Fatalf("NewClient: %v", err)
 	}
 
-	match, err := client.LookupByPhone(context.Background(), "+49 30 12345678")
+	person, err := client.LookupByPhone(context.Background(), "+49 30 12345678")
 	if err != nil {
 		t.Fatalf("lookup: %v", err)
 	}
-	if match.ID.Get() != "01M" || match.Name != "Ada Lovelace" {
-		t.Fatalf("match: %+v", match)
+	if person.Ref.Get() != "01M" || person.Name != "Ada Lovelace" {
+		t.Fatalf("person: %+v", person)
 	}
 
 	// The stub answers every number with the same document; an empty

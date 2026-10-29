@@ -90,87 +90,94 @@ func (r *Resolver) LookupCounters() (hit, miss, failure int64) {
 	return r.lookups.hit.Load(), r.lookups.miss.Load(), r.lookups.failure.Load()
 }
 
-// Resolve returns the contact a number belongs to, consulting the TTL cache
+// Resolve returns the CRM's person for a number, consulting the TTL cache
 // first. ok=false when the CRM is disabled, holds no contact, or fails —
 // callers treat all three identically: render the raw number / skip the
 // logging. Numbers are cache keys verbatim; distinct spellings of one
 // number cost at most distinct entries until the CRM's canonical answer
 // dominates the window.
-func (r *Resolver) Resolve(ctx context.Context, number string) (Match, bool) {
+func (r *Resolver) Resolve(ctx context.Context, number string) (Person, bool) {
 	if number == "" || !r.Enabled() {
-		return Match{}, false
+		return Person{}, false
 	}
 
 	if entry, fresh := r.cached(number); fresh {
-		return entry.match, !entry.miss
+		return entry.person, !entry.miss
 	}
 
 	if flight := r.join(number); flight != nil {
 		select {
 		case <-flight.done:
-			return flight.match, flight.ok
+			return flight.person, flight.ok
 		case <-ctx.Done():
 			// The waiting caller gave up; the leader's answer still
 			// lands in the cache for everyone after.
-			return Match{}, false
+			return Person{}, false
 		}
 	}
 
-	match, err := r.client.LookupByPhone(ctx, number)
+	person, err := r.client.LookupByPhone(ctx, number)
 
 	switch {
 	case err == nil:
-		r.remember(number, cacheEntry{match: match, fetched: time.Now()})
-		r.settle(number, match, true)
+		r.remember(number, cacheEntry{person: person, fetched: time.Now()})
+		r.settle(number, person, true)
 		r.lookups.hit.Add(1)
 
-		return match, true
+		return person, true
 	case errIsMiss(err):
 		r.remember(number, cacheEntry{miss: true, fetched: time.Now()})
-		r.settle(number, Match{}, false)
+		r.settle(number, Person{}, false)
 		r.lookups.miss.Add(1)
 
-		return Match{}, false
+		return Person{}, false
 	default:
 		// Do not cache transport failures: the next render retries, and
 		// one debug line per attempt keeps the operator trail honest.
 		r.log.Debug("crm: lookup failed; rendering raw number", "error", err)
-		r.settle(number, Match{}, false)
+		r.settle(number, Person{}, false)
 		r.lookups.failure.Add(1)
 
-		return Match{}, false
+		return Person{}, false
 	}
 }
 
 // Name resolves the display name for a number, or "" on any miss.
 func (r *Resolver) Name(ctx context.Context, number string) string {
-	match, ok := r.Resolve(ctx, number)
+	person, ok := r.Resolve(ctx, number)
 	if !ok {
 		return ""
 	}
 
-	return match.Name
+	return person.Name
 }
 
-// namesWorkerCap bounds the fan-out of Names: enough parallelism that a
+// namesWorkerCap bounds the fan-out of People: enough parallelism that a
 // slow CRM costs ONE timeout per page (not one per number), few enough
 // requests that a page render never stampedes the CRM.
 const namesWorkerCap = 8
 
-// Names resolves a batch of numbers and returns the number→name map for
-// view props. Unresolved numbers are absent, not empty-stringed, so the
+// People resolves a batch of numbers and returns the number→person map
+// for view props. Unresolved numbers are absent, not zero-personed, so the
 // displayName fallback needs no extra policy. Resolution runs bounded-
 // concurrent: a page holds tens of numbers and each lookup may take the
 // full request timeout against a slow CRM — sequential resolution would
 // hang the tab render for N×timeout, violating the "decoration, never a
 // prerequisite" contract of the whole seam.
-func (r *Resolver) Names(ctx context.Context, numbers []string) map[string]string {
-	names := make(map[string]string, len(numbers))
+//
+// The PERSON, not a bare name: the CRM's contact ref is what makes a named
+// caller reachable (deep link, call journal). Dropping it here was the
+// seam's original lossy projection.
+func (r *Resolver) People(ctx context.Context, numbers []string) map[string]Person {
+	people := make(map[string]Person, len(numbers))
 	if len(numbers) == 0 {
-		return names
+		return people
 	}
 
-	type resolved struct{ number, name string }
+	type resolved struct {
+		number string
+		person Person
+	}
 	results := make(chan resolved, len(numbers))
 	jobs := make(chan string)
 
@@ -179,8 +186,8 @@ func (r *Resolver) Names(ctx context.Context, numbers []string) map[string]strin
 	for range workers {
 		wg.Go(func() {
 			for number := range jobs {
-				if name := r.Name(ctx, number); name != "" {
-					results <- resolved{number: number, name: name}
+				if person, ok := r.Resolve(ctx, number); ok && person.Name != "" {
+					results <- resolved{number: number, person: person}
 				}
 			}
 		})
@@ -193,10 +200,10 @@ func (r *Resolver) Names(ctx context.Context, numbers []string) map[string]strin
 	close(results)
 
 	for res := range results {
-		names[res.number] = res.name
+		people[res.number] = res.person
 	}
 
-	return names
+	return people
 }
 
 // LogCall forwards one call activity to the CRM (no caching — a call is a
@@ -232,14 +239,14 @@ func (r *Resolver) join(number string) *lookupFlight {
 
 // settle publishes the leader's result to joiners and retires the
 // in-flight entry.
-func (r *Resolver) settle(number string, match Match, ok bool) {
+func (r *Resolver) settle(number string, person Person, ok bool) {
 	r.mu.Lock()
 	flight := r.inflight[number]
 	delete(r.inflight, number)
 	r.mu.Unlock()
 
 	if flight != nil {
-		flight.match = match
+		flight.person = person
 		flight.ok = ok
 		close(flight.done)
 	}
