@@ -32,7 +32,7 @@ templ crmNameLink(number string, contacts CRMContacts, lang Lang) {
 // a toggle. Rendering nothing when there is nothing to say is the whole
 // degradation contract — no empty shell, no placeholder, no spinner.
 templ crmContextStrip(crm *CRMContext, lang Lang) {
-	if ctx != nil {
+	if crm != nil {
 		<aside class="wp-crm-context" id="wp-crm-context" aria-label={ T(lang, "crm.context") }>
 			if crm.Company != "" {
 				<span class="wp-crm-chip">

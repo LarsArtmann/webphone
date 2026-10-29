@@ -139,7 +139,7 @@ func crmContextStrip(crm *CRMContext, lang Lang) templ.Component {
 			templ_7745c5c3_Var7 = templ.NopComponent
 		}
 		ctx = templ.ClearChildren(ctx)
-		if ctx != nil {
+		if crm != nil {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 6, "<aside class=\"wp-crm-context\" id=\"wp-crm-context\" aria-label=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
