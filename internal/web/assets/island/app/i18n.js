@@ -202,6 +202,8 @@ export const I18N = {
     transcribeFailed: (detail) => `transcription failed: ${detail}`,
     transcribeUnavailable:
       "Live transcription keeps failing — the provider may be unreachable.",
+    transcribeLag:
+      "Live transcription is lagging behind the call — captions may arrive late.",
     transcribeStarted: "Live transcription started",
     transcribeStopped: "Live transcription stopped",
     transcriptDelta: (text) => `Transcript: ${text}`,
@@ -422,6 +424,8 @@ export const I18N = {
     transcribeFailed: (detail) => `Transkription fehlgeschlagen: ${detail}`,
     transcribeUnavailable:
       "Live-Transkription schlägt wiederholt fehl — der Anbieter ist womöglich nicht erreichbar.",
+    transcribeLag:
+      "Live-Transkription hinkt dem Gespräch hinterher — Untertitel kommen verspätet.",
     transcribeStarted: "Live-Transkription gestartet",
     transcribeStopped: "Live-Transkription gestoppt",
     transcriptDelta: (text) => `Transkript: ${text}`,

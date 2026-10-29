@@ -98,3 +98,11 @@ htmlcov/
 # <<< buildflow-managed (.gitignore) <<<
 
 /webphone
+
+# Visual-harness output (scripts/ui-capture.py). LOCAL-ONLY by budget
+# decision and regenerated from scratch on every run — the harness deletes
+# the directory before shooting, so tracking these was 24 blobs rewritten
+# and re-committed per visual pass (untracked 2026-10-29). The shots are
+# eyeball material; the assertions that make them evidence live in
+# check_thread_layout() and the per-surface DOM markers.
+/ui-shots/

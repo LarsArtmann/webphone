@@ -28,6 +28,13 @@
         # island/, so the `all:island` embed never ships them to
         # browsers; --test-force-exit keeps the toast lifetime timers
         # from holding the event loop open.
+        #
+        # NO PIPE. This used to be `node … | tee $out`, which made the check
+        # structurally unable to fail: runCommand's `set -e` sees tee's exit 0,
+        # so a red spec still produced a green derivation (the pipeline-masking
+        # class already in docs/lessons.md). Redirecting straight into $out
+        # keeps the whole log as the check's output AND lets node's status
+        # reach `set -e`.
         island-js =
           pkgs.runCommand "island-js-check"
             {
@@ -36,7 +43,7 @@
             ''
               cd ${self}
               node --test --test-force-exit \
-                internal/web/assets/island-tests/*.test.mjs | tee $out
+                internal/web/assets/island-tests/*.test.mjs > $out
             '';
 
         # Fixture smoke of the vulnix triage CLI — the 2026-09-20
