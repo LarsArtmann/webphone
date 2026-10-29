@@ -11,6 +11,9 @@ import (
 )
 
 // dialServer builds a server with the dial gate enabled for cooldown.
+// The base dial-gate pins (advise+record, one-shot override, off→404,
+// anon→401) live in dialgate_test.go; this file holds the pins that
+// file does not carry.
 func dialServer(t *testing.T, cooldown time.Duration, mutate ...func(*Deps)) *testServer {
 	t.Helper()
 	return newTestServerWithConfig(t, "", func(c *config.Config) {
@@ -42,56 +45,40 @@ func decodeDial(t *testing.T, body []byte) (allowed bool, lastAt, window int64) 
 	return got.Allowed, got.LastAt, got.Window
 }
 
-// TestDialGateOffByDefault: the cooldown is OFF with zero config — the
-// mounted route answers the disabled-seam 404 even with the store wired
-// (the CONFIG is the gate, not the store) and /config.js carries no
-// dialCooldownSeconds key (the opt-in-off byte-identical pin).
-func TestDialGateOffByDefault(t *testing.T) {
+// TestDialGateConfigSilentWhenOff: the opt-in-off contract — /config.js
+// carries NO dialCooldownSeconds key with zero config (byte-identical
+// off) and the honest window length once the gate is on.
+func TestDialGateConfigSilentWhenOff(t *testing.T) {
 	c := newClient(t)
 	c.login("1001", "pw")
-	if resp, _ := postDial(t, c, `{"remote":"+4989123456"}`); resp.StatusCode != http.StatusNotFound {
-		t.Errorf("gate with the cooldown off: %d, want 404", resp.StatusCode)
-	}
-	resp, body := c.do(http.MethodGet, "/config.js", nil, "")
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("config.js: %d", resp.StatusCode)
-	}
+	_, body := c.do(http.MethodGet, "/config.js", nil, "")
 	if strings.Contains(string(body), "dialCooldownSeconds") {
 		t.Errorf("config.js must not carry the cooldown key when the gate is off: %s", body)
 	}
+
+	on := clientFor(t, dialServer(t, time.Hour))
+	on.login("1001", "pw")
+	resp, body := on.do(http.MethodGet, "/config.js", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("config.js (gate on): %d", resp.StatusCode)
+	}
+	if !strings.Contains(string(body), `"dialCooldownSeconds":3600`) {
+		t.Errorf("config.js must carry the window when the gate is on: %s", body)
+	}
 }
 
-// TestDialGateAllowsRecordsThenDenies: the first ask records the
-// attempt and allows; the immediate replay inside the window denies
-// with the slot's last-at stamp and the window length, carrying the
-// config.js echo so the island can phrase the remaining wait.
-func TestDialGateAllowsRecordsThenDenies(t *testing.T) {
-	srv := dialServer(t, time.Hour)
-	c := clientFor(t, srv)
+// TestDialGateAllowedVerdictCarriesNoState: an ALLOWED answer is exactly
+// the verdict — no last_at stamp, no window echo (those are the denied
+// ask's cooldown-phrasing state, per the DTO contract).
+func TestDialGateAllowedVerdictCarriesNoState(t *testing.T) {
+	c := clientFor(t, dialServer(t, time.Hour))
 	c.login("1001", "pw")
-
 	resp, body := postDial(t, c, `{"remote":"+4989123456"}`)
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("first dial: %d, want 200", resp.StatusCode)
 	}
-	allowed, lastAt, window := decodeDial(t, body)
-	if !allowed || lastAt != 0 || window != 0 {
-		t.Errorf("first verdict: allowed=%v last_at=%d window=%d, want true/0/0", allowed, lastAt, window)
-	}
-
-	resp, body = postDial(t, c, `{"remote":"+4989123456"}`)
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("replay dial: %d, want 200", resp.StatusCode)
-	}
-	allowed, lastAt, window = decodeDial(t, body)
-	if allowed {
-		t.Errorf("replay inside the window must deny, got allowed=true")
-	}
-	if lastAt <= 0 {
-		t.Errorf("denied verdict must carry the slot's last-at stamp, got %d", lastAt)
-	}
-	if window != 3600 {
-		t.Errorf("denied verdict must carry the window length in seconds, got %d", window)
+	if allowed, lastAt, window := decodeDial(t, body); !allowed || lastAt != 0 || window != 0 {
+		t.Errorf("allowed verdict: allowed=%v last_at=%d window=%d, want true/0/0", allowed, lastAt, window)
 	}
 }
 
@@ -99,12 +86,13 @@ func TestDialGateAllowsRecordsThenDenies(t *testing.T) {
 // after the window runs out from the LAST ALLOWED dial, the next ask is
 // allowed again (a retry loop must not grow the window it fights).
 func TestDialGateDenyNeverExtendsTheWindow(t *testing.T) {
-	srv := dialServer(t, 3*time.Second)
-	c := clientFor(t, srv)
+	c := clientFor(t, dialServer(t, 3*time.Second))
 	c.login("1001", "pw")
 
-	if resp, _ := postDial(t, c, `{"remote":"+4930123"}`); resp.StatusCode != http.StatusOK {
-		t.Fatalf("first dial: %d, want 200", resp.StatusCode)
+	if resp, body := postDial(t, c, `{"remote":"+4930123"}`); resp.StatusCode != http.StatusOK {
+		t.Fatalf("first dial: %d", resp.StatusCode)
+	} else if allowed, _, _ := decodeDial(t, body); !allowed {
+		t.Fatalf("first dial must be allowed")
 	}
 	if resp, body := postDial(t, c, `{"remote":"+4930123"}`); resp.StatusCode != http.StatusOK {
 		t.Fatalf("immediate replay: %d", resp.StatusCode)
@@ -118,41 +106,6 @@ func TestDialGateDenyNeverExtendsTheWindow(t *testing.T) {
 	}
 	if allowed, _, _ := decodeDial(t, body); !allowed {
 		t.Errorf("dial after the window must be allowed (denies must not extend the window)")
-	}
-}
-
-// TestDialGateOverrideIsOneShot: the click-through arms the bypass and
-// dials mid-window; the override is SPENT by that allowed attempt — the
-// next plain ask inside the (re-stamped) window denies again.
-func TestDialGateOverrideIsOneShot(t *testing.T) {
-	srv := dialServer(t, time.Hour)
-	c := clientFor(t, srv)
-	c.login("1001", "pw")
-
-	if resp, body := postDial(t, c, `{"remote":"+4930123"}`); resp.StatusCode != http.StatusOK {
-		t.Fatalf("seed dial: %d", resp.StatusCode)
-	} else if allowed, _, _ := decodeDial(t, body); !allowed {
-		t.Fatalf("seed dial must be allowed")
-	}
-	resp, body := postDial(t, c, `{"remote":"+4930123"}`)
-	if allowed, _, _ := decodeDial(t, body); resp.StatusCode != http.StatusOK || allowed {
-		t.Fatalf("second dial must deny (seeds the window), got %d allowed=%v", resp.StatusCode, allowed)
-	}
-
-	resp, body = postDial(t, c, `{"remote":"+4930123","override":true}`)
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("override dial: %d, want 200", resp.StatusCode)
-	}
-	if allowed, _, _ := decodeDial(t, body); !allowed {
-		t.Errorf("armed override must allow mid-window")
-	}
-
-	resp, body = postDial(t, c, `{"remote":"+4930123"}`)
-	if resp.StatusCode != http.StatusOK {
-		t.Fatalf("post-override dial: %d, want 200", resp.StatusCode)
-	}
-	if allowed, _, _ := decodeDial(t, body); allowed {
-		t.Errorf("the override is one-shot: the next plain ask must deny again")
 	}
 }
 
@@ -185,12 +138,9 @@ func TestDialGateOwnerScoping(t *testing.T) {
 }
 
 // TestDialGateBadInput: malformed bodies, unknown fields, and remotes
-// that fail the bound/charset checks are 400 before any store touch;
-// the gate sits behind the session (401) and CSRF gates like every
-// session surface.
+// that fail the bound/charset checks are 400 before any store touch.
 func TestDialGateBadInput(t *testing.T) {
-	srv := dialServer(t, time.Hour)
-	c := clientFor(t, srv)
+	c := clientFor(t, dialServer(t, time.Hour))
 	c.login("1001", "pw")
 
 	for name, body := range map[string]string{
@@ -205,11 +155,6 @@ func TestDialGateBadInput(t *testing.T) {
 		if resp, _ := postDial(t, c, body); resp.StatusCode != http.StatusBadRequest {
 			t.Errorf("%s: %d, want 400", name, resp.StatusCode)
 		}
-	}
-
-	anon := clientFor(t, srv)
-	if resp, _ := postDial(t, anon, `{"remote":"+4930123"}`); resp.StatusCode != http.StatusUnauthorized {
-		t.Errorf("unauthenticated ask: %d, want 401", resp.StatusCode)
 	}
 }
 
