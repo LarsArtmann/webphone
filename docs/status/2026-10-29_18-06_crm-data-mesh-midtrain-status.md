@@ -7,6 +7,13 @@
 
 ---
 
+> **SUPERSEDED (same day, 19:0x).** Every §c/§d item in this snapshot was
+> closed by the completion train:
+> [2026-10-29_18-13_SUPERB-crm-data-mesh-completion.md](../planning/2026-10-29_18-13_SUPERB-crm-data-mesh-completion.md).
+> The red test tree, the dead strip, the missing CSS, the unregistered error
+> code and the absent producer are all fixed and gated. Kept as the
+> point-in-time audit it was, not rewritten.
+
 ## 0. Verdict, in one paragraph
 
 I read the CRM seam, found one root cause (the seam's type is a lossy
