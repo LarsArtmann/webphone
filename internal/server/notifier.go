@@ -74,7 +74,7 @@ func (n *Notifier) Project(ctx context.Context, e domain.Event) {
 func (n *Notifier) messagesChanged(ctx context.Context, owner domain.Extension, threadID domain.ThreadID) {
 	lang := n.hubs.Lang(owner)
 	if threads, err := n.messages.ListThreads(ctx, owner); err == nil {
-		numbers := crmNumbers(threads, func(summary store.ThreadSummary) string { return summary.Thread.Remote.String() })
+		numbers := crmNumbers(threads, func(summary store.ThreadSummary) string { return crmNumberFor(summary.Thread.Remote) })
 		n.publish(ctx, owner, sseEventThreads, views.ThreadsList(threads, crmContacts(n.crm.People(ctx, numbers), n.crm), lang))
 	} else {
 		slog.Debug("sse: render thread list failed", "error", err)

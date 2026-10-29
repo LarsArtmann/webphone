@@ -128,6 +128,18 @@ func (a Address) String() string { return a.value }
 // IsZero reports whether the address is the zero value.
 func (a Address) IsZero() bool { return a.value == "" }
 
+// IsPhoneShaped reports whether the address rides a telephony network, i.e.
+// whether an external phone-number index can possibly match it. SMS and Signal
+// addresses ARE phone numbers; a Matrix user id or a Session id is not, so
+// asking a phone book about one is a guaranteed miss that still costs a
+// request (and, on a strict producer, a 400 that is never cached).
+//
+// This is the ONE home of that rule: consumers that talk to a phone-number
+// directory filter on it instead of enumerating networks themselves.
+func (a Address) IsPhoneShaped() bool {
+	return a.network == NetworkSMS || a.network == NetworkSignal
+}
+
 // isHex reports whether every character is a lowercase hex digit.
 func isHex(s string) bool {
 	for i := 0; i < len(s); i++ {

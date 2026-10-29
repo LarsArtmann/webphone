@@ -61,7 +61,7 @@ func (h *handlers) messagesPanelPrefilled(r *http.Request, sess session.Session,
 			return nil, err //nolint:erraudit // context_loss FP: archivedCount is an OUT param, garbage exactly when the count failed
 		}
 	}
-	numbers := crmNumbers(threads, func(summary store.ThreadSummary) string { return summary.Thread.Remote.String() })
+	numbers := crmNumbers(threads, func(summary store.ThreadSummary) string { return crmNumberFor(summary.Thread.Remote) })
 	reviews, draftsErr := h.textAgentReviews(r)
 	// The drafts panel shares the thread rows' name feed: every pending
 	// draft's contact resolves through the same CRM map.
@@ -110,7 +110,7 @@ func (h *handlers) threadPanelPrefilled(r *http.Request, sess session.Session, i
 	}
 	numbers := append(
 		[]string{thread.Remote.String()},
-		crmNumbers(rail, func(summary store.ThreadSummary) string { return summary.Thread.Remote.String() })...,
+		crmNumbers(rail, func(summary store.ThreadSummary) string { return crmNumberFor(summary.Thread.Remote) })...,
 	)
 	contacts := h.crmDirectory(r.Context(), numbers)
 	// Reply snippets feed the composer's chip lane + picker (M21);

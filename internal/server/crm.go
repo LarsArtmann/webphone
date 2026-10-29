@@ -31,6 +31,18 @@ func crmContacts(people map[string]crm.Person, resolver *crm.Resolver) views.CRM
 	return contacts
 }
 
+// crmNumberFor reports the string the CRM should be asked about for a thread's
+// remote, or "" when the CRM cannot possibly answer. Matrix user ids and
+// Session ids are not phone numbers: a lookup miss at best, a 400 at worst, and
+// always a request nobody needed. crmNumbers' existing ""-skip does the rest.
+func crmNumberFor(remote domain.Address) string {
+	if !remote.IsPhoneShaped() {
+		return ""
+	}
+
+	return remote.String()
+}
+
 // crmContextShown is how many open deals a strip renders. Two is the most a
 // single line can carry before the chips stop being scannable; the tail is
 // counted, never shipped to the markup.
@@ -38,14 +50,15 @@ const crmContextShown = 2
 
 // crmContextFor resolves the CRM's published context for a thread's remote
 // party, or nil when there is nothing to show. It is deliberately scoped to
-// TELEPHONY addresses: the CRM matches phone numbers, so asking it about a
-// matrix or session address would be a guaranteed 400 per page view.
+// PHONE-SHAPED addresses (the same rule the identity lookups obey, via
+// crmNumberFor): the CRM indexes phone numbers, so asking it about a matrix or
+// session address would be a guaranteed 400 per page view.
 //
 // Every degradation returns nil: seam off, no contact, no context published,
 // CRM unreachable. The surface then renders exactly what a CRM-less
 // deployment renders.
 func (h *handlers) crmContextFor(ctx context.Context, remote domain.Address) *views.CRMContext {
-	if remote.Network() != domain.NetworkSMS {
+	if !remote.IsPhoneShaped() {
 		return nil
 	}
 
