@@ -62,6 +62,8 @@ Code wins when doc and code disagree.
 
 ## Fax
 
+Code status below is per feature. Whether THIS deployment can fax at all is declared by `fax.send` / `fax.receive` — the shipped PBX stack runs with **both off** (one DID, on the voice trunk; outbound provider not wired), which the UI now states instead of offering a form that can only fail.
+
 | Feature                         | Status              | Notes                                                                                                                                                                                                                                                                            |
 | ------------------------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Send PDF                        | 🟢 FULLY_FUNCTIONAL | `%PDF-` sniff, ≤20 MiB, spooled to blob store                                                                                                                                                                                                                                    |
@@ -71,6 +73,7 @@ Code wins when doc and code disagree.
 | Document download               | 🟢 FULLY_FUNCTIONAL | Session-gated, owner-scoped PDF streaming                                                                                                                                                                                                                                        |
 | Paperless-ngx archive (inbound) | 🟢 FULLY_FUNCTIONAL | OPTIONAL (`paperless.url`+`paperless.token` both-or-neither): every inbound fax uploaded tagged `fax` / typed `Fax` with the `webphone-fax-id` provenance field, fire-and-forget after persist (blob store stays the storage truth), duplicate refusal inert; nil archiver = off |
 | Fax status timeline + resend    | 🟢 FULLY_FUNCTIONAL | Per-job step timeline (queued→sent→transmitted/failed with error text); resend re-submits the stored document                                                                                                                                                                    |
+| Capability declaration          | 🟢 FULLY_FUNCTIONAL | `fax.send` / `fax.receive` are DEPLOYMENT facts (default on): with a lane off the panel drops the affordance it cannot honour, states the missing half in place, and Settings grows a fax row naming it; both off renders one combined notice. Code-complete ≠ able-to-fax: the lanes need a dedicated fax DID (inbound) and a provider that accepts `/fax` (outbound) |
 
 ## Voicemail & history (phone API)
 

@@ -130,7 +130,11 @@ SURFACE_MARKERS = {
         ("#wp-crm-context", "Retainer 2027"),
     ],
     "media-transcribe": "[data-transcribe-src]",  # audio attachment button (ASR on)
-    "fax": ".wp-compose-fax",  # the compose form is always present
+    # The compose form exists only when the booted config declares outbound
+    # fax; a deployment without it renders the capability notice instead.
+    # Both are honest fax surfaces, so either satisfies the marker — the
+    # harness must not demand a form the product deliberately withholds.
+    "fax": ".wp-compose-fax, .wp-fax-off",
     "voicemail": "#voicemail-panel",
     "history": "#history-panel",
     "history-transcript": "[data-copy-transcript]",  # seeded transcript section

@@ -24,7 +24,7 @@ but usable against any SIP/WebSocket PBX (FreeSWITCH/sofia or compatible).
 | Resilience      | Bounded reconnect watchdog with re-registration; live calls survive                                                                                                                                                                            |
 | Call comfort    | Dial typeahead from your contacts, call state chip, missed-call badge, audio output picker for multi-output desks                                                                                                                              |
 | SMS & MMS       | Threads with unread badges, attachments in/out, delivery receipts, live updates, search over remote + message bodies; pin/mute/archive a conversation, quick reply snippets, optimistic send with retry                                        |
-| Fax             | Send PDFs, receive documents, per-job status timeline, resend failed jobs, download; optional fire-and-forget Paperless-ngx archive of inbound faxes                                                                                           |
+| Fax             | Send PDFs, receive documents, per-job status timeline, resend failed jobs, download; optional fire-and-forget Paperless-ngx archive of inbound faxes. **Per-deployment**: a server with no fax lane hides the send form and says so (`fax.send` / `fax.receive`, see *Fax capabilities*)                                                         |
 | Voicemail       | List, play (inline scrubber + speed control), delete — straight from the PBX's per-extension API                                                                                                                                               |
 | Call history    | Server-side CDR records through the same API; outcome filters (missed/answered), day grouping, shareable filter URLs; per-call notes + reassembled live transcripts with search                                                                |
 | Contacts        | Shared (config) + personal (per extension), vCard import/export, click-to-dial                                                                                                                                                                 |
@@ -140,6 +140,8 @@ in the JSON file.
 | `gateway.webhook_url`                   | _empty_                      | Provider base URL in webhook mode (required there)                                                                                                                                                                                                                                                                                                            |
 | `gateway.webhook_secret`                | _empty_                      | Shared secret; **also guards the inbound `/hooks/*` endpoints (fail-closed: hooks return 503 without it)**                                                                                                                                                                                                                                                    |
 | `gateway.webhook_secret_file`           | _empty_                      | Read the shared secret from a runtime file at startup (single line) instead — one file both sides read beats keeping an env copy and the receiver's copy in sync; at most one of the two may be set                                                                                                                                                           |
+| `fax.send`                              | `true`                       | **Deployment fact, not a code switch.** Whether THIS deployment can send faxes (an outbound provider that accepts `/fax`). `false` removes the Fax panel's send form, replaces it with a plain notice saying sending is not configured, and adds a Fax row to Settings — instead of offering a form whose only possible outcome is a failed job. Unset = on (the zero-config product is unchanged) |
+| `fax.receive`                           | `true`                       | Whether THIS deployment can receive faxes (a fax number routed to the PBX). `false` keeps the panel and any history but says the list can never grow inwards. Both flags are independent; both `false` renders one combined "Fax is not available on this server" notice |
 | `csrf.trusted_proxies`                  | _empty_                      | Local proxies whose `X-Forwarded-Proto` may be believed (the loopback front) — IP or CIDR entries                                                                                                                                                                                                                                                             |
 | `csrf.trusted_origins`                  | _empty_                      | Browser-facing origins counted as same-origin (the TLS vhost, e.g. `https://pbx.example.com`)                                                                                                                                                                                                                                                                 |
 | `crm.url`                               | _empty_ = disabled           | Ledger CRM base URL for the optional integration (e.g. `http://127.0.0.1:8080`)                                                                                                                                                                                                                                                                               |
@@ -280,6 +282,30 @@ content-hash duplicate refusal is inert — Paperless keeps one copy.
 Archiving is fire-and-forget after the fax is persisted: a slow or dead
 Paperless never delays or fails a fax, and failures only WARN in the
 log. Outbound faxes are not archived (v1 scope).
+
+### Fax capabilities (deployment facts)
+
+Fax is the one product area whose code can be complete while the
+deployment has nothing behind it, so the deployment declares its lanes
+and the UI obeys:
+
+- `fax.send` (default `true`) — an outbound provider accepts `/fax` in
+  webhook mode. **A Telnyx DID assigned to a SIP/voice connection cannot
+  also be a Programmable Fax number** (a number binds to one connection),
+  so enabling outbound fax via Telnyx means a Telnyx Fax Application plus
+  a fax-enabled number — or a bridge that implements `/fax`.
+- `fax.receive` (default `true`) — a fax number is routed to the PBX
+  (FreeSWITCH `rxfax` + the stack's fax feed posting to `/hooks/fax`).
+  That needs its OWN DID; the voice trunk's number carries no fax.
+
+With a flag `false` the Fax tab keeps the stored history and document
+links, drops the affordance it cannot honour, and states the missing
+half in place; Settings grows a fax row naming it. Both `false` renders
+one combined "Fax is not available on this server" notice. Misconfigured
+the other way round — flags on, provider absent — is visible as a
+failed job carrying the provider's own reason, never as a fake success
+(only the `loopback` dev gateway resolves instantly, and that mode is
+documented as a demo).
 
 ### Passkey sign-in (optional)
 

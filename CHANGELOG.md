@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The Fax tab states what the deployment can actually do (2026-10-30):
+  `fax.send` and `fax.receive` declare the two lanes independently. With a
+  lane off, the panel keeps stored faxes and document links, drops the
+  affordance it cannot honour, and says in place which half is missing
+  (Settings gains a fax row naming it; SSE payloads agree with the full
+  render). Both off renders one combined "Fax is not available on this
+  server" notice. Unset keeps both on, so the zero-config product is
+  byte-identical; the shipped PBX stack — one voice DID, no outbound fax
+  provider — declares both off instead of offering a send form whose only
+  possible outcome is a failed job.
+
 - CRM contact context beside an open conversation (2026-10-29): when the
   optional CRM is configured and publishes context for the caller, opening a
   conversation shows one quiet line of what is outstanding with them — their

@@ -869,3 +869,47 @@ func TestLoadDashboardConfig(t *testing.T) {
 		t.Errorf("dashboard.title: got %q", cfg.Dashboard.Title)
 	}
 }
+
+// TestLoadFaxCapability pins the deployment's fax declaration: UNSET
+// keeps both directions on (the zero-config product must stay complete),
+// an env switch turns one direction off without touching the other, and
+// the config file can declare both off. This is the seam the Fax tab
+// reads; a regression here silently re-offers a send form that cannot
+// work.
+func TestLoadFaxCapability(t *testing.T) {
+	scrubEnv(t)
+	t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))
+
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !cfg.Fax.SendEnabled() || !cfg.Fax.ReceiveEnabled() {
+		t.Fatalf("unset fax flags must default to both directions on, got send=%v receive=%v", cfg.Fax.SendEnabled(), cfg.Fax.ReceiveEnabled())
+	}
+	if !cfg.Fax.AnyEnabled() {
+		t.Error("any-enabled must report true when both directions are on")
+	}
+
+	t.Setenv("WEBPHONE_FAX__SEND", "false")
+	cfg, err = Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Fax.SendEnabled() {
+		t.Error("fax.send=false must disable outbound fax")
+	}
+	if !cfg.Fax.ReceiveEnabled() {
+		t.Error("fax.send=false must not disable inbound fax")
+	}
+
+	t.Setenv("WEBPHONE_CONFIG", writeConfigFile(t, `{"fax":{"send":false,"receive":false}}`))
+	_ = os.Unsetenv("WEBPHONE_FAX__SEND")
+	cfg, err = Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.Fax.AnyEnabled() {
+		t.Errorf("a file declaring both directions off must disable every lane, got send=%v receive=%v", cfg.Fax.SendEnabled(), cfg.Fax.ReceiveEnabled())
+	}
+}

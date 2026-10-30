@@ -272,3 +272,59 @@ func TestFaxResendRefusesNonFailedRows(t *testing.T) {
 		t.Fatalf("resend of a foreign job: %d (want 404)", resp.StatusCode)
 	}
 }
+
+// TestFaxPanelDeclaresTheDeploymentLane pins the wiring from config to
+// the served HTML: a deployment that declares no outbound fax provider
+// renders the Fax tab WITHOUT the send form and WITH the notice naming
+// the missing half, and Settings grows the fax row. The panel test pins
+// the view; this pins that the server actually feeds it the config.
+func TestFaxPanelDeclaresTheDeploymentLane(t *testing.T) {
+	off := false
+	server := newTestServerWithConfig(t, "", func(cfg *config.Config) {
+		cfg.Fax = config.Fax{Send: &off, Receive: &off}
+	})
+	c := clientFor(t, server)
+	c.login("1001", "pw")
+
+	resp, body := c.do(http.MethodGet, "/fax", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("fax tab: %d", resp.StatusCode)
+	}
+	page := string(body)
+	if strings.Contains(page, `class="wp-compose wp-compose-fax"`) {
+		t.Error("a deployment without fax must not render the send form")
+	}
+	if !strings.Contains(page, "wp-fax-off") {
+		t.Error("a deployment without fax must say so on the Fax tab")
+	}
+	if !strings.Contains(page, "Fax is not available on this server") {
+		t.Error("the notice must name the missing capability")
+	}
+
+	_, settings := c.do(http.MethodGet, "/settings", nil, "")
+	if !strings.Contains(string(settings), "not configured — nothing can be sent or received") {
+		t.Error("Settings must carry the fax row when a direction is missing")
+	}
+}
+
+// TestFaxPanelKeepsSendingOnADeploymentWithoutInbound pins the
+// independent directions: outbound declared, inbound not → the form
+// stays (sending works), and the panel says the list cannot grow
+// inwards instead of implying it is merely empty.
+func TestFaxPanelKeepsSendingOnADeploymentWithoutInbound(t *testing.T) {
+	off := false
+	server := newTestServerWithConfig(t, "", func(cfg *config.Config) {
+		cfg.Fax = config.Fax{Receive: &off}
+	})
+	c := clientFor(t, server)
+	c.login("1001", "pw")
+
+	_, body := c.do(http.MethodGet, "/fax", nil, "")
+	page := string(body)
+	if !strings.Contains(page, `class="wp-compose wp-compose-fax"`) {
+		t.Error("a deployment with outbound fax must keep the send form")
+	}
+	if !strings.Contains(page, "Receiving is not configured on this server") {
+		t.Errorf("the panel must name the missing inbound lane; got:\n%s", page)
+	}
+}

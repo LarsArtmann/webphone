@@ -130,7 +130,6 @@ func newTestServerWithConfig(
 
 	hubs := NewHubs()
 	engine := newTestEngine(t)
-	notifier := NewNotifier(hubs, store.NewMessages(db), engine.Faxes(), nil, false, views.FaxCapability{Send: true, Receive: true})
 	cfg := config.Config{
 		Addr: ":0", DataDir: t.TempDir(), WebsocketPath: "/sip",
 		SessionTTL: time.Hour,
@@ -139,6 +138,13 @@ func newTestServerWithConfig(
 	if tweakCfg != nil {
 		tweakCfg(&cfg)
 	}
+	// The notifier reads the capability from the SAME config the panels
+	// do (mirroring app.go): a test that declares a fax lane off must get
+	// SSE payloads that agree with the full render.
+	notifier := NewNotifier(hubs, store.NewMessages(db), engine.Faxes(), nil, false, views.FaxCapability{
+		Send:    cfg.Fax.SendEnabled(),
+		Receive: cfg.Fax.ReceiveEnabled(),
+	})
 	messages := store.NewMessages(db)
 	faxes := engine.Faxes()
 	transcripts := engine.Transcripts()
