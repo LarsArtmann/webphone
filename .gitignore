@@ -106,3 +106,4 @@ htmlcov/
 # eyeball material; the assertions that make them evidence live in
 # check_thread_layout() and the per-surface DOM markers.
 /ui-shots/
+/ui-shots-fax-off/
