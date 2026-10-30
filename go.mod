@@ -3,7 +3,7 @@ module github.com/larsartmann/webphone
 go 1.27.2
 
 require (
-	github.com/a-h/templ v0.3.1070
+	github.com/a-h/templ v0.3.1100
 	github.com/coreos/go-oidc/v3 v3.21.0
 	github.com/dustin/go-humanize v1.1.0
 	github.com/knadh/koanf/parsers/json v1.0.1
@@ -28,7 +28,7 @@ require (
 	github.com/larsartmann/go-paperless v0.5.0
 	github.com/larsartmann/go-sse v0.6.2
 	github.com/larsartmann/go-sse/ssetest v0.5.0
-	github.com/larsartmann/httputil v1.6.0
+	github.com/larsartmann/httputil v1.7.0
 	github.com/larsartmann/httputil/server_timing v1.0.3
 	github.com/larsartmann/templ-components v1.24.0
 	github.com/larsartmann/templ-components/icons v1.24.0
