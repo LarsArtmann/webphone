@@ -8,12 +8,30 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
+// FaxCapability is what THIS deployment can actually do with fax, per
+// direction (mirrored from config.Fax by the server). The directions are
+// independent: a PBX that receives faxes on a dedicated number but has no
+// outbound provider is the common case. The zero value (both false) means
+// no fax lane at all — the panel then says so up front instead of offering
+// a form that can only fail, and the zero-config product (both true)
+// renders byte-identically to the pre-capability markup.
+type FaxCapability struct {
+	Send    bool
+	Receive bool
+}
+
+// Any reports whether any direction is available.
+func (c FaxCapability) Any() bool { return c.Send || c.Receive }
+
 // FaxPanel is the Fax tab: PDF upload form plus the job list (outbox and
 // inbox). Only the list region carries sse-swap="fax" so live pushes
 // never wipe a PDF half-selected into the upload form.
 type FaxPanelProps struct {
 	Jobs  []domain.FaxJob
 	Error string
+	// Capability gates every affordance: no send → no form, no receive →
+	// the panel says the list can only ever hold what was sent.
+	Capability FaxCapability
 	// Identity is the extension's presented number (DID); empty = unknown.
 	Identity string
 	// CRM carries the optional CRM integration's answers for the numbers
@@ -24,40 +42,86 @@ type FaxPanelProps struct {
 
 templ FaxPanel(props FaxPanelProps) {
 	<section class="wp-panel" id="fax-panel">
-		@panelHead(props.Lang, "tab.fax", "fax.subtitle")
+		@panelHead(props.Lang, "tab.fax", faxSubtitleKey(props.Capability))
 		@panelError(props.Error)
 		@identityLine(props.Lang, props.Identity)
-		<form
-			class="wp-compose wp-compose-fax"
-			hx-post="/fax/send"
-			hx-target="#tab-content"
-			hx-swap="innerHTML"
-			hx-encoding="multipart/form-data"
-			enctype="multipart/form-data"
-			hx-disabled-elt="find button[type=submit]"
-		>
-			@forms.Input(forms.InputProps{
-				BaseProps: utils.BaseProps{
-					AriaLabel: T(props.Lang, "fax.number.ph"),
-					Attrs:     templ.Attributes{"inputmode": "tel"},
-				},
-				Name:        "to",
-				Placeholder: T(props.Lang, "fax.number.ph"),
-				Required:    true,
-			})
-			<input type="file" name="document" required accept="application/pdf,.pdf" aria-label={ T(props.Lang, "fax.document.label") }></input>
-			@display.Button(display.ButtonProps{
-				Type:  display.ButtonHTMLSubmit,
-				Icon:  faxSendIndicator(),
-				Text:  T(props.Lang, "fax.send"),
-			})
-			<div class="wp-attach" hidden></div>
-		</form>
+		if props.Capability.Send {
+			<form
+				class="wp-compose wp-compose-fax"
+				hx-post="/fax/send"
+				hx-target="#tab-content"
+				hx-swap="innerHTML"
+				hx-encoding="multipart/form-data"
+				enctype="multipart/form-data"
+				hx-disabled-elt="find button[type=submit]"
+			>
+				@forms.Input(forms.InputProps{
+					BaseProps: utils.BaseProps{
+						AriaLabel: T(props.Lang, "fax.number.ph"),
+						Attrs:     templ.Attributes{"inputmode": "tel"},
+					},
+					Name:        "to",
+					Placeholder: T(props.Lang, "fax.number.ph"),
+					Required:    true,
+				})
+				<input type="file" name="document" required accept="application/pdf,.pdf" aria-label={ T(props.Lang, "fax.document.label") }></input>
+				@display.Button(display.ButtonProps{
+					Type:  display.ButtonHTMLSubmit,
+					Icon:  faxSendIndicator(),
+					Text:  T(props.Lang, "fax.send"),
+				})
+				<div class="wp-attach" hidden></div>
+			</form>
+		} else {
+			@faxUnavailableNotice(props.Lang, faxUnavailableKey(props.Capability))
+		}
+		if !props.Capability.Receive && props.Capability.Send {
+			@faxUnavailableNotice(props.Lang, "fax.receiveOff")
+		}
 		<div class="wp-fax-list" sse-swap="fax" hx-swap="morph:innerHTML">
-			@FaxList(props.Jobs, props.CRM, props.Lang)
+			@FaxList(props.Jobs, props.CRM, props.Capability, props.Lang)
 		</div>
 	</section>
 }
+
+// faxSubtitleKey picks the panel subtitle: the plain one only when BOTH
+// directions exist (byte-identical default), otherwise a line that states
+// which half is missing. One home for the mapping.
+func faxSubtitleKey(cap FaxCapability) string {
+	switch {
+	case cap.Send && cap.Receive:
+		return "fax.subtitle"
+	case cap.Send:
+		return "fax.subtitle.noreceive"
+	case cap.Receive:
+		return "fax.subtitle.nosend"
+	default:
+		return "fax.subtitle.off"
+	}
+}
+
+// faxUnavailableKey picks the notice body for a half (or wholly) missing
+// lane. The "no send, no receive" case has its own combined copy so the
+// panel never stacks two notices saying almost the same thing.
+func faxUnavailableKey(cap FaxCapability) string {
+	switch {
+	case !cap.Send && !cap.Receive:
+		return "fax.off"
+	case !cap.Send:
+		return "fax.sendOff"
+	default:
+		return "fax.receiveOff"
+	}
+}
+
+// faxUnavailableNotice is the panel's honest "this cannot work here" box:
+// styled as the informational empty state (never as an error — nothing
+// broke, a capability is absent) and marked with wp-fax-off so the smoke
+// and UI-capture harnesses can assert which state rendered.
+templ faxUnavailableNotice(lang Lang, key string) {
+	<p class="wp-empty wp-fax-off" role="note">{ T(lang, key) }</p>
+}
+
 
 // faxSendIndicator is the send button's htmx spinner (the request
 // in-flight marker); Button renders it ahead of the label.
@@ -66,15 +130,33 @@ templ faxSendIndicator() {
 }
 
 // FaxList renders the fax rows (or the empty state). It is the payload of
-// the SSE "fax" event, so it must stay swap-safe: no wrapper, no form.
-templ FaxList(jobs []domain.FaxJob, contacts CRMContacts, lang Lang) {
+// the SSE "fax" event, so it must stay swap-safe: no wrapper, no form. The
+// empty state names the capability because "send a PDF above" is a lie
+// when the send form is absent — and an SSE payload must agree with the
+// full render (the Notifier carries the same boot-time flags).
+templ FaxList(jobs []domain.FaxJob, contacts CRMContacts, cap FaxCapability, lang Lang) {
 	if len(jobs) == 0 {
-		@display.EmptyState(display.EmptyStateProps{Title: T(lang, "fax.empty"), Icon: icons.Document})
+		@display.EmptyState(display.EmptyStateProps{Title: T(lang, faxEmptyKey(cap)), Icon: icons.Document})
 	}
 	for _, job := range jobs {
 		@FaxRow(job, contacts, lang)
 	}
 }
+
+// faxEmptyKey is the one home of the empty-state copy mapping.
+func faxEmptyKey(cap FaxCapability) string {
+	switch {
+	case cap.Send && cap.Receive:
+		return "fax.empty"
+	case cap.Send:
+		return "fax.empty.noreceive"
+	case cap.Receive:
+		return "fax.empty.nosend"
+	default:
+		return "fax.empty.off"
+	}
+}
+
 
 templ FaxRow(job domain.FaxJob, contacts CRMContacts, lang Lang) {
 	// wp-fax-row stays in the class list: it is the swap-safety contract

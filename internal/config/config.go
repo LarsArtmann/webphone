@@ -59,7 +59,16 @@ type Config struct {
 	// extensions or lookups by the signed-in extension silently miss.
 	Identities map[string]string `json:"identities" koanf:"identities"`
 	Gateway    Gateway           `json:"gateway" koanf:"gateway"`
-	TURN       TURNREST          `json:"turn_rest" koanf:"turn_rest"`
+	// Fax declares what this DEPLOYMENT can actually do with fax, per
+	// direction. It is a deployment fact, not a code fact: the fax code
+	// is complete either way, but a lane only exists when a number is
+	// routed to the PBX (receive) or an outbound provider accepts
+	// /fax (send). Both default ON so the zero-config product is
+	// unchanged; every surface that offers a fax affordance reads these
+	// flags, so switching one OFF hides the affordance and says why
+	// instead of letting the operator discover it as a failed send.
+	Fax  Fax       `json:"fax" koanf:"fax"`
+	TURN TURNREST  `json:"turn_rest" koanf:"turn_rest"`
 	CSRF       CSRF              `json:"csrf" koanf:"csrf"`
 	// CRM is the OPTIONAL integration with the Ledger CRM (contact name
 	// enrichment + call-activity logging). Zero value = disabled.
@@ -503,6 +512,20 @@ type Gateway struct {
 	WebhookSecretFile string `json:"webhook_secret_file,omitempty" koanf:"webhook_secret_file"`
 }
 
+// Fax is the deployment's declared fax reachability, one flag per
+// direction. The two directions are INDEPENDENT facts: a PBX that
+// receives faxes on a dedicated number but has no outbound provider is
+// the normal case here, and it must not be rendered as "fax works".
+// Zero value = no fax at all (both false); defaults() turns both on so
+// the zero-config product keeps byte-identical behaviour.
+type Fax struct {
+	Receive bool `json:"receive" koanf:"receive"`
+	Send    bool `json:"send" koanf:"send"`
+}
+
+// Any reports whether this deployment has any fax lane at all.
+func (f Fax) Any() bool { return f.Receive || f.Send }
+
 // errGatewaySecretBothSources: exactly-one-of gateway.webhook_secret /
 // gateway.webhook_secret_file — two sources for one secret invite drift.
 // Classified Rejection: the operator must fix
@@ -559,6 +582,7 @@ func defaults() Config {
 		SessionTTL:    7 * 24 * time.Hour,
 		SessionMaxTTL: 30 * 24 * time.Hour,
 		Gateway:       Gateway{Mode: GatewayLoopback},
+		Fax:           Fax{Receive: true, Send: true},
 	}
 }
 
