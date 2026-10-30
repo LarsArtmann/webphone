@@ -531,6 +531,7 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 		ASR:            h.asrOn(),
 		ASRDetail:      asrDetail,
 		ASRLocality:    h.deps.ASRLocality,
+		Paperless:      h.deps.Config.Paperless.Enabled(),
 		Agent:          agentOn,
 		AgentMode:      agentMode,
 		ChatMatrix:     h.deps.Config.Matrix.Enabled(),

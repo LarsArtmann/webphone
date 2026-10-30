@@ -37,6 +37,13 @@ type SettingsPanelProps struct {
 	ASR        bool
 	ASRDetail  string
 	ASRLocality string
+	// Paperless reports the optional inbound-fax archive (config-fax
+	// audit T7, 2026-10-30): the row renders ONLY when the seam is
+	// configured and states the CONFIG fact — never an uptime claim
+	// (the archive leg is fire-and-forget; the blob store stays the
+	// storage truth and failures belong to the journal). Off renders
+	// no row: off is the deliberate default, not a missing half.
+	Paperless bool
 	// Agent reports the optional textagent seam (M17/M13): AgentMode is
 	// the effective draft mode when the bounded probe answered (empty
 	// otherwise — the row still renders, naming the seam's home). The
@@ -294,6 +301,14 @@ func settingsItems(props SettingsPanelProps) []display.DefinitionItem {
 	// telephony-only deployment).
 	if props.Agent {
 		items = append(items, display.DefinitionItem{Term: T(props.Lang, "settings.agent"), DetailComponent: serviceDetailExtra(true, agentDetail(props), T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))})
+	}
+	// The Paperless row (capability-fax audit T7) surfaces only when the
+	// archive seam is configured: it states the config fact — inbound
+	// faxes are copied to the archive — without claiming uptime (the
+	// copy is fire-and-forget; the journal owns failures). Off renders
+	// no row and the zero-config panel stays byte-identical.
+	if props.Paperless {
+		items = append(items, display.DefinitionItem{Term: T(props.Lang, "settings.paperless"), DetailComponent: serviceDetail(true, T(props.Lang, "settings.paperless.on"), "")})
 	}
 	// Chat-network lanes surface only when they exist (an always-on
 	// "off" row would be noise for every telephony-only deployment).

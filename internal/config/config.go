@@ -366,6 +366,12 @@ type Paperless struct {
 	Token string `json:"token" koanf:"token"`
 }
 
+// Enabled is the both-or-neither rule as a fact the UI can state: the
+// archiver is built only when BOTH keys are set, so the Settings row
+// renders only on this (a half configuration is refused at boot —
+// this method never sees one).
+func (p Paperless) Enabled() bool { return p.URL != "" && p.Token != "" }
+
 // ASR configures the optional speech-to-text provider. Two provider
 // kinds share the seam: "openai" (default — any OpenAI-compatible
 // /v1/audio/transcriptions server, e.g. Speaches or whisper.cpp) and
