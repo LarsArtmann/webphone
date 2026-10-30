@@ -245,11 +245,15 @@ func orUnset(value string, lang Lang) string {
 	return value
 }
 
-// settingsFaxKey is the one home of the fax-row vocabulary: it names the
-// MISSING direction, because that is the fact an operator needs. A full
-// lane never reaches this function (the row is conditional).
+// settingsFaxKey is the one home of the fax-row vocabulary: it names
+// the lanes' state — the missing direction with its reason when one is
+// off, and the plain "both available" fact when neither is. The row
+// renders for EVERY deployment (owner decision 2, 2026-10-30: symmetric
+// rows read better than a row that only ever reports bad news).
 func settingsFaxKey(cap FaxCapability) string {
 	switch {
+	case cap.Send && cap.Receive:
+		return "settings.fax.on"
 	case !cap.Send && !cap.Receive:
 		return "settings.fax.off"
 	case !cap.Send:
@@ -270,15 +274,14 @@ func settingsItems(props SettingsPanelProps) []display.DefinitionItem {
 		{Term: T(props.Lang, "settings.ice"), Detail: fmtInt(props.ICEServers)},
 		{Term: T(props.Lang, "settings.gateway"), Detail: props.GatewayMode},
 	}
-	// The fax row surfaces only when a direction is MISSING (the
-	// push/chat pattern): a deployment whose fax lane works needs no row
-	// saying so, and zero config keeps the panel byte-identical. When it
-	// renders, it sits beside the gateway row because it is the same kind
-	// of deployment fact — and it names the missing half, which the
-	// gateway-mode vocabulary ("webhook") never did.
-	if !props.Fax.Send || !props.Fax.Receive {
-		items = append(items, display.DefinitionItem{Term: T(props.Lang, "settings.fax"), DetailComponent: serviceDetail(false, "", T(props.Lang, settingsFaxKey(props.Fax)))})
-	}
+	// The fax row renders for EVERY deployment (owner decision 2,
+	// 2026-10-30 — docs/planning/2026-10-30_04-15_fax-decision.md): a
+	// lane that works is also a deployment fact worth stating, and a
+	// row that only ever reports bad news reads as an error. The pill
+	// carries the lanes' state; its on/off class follows whether ANY
+	// lane is up. This deliberately ends the Settings byte-parity era
+	// — the new markup is pinned by the view tests instead.
+	items = append(items, display.DefinitionItem{Term: T(props.Lang, "settings.fax"), DetailComponent: serviceDetail(props.Fax.Any(), "", T(props.Lang, settingsFaxKey(props.Fax)))})
 	items = append(items,
 		display.DefinitionItem{Term: T(props.Lang, "settings.phoneAPI"), DetailComponent: serviceDetail(props.PhoneAPI, T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
 		display.DefinitionItem{Term: T(props.Lang, "settings.crm"), DetailComponent: crmDetail(props.CRMState, props.Lang)},
