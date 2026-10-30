@@ -270,13 +270,33 @@ real bar.
   it honestly red-ed the gateway-less VM fixtures in run 41060217586;
   refined + locally proven: telephony-eval AND telephony-fax green).
   CI on `ad122b9`: in progress at snapshot time — CHECK BEFORE RELOCK.
-- pbx-artmann: NOT YET RELOCKED (waits for stack CI green per the
-  2026-10-24 runbook doctrine). Staging steps once green:
-  `nix run .#relock` → real-host eval
-  `nix eval --json .#nixosConfigurations.pbx.config.services.webphone.settings.fax`
-  (expect `{"receive":false,"send":false}`) → `nix run .#deploy` →
-  owner runs the switch legs (no-ssh doctrine — the assistant never
-  ssh'd the PBX).
+- pbx-artmann: **RELOCKED, STAGED, GUARDS GREEN, PUSHED (15:5x CET)**.
+  `nix run .#relock` moved telephony `0a5ac22 → ad122b9` (stack CI green,
+  run 41062742902) and the webphone input `b43d1ab → b035e74e` (the
+  sibling's vetted rev). Real-host eval verdict:
+  `{"receive":false,"send":false}`. The staging ritual survived two
+  guard stops, both instructive: (1) `/tmp/pbx-toplevel-current` was
+  wiped by a reboot — rebuilt from the DEPLOYED commit `376db4a` via a
+  git worktree and the store path came back BYTE-IDENTICAL to the live
+  closure (`yyib5k9g…`, same derivation = same path, the repair recipe
+  works); (2) the concurrent mail-train commit (`0fce4f0`) landed
+  mid-ritual, so the staged root carries BOTH trains and the CHANGELOG
+  baseline bullet names the combined diff story (docs-churn restages
+  are same-plan children; readlink is the truth). Final state: staged
+  root `dw8zhd79…`, deploy-freshness FRESH, secrets-preflight OK,
+  remote master == local (`1245583`). Switch sheet:
+  `pbx-artmann/docs/runbooks/owner-switch-2026-10-30-fax-truth.md`.
+  The deploy app's printed owner legs (no-ssh doctrine — the assistant
+  never ssh'd the PBX):
+  ```console
+  0. push the train (DONE — remote master 1245583)
+  1. push secrets if any changed (NONE changed in this train)
+  2. nixos-rebuild switch --flake .#pbx --target-host root@pbx.artmann.tech
+  3. ssh root@pbx.artmann.tech 'systemctl restart telephony-secrets-perms webphone telephony-agent'
+  4. ./tests/installer/verify-live.sh
+  ```
+  (The sheet's test→verify→switch order is the conservative superset;
+  the printed legs are the app's canonical four.)
 
 ### Other attributed findings
 
