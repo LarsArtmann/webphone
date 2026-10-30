@@ -152,3 +152,43 @@ func TestFaxRowRendersWithoutCapability(t *testing.T) {
 		t.Errorf("stored document link must survive a capability change; rendered:\n%s", panel)
 	}
 }
+
+// TestSettingsFaxRowAlwaysStatesTheLanes pins the owner decision of
+// 2026-10-30 (docs/planning/2026-10-30_04-15_fax-decision.md, T29): the
+// fax Settings row renders for EVERY deployment — a lane that works is
+// also a deployment fact worth stating — and the pill names the state
+// in all four combinations, its on-class following whether ANY lane is
+// up. With default props the fax row is the only wp-service-on row in
+// the panel, so the on-cases assert exactly one.
+func TestSettingsFaxRowAlwaysStatesTheLanes(t *testing.T) {
+	tests := []struct {
+		name string
+		cap  FaxCapability
+		want string
+		on   bool
+	}{
+		{"both lanes on", FaxCapability{Send: true, Receive: true}, "sending and receiving available", true},
+		{"both lanes off", FaxCapability{}, "not configured — nothing can be sent or received", false},
+		{"send off", FaxCapability{Receive: true}, "receive only — no outbound fax provider", true},
+		{"receive off", FaxCapability{Send: true}, "send only — no fax number is routed here", false},
+	}
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			html := renderComponent(t, SettingsPanel(SettingsPanelProps{Fax: tc.cap, Lang: LangEN}))
+			if !strings.Contains(html, ">Fax</dt>") {
+				t.Fatalf("fax row missing from Settings; rendered:\n%s", html)
+			}
+			if !strings.Contains(html, tc.want) {
+				t.Fatalf("fax row does not state the lanes (%q); rendered:\n%s", tc.want, html)
+			}
+			ons := strings.Count(html, `wp-service wp-service-on`)
+			offs := strings.Count(html, `wp-service wp-service-off`)
+			if tc.on && ons != 1 {
+				t.Fatalf("exactly one on-pill expected, got %d; rendered:\n%s", ons, html)
+			}
+			if !tc.on && (ons != 0 || offs == 0) {
+				t.Fatalf("fax row must be an off-pill here (ons=%d offs=%d); rendered:\n%s", ons, offs, html)
+			}
+		})
+	}
+}
