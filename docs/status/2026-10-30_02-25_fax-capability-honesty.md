@@ -195,3 +195,96 @@ stack 3+ (latest `87331b2`, 02:14). **Both repos are clean but UNPUSHED.**
 1. **Should the Fax tab exist at all when both lanes are off?** I kept it visible so stored faxes and their documents stay reachable, and made it say "Fax is not available on this server". The alternative is hiding the tab and (perhaps) moving history behind Settings → export. This is a product/UX call with data-access consequences — I will implement either.
 2. **Push and relock now, or leave it to the daemon/train?** The manual-push bar is met (first unpushed commit >60 min) and the deployed effect needs webphone push → stack lock bump → pbx-artmann relock → switch. I did not push because you have not asked me to. Say the word and I will run the whole chain and CI-watch it to green.
 3. **Is fax a product you want, or a feature you want gone?** If yes: dedicated fax DID (which number/country, and who pays) plus an outbound decision (bridge `/fax` implementation vs a Telnyx Programmable Fax application on a *separate* number). If no: I can delete the Fax tab, the stack's fax options, and the bridge's 503 in one train and keep only the export path. Both are clean outcomes; the current middle state is the only one that costs attention forever.
+
+---
+
+## UPDATE — 2026-10-30 14:30 CET (the follow-through session)
+
+Snapshot-rot warning applies: timestamps below are per-claim; re-check
+push/CI before quoting.
+
+### The three open questions (§g) — ANSWERED by the owner (~04:15 CET)
+
+1. **Fax tab visibility** → KEEP the tab (history/downloads live there).
+2. **Push/relock** → executed (see the chain below; the daemon's
+   push-leg stalled 9h20m — the manual-push bar was invoked with anchor
+   04:34:43+01:00, and SystemNix gained an hourly local watchdog).
+3. **Fax future** → KEEP as-is, declared off. No DID purchase, no
+   outbound path, no deletion. Full record + consequences:
+   docs/planning/2026-10-30_04-15_fax-decision.md. Settings lanes go
+   always-on (owner decision 2), shipped in this session.
+
+### Gates that never ran at 02:25 — ALL RUN NOW
+
+- `buildflow` full (`BUILDFLOW_NO_RESULT_CACHE=1`): exit 0; warnings
+  only, all pre-existing classes (vulnix toolchain advisories, vulture
+  false positives on ui-capture's HTTP handler methods, the retired
+  baseline-file notice, a go.sum drift that `go mod tidy` then healed —
+  vendorHash verified by `nix build .#webphone.goModules --rebuild`).
+- webphone island gates: island-lint, island-js, island-typecheck,
+  webphone-module — all green.
+- `ui-capture.py`: 24-shot matrix green (parity path intact) AND the new
+  `--fax-off` mode: 4 shots (fax + settings, light+dark) with the
+  TIGHTENED assertion — notice present, compose form ABSENT. The
+  off-state panel reads informational, not error.
+- erraudit nolint-audit: 68 directives, 68 needed, 0 stale.
+- Smoke on a fresh HEAD binary: 49 + restart 4 + boot 8 + asr 9 +
+  dialgate 9 + faxcap 8 (new: Settings states the available lanes).
+
+### The verification gaps — CLOSED
+
+- **Unknown config keys now WARN at boot** (`internal/config/unknown.go`):
+  one WARN names the unknown key paths (never values; capped at 20 with
+  the full count), zero unknown keys log nothing. Catches the exact
+  silent-pin-gap that kept this deployment lying: a config newer than
+  its binary names what the binary ignores. Found and fixed a real wart
+  while testing it: WEBPHONE_CONFIG itself used to leak into koanf as a
+  junk `config` key (the warning would have fired on EVERY boot).
+- **Stack eval guard**: `fax.enable` with a PSTN trunk but no
+  `gateways.<n>.faxDid` now FAILS EVAL (negative fixture in
+  tests/eval.nix; a gateway-less lab node stays legal — its fax
+  extension is SIP-reachable, not a PSTN lie). The example host
+  (hosts/pbx-prod) flipped `fax.enable = true → false` with the real
+  enablement recipe in a comment: the example can no longer disagree
+  with the truth.
+- **CI flake fixed** (tests/fax.nix): the `mod_spandsp` assertion waits
+  (wait_until_succeeds, 60s) instead of probing once — CI run
+  40986572102 failed it on a loaded shared runner while the
+  byte-identical derivation passed locally with KVM.
+
+### Owner decisions shipped (Settings symmetry)
+
+The fax Settings row is now UNCONDITIONAL and states both lanes in all
+four combinations ("sending and receiving available" / the named
+missing half with its reason), pill class following whether any lane is
+up. This deliberately ends the Settings byte-parity era — pinned by
+`TestSettingsFaxRowAlwaysStatesTheLanes` + the smoke's new faxcap
+assertion. DE copy got a best-effort non-native pass (one precision
+fix: "Der Faxversand ist …"); the record says a native read remains the
+real bar.
+
+### Deploy chain state (as of this snapshot)
+
+- webphone `main` = `9dc9b15a`, CI green (run 41058944754).
+- stack `main` = `ad122b9` (faxDid assertion scoped to trunk-hosts after
+  it honestly red-ed the gateway-less VM fixtures in run 41060217586;
+  refined + locally proven: telephony-eval AND telephony-fax green).
+  CI on `ad122b9`: in progress at snapshot time — CHECK BEFORE RELOCK.
+- pbx-artmann: NOT YET RELOCKED (waits for stack CI green per the
+  2026-10-24 runbook doctrine). Staging steps once green:
+  `nix run .#relock` → real-host eval
+  `nix eval --json .#nixosConfigurations.pbx.config.services.webphone.settings.fax`
+  (expect `{"receive":false,"send":false}`) → `nix run .#deploy` →
+  owner runs the switch legs (no-ssh doctrine — the assistant never
+  ssh'd the PBX).
+
+### Other attributed findings
+
+- Stack CI's two "runner lost" reds (10-29) and one cancel: infra, not
+  code; the runs around them were green.
+- SystemNix `btrfs-scrub-staleness-fixture` red: pre-existing since
+  530ff33ee (10-28), unrelated to this train's push-stall timer (which
+  evals clean); attributed, not fixed — wrong repo, wrong train.
+- Paperless is the next silent-seam candidate (capability-seam audit:
+  docs/planning/2026-10-30_14-05_capability-seam-audit.md) — recorded,
+  NOT built (plan §8: findings first).
