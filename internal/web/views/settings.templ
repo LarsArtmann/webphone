@@ -19,7 +19,11 @@ type SettingsPanelProps struct {
 	SIPDomain      string
 	WebsocketURL   string
 	GatewayMode    string
-	PhoneAPI       bool
+	// Fax is the deployment's declared fax reachability (config.Fax). The
+	// row renders ONLY when a direction is missing, and names that half —
+	// the gateway-mode row ("webhook") never did.
+	Fax     FaxCapability
+	PhoneAPI bool
 	// CRMState is the Settings row's honest CRM rendering (T7): "unset"
 	// (no seam — the historical off path), "connected" (bounded probe
 	// 200), "auth-failed" (401/403 — rotate the token credential),
@@ -241,6 +245,20 @@ func orUnset(value string, lang Lang) string {
 	return value
 }
 
+// settingsFaxKey is the one home of the fax-row vocabulary: it names the
+// MISSING direction, because that is the fact an operator needs. A full
+// lane never reaches this function (the row is conditional).
+func settingsFaxKey(cap FaxCapability) string {
+	switch {
+	case !cap.Send && !cap.Receive:
+		return "settings.fax.off"
+	case !cap.Send:
+		return "settings.fax.sendOff"
+	default:
+		return "settings.fax.receiveOff"
+	}
+}
+
 // settingsItems builds the deployment-facts rows for the DefinitionList
 // (the settingsRow adoption, dedup registry 2026-10-11 ruling #2): plain
 // Detail strings for text values, DetailComponent where the value is
@@ -251,12 +269,23 @@ func settingsItems(props SettingsPanelProps) []display.DefinitionItem {
 		{Term: T(props.Lang, "settings.sipWS"), Detail: props.WebsocketURL},
 		{Term: T(props.Lang, "settings.ice"), Detail: fmtInt(props.ICEServers)},
 		{Term: T(props.Lang, "settings.gateway"), Detail: props.GatewayMode},
-		{Term: T(props.Lang, "settings.phoneAPI"), DetailComponent: serviceDetail(props.PhoneAPI, T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
-		{Term: T(props.Lang, "settings.crm"), DetailComponent: crmDetail(props.CRMState, props.Lang)},
-		{Term: T(props.Lang, "settings.asr"), DetailComponent: serviceDetailExtra(props.ASR, asrDetailWithLocality(props), T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
-		{Term: T(props.Lang, "settings.shared"), Detail: fmtInt(props.SharedContacts)},
-		{Term: T(props.Lang, "settings.export"), DetailComponent: exportLink(T(props.Lang, "settings.exportLink"))},
 	}
+	// The fax row surfaces only when a direction is MISSING (the
+	// push/chat pattern): a deployment whose fax lane works needs no row
+	// saying so, and zero config keeps the panel byte-identical. When it
+	// renders, it sits beside the gateway row because it is the same kind
+	// of deployment fact — and it names the missing half, which the
+	// gateway-mode vocabulary ("webhook") never did.
+	if !props.Fax.Send || !props.Fax.Receive {
+		items = append(items, display.DefinitionItem{Term: T(props.Lang, "settings.fax"), DetailComponent: serviceDetail(false, "", T(props.Lang, settingsFaxKey(props.Fax)))})
+	}
+	items = append(items,
+		display.DefinitionItem{Term: T(props.Lang, "settings.phoneAPI"), DetailComponent: serviceDetail(props.PhoneAPI, T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
+		display.DefinitionItem{Term: T(props.Lang, "settings.crm"), DetailComponent: crmDetail(props.CRMState, props.Lang)},
+		display.DefinitionItem{Term: T(props.Lang, "settings.asr"), DetailComponent: serviceDetailExtra(props.ASR, asrDetailWithLocality(props), T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
+		display.DefinitionItem{Term: T(props.Lang, "settings.shared"), Detail: fmtInt(props.SharedContacts)},
+		display.DefinitionItem{Term: T(props.Lang, "settings.export"), DetailComponent: exportLink(T(props.Lang, "settings.exportLink"))},
+	)
 	// The agent row (M17) surfaces only when the textagent seam is
 	// wired (an always-on "off" row would be noise for every
 	// telephony-only deployment).

@@ -166,7 +166,14 @@ func (h *handlers) faxPanel(r *http.Request, sess session.Session) (templ.Compon
 		return nil, err
 	}
 	numbers := crmNumbers(jobs, func(job domain.FaxJob) string { return job.Remote.String() })
-	return views.FaxPanel(views.FaxPanelProps{Jobs: jobs, Identity: h.identityFor(sess.Extension), CRM: h.crmDirectory(r.Context(), numbers), Lang: h.lang(r)}), nil
+	return views.FaxPanel(views.FaxPanelProps{Jobs: jobs, Capability: h.faxCapability(), Identity: h.identityFor(sess.Extension), CRM: h.crmDirectory(r.Context(), numbers), Lang: h.lang(r)}), nil
+}
+
+// faxCapability mirrors the deployment's config.Fax into the view type —
+// the ONE conversion, so the Fax panel, the Settings row and the SSE
+// payload can never disagree about what this server can actually do.
+func (h *handlers) faxCapability() views.FaxCapability {
+	return views.FaxCapability{Send: h.deps.Config.Fax.Send, Receive: h.deps.Config.Fax.Receive}
 }
 
 func (h *handlers) voicemailPanel(r *http.Request, sess session.Session) (templ.Component, error) {
@@ -518,6 +525,7 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 		SIPDomain:      h.deps.Config.SIPDomain,
 		WebsocketURL:   websocketURL,
 		GatewayMode:    string(h.deps.Config.Gateway.Mode),
+		Fax:            h.faxCapability(),
 		PhoneAPI:       h.deps.PhoneAPI.Enabled(),
 		CRMState:       crmState,
 		ASR:            h.asrOn(),

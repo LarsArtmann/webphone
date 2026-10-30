@@ -29,15 +29,18 @@ type Notifier struct {
 	faxes    *readmodels.Faxes
 	crm      *crm.Resolver
 	asr      bool
+	faxLane  views.FaxCapability
 }
 
 // NewNotifier builds the change notifier. The resolver may be nil (CRM
 // integration off): fragments then render raw numbers, same as a miss.
 // asrOn rides thread pushes so audio-attachment transcribe buttons
 // survive SSE re-renders exactly when the seam is configured (a
-// boot-time flag, not a per-request read).
-func NewNotifier(hubs *ExtensionHubs, messages *store.Messages, faxes *readmodels.Faxes, crmResolver *crm.Resolver, asrOn bool) *Notifier {
-	return &Notifier{hubs: hubs, messages: messages, faxes: faxes, crm: crmResolver, asr: asrOn}
+// boot-time flag, not a per-request read). faxLane does the same job for
+// the fax fragment's empty state: an SSE payload must not promise a send
+// affordance its deployment lacks (the panel keeps the same flags).
+func NewNotifier(hubs *ExtensionHubs, messages *store.Messages, faxes *readmodels.Faxes, crmResolver *crm.Resolver, asrOn bool, faxLane views.FaxCapability) *Notifier {
+	return &Notifier{hubs: hubs, messages: messages, faxes: faxes, crm: crmResolver, asr: asrOn, faxLane: faxLane}
 }
 
 // Project is the change-notification projection (train E1): each
@@ -97,7 +100,7 @@ func (n *Notifier) faxesChanged(ctx context.Context, owner domain.Extension) {
 		return
 	}
 	numbers := crmNumbers(jobs, func(job domain.FaxJob) string { return job.Remote.String() })
-	n.publish(ctx, owner, sseEventFax, views.FaxList(jobs, crmContacts(n.crm.People(ctx, numbers), n.crm), n.hubs.Lang(owner)))
+	n.publish(ctx, owner, sseEventFax, views.FaxList(jobs, crmContacts(n.crm.People(ctx, numbers), n.crm), n.faxLane, n.hubs.Lang(owner)))
 }
 
 func (n *Notifier) publish(ctx context.Context, owner domain.Extension, event EventName, component templ.Component) {
