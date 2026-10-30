@@ -24,9 +24,9 @@ import http.cookiejar
 import http.server
 import json
 import os
-import shutil
 import pathlib
 import re
+import shutil
 import socket
 import subprocess  # nosec B404 - deliberately spawns the local webphone binary under test
 import sys
