@@ -398,7 +398,7 @@ var dictionaries = map[Lang]map[string]string{
 		"fax.empty.noreceive":              "Noch keine Faxe — hier kann nichts eingehen; senden Sie oben ein PDF.",
 		"fax.empty.off":                    "Noch keine Faxe.",
 		"fax.off":                          "Fax ist auf diesem Server nicht verfügbar: Es ist keine Faxnummer hierher geleitet und kein Fax-Anbieter für ausgehende Faxe eingerichtet, es kann also nichts gesendet oder empfangen werden. Bitten Sie den Owner, Fax zu aktivieren — für eingehende Faxe ist eine eigene Faxnummer nötig, für ausgehende ein Anbieter, der Faxe annimmt.",
-		"fax.sendOff":                      "Faxen ist auf diesem Server nicht eingerichtet: Für ausgehende Faxe ist kein Anbieter angebunden. Empfangene Faxe erscheinen weiterhin unten. Bitten Sie den Owner, einen Fax-Anbieter einzurichten.",
+		"fax.sendOff":                      "Der Faxversand ist auf diesem Server nicht eingerichtet: Für ausgehende Faxe ist kein Anbieter angebunden. Empfangene Faxe erscheinen weiterhin unten. Bitten Sie den Owner, einen Fax-Anbieter einzurichten.",
 		"fax.receiveOff":                   "Faxempfang ist auf diesem Server nicht eingerichtet: Es ist keine Faxnummer hierher geleitet, die Liste kann also nur selbst gesendete Faxe enthalten.",
 		"fax.in":                           "← empfangen von",
 		"fax.out":                          "→ gesendet an",

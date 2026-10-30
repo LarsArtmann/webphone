@@ -528,6 +528,13 @@ type Fax struct {
 	Send    *bool `json:"send,omitempty" koanf:"send"`
 }
 
+// RULING (2026-10-30, docs/planning/2026-10-30_04-15_fax-decision.md):
+// fax.send=true under gateway.mode=loopback is ALLOWED and unvalidated —
+// loopback IS the demo/development posture (a send there fails against
+// the honest no-provider path, which is the truth the UI now declares),
+// so refusing the combination would break every dev boot for no safety.
+// Validation exists only where a REAL provider would be half-wired.
+
 // boolOr reads a tri-state config flag: unset keeps the product default.
 func boolOr(v *bool, def bool) bool {
 	if v == nil {
