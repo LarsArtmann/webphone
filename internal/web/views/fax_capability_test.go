@@ -223,3 +223,23 @@ func TestReceiveOnlyPanelKeepsStoredInboundFaxes(t *testing.T) {
 		t.Error("receive-only panel must not offer the send form")
 	}
 }
+
+// TestSettingsPaperlessRowStatesTheArchive pins the capability audit's
+// one real gap (docs/planning/2026-10-30_14-05_capability-seam-audit.md,
+// plan T7): the Paperless row renders ONLY when the seam is configured
+// — zero config keeps the panel byte-identical — and states the CONFIG
+// fact without claiming uptime.
+func TestSettingsPaperlessRowStatesTheArchive(t *testing.T) {
+	off := renderComponent(t, SettingsPanel(SettingsPanelProps{Lang: LangEN}))
+	if strings.Contains(off, "Paperless archive") {
+		t.Errorf("paperless row rendered with the seam off (zero-config must stay byte-identical): %s", off)
+	}
+	on := renderComponent(t, SettingsPanel(SettingsPanelProps{Paperless: true, Lang: LangEN}))
+	if !strings.Contains(on, "Paperless archive") || !strings.Contains(on, "inbound faxes are copied") {
+		t.Errorf("configured paperless row missing its copy; rendered:\n%s", on)
+	}
+	onDE := renderComponent(t, SettingsPanel(SettingsPanelProps{Paperless: true, Lang: LangDE}))
+	if !strings.Contains(onDE, "Paperless-Archiv") || !strings.Contains(onDE, "eingerichtet") {
+		t.Errorf("DE paperless row missing its copy; rendered:\n%s", onDE)
+	}
+}

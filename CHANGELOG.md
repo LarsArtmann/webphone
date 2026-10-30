@@ -22,6 +22,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reason when not. This ends the Settings byte-parity era deliberately;
   the four combinations are pinned by a view test.
 
+- The Settings panel states the Paperless archive seam (2026-10-30,
+  the capability audit's one real gap): a row renders only when
+  `paperless.url`+`paperless.token` are configured, saying inbound
+  faxes are copied to the archive — the config fact, never an uptime
+  claim (the copy is fire-and-forget; the blob store stays the storage
+  truth). Off renders no row; the zero-config panel is byte-identical.
+
 - The Settings gateway row is renamed "Message gateway" (2026-10-30):
   fax is a declared lane of its own with its own row, so the gateway
   row claiming fax was the small lie in the other direction. EN and DE.
