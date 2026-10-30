@@ -325,3 +325,10 @@ tested). Remaining: the owner's four switch legs.
 - Paperless is the next silent-seam candidate (capability-seam audit:
   docs/planning/2026-10-30_14-05_capability-seam-audit.md) — recorded,
   NOT built (plan §8: findings first).
+
+→ **Continued 20:29 CET:** the pre-switch sweep + owner-sheet repair
+(18:3x snapshot) is
+`2026-10-30_20-29_fax-truth-pre-switch-sweep-and-owner-sheet-repair.md`
+— the owner sheet had gone stale after the second ride (it still
+demanded relock `05a442e` on top) and was fixed (`d540f4b` in
+pbx-artmann); the switch was still pending as of that report.
