@@ -331,7 +331,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			do.MustInvokeNamed[*readmodels.Engine](i, "metaengine").Faxes(),
 			do.MustInvoke[*crm.Resolver](i),
 			cfg.ASR.Enabled(),
-			views.FaxCapability{Send: cfg.Fax.Send, Receive: cfg.Fax.Receive},
+			views.FaxCapability{Send: cfg.Fax.SendEnabled(), Receive: cfg.Fax.ReceiveEnabled()},
 		), nil
 	})
 	do.Provide(injector, func(i do.Injector) (gateway.MessageGateway, error) {

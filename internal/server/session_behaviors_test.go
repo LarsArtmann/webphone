@@ -23,6 +23,7 @@ import (
 	"github.com/larsartmann/webphone/internal/fax"
 	"github.com/larsartmann/webphone/internal/gateway"
 	"github.com/larsartmann/webphone/internal/messaging"
+	"github.com/larsartmann/webphone/internal/web/views"
 	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/server"
@@ -54,7 +55,7 @@ func start(t GinkgoTInterface, phoneAPIURL string, mutate ...func(*config.Config
 	engine, err := readmodels.Open(t.TempDir())
 	Expect(err).NotTo(HaveOccurred())
 	t.Cleanup(func() { _ = engine.Shutdown() })
-	notifier := server.NewNotifier(hubs, store.NewMessages(db), engine.Faxes(), nil, false)
+	notifier := server.NewNotifier(hubs, store.NewMessages(db), engine.Faxes(), nil, false, views.FaxCapability{Send: true, Receive: true})
 	cfg := config.Config{
 		Addr: ":0", DataDir: t.TempDir(), WebsocketPath: "/sip",
 		SessionTTL: time.Hour,

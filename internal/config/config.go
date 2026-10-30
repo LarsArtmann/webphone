@@ -515,16 +515,37 @@ type Gateway struct {
 // Fax is the deployment's declared fax reachability, one flag per
 // direction. The two directions are INDEPENDENT facts: a PBX that
 // receives faxes on a dedicated number but has no outbound provider is
-// the normal case here, and it must not be rendered as "fax works".
-// Zero value = no fax at all (both false); defaults() turns both on so
-// the zero-config product keeps byte-identical behaviour.
+// the normal case, and it must never be rendered as "fax works".
+//
+// The flags are POINTERS so an UNSET direction means "declared on": the
+// product's base capability is fax, and a deployment switches a lane OFF
+// (the stack does exactly that). A plain bool would make every config
+// literal that forgets the field — tests, embedded defaults, a future
+// caller — silently strip fax out of the UI, which is the same class of
+// lie this declaration exists to prevent.
 type Fax struct {
-	Receive bool `json:"receive" koanf:"receive"`
-	Send    bool `json:"send" koanf:"send"`
+	Receive *bool `json:"receive,omitempty" koanf:"receive"`
+	Send    *bool `json:"send,omitempty" koanf:"send"`
 }
 
-// Any reports whether this deployment has any fax lane at all.
-func (f Fax) Any() bool { return f.Receive || f.Send }
+// boolOr reads a tri-state config flag: unset keeps the product default.
+func boolOr(v *bool, def bool) bool {
+	if v == nil {
+		return def
+	}
+	return *v
+}
+
+// SendEnabled reports whether outbound fax is declared for this
+// deployment (unset = enabled).
+func (f Fax) SendEnabled() bool { return boolOr(f.Send, true) }
+
+// ReceiveEnabled reports whether inbound fax is declared for this
+// deployment (unset = enabled).
+func (f Fax) ReceiveEnabled() bool { return boolOr(f.Receive, true) }
+
+// AnyEnabled reports whether any fax direction is declared.
+func (f Fax) AnyEnabled() bool { return f.SendEnabled() || f.ReceiveEnabled() }
 
 // errGatewaySecretBothSources: exactly-one-of gateway.webhook_secret /
 // gateway.webhook_secret_file — two sources for one secret invite drift.
@@ -582,7 +603,6 @@ func defaults() Config {
 		SessionTTL:    7 * 24 * time.Hour,
 		SessionMaxTTL: 30 * 24 * time.Hour,
 		Gateway:       Gateway{Mode: GatewayLoopback},
-		Fax:           Fax{Receive: true, Send: true},
 	}
 }
 

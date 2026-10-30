@@ -173,7 +173,7 @@ func (h *handlers) faxPanel(r *http.Request, sess session.Session) (templ.Compon
 // the ONE conversion, so the Fax panel, the Settings row and the SSE
 // payload can never disagree about what this server can actually do.
 func (h *handlers) faxCapability() views.FaxCapability {
-	return views.FaxCapability{Send: h.deps.Config.Fax.Send, Receive: h.deps.Config.Fax.Receive}
+	return views.FaxCapability{Send: h.deps.Config.Fax.SendEnabled(), Receive: h.deps.Config.Fax.ReceiveEnabled()}
 }
 
 func (h *handlers) voicemailPanel(r *http.Request, sess session.Session) (templ.Component, error) {

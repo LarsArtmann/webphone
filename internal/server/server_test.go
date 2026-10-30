@@ -21,6 +21,7 @@ import (
 	"github.com/larsartmann/webphone/internal/fax"
 	"github.com/larsartmann/webphone/internal/gateway"
 	"github.com/larsartmann/webphone/internal/messaging"
+	"github.com/larsartmann/webphone/internal/web/views"
 	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/session"
@@ -129,7 +130,7 @@ func newTestServerWithConfig(
 
 	hubs := NewHubs()
 	engine := newTestEngine(t)
-	notifier := NewNotifier(hubs, store.NewMessages(db), engine.Faxes(), nil, false)
+	notifier := NewNotifier(hubs, store.NewMessages(db), engine.Faxes(), nil, false, views.FaxCapability{Send: true, Receive: true})
 	cfg := config.Config{
 		Addr: ":0", DataDir: t.TempDir(), WebsocketPath: "/sip",
 		SessionTTL: time.Hour,
