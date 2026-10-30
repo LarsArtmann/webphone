@@ -119,6 +119,13 @@ literal: `WEBPHONE_DATA_DIR` → `data_dir`. Scalars are env-friendly;
 nested lists (`ice_servers`, `contacts`) and maps (`identities`) belong
 in the JSON file.
 
+Unknown keys **warn at boot** (one `WARN` line listing the key paths,
+values never logged) and are then ignored — a config written for a newer
+binary on an older binary shows up in the journal instead of silently
+dropping its declarations. Zero unknown keys log nothing. Dynamic-key
+maps (`identities`, `auth.passkey.users`) accept arbitrary children by
+design and are exempt.
+
 | Key                                     | Default                      | Meaning                                                                                                                                                                                                                                                                                                                                                       |
 | --------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `addr`                                  | `:8080`                      | Listen address                                                                                                                                                                                                                                                                                                                                                |
