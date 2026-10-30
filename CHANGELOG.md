@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   reason when not. This ends the Settings byte-parity era deliberately;
   the four combinations are pinned by a view test.
 
+- The Settings gateway row is renamed "Message gateway" (2026-10-30):
+  fax is a declared lane of its own with its own row, so the gateway
+  row claiming fax was the small lie in the other direction. EN and DE.
+
 - The Fax tab states what the deployment can actually do (2026-10-30):
   `fax.send` and `fax.receive` declare the two lanes independently. With a
   lane off, the panel keeps stored faxes and document links, drops the
