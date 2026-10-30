@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -104,8 +105,8 @@ func TestFaxPushCarriesTheCapability(t *testing.T) {
 				continue
 			}
 			body := string(ev.Data)
-			if !strings.Contains(body, "wp-fax-off") {
-				t.Fatalf("off-deployment fax push lost the capability notice; payload:\n%s", body)
+			if !strings.Contains(body, "No faxes yet.") {
+				t.Fatalf("off-deployment fax push lost the honest empty copy; payload:\n%s", body)
 			}
 			if strings.Contains(body, "send a PDF above") {
 				t.Fatalf("off-deployment fax push promises a send affordance; payload:\n%s", body)

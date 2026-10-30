@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Unknown configuration keys warn at boot (2026-10-30): one `WARN` line
+  lists the key paths a binary does not know (never values), so a config
+  written for a newer webphone on an older binary shows up in the journal
+  instead of silently vanishing — the pin-gap that kept the deployed PBX
+  lying about fax. Dynamic-key maps (`identities`, `auth.passkey.users`)
+  are exempt; a clean config logs nothing.
+
+- The Settings fax row is now unconditional and symmetric (2026-10-30,
+  owner decision): every deployment states its fax lanes — "sending and
+  receiving available" when both are up, the named missing half with its
+  reason when not. This ends the Settings byte-parity era deliberately;
+  the four combinations are pinned by a view test.
+
 - The Fax tab states what the deployment can actually do (2026-10-30):
   `fax.send` and `fax.receive` declare the two lanes independently. With a
   lane off, the panel keeps stored faxes and document links, drops the
