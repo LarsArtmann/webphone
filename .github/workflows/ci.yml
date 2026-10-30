@@ -23,6 +23,28 @@ jobs:
       - name: Build the webphone binary
         run: nix build -L .#webphone
 
+  # The live smoke (plan T15.5 finding, 2026-10-30): the 6-scenario
+  # self-booting suite (restart, boot-failure, ASR, dial-gate, faxcap)
+  # never ran in CI — every verdict was a human running it locally. The
+  # smoke is loopback-only (whole product, zero PBX), so plain CI can
+  # run it against the freshly built binary.
+  smoke:
+    name: webphone-smoke (live boot)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+
+      - name: Build the binary
+        run: nix build -L .#webphone
+
+      - name: Run the live smoke against it
+        run: |
+          nix run nixpkgs#python3 -- scripts/webphone-smoke.py \
+            --bin ./result/bin/webphone
+
   # Go unit/contract tests (cmd + internal). The minimal `ci` devShell
   # provides Go at the go.mod floor; GOTOOLCHAIN=local (set in that
   # shell) forbids surprise toolchain downloads inside the hermetic shell.

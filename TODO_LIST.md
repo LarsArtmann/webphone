@@ -86,15 +86,12 @@ purchase, no outbound path, no deletion. Record + consequences:
 `docs/planning/2026-10-30_04-15_fax-decision.md`. This section remains
 the re-open recipe; nothing here is scheduled.
 
-### Live smoke in CI (T15.5 finding, 2026-10-30)
+### Live smoke in CI — SHIPPED (2026-10-30, plan T6)
 
-`scripts/webphone-smoke.py` (the self-booting 6-scenario live smoke:
-restart, boot-failure, ASR, dial-gate, faxcap) runs NOWHERE in CI —
-`.github/workflows/ci.yml` covers nix build, `go test -race`, the fast
-flake checks and art-dupl only. Every smoke verdict so far is a human
-running it locally. Candidate lane: a CI job after the binary build
-(the smoke self-boots a loopback binary; no PBX needed). Cost: ~1-2 min
-runner time per push. Filed as a row, not silently assumed.
+The `smoke` job now runs `scripts/webphone-smoke.py` against the freshly
+built binary on every push/PR (loopback-only, self-booting, no PBX
+needed; ~2 min runner time). Dry-run proven locally with the exact CI
+command before landing.
 
 ### Paperless: the invisible seam (capability audit T31, 2026-10-30)
 
