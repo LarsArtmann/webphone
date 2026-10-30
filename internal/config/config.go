@@ -655,6 +655,12 @@ func Load() (Config, error) {
 		return Config{}, errorfamily.WrapRejectionf(err, "config.env", "config env")
 	}
 
+	// WEBPHONE_CONFIG is the bootstrap var that POINTS at the file, not
+	// a config key: the env provider ingests it as a literal "config"
+	// path the schema has no home for. Delete it so the unknown-key
+	// warning below does not fire on every single boot.
+	k.Delete("config")
+
 	// Every source is merged: warn about keys this binary does not know
 	// BEFORE Unmarshal drops them silently (the pin-gap warning).
 	warnUnknownConfigKeys(k.Raw())

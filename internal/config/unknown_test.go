@@ -2,7 +2,6 @@ package config
 
 import (
 	"bytes"
-	"errors"
 	"log/slog"
 	"os"
 	"path/filepath"
@@ -20,11 +19,19 @@ func TestUnknownConfigPaths(t *testing.T) {
 		{
 			name: "clean config yields nothing",
 			raw: map[string]any{
-				"addr":         "127.0.0.1:8080",
-				"fax":          map[string]any{"send": false, "receive": true},
-				"gateway":      map[string]any{"mode": "loopback", "webhook_url": ""},
-				"identities":   map[string]any{"1001": "+493012345678"},
-				"auth.passkey": map[string]any{"users": map[string]any{"a@b.c": map[string]any{"extensions": []any{"1001"}}}},
+				"addr":    "127.0.0.1:8080",
+				"fax":     map[string]any{"send": false, "receive": true},
+				"gateway": map[string]any{"mode": "loopback", "webhook_url": ""},
+				"identities": map[string]any{
+					"1001": "+493012345678",
+				},
+				"auth": map[string]any{
+					"passkey": map[string]any{
+						"users": map[string]any{
+							"a@b.c": map[string]any{"extensions": []any{"1001"}},
+						},
+					},
+				},
 			},
 			want: nil,
 		},
@@ -53,8 +60,14 @@ func TestUnknownConfigPaths(t *testing.T) {
 		{
 			name: "dynamic-key map children are exempt",
 			raw: map[string]any{
-				"identities":   map[string]any{"1001": "+49", "new-ext-tomorrow": "+49"},
-				"auth.passkey": map[string]any{"users": map[string]any{"new@user.example": map[string]any{"whatever": 1}}},
+				"identities": map[string]any{"1001": "+49", "new-ext-tomorrow": "+49"},
+				"auth": map[string]any{
+					"passkey": map[string]any{
+						"users": map[string]any{
+							"new@user.example": map[string]any{"whatever": 1},
+						},
+					},
+				},
 			},
 			want: nil,
 		},
@@ -86,7 +99,7 @@ func TestUnknownConfigPathsCoversRealSchema(t *testing.T) {
 		"fax.send", "fax.receive",
 		"gateway.webhook_secret_file", "sip.credential_secret_file",
 		"crm.token_file", "asr.url", "push.fcm.credentials_file",
-		"auth.passkey.users", "identities", "dial.cooldown_seconds",
+		"auth.passkey.users", "identities", "dial.cooldown",
 	} {
 		if !known[path] {
 			t.Errorf("schemaPaths() is missing known path %q", path)
@@ -128,7 +141,7 @@ func TestLoadWarnsOnUnknownKeys(t *testing.T) {
 	if !strings.Contains(out, "fax.nonsense") || !strings.Contains(out, "not_a_key") {
 		t.Fatalf("warning does not name the unknown paths; output:\n%s", out)
 	}
-	if strings.Contains(out, "true") && strings.Contains(out, "nonsense=true") {
+	if strings.Contains(out, "nonsense=true") {
 		t.Fatalf("warning leaked a config VALUE (paths only); output:\n%s", out)
 	}
 }
@@ -188,8 +201,5 @@ func TestUnknownConfigPathsNeverPanicsOnOddShapes(t *testing.T) {
 	})
 	if len(got) != 1 || got[0] != "weird" {
 		t.Fatalf("unknownConfigPaths() = %v, want [weird]", got)
-	}
-	if errors.Join() != nil {
-		t.Fatal("unreachable")
 	}
 }
