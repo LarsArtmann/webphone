@@ -67,9 +67,9 @@ type Config struct {
 	// unchanged; every surface that offers a fax affordance reads these
 	// flags, so switching one OFF hides the affordance and says why
 	// instead of letting the operator discover it as a failed send.
-	Fax  Fax       `json:"fax" koanf:"fax"`
-	TURN TURNREST  `json:"turn_rest" koanf:"turn_rest"`
-	CSRF       CSRF              `json:"csrf" koanf:"csrf"`
+	Fax  Fax      `json:"fax" koanf:"fax"`
+	TURN TURNREST `json:"turn_rest" koanf:"turn_rest"`
+	CSRF CSRF     `json:"csrf" koanf:"csrf"`
 	// CRM is the OPTIONAL integration with the Ledger CRM (contact name
 	// enrichment + call-activity logging). Zero value = disabled.
 	CRM CRM `json:"crm" koanf:"crm"`

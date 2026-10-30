@@ -989,3 +989,29 @@ pushing.
   cache) but the env flag is the surgical per-invocation fix. Detection
   signature: "formatted N files in <100ms" where N>0 files were passed —
   7 ms is a skip, 276 ms is prettier actually running.
+
+## Honest UI surfaces
+
+- **A capability the deployment lacks must be DECLARED, not discovered
+  as a failed send** (2026-10-30, the fax-tab lie). The Fax tab rendered
+  a working compose form and the empty state "No faxes yet — send a PDF
+  above" on a deployment with exactly one DID (voice, on the SIP FQDN
+  connection) and a bridge whose `/gateway/fax` had always answered an
+  honest 503. Nothing CRASHED — the failure only appeared after a user
+  did everything the UI asked, and the panel's own copy had already
+  promised the opposite. The root cause is a missing axis, not a missing
+  check: fax has TWO independent directions (send needs a provider that
+  accepts `/fax`; receive needs a DID routed to the PBX with rxfax), and
+  the product modelled neither. Fix shape worth copying: config
+  `fax.send` / `fax.receive` (POINTER bools so an unset field means
+  "declared on" — a plain bool makes every forgotten literal, test
+  configs included, silently strip fax from the UI), ONE server-side
+  conversion into `views.FaxCapability`, props on the panel AND the SSE
+  fragment (a pushed payload must not promise an affordance the full
+  render withholds), a Settings row naming the MISSING half, and copy
+  that tells the reader who to ask. Enabling the lane is a carrier
+  fact, not a flag: a Telnyx number binds to exactly ONE connection, so
+  a Programmable Fax application and the voice SIP connection cannot
+  share a DID — inbound needs its own fax DID (the stack asserts
+  `faxDid ≠ voice DID`), outbound needs a fax app + fax-enabled number
+  or a bridge implementing `/fax`.
