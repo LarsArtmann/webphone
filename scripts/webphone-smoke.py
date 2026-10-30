@@ -772,6 +772,114 @@ def dialgate_scenario(binary: str, workdir: str) -> int:
     return 1 if c.failures else 0
 
 
+def faxcap_scenario(binary: str, workdir: str) -> int:
+    """The fax capability declaration, end-to-end on a self-booted server.
+
+    The Fax tab must state what the DEPLOYMENT can do instead of offering
+    an affordance it cannot honour: with fax.send/fax.receive off there is
+    no compose form, the panel carries the capability notice (and Settings
+    names the missing halves); with zero config the panel is the historical
+    one (form + plain copy), so the smoke also pins the byte-parity path.
+    """
+    c = Check()
+
+    def boot(env_extra: dict[str, str], datadir: str) -> tuple[subprocess.Popen, str]:
+        port = free_port()
+        env = dict(os.environ)
+        env.update(
+            {
+                "WEBPHONE_ADDR": f"127.0.0.1:{port}",
+                "WEBPHONE_DATA_DIR": f"{workdir}/{datadir}",
+                "WEBPHONE_GATEWAY__WEBHOOK_SECRET": "test-secret",  # nosec B105 - fixture secret for the self-booted smoke server
+            }
+        )
+        env.update(env_extra)
+        srv = subprocess.Popen(  # nosec B603 - argv-list (no shell) launch of the local binary under test
+            [binary], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+        base = f"http://127.0.0.1:{port}"
+        deadline = time.monotonic() + TIMEOUT
+        while time.monotonic() < deadline:
+            try:
+                urllib.request.urlopen(base + "/healthz", timeout=1).read()  # nosec B310 - readiness probe of the local server under test
+                return srv, base
+            except OSError:
+                time.sleep(0.1)
+        srv.kill()
+        raise RuntimeError("faxcap scenario: server did not become ready")
+
+    def stop_server(srv: subprocess.Popen) -> None:
+        srv.terminate()
+        try:
+            srv.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            srv.kill()
+
+    def login(base: str) -> Smoke:
+        s = Smoke(base)
+        _, page, _ = s.request("GET", "/")
+        m = re.search(
+            r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
+        )
+        if m:
+            s.csrf = m.group(1)
+        c.ok("faxcap: login accepted", s.login(), "POST /api/session != 201")
+        return s
+
+    # OFF boot: no send form, the notice + the Settings row instead.
+    srv, base = boot(
+        {"WEBPHONE_FAX__SEND": "false", "WEBPHONE_FAX__RECEIVE": "false"},
+        "data-faxcap-off",
+    )
+    try:
+        s = login(base)
+        _, body, _ = s.request("GET", "/fax")
+        page = body.decode("utf-8", "replace")
+        c.ok(
+            "faxcap: no compose form without a lane",
+            "wp-compose-fax" not in page,
+            "the send form rendered on a deployment with no fax lane",
+        )
+        c.ok(
+            "faxcap: panel says fax is unavailable",
+            "wp-fax-off" in page and "Fax is not available on this server" in page,
+            page[:200],
+        )
+        _, body, _ = s.request("GET", "/settings")
+        settings = body.decode("utf-8", "replace")
+        c.ok(
+            "faxcap: settings names the missing directions",
+            "not configured — nothing can be sent or received" in settings,
+            "Settings lost the fax row",
+        )
+    finally:
+        stop_server(srv)
+
+    # Default boot: the historical panel (parity path), no notice.
+    srv, base = boot({}, "data-faxcap-on")
+    try:
+        s = login(base)
+        _, body, _ = s.request("GET", "/fax")
+        page = body.decode("utf-8", "replace")
+        c.ok(
+            "faxcap: default keeps the compose form",
+            "wp-compose-fax" in page,
+            "the zero-config Fax tab lost its send form",
+        )
+        c.ok(
+            "faxcap: default renders no capability notice",
+            "wp-fax-off" not in page,
+            "a capability notice leaked into the default panel",
+        )
+    finally:
+        stop_server(srv)
+
+    print(f"faxcap scenario: {c.passed} passed, {len(c.failures)} failed")
+    for failure in c.failures:
+        print(f"  FAILED: {failure}")
+    return 1 if c.failures else 0
+
+
 def run_checks(
     s: Smoke,
     boot_configured: Callable[[], tuple[str, Callable[[], None]]] | None = None,
@@ -1354,6 +1462,7 @@ def main() -> int:
         rc = max(rc, boot_failure_scenario(binary, workdir, free_port()))
         rc = max(rc, asr_scenario(binary, workdir))
         rc = max(rc, dialgate_scenario(binary, workdir))
+        rc = max(rc, faxcap_scenario(binary, workdir))
         return rc
     finally:
         server.terminate()

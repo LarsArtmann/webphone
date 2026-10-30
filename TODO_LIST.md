@@ -59,6 +59,28 @@ Prior sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList ad
 
 ## Open tasks
 
+### Fax enablement (owner + carrier action, 2026-10-30)
+
+The app now DECLARES the fax lanes instead of offering a form that can
+only fail (`fax.send` / `fax.receive`; the stack derives them: receive
+follows the fax feed, send is off). Turning fax ON is not a flag flip —
+it is two carrier facts, one per direction:
+
+1. **Inbound**: buy/port a fax-capable DID and set
+   `services.telephony.gateways.<gw>.faxDid` on the stack (the module
+   asserts it differs from the voice DID), plus
+   `services.telephony.fax.feed.enable` + `feed.secretFile` so rxfax
+   TIFFs reach `/hooks/fax`. Then `fax.receive` turns on by derivation.
+2. **Outbound**: nothing in the stack transmits faxes (the messaging
+   bridge answers `/gateway/fax` with an honest 503). Needs either a
+   Telnyx Programmable Fax application + fax-enabled number (a number
+   binds to ONE connection, so that DID cannot also carry the voice
+   trunk) or a bridge that implements `/fax`; then set
+   `services.webphone.settings.fax.send = true` in the host.
+
+Verifying the UI after either step: `python3 scripts/webphone-smoke.py
+--bin <binary>` prints the `faxcap scenario` verdicts.
+
 ### CRM data-mesh train (2026-10-29) — deferred tail
 
 Source: [docs/status/2026-10-29_19-44_crm-data-mesh-train-closeout-status.md](docs/status/2026-10-29_19-44_crm-data-mesh-train-closeout-status.md)
