@@ -42,6 +42,15 @@ context strip (`#wp-crm-context`) in the DOM before the shot. Without the
 flag the seam stays off and the surface is skipped, which keeps the
 default matrix exactly what a zero-config deployment renders.
 
+Fax capability extension (2026-10-30): `--fax-off` boots with
+`fax.send`/`fax.receive` explicitly false — what a deployed PBX without
+a fax DID declares — and TIGHTENS the fax surface's DOM assertion from
+"form or notice" to "notice present, compose form ABSENT", so a shot
+cannot pass while the UI still lies about send/receive. Pair it with
+`--surface fax` (plus `--surface settings`) for the targeted evidence
+shot, or run the full matrix to see every surface as the off-deployment
+renders it.
+
 Budget decision (documented, 2026-10-02): this is a LOCAL harness, NOT a
 flake check — headless chromium cannot run inside a nix build sandbox
 without a KVM VM, and a KVM browser VM here would duplicate the stack's
@@ -159,6 +168,10 @@ ANONYMOUS_MARKERS = {
     "login-card": ("#passkey-login", "Sign in with passkey"),
     "login-page": ("#lp-login-form", None),
 }
+# Selectors that must NOT exist on a surface. Only --fax-off populates
+# an entry (the fax surface must not carry the compose form while the
+# boot declares send=false); the loop asserts absence after the pins.
+SURFACE_ABSENT_MARKERS: dict[str, tuple[str, ...]] = {}
 
 
 FAKE_CRM_TOKEN = "ui-capture-crm-token"  # nosec B105 - LOCAL-ONLY visual harness; never a real credential
@@ -528,6 +541,13 @@ def capture(
                             f"surface {name!r} rendered without {expected_text!r} — "
                             "the marker matched but the copy is wrong; aborting"
                         )
+                for absent in SURFACE_ABSENT_MARKERS.get(name, ()):
+                    if driver.find_elements("css selector", absent):
+                        raise AssertionError(
+                            f"surface {name!r} renders {absent!r} but the boot "
+                            "declared it away — the shot would prove a lie; "
+                            "aborting"
+                        )
                 target = os.path.join(out_dir, f"{shots + 1:02d}-{name}-{theme}.png")
                 driver.save_screenshot(target)
                 print(f"captured {target}")
@@ -688,6 +708,14 @@ def main() -> int:
         # the ONE way to shoot a CRM-linked caller name and the context strip.
         help="boot a fake CRM so crm-context surfaces render (link + strip)",
     )
+    parser.add_argument(
+        "--fax-off",
+        action="store_true",
+        # Boots the app with fax.send/receive=false (the deployed PBX's
+        # declaration) and demands the notice markup, not the form.
+        help="boot with fax.send/receive=false; the fax surface must show "
+        "the capability notice, NOT the compose form",
+    )
     parser.add_argument("--port", type=int, default=18097)
     parser.add_argument("--out-dir", default="ui-shots")
     parser.add_argument(
@@ -748,6 +776,17 @@ def main() -> int:
             }
         },
     }
+    if args.fax_off:
+        config["fax"] = {"send": False, "receive": False}
+        # Tighten the fax pin from "form or notice" to notice-only, and
+        # forbid the form outright — the whole point of the off-state shot.
+        SURFACE_MARKERS["fax"] = [
+            (
+                ".wp-fax-off",
+                None,
+            ),
+        ]
+        SURFACE_ABSENT_MARKERS["fax"] = (".wp-compose-fax",)
     if args.crm:
         crm_url, crm_token = start_fake_crm()
         config["crm"] = {
