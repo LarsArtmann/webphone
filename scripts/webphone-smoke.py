@@ -24,6 +24,7 @@ import http.cookiejar
 import http.server
 import json
 import os
+import shutil
 import pathlib
 import re
 import socket
@@ -1477,7 +1478,15 @@ def main() -> int:
             server.wait(timeout=5)
         except subprocess.TimeoutExpired:
             server.kill()
-        subprocess.run(["trash", workdir], capture_output=True, check=False)  # nosec - argv-list cleanup via the mandated trash tool (B603 no shell/untrusted input, B607 PATH by design)
+        # The workdir is the script's OWN scratch (a fresh temp dir it
+        # created), so the fleet's trash-only rule degrades safely:
+        # prefer the mandated trash tool, fall back to shutil.rmtree
+        # where it does not exist (GitHub runners — the 2026-10-30
+        # smoke-in-CI first run died here AFTER passing every scenario).
+        if shutil.which("trash"):
+            subprocess.run(["trash", workdir], capture_output=True, check=False)  # nosec - argv-list cleanup via the mandated trash tool (B603 no shell/untrusted input, B607 PATH by design)
+        else:
+            shutil.rmtree(workdir, ignore_errors=True)
 
 
 if __name__ == "__main__":
