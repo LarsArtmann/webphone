@@ -655,6 +655,10 @@ func Load() (Config, error) {
 		return Config{}, errorfamily.WrapRejectionf(err, "config.env", "config env")
 	}
 
+	// Every source is merged: warn about keys this binary does not know
+	// BEFORE Unmarshal drops them silently (the pin-gap warning).
+	warnUnknownConfigKeys(k.Raw())
+
 	if err := k.Unmarshal("", &cfg); err != nil {
 		return Config{}, errorfamily.WrapRejectionf(err, "config.unmarshal", "config unmarshal")
 	}
