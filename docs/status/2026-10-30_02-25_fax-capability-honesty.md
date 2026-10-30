@@ -298,6 +298,23 @@ real bar.
   (The sheet's test→verify→switch order is the conservative superset;
   the printed legs are the app's canonical four.)
 
+### RIDE COMPLETE — 18:2x CET (the staged root carries today's full webphone)
+
+The ride-first recommendation was EXECUTED: stack relocked
+`62b52069 -> e6fb14db` (the intermediate bump's CI was cancelled by the
+Dependabot github_actions race; the pin rode straight to the settled
+tip), stack CI GREEN on `f64f4fd`, pbx-artmann relocked and RESTAGED —
+final staged root `a2slrp3c…`, ALL GUARDS GREEN, pushed (`cc1e3f3`).
+The staged closure now carries: the fax-truth ride + always-on Settings
+row + Message-gateway rename + T20 tests + the Paperless archive
+Settings row + the smoke-in-CI lane + the concurrent mail-fleet train.
+Also shipped while the CI cooked: `nix flake check` FULL green (T5,
+including the KVM backup VM suite), the smoke-in-CI job (T6, first
+green run on `e6fb14db`; the first attempt died on the missing `trash`
+binary — the cleanup now degrades to shutil.rmtree for the script's own
+scratch), and the Paperless capability row (T7, conditional, EN/DE,
+tested). Remaining: the owner's four switch legs.
+
 ### Other attributed findings
 
 - Stack CI's two "runner lost" reds (10-29) and one cancel: infra, not
