@@ -170,7 +170,7 @@ func TestSettingsFaxRowAlwaysStatesTheLanes(t *testing.T) {
 		{"both lanes on", FaxCapability{Send: true, Receive: true}, "sending and receiving available", true},
 		{"both lanes off", FaxCapability{}, "not configured — nothing can be sent or received", false},
 		{"send off", FaxCapability{Receive: true}, "receive only — no outbound fax provider", true},
-		{"receive off", FaxCapability{Send: true}, "send only — no fax number is routed here", false},
+		{"receive off", FaxCapability{Send: true}, "send only — no fax number is routed here", true},
 	}
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
@@ -190,5 +190,36 @@ func TestSettingsFaxRowAlwaysStatesTheLanes(t *testing.T) {
 				t.Fatalf("fax row must be an off-pill here (ons=%d offs=%d); rendered:\n%s", ons, offs, html)
 			}
 		})
+	}
+}
+
+// TestReceiveOnlyPanelKeepsStoredInboundFaxes pins T20.1: a deployment
+// that can receive but not send still shows its stored INBOUND fax
+// history (rows + document links) beside the notice that names the
+// missing send lane — a capability change must never orphan history.
+func TestReceiveOnlyPanelKeepsStoredInboundFaxes(t *testing.T) {
+	job := domain.FaxJob{
+		Direction:    domain.FaxInbound,
+		Status:       domain.FaxReceived,
+		Remote:       domain.MustParsePhone("+491512345678"),
+		DocumentPath: "blob/inbound-fax.pdf",
+	}
+	panel := renderComponent(t, FaxPanel(FaxPanelProps{
+		Jobs:       []domain.FaxJob{job},
+		Capability: FaxCapability{Receive: true},
+		Lang:       LangEN,
+	}))
+
+	if !strings.Contains(panel, "wp-fax-row") {
+		t.Error("stored inbound fax row must render on a receive-only deployment")
+	}
+	if !strings.Contains(panel, "/fax/"+job.ID.String()+"/document") {
+		t.Errorf("stored inbound document link must render; panel:\n%s", panel)
+	}
+	if !strings.Contains(panel, "wp-fax-off") || !strings.Contains(panel, "no outbound provider") {
+		t.Errorf("receive-only panel must still name the missing send lane; panel:\n%s", panel)
+	}
+	if strings.Contains(panel, "wp-compose-fax") {
+		t.Error("receive-only panel must not offer the send form")
 	}
 }

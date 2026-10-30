@@ -871,6 +871,13 @@ def faxcap_scenario(binary: str, workdir: str) -> int:
             "wp-fax-off" not in page,
             "a capability notice leaked into the default panel",
         )
+        _, body, _ = s.request("GET", "/settings")
+        settings = body.decode("utf-8", "replace")
+        c.ok(
+            "faxcap: settings states the available lanes",
+            "sending and receiving available" in settings,
+            "Settings lost the always-on fax lanes row (owner decision 2, 2026-10-30)",
+        )
     finally:
         stop_server(srv)
 
