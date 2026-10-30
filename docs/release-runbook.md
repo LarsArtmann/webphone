@@ -179,3 +179,21 @@ should reach prod:
    build's path stays in the journal or your notes).
 6. The daemon beats manual commits — amend its unpushed commit into
    the narrative message.
+
+### The pin-predates-key trap (learned 2026-10-30, the fax train)
+
+A config key ADDED upstream is invisible to every deployed binary whose
+pin predates it: koanf silently drops unknown keys, the deployment keeps
+serving the old UI, and nothing — no gate, no eval, no diff — complains,
+because both sides are individually correct. The stack can DERIVE a
+brand-new `settings.fax` block while the pinned webphone keeps ignoring
+it byte-for-byte. Two mitigations now exist; use both:
+
+- The webphone unknown-config-key boot WARN names any key the running
+  binary does not know — on a too-old pin it fires for every key the
+  stack emits, so a healthy journal goes quiet after a real relock.
+- `nix eval .#nixosConfigurations.pbx-prod.config.services.webphone.settings.fax`
+  proves what the MODULE derives, but NEVER proves the pinned binary
+  READS it. Before claiming any new config lane is live, grep the
+  deployed `/fax` (or the lane's surface) for the markup only the new
+  binary renders — the eval alone is exactly the lie this trap is.

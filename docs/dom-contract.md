@@ -173,6 +173,22 @@ Conditional by construction, so the E2E must not assume them:
   contact name and the container is not itself a link: thread head, fax row,
   CDR row). Present ONLY when `crm.contact_url` is configured.
 
+### Capability-conditional fax nodes (2026-10-30)
+
+The fax panel obeys the deployment's declared lanes (`fax.send` /
+`fax.receive`, unset = on), so the E2E must treat these as EITHER/OR, never
+assume both:
+
+- `.wp-compose-fax` — the outbound compose form. Present ONLY when
+  `fax.send` is on.
+- `.wp-fax-off` — the capability notice (`role="note"`, informational
+  styling). Present when EITHER lane is off, naming the missing half. The
+  smoke's `faxcap` scenario and `ui-capture.py --fax-off` assert the pair:
+  notice present, form absent.
+- The Settings fax row is UNCONDITIONAL (owner decision 2, 2026-10-30) and
+  states both lanes in all deployments; its pill class
+  (`wp-service-on`/`wp-service-off`) follows whether any lane is up.
+
 ### Layout ids (served, but NOT required — 2026-10-29)
 
 These are in the served bytes of every signed-in shell but are deliberately
