@@ -81,6 +81,31 @@ it is two carrier facts, one per direction:
 Verifying the UI after either step: `python3 scripts/webphone-smoke.py
 --bin <binary>` prints the `faxcap scenario` verdicts.
 
+**DECISION (2026-10-30, owner): fax stays as-is — declared off.** No DID
+purchase, no outbound path, no deletion. Record + consequences:
+`docs/planning/2026-10-30_04-15_fax-decision.md`. This section remains
+the re-open recipe; nothing here is scheduled.
+
+### Live smoke in CI (T15.5 finding, 2026-10-30)
+
+`scripts/webphone-smoke.py` (the self-booting 6-scenario live smoke:
+restart, boot-failure, ASR, dial-gate, faxcap) runs NOWHERE in CI —
+`.github/workflows/ci.yml` covers nix build, `go test -race`, the fast
+flake checks and art-dupl only. Every smoke verdict so far is a human
+running it locally. Candidate lane: a CI job after the binary build
+(the smoke self-boots a loopback binary; no PBX needed). Cost: ~1-2 min
+runner time per push. Filed as a row, not silently assumed.
+
+### Paperless: the invisible seam (capability audit T31, 2026-10-30)
+
+The fax audit's one real gap: `paperless.url`/`token` build the fax
+archiver with NO Settings row and NO per-job archive marker — a
+deployment that believes it archives learns otherwise only from the
+journal. Suggested shape + the other three seams' clean verdicts:
+`docs/planning/2026-10-30_14-05_capability-seam-audit.md`. Owner call
+on the shape (Settings row alone vs per-fax archive marker); recorded,
+not built.
+
 ### CRM data-mesh train (2026-10-29) — deferred tail
 
 Source: [docs/status/2026-10-29_19-44_crm-data-mesh-train-closeout-status.md](docs/status/2026-10-29_19-44_crm-data-mesh-train-closeout-status.md)
