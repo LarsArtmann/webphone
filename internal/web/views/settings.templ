@@ -281,7 +281,7 @@ func settingsItems(props SettingsPanelProps) []display.DefinitionItem {
 	// carries the lanes' state; its on/off class follows whether ANY
 	// lane is up. This deliberately ends the Settings byte-parity era
 	// — the new markup is pinned by the view tests instead.
-	items = append(items, display.DefinitionItem{Term: T(props.Lang, "settings.fax"), DetailComponent: serviceDetail(props.Fax.Any(), "", T(props.Lang, settingsFaxKey(props.Fax)))})
+	items = append(items, display.DefinitionItem{Term: T(props.Lang, "settings.fax"), DetailComponent: faxLaneDetail(props.Fax, props.Lang)})
 	items = append(items,
 		display.DefinitionItem{Term: T(props.Lang, "settings.phoneAPI"), DetailComponent: serviceDetail(props.PhoneAPI, T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
 		display.DefinitionItem{Term: T(props.Lang, "settings.crm"), DetailComponent: crmDetail(props.CRMState, props.Lang)},
@@ -319,6 +319,17 @@ templ serviceDetail(on bool, connected, unset string) {
 		} else {
 			{ unset }
 		}
+	</span>
+}
+
+// faxLaneDetail is the fax row's pill: the lanes' state vocabulary
+// ALWAYS renders (both the on and the off phrasings are facts), while
+// the on/off class follows whether any lane is up — unlike
+// serviceDetail, whose connected/unset pair replaces one phrasing with
+// another.
+templ faxLaneDetail(cap FaxCapability, lang Lang) {
+	<span class={ "wp-service", templ.KV("wp-service-on", cap.Any()), templ.KV("wp-service-off", !cap.Any()) }>
+		{ T(lang, settingsFaxKey(cap)) }
 	</span>
 }
 
