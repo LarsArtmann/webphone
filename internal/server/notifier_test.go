@@ -75,3 +75,44 @@ func expectQuiet(t *testing.T, events <-chan sse.Event, because string) {
 	case <-deadline.C:
 	}
 }
+
+// TestFaxPushCarriesTheCapability pins T20.2: the SSE fax-list push
+// renders through the SAME lane capability as the full panel, so a
+// pushed payload can never promise a form or an affordance the render
+// withholds — the off-deployment's push carries the honest empty copy.
+func TestFaxPushCarriesTheCapability(t *testing.T) {
+	db, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = db.Close() })
+	hubs := NewHubs()
+	owner := domain.MustParseExtension("100")
+	notifier := NewNotifier(hubs, store.NewMessages(db), newTestEngine(t).Faxes(), nil, false, views.FaxCapability{})
+
+	events := hubs.get(owner).Hub().Subscribe()
+	t.Cleanup(func() { hubs.get(owner).Hub().Unsubscribe(events) })
+
+	notifier.Project(context.Background(), domain.FaxAdvanced{Owner: owner, Fax: domain.GenerateFaxID()})
+
+	deadline := time.NewTimer(2 * time.Second)
+	defer deadline.Stop()
+	for {
+		select {
+		case ev := <-events:
+			if ev.Event != "fax" {
+				continue
+			}
+			body := string(ev.Data)
+			if !strings.Contains(body, "wp-fax-off") {
+				t.Fatalf("off-deployment fax push lost the capability notice; payload:\n%s", body)
+			}
+			if strings.Contains(body, "send a PDF above") {
+				t.Fatalf("off-deployment fax push promises a send affordance; payload:\n%s", body)
+			}
+			return
+		case <-deadline.C:
+			t.Fatal("projection never pushed the fax list")
+		}
+	}
+}

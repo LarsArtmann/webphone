@@ -216,7 +216,7 @@ func TestReceiveOnlyPanelKeepsStoredInboundFaxes(t *testing.T) {
 	if !strings.Contains(panel, "/fax/"+job.ID.String()+"/document") {
 		t.Errorf("stored inbound document link must render; panel:\n%s", panel)
 	}
-	if !strings.Contains(panel, "wp-fax-off") || !strings.Contains(panel, "no outbound provider") {
+	if !strings.Contains(panel, "wp-fax-off") || !strings.Contains(panel, "no outbound fax provider") {
 		t.Errorf("receive-only panel must still name the missing send lane; panel:\n%s", panel)
 	}
 	if strings.Contains(panel, "wp-compose-fax") {
