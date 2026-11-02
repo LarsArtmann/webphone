@@ -179,6 +179,7 @@ Near-misses of THIS session, honestly:
 `[O]` = owner, `[A]` = assistant. Sorted: switch-critical first.
 
 **The switch + live proof (P0):**
+
 1. `[O]` Leg 0: confirm pbx tree clean + fully pushed (concurrent train settled).
 2. `[O]` Leg 1: `nix run .#deploy` — guards green, deploy-freshness FRESH, legs printed (expect NEW docs-churn paths vs `a2slrp3c`).
 3. `[O]` Leg 2: `nixos-rebuild test` + the two journal probes — NO `unknown configuration keys` WARN.
@@ -251,5 +252,5 @@ Near-misses of THIS session, honestly:
 
 ---
 
-*Verified as of 18:33–18:38 CET snapshot; written 20:29 CET. Next state
-change that matters: the owner's leg 0–2.*
+_Verified as of 18:33–18:38 CET snapshot; written 20:29 CET. Next state
+change that matters: the owner's leg 0–2._
