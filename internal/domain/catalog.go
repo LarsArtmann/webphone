@@ -13,10 +13,10 @@ const (
 	CatalogTitle   = "Webphone"
 	CatalogVersion = "1.0.0"
 
-	// catalogServiceID is the service id in the catalog and the
+	// CatalogServiceID is the service id in the catalog and the
 	// federation-hub union — keep in sync with the repo's
 	// .eventcatalog-hub.json name.
-	catalogServiceID = "webphone"
+	CatalogServiceID = "webphone"
 )
 
 // The Catalog*Schema types mirror the service-seam events (events.go)
@@ -60,7 +60,7 @@ func BuildCatalog() *catalog.Catalog {
 	builder := catalog.NewBuilder(CatalogTitle, CatalogVersion)
 
 	builder.AddService(
-		catalogServiceID, CatalogTitle, CatalogVersion,
+		CatalogServiceID, CatalogTitle, CatalogVersion,
 		"Single-binary unified-communications web app for pbx.artmann.tech: "+
 			"SIP calls (SIP.js island), SMS/MMS threads, fax, voicemail, history "+
 			"and contacts behind one login against the PBX directory.",
@@ -100,24 +100,31 @@ func BuildCatalog() *catalog.Catalog {
 		Name:  "Lars Artmann",
 		Email: "git@lars.software",
 	})
-	builder.ConfigureService(catalogServiceID, catalog.ServiceOwners("lars"),
+	builder.ConfigureService(CatalogServiceID, catalog.ServiceOwners("lars"),
 		// Wire-contract cross-links (hub inventory page): the catalog
-		// command renders BOTH spec files into <out>/eventcatalog/
-		// specifications/ next to this service page — the AsyncAPI doc
-		// from server.RenderWireContractsYAML (the /hooks/* lanes,
-		// receipts, SSE) and the OpenAPI doc from
+		// command renders BOTH spec files into
+		// <out>/eventcatalog/services/webphone/specifications/ — the
+		// AsyncAPI doc from server.RenderWireContractsYAML (the /hooks/*
+		// lanes, receipts, SSE) and the OpenAPI doc from
 		// server.RenderOpenAPIContract (the session-gated HTTP API).
-		// Paths are catalog-root-relative per EventCatalog's
-		// specifications frontmatter convention.
+		//
+		// Paths are SERVICE-DIR-RELATIVE, which is what core actually
+		// enforces: it joins the resource page's directory with the path
+		// (core/src/utils/resource-files.ts, getResourceFilePath ->
+		// path.join(dirname(resource), relativePath)). The previous
+		// catalog-root layout ("/specifications/...", files at the tree
+		// root) satisfied no check locally and died in the federation
+		// hub: `refs/file-exists` red at lint, and astro ENOENT
+		// 'services/webphone/specifications/asyncapi.yaml' at render.
 		catalog.ServiceSpecifications(
 			catalog.Specification{
 				Type: "asyncapi",
-				Path: "/specifications/asyncapi.yaml",
+				Path: "specifications/asyncapi.yaml",
 				Name: "Webphone wire contracts (hooks, receipts, SSE)",
 			},
 			catalog.Specification{
 				Type: "openapi",
-				Path: "/specifications/openapi.json",
+				Path: "specifications/openapi.json",
 				Name: "Session-gated HTTP API",
 			},
 		),
@@ -130,7 +137,7 @@ func BuildCatalog() *catalog.Catalog {
 		"telephony", "Telephony", CatalogVersion,
 		"User-facing telephony for pbx.artmann.tech: calls, message threads, "+
 			"and fax per extension, live over SSE.",
-		catalogServiceID,
+		CatalogServiceID,
 	)
 	builder.ConfigureDomain("telephony", catalog.DomainOwners("lars"))
 

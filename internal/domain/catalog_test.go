@@ -41,8 +41,8 @@ func TestBuildCatalog(t *testing.T) {
 func testCatalogService(t *testing.T, svc catalog.Service) {
 	t.Helper()
 
-	if svc.ID != catalogServiceID {
-		t.Errorf("Service.ID = %q, want %q", svc.ID, catalogServiceID)
+	if svc.ID != CatalogServiceID {
+		t.Errorf("Service.ID = %q, want %q", svc.ID, CatalogServiceID)
 	}
 
 	if !slices.Equal(svc.Owners, []string{"lars"}) {
@@ -57,9 +57,12 @@ func testCatalogService(t *testing.T, svc catalog.Service) {
 		t.Errorf("len(Commands) = %d, want 0 (webphone writes are HTTP, not messages)", len(svc.Commands))
 	}
 
+	// Service-dir-relative: core joins the service page's directory with
+	// these paths (core/src/utils/resource-files.ts). Root-absolute paths
+	// silently matched nothing and broke the federation hub at lint/render.
 	wantSpecs := []catalog.Specification{
-		{Type: "asyncapi", Path: "/specifications/asyncapi.yaml", Name: "Webphone wire contracts (hooks, receipts, SSE)"},
-		{Type: "openapi", Path: "/specifications/openapi.json", Name: "Session-gated HTTP API"},
+		{Type: "asyncapi", Path: "specifications/asyncapi.yaml", Name: "Webphone wire contracts (hooks, receipts, SSE)"},
+		{Type: "openapi", Path: "specifications/openapi.json", Name: "Session-gated HTTP API"},
 	}
 	if !slices.Equal(svc.Specifications, wantSpecs) {
 		t.Errorf("Service.Specifications = %v, want %v (the hub inventory page links the wire contracts through these)", svc.Specifications, wantSpecs)
@@ -130,8 +133,8 @@ func testCatalogDomain(t *testing.T, cat *catalog.Catalog) {
 		t.Errorf("Domain.Version = %q, want %q", domain.Version, CatalogVersion)
 	}
 
-	if len(domain.Services) != 1 || domain.Services[0] != catalogServiceID {
-		t.Errorf("Domain.Services = %v, want [%s]", domain.Services, catalogServiceID)
+	if len(domain.Services) != 1 || domain.Services[0] != CatalogServiceID {
+		t.Errorf("Domain.Services = %v, want [%s]", domain.Services, CatalogServiceID)
 	}
 
 	if !slices.Equal(domain.Owners, []string{"lars"}) {
@@ -240,7 +243,7 @@ func TestCatalogExportFrontmatter(t *testing.T) {
 	}
 
 	for _, want := range []string{
-		filepath.Join("services", catalogServiceID, "index.mdx"),
+		filepath.Join("services", CatalogServiceID, "index.mdx"),
 		filepath.Join("domains", "telephony", "index.mdx"),
 	} {
 		if _, err := os.Stat(filepath.Join(tree, want)); err != nil {

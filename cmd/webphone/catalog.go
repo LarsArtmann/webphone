@@ -39,7 +39,12 @@ func runCatalog(args []string) error {
 	// frontmatter points here): the SAME pure renders behind
 	// `webphone contracts` and GET /openapi.json, so the hub's inventory
 	// page links live contract bytes, never hand-maintained copies.
-	specs := filepath.Join(dir, "specifications")
+	//
+	// They live INSIDE the service directory because core resolves a
+	// specification path relative to the resource page
+	// (core/src/utils/resource-files.ts: path.join(dirname(resourcePage),
+	// specPath)). A tree-root specifications/ dir matched nothing.
+	specs := filepath.Join(dir, "services", domain.CatalogServiceID, "specifications")
 	if err := os.MkdirAll(specs, 0o755); err != nil {
 		return bootErr(bootGeneric, errorfamily.WrapInfrastructure(err, "webphone.cli.catalog",
 			"create "+specs))
