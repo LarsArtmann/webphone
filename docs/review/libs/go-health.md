@@ -1,7 +1,7 @@
 # go-health — library utilization audit
 
-**Verdict:** exactly the composition the 09-24 audit praised — injector-discovered probe, one readiness truth, zero duplication. One real gap: response sanitization. **Adoption 83/100 (high)** — 4.5 of 6 applicable rows.
-**Pin:** v0.8.1 (go.mod:26) · **Latest:** v0.9.0 · **Currency:** **one minor behind** · **Status:** direct dep
+**Verdict:** exactly the composition the 09-24 audit praised — injector-discovered probe, one readiness truth, zero duplication. The response-sanitization gap **LANDED 2026-11-04** (bumped + the library applies `CoerceValidUTF8` at its own write seam). **Adoption 100/100 (top band, post-bump)** — 6 of 6 applicable rows.
+**Pin:** v0.9.0 (go.mod) · **Latest:** v0.9.0 · **Currency:** current · **Status:** direct dep (bumped 2026-11-04 with go-health-dashboard v0.13.0 — the coordinated wave's consumer side; the dashboard's release commit existed but its tag was missing, which the closeout train completed: verified the release commit green in a detached worktree, tagged v0.13.0, pushed, waited for proxy propagation, then bumped both)
 **Audited:** 2026-11-04 · **Prior reports:** [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html) (80/100 at v0.3.0).
 
 ## Status
@@ -35,12 +35,12 @@
 | 4 | Liveness + startup handlers | 🟢 Fully leveraged | server.go:639-640 |
 | 5 | Readiness serving | 🟡 Partial | Deliberately delegated to `cqrshtmx.ReadinessHandler` for per-check timeouts and the projections leg — documented divergence, not neglect; using go-health here too would create a second readiness truth |
 | 6 | Probe-eval timeout (`WithTimeout`) | 🟡 Partial | unused; per-check budgets live in cqrs-htmx `NamedCheck`; the probe eval itself runs on defaults |
-| 7 | **Response sanitization (`CoerceValidUTF8`, v0.9.0)** | 🔴 Missed | Check details embed driver strings (modernc sqlite, loopback dial errors) that can contain non-UTF-8 bytes; `/livez`,`/startupz` JSON would break. The bump ships the fix |
+| 7 | **Response sanitization (`CoerceValidUTF8`, v0.9.0)** | 🟢 Adopted 2026-11-04 | Bumped to v0.9.0; the coercion is applied INSIDE the library at its single serialization seam (handlers.go `writeHealthResponse` → `marshalResponse(CoerceValidUTF8(resp))`), so `/livez`+`/startupz` are fixed with zero webphone-side wiring — webphone never marshals a `health.Response` itself. `/healthz` (cqrs-htmx `ReadinessHandler`) marshals via encoding/json v1, which coerces invalid UTF-8 silently — no v2 500 risk there |
 | n/a | Instance ID / version / boot-time observability | ⚪ N/A | single binary; `/version` + bootreport own identity |
 | n/a | Evaluation hooks / recorders / `ChainRecorders` | ⚪ N/A | the dashboard subscribes internally; no second recorder use case |
 | n/a | `aggregate` / `federation` / `checks` batteries | ⚪ N/A | one process, no federated probes; disk/memory thresholds are a NixOS monitoring concern |
 
-**Score:** rows 1-4 = 1.0 (4.0) + rows 5-6 = 0.5 (1.0) + row 7 = 0 → **5.0 / 6 ≈ 83/100, high band.**
+**Score:** rows 1-4 = 1.0 (4.0) + rows 5-6 = 0.5 (1.0) + row 7 = 1.0 (bumped 2026-11-04) → **6.0 / 6 = 100/100, top band.**
 
 ## Ruling
 
