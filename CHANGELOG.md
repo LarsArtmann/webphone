@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Blob persistence is now crash-durable (2026-11-04, the fleet-libs
+  audit's top finding): `blob.Save` — the one runtime write path for
+  attachments and fax PDFs — rides go-atomic-write (fsync file, atomic
+  rename, fsync directory) instead of a bare `os.WriteFile`. A power
+  loss can no longer leave a database row referencing truncated or
+  zero-length blob bytes (for inbound faxes that row is the only copy).
+  Write ordering was verified file-then-row at all four call sites, so
+  "Save returned" now implies "content on stable storage" exactly when
+  the referencing row can land. The `webphone catalog` and
+  `webphone contracts` spec writers ride the same library's
+  `WriteIfChanged` (no torn writes, no mtime churn on identical reruns).
+
 ### Added
 
 - Unknown configuration keys warn at boot (2026-10-30): one `WARN` line

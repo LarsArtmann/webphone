@@ -1,7 +1,7 @@
 # go-atomic-write — library utilization audit
 
-**Verdict:** the sharpest NEW finding of this audit series: webphone's one runtime file-write path persists user data with a bare `os.WriteFile` — no fsync, no atomic rename — while this library exists precisely for that. **Adoption: n/a today; fit: HIGH (small surface, real durability win).**
-**Pin:** none (absent from go.mod) · **Latest:** v0.6.2 (local checkout tag) · **Status:** not a dependency
+**Verdict:** the sharpest NEW finding of this audit series: webphone's one runtime file-write path persisted user data with a bare `os.WriteFile` — no fsync, no atomic rename — while this library exists precisely for that. **Adoption: LANDED 2026-11-04 (v0.6.2) — `blob.Save` rides `WriteWithPerm(…, 0o640)`, both CLI spec writers ride `WriteIfChanged`; vendorHash re-pinned in the same train.**
+**Pin:** v0.6.2 · **Latest:** v0.6.2 (local checkout tag) · **Status:** direct dependency
 **Audited:** 2026-11-04 · **Prior reports:** none (first audit).
 
 ## Errata — verified write ordering (T01, 2026-11-04)
@@ -19,7 +19,7 @@ Step-0 verification of the plan (`docs/planning/2026-11-04_18-41_SUPERB-fleet-li
 | | |
 |---|---|
 | Module | `github.com/larsartmann/go-atomic-write` |
-| In webphone | absent (0 references) |
+| In webphone | adopted v0.6.2 (blob.Save + 2 CLI writers)
 
 ## What the library offers
 
@@ -49,7 +49,7 @@ Step-0 verification of the plan (`docs/planning/2026-11-04_18-41_SUPERB-fleet-li
 ## How to verify
 
 ```console
-rg -n "os.WriteFile" internal/blob/store.go              # the finding (:50)
-rg -n "os.WriteFile" cmd/webphone/catalog.go cmd/webphone/contracts.go
-rg -rn "atomicwrite" --type go internal/ | wc -l         # expect 0 until adopted
+rg -n "os.WriteFile" internal/blob/store.go              # expect: probe only (health probe still uses CreateTemp); the Save write is atomicwrite now
+rg -n "os.WriteFile" cmd/webphone/catalog.go cmd/webphone/contracts.go   # expect 0 hits (WriteIfChanged adopted)
+rg -n "atomicwrite" --type go internal/ cmd/ | wc -l     # expect > 0 (adopted 2026-11-04)
 ```
