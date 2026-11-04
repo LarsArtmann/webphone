@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"bytes"
 	"strings"
 	"testing"
 	"time"
@@ -237,6 +238,26 @@ func TestAppShutdownClosesDatabaseAndIsIdempotent(t *testing.T) {
 
 func discardLogger() *slog.Logger {
 	return slog.New(slog.NewTextHandler(io.Discard, nil))
+}
+
+// TestDashboardEnableWarnsTheFenceIsTheProxy pins the T19 fence
+// decision's operator surface: enabling the dashboard logs the WARN
+// naming the reverse proxy as the authentication home (the app ships
+// no middleware — docs/planning/2026-11-04_23-45_dashboard-fence-decision.md).
+func TestDashboardEnableWarnsTheFenceIsTheProxy(t *testing.T) {
+	var buf bytes.Buffer
+	application, err := New(testConfig(t, true), slog.New(slog.NewTextHandler(&buf, nil)))
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if err := application.Shutdown(); err != nil {
+		t.Fatalf("Shutdown: %v", err)
+	}
+	for _, want := range []string{"WITHOUT app-side authentication", "reverse proxy"} {
+		if !strings.Contains(buf.String(), want) {
+			t.Errorf("dashboard fence WARN missing %q; boot log:\n%s", want, buf.String())
+		}
+	}
 }
 
 // TestAppServesMainPageUnderStrictCSP guards the boundary: the shell

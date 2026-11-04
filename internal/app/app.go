@@ -380,6 +380,13 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	var dashboardHandler http.Handler
 	if cfg.Dashboard.Enable {
 		dashboardHandler = newDashboard(injector, probe, cfg)
+		// The dashboard ships no app-side authentication BY DECISION
+		// (docs/planning/2026-11-04_23-45_dashboard-fence-decision.md):
+		// behind any proxy the app cannot see the client address, and a
+		// header gate would duplicate the module's fence mode as a
+		// second config home. The fence is the reverse proxy's; say so
+		// where the operator is looking.
+		log.Warn("health dashboard mounted WITHOUT app-side authentication; the fence is your reverse proxy (module default: SSO gate in forwardAuth mode, loopback-only otherwise)")
 	}
 
 	do.Provide(injector, func(i do.Injector) (http.Handler, error) {

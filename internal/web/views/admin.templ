@@ -1,0 +1,301 @@
+package views
+
+import (
+	"strings"
+
+	"github.com/larsartmann/templ-components/display"
+	"github.com/larsartmann/templ-components/icons"
+	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/pbx"
+	"github.com/larsartmann/webphone/internal/store"
+)
+
+// AdminPanel is the Admin tab: read-only visibility across EVERY line of
+// the phone system — accounts, numbers, conversations, faxes and calls.
+// It renders only for admin sessions (the server gates route + panel);
+// every affordance here is a read or a download, never an action on
+// another owner's data — acting stays on each line's own login.
+type AdminPanelProps struct {
+	// Users is the account inventory (the shared auth.users mapping),
+	// with each account's live session count.
+	Users []AdminUserRow
+	// Numbers is the line inventory: the union of the identities feed
+	// and the mapped extensions.
+	Numbers []AdminNumberRow
+	// Threads is the cross-owner conversation inventory, newest first
+	// (archived threads included, badged).
+	Threads []store.ThreadSummary
+	// ThreadsError degrades the section instead of dying the panel
+	// (the honest-degrade doctrine every panel follows).
+	ThreadsError string
+	// Faxes is the cross-owner fax inventory, newest first.
+	Faxes      []domain.FaxJob
+	FaxesError string
+	// Transcripts is the cross-owner transcribed-call inventory
+	// (the History tab's group shape, plus the owning line).
+	Transcripts      []AdminCallRow
+	TranscriptsError string
+	// CDRs is the merged per-line call-record page; Extension names the
+	// line whose directory credentials surfaced the row.
+	CDRs []AdminCDRRow
+	// CDROff marks the phone API as disabled (the CDR half cannot
+	// exist; the section says so instead of rendering a dead table).
+	CDROff bool
+	// CDRFailed lists the lines whose CDR page could not be fetched —
+	// one honest notice, the surviving lines still render.
+	CDRFailed []string
+	Lang      Lang
+}
+
+// AdminUserRow is one account of the users inventory.
+type AdminUserRow struct {
+	Email        string
+	DisplayName  string
+	Extensions   []string
+	Admin        bool
+	LiveSessions int
+}
+
+// AdminNumberRow is one line of the numbers inventory.
+type AdminNumberRow struct {
+	Extension string
+	DID       string
+	Users     []string
+}
+
+// AdminCallRow is one transcribed call across owners: the TranscriptGroup
+// shape plus the line that owns it.
+type AdminCallRow struct {
+	Owner     string
+	Remote    string
+	Direction string
+	Lines     []string
+}
+
+// AdminCDRRow is one call record with the line it belongs to.
+type AdminCDRRow struct {
+	CDR       pbx.CDR
+	Extension string
+}
+
+templ AdminPanel(props AdminPanelProps) {
+	<section class="wp-panel" id="admin-panel">
+		@panelHead(props.Lang, "tab.admin", "admin.subtitle")
+
+		<h3 class="wp-settings-head" id="wp-admin-users">{ T(props.Lang, "admin.users.title") }</h3>
+		if len(props.Users) == 0 {
+			<p class="wp-empty">{ T(props.Lang, "admin.users.empty") }</p>
+		}
+		for _, user := range props.Users {
+			<div class="wp-row wp-admin-user-row">
+				<span class="wp-thread-text">
+					{ user.Email }
+					if user.DisplayName != "" {
+						<span class="wp-muted">{ user.DisplayName }</span>
+					}
+				</span>
+				<span class="wp-thread-text">
+					{ strings.Join(user.Extensions, ", ") }
+					if user.Admin {
+						<span class="wp-admin-chip">{ T(props.Lang, "admin.users.admin") }</span>
+					}
+					if user.LiveSessions > 0 {
+						<span class="wp-muted">{ " · " + fmtInt(user.LiveSessions) + T(props.Lang, "admin.users.live") }</span>
+					}
+				</span>
+			</div>
+		}
+
+		<h3 class="wp-settings-head" id="wp-admin-numbers">{ T(props.Lang, "admin.numbers.title") }</h3>
+		if len(props.Numbers) == 0 {
+			<p class="wp-empty">{ T(props.Lang, "admin.numbers.empty") }</p>
+		}
+		for _, number := range props.Numbers {
+			<div class="wp-row wp-admin-number-row">
+				<span class="wp-admin-ext">{ number.Extension }</span>
+				<span class="wp-thread-text">
+					if number.DID != "" {
+						{ number.DID }
+					} else {
+						<span class="wp-muted">{ T(props.Lang, "admin.numbers.nodid") }</span>
+					}
+					if len(number.Users) > 0 {
+						<span class="wp-muted">{ " · " + strings.Join(number.Users, ", ") }</span>
+					}
+				</span>
+			</div>
+		}
+
+		<h3 class="wp-settings-head" id="wp-admin-threads">{ T(props.Lang, "admin.threads.title") }</h3>
+		@panelError(props.ThreadsError)
+		if props.ThreadsError == "" && len(props.Threads) == 0 {
+			<p class="wp-empty">{ T(props.Lang, "admin.threads.empty") }</p>
+		}
+		for _, summary := range props.Threads {
+			<a
+				class="wp-row wp-admin-thread-row"
+				href={ "/admin/threads/" + summary.Thread.ID.String() }
+				hx-get={ "/partials/admin/threads/" + summary.Thread.ID.String() }
+				hx-target="#tab-content"
+				hx-swap="innerHTML show:window:top"
+				hx-push-url={ "/admin/threads/" + summary.Thread.ID.String() }
+			>
+				<span class="wp-admin-ext">{ summary.Thread.Owner.String() }</span>
+				<span class="wp-thread-text">
+					{ summary.Thread.Remote.String() }
+					<span class="wp-muted">
+						{ " · " + string(summary.Thread.Network()) }
+						if summary.LastBody != "" {
+							{ " · " + previewText(summary.LastBody) }
+						}
+					</span>
+				</span>
+				<span class="wp-row-actions">
+					if summary.Thread.Archived {
+						<span class="wp-admin-chip">{ T(props.Lang, "threads.archived") }</span>
+					}
+					<span class="wp-muted">{ formatStamp(props.Lang, summary.Thread.LastActivityAt) }</span>
+				</span>
+			</a>
+		}
+
+		<h3 class="wp-settings-head" id="wp-admin-faxes">{ T(props.Lang, "admin.faxes.title") }</h3>
+		@panelError(props.FaxesError)
+		if props.FaxesError == "" && len(props.Faxes) == 0 {
+			<p class="wp-empty">{ T(props.Lang, "admin.faxes.empty") }</p>
+		}
+		for _, job := range props.Faxes {
+			<div class={ "wp-row wp-admin-fax-row", templ.KV("wp-fax-in", job.Direction == domain.FaxInbound) }>
+				<span class={ "wp-dir-chip", templ.KV("wp-dir-in", job.Direction == domain.FaxInbound) } aria-hidden="true">{ faxDirGlyph(job) }</span>
+				<span class="wp-thread-text" role="img" aria-label={ faxDirLabel(job, props.Lang) }>
+					<span class="wp-admin-ext">{ job.Owner.String() }</span>
+					{ " " }
+					{ job.Remote.String() }
+					<span class="wp-muted">
+						{ " · " + formatStamp(props.Lang, job.CreatedAt) + " " }
+						@FaxStatusBadge(job, props.Lang)
+						if job.Pages > 0 {
+							{ " · " + fmtInt(job.Pages) + T(props.Lang, "fax.pages") }
+						}
+					</span>
+				</span>
+				<span class="wp-row-actions">
+					if job.DocumentPath != "" {
+						<a class="wp-mini" href={ "/fax/" + job.ID.String() + "/document" } download>{ T(props.Lang, "fax.pdf") }</a>
+					}
+				</span>
+			</div>
+		}
+
+		<h3 class="wp-settings-head" id="wp-admin-calls">{ T(props.Lang, "admin.calls.title") }</h3>
+		if props.CDROff {
+			<p class="wp-empty">{ T(props.Lang, "admin.calls.cdrOff") }</p>
+		} else {
+			if len(props.CDRFailed) > 0 {
+				<p class="wp-error" role="alert">{ T(props.Lang, "admin.calls.cdrFailed") + " " + strings.Join(props.CDRFailed, ", ") }</p>
+			}
+			if len(props.CDRs) == 0 && len(props.CDRFailed) == 0 {
+				<p class="wp-empty">{ T(props.Lang, "admin.calls.cdrNone") }</p>
+			}
+			for _, row := range props.CDRs {
+				@AdminCDRRowView(row, props.Lang)
+			}
+		}
+
+		<h3 class="wp-settings-head" id="wp-admin-transcripts">{ T(props.Lang, "admin.calls.transcripts") }</h3>
+		@panelError(props.TranscriptsError)
+		if props.TranscriptsError == "" && len(props.Transcripts) == 0 {
+			<p class="wp-empty">{ T(props.Lang, "admin.calls.transcriptsNone") }</p>
+		}
+		for _, call := range props.Transcripts {
+			<details class="wp-row wp-admin-call-row">
+				<summary>
+					<span class="wp-admin-ext">{ call.Owner }</span>
+					{ " " + call.Remote }
+					<span class="wp-muted">{ " · " + call.Direction + " · " + fmtInt(len(call.Lines)) + T(props.Lang, "admin.calls.lines") }</span>
+				</summary>
+				<ul class="wp-admin-lines">
+					for _, line := range call.Lines {
+						<li>{ line }</li>
+					}
+				</ul>
+			</details>
+		}
+	</section>
+}
+
+// AdminCDRRowView is one merged call record: the line chip, the
+// direction, the parties, and the timing. Direction reads the same
+// context vocabulary the History filters use ("public" = inbound).
+templ AdminCDRRowView(row AdminCDRRow, lang Lang) {
+	<div class="wp-row wp-admin-cdr-row">
+		if row.CDR.Context == "public" {
+			<span class="wp-dir-chip wp-dir-in" aria-hidden="true">↓</span>
+		} else {
+			<span class="wp-dir-chip" aria-hidden="true">↑</span>
+		}
+		<span class="wp-thread-text">
+			{ row.CDR.CallerIDNumber + " → " + row.CDR.DestinationNumber }
+			<span class="wp-muted">
+				{ " · " + formatStamp(lang, row.CDR.Start) }
+				if row.CDR.Billsec > 0 {
+					{ " · " + fmtInt(row.CDR.Billsec) + T(lang, "admin.calls.seconds") }
+				}
+			</span>
+		</span>
+		<span class="wp-row-actions">
+			<span class="wp-admin-ext">{ row.Extension }</span>
+		</span>
+	</div>
+}
+
+// AdminThread is the read-only cross-line conversation view: the owning
+// line's transcript without any owner affordance (no composer, no flag
+// toggles, no mark-read). Attachment links ride the admin-gated stream
+// fallback on /attachments/{id}.
+type AdminThreadProps struct {
+	Thread   domain.Thread
+	Messages []domain.Message
+	Lang     Lang
+}
+
+templ AdminThread(props AdminThreadProps) {
+	<section class="wp-panel" id="admin-thread">
+		<div class="wp-thread-head" id="wp-admin-thread-head">
+			<a
+				class="wp-archived-toggle"
+				href="/admin"
+				hx-get="/partials/admin"
+				hx-target="#tab-content"
+				hx-swap="innerHTML show:window:top"
+				hx-push-url="/admin"
+			>← { T(props.Lang, "admin.thread.back") }</a>
+			<h2>
+				{ T(props.Lang, "admin.thread.owner") + " " + props.Thread.Owner.String() + " · " + props.Thread.Remote.String() }
+			</h2>
+			if props.Thread.Archived {
+				<span class="wp-admin-chip">{ T(props.Lang, "threads.archived") }</span>
+			}
+		</div>
+		<div class="wp-transcript-wrap">
+			<div class="wp-transcript">
+				if len(props.Messages) == 0 {
+					@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, "admin.threads.empty"), Icon: icons.Message})
+				} else {
+					@Transcript(props.Messages, props.Lang, false)
+				}
+			</div>
+		</div>
+	</section>
+}
+
+// previewText flattens a last-message body into a one-line list preview
+// (rune-safe: a byte slice could cut a multi-byte character mid-rune).
+func previewText(body string) string {
+	flat := strings.Join(strings.Fields(body), " ")
+	runes := []rune(flat)
+	if len(runes) > 60 {
+		return string(runes[:60]) + "…"
+	}
+	return flat
+}

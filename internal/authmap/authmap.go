@@ -130,22 +130,6 @@ func (m *Map) Users() []User {
 	return out
 }
 
-// AnyAdmin reports whether at least one mapped account is an admin —
-// the composition root's signal that the admin surface exists at all
-// (no admin configured: the routes answer the styled 404 for everyone,
-// byte-identical to a build without the feature).
-func (m *Map) AnyAdmin() bool {
-	if m == nil {
-		return false
-	}
-	for _, user := range m.users {
-		if user.Admin {
-			return true
-		}
-	}
-	return false
-}
-
 // SIPPassword reads the extension's directory password from its
 // operator-managed file — at login time, never cached, so rotation via the
 // secrets pipeline takes effect on the next login. Empty or

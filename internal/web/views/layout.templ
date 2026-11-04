@@ -15,10 +15,17 @@ const (
 	TabHistory   Tab = "history"
 	TabContacts  Tab = "contacts"
 	TabSettings  Tab = "settings"
+	// TabAdmin is the cross-line admin surface (read-only visibility
+	// over every owner's messages, faxes, calls, users and numbers). It
+	// renders ONLY for admin sessions — NavLinks skips it otherwise, so
+	// a deployment without admins is byte-identical to one without the
+	// feature.
+	TabAdmin Tab = "admin"
 )
 
-// AllTabs is the navigation order.
-var AllTabs = []Tab{TabMessages, TabFax, TabVoicemail, TabHistory, TabContacts, TabSettings}
+// AllTabs is the navigation order (TabAdmin rides at the end; NavLinks
+// hides it from non-admin sessions).
+var AllTabs = []Tab{TabMessages, TabFax, TabVoicemail, TabHistory, TabContacts, TabSettings, TabAdmin}
 
 // Path returns the tab's route.
 func (t Tab) Path() string { return "/" + string(t) }
@@ -52,6 +59,11 @@ type ShellProps struct {
 	// IdP's authorization-code + PKCE dance. False renders nothing, so
 	// deployments without OIDC keep their exact login card.
 	SSO bool
+	// Admin renders the Admin tab in the nav: the signed-in session's
+	// login email carries the admin flag (resolved per request from the
+	// live mapping). False keeps the served shell byte-equivalent to a
+	// non-admin build.
+	Admin bool
 	// Lang drives the server-rendered strings.
 	Lang Lang
 }
@@ -175,6 +187,9 @@ templ ShellBody(props ShellProps) {
 
 templ NavLinks(props ShellProps) {
 	for _, tab := range AllTabs {
+		if tab == TabAdmin && !props.Admin {
+			continue
+		}
 		<a
 			class={ "wp-nav-link", templ.KV("wp-active", props.ActiveTab == tab) }
 			href={ tab.Path() }
