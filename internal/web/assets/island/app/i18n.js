@@ -241,6 +241,11 @@ export const I18N = {
     dispositionIvr: "IVR",
     dispositionSaved: (label) => `Verdict saved: ${label}`,
     dispositionFailed: "Saving the verdict failed — try again.",
+    callNotePlaceholder: "Add a note for this call…",
+    callNoteSave: "Save note",
+    callNoteSaved: "Note saved",
+    callNoteFailed: "Saving the note failed; try again.",
+    callNoteFull: "The note list is full; delete another note first.",
   }),
   de: defineMessages({
     regState: "Registrierungsstatus",
@@ -465,6 +470,13 @@ export const I18N = {
     dispositionSaved: (label) => `Einschätzung gespeichert: ${label}`,
     dispositionFailed:
       "Speichern der Einschätzung fehlgeschlagen — bitte erneut versuchen.",
+    callNotePlaceholder: "Notiz zu diesem Gespräch hinzufügen …",
+    callNoteSave: "Notiz speichern",
+    callNoteSaved: "Notiz gespeichert",
+    callNoteFailed:
+      "Speichern der Notiz fehlgeschlagen; bitte erneut versuchen.",
+    callNoteFull:
+      "Die Notizliste ist voll; löschen Sie zuerst eine andere Notiz.",
   }),
 };
 

@@ -590,6 +590,25 @@ button.small {
   font-size: 0.92em;
 }
 
+/* Post-call note editor (issue #11): the hangup moment writes the same
+   slot History renders; the editor takes the controls row's own line. */
+.call-note-row {
+  display: flex;
+  flex: 1 1 100%;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.call-note-input {
+  width: 100%;
+  resize: vertical;
+}
+
+.call-note-saved {
+  color: var(--muted);
+  font-size: 0.92em;
+}
+
 .call-card.wp-ended-card[data-state] .call-state-text::before {
   background: var(--border);
   animation: none;

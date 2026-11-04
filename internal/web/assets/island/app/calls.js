@@ -260,6 +260,7 @@ function morphToEndedCard(id, entry) {
   const controls = card.querySelector(".controls");
   if (!controls) return;
   controls.replaceChildren();
+  controls.append(noteRow(id));
   if (crmEnabled) {
     controls.append(dispositionRow(id, entry));
   }
@@ -355,6 +356,79 @@ async function confirmDisposition(row, id, entry, value, labelKey) {
   } catch (err) {
     for (const chip of chips) chip.disabled = false;
     announce(t("dispositionFailed"), "warn");
+    throw err;
+  }
+}
+
+// noteRow is the post-call note editor (issue #11): the hangup moment
+// gets the SAME note slot History renders later (PUT /api/calls/{id}/note),
+// so the conversation is written down with zero navigation. A 204
+// collapses the row to the saved line; the note-list-full 409 and any
+// other failure keep the draft in the editor (hand-written content is
+// never silently expunged); dismissing the card loses nothing already
+// saved.
+/** @param {string} id @returns {HTMLDivElement} */
+export function noteRow(id) {
+  const row = document.createElement("div");
+  row.className = "call-note-row";
+  const input = document.createElement("textarea");
+  input.className = "call-note-input";
+  input.placeholder = t("callNotePlaceholder");
+  input.maxLength = 4000;
+  input.rows = 3;
+  const save = document.createElement("button");
+  save.className = "ghost call-note-save";
+  save.textContent = t("callNoteSave");
+  save.addEventListener("click", () => {
+    saveCallNote(row, id, input.value).catch((err) =>
+      log(`note save failed: ${errorMessage(err)}`, "warn"),
+    );
+  });
+  row.append(input, save);
+  return row;
+}
+
+/**
+ * @param {HTMLElement} row
+ * @param {string} id
+ * @param {string} body
+ * @returns {Promise<void>}
+ */
+async function saveCallNote(row, id, body) {
+  const save = /** @type {HTMLButtonElement | null} */ (
+    row.querySelector(".call-note-save")
+  );
+  const input = /** @type {HTMLTextAreaElement | null} */ (
+    row.querySelector(".call-note-input")
+  );
+  if (save) save.disabled = true;
+  try {
+    const res = await authedFetch(
+      `/api/calls/${encodeURIComponent(id)}/note`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body }),
+      },
+    );
+    if (!res.ok) {
+      if (save) save.disabled = false;
+      if (res.status === 409) announce(t("callNoteFull"), "warn");
+      else announce(t("callNoteFailed"), "warn");
+      return;
+    }
+    if (input) input.remove();
+    if (save) save.remove();
+    row.append(
+      Object.assign(document.createElement("span"), {
+        className: "call-note-saved",
+        textContent: t("callNoteSaved"),
+      }),
+    );
+    announce(t("callNoteSaved"));
+  } catch (err) {
+    if (save) save.disabled = false;
+    announce(t("callNoteFailed"), "warn");
     throw err;
   }
 }
