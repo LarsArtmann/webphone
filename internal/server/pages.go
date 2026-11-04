@@ -69,7 +69,7 @@ func (h *handlers) tabPage(w http.ResponseWriter, r *http.Request) {
 	h.renderShell(w, r, tabFromPath(r.URL.Path))
 }
 
-func (h *handlers) renderShell(w http.ResponseWriter, r *http.Request, tab views.Tab) {
+func (h *handlers) renderShell(w http.ResponseWriter, r *http.Request, tab views.Tab, content ...templ.Component) {
 	lang := h.lang(r)
 	var props views.ShellProps
 	props.ActiveTab = tab
@@ -88,11 +88,18 @@ func (h *handlers) renderShell(w http.ResponseWriter, r *http.Request, tab views
 	if sess, ok := session.From(r.Context()); ok {
 		props.SignedIn = sess.Extension.String()
 		props.SignedInDID = h.identityFor(sess.Extension)
+		// The Admin tab renders only for admin sessions (per-request
+		// resolution over the live mapping — see isAdminSession).
+		props.Admin = h.isAdminSession(sess)
 		// Keep the hub's language fresh so SSE fragments match the tabs.
 		h.deps.Hubs.SetLang(sess.Extension, lang)
 		props.Unread = h.countUnread(r, sess)
 		props.NewVoicemail = h.countVoicemail(r, sess)
-		if component, err := h.tabComponent(r, tab, sess); err == nil {
+		if len(content) > 0 {
+			// A pre-built component (the admin deep link): the handler
+			// already ran (and gated) the tab's own builder.
+			props.TabContent = content[0]
+		} else if component, err := h.tabComponent(r, tab, sess); err == nil {
 			props.TabContent = component
 		} else {
 			props.TabContent = errorPanel(h.safeDetail(r, "render tab", err), lang)
@@ -239,6 +246,7 @@ func (h *handlers) partialNav(w http.ResponseWriter, r *http.Request) {
 	if sess, ok := session.From(r.Context()); ok {
 		props.Unread = h.countUnread(r, sess)
 		props.NewVoicemail = h.countVoicemail(r, sess)
+		props.Admin = h.isAdminSession(sess)
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := views.NavLinks(props).Render(r.Context(), w); err != nil {
@@ -258,6 +266,8 @@ func tabFromPath(path string) views.Tab {
 		return views.TabContacts
 	case "/settings", "/settings/":
 		return views.TabSettings
+	case "/admin", "/admin/":
+		return views.TabAdmin
 	default:
 		return views.TabMessages
 	}

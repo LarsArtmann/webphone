@@ -25,6 +25,7 @@ import (
 	"github.com/larsartmann/httputil"
 	servertiming "github.com/larsartmann/httputil/server_timing"
 
+	"github.com/larsartmann/webphone/internal/admin"
 	"github.com/larsartmann/webphone/internal/asr"
 	"github.com/larsartmann/webphone/internal/blob"
 	"github.com/larsartmann/webphone/internal/config"
@@ -238,6 +239,14 @@ type Deps struct {
 	// PushDevices is the registered-device store (readmodels-backed;
 	// present whenever the composition built the engine).
 	PushDevices *readmodels.PushDevices
+	// Admin is the admin surface's identity inventory (config-derived:
+	// the shared auth.users mapping + the identities feed). Nil (test
+	// compositions): every admin route answers the styled 404 and the
+	// nav renders no Admin tab. Non-nil, a route still demands the
+	// session's login email carry the admin flag — resolved per request
+	// over the LIVE mapping, so a config demotion bites on the admin's
+	// next request (see isAdminSession).
+	Admin *admin.Service
 	// Readiness probes only (healthz): the SQLite handle for the ping
 	// and the blob files root for the write probe. Nothing else may use
 	// them — data access rides the services above.
@@ -339,6 +348,13 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("GET /history", h.tabPage)
 	protected.HandleFunc("GET /contacts", h.tabPage)
 	protected.HandleFunc("GET /settings", h.tabPage)
+	// The admin surface (read-only cross-line visibility): every route
+	// gates on the admin flag, and a miss answers the styled 404 — the
+	// surface never confirms it exists to a non-admin.
+	protected.HandleFunc("GET /admin", h.adminPage)
+	protected.HandleFunc("GET /partials/admin", h.adminPartial)
+	protected.HandleFunc("GET /admin/threads/{id}", h.adminThreadPage)
+	protected.HandleFunc("GET /partials/admin/threads/{id}", h.adminThreadPartial)
 	protected.HandleFunc("GET /partials/messages", h.partialMessages)
 	protected.HandleFunc("GET /partials/messages/{id}", h.partialThread)
 	protected.HandleFunc("GET /partials/fax", h.partialFax)

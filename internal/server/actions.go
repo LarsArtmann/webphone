@@ -205,6 +205,12 @@ func (h *handlers) faxDocument(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	job, err := h.deps.Fax.Get(r.Context(), sess.Extension, faxID)
+	if err != nil && h.isAdminSession(sess) {
+		// The admin surface's read-only stream: the owner-scoped lookup
+		// misses another line's job by design; an admin session may read
+		// it across owners.
+		job, err = h.deps.Faxes.GetAny(r.Context(), faxID)
+	}
 	if err != nil {
 		h.notFound(w, r)
 		return
@@ -234,6 +240,11 @@ func (h *handlers) attachment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	attachment, err := h.deps.Messaging.AttachmentByID(r.Context(), sess.Extension, attachmentID)
+	if err != nil && h.isAdminSession(sess) {
+		// The admin surface's read-only stream: same cross-owner fallback
+		// as the fax document above.
+		attachment, err = h.deps.Messaging.AttachmentByIDAny(r.Context(), attachmentID)
+	}
 	if err != nil {
 		http.NotFound(w, r)
 		return

@@ -36,6 +36,7 @@ import (
 	dashboard "github.com/larsartmann/go-health-dashboard"
 	"github.com/samber/do/v2"
 
+	"github.com/larsartmann/webphone/internal/admin"
 	"github.com/larsartmann/webphone/internal/asr"
 	"github.com/larsartmann/webphone/internal/authmap"
 	"github.com/larsartmann/webphone/internal/blob"
@@ -410,6 +411,15 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		if cfg.Auth.OAuth2.Enabled() {
 			ssoClient = do.MustInvokeNamed[*sso.Client](i, "sso")
 		}
+		// The admin surface's identity inventory: config-derived, built
+		// from the SAME shared mapping the login modes read (see
+		// AdminService). A nil service (no admin configured on a mapping
+		// that cannot mint logins) keeps every admin route on the styled
+		// 404 — byte-identical to a deployment without the feature.
+		adminService, err := AdminService(cfg)
+		if err != nil {
+			return nil, err
+		}
 		return server.New(server.Deps{
 			Config:      cfg,
 			Sessions:    do.MustInvoke[*session.SQLiteStore](i),
@@ -441,6 +451,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			Dedup:       engineDedupWindow{store: engine.DedupStore()},
 			Push:        pushFanout,
 			PushDevices: engine.PushDevices(),
+			Admin:       adminService,
 		}), nil
 	})
 
@@ -576,6 +587,50 @@ func SSOConfig(a config.Auth) sso.Config {
 		Users:                  mapped,
 		ExtensionPasswordFiles: passwordFiles,
 	}
+}
+
+// AdminService is the config→runtime adapter for the admin surface: it
+// builds the SAME shared mapping the login modes read (auth.users, with
+// the historical passkey.users fallback) into the admin service's own
+// authmap, plus the identities feed. Boot-compatibility doctrine: a
+// mapping that cannot mint logins (a mapped extension without a
+// password file) was already invalid for every login MODE — but with
+// both modes off such a config historically booted, so it still does:
+// the service degrades to nil unless an ADMIN is configured on the
+// broken mapping (then the boot fails loudly; an admin that cannot
+// exist is worse than a failed start).
+func AdminService(cfg config.Config) (*admin.Service, error) {
+	users := cfg.Auth.Users
+	if len(users) == 0 {
+		users = cfg.Auth.Passkey.Users
+	}
+	passwordFiles := cfg.Auth.ExtensionPasswordFiles
+	if len(passwordFiles) == 0 {
+		passwordFiles = cfg.Auth.Passkey.ExtensionPasswordFiles
+	}
+	anyAdmin := false
+	mapped := make(map[string]authmap.User, len(users))
+	for email, user := range users {
+		extensions := make([]domain.Extension, 0, len(user.Extensions))
+		for _, raw := range user.Extensions {
+			ext, err := domain.ParseExtension(raw)
+			if err != nil {
+				//nolint:branching-flow // composition-root fail-fast (DO-1): config validation already rejects unparseable extensions, so reaching here is an unrepresentable miswire
+				panic(fmt.Sprintf("auth mapping for %q holds unparseable extension %q after config validation: %v", email, raw, err))
+			}
+			extensions = append(extensions, ext)
+		}
+		anyAdmin = anyAdmin || user.Admin
+		mapped[email] = authmap.User{Email: email, DisplayName: user.DisplayName, Extensions: extensions, Admin: user.Admin}
+	}
+	authMapped, err := authmap.New(mapped, passwordFiles)
+	if err != nil {
+		if anyAdmin {
+			return nil, wrapf("wire admin surface: %w", err)
+		}
+		return nil, nil
+	}
+	return admin.New(authMapped, cfg.Identities)
 }
 
 // Start launches the background loops: the dashboard pusher (when

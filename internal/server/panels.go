@@ -604,6 +604,11 @@ func (h *handlers) tabComponent(r *http.Request, tab views.Tab, sess session.Ses
 		return h.historyPanel(r, sess)
 	case views.TabContacts:
 		return h.contactsPanel(r, sess)
+	case views.TabAdmin:
+		// Gated twice on purpose: the routes deny non-admins first; this
+		// arm re-checks so a future wiring mistake cannot route a
+		// non-admin session into the cross-owner builder.
+		return h.adminPanel(r, sess)
 	default:
 		return h.settingsPanel(r, sess)
 	}

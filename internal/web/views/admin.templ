@@ -10,6 +10,7 @@ import (
 	"github.com/larsartmann/webphone/internal/store"
 )
 
+
 // AdminPanel is the Admin tab: read-only visibility across EVERY line of
 // the phone system — accounts, numbers, conversations, faxes and calls.
 // It renders only for admin sessions (the server gates route + panel);
@@ -144,7 +145,7 @@ templ AdminPanel(props AdminPanelProps) {
 				<span class="wp-thread-text">
 					{ summary.Thread.Remote.String() }
 					<span class="wp-muted">
-						{ " · " + string(summary.Thread.Network()) }
+						{ " · " + string(summary.Thread.Remote.Network()) }
 						if summary.LastBody != "" {
 							{ " · " + previewText(summary.LastBody) }
 						}
@@ -225,28 +226,23 @@ templ AdminPanel(props AdminPanelProps) {
 }
 
 // AdminCDRRowView is one merged call record: the line chip, the
-// direction, the parties, and the timing. Direction reads the same
-// context vocabulary the History filters use ("public" = inbound).
+// direction, the parties, and the timing. It reuses the History row's
+// vocabulary (glyphs, missed highlight, duration label) so both call
+// lists read identically.
 templ AdminCDRRowView(row AdminCDRRow, lang Lang) {
-	<div class="wp-row wp-admin-cdr-row">
-		if row.CDR.Context == "public" {
-			<span class="wp-dir-chip wp-dir-in" aria-hidden="true">↓</span>
-		} else {
-			<span class="wp-dir-chip" aria-hidden="true">↑</span>
-		}
-		<span class="wp-thread-text">
+	<article class={ "wp-row wp-admin-cdr-row", templ.KV("wp-row-missed", cdrMissed(row.CDR)) }>
+		<span
+			class={ "wp-dir-chip", templ.KV("wp-dir-in", row.CDR.Context == "public"), templ.KV("wp-row-missed", cdrMissed(row.CDR)) }
+			aria-hidden="true"
+		>{ cdrDirGlyph(row.CDR) }</span>
+		<span class="wp-thread-text" role="img" aria-label={ cdrDirLabel(row.CDR, lang) }>
 			{ row.CDR.CallerIDNumber + " → " + row.CDR.DestinationNumber }
-			<span class="wp-muted">
-				{ " · " + formatStamp(lang, row.CDR.Start) }
-				if row.CDR.Billsec > 0 {
-					{ " · " + fmtInt(row.CDR.Billsec) + T(lang, "admin.calls.seconds") }
-				}
-			</span>
+			<span class="wp-muted">{ row.CDR.Start + " · " + durationLabel(row.CDR.Billsec) }</span>
 		</span>
 		<span class="wp-row-actions">
 			<span class="wp-admin-ext">{ row.Extension }</span>
 		</span>
-	</div>
+	</article>
 }
 
 // AdminThread is the read-only cross-line conversation view: the owning
@@ -280,7 +276,7 @@ templ AdminThread(props AdminThreadProps) {
 		<div class="wp-transcript-wrap">
 			<div class="wp-transcript">
 				if len(props.Messages) == 0 {
-					@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, "admin.threads.empty"), Icon: icons.Message})
+				@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, "admin.threads.empty"), Icon: icons.Inbox})
 				} else {
 					@Transcript(props.Messages, props.Lang, false)
 				}
