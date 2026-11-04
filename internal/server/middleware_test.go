@@ -242,6 +242,57 @@ func TestOpenAPIEndpoint(t *testing.T) {
 	}
 }
 
+// TestConditionalGETRootDocuments pins the etag-middleware mount (the
+// closeout train's T16): the two machine-readable root documents
+// answer 304 on a matching If-None-Match (weak candidates included —
+// RFC 7232 weak comparison) and 200 with the ETag set on a miss. The
+// no-store fences stay structurally untouched because the middleware
+// wraps ONLY these two handlers: the pin asserts an authed surface
+// carries no ETag header at all, so a refactor that widens the mount
+// fails here (the guard-2 contract).
+func TestConditionalGETRootDocuments(t *testing.T) {
+	server := newTestServer(t)
+
+	get := func(path, ifNoneMatch string) *http.Response {
+		req, _ := http.NewRequest(http.MethodGet, server.URL+path, nil)
+		if ifNoneMatch != "" {
+			req.Header.Set("If-None-Match", ifNoneMatch)
+		}
+		resp, err := server.Client().Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { _ = resp.Body.Close() })
+		return resp
+	}
+
+	first := get("/openapi.json", "")
+	etagValue := first.Header.Get("ETag")
+	if etagValue == "" {
+		t.Fatal("openapi.json carries no ETag; the conditionalGET mount is missing")
+	}
+	if re := get("/openapi.json", etagValue); re.StatusCode != http.StatusNotModified {
+		t.Errorf("revalidation with the served ETag: %d, want 304", re.StatusCode)
+	}
+	if re := get("/openapi.json", `W/`+etagValue); re.StatusCode != http.StatusNotModified {
+		t.Errorf("weak-candidate revalidation: %d, want 304 (RFC 7232 weak comparison)", re.StatusCode)
+	}
+	if miss := get("/openapi.json", `"stale-deadbeef"`); miss.StatusCode != http.StatusOK {
+		t.Errorf("stale candidate: %d, want 200 with a fresh body", miss.StatusCode)
+	}
+
+	manifest := get("/manifest.webmanifest", "")
+	if mtag := manifest.Header.Get("ETag"); mtag == "" {
+		t.Error("manifest.webmanifest carries no ETag; the conditionalGET mount is missing")
+	} else if re := get("/manifest.webmanifest", mtag); re.StatusCode != http.StatusNotModified {
+		t.Errorf("manifest revalidation: %d, want 304", re.StatusCode)
+	}
+
+	if noStoreSurf := get("/config.js", ""); noStoreSurf.Header.Get("ETag") != "" {
+		t.Error("config.js grew an ETag; the conditional-GET mount must stay fenced to the two root documents")
+	}
+}
+
 // TestOpenAPIContactsMatchesHandlers pins the contacts spec against the
 // handlers it describes: every documented response code is one the
 // handler actually emits, and the 429 the limiter adds (T12) is

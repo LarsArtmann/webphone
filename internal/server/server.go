@@ -20,6 +20,7 @@ import (
 
 	loginpage "github.com/larsartmann/cqrs-htmx/loginpage/v4"
 	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
+	etag "github.com/larsartmann/go-etag/server"
 	"github.com/larsartmann/go-health"
 	"github.com/larsartmann/httputil"
 	servertiming "github.com/larsartmann/httputil/server_timing"
@@ -522,7 +523,15 @@ func New(deps Deps) http.Handler {
 	// 2026-09-22 spike stands — no fetch interception, zero staleness
 	// risk). application/manifest+json is the type Chrome requires to
 	// parse it as a manifest.
-	open.HandleFunc("GET /manifest.webmanifest", h.manifest)
+	// conditionalGET turns revalidation into bodyless 304s for the two
+	// machine-readable root documents whose bytes are stable per build:
+	// the generated API contract (no-cache revalidates every fetch — the
+	// ETag makes the revalidation free) and the PWA install manifest.
+	// The mount IS the Skip set: these are the only handlers the
+	// middleware wraps, so session/credential/SSE surfaces are
+	// structurally untouched (pinned by TestConditionalGETRootDocuments).
+	conditionalGET := etag.New(etag.DefaultETagConfig())
+	open.Handle("GET /manifest.webmanifest", conditionalGET(http.HandlerFunc(h.manifest)))
 	// /metrics is the ops scrape surface: AGGREGATES only (counts +
 	// build facts, never per-extension data), fenced per-location by
 	// the module's vhost like the probe triple.
@@ -668,7 +677,7 @@ func New(deps Deps) http.Handler {
 		open.HandleFunc("/health/", h.notFoundPage)
 	}
 	open.Handle("GET /version", versionHandler())
-	open.HandleFunc("GET /openapi.json", openapiHandler)
+	open.Handle("GET /openapi.json", conditionalGET(http.HandlerFunc(openapiHandler)))
 	open.Handle("/hooks/", h.hookLimiter.Middleware()(hooksHandlers.SecretGate(http.HandlerFunc(hooksHandlers.Webhooks))))
 	// The internal directory endpoint (the stack's FS directory bridge is
 	// the only consumer): outside CSRF/session (webhooks-class — secret
