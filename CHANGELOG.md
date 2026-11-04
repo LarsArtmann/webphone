@@ -21,6 +21,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The two machine-readable root documents answer conditional GETs
+  (2026-11-04, T16 of the fleet-libs closeout): `/openapi.json` and
+  `/manifest.webmanifest` carry ETags (go-etag/server middleware) and
+  answer a matching `If-None-Match` with a bodyless `304 Not Modified`
+  — revalidating the generated API contract (fetched with
+  `Cache-Control: no-cache`) no longer costs the full document body.
+  The mount IS the skip set: only those two handlers are wrapped, so
+  the no-store fences on session/credential surfaces are untouched by
+  construction (`TestConditionalGETRootDocuments` pins the 304/weak/
+  stale behavior and asserts `/config.js` carries no ETag).
+  `/version` deliberately stays bare.
+
 - Blob persistence is now crash-durable (2026-11-04, the fleet-libs
   audit's top finding): `blob.Save` — the one runtime write path for
   attachments and fax PDFs — rides go-atomic-write (fsync file, atomic

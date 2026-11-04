@@ -756,10 +756,12 @@ three-catalog ruling SHIPPED since that plan was written):
       client calls, parse the asyncapi ring contract, verify the CSRF-dance
       paths against the spec (completion-plan N14; other repo's gates).
       **Priority:** Medium · **Effort:** M.
-- [ ] **OWNER CALL: /openapi.json ETag + golden fixture** — cheap
-      client caching / byte-pinned generated spec; recorded, not built
-      (a disabled deployment must not promise; an ETag is a product
-      decision). **Priority:** Low · **Effort:** S.
+- [x] **DONE 2026-11-04 (ETag half): /openapi.json conditional GET** —
+      the go-etag/server middleware serves bodyless 304 revalidation on
+      `/openapi.json` + `/manifest.webmanifest` (mount is the skip set;
+      `TestConditionalGETRootDocuments` pins it). Remaining OWNER CALL:
+      the golden fixture (byte-pinned generated spec). **Priority:** Low
+      · **Effort:** S.
 
 ### Declarative/DDD model train (2026-10-14 plan — EXECUTED)
 

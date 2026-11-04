@@ -1112,15 +1112,17 @@
           </div>
 
           <div class="issue issue-nice" id="issue-5">
-            <span class="severity severity-nice">1 of 3 LANDED 2026-11-04 &middot; 1 BLOCKED &middot; 1 open</span>
+            <span class="severity severity-important">1 of 3 LANDED 2026-11-04 &middot; 1 BLOCKED &middot; 1 LANDED same day</span>
             <h3>Close the three version gaps</h3>
-            <div class="where">go-health v0.8.1→v0.9.0 LANDED (+dashboard v0.13.0, tag completed upstream) · go-sse v0.6.2→v0.7.0 BLOCKED on the cqrs-htmx templ-wave · go-etag entitytag swap LANDED (submodule stays v0.6.1 — the root v0.7.0 tag excludes it)</div>
+            <div class="where">go-health v0.8.1→v0.9.0 LANDED (+dashboard v0.13.0, tag completed upstream) · go-sse v0.6.2→v0.7.0 BLOCKED on the cqrs-htmx templ-wave · go-etag LANDED BOTH halves (entitytag swap + server middleware mount: <code>/openapi.json</code> + manifest answer bodyless 304s; submodule stays v0.6.1 — the root v0.7.0 tag excludes it)</div>
             <p>
               go-health v0.9.0&rsquo;s <code>CoerceValidUTF8</code> was the substantive one and
               landed (probe JSON can never break on invalid UTF-8). The go-sse v0.7.0 bump was
               attempted and REVERTED: its templ v0.3.1100 requirement breaks
               cqrs-htmx/loginpage v4.13.0, which has no compatible release — reopen when the
-              cqrs-htmx wave publishes (errata in go-sse.md).
+              cqrs-htmx wave publishes (errata in go-sse.md). The go-etag finding closed fully
+              the same day: the <code>etag.New</code> middleware now serves the generated
+              contract with bodyless 304 revalidation (go-etag.md § Ruling).
             </p>
           </div>
 
