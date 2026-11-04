@@ -1,7 +1,7 @@
 # go-health-dashboard — library utilization audit
 
 **Verdict:** deeply and carefully wired — the stack-facing operator surface rides this library with its CSP, nonce and stylesheet conventions handled properly. **Adoption 88/100 (very high)** — 3.5 of 4 applicable rows.
-**Pin:** v0.12.2 (go.mod:27) · **Latest:** v0.12.2 · **Currency:** current · **Status:** direct dep
+**Pin:** v0.13.0 (go.mod, bumped 2026-11-04) · **Latest:** v0.13.0 · **Currency:** current · **Status:** direct dep. Note: the v0.13.0 release commit was pushed in the upstream repo with its TAG missing (the release dance stalled mid-flight) — the webphone closeout train verified the release commit green in a detached worktree, tagged v0.13.0, and rode it the same day (the coordinated go-health v0.9.0 wave's consumer side).
 **Audited:** 2026-11-04 · **Prior reports:** none specific (context: 2026-09-24 fleet stack audit; AGENTS.md § health dashboard seam).
 
 ## Status
@@ -9,8 +9,8 @@
 | | |
 |---|---|
 | Module | `github.com/larsartmann/go-health-dashboard` |
-| Pinned | v0.12.2 direct |
-| Latest release | v0.12.2 (local checkout tag) |
+| Pinned | v0.13.0 direct (bumped 2026-11-04) |
+| Latest release | v0.13.0 (the coordinated go-health v0.9.0 wave) |
 | Usage | internal/app/dashboard.go (construction), internal/server/server.go:641-668 (mount + fence) |
 
 ## What the library offers

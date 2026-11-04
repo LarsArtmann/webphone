@@ -944,7 +944,7 @@
             indirect-only</strong> (idempotency, retry, codec, etag — each with a written
             reason in its own report), and <strong>six are absent by decision</strong>
             (atomic-write, filewatcher, daemon, output, credentials-store, appkit). The scored
-            families average <strong>76/100</strong> at audit time (77 after the first two adoptions landed the same day); the audit found <strong>one genuine
+            families average <strong>76/100</strong> at audit time (79 after the closeout adoptions landed the same day); the audit found <strong>one genuine
             correctness gap</strong> (blob durability, LANDED 2026-11-04), <strong>one standing finding from the
             2026-09-24 audit</strong> (MaxBodySize, LANDED 2026-11-04), and a handful of cheap wins.
           </p>
@@ -981,9 +981,9 @@
               </thead>
               <tbody>
                 <tr><th scope="row"><a href="cqrs-htmx.md">cqrs-htmx</a></th><td>direct ×5</td><td>v4.15.0 / ≥ pin</td><td class="yes">100</td><td>Affirmed at the round-3 ceiling; setup stays rejected; gap is upstream (bounded AuditLog)</td></tr>
-                <tr><th scope="row"><a href="go-health-dashboard.md">go-health-dashboard</a></th><td>direct</td><td>v0.12.2 / v0.12.2</td><td class="yes">88</td><td>Deep wiring; the auth seam (<code>WithMiddleware</code>) is the one open decision</td></tr>
+                <tr><th scope="row"><a href="go-health-dashboard.md">go-health-dashboard</a></th><td>direct</td><td>v0.13.0 / v0.13.0</td><td class="yes">88</td><td>Deep wiring; the auth seam (<code>WithMiddleware</code>) is the one open decision; v0.13.0 tagged by the closeout train (upstream tag was missing)</td></tr>
                 <tr><th scope="row"><a href="httputil.md">httputil</a></th><td>direct</td><td>v1.8.0 / v1.8.0</td><td class="yes">95</td><td>Configured, not defaulted; MaxBodySize adopted 2026-11-04 (14 route mounts; two ruled one-home funnels)</td></tr>
-                <tr><th scope="row"><a href="go-health.md">go-health</a></th><td>direct</td><td>v0.8.1 / v0.9.0</td><td class="yes">83</td><td>Injector-discovered probe, one readiness truth; bump for <code>CoerceValidUTF8</code></td></tr>
+                <tr><th scope="row"><a href="go-health.md">go-health</a></th><td>direct</td><td>v0.9.0 / v0.9.0</td><td class="yes">100</td><td>Injector-discovered probe, one readiness truth; <code>CoerceValidUTF8</code> wave landed 2026-11-04</td></tr>
                 <tr><th scope="row"><a href="go-cqrs-lite.md">go-cqrs-lite</a></th><td>direct ×4</td><td>v4.20.0 / v4.20.0</td><td class="yes">83</td><td>metaengine IS the read-model substrate; adopt <code>EnforceCap</code> for the trim caps</td></tr>
                 <tr><th scope="row"><a href="go-sse.md">go-sse</a></th><td>direct</td><td>v0.6.2 / v0.7.0</td><td>67</td><td>Thin by composition (cqrs-htmx wraps it); ssetest pins the wire contract; replay unused by design</td></tr>
                 <tr><th scope="row"><a href="httputil-server-timing.md">httputil/server_timing</a></th><td>direct</td><td>v1.0.3 / v1.0.3</td><td>67</td><td>Env-gated edge middleware exactly as designed; named spans unused (do not pre-instrument)</td></tr>

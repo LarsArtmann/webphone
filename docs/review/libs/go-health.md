@@ -44,7 +44,7 @@
 
 ## Ruling
 
-**Bump to v0.9.0** (carries `CoerceValidUTF8`; also the instance-ID branding — mechanical) and wire the sanitizer so probe JSON can never emit invalid UTF-8. Everything else is at its deliberate boundary.
+**LANDED 2026-11-04:** bumped to v0.9.0 together with go-health-dashboard v0.13.0 (the wave's coordinated consumer side — see the header note). No webphone-side sanitizer wiring exists or is needed: the library applies `CoerceValidUTF8` at its own serialization seam before marshaling, and webphone never marshals a `health.Response` itself. The dashboard half required finishing the wave's stalled release (the v0.13.0 release commit was pushed untagged): verified green in a detached worktree, tagged, proxy-verified, then bumped. Everything else is at its deliberate boundary.
 
 **Refresh trigger:** a second readiness consumer; a multi-instance deployment; the go-health-dashboard gaining a surface that needs `WithEvaluationHook`.
 
@@ -54,5 +54,5 @@
 rg -n "health.New\(" internal/app/app.go
 rg -n "LivenessHandler|StartupHandler" internal/server/server.go | head -4
 rg -n "cqrshtmx.ReadinessHandler" internal/server/server.go | head -2    # the one readiness truth
-git -C /home/lars/projects/go-health describe --tags --abbrev=0          # expect v0.9.0 vs pin v0.8.1
+rg -n "go-health v" go.mod                                               # expect v0.9.0 (bumped 2026-11-04)
 ```

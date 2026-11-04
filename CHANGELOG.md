@@ -35,6 +35,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   rulings at the site, and a new test pins that an oversized login body
   still answers 400 without minting a session.
 
+- go-health bumped to v0.9.0 (2026-11-04): probe JSON can never emit
+  invalid UTF-8 — the library now coerces every response string at its
+  serialization seam, so a driver error carrying raw bytes turns into
+  U+FFFD instead of refusing to marshal. No webphone code changed: the
+  coercion lives inside the library's single write seam, and webphone
+  never marshals a health response itself. The coordinated wave also
+  required go-health-dashboard v0.13.0 (the previous pin predates the
+  go-health v0.9.0 API); its release commit was already pushed upstream
+  with the tag missing, so the closeout train verified the commit green
+  in a detached worktree and tagged it to unblock the fleet.
+
 ### Added
 
 - Unknown configuration keys warn at boot (2026-10-30): one `WARN` line
