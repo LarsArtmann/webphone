@@ -59,6 +59,30 @@ Prior sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList ad
 
 ## Open tasks
 
+### Fleet-libs closeout residue (2026-11-04, the SUPERB closeout train)
+
+The 2026-11-04 fleet-libs audit's 26-task closeout plan
+(`docs/planning/2026-11-04_18-41_SUPERB-fleet-libs-closeout.md`) executed T01–T15 the same
+day; the residue below is what remains OPEN, with its reopen triggers. The landed work
+(blob durability, MaxBodySize mounts, go-health/dashboard wave, Conflict family, entitytag
+swap, fax badge, 2 empty states) lives in CHANGELOG + the per-library reports — not here
+(one home per fact).
+
+1. **go-sse v0.7.0 bump train (BLOCKED, one release unblocks it)** — v0.7.0 requires
+   `a-h/templ v0.3.1100`, which breaks `cqrs-htmx/loginpage v4.13.0`; no compatible release
+   exists (the cqrs-htmx local checkout sits ~55 commits past an UNPUBLISHED v4.16.0).
+   Trigger to watch: a loginpage/root cqrs-htmx release whose go.mod accepts templ
+   ≥ v0.3.1100. Then land go-sse v0.7.0 + templ-components latest + loginpage in ONE train
+   (ssetest `WithLastEventID(sse.EventID)` branding + vendorHash tail). Evidence:
+   `docs/review/libs/go-sse.md` § errata.
+2. **metaengine per-group cap upstream ask** — EnforceCap is collection-global; webphone's
+   transcript/dial-window caps are per-owner/per-call (ruled NO-GO with evidence,
+   `docs/review/libs/go-cqrs-lite.md` § errata). If the ask lands upstream, migrate
+   `trimOwner`/`trimCall`/`trimWindows` in one train. Rides the upstream-asks train (T20).
+3. **templ-components taste calls** — owner decisions, not adoption gaps: the ✓ delivered
+   chip (or a Badge prefix/icon slot) and whether section subtitles should render as muted
+   empty-states. Re-litigate only if the owner asks.
+
 ### Fax enablement (owner + carrier action, 2026-10-30)
 
 The app now DECLARES the fax lanes instead of offering a form that can
