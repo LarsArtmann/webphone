@@ -1087,15 +1087,14 @@
           </div>
 
           <div class="issue issue-important" id="issue-3">
-            <span class="severity severity-important">Medium impact &middot; Low effort</span>
+            <span class="severity severity-important">1 of 3 LANDED 2026-11-04 &middot; 2 ruled</span>
             <h3>templ-components cheap wins: StatusBadge, SimpleEmptyState, feedback.Alert</h3>
-            <div class="where">fax.templ:214, messages.templ:738-744 (badges); wp-empty ×10; error.templ</div>
+            <div class="where">fax.templ FaxStatusBadge LANDED (display.Badge) &middot; messages OutboundStatusBadge DECLINED (byte-pinned &times;5 incl. the delivered &check; affordance; bubble-integrated :has() styling) &middot; wp-empty &times10 and errorBanner ruled separately</div>
             <p>
-              Status badges, ten inline empty-state paragraphs and the error banner are
-              hand-rolled while the same panels already use the library&rsquo;s Button and
-              EmptyState — the inconsistency is the argument, not the count. Cascading-layer
-              contract and greppable row classes must survive the swap. panelHead →
-              PageHeader follows on the next panel-touching train.
+              The fax badge now rides <code>display.Badge</code> with a webphone tone table
+              (localized labels stay server-side). The messages badge swap is declined with
+              evidence: the classes are pinned contract DOM that styles the failed bubble,
+              not free-floating chips &mdash; swapping is a bubble redesign, not an adoption.
             </p>
           </div>
 

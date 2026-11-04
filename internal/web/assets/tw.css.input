@@ -117,6 +117,8 @@
 @source "../../../vendor/github.com/larsartmann/templ-components/display/button_go.go";
 @source "../../../vendor/github.com/larsartmann/templ-components/display/button.templ";
 @source "../../../vendor/github.com/larsartmann/templ-components/display/button_templ.go";
+@source "../../../vendor/github.com/larsartmann/templ-components/display/badge.templ";
+@source "../../../vendor/github.com/larsartmann/templ-components/display/badge_templ.go";
 @source "../../../vendor/github.com/larsartmann/templ-components/forms/input.templ";
 @source "../../../vendor/github.com/larsartmann/templ-components/forms/input_templ.go";
 @source "../../../vendor/github.com/larsartmann/templ-components/forms/input_classes.go";

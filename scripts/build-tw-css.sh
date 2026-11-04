@@ -108,6 +108,7 @@ for f in \
 	display/definition_list.templ display/definition_list_templ.go \
 	display/empty_state.templ display/empty_state_templ.go \
 	display/button_go.go display/button.templ display/button_templ.go \
+	display/badge.templ display/badge_templ.go \
 	forms/input.templ forms/input_templ.go forms/input_classes.go \
 	forms/label.templ forms/label_templ.go \
 	forms/textarea.templ forms/textarea_templ.go \

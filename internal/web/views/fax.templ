@@ -211,7 +211,11 @@ func faxDirLabel(job domain.FaxJob, lang Lang) string {
 }
 
 templ FaxStatusBadge(job domain.FaxJob, lang Lang) {
-	<span class={ "wp-status", faxStatusClass(job.Status) }>{ faxStatusText(job.Status, lang) }</span>
+	@display.Badge(display.BadgeProps{
+		Text: faxStatusText(job.Status, lang),
+		Type: faxBadgeType(job.Status),
+		Dot:  true,
+	})
 }
 
 // FaxSteps renders the outbound progress timeline (queued → sending →
@@ -249,16 +253,20 @@ func faxStatusText(status domain.FaxStatus, lang Lang) string {
 	}
 }
 
-func faxStatusClass(status domain.FaxStatus) string {
+// faxBadgeType is the one home of the status→badge-tone mapping (the
+// display.Badge swap, 2026-11-04: the tone table replaces the old
+// wp-status-* fax classes; the localized label still comes from
+// faxStatusText).
+func faxBadgeType(status domain.FaxStatus) display.BadgeType {
 	switch status {
 	case domain.FaxQueued, domain.FaxSending:
-		return "wp-status-queued"
+		return display.BadgeWarning
 	case domain.FaxTransmitted, domain.FaxReceived:
-		return "wp-status-sent"
+		return display.BadgeSuccess
 	case domain.FaxFailed:
-		return "wp-status-failed"
+		return display.BadgeError
 	default:
-		return ""
+		return display.BadgeNeutral
 	}
 }
 

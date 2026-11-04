@@ -1,8 +1,13 @@
 # templ-components — library utilization audit
 
-**Verdict:** growing adoption on deliberate boundaries: the shell, buttons, empty states, forms and icons ride the library; domain panels are hand-rolled templ by design. Four cheap wins sit inside unruled territory. **Adoption 50/100 (moderate)** — 3.5 of 7 applicable rows.
-**Pin:** v1.26.0 + icons v1.26.0 + utils v1.26.0 (direct); datastar + htmx submodules indirect v1.26.0 · **Latest (family tag):** charts/echarts/v1.26.0 · **Currency:** current · **Status:** direct dep
+**Verdict:** growing adoption on deliberate boundaries: the shell, buttons, empty states, forms and icons ride the library; domain panels are hand-rolled templ by design. The cheap-wins territory is now RULED: fax badge adopted, messages badge + error banner declined on pin/taste evidence (see the errata). **Adoption 50/100 (moderate)** — 3.5 of 7 applicable rows.
+**Pin:** v1.26.0 + icons v1.26.0 + utils v1.26.0 (direct); datastar + htmx submodules indirect v1.26.0 · **Latest (family tag):** charts/echarts/v1.26.0 · **Currency:** current (v1.27.0 exists upstream but requires templ v0.3.1100 — the go-sse cascade; stay on v1.26.0 until the cqrs-htmx wave publishes) · **Status:** direct dep
 **Audited:** 2026-11-04 · **Prior reports:** [2026-09-22 deep-dive](../../research/2026-09-22_templ-components-deep-dive.html) (adopted layout.Base + EmptyState + icons; RelativeTime/CountBadge/errorpage REJECTED; that audit shipped `PageProps.NoThemeScript` upstream); [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html) (15/100 — "1 of 121 components"; superseded: adoption is materially deeper now).
+
+## Errata — the four red rows ruled (2026-11-04 closeout train)
+
+- **Status badges: PARTIAL.** `FaxStatusBadge` now renders `display.Badge` (tone table `faxBadgeType`, localized label via the existing `faxStatusText`, `Dot: true`; tw.css gained the badge @source pair). **`OutboundStatusBadge` DECLINED with evidence**: the `wp-status-*` classes are byte-pinned ×5 in `messages_test.go` (guard §5.3) INCLUDING the delivered `aria-hidden="true">✓` checkmark — an asserted affordance with no Badge slot — and the classes are bubble-INTEGRATED DOM: `.wp-bubble.wp-out:has(.wp-status-failed)` drives the failed bubble's border/meta styling (app.css:1906-1944). Swapping means reworking the bubble component and deleting a pinned affordance — a product redesign, not a library adoption. The owner's documented deliberate-hand-roll boundary (AGENTS.md: nav badges et al.) already covers this class.
+- Refresh trigger for the messages half: an owner taste ruling that accepts losing the ✓ chip (or Badge growing a prefix/icon slot) AND a train that rewrites the five pins deliberately.
 
 ## Status
 
@@ -31,7 +36,7 @@ Root: `display` (49 components — badges, cards, charts, tables, tabs, modal/dr
 | 2 | display adoption (Button/EmptyState/DefinitionList) | 🟢 Fully leveraged | ×15 sites; matches the adopted verdicts |
 | 3 | icons | 🟢 Fully leveraged | 16/105 pulled on demand — an icon library is pull-as-need, not max-out |
 | 4 | forms | 🟡 Partial | 4 components used; contacts add form, snippet picker and quick-send compose are hand-rolled `<form>` markup |
-| 5 | **Status badges** (`FaxStatusBadge`, `OutboundStatusBadge`, `wp-status` spans) vs `display.StatusBadge`/`Badge` | 🔴 Missed | hand-rolled at fax.templ:214, messages.templ:738-744; the library component maps status→label+tone with the same semantics |
+| 5 | **Status badges** (`FaxStatusBadge`, `OutboundStatusBadge`, `wp-status` spans) vs `display.StatusBadge`/`Badge` | 🟡 Partial 2026-11-04 | Fax badge adopted (`display.Badge` + tone table; `wp-status-*` fax classes deleted). Messages badge DECLINED: byte-pinned ×5 (incl. the delivered ✓ affordance) and bubble-integrated via `:has()` selectors — see the errata |
 | 6 | **`wp-empty` inline paragraphs** (×10) vs `display.SimpleEmptyState` | 🔴 Missed | inconsistent with the ADOPTED EmptyState used elsewhere in the same panels; cheap consistency win |
 | 7 | **errorBanner/ErrorPanel** vs `feedback.Alert`/`InlineError` | 🔴 Missed | feedback package not imported at all; error banner markup is hand-rolled (error.templ) |
 | 8 | **panelHead** vs `display.PageHeader`/`SectionHeading` | 🔴 Missed | one-home helper (views/panels_test.go pins it) — a swap would be a component-for-component refactor, listed for the next panel-touching train |
