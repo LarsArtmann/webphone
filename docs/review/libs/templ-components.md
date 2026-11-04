@@ -7,7 +7,8 @@
 ## Errata — the four red rows ruled (2026-11-04 closeout train)
 
 - **Status badges: PARTIAL.** `FaxStatusBadge` now renders `display.Badge` (tone table `faxBadgeType`, localized label via the existing `faxStatusText`, `Dot: true`; tw.css gained the badge @source pair). **`OutboundStatusBadge` DECLINED with evidence**: the `wp-status-*` classes are byte-pinned ×5 in `messages_test.go` (guard §5.3) INCLUDING the delivered `aria-hidden="true">✓` checkmark — an asserted affordance with no Badge slot — and the classes are bubble-INTEGRATED DOM: `.wp-bubble.wp-out:has(.wp-status-failed)` drives the failed bubble's border/meta styling (app.css:1906-1944). Swapping means reworking the bubble component and deleting a pinned affordance — a product redesign, not a library adoption. The owner's documented deliberate-hand-roll boundary (AGENTS.md: nav badges et al.) already covers this class.
-- Refresh trigger for the messages half: an owner taste ruling that accepts losing the ✓ chip (or Badge growing a prefix/icon slot) AND a train that rewrites the five pins deliberately.
+- **SimpleEmptyState: PARTIAL — 2 of the 11 `wp-empty` sites.** The audit's "×10" was a grep-driven overcount: T09's per-site triage found 4 are section SUBTITLES (`audit.subtitle`, `passkeys.subtitle`, `snippets.subtitle`, the theme note), 2 embed `<code>` elements (history + voicemail disabled notices — SimpleEmptyState takes only a string), 2 carry ids pinned by tests or JS (`wp-passkeys-empty` is asserted in `passkey_api_test.go:488`; `wp-agent-audit-empty` is an id hook), and 1 carries `role="note"` + the `wp-fax-off` capability class. The two TRUE empty states (push devices empty, snippets empty) swapped; the nine others are semantically not empty states or structurally un-swappable. Refresh trigger: an owner taste ruling that wants subtitles styled as muted empty-states (a presentational change, not an adoption gap).
+- Refresh trigger for the messages badge half: an owner taste ruling that accepts losing the ✓ chip (or Badge growing a prefix/icon slot) AND a train that rewrites the five pins deliberately.
 
 ## Status
 
@@ -37,7 +38,7 @@ Root: `display` (49 components — badges, cards, charts, tables, tabs, modal/dr
 | 3 | icons | 🟢 Fully leveraged | 16/105 pulled on demand — an icon library is pull-as-need, not max-out |
 | 4 | forms | 🟡 Partial | 4 components used; contacts add form, snippet picker and quick-send compose are hand-rolled `<form>` markup |
 | 5 | **Status badges** (`FaxStatusBadge`, `OutboundStatusBadge`, `wp-status` spans) vs `display.StatusBadge`/`Badge` | 🟡 Partial 2026-11-04 | Fax badge adopted (`display.Badge` + tone table; `wp-status-*` fax classes deleted). Messages badge DECLINED: byte-pinned ×5 (incl. the delivered ✓ affordance) and bubble-integrated via `:has()` selectors — see the errata |
-| 6 | **`wp-empty` inline paragraphs** (×10) vs `display.SimpleEmptyState` | 🔴 Missed | inconsistent with the ADOPTED EmptyState used elsewhere in the same panels; cheap consistency win |
+| 6 | **`wp-empty` inline paragraphs** (11 sites at closeout time) vs `display.SimpleEmptyState` | 🟡 Partial 2026-11-04 | 2 TRUE empty states swapped (push devices, snippets); the 9 others ruled un-swappable (4 subtitles, 2 `<code>`-rich, 2 id-pinned, 1 role+class capability notice) — see the errata for the per-site triage |
 | 7 | **errorBanner/ErrorPanel** vs `feedback.Alert`/`InlineError` | 🔴 Missed | feedback package not imported at all; error banner markup is hand-rolled (error.templ) |
 | 8 | **panelHead** vs `display.PageHeader`/`SectionHeading` | 🔴 Missed | one-home helper (views/panels_test.go pins it) — a swap would be a component-for-component refactor, listed for the next panel-touching train |
 | n/a | Avatars (`avatarFor`/`avatarHue`) vs `display.Avatar` | ⚪ N/A | ruled DELIBERATE hand-roll (AGENTS.md: avatars stay, with helper tests) |
@@ -48,7 +49,7 @@ Root: `display` (49 components — badges, cards, charts, tables, tabs, modal/dr
 
 ## Ruling
 
-The thin-but-deep pattern is right for a domain-specific phone shell — do NOT chase component coverage for its own sake. The four red rows are worth a small train because they remove hand-rolled CSS/markup with no behavior change: **StatusBadge (fax + messages), SimpleEmptyState (×10), feedback.Alert (errorBanner)**; panelHead follows when a panel is next touched. Each keeps the cascade-layer contract (layered utilities only) and the greppable row classes.
+The thin-but-deep pattern is right for a domain-specific phone shell — do NOT chase component coverage for its own sake. ~~The four red rows are worth a small train~~ **RULED 2026-11-04**: fax badge adopted; messages badge, most empty-state sites, and the error banner declined on pin/taste/structural evidence (errata); panelHead follows when a panel is next touched. Each keeps the cascade-layer contract (layered utilities only) and the greppable row classes.
 
 **Refresh trigger:** a templ-components release with a new status/toast component; any panel redesign; the error surface train revisiting banners.
 
@@ -57,6 +58,6 @@ The thin-but-deep pattern is right for a domain-specific phone shell — do NOT 
 ```console
 rg -o "icons\.Icon" -N -g '*.templ' | wc -l                       # expect 24
 rg -n "RelativeTime|CountBadge|errorpage" -g '*.templ' --type go | wc -l   # expect 0
-rg -n "wp-empty" -g '*.templ' | wc -l                             # expect 10
+rg -n "wp-empty" -g '*.templ' | wc -l                             # expect 9 (11 at audit time; 2 swapped 2026-11-04)
 rg -c "display\.StatusBadge|feedback\.Alert|SimpleEmptyState" -g '*.templ' | wc -l   # expect 0 today
 ```

@@ -232,7 +232,7 @@ func (c PasskeyCredentialView) displayName() string {
 templ PushDevicesSection(devices []PushDeviceRow, lang Lang) {
 	<h3 class="wp-settings-head">{ T(lang, "push.title") }</h3>
 	if len(devices) == 0 {
-		<p class="wp-empty">{ T(lang, "push.empty") }</p>
+		@display.SimpleEmptyState(T(lang, "push.empty"))
 	} else {
 		<ul class="wp-snippet-manage">
 			for _, device := range devices {
@@ -418,7 +418,7 @@ templ SnippetsSection(snippets []domain.Snippet, lang Lang) {
 	<h3 class="wp-settings-head">{ T(lang, "snippets.title") }</h3>
 	<p class="wp-empty">{ T(lang, "snippets.subtitle") }</p>
 	if len(snippets) == 0 {
-		<p class="wp-empty">{ T(lang, "snippets.empty") }</p>
+		@display.SimpleEmptyState(T(lang, "snippets.empty"))
 	} else {
 		<ul class="wp-snippet-manage">
 			for _, snippet := range snippets {
