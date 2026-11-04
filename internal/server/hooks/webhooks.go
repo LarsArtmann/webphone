@@ -421,6 +421,11 @@ func (h *Handlers) hookMessageStatus(w http.ResponseWriter, r *http.Request) {
 		})
 }
 
+// decodeJSON is the ONE home for /hooks/* body parsing AND its cap: the
+// 40 MiB wrap stays here deliberately (not an httputil.MaxBodySize route
+// mount) because every hook path funnels through this decoder — per-route
+// mounts would re-scatter a cap this helper unified. Ruled 2026-11-04
+// (MaxBodySize consolidation train).
 func decodeJSON(w http.ResponseWriter, r *http.Request, out any) error {
 	decoder := jsontext.NewDecoder(http.MaxBytesReader(w, r.Body, 40<<20))
 	if err := json.UnmarshalDecode(decoder, out); err != nil {

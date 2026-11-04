@@ -368,7 +368,8 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("POST /contacts/delete", h.deleteContact)
 	protected.HandleFunc("POST /contacts/import", h.importContacts)
 	protected.HandleFunc("GET /contacts/export", h.exportContacts)
-	protected.Handle("POST /api/session", h.loginLimiter.Middleware()(http.HandlerFunc(h.createSession)))
+	protected.Handle("POST /api/session",
+		h.loginLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(h.createSession))))
 	// The passkey (WebAuthn) login + enrollment surface: registered ONLY
 	// when the identity layer is wired (config-gated in the composition
 	// root) — a disabled deployment keeps answering the styled 404.
@@ -392,22 +393,22 @@ func New(deps Deps) http.Handler {
 		// (the one-time token is the real gate, the bucket only fences
 		// runaway clients).
 		protected.Handle("POST /api/auth/webauthn/login/begin",
-			h.loginLimiter.Middleware()(http.HandlerFunc(h.passkeyBeginLogin)))
+			h.loginLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(h.passkeyBeginLogin))))
 		protected.Handle("POST /api/auth/webauthn/login/finish",
-			h.loginLimiter.Middleware()(http.HandlerFunc(h.passkeyFinishLogin)))
+			h.loginLimiter.Middleware()(httputil.MaxBodySize(maxPasskeyBodySize)(http.HandlerFunc(h.passkeyFinishLogin))))
 		protected.Handle("POST /api/auth/passkey/enroll/verify",
-			h.passkeyLimiter.Middleware()(http.HandlerFunc(h.passkeyEnrollVerify)))
+			h.passkeyLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(h.passkeyEnrollVerify))))
 		protected.Handle("POST /api/auth/passkey/enroll/begin",
-			h.passkeyLimiter.Middleware()(http.HandlerFunc(h.passkeyEnrollBegin)))
+			h.passkeyLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(h.passkeyEnrollBegin))))
 		protected.Handle("POST /api/auth/passkey/enroll/finish",
-			h.passkeyLimiter.Middleware()(http.HandlerFunc(h.passkeyEnrollFinish)))
+			h.passkeyLimiter.Middleware()(httputil.MaxBodySize(maxPasskeyBodySize)(http.HandlerFunc(h.passkeyEnrollFinish))))
 		protected.HandleFunc("GET /enroll", h.enrollPage)
 		// The line switcher (D1): re-mints the session for another
 		// extension mapped to the signed-in user. Registered with the
 		// identity layer — a deployment without mapped logins has no
 		// session that could switch (the handler still self-gates).
 		protected.Handle("POST /api/session/switch",
-			h.switchLimiter.Middleware()(http.HandlerFunc(h.switchExtension)))
+			h.switchLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(h.switchExtension))))
 		// Settings-tab passkey management (A2): list lives in the
 		// settings partial; revoke is session-gated + CSRF-protected and
 		// owner-matched against the session extension's mapping.
@@ -431,7 +432,7 @@ func New(deps Deps) http.Handler {
 	// JSON surface for the island's contact panel (same store as the
 	// Contacts tab; the island migrated off localStorage onto this).
 	protected.HandleFunc("GET /api/contacts", apiHandlers.ListContacts)
-	protected.Handle("POST /api/contacts", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.SaveContact)))
+	protected.Handle("POST /api/contacts", h.contactsLimiter.Middleware()(httputil.MaxBodySize(api.ContactsBodyLimit)(http.HandlerFunc(apiHandlers.SaveContact))))
 	protected.HandleFunc("DELETE /api/contacts", apiHandlers.DeleteContact)
 	// The per-extension data export: one zip with every thread, fax job
 	// and personal contact the signed-in extension owns (settings-tab
@@ -443,7 +444,7 @@ func New(deps Deps) http.Handler {
 	// one island JSON POST per user action). A disabled CRM answers 204 —
 	// the island normally gates on PBX_CONFIG.crm, but a config change
 	// under a long-lived session must not error.
-	protected.Handle("POST /api/calls", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.LogCall)))
+	protected.Handle("POST /api/calls", h.contactsLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(apiHandlers.LogCall))))
 	// The post-call summarize chain: one call's transcript becomes an AI
 	// follow-up draft in the review queue. Session-gated, CSRF via
 	// authedFetch, sharing the contacts write budget (one island POST per
@@ -471,26 +472,26 @@ func New(deps Deps) http.Handler {
 	// island hides the decoration when this fails.
 	protected.Handle("GET /api/dials", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.DialSlots)))
 	protected.Handle("GET /api/calls/{id}/note", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.GetCallNote)))
-	protected.Handle("PUT /api/calls/{id}/note", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.SetCallNote)))
+	protected.Handle("PUT /api/calls/{id}/note", h.contactsLimiter.Middleware()(httputil.MaxBodySize(api.TranscriptBodyLimit)(http.HandlerFunc(apiHandlers.SetCallNote))))
 	// The operator's post-call disposition verdict (issue #6): the one
 	// authority that may claim "answered", persisted on the call's
 	// review slot and corrected upstream in the same awaited write.
 	// Session-gated, CSRF via authedFetch, sharing the contacts write
 	// budget (one island POST per user action).
-	protected.Handle("POST /api/calls/{id}/disposition", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.ConfirmCallDisposition)))
+	protected.Handle("POST /api/calls/{id}/disposition", h.contactsLimiter.Middleware()(httputil.MaxBodySize(api.TranscriptBodyLimit)(http.HandlerFunc(apiHandlers.ConfirmCallDisposition))))
 	// The push-device registry the native shells ride (the Android call
 	// shell first): session-gated, CSRF via the same authedFetch dance,
 	// sharing the contacts write budget (the same one-write-per-action
 	// class). A disabled seam answers 404 — a shell must not believe
 	// registration succeeded on a server that cannot ring it.
 	protected.HandleFunc("GET /api/push-devices", apiHandlers.ListPushDevices)
-	protected.Handle("POST /api/push-devices", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.SavePushDevice)))
+	protected.Handle("POST /api/push-devices", h.contactsLimiter.Middleware()(httputil.MaxBodySize(api.PushDeviceBodyLimit)(http.HandlerFunc(apiHandlers.SavePushDevice))))
 	protected.HandleFunc("DELETE /api/push-devices", apiHandlers.DeletePushDevice)
 	// The transcription surface: session-gated, CSRF via authedFetch, and
 	// the ONE endpoint behind every audio stream's transcribe affordance
 	// (live calls, voicemail, MMS audio). A disabled seam answers 404.
-	protected.Handle("POST /api/transcribe", h.transcribeLimiter.Middleware()(http.HandlerFunc(apiHandlers.Transcribe)))
-	protected.Handle("POST /api/transcripts", h.transcribeLimiter.Middleware()(http.HandlerFunc(apiHandlers.SaveTranscript)))
+	protected.Handle("POST /api/transcribe", h.transcribeLimiter.Middleware()(httputil.MaxBodySize(api.TranscribeBodyLimit)(http.HandlerFunc(apiHandlers.Transcribe))))
+	protected.Handle("POST /api/transcripts", h.transcribeLimiter.Middleware()(httputil.MaxBodySize(api.TranscriptBodyLimit)(http.HandlerFunc(apiHandlers.SaveTranscript))))
 	protected.Handle("DELETE /api/transcripts", h.transcribeLimiter.Middleware()(http.HandlerFunc(apiHandlers.DeleteTranscript)))
 	// GET /api/csrf shares the flood budget: the endpoint hands out masked
 	// tokens anonymously, so a client must not churn it unbounded. One

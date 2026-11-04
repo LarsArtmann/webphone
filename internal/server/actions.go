@@ -644,6 +644,13 @@ func (h *handlers) requireThread(
 
 // requireSessionMultipart parses a multipart action form for the signed-in
 // extension; on failure it has already written the error response.
+//
+// The body cap stays HERE deliberately (not an httputil.MaxBodySize route
+// mount): this helper is the ONE home for every multipart action route
+// (fax send/resend, message attachments, voicemail delete, contacts
+// import) — per-route mounts would re-scatter the cap this helper
+// unified; the stdlib wrap is the mechanism, uploadBodyLimit the one
+// fact. Ruled 2026-11-04 (MaxBodySize consolidation train).
 func (h *handlers) requireSessionMultipart(w http.ResponseWriter, r *http.Request) (session.Session, bool) {
 	sess, ok := h.RequireSession(w, r)
 	if !ok {

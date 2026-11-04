@@ -55,7 +55,7 @@ func (h *handlers) passkeyBeginLogin(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Email string `json:"email"`
 	}
-	if err := json.UnmarshalRead(http.MaxBytesReader(w, r.Body, 4096), &body); err != nil || body.Email == "" {
+	if err := json.UnmarshalRead(r.Body, &body); err != nil || body.Email == "" {
 		http.Error(w, "email is required", http.StatusBadRequest)
 		return
 	}
@@ -87,7 +87,6 @@ func (h *handlers) passkeyFinishLogin(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	r.Body = http.MaxBytesReader(w, r.Body, maxPasskeyBodySize)
 	raw := r.URL.Query().Get("user_id")
 	if raw == "" {
 		http.Error(w, "user_id query parameter is required", http.StatusBadRequest)
@@ -152,7 +151,7 @@ func (h *handlers) passkeyEnrollVerify(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Token string `json:"token"`
 	}
-	if err := json.UnmarshalRead(http.MaxBytesReader(w, r.Body, 4096), &body); err != nil || body.Token == "" {
+	if err := json.UnmarshalRead(r.Body, &body); err != nil || body.Token == "" {
 		http.Error(w, "token is required", http.StatusBadRequest)
 		return
 	}
@@ -177,7 +176,7 @@ func (h *handlers) passkeyEnrollBegin(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		UserID string `json:"user_id"`
 	}
-	if err := json.UnmarshalRead(http.MaxBytesReader(w, r.Body, 4096), &body); err != nil || body.UserID == "" {
+	if err := json.UnmarshalRead(r.Body, &body); err != nil || body.UserID == "" {
 		http.Error(w, "user_id is required", http.StatusBadRequest)
 		return
 	}
@@ -200,7 +199,6 @@ func (h *handlers) passkeyEnrollFinish(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	r.Body = http.MaxBytesReader(w, r.Body, maxPasskeyBodySize)
 	raw := r.URL.Query().Get("user_id")
 	if raw == "" {
 		http.Error(w, "user_id query parameter is required", http.StatusBadRequest)
