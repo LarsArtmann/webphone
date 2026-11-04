@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Post-call note editor on the island's ended card (2026-11-04, issue
+  #11): when a call ends, the card now carries a draft box over the SAME
+  note slot History renders (`PUT /api/calls/{id}/note`), so the
+  conversation is written down at the hangup moment with zero
+  navigation. A save collapses the editor to a saved line; the
+  note-list-full 409 and any failure keep the draft editable and
+  announce the reason (hand-written content is never silently
+  expunged). Pinned by island tests (`calls-note.test.mjs`).
+
 ### Fixed
 
 - daemon-audit deduplication (2026-11-04): the */15 watcher filed one

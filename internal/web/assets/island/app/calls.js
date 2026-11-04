@@ -403,14 +403,11 @@ async function saveCallNote(row, id, body) {
   );
   if (save) save.disabled = true;
   try {
-    const res = await authedFetch(
-      `/api/calls/${encodeURIComponent(id)}/note`,
-      {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ body }),
-      },
-    );
+    const res = await authedFetch(`/api/calls/${encodeURIComponent(id)}/note`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ body }),
+    });
     if (!res.ok) {
       if (save) save.disabled = false;
       if (res.status === 409) announce(t("callNoteFull"), "warn");
