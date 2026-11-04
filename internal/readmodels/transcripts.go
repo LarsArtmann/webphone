@@ -135,6 +135,12 @@ func (s *Transcripts) Append(ctx context.Context, seg domain.CallTranscriptSegme
 // cannot hold, repeating until the owner fits — one bounded scan sees
 // only cap+1 rows, so a flood converges over passes (each removes at
 // least one row).
+//
+// Deliberately NOT metaengine.EnforceCap (ruled 2026-11-04, T07): the
+// engine's cap is collection-global — a global cap would let one
+// owner's flood evict another owner's segments. The owner/call filters
+// here ARE the grouped semantics; reopen only when metaengine grows a
+// per-group cap (docs/review/libs/go-cqrs-lite.md § errata).
 func (s *Transcripts) trimOwner(ctx context.Context, owner string) error {
 	for {
 		views, err := s.reader.Scan(ctx,

@@ -1100,14 +1100,15 @@
           </div>
 
           <div class="issue issue-important" id="issue-4">
-            <span class="severity severity-important">Medium impact &middot; Medium effort</span>
+            <span class="severity severity-important">RULED NO-GO 2026-11-04 (semantic)</span>
             <h3>Declare the two trim caps with metaengine EnforceCap</h3>
-            <div class="where">internal/readmodels/transcripts.go:106-130 (trimOwner/trimCall) &middot; dialwindows.go:229 (trimWindows)</div>
+            <div class="where">internal/readmodels/transcripts.go (trimOwner/trimCall) &middot; dialwindows.go (trimWindows)</div>
             <p>
-              metaengine ships <code>EnforceCap(name)</code> (newest-rows trim) — exactly the
-              shape webphone hand-rolls for transcripts (5000) and dial windows (500).
-              Reject-caps (contacts, call reviews) must stay app-side on purpose: trimming
-              would silently evict owner content, and that is a written contract.
+              The T07 verification falsified the finding: EnforceCap trims a whole
+              <em>collection</em> (no per-key grouping), while these caps are per-owner
+              (5000/500) and per-call. A global cap would let one owner&rsquo;s flood evict
+              another owner&rsquo;s rows. The hand loops are the correct semantics; reopen
+              when metaengine grows a per-group cap (go-cqrs-lite.md &sect; errata).
             </p>
           </div>
 

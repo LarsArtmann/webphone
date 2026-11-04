@@ -229,6 +229,10 @@ func (s *DialWindows) recordAttempt(ctx context.Context, owner domain.Extension,
 // trimWindows expunges the owner's oldest rows past the cap on BOTH
 // collections (the transcripts posture: system facts are trimmed,
 // never user content).
+//
+// Deliberately NOT metaengine.EnforceCap (ruled 2026-11-04, T07): the
+// engine's cap is collection-global, webphone's is per-owner — see
+// the go-cqrs-lite.md errata for the ruling and reopen trigger.
 func (s *DialWindows) trimWindows(ctx context.Context, owner string) error {
 	wins, err := s.windows.Scan(ctx,
 		metaengine.WithFilter("owner", metaengine.FilterEq, owner),

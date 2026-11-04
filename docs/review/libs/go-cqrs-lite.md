@@ -4,6 +4,10 @@
 **Pin:** catalog/v4 v4.12.0, metaengine/v4 v4.20.0, metaengine/sqliteengine/v4 v4.6.0, record/v4 v4.6.2 (all direct; ~21 more /v4 modules indirect via cqrs-htmx) · **Latest (family tag):** cmd/cqrs-lint/v4.20.0 · **Currency:** current at the four required modules · **Status:** direct dep
 **Audited:** 2026-11-04 · **Prior reports:** [2026-10-24 catalog deep-dive](../../research/2026-10-24_go-cqrs-lite-catalog-deep-dive.html) (0/100 snapshot, gap closed same day — read its Addenda first); [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html) (n/a at the time: zero direct imports — fully superseded).
 
+## Errata — EnforceCap ruled NO-GO (T07 verification, 2026-11-04)
+
+The plan's step-2 verification ("confirm newest-rows semantics") FAILED, and the row-8 finding was **wrong on semantics**. `WithCap(maxRows, orderBy)` + `Store.EnforceCap` trim a whole **collection** to maxRows — there is no per-key grouping option (verified against cap.go + query_config.go: the keep page is one descending prefix; capKeyExtractor only maps victims back to keys). Webphone's trims are **per-owner** (`trimOwner`: owner-filtered 5000) and **per-call** (`trimCall`: owner+call_id filtered) and **per-owner** again (`trimWindows`: 500/owner). Swapping would change the guarantee from "each owner keeps 5000" to "all owners share N total" — on a multi-extension deployment one owner's flood would silently evict ANOTHER owner's transcripts/dial windows, which is guard §5.1's exact wrong (reject-caps protect owner data; per-owner caps do too). The hand loops are the correct one-home for the grouped semantics: bounded cap+1 scans, converging passes, owner-scoped. **Refresh trigger for a re-look: metaengine growing a per-group cap (`WithCapPerGroup(groupCol, maxRows, orderBy)` or equivalent) — then the three trims migrate in one train.**
+
 ## Status
 
 | | |
@@ -39,7 +43,7 @@
 | 5 | DedupStore adaptation | 🟢 Fully leveraged | internal/app/dedup.go; idem windows are DURABLE since the readmodels train |
 | 6 | AggregateReader counts | 🟢 Fully leveraged | contacts count etc. |
 | 7 | catalog builder + 3 exporters | 🟢 Fully leveraged | apidocs.go, wirecontracts.go, cmd/webphone/catalog.go |
-| 8 | **`EnforceCap`/`EnforceCaps` (native trim)** | 🔴 Missed | metaengine/cap.go:144 keeps newest rows past a declared cap — exactly the shape of `trimOwner`/`trimCall` (transcripts.go:106-130) and `trimWindows` (dialwindows.go:229). Hand-rolled today. NOTE: deliberately NOT a fit for the REJECT-caps (contacts ErrListFull, call_reviews "never silently evicted") — those must keep refusing, not trimming |
+| 8 | **`EnforceCap`/`EnforceCaps` (native trim)** | 🔵 NO-GO (ruled 2026-11-04) | The audit's "exactly the shape" claim was wrong: EnforceCap trims a whole COLLECTION; webphone's trims are per-OWNER and per-CALL (owner+call_id filters). A global cap would let one owner's flood evict another owner's rows — the guard-§5.1 wrong. Hand loops stay as the one-home for grouped semantics; reopen on a per-group cap API upstream (see the errata)
 | 9 | Advanced ScanOptions (WithCursor keyset, WithRange/WithIn/WithOr) | 🟡 Partial | History/transcript paging scans the newest window bounded by WithLimit; no keyset pagination, no engine-side compound filters — fine at 5000-row caps, becomes interesting at ten-fold growth |
 | n/a | record envelope metadata (Actor/Cause/Stamp) | ⚪ N/A | every fold discards the envelope (`func(_ record.Record, e domain.E)` — deliberate: webphone's domain events carry their own facts) |
 | n/a | Multi-engine ops (Replan/AddEngine/Backfill/Export/materialized views/temporal) | ⚪ N/A | single-engine-per-DB is the documented posture; no hot tier |
@@ -50,7 +54,7 @@
 
 ## Ruling
 
-Deep adoption is correct and should stay the pattern for every new read model ("New read models grow as metaengine.Query declarations"). One real opportunity: **declare the two trim caps with metaengine caps (`EnforceCap`) and delete `trimOwner`/`trimCall`/`trimWindows`** — same newest-rows semantics, engine-owned, one bounded scan. Keep reject-caps app-side (the library's trim semantics are intentionally wrong for them).
+Deep adoption is correct and should stay the pattern for every new read model ("New read models grow as metaengine.Query declarations"). ~~One real opportunity: declare the two trim caps with metaengine caps and delete the trims~~ **RULED NO-GO 2026-11-04** (see the errata: EnforceCap is collection-global; webphone's caps are per-owner/per-call — the hand loops ARE the correct semantics). Reject-caps stay app-side as before. The remaining gap between the engine and webphone is the missing per-group cap — an upstream ask candidate (T20).
 
 **Refresh trigger:** any read model crossing ~10k rows per owner (keyset pagination via WithCursor); a second engine (failover/backfill); an upstream bounded-AuditLog projection.
 
