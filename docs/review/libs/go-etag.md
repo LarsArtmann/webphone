@@ -1,7 +1,7 @@
 # go-etag — library utilization audit
 
-**Verdict:** the best adoption candidate among the indirect-only libraries: webphone hand-rolls RFC 7232 conditional-request logic for embedded assets while the library ships exactly that (plus a client-side caching transport webphone doesn't need). **Adoption: n/a (indirect-only); fit: MEDIUM.**
-**Pin:** go-etag/entitytag + go-etag/server v0.6.1 (go.mod:100-101, `// indirect`) · **Latest:** v0.7.0 (local checkout tag) · **Currency:** one minor behind at the indirect pin · **Status:** indirect-only — pulled by httputil (root) and cqrs-htmx
+**Verdict:** the best adoption candidate among the indirect-only libraries: webphone hand-rolled RFC 7232 conditional-request logic for embedded assets while the library ships exactly that. **Adoption: LANDED 2026-11-04 (option A) — `assetHeaders` now rides `entitytag.NewETag` + `MatchesIfNoneMatch` (the RFC-correct weak comparison replaces the hand-rolled strong-as-weak compare); `ifNoneMatch` deleted.**
+**Pin:** go-etag/entitytag v0.6.1 (DIRECT since 2026-11-04; go-etag/server stays indirect) · **Latest:** entitytag submodule v0.6.1 (the repo-root v0.7.0 tag did NOT include an entitytag bump — the CHANGELOG drift T20 files upstream) · **Currency:** current at the submodule · **Status:** direct dep (entitytag)
 **Audited:** 2026-11-04 · **Prior reports:** none (first audit).
 
 ## Status
@@ -38,7 +38,8 @@ Option A is a tidy-up worth doing in the next assets-touching train; Option B is
 ## How to verify
 
 ```console
-rg -n "ifNoneMatch" internal/server/assets.go            # the hand-roll (:126)
+rg -n "ifNoneMatch" internal/server/assets.go            # expect 0 (deleted 2026-11-04)
+rg -n "entitytag" internal/server/assets.go              # expect the NewETag + MatchesIfNoneMatch use
 rg -rn "go-etag" --type go internal/ | wc -l             # expect 0 direct imports
 rg -n "go-etag" go.mod                                   # indirect pins
 git -C /home/lars/projects/go-etag describe --tags --abbrev=0   # v0.7.0 vs pin v0.6.1

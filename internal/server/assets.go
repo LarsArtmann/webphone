@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/larsartmann/go-etag/entitytag"
+
 	"github.com/larsartmann/webphone/internal/web/assets"
 )
 
@@ -109,32 +111,15 @@ func assetHeaders(next http.Handler) http.Handler {
 			return
 		}
 		sum := sha256.Sum256(content)
-		etag := `"` + hex.EncodeToString(sum[:]) + `"`
+		tag := entitytag.NewETag(hex.EncodeToString(sum[:]), entitytag.Strong)
 		w.Header().Set("Vary", "Accept-Encoding")
-		w.Header().Set("ETag", etag)
-		if ifNoneMatch(r.Header.Get("If-None-Match"), etag) {
+		w.Header().Set("ETag", tag.String())
+		if entitytag.MatchesIfNoneMatch(tag, r.Header.Get("If-None-Match")) {
 			w.WriteHeader(http.StatusNotModified)
 			return
 		}
 		next.ServeHTTP(w, r)
 	})
-}
-
-// ifNoneMatch reports whether an If-None-Match header value selects etag.
-// Handles the wildcard and comma-separated lists (weak W/ prefixes are
-// compared as strong, which is safe for our stable content hashes).
-func ifNoneMatch(header, etag string) bool {
-	if header == "" {
-		return false
-	}
-	for candidate := range strings.SplitSeq(header, ",") {
-		candidate = strings.TrimSpace(candidate)
-		candidate = strings.TrimPrefix(candidate, "W/")
-		if candidate == "*" || candidate == etag {
-			return true
-		}
-	}
-	return false
 }
 
 // gzipAssets compresses the static subtree when the client accepts gzip.

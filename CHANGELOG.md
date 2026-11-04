@@ -64,6 +64,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   row are honest about it. The sibling caps keep their Rejection
   classification: their 422 answers are correct as-is.
 
+- Asset revalidation rides the go-etag entitytag package (2026-11-04):
+  the hand-rolled If-None-Match list comparison for embedded assets is
+  replaced by the library's RFC 7232 matcher — the same sha256 content
+  ETags, now compared with the spec's weak comparison (a `W/`-prefixed
+  candidate matches correctly instead of being compared character-wise)
+  and wildcard handling straight from the spec. The 304 contract is
+  unchanged and pinned by the existing asset revalidation test.
+
 ### Added
 
 - Unknown configuration keys warn at boot (2026-10-30): one `WARN` line

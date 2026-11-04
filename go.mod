@@ -23,6 +23,7 @@ require (
 	github.com/larsartmann/go-cqrs-lite/metaengine/v4 v4.20.0
 	github.com/larsartmann/go-cqrs-lite/record/v4 v4.6.2
 	github.com/larsartmann/go-error-family v0.12.0
+	github.com/larsartmann/go-etag/entitytag v0.6.1
 	github.com/larsartmann/go-flightrecorder v0.2.1
 	github.com/larsartmann/go-health v0.9.0
 	github.com/larsartmann/go-health-dashboard v0.13.0
@@ -99,7 +100,6 @@ require (
 	github.com/larsartmann/go-cqrs-lite/watermill/v4 v4.7.0 // indirect
 	github.com/larsartmann/go-datastar v0.6.2 // indirect
 	github.com/larsartmann/go-datastar/static v0.6.1 // indirect
-	github.com/larsartmann/go-etag/entitytag v0.6.1 // indirect
 	github.com/larsartmann/go-etag/server v0.6.1 // indirect
 	github.com/larsartmann/go-idempotency v0.3.2 // indirect
 	github.com/larsartmann/go-retry v0.9.0 // indirect
