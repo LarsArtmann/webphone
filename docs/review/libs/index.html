@@ -1,0 +1,1237 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>webphone × LarsArtmann stack — 19-library utilization audit (2026-11-04)</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS LIGHT — Editorial template
+         Design language: form follows function. Primary colors on warm paper.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Light) --- */
+        --color-paper: #f4f4f0;
+        --color-paper-2: #ffffff;
+        --color-paper-3: #e8e8e2;
+        --color-ink: #111111;
+        --color-red: #e63946;
+        --color-blue: #1d3557;
+        --color-yellow: #f4d35e;
+        --color-hairline: rgba(17, 17, 17, 0.14);
+        --color-hairline-strong: rgba(17, 17, 17, 0.3);
+
+        /* --- Semantic layer (shared vocabulary with dark template) --- */
+        --surface: var(--color-paper);
+        --surface-raised: var(--color-paper-2);
+        --surface-sunken: var(--color-paper-3);
+        --text: var(--color-ink);
+        --text-muted: rgba(17, 17, 17, 0.72);
+        --text-faint: rgba(17, 17, 17, 0.5);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-red);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber: var(--warning);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 22%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 12%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 12%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px;
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .sidebar a {
+        font-size: 0.86rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-left: 4px solid transparent;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      h1 {
+        font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+        line-height: 1.05;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px solid var(--text);
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--text);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin-bottom: 0.9rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0 0 1rem;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.6rem;
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+      }
+      .tag.amber {
+        background: var(--warning);
+        border-color: var(--warning);
+        color: var(--text);
+      }
+      .tag.teal {
+        background: var(--solution);
+        border-color: var(--solution);
+        color: var(--surface);
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 90px;
+        margin-bottom: 1.2rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        right: 180px;
+        width: 64px;
+        height: 64px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 26px;
+        right: 90px;
+        width: 56px;
+        height: 56px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-left: 32px solid transparent;
+        border-right: 32px solid transparent;
+        border-bottom: 56px solid var(--warning);
+      }
+      .hero-shapes .bar {
+        position: absolute;
+        bottom: 0;
+        right: 230px;
+        width: 100px;
+        height: 14px;
+        background: var(--text);
+      }
+
+      /* --- Scorecard / stat cards --- */
+      .scorecard,
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        margin: 1.5rem 0 2rem;
+        border: 3px solid var(--text);
+      }
+      .score-card,
+      .stat-card {
+        padding: 1.3rem 1rem;
+        text-align: center;
+        border-right: 3px solid var(--text);
+        background: var(--surface-raised);
+      }
+      .score-card:last-child,
+      .stat-card:last-child {
+        border-right: none;
+      }
+
+      .score,
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.6rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-card .label,
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 0.5rem;
+      }
+      /* Semantic state classes — no nth-child decoration, no !important */
+      .score-good,
+      .stat-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .score-warn,
+      .stat-warn {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .score-bad,
+      .stat-bad {
+        background: var(--problem);
+        color: var(--surface);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.6rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid var(--text);
+        color: var(--text);
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: var(--warning);
+      }
+      .badge-medium {
+        background: var(--surface-sunken);
+      }
+      .badge-low {
+        background: var(--surface-raised);
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      /* --- Callouts --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-sunken);
+        font-size: 0.92rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-teal,
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 10%,
+          var(--surface-raised)
+        );
+      }
+      .callout-amber,
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 18%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Strengths --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.3rem;
+        line-height: 1.3;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      /* Responsive scorecard region: keyboard-scrollable, sticky header (guide: responsive-table) */
+      .table-wrapper {
+        overflow: auto;
+        max-block-size: min(560px, 80vh);
+        border: 2px solid var(--text);
+      }
+      .table-wrapper table {
+        margin: 0;
+        border: none;
+      }
+      .table-wrapper thead th {
+        position: sticky;
+        inset-block-start: 0;
+        z-index: 1;
+      }
+      .table-wrapper tbody th {
+        background: var(--surface-sunken);
+      }
+      caption {
+        caption-side: top;
+        text-align: left;
+        font-size: 0.78rem;
+        color: var(--muted, rgba(17, 17, 17, 0.6));
+        padding: 0.5rem 0.9rem;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+        border: 2px solid var(--text);
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--text);
+        color: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border-strong);
+      }
+      th:last-child {
+        border-right: none;
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+      }
+      td:last-child {
+        border-right: none;
+      }
+      tr:nth-child(even) td {
+        background: var(--surface-sunken);
+      }
+      table.compare td.yes {
+        color: var(--solution);
+        font-weight: 700;
+      }
+      table.compare td.no {
+        color: var(--problem);
+        font-weight: 700;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--text);
+        color: var(--surface);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        border: 2px solid var(--text);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--warning);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: #95e1d3;
+      }
+      .tok-comment {
+        color: rgba(244, 244, 240, 0.45);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #6eb5ff;
+      }
+      .tok-number {
+        color: var(--warning);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #6eb5ff;
+      }
+      .tok-punct {
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .tok-attr {
+        color: var(--warning);
+      }
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 2px solid var(--text);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--surface-sunken);
+        border: 1px solid var(--text);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1.1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.94rem;
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 3px solid var(--text);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .scorecard,
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-right: none;
+        }
+        .score-card:nth-child(1),
+        .stat-card:nth-child(1),
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-bottom: 3px solid var(--text);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+        .hero-shapes {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Full-bleed top bar -->
+    <div class="top-bar">
+      <span>LIBRARY UTILIZATION AUDIT</span>
+      <span>2026-11-04</span>
+      <span>webphone · LarsArtmann first-party stack</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#scorecard">Scorecard</a>
+          <a href="#strengths">Strengths</a>
+          <a href="#findings">Findings</a>
+          <a href="#composition">Composition</a>
+          <a href="#appendix">Method + verify</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <header class="hero">
+          <div class="hero-shapes">
+            <div class="bar"></div>
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="eyebrow">LIBRARY UTILIZATION AUDIT &middot; 2026-11-04</div>
+          <h1>The LarsArtmann stack in webphone — 19 libraries, audited to the max</h1>
+          <p class="subtitle">
+            Every first-party library the owner named — direct, indirect and absent —
+            audited against webphone&rsquo;s actual source and each library&rsquo;s full exported
+            surface, read from the local checkouts, not from docs. One Markdown report per
+            library lives beside this index.
+          </p>
+          <div class="meta">
+            <span class="tag amber">Scope: 19 libraries</span>
+            <span class="tag">Baseline: go.mod @ main (7f7029dd)</span>
+            <span class="tag teal">Method: source-level, local repos</span>
+          </div>
+        </header>
+
+        <section id="scorecard" class="scorecard">
+          <div class="score-card score-good">
+            <div class="score">76</div>
+            <div class="label">Mean adoption /100 (9 scored)</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">2</div>
+            <div class="label">Pins one minor behind</div>
+          </div>
+          <div class="score-card score-bad">
+            <div class="score">1</div>
+            <div class="label">Real durability gap</div>
+          </div>
+          <div class="score-card">
+            <div class="score">7</div>
+            <div class="label">Reasoned NO-GOs (declined / absent)</div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">00</span>Summary</h2>
+          <p>
+            Webphone consumes the family deliberately: <strong>nine entries are direct
+            dependencies</strong> (error-family, httputil + server_timing, go-sse, go-health,
+            go-health-dashboard, templ-components, go-cqrs-lite, cqrs-htmx), <strong>four ride
+            indirect-only</strong> (idempotency, retry, codec, etag — each with a written
+            reason in its own report), and <strong>six are absent by decision</strong>
+            (atomic-write, filewatcher, daemon, output, credentials-store, appkit). The scored
+            families average <strong>76/100</strong>; the audit found <strong>one genuine
+            correctness gap</strong> (blob durability), <strong>one standing finding from the
+            2026-09-24 audit still open</strong> (MaxBodySize), and a handful of cheap wins.
+          </p>
+          <div class="callout callout-amber">
+            <strong>The bottom line</strong>
+            Adopt <code>go-atomic-write</code> for <code>blob.Save</code> — it is the only
+            user-data durability hole found (attachments/fax PDFs written with bare
+            <code>os.WriteFile</code>, no fsync/rename). Then retire the 12 hand-rolled
+            <code>MaxBytesReader</code> sites for <code>httputil.MaxBodySize</code> (open
+            since September). Everything else is either at its deliberate boundary or a
+            reasoned decline.
+          </div>
+        </section>
+
+        <section id="scorecard-table">
+          <h2><span class="num">&#9670;</span>Full scorecard — all 19</h2>
+          <p>
+            Scores weigh impact, not count (rubric and per-row inputs in each library&rsquo;s
+            report). Absent/declined libraries carry a fit verdict instead of an adoption
+            score. Rows sorted by status, then score.
+          </p>
+          <div class="table-wrapper" role="region" aria-label="Per-library adoption scorecard" tabindex="0">
+            <table class="compare">
+              <caption id="lib-table-caption">Per-library verdicts; links open the detailed Markdown report</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Library</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Pin / latest</th>
+                  <th scope="col">Adoption</th>
+                  <th scope="col">Verdict (one line)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><th scope="row"><a href="cqrs-htmx.md">cqrs-htmx</a></th><td>direct ×5</td><td>v4.15.0 / ≥ pin</td><td class="yes">100</td><td>Affirmed at the round-3 ceiling; setup stays rejected; gap is upstream (bounded AuditLog)</td></tr>
+                <tr><th scope="row"><a href="go-health-dashboard.md">go-health-dashboard</a></th><td>direct</td><td>v0.12.2 / v0.12.2</td><td class="yes">88</td><td>Deep wiring; the auth seam (<code>WithMiddleware</code>) is the one open decision</td></tr>
+                <tr><th scope="row"><a href="httputil.md">httputil</a></th><td>direct</td><td>v1.8.0 / v1.8.0</td><td class="yes">85</td><td>Configured, not defaulted; <code>MaxBodySize</code> standing gap (12 hand-rolled sites)</td></tr>
+                <tr><th scope="row"><a href="go-health.md">go-health</a></th><td>direct</td><td>v0.8.1 / v0.9.0</td><td class="yes">83</td><td>Injector-discovered probe, one readiness truth; bump for <code>CoerceValidUTF8</code></td></tr>
+                <tr><th scope="row"><a href="go-cqrs-lite.md">go-cqrs-lite</a></th><td>direct ×4</td><td>v4.20.0 / v4.20.0</td><td class="yes">83</td><td>metaengine IS the read-model substrate; adopt <code>EnforceCap</code> for the trim caps</td></tr>
+                <tr><th scope="row"><a href="go-sse.md">go-sse</a></th><td>direct</td><td>v0.6.2 / v0.7.0</td><td>67</td><td>Thin by composition (cqrs-htmx wraps it); ssetest pins the wire contract; replay unused by design</td></tr>
+                <tr><th scope="row"><a href="httputil-server-timing.md">httputil/server_timing</a></th><td>direct</td><td>v1.0.3 / v1.0.3</td><td>67</td><td>Env-gated edge middleware exactly as designed; named spans unused (do not pre-instrument)</td></tr>
+                <tr><th scope="row"><a href="go-error-family.md">go-error-family</a></th><td>direct</td><td>v0.12.0 / v0.12.0</td><td>64</td><td>The error culture&rsquo;s backbone; Conflict family and retry-policy consumption unused</td></tr>
+                <tr><th scope="row"><a href="templ-components.md">templ-components</a></th><td>direct ×3</td><td>v1.26.0 / v1.26.0</td><td>50</td><td>Deepening on deliberate boundaries; four cheap wins (StatusBadge, SimpleEmptyState, Alert, PageHeader)</td></tr>
+                <tr><th scope="row"><a href="go-etag.md">go-etag</a></th><td>indirect</td><td>v0.6.1 / v0.7.0</td><td>fit: medium</td><td>Webphone hand-rolls <code>ifNoneMatch</code> at assets.go:126; adopt <code>entitytag</code> next assets train</td></tr>
+                <tr><th scope="row"><a href="go-retry.md">go-retry</a></th><td>indirect</td><td>v0.9.0 / v0.9.0</td><td>fit: partial</td><td>Chat loops hand-roll backoff without jitter; <code>ComputeDelay</code> is the swap, not <code>retry.Do</code></td></tr>
+                <tr><th scope="row"><a href="go-idempotency.md">go-idempotency</a></th><td>indirect</td><td>v0.3.2 / v0.3.2</td><td class="no">NO-GO</td><td>Semantics differ (check-first vs CheckAndRecord); metaengine DedupStore already IS the capability</td></tr>
+                <tr><th scope="row"><a href="go-codec.md">go-codec</a></th><td>indirect</td><td>v0.3.3 / v0.3.3</td><td class="no">NO-GO</td><td>Event-store payload codec; webphone benefits transitively, HTTP JSON is not codec territory</td></tr>
+                <tr><th scope="row"><a href="go-atomic-write.md">go-atomic-write</a></th><td>absent</td><td>— / v0.6.2</td><td>fit: HIGH</td><td><strong>blob.Save writes user data with bare os.WriteFile — no fsync/rename.</strong> Top finding</td></tr>
+                <tr><th scope="row"><a href="go-filewatcher.md">go-filewatcher</a></th><td>absent</td><td>— / v2.4.3</td><td class="no">NO-GO</td><td>Nothing to watch: boot-immutable config, per-use secret reads, rotation = restart</td></tr>
+                <tr><th scope="row"><a href="go-daemon.md">go-daemon</a></th><td>absent</td><td>— / v0.4.0</td><td class="no">NO-GO</td><td>Not daemonization; every slice (sockets, sd_notify, codecs, SSE parse) is owned elsewhere</td></tr>
+                <tr><th scope="row"><a href="go-output.md">go-output</a></th><td>absent</td><td>— / v0.38.x</td><td class="no">NO-GO</td><td>CLI prints one-liners; the boot report is a designed artifact, not tabular data</td></tr>
+                <tr><th scope="row"><a href="go-credentials-store.md">go-credentials-store</a></th><td>absent</td><td>— / v0.3.1</td><td class="no">NO-GO</td><td>Platform owns secrets (LoadCredential + NixOS); the library is a second stateful service</td></tr>
+                <tr><th scope="row"><a href="go-appkit.md">go-appkit</a></th><td>absent</td><td>— / health/v0.3.0</td><td class="no">NO-GO (affirmed)</td><td>2026-10-23 ruling stands: every module re-wraps what webphone composes directly</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="strengths">
+          <h2><span class="num">01</span>What&rsquo;s already excellent</h2>
+          <div class="strengths">
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Every non-adoption carries a written reason</strong>
+                <span>Seven declined/absent libraries, seven rulings with evidence — none is neglect. go-idempotency&rsquo;s NO-GO even matches the upstream README&rsquo;s own guidance for cqrs-lite stacks.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>cqrs-htmx at its ceiling, re-verified</strong>
+                <span>The round-3 addendum&rsquo;s three shipped findings (projections readiness, identity train, hub pre-drain) are all still wired in this tree; the setup bundle stays rejected with its measured +68% delta pinned in main.go:189-193.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>metaengine dogfooding is the real thing</strong>
+                <span>11 Query declarations, boot-time capability assertions, durable dedup windows, three generated doc/export lanes — the 2026-10-24 catalog audit&rsquo;s zero-usage snapshot is ancient history.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>httputil is configured, not defaulted</strong>
+                <span>Explicit CSP with two scoped per-subtree exceptions, 8 keyed rate limiters on a custom port-stripped extractor with the flip rule documented, SSE-safe server lifecycle, httpspec pinning the chain.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The error-code registry is generated and drift-pinned</strong>
+                <span>go-error-family constructors are regex-scanned by TestErrorCodeRegistryIsFresh into docs/error-contract.md — the family taxonomy is enforced culture, not convention.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="findings">
+          <h2><span class="num">02</span>Findings — top opportunities (impact × ease)</h2>
+          <p>Six actions, sorted by impact then ease. Each links to its evidence.</p>
+
+          <div class="issue issue-critical" id="issue-1">
+            <span class="severity severity-critical">High impact &middot; Low effort</span>
+            <h3>Adopt go-atomic-write for blob persistence</h3>
+            <div class="where">internal/blob/store.go:50 &middot; cmd/webphone/catalog.go:56,64 &middot; cmd/webphone/contracts.go:36</div>
+            <p>
+              The blob store saves attachments and fax PDFs with a bare
+              <code>os.WriteFile(abs, content, 0o640)</code> — no fsync, no atomic rename.
+              A crash or power loss between write and fsync can leave a truncated blob on
+              disk while the database row already references it: user data that 404s.
+              This is the only user-data durability hole found across all 19 libraries.
+              The CLI spec writers get <code>WriteIfChanged</code> (no torn diffs, no mtime
+              churn) in the same move. Ride the vendorHash re-pin ritual in the same commit.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              <code>atomicwrite.Write(abs, content)</code> in blob.Save (content is already
+              in memory), <code>WriteIfChanged</code> for the two CLI writers. Full analysis:
+              <a href="go-atomic-write.md">go-atomic-write.md</a>
+            </div>
+          </div>
+
+          <div class="issue issue-important" id="issue-2">
+            <span class="severity severity-important">Medium impact &middot; Low effort</span>
+            <h3>Retire the 12 hand-rolled MaxBytesReader sites for httputil.MaxBodySize</h3>
+            <div class="where">actions.go:652, transcribe.go:54, passkey_api.go:90,203, hooks/webhooks.go:425, api/*.go JSON guards</div>
+            <p>
+              The standing finding #1 of the 2026-09-24 fleet audit — still open at v1.8.0.
+              The library ships the middleware; twelve call sites re-implement it by hand.
+              Mechanical migration, covered by the existing httpspec + per-route tests.
+            </p>
+          </div>
+
+          <div class="issue issue-important" id="issue-3">
+            <span class="severity severity-important">Medium impact &middot; Low effort</span>
+            <h3>templ-components cheap wins: StatusBadge, SimpleEmptyState, feedback.Alert</h3>
+            <div class="where">fax.templ:214, messages.templ:738-744 (badges); wp-empty ×10; error.templ</div>
+            <p>
+              Status badges, ten inline empty-state paragraphs and the error banner are
+              hand-rolled while the same panels already use the library&rsquo;s Button and
+              EmptyState — the inconsistency is the argument, not the count. Cascading-layer
+              contract and greppable row classes must survive the swap. panelHead →
+              PageHeader follows on the next panel-touching train.
+            </p>
+          </div>
+
+          <div class="issue issue-important" id="issue-4">
+            <span class="severity severity-important">Medium impact &middot; Medium effort</span>
+            <h3>Declare the two trim caps with metaengine EnforceCap</h3>
+            <div class="where">internal/readmodels/transcripts.go:106-130 (trimOwner/trimCall) &middot; dialwindows.go:229 (trimWindows)</div>
+            <p>
+              metaengine ships <code>EnforceCap(name)</code> (newest-rows trim) — exactly the
+              shape webphone hand-rolls for transcripts (5000) and dial windows (500).
+              Reject-caps (contacts, call reviews) must stay app-side on purpose: trimming
+              would silently evict owner content, and that is a written contract.
+            </p>
+          </div>
+
+          <div class="issue issue-nice" id="issue-5">
+            <span class="severity severity-nice">Low-medium impact &middot; Low effort</span>
+            <h3>Close the three version gaps</h3>
+            <div class="where">go-sse v0.6.2→v0.7.0 · go-health v0.8.1→v0.9.0 · go-etag v0.6.1→v0.7.0 (with adoption)</div>
+            <p>
+              go-health v0.9.0&rsquo;s <code>CoerceValidUTF8</code> is the substantive one:
+              probe details embed driver strings that can carry non-UTF-8 bytes, and probe
+              JSON must never break. go-sse v0.7.0 brings EventID branding + the ssetest
+              breaking change in one mechanical train.
+            </p>
+          </div>
+
+          <div class="issue issue-nice" id="issue-6">
+            <span class="severity severity-nice">Low impact &middot; Low effort</span>
+            <h3>go-error-family: put 409-shaped outcomes in the Conflict family</h3>
+            <div class="where">internal/readmodels (note_list_full, dial-gate conflicts)</div>
+            <p>
+              The Conflict family has zero uses; conflict-shaped outcomes map to Rejection
+              today. One-family migration + family_test updates. (Retry-policy consumption
+              rides the go-retry question — see its report for the shape mismatch.)
+            </p>
+          </div>
+        </section>
+
+        <section id="composition">
+          <h2><span class="num">03</span>Composition — who owns which seam</h2>
+          <p>Why most &ldquo;unused&rdquo; capabilities are somebody else&rsquo;s job by design:</p>
+          <div class="dep-tree">
+root webphone
+├── identity        cqrs-htmx (usermgmt+webauthn+loginpage+identity-model)   [own session store beside it]
+├── SSE             cqrs-htmx.Broadcaster → go-sse (Event, ssetest pins)     [replay deliberately unused]
+├── HTTP shell      httputil (NewServer, CSRF, CSP, nonce, rate limiters)    [cqrs-htmx Chain + Recovery compose it]
+├── readiness       cqrs-htmx ReadinessHandler (/healthz)                    [go-health owns /livez /startupz probe]
+├── operator UI     go-health-dashboard over go-health Probe                 [fence lives at Caddy]
+├── read models     go-cqrs-lite metaengine + sqliteengine + record          [catalog → openapi/asyncapi/eventcatalog]
+├── errors          go-error-family (taxonomy, codes, registry pin)          [HTTP mapping per-handler]
+├── UI kit          templ-components (layout, display, forms, icons, utils)  [domain panels hand-rolled templ]
+├── recording       go-flightrecorder (direct)                               [not go-daemon&rsquo;s embedded variant]
+├── storage         modernc sqlite + go-sqlitestore                          [durability of FILES = the blob gap]
+└── declined        idempotency, retry, codec, etag, atomic-write, filewatcher, daemon, output, credentials-store, appkit
+          </div>
+        </section>
+
+        <section id="appendix">
+          <h2><span class="num">04</span>Method + how to verify</h2>
+          <p>
+            Source-level: every claim was read out of the webphone tree and the local
+            library checkouts on 2026-11-04 (versions from go.mod + local git tags). Prior
+            series reports were read first and are cited or superseded per report
+            (cqrs-htmx 2026-10-25, templ-components 2026-09-22, go-appkit 2026-10-23,
+            catalog 2026-10-24, fleet stack 2026-09-24). Score rubric: capability rows
+            graded Fully=1 / Partially=0.5 / Missed=0, N/A rows excluded with a written
+            reason; score = 100 × Σ / applicable.
+          </p>
+          <pre><code># re-derive the headline numbers
+rg -l "larsartmann/go-error-family" --type go -g '!*_templ.go' | wc -l   # 97 import sites
+rg -l "MaxBytesReader" --type go internal/ | wc -l                       # 12 hand-rolled body caps
+rg -n "os.WriteFile" internal/blob/store.go                              # the durability finding
+rg -c "NewConflict|WrapConflict" --type go internal/ | wc -l             # Conflict family: 0 uses
+rg -n "EnforceCap" /home/lars/projects/go-cqrs-lite/metaengine/cap.go    # the unused native trim
+for m in go-sse go-health go-etag; do git -C /home/lars/projects/$m describe --tags --abbrev=0; done
+
+# per-library evidence lives in the .md reports beside this file; each carries
+# its own verify block replayed before publishing.</code></pre>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Report series</th>
+                <th>When</th>
+                <th>Relation to this audit</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>cqrs-htmx round-3 + addendum</td><td>2026-10-25</td><td class="yes">Affirmed (100/100), not re-litigated</td></tr>
+              <tr><td>templ-components deep-dive</td><td>2026-09-22</td><td class="yes">Adopt/reject boundaries re-verified; thin-adoption score superseded</td></tr>
+              <tr><td>go-appkit deep-dive</td><td>2026-10-23</td><td class="yes">Non-adoption affirmed, absence re-verified</td></tr>
+              <tr><td>catalog deep-dive</td><td>2026-10-24</td><td class="yes">Its gap closed same-day; go-cqrs-lite report supersedes</td></tr>
+              <tr><td>fleet stack deep-dive</td><td>2026-09-24</td><td>Superseded per library; its MaxBodySize finding is credited — and still open</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <footer class="footer">
+          <p>
+            Generated 2026-11-04 &middot; 19 reports in docs/review/libs/ &middot; Claims
+            verified against source at main (7f7029dd); pins from go.mod; &ldquo;latest&rdquo;
+            from local checkouts&rsquo; git tags
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>

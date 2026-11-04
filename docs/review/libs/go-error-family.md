@@ -1,0 +1,65 @@
+# go-error-family — library utilization audit
+
+**Verdict:** the backbone of webphone's error culture; deep and deliberate. **Adoption 64/100 (moderate)** — 7 of 11 applicable rows fully leveraged (inputs below).
+**Pin:** v0.12.0 (go.mod:24) · **Latest:** v0.12.0 · **Currency:** current · **Status:** direct dep
+**Audited:** 2026-11-04 · **Prior reports:** [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html) (58/100 at v0.10.1 — superseded by this one; adoption roughly doubled since).
+
+## Status
+
+| | |
+|---|---|
+| Module | `github.com/larsartmann/go-error-family` |
+| Pinned | v0.12.0 (direct) |
+| Latest release | v0.12.0 (local checkout tag) |
+| Usage | **97 files** import it; 18 `family_test.go` pin files; `errorfamilytest` in ~30 test files |
+
+## What the library offers
+
+Root package: 6-family behavioral taxonomy (`Rejection, Conflict, Transient, Corruption, Infrastructure, Orchestration`) each carrying Severity/ExitCode/HTTPStatus/Tone/Audience/RetryPolicy; generic constructors `New/Newf/Wrap/Wrapf/WrapOnce*f` plus family-fixed `New{Family}`/`Wrap{Family}[f]`; `Error` builders (`WithContext*`, `WithCause`, `WithHTTPStatus`, `Summary`, `JSON`); `Classify` + classifier/classification registries; `HandleError*` CLI boundary with message templates (What/Why/Fix/WayOut); `HTTPStatus`/`HTTPHandler`; `LogError*` slog emitters; stdlib default classifications. Sub-packages `errorfamilytest` (assertion helpers), `bridge`, `diagnose` (rules/runner), `agent` (experimental).
+
+## How webphone uses it
+
+- **Constructors at every seam** (the repo doctrine: typed error products, stable `<seam>.<op>` codes): `WrapInfrastructuref` 100+ uses (heaviest), `NewRejection` 83, `Newf` 91, `WrapTransientf` 31, `WrapRejectionf` 25, `NewInfrastructure` 5, `WrapOrchestrationf` 1, `NewTransient` 1, `Corruption` const 1 (internal/domain/ids.go:227). Example: `errorfamily.WrapInfrastructuref(err, "gateway.form", "build message form")` (internal/gateway/webhook.go:107).
+- **Machine-code registry is GENERATED and test-pinned**: `TestErrorCodeRegistryIsFresh` (internal/arch/errorregistry_test.go:64) regex-scans every non-test `.go` for constructor calls, resolves named consts, and compares against the generated block in docs/error-contract.md (`-update` rewrites). Drift fails the suite — the 2026-10-24 red-main class this test exists for.
+- **Family pins**: 18 `family_test.go` files map sentinel → family (e.g. `ErrListFull → Rejection`, internal/readmodels/contacts.go:29); `errorfamilytest.AssertFamily` ×95, `AssertCode` ×72, `AssertRetryable` ×5.
+- **Third-party classification**: `Classify(err)` ~22 uses (gateway, pbx, crm, push, asr seams); `RegisterClassifications` once, 2 sentinels (internal/crm/client.go:30-32). Custom types implement the `Classified` interface instead of wrapping (`ErrProviderRejected.ErrorFamily()`, internal/gateway/webhook.go:72-86).
+- **Structured logging**: `LogErrorContext` ×4 (e.g. internal/server/actions.go:500).
+
+## Gap analysis
+
+| # | Capability area | Status | Evidence / reason |
+|---|---|---|---|
+| 1 | Family taxonomy at every seam | 🟢 Fully leveraged | 97 files; all four main families in use |
+| 2 | Family-fixed constructors + stable codes | 🟢 Fully leveraged | `<seam>.<op>` doctrine; AGENTS.md bar |
+| 3 | Code registry freshness + generated contract | 🟢 Fully leveraged | internal/arch/errorregistry_test.go:64 → docs/error-contract.md |
+| 4 | family_test pin culture | 🟢 Fully leveraged | 18 family_test.go files |
+| 5 | Third-party `Classify` | 🟢 Fully leveraged | ~22 uses across provider seams |
+| 6 | `RegisterClassifications` breadth | 🟡 Partial | Only 2 sentinels (crm); stdlib defaults (`RegisterStdlibDefaults`) never registered — sql.ErrNoRows-class handled ad hoc |
+| 7 | Structured logging | 🟢 Fully leveraged | `LogErrorContext` at gateway failure paths |
+| 8 | HTTP status centralization | 🟡 Partial | Handlers map `Classify(err)` manually per surface; `HTTPStatus()`/`HTTPHandler` unused (actions.go:449 comment references the concept only) |
+| 9 | **Conflict family** | 🔴 Missed | Zero uses of `NewConflict`/`WrapConflict`/`Conflict` (verified `rg -c … | wc -l` → 0). Real 409-shaped outcomes exist: `readmodels.note_list_full` 409, idem replays, dial-gate conflicts — all mapped to Rejection today |
+| 10 | Retry policy consumption | 🔴 Missed | `IsRetryable`/`RetryPolicy` never consumed in prod code; the reconnect loops (internal/chatloop) hand-roll backoff with no retryable classification (see [go-retry](go-retry.md)) |
+| 11 | Error context (`WithContext*`/`ErrorContext`) | 🔴 Missed | Context map never written; context travels via structured log attrs instead |
+| n/a | `HandleError*` CLI boundary | ⚪ N/A | cmd/webphone's boot report (cmd/webphone/bootreport.go) is a designed 5-part operator artifact, not a template-rendered exit |
+| n/a | `bridge`/`diagnose`/`agent` modules | ⚪ N/A | Experimental upstream modules; no problem statement in this repo |
+
+**Score:** rows 1-5,7 = 1.0 (6.0) + rows 6,8 = 0.5 (1.0) + rows 9-11 = 0 → **7.0 / 11 = 64/100, moderate band.**
+
+## Ruling: should we use it to the max?
+
+Adoption is deep where the doctrine lives (seams, codes, pins, registry) and thin on three consumer-side capabilities. Priorities:
+
+1. **Conflict family** (cheap, honest): `readmodels.note_list_full` and future 409-shaped outcomes are semantically Conflict, not Rejection. One-family migration + family_test updates.
+2. **Retry policy consumption** rides the [go-retry](go-retry.md) question — if `retry.Do`/`ComputeDelay` is ever adopted for the chat loops, `IsRetryable` becomes the predicate for free.
+3. **Error context**: only worth adopting if a diagnostic surface consumes `ErrorContext` (the `diagnose` module is the consumer — not scheduled). Log-attrs context is adequate today; do not adopt ceremonially.
+
+**Refresh trigger:** a new seam that needs 409 semantics; a retry loop adoption; a CLI subcommand that outgrows one-line output.
+
+## How to verify
+
+```console
+rg -l "larsartmann/go-error-family" --type go -g '!*_templ.go' | wc -l   # expect 97
+rg -c "NewConflict|WrapConflict|errorfamily.Conflict" --type go internal/ | wc -l   # expect 0
+go test ./internal/arch -run TestErrorCodeRegistryIsFresh               # registry freshness
+rg -o "errorfamily\.[A-Za-z]+" -N --type go | sed 's/.*errorfamily\.//' | sort | uniq -c | sort -rn | head -15
+```
