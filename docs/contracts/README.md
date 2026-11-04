@@ -47,6 +47,21 @@ configured, styled 404 otherwise) and therefore deliberately absent from
 both documents — a disabled deployment must not promise a surface it
 does not mount.
 
+## Conditional GET on the served document
+
+`/openapi.json` is generated (stable bytes per build) and fetched with
+`Cache-Control: no-cache`, so every consumer revalidation used to cost
+the full document body. It now carries an ETag (go-etag/server
+middleware) and answers a matching `If-None-Match` with a bodyless
+`304 Not Modified` — send the served ETag (weak candidates accepted,
+RFC 7232 weak comparison) and revalidation is free. The middleware
+mounts on exactly two routes — this document and
+`/manifest.webmanifest` — so the mount IS the skip set: the no-store
+fences on session/credential surfaces are untouched by construction
+(pinned by `TestConditionalGETRootDocuments`, which also asserts
+`/config.js` carries no ETag). `/version` deliberately has no ETag: a
+one-line string is not a revalidation cost worth the mechanism.
+
 ## One home each: why there are THREE catalog builders
 
 webphone declares three catalogs and that is the ruling, not an
