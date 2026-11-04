@@ -23,6 +23,15 @@ import (
 	"github.com/larsartmann/webphone/internal/textagent"
 )
 
+// JSONBodyLimit is the one home for the small-JSON guard cap: every
+// island endpoint whose body is a handful of typed fields (login,
+// call log, disposition, push registration) accepts at most 4 KiB —
+// anything larger is an abuse shape, not a legitimate payload. The
+// routes mount httputil.MaxBodySize(JSONBodyLimit) in the server's
+// route table; per-surface limits that exceed it (transcripts,
+// contacts, transcribe audio) keep their own named constants.
+const JSONBodyLimit = 4096
+
 // Server is the narrow wiring seam the carved handlers ride on,
 // implemented by the server's handlers hub: the session gate (the ONE
 // 401 writer for missing sessions) and the contacts SSE nudge (the
