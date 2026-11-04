@@ -944,17 +944,18 @@
             indirect-only</strong> (idempotency, retry, codec, etag — each with a written
             reason in its own report), and <strong>six are absent by decision</strong>
             (atomic-write, filewatcher, daemon, output, credentials-store, appkit). The scored
-            families average <strong>76/100</strong>; the audit found <strong>one genuine
-            correctness gap</strong> (blob durability), <strong>one standing finding from the
-            2026-09-24 audit still open</strong> (MaxBodySize), and a handful of cheap wins.
+            families average <strong>76/100</strong> at audit time (77 after the first two adoptions landed the same day); the audit found <strong>one genuine
+            correctness gap</strong> (blob durability, LANDED 2026-11-04), <strong>one standing finding from the
+            2026-09-24 audit</strong> (MaxBodySize, LANDED 2026-11-04), and a handful of cheap wins.
           </p>
           <div class="callout callout-amber">
             <strong>The bottom line</strong>
             Adopt <code>go-atomic-write</code> for <code>blob.Save</code> — it is the only
             user-data durability hole found (attachments/fax PDFs written with bare
-            <code>os.WriteFile</code>, no fsync/rename). Then retire the 12 hand-rolled
+            <code>os.WriteFile</code>, no fsync/rename) — and retire the hand-rolled
             <code>MaxBytesReader</code> sites for <code>httputil.MaxBodySize</code> (open
-            since September). Everything else is either at its deliberate boundary or a
+            since September). Both LANDED 2026-11-04 (see the per-library reports' ruling
+            sections). Everything else is either at its deliberate boundary or a
             reasoned decline.
           </div>
         </section>
@@ -981,7 +982,7 @@
               <tbody>
                 <tr><th scope="row"><a href="cqrs-htmx.md">cqrs-htmx</a></th><td>direct ×5</td><td>v4.15.0 / ≥ pin</td><td class="yes">100</td><td>Affirmed at the round-3 ceiling; setup stays rejected; gap is upstream (bounded AuditLog)</td></tr>
                 <tr><th scope="row"><a href="go-health-dashboard.md">go-health-dashboard</a></th><td>direct</td><td>v0.12.2 / v0.12.2</td><td class="yes">88</td><td>Deep wiring; the auth seam (<code>WithMiddleware</code>) is the one open decision</td></tr>
-                <tr><th scope="row"><a href="httputil.md">httputil</a></th><td>direct</td><td>v1.8.0 / v1.8.0</td><td class="yes">85</td><td>Configured, not defaulted; <code>MaxBodySize</code> standing gap (12 hand-rolled sites)</td></tr>
+                <tr><th scope="row"><a href="httputil.md">httputil</a></th><td>direct</td><td>v1.8.0 / v1.8.0</td><td class="yes">95</td><td>Configured, not defaulted; MaxBodySize adopted 2026-11-04 (14 route mounts; two ruled one-home funnels)</td></tr>
                 <tr><th scope="row"><a href="go-health.md">go-health</a></th><td>direct</td><td>v0.8.1 / v0.9.0</td><td class="yes">83</td><td>Injector-discovered probe, one readiness truth; bump for <code>CoerceValidUTF8</code></td></tr>
                 <tr><th scope="row"><a href="go-cqrs-lite.md">go-cqrs-lite</a></th><td>direct ×4</td><td>v4.20.0 / v4.20.0</td><td class="yes">83</td><td>metaengine IS the read-model substrate; adopt <code>EnforceCap</code> for the trim caps</td></tr>
                 <tr><th scope="row"><a href="go-sse.md">go-sse</a></th><td>direct</td><td>v0.6.2 / v0.7.0</td><td>67</td><td>Thin by composition (cqrs-htmx wraps it); ssetest pins the wire contract; replay unused by design</td></tr>
@@ -1071,14 +1072,17 @@
             </div>
           </div>
 
-          <div class="issue issue-important" id="issue-2">
-            <span class="severity severity-important">Medium impact &middot; Low effort</span>
-            <h3>Retire the 12 hand-rolled MaxBytesReader sites for httputil.MaxBodySize</h3>
-            <div class="where">actions.go:652, transcribe.go:54, passkey_api.go:90,203, hooks/webhooks.go:425, api/*.go JSON guards</div>
+          <div class="issue issue-important issue-landed" id="issue-2">
+            <span class="severity severity-important">LANDED 2026-11-04</span>
+            <h3>Retire the hand-rolled MaxBytesReader sites for httputil.MaxBodySize</h3>
+            <div class="where">14 route mounts (login, switch, passkey ×5, contacts, call log, note, disposition, push-device, transcribe, transcripts) &middot; two ruled one-home funnels: requireSessionMultipart + hooks decodeJSON</div>
             <p>
-              The standing finding #1 of the 2026-09-24 fleet audit — still open at v1.8.0.
-              The library ships the middleware; twelve call sites re-implement it by hand.
-              Mechanical migration, covered by the existing httpspec + per-route tests.
+              The standing finding #1 of the 2026-09-24 fleet audit — closed the same day as
+              the blob train. The library's middleware now caps the JSON surfaces in the
+              route table (<code>api.JSONBodyLimit</code> is the one home for the 4 KiB guard);
+              the two multi-route funnels keep the stdlib wrap with written rulings. A cap
+              pin (<code>TestSessionCreationBodyCap</code>) guards the mount against
+              route-table refactors.
             </p>
           </div>
 
@@ -1184,7 +1188,7 @@ for m in go-sse go-health go-etag; do git -C /home/lars/projects/$m describe --t
               <tr><td>templ-components deep-dive</td><td>2026-09-22</td><td class="yes">Adopt/reject boundaries re-verified; thin-adoption score superseded</td></tr>
               <tr><td>go-appkit deep-dive</td><td>2026-10-23</td><td class="yes">Non-adoption affirmed, absence re-verified</td></tr>
               <tr><td>catalog deep-dive</td><td>2026-10-24</td><td class="yes">Its gap closed same-day; go-cqrs-lite report supersedes</td></tr>
-              <tr><td>fleet stack deep-dive</td><td>2026-09-24</td><td>Superseded per library; its MaxBodySize finding is credited — and still open</td></tr>
+              <tr><td>fleet stack deep-dive</td><td>2026-09-24</td><td>Superseded per library; its MaxBodySize finding is credited — landed 2026-11-04</td></tr>
             </tbody>
           </table>
         </section>

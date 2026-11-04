@@ -94,6 +94,26 @@ func TestSessionCreationFailsClosedWhenPbxDown(t *testing.T) {
 	}
 }
 
+// TestSessionCreationBodyCap pins the route-level body cap (the
+// MaxBodySize consolidation train, 2026-11-04): the login route mounts
+// httputil.MaxBodySize(api.JSONBodyLimit) in the route table, so an
+// oversized body is a 400 at the parse — never a credential check on
+// garbage bytes. The old inline MaxBytesReader and this mount are the
+// same mechanism; the pin exists so a future route-table refactor
+// cannot silently drop the cap.
+func TestSessionCreationBodyCap(t *testing.T) {
+	c := newClient(t)
+
+	oversized := []byte(`{"extension":"1001","password":"x","pad":"` + strings.Repeat("p", 8192) + `"}`)
+	resp, body := c.do(http.MethodPost, "/api/session", oversized, "application/json")
+	if resp.StatusCode != http.StatusBadRequest {
+		t.Fatalf("oversized login body: %d %s (want 400)", resp.StatusCode, body)
+	}
+	if gated, _ := c.do(http.MethodGet, "/partials/messages", nil, ""); gated.StatusCode != http.StatusUnauthorized {
+		t.Fatalf("capped login must not mint a session: partials %d", gated.StatusCode)
+	}
+}
+
 // TestSessionResumeReturnsCredentials pins the boot-resume contract: a
 // live cookie gets the session's SIP credentials back (the browser-side
 // REGISTER needs them to re-register without the login form), the

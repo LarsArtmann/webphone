@@ -1,6 +1,6 @@
 # httputil — library utilization audit
 
-**Verdict:** configured, not defaulted — the security surface runs on this library by explicit choice. One standing body-cap gap. **Adoption 85/100 (very high)** — 8.5 of 10 applicable rows (inputs below).
+**Verdict:** configured, not defaulted — the security surface runs on this library by explicit choice. The standing body-cap gap LANDED 2026-11-04. **Adoption 95/100 (top band, post-adoption)** — 9.5 of 10 applicable rows (inputs below).
 **Pin:** v1.8.0 (go.mod:31) + `httputil/server_timing` v1.0.3 · **Latest:** v1.8.0 / v1.0.3 · **Currency:** current · **Status:** direct dep
 **Audited:** 2026-11-04 · **Prior reports:** [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html) (82/100 at v1.2.0 — its finding #1, `MaxBodySize`, is **still open**); server_timing has its own [report](httputil-server-timing.md).
 
@@ -39,7 +39,7 @@ Root package: `NewServer`/`ServerConfig` (timeouts, graceful shutdown, `StartTLS
 | 6 | Metrics hook | 🟢 Fully leveraged | feeds `webphone_http_request_duration_seconds` |
 | 7 | server_timing middleware | 🟢 Fully leveraged | see [server_timing report](httputil-server-timing.md) |
 | 8 | httpspec conformance | 🟢 Fully leveraged | 19-spec chain pin |
-| 9 | **`MaxBodySize`** | 🔴 Missed | **Standing finding since the 2026-09-24 audit: still open.** 12 files hand-roll `http.MaxBytesReader` (internal/server/actions.go:652, transcribe.go:54, passkey_api.go:90,203, hooks/webhooks.go:425, api/*.go 4 KiB JSON guards); `rg MaxBodySize` → 0 uses. Mechanical migration |
+| 9 | **`MaxBodySize`** | 🟢 Adopted 2026-11-04 | **LANDED (MaxBodySize consolidation train).** 14 sites now mount `httputil.MaxBodySize` in the route table (login, switch, five passkey ceremonies, contacts save, call log, note, disposition, push-device, transcribe, transcript save); `api.JSONBodyLimit` is the one home for the 4 KiB guard cap. Two survivors carry written rulings: `requireSessionMultipart` + hooks `decodeJSON` are deliberate one-home funnels (per-route mounts would re-scatter the cap) |
 | 10 | Compression | 🟡 Partial | assets.go hand-rolls *scoped* gzip for embedded assets by design (SSE-safety + ETag interaction); the generic `Compression` middleware is unused |
 | n/a | CORS | ⚪ N/A | same-origin product; CSP forbids cross-origin by policy |
 | n/a | Language extractor | ⚪ N/A | the `wp-lang` cookie → Accept-Language chain is session-scoped and SSE-aware (views/i18n.go); the generic extractor cannot express it |
@@ -47,19 +47,20 @@ Root package: `NewServer`/`ServerConfig` (timeouts, graceful shutdown, `StartTLS
 | n/a | Timeout middleware | ⚪ N/A | long-lived SSE + `/phone-api` proxy need per-route budgets, not a blanket wrapper |
 | n/a | `MiddlewareStack`/`Compose` | ⚪ N/A | chain composed via `cqrshtmx.Chain` deliberately (cqrs-htmx round-3 ruling) |
 
-**Score:** rows 1-8 = 1.0 (8.0) + row 10 = 0.5 + row 9 = 0 → **8.5 / 10 = 85/100, very high band.**
+**Score:** rows 1-8 = 1.0 (8.0) + row 10 = 0.5 + row 9 = 1.0 (adopted 2026-11-04) → **9.5 / 10 = 95/100, top band.** (Point-in-time note: the 85/100 grade above predates the adoption train.)
 
 ## Ruling: should we use it to the max?
 
-Yes with one action item: **retire the 12 hand-rolled `MaxBytesReader` sites for `httputil.MaxBodySize`** (or justify a written ruling at each site). It is the last standing finding from the 09-24 audit and the library ships exactly this. The remaining unused middleware (CORS, Language, RequestID, Timeout) each carry a written no-fit reason above — re-litigate only if the constraint changes.
+Yes with one action item: **retire the hand-rolled `MaxBytesReader` sites for `httputil.MaxBodySize`** (or justify a written ruling at each site). **LANDED 2026-11-04 (MaxBodySize consolidation train): 14 of the 16 sites now mount `httputil.MaxBodySize` in the route table** (login, switch, the five passkey ceremonies, contacts save, call log, note, disposition, push-device, transcribe, transcript save) with `api.JSONBodyLimit` minted as the one home for the 4 KiB JSON guard cap and `transcriptBodyLimit` exported to `TranscriptBodyLimit` for the route mounts. The two survivors carry written rulings at the site (deliberate one-home funnels over multiple routes; per-route mounts would re-scatter the cap they unified): `requireSessionMultipart` (all multipart action forms) and hooks `decodeJSON` (all /hooks/* bodies). Behavior is byte-preserved — the middleware IS the same one-line MaxBytesReader wrap, mounted after CSRF like the old inline caps. The remaining unused middleware (CORS, Language, RequestID, Timeout) each carry a written no-fit reason above — re-litigate only if the constraint changes.
 
 **Refresh trigger:** a new body-consuming route; a cross-origin consumer; a per-route timeout need that outgrows handler-local contexts.
 
 ## How to verify
 
 ```console
-rg -l "MaxBytesReader" --type go internal/ | wc -l        # expect 12
-rg -n "MaxBodySize" --type go internal/ | wc -l           # expect 0
+rg -l "MaxBytesReader" --type go internal/ | wc -l        # expect 2 (the two ruled one-home funnels)
+rg -n "httputil.MaxBodySize" --type go internal/ | wc -l  # expect >= 14 (adopted 2026-11-04)
 rg -n "httputil.NewServer" cmd/webphone/main.go           # lifecycle
 go test ./internal/server/ -run TestHttpspec -v           # conformance pin
+go test ./internal/server/ -run TestSessionCreationBodyCap # the cap-engagement pin
 ```
