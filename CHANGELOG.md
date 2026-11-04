@@ -43,6 +43,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Enabling the health dashboard now logs a boot WARN naming where its
+  authentication fence lives (2026-11-04, the fence decision): the
+  dashboard ships no app-side authentication by design — the reverse
+  proxy is the fence (module default: operator SSO gate in
+  forwardAuth mode, loopback-only otherwise), and an app-side
+  middleware was declined because the app cannot see client
+  addresses behind a proxy and a header gate would duplicate the
+  module's fence mode as a second config home. The WARN makes the
+  contract visible at the moment the surface turns on.
+
 - Chat-network reconnects jitter and stop on permanent failures
   (2026-11-04, the go-retry adoption): the receivers' shared backoff
   ladder now computes each wait with go-retry's `ComputeDelay` —
