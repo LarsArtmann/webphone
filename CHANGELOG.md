@@ -21,6 +21,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `webphone contracts` spec writers ride the same library's
   `WriteIfChanged` (no torn writes, no mtime churn on identical reruns).
 
+- Request-body caps consolidated onto `httputil.MaxBodySize` (2026-11-04,
+  the standing 2026-09-24 audit finding): the fourteen JSON surfaces
+  (login, line switch, the five passkey ceremonies, contacts save, call
+  log, notes, disposition, push-device registration, transcribe,
+  transcript save) are now capped by a route-table middleware mount
+  instead of fourteen inline `http.MaxBytesReader` wraps — same
+  mechanism, same limits, same responses; the cap is now visible beside
+  each route's rate limiter. `api.JSONBodyLimit` is the one home for the
+  4 KiB small-JSON guard. The two deliberate funnels (the multipart
+  action prologue and the provider-hook JSON decoder, each the single
+  cap home for several routes) keep the stdlib wrap with written
+  rulings at the site, and a new test pins that an oversized login body
+  still answers 400 without minting a session.
+
 ### Added
 
 - Unknown configuration keys warn at boot (2026-10-30): one `WARN` line
