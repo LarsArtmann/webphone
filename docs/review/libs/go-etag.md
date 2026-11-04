@@ -1,7 +1,7 @@
 # go-etag — library utilization audit
 
 **Verdict:** the best adoption candidate among the indirect-only libraries: webphone hand-rolled RFC 7232 conditional-request logic for embedded assets while the library ships exactly that. **Adoption: LANDED 2026-11-04, BOTH halves — option A (`assetHeaders` rides `entitytag.NewETag` + `MatchesIfNoneMatch`; the hand-rolled `ifNoneMatch` deleted) AND option B (`etag.New(etag.DefaultETagConfig())` mounted on `/openapi.json` + `/manifest.webmanifest` only — the mount is the Skip set, `TestConditionalGETRootDocuments` pins 304/weak-candidate/stale/fence incl. config.js staying bare).**
-**Pin:** go-etag/entitytag v0.6.1 + go-etag/server v0.6.1 (BOTH direct since 2026-11-04) · **Latest:** entitytag submodule v0.6.1 (the repo-root v0.7.0 tag did NOT include an entitytag bump — the CHANGELOG drift T20 files upstream) · **Currency:** current at the submodule · **Status:** direct dep (entitytag + server)
+**Pin:** go-etag/entitytag v0.6.1 + go-etag/server v0.6.1 (BOTH direct since 2026-11-04) · **Latest:** entitytag submodule v0.6.1 (the repo-root v0.7.0 tag did NOT include an entitytag bump — the CHANGELOG drift FILED upstream 2026-11-04 as [go-etag#5](https://github.com/LarsArtmann/go-etag/issues/5) (verified at the tag: no `[0.7.0]` section cut, Release run 41773058677 failed as designed, tag stuck Pre-release while Latest holds v0.6.0; the v0.6.1→v0.7.0 delta is docs/CI/deps only — no entitytag or server change)) · **Currency:** current at the submodule · **Status:** direct dep (entitytag + server)
 **Audited:** 2026-11-04 · **Prior reports:** none (first audit).
 
 ## Status

@@ -75,10 +75,12 @@ swap, fax badge, 2 empty states) lives in CHANGELOG + the per-library reports �
    ≥ v0.3.1100. Then land go-sse v0.7.0 + templ-components latest + loginpage in ONE train
    (ssetest `WithLastEventID(sse.EventID)` branding + vendorHash tail). Evidence:
    `docs/review/libs/go-sse.md` § errata.
-2. **metaengine per-group cap upstream ask** — EnforceCap is collection-global; webphone's
-   transcript/dial-window caps are per-owner/per-call (ruled NO-GO with evidence,
-   `docs/review/libs/go-cqrs-lite.md` § errata). If the ask lands upstream, migrate
-   `trimOwner`/`trimCall`/`trimWindows` in one train. Rides the upstream-asks train (T20).
+2. **metaengine per-group cap upstream ask — FILED 2026-11-04:
+   [go-cqrs-lite#114](https://github.com/LarsArtmann/go-cqrs-lite/issues/114)** —
+   EnforceCap is collection-global; webphone's transcript/dial-window caps are
+   per-owner/per-call (NO-GO ruling re-verified at the pin v4.20.0,
+   `docs/review/libs/go-cqrs-lite.md` § errata). If #114 lands upstream, migrate
+   `trimOwner`/`trimCall`/`trimWindows` in one train.
 3. **templ-components taste calls** — owner decisions, not adoption gaps: the ✓ delivered
    chip (or a Badge prefix/icon slot) and whether section subtitles should render as muted
    empty-states. Re-litigate only if the owner asks.
