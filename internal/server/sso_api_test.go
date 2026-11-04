@@ -103,6 +103,15 @@ func TestSSOBeginParksTheAttemptAndRedirects(t *testing.T) {
 	if got := resp.Header.Get("Location"); got != stub.challenge.URL {
 		t.Errorf("Location = %q, want the IdP authorize URL", got)
 	}
+	// Issue #21: the Android shell judges the begin hop by its
+	// server-redirect shape, so the hop must also stay referrer-free
+	// and uncached; both are part of the device-proven contract.
+	if got := resp.Header.Get("Referrer-Policy"); got != "no-referrer" {
+		t.Errorf("Referrer-Policy = %q, want no-referrer", got)
+	}
+	if got := resp.Header.Get("Cache-Control"); got != "no-store" {
+		t.Errorf("Cache-Control = %q, want no-store", got)
+	}
 	cookies := map[string]*http.Cookie{}
 	for _, cookie := range resp.Cookies() {
 		cookies[cookie.Name] = cookie
