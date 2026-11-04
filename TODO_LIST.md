@@ -467,7 +467,12 @@ per-row.
    second agent is real".
 4. **Delegation + roles (D4)**: approve-on-behalf-of, per-contact scopes,
    admin/member split — needs the actor substrate (shipped) AND a second
-   real user first. Owner call.
+   real user first. Owner call. UPDATE 2026-11-04: the READ-ONLY half of
+   the admin split SHIPPED (the Admin tab: all messages/faxes/calls/
+   users/numbers across lines for `admin: true` accounts, resolved per
+   request — see FEATURES § Contacts & sessions); what remains open is
+   delegation (approve-on-behalf-of) and any WRITE-shaped admin surface,
+   both still gated on a second real user.
 5. **Durable audit read model (D5, F107 reopen trigger)** — SHIPPED
    2026-10-28 (whole-list execution session): readmodels `agent_audit`
    (append-only, owner-scoped, 500/extension oldest-first trim) +

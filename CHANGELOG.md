@@ -9,6 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Admin surface: read-only visibility across every line (2026-11-04).
+  An account carrying `admin: true` on the shared `auth.users` mapping
+  gets an Admin tab (`/admin`) with the account inventory (live session
+  counts included), the phone-numbers inventory (identities + mapped
+  lines), every line's conversations (read-only transcript at
+  `/admin/threads/{id}`; attachments and fax documents stream through
+  admin-gated fallbacks on the owner-scoped routes), every fax job,
+  merged per-line call records (one CDR page per mapped line, sourced
+  with that line's own directory credentials) and every transcribed
+  call. Admin is a property of the identity, resolved per request from
+  the live mapping — nothing is minted into the session, so a config
+  demotion bites on the admin's next request, and a deployment with no
+  admin configured stays byte-identical (every admin route answers the
+  styled 404 for everyone). Owner-scoping stays the rule everywhere
+  else: the only cross-owner reads are the deliberate `*Any`/`ListAll`
+  seams, reachable solely from admin-gated handlers and pinned as such.
 - Post-call note editor on the island's ended card (2026-11-04, issue
   #11): when a call ends, the card now carries a draft box over the SAME
   note slot History renders (`PUT /api/calls/{id}/note`), so the
