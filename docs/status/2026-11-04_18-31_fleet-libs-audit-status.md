@@ -1,6 +1,20 @@
 # Fleet-libs utilization audit — session status report
 
 **Snapshot:** 2026-11-04 18:31 CET — claims verified as of this minute; push/CI statements rot fastest.
+**ERRATA (2026-11-04 closeout train, appended same day):** the three named gaps in the scope
+line below are all CLOSED now — (1) the full quality gate ran GREEN over the closeout HEAD
+(`buildflow` exit 0, ~21:50 CET; `nix flake check`-class claims are still per-run); (2) the
+blob crash-window narrative was verified for real (T01: ordering is file-then-row at all four
+Save call sites; the corruption window is row-committed-before-file-durable — see
+`docs/review/libs/go-atomic-write.md` § errata) and then FIXED (go-atomic-write adopted);
+(3) the local-tag version claims were re-checked against the proxy during the bump trains
+(cqrs-htmx/loginpage: the local checkout is ~55 commits AHEAD of an unpublished v4.16.0 —
+which BLOCKED the go-sse bump, see its report's errata; templ-components v1.27.0 and
+go-health-dashboard v0.13.0 exist upstream — the dashboard's tag was missing and the train
+completed that release). The §f-1 done-bar gate item is now TRUE at the closeout HEAD.
+
+---
+
 **Session:** the 19-library LarsArtmann stack utilization audit (the only work this session did).
 **Scope line — what this report VERIFIED:** every session claim below was verified with a
 command or artifact during the session (replay of 66 verify-block commands from repo root,
