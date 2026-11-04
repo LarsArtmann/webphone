@@ -120,6 +120,11 @@ while [ $# -gt 0 ]; do
 done
 [ -n "$SHA" ] && audited_sha=$SHA
 audited_sha=${audited_sha:-HEAD}
+# Resolve the ref to a real sha BEFORE anything else: the issue title is
+# the dedup key, and a literal "HEAD" title made every run's flag
+# indistinguishable (2026-11-04: 40 identical issues for different
+# commits) and un-dedupable.
+audited_sha=$(git rev-parse --short "$audited_sha") || exit 1
 SUBJECT=$(git log -1 --format=%s "$audited_sha")
 
 case "$SUBJECT" in
@@ -193,7 +198,16 @@ if [ "$FILE_ISSUE" = 1 ]; then
 		echo "$BODY"
 		exit 0
 	}
-	URL=$(gh issue create --title "daemon-audit: $audited_sha touched guarded paths" --body "$BODY" --label ci-red 2>/dev/null || gh issue create --title "daemon-audit: $audited_sha touched guarded paths" --body "$BODY")
+	TITLE="daemon-audit: $audited_sha touched guarded paths"
+	# Dedup: the */15 watcher re-runs while the flagged commit stays
+	# HEAD — without this it files one identical issue per run
+	# (2026-11-04: 40 duplicates). One open issue per sha; a NEW flag
+	# for the SAME sha reuses it, a new sha files its own.
+	if EXISTING=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number' 2>/dev/null) && [ -n "$EXISTING" ]; then
+		say "already flagged in #$EXISTING — not filing a duplicate"
+		exit 0
+	fi
+	URL=$(gh issue create --title "$TITLE" --body "$BODY" --label ci-red 2>/dev/null || gh issue create --title "$TITLE" --body "$BODY")
 	say "filed $URL"
 fi
 say "FLAGGED $audited_sha:"
