@@ -10,10 +10,11 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
-// transcriptBodyLimit caps one segment POST: a JSON envelope around a
+// TranscriptBodyLimit caps one segment POST: a JSON envelope around a
 // few seconds of TEXT (the audio already went through /api/transcribe),
-// so single-digit KiB is the honest ceiling.
-const transcriptBodyLimit = 16 << 10
+// so single-digit KiB is the honest ceiling. Exported: the route mount
+// (httputil.MaxBodySize in the server's route table) names it.
+const TranscriptBodyLimit = 16 << 10
 
 // transcriptTextMax bounds one stored segment: the ASR seam returns
 // trimmed plain text for ~4 s of speech; anything far beyond this is a
@@ -55,7 +56,7 @@ func (h *Handlers) SaveTranscript(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body TranscriptSaveRequest
-	if err := json.UnmarshalRead(http.MaxBytesReader(w, r.Body, transcriptBodyLimit), &body); err != nil {
+	if err := json.UnmarshalRead(r.Body, &body); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}

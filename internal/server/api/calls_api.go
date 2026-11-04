@@ -54,7 +54,7 @@ func (h *Handlers) LogCall(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var body CallLogRequest
-	if err := json.UnmarshalRead(http.MaxBytesReader(w, r.Body, 4096), &body); err != nil {
+	if err := json.UnmarshalRead(r.Body, &body); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}

@@ -108,7 +108,7 @@ func (h *Handlers) SaveContact(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body ContactSaveRequest
-	if err := json.UnmarshalRead(http.MaxBytesReader(w, r.Body, ContactsBodyLimit), &body); err != nil {
+	if err := json.UnmarshalRead(r.Body, &body); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}

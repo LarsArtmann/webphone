@@ -90,7 +90,7 @@ func (h *Handlers) SetCallNote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body CallNoteRequest
-	if err := json.UnmarshalRead(http.MaxBytesReader(w, r.Body, transcriptBodyLimit), &body); err != nil {
+	if err := json.UnmarshalRead(r.Body, &body); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}

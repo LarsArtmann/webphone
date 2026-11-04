@@ -14,6 +14,7 @@ import (
 
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/pbx"
+	"github.com/larsartmann/webphone/internal/server/api"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/sipcred"
 	"github.com/larsartmann/webphone/internal/userauth"
@@ -56,7 +57,7 @@ type switchRequest struct {
 // matching the mode where no PBX-backed panels exist.
 func (h *handlers) createSession(w http.ResponseWriter, r *http.Request) {
 	var body loginRequest
-	if err := json.UnmarshalRead(http.MaxBytesReader(w, r.Body, 4096), &body); err != nil {
+	if err := json.UnmarshalRead(r.Body, &body); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
@@ -110,7 +111,7 @@ func (h *handlers) switchExtension(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body switchRequest
-	if err := json.UnmarshalRead(http.MaxBytesReader(w, r.Body, 4096), &body); err != nil {
+	if err := json.UnmarshalRead(r.Body, &body); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}

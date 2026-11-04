@@ -50,7 +50,7 @@ func (h *Handlers) ConfirmCallDisposition(w http.ResponseWriter, r *http.Request
 	}
 
 	var body CallDispositionRequest
-	if err := json.UnmarshalRead(http.MaxBytesReader(w, r.Body, transcriptBodyLimit), &body); err != nil {
+	if err := json.UnmarshalRead(r.Body, &body); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}

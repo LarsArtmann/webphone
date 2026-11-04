@@ -51,10 +51,10 @@ func (h *Handlers) Transcribe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	r.Body = http.MaxBytesReader(w, r.Body, TranscribeBodyLimit)
 	// The concurrency ceiling guards BOTH the buffered body and the
 	// provider round trip (#47): acquire before reading, so the memory
 	// bound holds even when every caller ships a maximum-size segment.
+	// (The body cap itself is the route-level httputil.MaxBodySize mount.)
 	timer := time.NewTimer(transcribeQueueWait)
 	select {
 	case h.transcribeSlots <- struct{}{}:

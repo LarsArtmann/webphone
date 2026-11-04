@@ -113,7 +113,7 @@ func (h *Handlers) SavePushDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var body PushDeviceRegisterRequest
-	if err := json.UnmarshalRead(http.MaxBytesReader(w, r.Body, PushDeviceBodyLimit), &body); err != nil {
+	if err := json.UnmarshalRead(r.Body, &body); err != nil {
 		http.Error(w, "invalid request body", http.StatusBadRequest)
 		return
 	}
