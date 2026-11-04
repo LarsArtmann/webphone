@@ -20,6 +20,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The chat-network lanes never started (2026-11-04, found by the
+  go-retry closeout's research step): `wireChatNetworks` was born
+  without a caller on 2026-10-23 — the matrix `/sync` and signal ping
+  receiver loops existed only as uncalled closures, so a matrix/signal
+  deployment received no inbound messages and outbound chat-network
+  sends answered "unregistered network" even with correct config.
+  `App.Start` now wires and runs the config-gated loops under the app
+  context; a lane exiting while the app lives logs an Error naming the
+  coded reason. A fake-homeserver test proves the sync actually
+  arrives (it fails on every commit before the fix).
+
 - daemon-audit deduplication (2026-11-04): the */15 watcher filed one
   identical ci-red issue per run while the flagged commit stayed HEAD —
   199 duplicates accumulated because titles carried the literal ref
@@ -31,6 +42,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   search-based check raced its own creation during verification).
 
 ### Changed
+
+- Chat-network reconnects jitter and stop on permanent failures
+  (2026-11-04, the go-retry adoption): the receivers' shared backoff
+  ladder now computes each wait with go-retry's `ComputeDelay` —
+  exponential doubling with up to 50% additive jitter, hard-capped —
+  instead of deterministic doubling that made every lane reconnect in
+  lockstep after a shared-server restart. A Rejection-classified
+  failure (a revoked matrix token, a signal daemon that refuses)
+  stops the loop with a loud Error instead of retrying forever;
+  transient and infrastructure failures keep retrying. Successful
+  rounds reset the ladder to 1s.
 
 - The two machine-readable root documents answer conditional GETs
   (2026-11-04, T16 of the fleet-libs closeout): `/openapi.json` and
