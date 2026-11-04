@@ -2,7 +2,7 @@
 
 **Verdict:** configured, not defaulted — the security surface runs on this library by explicit choice. The standing body-cap gap LANDED 2026-11-04. **Adoption 95/100 (top band, post-adoption)** — 9.5 of 10 applicable rows (inputs below).
 **Pin:** v1.8.0 (go.mod:31) + `httputil/server_timing` v1.0.3 · **Latest:** v1.8.0 / v1.0.3 · **Currency:** current · **Status:** direct dep
-**Audited:** 2026-11-04 · **Prior reports:** [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html) (82/100 at v1.2.0 — its finding #1, `MaxBodySize`, is **still open**); server_timing has its own [report](httputil-server-timing.md).
+**Audited:** 2026-11-04 · **Prior reports:** [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html) (82/100 at v1.2.0 — its finding #1, `MaxBodySize`, LANDED 2026-11-04). **Movement: → 95 at this audit (+13 — the standing finding closed and the mounts pinned)**; server_timing has its own [report](httputil-server-timing.md).
 
 ## Status
 
@@ -56,6 +56,8 @@ Yes with one action item: **retire the hand-rolled `MaxBytesReader` sites for `h
 **Refresh trigger:** a new body-consuming route; a cross-origin consumer; a per-route timeout need that outgrows handler-local contexts.
 
 ## How to verify
+
+All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
 
 ```console
 rg -l "MaxBytesReader" --type go internal/ | wc -l        # expect 2 (the two ruled one-home funnels)

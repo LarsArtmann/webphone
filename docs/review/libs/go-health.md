@@ -2,7 +2,7 @@
 
 **Verdict:** exactly the composition the 09-24 audit praised — injector-discovered probe, one readiness truth, zero duplication. The response-sanitization gap **LANDED 2026-11-04** (bumped + the library applies `CoerceValidUTF8` at its own write seam). **Adoption 100/100 (top band, post-bump)** — 6 of 6 applicable rows.
 **Pin:** v0.9.0 (go.mod) · **Latest:** v0.9.0 · **Currency:** current · **Status:** direct dep (bumped 2026-11-04 with go-health-dashboard v0.13.0 — the coordinated wave's consumer side; the dashboard's release commit existed but its tag was missing, which the closeout train completed: verified the release commit green in a detached worktree, tagged v0.13.0, pushed, waited for proxy propagation, then bumped both)
-**Audited:** 2026-11-04 · **Prior reports:** [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html) (80/100 at v0.3.0).
+**Audited:** 2026-11-04 · **Prior reports:** [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html) (80/100 at v0.3.0). **Movement: → 100 at this audit (+20 — the v0.9.0 wave landed same-day and the readiness wiring verified at the ceiling)**.
 
 ## Status
 
@@ -49,6 +49,8 @@
 **Refresh trigger:** a second readiness consumer; a multi-instance deployment; the go-health-dashboard gaining a surface that needs `WithEvaluationHook`.
 
 ## How to verify
+
+All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
 
 ```console
 rg -n "health.New\(" internal/app/app.go

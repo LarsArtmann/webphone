@@ -40,6 +40,8 @@ The seam is small and the default-off gate is right for a phone app. Named spans
 
 ## How to verify
 
+All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
+
 ```console
 rg -n "servertiming" internal/server/server.go | head -3     # middleware + import
 rg -n "MeasureServerTiming|RecordServerTiming" --type go | wc -l   # expect 0

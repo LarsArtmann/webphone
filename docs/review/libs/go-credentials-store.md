@@ -34,6 +34,8 @@ Adopting the library would add a second stateful component with its own master-k
 
 ## How to verify
 
+All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
+
 ```console
 rg -rn "credentials-store" --type go go.mod internal/ | wc -l    # expect 0
 rg -n "os.ReadFile" internal/authmap/authmap.go | head -2        # per-use secret reads

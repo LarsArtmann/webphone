@@ -2,7 +2,7 @@
 
 **Verdict:** thin by architecture — cqrs-htmx's `Broadcaster` wraps this library, and webphone touches the wrapped surface; the test kit pins the SSE wire contract (called "the single best test-integration in the repo" by the 09-24 audit). **Adoption 67/100 (moderate)** — 2 of 3 applicable rows.
 **Pin:** v0.6.2 + `go-sse/ssetest` v0.5.0 (direct); `go-sse/sseparse` v0.2.1 (indirect) · **Latest:** v0.7.0 / ssetest v0.5.0 · **Currency:** **one minor behind — BUMP ATTEMPTED AND REVERTED 2026-11-04 (BLOCKED, see errata)** · **Status:** direct dep
-**Audited:** 2026-11-04 · **Prior reports:** [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html) (72/100 at v0.6.0).
+**Audited:** 2026-11-04 · **Prior reports:** [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html) (72/100 at v0.6.0). **Movement: → 67 at this audit (−5 — the BLOCKED v0.7.0 bump cost the currency points the 09-24 score carried; the wire seam itself is unchanged)**.
 
 ## Status
 
@@ -46,6 +46,8 @@ The thin surface is a composition decision, not neglect — keep it. Two small a
 **Refresh trigger:** user-visible missed-update reports on flaky mobile links; the cqrs-htmx wrap gaining replay passthrough.
 
 ## How to verify
+
+All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
 
 ```console
 rg -n "sse.Event" internal/server/sse.go | head -3

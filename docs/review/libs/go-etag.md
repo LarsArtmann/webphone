@@ -37,6 +37,8 @@ Option A AND option B both LANDED 2026-11-04. The B mount is deliberately minima
 
 ## How to verify
 
+All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
+
 ```console
 rg -n "ifNoneMatch" internal/server/assets.go            # expect 0 (deleted 2026-11-04)
 rg -n "entitytag" internal/server/assets.go              # expect the NewETag + MatchesIfNoneMatch use

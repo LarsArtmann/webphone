@@ -2,7 +2,7 @@
 
 **Verdict:** AFFIRMED at the prior round's ceiling: 100/100 — the round-3 audit's three opportunities were all shipped the same day by the SUPERB train and remain wired. This report re-verifies the pins and re-states the boundaries; it does not re-litigate. **Adoption 100/100 (very high; affirmed)** — 14 of 14 post-train rows per the round-3 rubric.
 **Pin:** root /v4 v4.15.0, identity-model/v4 v4.15.0, loginpage/v4 v4.13.0, usermgmt/v4 v4.18.0, usermgmt/webauthn/v4 v4.13.0 (all direct) · **Latest (family tag):** setup/v4.16.0 · **Currency:** pins ≥ audit-time latest (usermgmt moved v4.16.0 → v4.18.0 since the round-3 audit) · **Status:** direct dep
-**Audited:** 2026-11-04 · **Authoritative prior:** [2026-10-25 round-3 deep-dive](../../research/2026-10-25_cqrs-htmx-deep-dive.html) (71/100 at audit time → **re-scored 100/100 same day**, §07 Addendum; supersedes the 09-18/09-19 rounds).
+**Audited:** 2026-11-04 · **Authoritative prior:** [2026-10-25 round-3 deep-dive](../../research/2026-10-25_cqrs-htmx-deep-dive.html) (71/100 at audit time → **re-scored 100/100 same day**, §07 Addendum; supersedes the 09-18/09-19 rounds). **Movement: 100 → 100 affirmed at this audit (the three round-3 opportunities are all SHIPPED and pinned)**.
 
 ## Status
 
@@ -50,6 +50,8 @@ Stay the course. The two live items are upstream-shaped: (1) the bounded AuditLo
 **Refresh trigger:** usermgmt major bump; a bounded AuditLog projection upstream; any second identity consumer (then re-check `adminui`).
 
 ## How to verify
+
+All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
 
 ```console
 rg -n "ProjectionReadinessCheck" internal/server/server.go | head -2

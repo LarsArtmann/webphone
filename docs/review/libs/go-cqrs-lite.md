@@ -60,6 +60,8 @@ Deep adoption is correct and should stay the pattern for every new read model ("
 
 ## How to verify
 
+All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
+
 ```console
 rg -n "metaengine.Plan\(" internal/readmodels/readmodels.go
 rg -n "func .*trim" internal/readmodels/*.go | head -5

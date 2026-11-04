@@ -46,6 +46,8 @@ Adoption is essentially complete. The one decision to make explicit: either wrap
 
 ## How to verify
 
+All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
+
 ```console
 rg -n "dashboard.New\(|WithRoutes|WithMiddleware" internal/app/dashboard.go   # WithMiddleware absent
 rg -n "RecommendedCSP" internal/app/dashboard.go

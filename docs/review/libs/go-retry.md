@@ -38,6 +38,8 @@
 
 ## How to verify
 
+All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
+
 ```console
 rg -n "func NextBackoff" internal/chatloop/chatloop.go        # expect 0 (deleted 2026-11-04)
 rg -n "ComputeDelay|Classify" internal/chatloop/chatloop.go   # expect the nextDelay use + the Rejection-stop gate

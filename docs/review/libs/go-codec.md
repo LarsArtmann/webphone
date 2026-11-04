@@ -34,6 +34,8 @@ Do not adopt directly. The one named future trigger: if webphone ever persists i
 
 ## How to verify
 
+All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
+
 ```console
 rg -n "go-codec" go.mod                                   # indirect pin
 rg -rn "go-codec" --type go internal/ cmd/ | wc -l        # expect 0

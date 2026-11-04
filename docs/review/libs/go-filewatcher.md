@@ -30,6 +30,8 @@ High-level fsnotify wrapper: recursion, 17 composable filters (extensions, gitig
 
 ## How to verify
 
+All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
+
 ```console
 rg -rn "filewatcher|fsnotify" --type go internal/ cmd/ | wc -l   # expect 0
 rg -n "SIPPassword" internal/authmap/authmap.go | head -3        # per-login read, no cache

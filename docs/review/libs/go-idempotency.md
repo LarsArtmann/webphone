@@ -34,6 +34,8 @@ One small, cheap pin: adapt `DedupWindow` → the library's `Store` interface an
 
 ## How to verify
 
+All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
+
 ```console
 rg -n "go-idempotency" go.mod                            # indirect pin
 rg -rn "go-idempotency" --type go internal/ cmd/ | wc -l # expect 0 imports

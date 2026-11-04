@@ -34,6 +34,8 @@
 
 ## How to verify
 
+All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
+
 ```console
 rg -rn "go-daemon" --type go internal/ cmd/ go.mod | wc -l      # expect 0
 rg -n "signal.NotifyContext" cmd/webphone/main.go               # the shutdown path

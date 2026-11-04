@@ -22,6 +22,8 @@ The 2026-10-23 verdict holds: adopting the framework layer would replace a compo
 
 ## How to verify
 
+All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
+
 ```console
 rg -n "go-appkit" go.mod | wc -l                          # expect 0
 rg -n "go-flightrecorder" go.mod                          # the direct family ride

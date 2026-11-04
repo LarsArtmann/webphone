@@ -2,7 +2,7 @@
 
 **Verdict:** the backbone of webphone's error culture; deep and deliberate. **Adoption 64/100 (moderate)** — 7 of 11 applicable rows fully leveraged (inputs below).
 **Pin:** v0.12.0 (go.mod:24) · **Latest:** v0.12.0 · **Currency:** current · **Status:** direct dep
-**Audited:** 2026-11-04 · **Prior reports:** [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html) (58/100 at v0.10.1 — superseded by this one; adoption roughly doubled since).
+**Audited:** 2026-11-04 · **Prior reports:** [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html) (58/100 at v0.10.1 — superseded by this one; adoption roughly doubled since). **Movement: → 64 at this audit (+6)**.
 
 ## Status
 
@@ -56,6 +56,8 @@ Adoption is deep where the doctrine lives (seams, codes, pins, registry) and thi
 **Refresh trigger:** a new seam that needs 409 semantics; a retry loop adoption; a CLI subcommand that outgrows one-line output.
 
 ## How to verify
+
+All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
 
 ```console
 rg -l "larsartmann/go-error-family" --type go -g '!*_templ.go' | wc -l   # expect 97

@@ -29,6 +29,8 @@
 
 ## How to verify
 
+All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
+
 ```console
 rg -rn "go-output" --type go go.mod cmd/ internal/ | wc -l       # expect 0
 rg -n "fmt\\.Print" cmd/webphone/*.go | head -6                  # the one-line outputs
