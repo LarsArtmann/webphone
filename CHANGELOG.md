@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- daemon-audit deduplication (2026-11-04): the */15 watcher filed one
+  identical ci-red issue per run while the flagged commit stayed HEAD —
+  199 duplicates accumulated because titles carried the literal ref
+  `HEAD` instead of the resolved sha, making every flag indistinguishable
+  and un-dedupable. `scripts/daemon-audit.sh` now resolves the ref to a
+  real sha before anything else (titles become per-sha) and skips filing
+  when an open ci-red issue with the same title already exists, matched
+  on the fresh list API rather than the lagging search index (a
+  search-based check raced its own creation during verification).
+
 ### Changed
 
 - Blob persistence is now crash-durable (2026-11-04, the fleet-libs

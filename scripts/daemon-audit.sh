@@ -201,9 +201,10 @@ if [ "$FILE_ISSUE" = 1 ]; then
 	TITLE="daemon-audit: $audited_sha touched guarded paths"
 	# Dedup: the */15 watcher re-runs while the flagged commit stays
 	# HEAD — without this it files one identical issue per run
-	# (2026-11-04: 40 duplicates). One open issue per sha; a NEW flag
-	# for the SAME sha reuses it, a new sha files its own.
-	if EXISTING=$(gh issue list --state open --search "$TITLE in:title" --json number --jq '.[0].number' 2>/dev/null) && [ -n "$EXISTING" ]; then
+	# (2026-11-04: 40 duplicates). The LIST api is fresh; the SEARCH
+	# index lags for freshly-created issues, so a search-based check
+	# races its own creation and re-files.
+	if EXISTING=$(gh issue list --state open --label ci-red --limit 200 --json number,title 2>/dev/null | python3 -c 'import json,sys; ts=[(i["number"],i["title"]) for i in json.load(sys.stdin)]; m=[n for n,t in ts if t==sys.argv[1]]; print(m[0] if m else "")' "$TITLE") && [ -n "$EXISTING" ]; then
 		say "already flagged in #$EXISTING — not filing a duplicate"
 		exit 0
 	fi
