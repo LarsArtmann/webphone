@@ -603,6 +603,20 @@ func (a *App) Start(ctx context.Context) error {
 	}
 	retention.Start(ctx, db.SQL(), blobs, engine, time.Duration(a.cfg.RetentionDays)*24*time.Hour)
 	startDedupSweeper(ctx, a.log, engineDedupWindow{store: engine.DedupStore()})
+	// The chat-network lanes wire here (config-gated; absent config wires
+	// nothing) and run under the same ctx bound: a lane exiting while the
+	// app lives is a loud Error, not silent intake death.
+	loops, err := wireChatNetworks(a.cfg, a.injector, db.SQL(), a.log)
+	if err != nil {
+		return wrapf("wire chat networks: %w", err)
+	}
+	for _, loop := range loops {
+		go func(run func(context.Context) error) {
+			if err := run(ctx); err != nil && ctx.Err() == nil {
+				a.log.Error("chat receiver loop exited", "error", err)
+			}
+		}(loop)
+	}
 	return nil
 }
 
