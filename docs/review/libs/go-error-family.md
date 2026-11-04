@@ -37,7 +37,7 @@ Root package: 6-family behavioral taxonomy (`Rejection, Conflict, Transient, Cor
 | 6 | `RegisterClassifications` breadth | 🟡 Partial | Only 2 sentinels (crm); stdlib defaults (`RegisterStdlibDefaults`) never registered — sql.ErrNoRows-class handled ad hoc |
 | 7 | Structured logging | 🟢 Fully leveraged | `LogErrorContext` at gateway failure paths |
 | 8 | HTTP status centralization | 🟡 Partial | Handlers map `Classify(err)` manually per surface; `HTTPStatus()`/`HTTPHandler` unused (actions.go:449 comment references the concept only) |
-| 9 | **Conflict family** | 🔴 Missed | Zero uses of `NewConflict`/`WrapConflict`/`Conflict` (verified `rg -c … | wc -l` → 0). Real 409-shaped outcomes exist: `readmodels.note_list_full` 409, idem replays, dial-gate conflicts — all mapped to Rejection today |
+| 9 | **Conflict family** | 🟢 Adopted 2026-11-04 | `readmodels.note_list_full` migrated to the Conflict family (`WrapConflictf` + classification registry; the ONLY true 409-shaped error — its HTTP surface always answered 409, now the family agrees; `TestErrNoteListFullClassifiesConflict` pins it). The audit's other candidates were ruled out on verification: dial-gate denies answer 200-with-verdict (not an error), the line switch answers 403 (Rejection, correct), and the contacts/snippets/push caps answer 422 where Rejection IS the honest family |
 | 10 | Retry policy consumption | 🔴 Missed | `IsRetryable`/`RetryPolicy` never consumed in prod code; the reconnect loops (internal/chatloop) hand-roll backoff with no retryable classification (see [go-retry](go-retry.md)) |
 | 11 | Error context (`WithContext*`/`ErrorContext`) | 🔴 Missed | Context map never written; context travels via structured log attrs instead |
 | n/a | `HandleError*` CLI boundary | ⚪ N/A | cmd/webphone's boot report (cmd/webphone/bootreport.go) is a designed 5-part operator artifact, not a template-rendered exit |
@@ -49,7 +49,7 @@ Root package: 6-family behavioral taxonomy (`Rejection, Conflict, Transient, Cor
 
 Adoption is deep where the doctrine lives (seams, codes, pins, registry) and thin on three consumer-side capabilities. Priorities:
 
-1. **Conflict family** (cheap, honest): `readmodels.note_list_full` and future 409-shaped outcomes are semantically Conflict, not Rejection. One-family migration + family_test updates.
+1. ~~**Conflict family** (cheap, honest)~~ **LANDED 2026-11-04**: `readmodels.note_list_full` migrated (see row 9); the idem-replay 202s and dial-gate verdicts are not errors and the 422 caps stay Rejection — the family taxonomy now matches the HTTP reality everywhere.
 2. **Retry policy consumption** rides the [go-retry](go-retry.md) question — if `retry.Do`/`ComputeDelay` is ever adopted for the chat loops, `IsRetryable` becomes the predicate for free.
 3. **Error context**: only worth adopting if a diagnostic surface consumes `ErrorContext` (the `diagnose` module is the consumer — not scheduled). Log-attrs context is adequate today; do not adopt ceremonially.
 
@@ -59,7 +59,7 @@ Adoption is deep where the doctrine lives (seams, codes, pins, registry) and thi
 
 ```console
 rg -l "larsartmann/go-error-family" --type go -g '!*_templ.go' | wc -l   # expect 97
-rg -c "NewConflict|WrapConflict|errorfamily.Conflict" --type go internal/ | wc -l   # expect 0
+rg -c "NewConflict|WrapConflict|errorfamily.Conflict" --type go internal/ | wc -l   # expect > 0 (adopted 2026-11-04)
 go test ./internal/arch -run TestErrorCodeRegistryIsFresh               # registry freshness
 rg -o "errorfamily\.[A-Za-z]+" -N --type go | sed 's/.*errorfamily\.//' | sort | uniq -c | sort -rn | head -15
 ```

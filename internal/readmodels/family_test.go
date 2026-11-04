@@ -22,8 +22,16 @@ import (
 func TestErrListFullClassifiesRejection(t *testing.T) {
 	errorfamilytest.AssertFamily(t, readmodels.ErrListFull, errorfamily.Rejection)
 	errorfamilytest.AssertFamily(t, readmodels.ErrSnippetListFull, errorfamily.Rejection)
-	errorfamilytest.AssertFamily(t, readmodels.ErrNoteListFull, errorfamily.Rejection)
 	errorfamilytest.AssertFamily(t, readmodels.ErrReviewListFull, errorfamily.Rejection)
+}
+
+// TestErrNoteListFullClassifiesConflict pins the one 409-shaped cap:
+// the note list is the only cap whose HTTP surface answers 409, so the
+// family must say Conflict (the owner's STATE conflicts and can be
+// resolved by deleting another note) — the siblings answer 422 and
+// stay Rejections (Conflict-family train, 2026-11-04).
+func TestErrNoteListFullClassifiesConflict(t *testing.T) {
+	errorfamilytest.AssertFamily(t, readmodels.ErrNoteListFull, errorfamily.Conflict)
 }
 
 func TestListCapWrapKeepsIdentityAndFamily(t *testing.T) {

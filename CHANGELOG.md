@@ -56,6 +56,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   classes are pinned test contract DOM that styles the failed message
   bubble, and the delivered checkmark is an asserted affordance.
 
+- The call-note list-full error is now classified Conflict (2026-11-04):
+  the note cap is the one list cap whose HTTP surface answers 409, and
+  the error family now agrees (the owner's state conflicts and can be
+  resolved by deleting another note — the Conflict contract). Wire
+  behavior unchanged; the error taxonomy and docs/error-contract.md
+  row are honest about it. The sibling caps keep their Rejection
+  classification: their 422 answers are correct as-is.
+
 ### Added
 
 - Unknown configuration keys warn at boot (2026-10-30): one `WARN` line

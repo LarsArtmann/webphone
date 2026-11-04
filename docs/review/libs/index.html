@@ -1125,13 +1125,16 @@
           </div>
 
           <div class="issue issue-nice" id="issue-6">
-            <span class="severity severity-nice">Low impact &middot; Low effort</span>
+            <span class="severity severity-nice">LANDED 2026-11-04 (one true 409; rest ruled out)</span>
             <h3>go-error-family: put 409-shaped outcomes in the Conflict family</h3>
-            <div class="where">internal/readmodels (note_list_full, dial-gate conflicts)</div>
+            <div class="where">internal/readmodels/callnotes.go (note_list_full → Conflict) &middot; dial-gate denies answer 200 (not an error) &middot; the 422 caps stay Rejection</div>
             <p>
-              The Conflict family has zero uses; conflict-shaped outcomes map to Rejection
-              today. One-family migration + family_test updates. (Retry-policy consumption
-              rides the go-retry question — see its report for the shape mismatch.)
+              The verification narrowed the finding to its honest core: only
+              <code>readmodels.note_list_full</code> is a true 409-shaped error, and it now
+              rides <code>WrapConflictf</code> with the classification registry regenerated
+              (error-contract.md row flipped to Conflict) and a family test pin. The audit&rsquo;s
+              dial-gate and switch candidates were not errors at all; the sibling caps&rsquo; 422
+              surfaces are honestly Rejection.
             </p>
           </div>
         </section>

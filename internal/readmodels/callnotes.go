@@ -21,11 +21,19 @@ const NotesMaxPerExtension = 2000
 
 // ErrNoteListFull is returned when a NEW call's note would exceed the
 // per-owner cap; re-saving an existing call's note stays open.
+//
+// Classified CONFLICT (not Rejection): the request is well-formed and
+// acceptable — the OWNER'S STATE (2000 noted calls) conflicts with it,
+// and the owner can resolve and resubmit (delete another note), which
+// is the 409/Conflict contract the HTTP surface has always answered.
+// The sibling caps (contacts, snippets, push) stay Rejections: their
+// HTTP surfaces answer 422, where "this submission cannot be accepted"
+// is the honest family.
 var ErrNoteListFull = errors.New("call note list full")
 
 func init() {
 	errorfamily.RegisterClassifications(map[error]errorfamily.Family{
-		ErrNoteListFull: errorfamily.Rejection,
+		ErrNoteListFull: errorfamily.Conflict,
 	})
 }
 
@@ -181,7 +189,7 @@ func (s *Notes) claimSlot(ctx context.Context, owner domain.Extension, callID st
 			return nil, false, errorfamily.WrapInfrastructuref(err, "readmodels.note_save", "count notes for %s", owner.String())
 		}
 		if len(views) >= NotesMaxPerExtension {
-			return nil, false, errorfamily.WrapRejectionf(ErrNoteListFull, "readmodels.note_list_full",
+			return nil, false, errorfamily.WrapConflictf(ErrNoteListFull, "readmodels.note_list_full",
 				"%s at %d noted calls", owner.String(), NotesMaxPerExtension)
 		}
 	}
