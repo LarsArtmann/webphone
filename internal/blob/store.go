@@ -11,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/larsartmann/go-atomic-write"
 	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/sixafter/nanoid"
@@ -47,7 +48,11 @@ func (s *Store) Save(subDir, ext string, content []byte) (domain.RelPath, error)
 	rel := filepath.Join(subDir, string(name)+ext)
 	abs := filepath.Join(s.root, rel)
 
-	if err := os.WriteFile(abs, content, 0o640); err != nil {
+	// Atomic write (fsync file + rename + fsync dir): "Save returned" must
+	// imply "bytes on stable storage", because the DB row referencing this
+	// path lands immediately after and file-then-row is the verified order
+	// at every call site — a row must never reference non-durable content.
+	if err := atomicwrite.WriteWithPerm(abs, content, 0o640); err != nil {
 		return domain.RelPath{}, errorfamily.WrapInfrastructuref(err, "blob.write", "write %s", rel)
 	}
 

@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/larsartmann/go-atomic-write"
 	errorfamily "github.com/larsartmann/go-error-family"
 
 	"github.com/larsartmann/webphone/internal/server"
@@ -33,7 +34,7 @@ func runContracts(args []string) error {
 			"create the contracts output directory "+*output)) //nolint:branching-flow // flag.String never returns a nil pointer
 	}
 	target := filepath.Join(*output, "asyncapi.yaml") //nolint:branching-flow // flag.String never returns a nil pointer
-	if err := os.WriteFile(target, body, 0o644); err != nil {
+	if _, err := atomicwrite.WriteIfChanged(target, body); err != nil {
 		return bootErr(bootGeneric, errorfamily.WrapInfrastructure(err, "webphone.cli.contracts",
 			"write "+target))
 	}

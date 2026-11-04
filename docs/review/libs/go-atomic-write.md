@@ -4,6 +4,16 @@
 **Pin:** none (absent from go.mod) · **Latest:** v0.6.2 (local checkout tag) · **Status:** not a dependency
 **Audited:** 2026-11-04 · **Prior reports:** none (first audit).
 
+## Errata — verified write ordering (T01, 2026-11-04)
+
+Step-0 verification of the plan (`docs/planning/2026-11-04_18-41_SUPERB-fleet-libs-closeout.md`) confirmed the finding and sharpened the crash window:
+
+- **Ordering is file-then-row at all four `Save` call sites**: `messaging/service.go:141→159` (outbound attachments), `messaging/service.go:210→224` (inbound attachments), `fax/service.go:118→124` (outbound spool), `fax/service.go:219→225` (inbound spool). The DB row (SQLite, fsynced WAL) lands only after `Save` returns.
+- **The precise corruption window is row-committed-before-file-durable**: `os.WriteFile` returning ≠ bytes on stable storage; a power loss after the row commit but before page-cache flush leaves the row referencing a missing/zeroed/truncated file. For inbound faxes the blob is the ONLY copy — this is the user-data-loss class. A crash *between* file-create and the row does NOT corrupt referenced data (no row exists yet → orphan file at worst).
+- **The report's original phrasing** ("a crash between file-create and final bytes corrupts the blob") named the wrong half of the window; the fix is the same either way: fsync-file + rename + dir-fsync makes "Save returned ⇒ content durable" true, closing the window exactly because the row follows the return.
+- **Keep file-then-row**: swapping to row-then-file would create the strictly worse direction (row referencing a never-landed file). The orphan-file window (crash between Save and row persist) is a leak, not corruption; no sweep exists for untracked blobs — a possible future retention-sweep extension, NOT part of the adoption train.
+- **`Save` signature claim verified**: `internal/blob/store.go:50` — bare `os.WriteFile(abs, content, 0o640)`, 0o640 perms, nanoid names, `ParseRelPath` branding after write.
+
 ## Status
 
 | | |
@@ -19,7 +29,7 @@
 
 | Site | Today | Exposure |
 |---|---|---|
-| **internal/blob/store.go:50** — `Save` persists attachments/fax PDFs with `os.WriteFile(abs, content, 0o640)` | bare write | power-loss/kill -9 can leave a **truncated or zero-length blob on disk while the DB row already references it** — the read path then 404s/500s on user data. The write order (DB row vs file) does not fence this: a crash between file-create and final bytes corrupts the blob. fsync+rename closes the window |
+| **internal/blob/store.go:50** — `Save` persists attachments/fax PDFs with `os.WriteFile(abs, content, 0o640)` | bare write, file-then-row (verified T01) | `WriteFile` returning ≠ bytes on disk; a power loss **after the DB row commits** can leave a truncated/zero-length blob behind a row that references it — the read path then 404s/500s on user data (inbound faxes: the only copy). fsync+rename makes "Save returned ⇒ durable", closing the window exactly because the row follows the return |
 | cmd/webphone/catalog.go:56,64 + contracts.go:36 — generated spec trees/docs | bare `os.WriteFile` | freshness gates diff these files; a torn write produces a confusing diff. `WriteIfChanged` also stops needless mtime churn |
 | Sessions, enroll tokens, matrix cursor, snippets… | SQLite (WAL) | engine-owned durability — correctly NOT file-write territory |
 | The `CreateTemp` in the health probe | probe-only | not a persistence path |

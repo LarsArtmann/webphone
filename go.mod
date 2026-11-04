@@ -16,6 +16,7 @@ require (
 	github.com/larsartmann/cqrs-htmx/usermgmt/v4 v4.18.0
 	github.com/larsartmann/cqrs-htmx/usermgmt/webauthn/v4 v4.13.0
 	github.com/larsartmann/cqrs-htmx/v4 v4.15.0
+	github.com/larsartmann/go-atomic-write v0.6.2
 	github.com/larsartmann/go-branded-id v0.7.0
 	github.com/larsartmann/go-cqrs-lite/catalog/v4 v4.12.0
 	github.com/larsartmann/go-cqrs-lite/metaengine/sqliteengine/v4 v4.6.0
@@ -65,6 +66,7 @@ require (
 	github.com/go-viper/mapstructure/v2 v2.5.0 // indirect
 	github.com/go-webauthn/webauthn v0.18.2 // indirect
 	github.com/go-webauthn/x v0.3.1 // indirect
+	github.com/gofrs/flock v0.13.1 // indirect
 	github.com/golang-jwt/jwt/v5 v5.3.1 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/go-tpm v0.9.8 // indirect

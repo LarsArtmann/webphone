@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/larsartmann/go-atomic-write"
 	"github.com/larsartmann/go-cqrs-lite/catalog/v4/eventcatalog"
 	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/domain"
@@ -53,7 +54,7 @@ func runCatalog(args []string) error {
 	if err != nil {
 		return bootErr(bootGeneric, err)
 	}
-	if err := os.WriteFile(filepath.Join(specs, "asyncapi.yaml"), wire, 0o644); err != nil {
+	if _, err := atomicwrite.WriteIfChanged(filepath.Join(specs, "asyncapi.yaml"), wire); err != nil {
 		return bootErr(bootGeneric, errorfamily.WrapInfrastructure(err, "webphone.cli.catalog",
 			"write the asyncapi specification"))
 	}
@@ -61,7 +62,7 @@ func runCatalog(args []string) error {
 	if err != nil {
 		return bootErr(bootGeneric, err)
 	}
-	if err := os.WriteFile(filepath.Join(specs, "openapi.json"), apiBody, 0o644); err != nil {
+	if _, err := atomicwrite.WriteIfChanged(filepath.Join(specs, "openapi.json"), apiBody); err != nil {
 		return bootErr(bootGeneric, errorfamily.WrapInfrastructure(err, "webphone.cli.catalog",
 			"write the openapi specification"))
 	}

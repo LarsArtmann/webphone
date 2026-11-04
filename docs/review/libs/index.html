@@ -992,7 +992,7 @@
                 <tr><th scope="row"><a href="go-retry.md">go-retry</a></th><td>indirect</td><td>v0.9.0 / v0.9.0</td><td>fit: partial</td><td>Chat loops hand-roll backoff without jitter; <code>ComputeDelay</code> is the swap, not <code>retry.Do</code></td></tr>
                 <tr><th scope="row"><a href="go-idempotency.md">go-idempotency</a></th><td>indirect</td><td>v0.3.2 / v0.3.2</td><td class="no">NO-GO</td><td>Semantics differ (check-first vs CheckAndRecord); metaengine DedupStore already IS the capability</td></tr>
                 <tr><th scope="row"><a href="go-codec.md">go-codec</a></th><td>indirect</td><td>v0.3.3 / v0.3.3</td><td class="no">NO-GO</td><td>Event-store payload codec; webphone benefits transitively, HTTP JSON is not codec territory</td></tr>
-                <tr><th scope="row"><a href="go-atomic-write.md">go-atomic-write</a></th><td>absent</td><td>— / v0.6.2</td><td>fit: HIGH</td><td><strong>blob.Save writes user data with bare os.WriteFile — no fsync/rename.</strong> Top finding</td></tr>
+                <tr><th scope="row"><a href="go-atomic-write.md">go-atomic-write</a></th><td>absent</td><td>— / v0.6.2</td><td>fit: HIGH</td><td><strong>blob.Save writes user data with bare os.WriteFile — no fsync/rename (ordering verified file-then-row; window = row-committed-before-file-durable).</strong> Top finding</td></tr>
                 <tr><th scope="row"><a href="go-filewatcher.md">go-filewatcher</a></th><td>absent</td><td>— / v2.4.3</td><td class="no">NO-GO</td><td>Nothing to watch: boot-immutable config, per-use secret reads, rotation = restart</td></tr>
                 <tr><th scope="row"><a href="go-daemon.md">go-daemon</a></th><td>absent</td><td>— / v0.4.0</td><td class="no">NO-GO</td><td>Not daemonization; every slice (sockets, sd_notify, codecs, SSE parse) is owned elsewhere</td></tr>
                 <tr><th scope="row"><a href="go-output.md">go-output</a></th><td>absent</td><td>— / v0.38.x</td><td class="no">NO-GO</td><td>CLI prints one-liners; the boot report is a designed artifact, not tabular data</td></tr>
@@ -1055,11 +1055,13 @@
             <p>
               The blob store saves attachments and fax PDFs with a bare
               <code>os.WriteFile(abs, content, 0o640)</code> — no fsync, no atomic rename.
-              A crash or power loss between write and fsync can leave a truncated blob on
-              disk while the database row already references it: user data that 404s.
-              This is the only user-data durability hole found across all 19 libraries.
-              The CLI spec writers get <code>WriteIfChanged</code> (no torn diffs, no mtime
-              churn) in the same move. Ride the vendorHash re-pin ritual in the same commit.
+              Write ordering verified file-then-row at all four call sites (T01 errata), so the
+              precise window is row-committed-before-file-durable: a power loss after the
+              database row commits can leave a truncated blob behind a row that references
+              it: user data that 404s (inbound faxes: the only copy). This is the only
+              user-data durability hole found across all 19 libraries. The CLI spec writers
+              get <code>WriteIfChanged</code> (no torn diffs, no mtime churn) in the same
+              move. Ride the vendorHash re-pin ritual in the same commit.
             </p>
             <div class="callout callout-teal">
               <strong>Fix</strong>
