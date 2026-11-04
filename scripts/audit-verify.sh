@@ -111,7 +111,10 @@ for report in $REPORTS; do
 	}
 	# Extract the How-to-verify console fence; skip comment lines.
 	_block=$(awk '/^## How to verify/{f=1; next} f && /^```console/{c=1; next} f && c && /^```/{exit} c {print}' "$report")
-	while IFS= read -r line; do
+	# read on fd 3 so the heredoc never becomes the children's stdin:
+	# rg with no explicit path would otherwise read the exhausted pipe
+	# and silently answer 0 matches.
+	while IFS= read -r line <&3; do
 		[ -z "$line" ] && continue
 		case "$line" in
 		\#*) continue ;;
@@ -131,7 +134,7 @@ for report in $REPORTS; do
 		cmd=$(printf '%s' "$cmd" | sed 's/[[:space:]]*$//')
 		[ -z "$cmd" ] && continue
 		run_claim "$report" "$cmd" "$expect"
-	done <<EOF
+	done 3<<EOF
 $_block
 EOF
 done

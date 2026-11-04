@@ -63,5 +63,5 @@ All commands run from the **webphone checkout root** (repo-relative paths; `git 
 rg -o "icons\.Icon" -N -g '*.templ' internal/ | wc -l                    # expect 12 (24 at audit time; the admin train's layout rewrite removed the nav icons)
 rg -n "RelativeTime|CountBadge|errorpage" -g '*.templ' --type go internal/ | wc -l   # expect 0
 rg -n "wp-empty" -g '*.templ' internal/ | wc -l                          # expect 16 (9 at audit time; the admin train's panels added 7 informational empties — swap candidates only, not adoption gaps)
-rg -c "display\.StatusBadge|feedback\.Alert|SimpleEmptyState" -g '*.templ' internal/ | wc -l   # expect 0 today
+rg -c "display\.StatusBadge|feedback\.Alert" -g '*.templ' internal/ | wc -l   # expect 0 (the DECLINED components stay unused; SimpleEmptyState rides the two T12 swaps)
 ```
