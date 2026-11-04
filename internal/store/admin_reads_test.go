@@ -96,7 +96,7 @@ func TestGetThreadAnyCrossesOwnersAndCarriesOwner(t *testing.T) {
 }
 
 func TestAttachmentByIDAnyCrossesOwners(t *testing.T) {
-	messages, first, second, _, attachmentID := newAdminReadsFixture(t)
+	messages, first, _, _, attachmentID := newAdminReadsFixture(t)
 	ctx := context.Background()
 
 	attachment, err := messages.AttachmentByIDAny(ctx, attachmentID)

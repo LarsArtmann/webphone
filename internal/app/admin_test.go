@@ -67,7 +67,7 @@ func TestAdminServiceEmptyConfigIsHarmless(t *testing.T) {
 	if service == nil {
 		t.Fatal("an empty config still builds the (empty) service; the gate answers false for everyone")
 	}
-	if service.IsAdmin("anyone@example.com") || service.Users() != nil || service.Numbers() != nil {
+	if service.IsAdmin("anyone@example.com") || len(service.Users()) != 0 || len(service.Numbers()) != 0 {
 		t.Error("an empty mapping must list nothing and admit nobody")
 	}
 }

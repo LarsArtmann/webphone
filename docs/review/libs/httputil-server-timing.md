@@ -44,6 +44,6 @@ All commands run from the **webphone checkout root** (repo-relative paths; `git 
 
 ```console
 rg -n "servertiming" internal/server/server.go | head -3     # middleware + import
-rg -n "MeasureServerTiming|RecordServerTiming" --type go | wc -l   # expect 0
+rg -n "MeasureServerTiming|RecordServerTiming" --type go internal/ | wc -l   # expect 0
 WEBPHONE_DEBUG_TIMING=1 go test ./internal/server/ -run TestServerTiming -v 2>/dev/null || rg -n "WEBPHONE_DEBUG_TIMING" internal/server/
 ```

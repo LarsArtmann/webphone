@@ -60,8 +60,8 @@ Adoption is deep where the doctrine lives (seams, codes, pins, registry) and thi
 All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
 
 ```console
-rg -l "larsartmann/go-error-family" --type go -g '!*_templ.go' | wc -l   # expect 97
+rg -l "larsartmann/go-error-family" --type go -g '!*_templ.go' internal/ cmd/ | wc -l   # expect 104 (97 at audit time; the admin train added 7 consumers 2026-11-04)
 rg -c "NewConflict|WrapConflict|errorfamily.Conflict" --type go internal/ | wc -l   # expect > 0 (adopted 2026-11-04)
 go test ./internal/arch -run TestErrorCodeRegistryIsFresh               # registry freshness
-rg -o "errorfamily\.[A-Za-z]+" -N --type go | sed 's/.*errorfamily\.//' | sort | uniq -c | sort -rn | head -15
+rg -o "errorfamily\.[A-Za-z]+" -N --type go internal/ cmd/ | sed 's/.*errorfamily\.//' | sort | uniq -c | sort -rn | head -15
 ```

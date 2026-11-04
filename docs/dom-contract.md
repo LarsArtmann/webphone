@@ -102,6 +102,35 @@ Rendered when the deployment configures the OIDC lane
 the latter, which is why the id is declared in its typed lookups even
 though the markup is conditional.
 
+## Conditional ids (admin surface)
+
+These ids render ONLY for a session whose login email carries the admin
+flag on the shared `auth.users` mapping (`admin: true`; resolved per
+request from the live mapping — a demotion removes the surface on the
+next request). Every other session, anonymous included, gets the styled
+404 for `/admin*` and no Admin nav entry; the E2E must not assume them:
+
+- `admin-panel` — the Admin tab's panel (`GET /admin`,
+  `GET /partials/admin`): read-only cross-line inventory
+- `wp-admin-users`, `wp-admin-numbers`, `wp-admin-threads`,
+  `wp-admin-faxes`, `wp-admin-calls`, `wp-admin-transcripts` — the five
+  section heads (accounts with live-session counts, the numbers
+  inventory, every line's conversations, faxes, merged per-line CDRs
+  and transcribed calls)
+- `admin-thread`, `wp-admin-thread-head` — the read-only cross-line
+  conversation (`GET /admin/threads/{id}`, partial at
+  `GET /partials/admin/threads/{id}`); no composer, no owner actions
+- row classes `wp-admin-user-row`, `wp-admin-number-row`,
+  `wp-admin-thread-row`, `wp-admin-fax-row`, `wp-admin-cdr-row`,
+  `wp-admin-call-row` — the greppable row vocabulary (the SSE-payload
+  doctrine; the admin panel is not SSE-swapped, but the classes keep
+  the surfaces greppable alike)
+
+Attachment and fax-document links inside the admin views ride the
+OWNER-scoped routes (`/attachments/{id}`, `/fax/{id}/document`); the
+handlers grant cross-owner reads to admin sessions as a fallback after
+the owner-scoped lookup misses.
+
 ## Conditional ids (passkey mode)
 
 These ids render ONLY when the deployment enables the passkey

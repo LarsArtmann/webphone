@@ -52,6 +52,6 @@ All commands run from the **webphone checkout root** (repo-relative paths; `git 
 ```console
 rg -n "sse.Event" internal/server/sse.go | head -3
 rg -in "last-event" internal/ | wc -l                    # expect 0
-rg -o "ssetest\.[A-Za-z]+" --type go | sed 's/.*ssetest\.//' | sort | uniq -c | sort -rn | head -6
+rg -o "ssetest\.[A-Za-z]+" --type go internal/ | sed 's/.*ssetest\.//' | sort | uniq -c | sort -rn | head -6
 git -C /home/lars/projects/go-sse describe --tags --abbrev=0   # expect v0.7.0 vs pin v0.6.2
 ```

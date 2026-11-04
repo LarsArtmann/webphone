@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/store"
 )
 
 // The cross-owner admin seams: ListAll/GetAny (faxes) and RecentAll
@@ -71,11 +72,10 @@ func TestTranscriptsRecentAllCrossesOwners(t *testing.T) {
 	second := domain.MustParseExtension("1002")
 	base := time.Unix(1700000000, 0)
 
-	for i, text := range []string{"first line one", "first line two"} {
+	for _, text := range []string{"first line one", "first line two"} {
 		if err := transcripts.Append(ctx, domain.CallTranscriptSegment{
 			Owner: first, CallID: "call-first", Direction: domain.DirectionInbound,
 			Remote: "+15550000001", StartedAt: base, Text: text,
-			Seq: int64(i),
 		}); err != nil {
 			t.Fatal(err)
 		}
@@ -83,7 +83,6 @@ func TestTranscriptsRecentAllCrossesOwners(t *testing.T) {
 	if err := transcripts.Append(ctx, domain.CallTranscriptSegment{
 		Owner: second, CallID: "call-second", Direction: domain.DirectionOutbound,
 		Remote: "+15550000002", StartedAt: base.Add(time.Hour), Text: "second line words",
-		Seq: 10,
 	}); err != nil {
 		t.Fatal(err)
 	}

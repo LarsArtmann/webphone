@@ -38,7 +38,7 @@ All commands run from the **webphone checkout root** (repo-relative paths; `git 
 
 ```console
 rg -n "go-idempotency" go.mod                            # indirect pin
-rg -rn "go-idempotency" --type go internal/ cmd/ | wc -l # expect 0 imports
+rg -n "go-idempotency" --type go -g '!*_test.go' internal/ cmd/ | wc -l # expect 0 production imports (the T18 contract adapter is test-only)
 rg -n "type DedupWindow" internal/server/hooks/idempotency.go
 rg -n "DedupCheckAndRecord" internal/app/dedup.go | head -2
 ```

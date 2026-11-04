@@ -51,7 +51,7 @@ Step-0 verification of the plan (`docs/planning/2026-11-04_18-41_SUPERB-fleet-li
 All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
 
 ```console
-rg -n "os.WriteFile" internal/blob/store.go              # expect: probe only (health probe still uses CreateTemp); the Save write is atomicwrite now
+rg -n "os.WriteFile" internal/blob/store.go              # expect 0 (the probe rides CreateTemp+Remove since the closeout train; nothing bare remains) (health probe still uses CreateTemp); the Save write is atomicwrite now
 rg -n "os.WriteFile" cmd/webphone/catalog.go cmd/webphone/contracts.go   # expect 0 hits (WriteIfChanged adopted)
 rg -n "atomicwrite" --type go internal/ cmd/ | wc -l     # expect > 0 (adopted 2026-11-04)
 ```
