@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "threshold": 1,
-  "recordedAt": "2026-10-29T17:49:24.980825673Z",
+  "recordedAt": "2026-11-04T22:34:25.838386089Z",
   "entries": [
     {
       "hash": "090feb586e2e0439",
@@ -49,14 +49,12 @@
       "hash": "112322f48c9f18a1",
       "files": [
         "internal/web/views/messages.templ",
-        "internal/web/views/settings.templ",
         "internal/web/views/history.templ",
         "internal/web/views/messages.templ",
         "internal/web/views/history.templ",
-        "internal/web/views/history.templ",
-        "internal/web/views/settings.templ"
+        "internal/web/views/history.templ"
       ],
-      "tokens": 7
+      "tokens": 5
     },
     {
       "hash": "18bc26cd133d7425",
@@ -103,10 +101,11 @@
     {
       "hash": "23d679627738d59a",
       "files": [
+        "internal/web/views/fax.templ",
         "internal/web/views/layout.templ",
         "internal/web/views/messages.templ"
       ],
-      "tokens": 2
+      "tokens": 3
     },
     {
       "hash": "26cbc4ce3e464343",
@@ -256,28 +255,12 @@
       "tokens": 4
     },
     {
-      "hash": "5468c76ed1ab72a0",
-      "files": [
-        "internal/matrix/receiver.go",
-        "internal/signal/receiver.go"
-      ],
-      "tokens": 6
-    },
-    {
       "hash": "58acd847e751aa14",
       "files": [
         "internal/web/views/history.templ",
         "internal/web/views/enroll.templ",
         "internal/web/views/messages.templ",
         "internal/web/views/layout.templ"
-      ],
-      "tokens": 4
-    },
-    {
-      "hash": "5b5f9a5073da6834",
-      "files": [
-        "internal/web/views/crm.templ",
-        "internal/web/views/settings.templ"
       ],
       "tokens": 4
     },
@@ -376,6 +359,7 @@
         "internal/web/views/messages.templ",
         "internal/web/views/messages.templ",
         "internal/web/views/messages.templ",
+        "internal/web/views/crm.templ",
         "internal/web/views/messages.templ",
         "internal/web/views/voicemail.templ",
         "internal/web/views/fax.templ",
@@ -387,8 +371,9 @@
         "internal/web/views/settings.templ",
         "internal/web/views/layout.templ",
         "internal/web/views/messages.templ",
-        "internal/web/views/settings.templ",
         "internal/web/views/messages.templ",
+        "internal/web/views/crm.templ",
+        "internal/web/views/settings.templ",
         "internal/web/views/settings.templ",
         "internal/web/views/settings.templ",
         "internal/web/views/settings.templ",
@@ -397,6 +382,7 @@
         "internal/web/views/voicemail.templ",
         "internal/web/views/fax.templ",
         "internal/web/views/history.templ",
+        "internal/web/views/settings.templ",
         "internal/web/views/messages.templ",
         "internal/web/views/fax.templ",
         "internal/web/views/messages.templ",
@@ -412,7 +398,7 @@
         "internal/web/views/error.templ",
         "internal/web/views/history.templ"
       ],
-      "tokens": 44
+      "tokens": 47
     },
     {
       "hash": "78dd46cd10c1b449",
@@ -597,10 +583,9 @@
         "internal/web/views/settings.templ",
         "internal/web/views/history.templ",
         "internal/web/views/settings.templ",
-        "internal/web/views/messages.templ",
-        "internal/web/views/crm.templ"
+        "internal/web/views/messages.templ"
       ],
-      "tokens": 12
+      "tokens": 10
     },
     {
       "hash": "bc0b8f2f3f03e5ff",
@@ -648,6 +633,14 @@
         "internal/web/views/layout.templ"
       ],
       "tokens": 18
+    },
+    {
+      "hash": "ccb472f6dc21132d",
+      "files": [
+        "internal/matrix/receiver.go",
+        "internal/signal/receiver.go"
+      ],
+      "tokens": 6
     },
     {
       "hash": "ce4d9c4f0b465e4d",
@@ -724,9 +717,17 @@
       "tokens": 2
     },
     {
+      "hash": "eab08738485867a9",
+      "files": [
+        "internal/config/config.go",
+        "internal/app/app.go"
+      ],
+      "tokens": 4
+    },
+    {
       "hash": "eb80d5bf18efc724",
       "files": [
-        "internal/web/views/fax.templ",
+        "internal/web/views/settings.templ",
         "internal/web/views/settings.templ",
         "internal/web/views/settings.templ",
         "internal/web/views/settings.templ",
