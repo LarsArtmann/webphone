@@ -1,11 +1,14 @@
 # go-sse — library utilization audit
 
 **Verdict:** thin by architecture — cqrs-htmx's `Broadcaster` wraps this library, and webphone touches the wrapped surface; the test kit pins the SSE wire contract (called "the single best test-integration in the repo" by the 09-24 audit). **Adoption 67/100 (moderate)** — 2 of 3 applicable rows.
-**Pin:** v0.6.2 + `go-sse/ssetest` v0.5.0 (direct); `go-sse/sseparse` v0.2.1 (indirect) · **Latest:** v0.7.0 / ssetest v0.5.0 · **Currency:** **one minor behind** · **Status:** direct dep
+**Pin:** v0.6.2 + `go-sse/ssetest` v0.5.0 (direct); `go-sse/sseparse` v0.2.1 (indirect) · **Latest:** v0.7.0 / ssetest v0.5.0 · **Currency:** **one minor behind — BUMP ATTEMPTED AND REVERTED 2026-11-04 (BLOCKED, see errata)** · **Status:** direct dep
 **Audited:** 2026-11-04 · **Prior reports:** [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html) (72/100 at v0.6.0).
 
 ## Status
 
+## Errata — bump attempted and reverted (2026-11-04, closeout train)
+
+The v0.6.2→v0.7.0 bump was executed and REVERTED in the same train. The cascade, verified live: v0.7.0's go.mod requires `github.com/a-h/templ v0.3.1100` (webphone pins v0.3.1070); the upgrade compiles go-sse itself but breaks two templ-consuming pins in webphone's graph — `templ-components v1.26.0` (fixed by the already-published v1.27.0) and then **`cqrs-htmx/loginpage v4.13.0`** (`templ.ResolveAttributeValue`/`templ.JoinURLErrs` undefined), for which NO templ-v0.3.1100-compatible release exists: the local cqrs-htmx checkout sits ~55 commits past an UNPUBLISHED v4.16.0 tag. Landing v0.7.0 therefore requires releasing the cqrs-htmx wave first — a fleet release operation outside a consumer currency bump's scope (Verschlimmbessern guard: a boring bump must not drag an unreleased multi-module wave). **Reopen trigger: cqrs-htmx/loginpage publishing a release whose go.mod accepts templ ≥ v0.3.1100** (then: go-sse v0.7.0 + templ-components latest + loginpage in ONE train, plus the ssetest `WithLastEventID(sse.EventID)` branding adjustments — verified the v0.7.0 API shapes: `EventID = brandid.ID[eventBrand, string]`, constructed via `sse.NewEventID`).
 | | |
 |---|---|
 | Module | `github.com/larsartmann/go-sse` (+ `ssetest` test module, `sseparse` parser module) |

@@ -985,7 +985,7 @@
                 <tr><th scope="row"><a href="httputil.md">httputil</a></th><td>direct</td><td>v1.8.0 / v1.8.0</td><td class="yes">95</td><td>Configured, not defaulted; MaxBodySize adopted 2026-11-04 (14 route mounts; two ruled one-home funnels)</td></tr>
                 <tr><th scope="row"><a href="go-health.md">go-health</a></th><td>direct</td><td>v0.9.0 / v0.9.0</td><td class="yes">100</td><td>Injector-discovered probe, one readiness truth; <code>CoerceValidUTF8</code> wave landed 2026-11-04</td></tr>
                 <tr><th scope="row"><a href="go-cqrs-lite.md">go-cqrs-lite</a></th><td>direct ×4</td><td>v4.20.0 / v4.20.0</td><td class="yes">83</td><td>metaengine IS the read-model substrate; adopt <code>EnforceCap</code> for the trim caps</td></tr>
-                <tr><th scope="row"><a href="go-sse.md">go-sse</a></th><td>direct</td><td>v0.6.2 / v0.7.0</td><td>67</td><td>Thin by composition (cqrs-htmx wraps it); ssetest pins the wire contract; replay unused by design</td></tr>
+                <tr><th scope="row"><a href="go-sse.md">go-sse</a></th><td>direct</td><td>v0.6.2 / v0.7.0</td><td>67</td><td>Thin by composition (cqrs-htmx wraps it); ssetest pins the wire contract; v0.7.0 bump BLOCKED on the cqrs-htmx templ-wave (2026-11-04 errata)</td></tr>
                 <tr><th scope="row"><a href="httputil-server-timing.md">httputil/server_timing</a></th><td>direct</td><td>v1.0.3 / v1.0.3</td><td>67</td><td>Env-gated edge middleware exactly as designed; named spans unused (do not pre-instrument)</td></tr>
                 <tr><th scope="row"><a href="go-error-family.md">go-error-family</a></th><td>direct</td><td>v0.12.0 / v0.12.0</td><td>64</td><td>The error culture&rsquo;s backbone; Conflict family and retry-policy consumption unused</td></tr>
                 <tr><th scope="row"><a href="templ-components.md">templ-components</a></th><td>direct ×3</td><td>v1.26.0 / v1.26.0</td><td>50</td><td>Deepening on deliberate boundaries; four cheap wins (StatusBadge, SimpleEmptyState, Alert, PageHeader)</td></tr>
@@ -1112,14 +1112,15 @@
           </div>
 
           <div class="issue issue-nice" id="issue-5">
-            <span class="severity severity-nice">Low-medium impact &middot; Low effort</span>
+            <span class="severity severity-nice">1 of 3 LANDED 2026-11-04 &middot; 1 BLOCKED &middot; 1 open</span>
             <h3>Close the three version gaps</h3>
-            <div class="where">go-sse v0.6.2→v0.7.0 · go-health v0.8.1→v0.9.0 · go-etag v0.6.1→v0.7.0 (with adoption)</div>
+            <div class="where">go-health v0.8.1→v0.9.0 LANDED (+dashboard v0.13.0, tag completed upstream) · go-sse v0.6.2→v0.7.0 BLOCKED on the cqrs-htmx templ-wave · go-etag v0.6.1→v0.7.0 (with adoption)</div>
             <p>
-              go-health v0.9.0&rsquo;s <code>CoerceValidUTF8</code> is the substantive one:
-              probe details embed driver strings that can carry non-UTF-8 bytes, and probe
-              JSON must never break. go-sse v0.7.0 brings EventID branding + the ssetest
-              breaking change in one mechanical train.
+              go-health v0.9.0&rsquo;s <code>CoerceValidUTF8</code> was the substantive one and
+              landed (probe JSON can never break on invalid UTF-8). The go-sse v0.7.0 bump was
+              attempted and REVERTED: its templ v0.3.1100 requirement breaks
+              cqrs-htmx/loginpage v4.13.0, which has no compatible release — reopen when the
+              cqrs-htmx wave publishes (errata in go-sse.md).
             </p>
           </div>
 
