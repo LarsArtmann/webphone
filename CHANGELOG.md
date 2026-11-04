@@ -46,6 +46,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   with the tag missing, so the closeout train verified the commit green
   in a detached worktree and tagged it to unblock the fleet.
 
+- Fax status badges ride the templ-components Badge component
+  (2026-11-04): the fax row's status chip renders `display.Badge` with
+  a dedicated status→tone table (queued/sending amber, transmitted/
+  received green, failed red) instead of hand-rolled `wp-status-*`
+  spans — same localized labels, one consistent badge shape shared
+  with the rest of the shell, dark-mode variants from the library's
+  token set. The messages badges stay hand-rolled deliberately: their
+  classes are pinned test contract DOM that styles the failed message
+  bubble, and the delivered checkmark is an asserted affordance.
+
 ### Added
 
 - Unknown configuration keys warn at boot (2026-10-30): one `WARN` line
