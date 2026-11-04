@@ -24,6 +24,11 @@ type User struct {
 	Email       string
 	DisplayName string
 	Extensions  []domain.Extension
+	// Admin grants read-only cross-line visibility (the Admin tab). It
+	// is a property of the IDENTITY, resolved per request from the live
+	// mapping — never minted into the session, so a config demotion
+	// takes effect on the admin's next request, not their next login.
+	Admin bool
 }
 
 // SessionExtension is the extension a passwordless login binds its session
@@ -108,6 +113,37 @@ func (m *Map) MappedByLogin(extension domain.Extension, loginEmail string) (User
 		}
 	}
 	return m.MappedByExtension(extension)
+}
+
+// Users enumerates the configured mappings deterministically (sorted
+// by email) — the admin surface's user listing. Go map order is random;
+// a shared-extension or multi-account fleet must not reshuffle between
+// requests.
+func (m *Map) Users() []User {
+	if m == nil {
+		return nil
+	}
+	out := make([]User, 0, len(m.users))
+	for _, email := range slices.Sorted(maps.Keys(m.users)) {
+		out = append(out, m.users[email])
+	}
+	return out
+}
+
+// AnyAdmin reports whether at least one mapped account is an admin —
+// the composition root's signal that the admin surface exists at all
+// (no admin configured: the routes answer the styled 404 for everyone,
+// byte-identical to a build without the feature).
+func (m *Map) AnyAdmin() bool {
+	if m == nil {
+		return false
+	}
+	for _, user := range m.users {
+		if user.Admin {
+			return true
+		}
+	}
+	return false
 }
 
 // SIPPassword reads the extension's directory password from its

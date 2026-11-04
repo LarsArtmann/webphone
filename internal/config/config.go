@@ -262,7 +262,7 @@ func sameUserMap(a, b map[string]PasskeyUser) bool {
 	}
 	for email, user := range a {
 		other, ok := b[email]
-		if !ok || other.DisplayName != user.DisplayName || len(other.Extensions) != len(user.Extensions) {
+		if !ok || other.DisplayName != user.DisplayName || other.Admin != user.Admin || len(other.Extensions) != len(user.Extensions) {
 			return false
 		}
 		for i, ext := range user.Extensions {
@@ -317,6 +317,14 @@ type Passkey struct {
 type PasskeyUser struct {
 	Extensions  []string `json:"extensions" koanf:"extensions"`
 	DisplayName string   `json:"display_name,omitempty" koanf:"display_name"`
+	// Admin grants the account read-only visibility across every line
+	// (the Admin tab: all messages, faxes, calls, users and numbers).
+	// It rides the SHARED map (auth.users), never a UI flow — revoking
+	// it is a config edit + restart, and admin reads resolve the live
+	// mapping per request, so a demoted login loses the surface with its
+	// next request, not its next sign-in. An admin still signs in through
+	// a mapped extension (validation rejects admin without extensions).
+	Admin bool `json:"admin,omitempty" koanf:"admin"`
 }
 
 // Enabled reports whether the passkey mode is configured. Any set field
@@ -853,6 +861,9 @@ func validate(cfg Config) error {
 	if err := validatePasskey(cfg.Auth.Passkey); err != nil {
 		return err
 	}
+	if err := validateAdminUsers(cfg.Auth); err != nil {
+		return err
+	}
 	if err := validateOAuth2(cfg.Auth.OAuth2); err != nil {
 		return err
 	}
@@ -1120,6 +1131,25 @@ func validatePasskey(p Passkey) error {
 			if !ok || file == "" {
 				return errorfamily.Newf(errorfamily.Rejection, "config.auth.passkey.extension_password_files", "auth.passkey.extension_password_files: no password file for extension %q (mapped by %q) — passkey login must source the SIP directory password server-side", raw, email)
 			}
+		}
+	}
+	return nil
+}
+
+// validateAdminUsers checks the admin flag on the SHARED user map
+// (auth.users, with the historical passkey.users fallback — the same
+// shape SSOConfig reads). The flag is meaningful in every login mode
+// that resolves the shared map, so the check lives OUTSIDE
+// validatePasskey's enabled gate.
+func validateAdminUsers(a Auth) error {
+	users := a.Users
+	if len(users) == 0 {
+		users = a.Passkey.Users
+	}
+	for email, user := range users {
+		if user.Admin && len(user.Extensions) == 0 {
+			return errorfamily.Newf(errorfamily.Rejection, "config.auth.users",
+				"auth.users: %q is admin without extensions — an admin still signs in through a mapped line; map at least one extension or drop the admin flag", email)
 		}
 	}
 	return nil

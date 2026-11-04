@@ -200,7 +200,7 @@ func (s *Transcripts) expunge(ctx context.Context, id string) error {
 // fetched newest-first, grouped by call (newest call first, its lines
 // in spoken order), and the group list is capped at maxCalls.
 func (s *Transcripts) Recent(ctx context.Context, owner domain.Extension, maxCalls int) ([]domain.CallTranscript, error) {
-	rows, err := s.fetchSegments(ctx, owner,
+	rows, err := s.fetchSegments(ctx, owner.String(),
 		metaengine.WithFilter("owner", metaengine.FilterEq, owner.String()),
 		metaengine.WithSort("seq", true),
 		metaengine.WithLimit(transcriptFetchWindow),
@@ -218,7 +218,7 @@ func (s *Transcripts) Recent(ctx context.Context, owner domain.Extension, maxCal
 // first, MATCHING lines only: the silent half of a hit call is not the
 // searcher's answer, and the History hint says what is shown.
 func (s *Transcripts) Search(ctx context.Context, owner domain.Extension, needle string, maxCalls int) ([]domain.CallTranscript, error) {
-	rows, err := s.fetchSegments(ctx, owner,
+	rows, err := s.fetchSegments(ctx, owner.String(),
 		metaengine.WithFilter("owner", metaengine.FilterEq, owner.String()),
 		metaengine.WithSort("seq", true),
 		metaengine.WithLimit(transcriptFetchWindow),
@@ -236,12 +236,27 @@ func (s *Transcripts) Search(ctx context.Context, owner domain.Extension, needle
 	return reassembleTranscripts(matches, maxCalls), nil
 }
 
+// RecentAll reassembles the newest transcribed calls across EVERY
+// owner (the admin surface's cross-line call inventory — the deliberate
+// seam without the owner filter; owner-scoping stays the rule for every
+// other read). Grouped and capped exactly like Recent.
+func (s *Transcripts) RecentAll(ctx context.Context, maxCalls int) ([]domain.CallTranscript, error) {
+	rows, err := s.fetchSegments(ctx, "all owners",
+		metaengine.WithSort("seq", true),
+		metaengine.WithLimit(transcriptFetchWindow),
+	)
+	if err != nil {
+		return nil, err
+	}
+	return reassembleTranscripts(rows, maxCalls), nil
+}
+
 // Export reassembles the owner's WHOLE transcript history for the
 // settings export zip: the read window is the owner cap (not the render
 // window), so every stored call arrives — newest first, lines in spoken
 // order, the group list capped at maxCalls.
 func (s *Transcripts) Export(ctx context.Context, owner domain.Extension, maxCalls int) ([]domain.CallTranscript, error) {
-	rows, err := s.fetchSegments(ctx, owner,
+	rows, err := s.fetchSegments(ctx, owner.String(),
 		metaengine.WithFilter("owner", metaengine.FilterEq, owner.String()),
 		metaengine.WithSort("seq", true),
 		metaengine.WithLimit(TranscriptSegmentsMaxPerExtension),
@@ -253,12 +268,15 @@ func (s *Transcripts) Export(ctx context.Context, owner domain.Extension, maxCal
 }
 
 // fetchSegments reads segments newest-first behind the given scan
-// options — the ONE home for the transcript read so Recent, Search and
-// Export cannot drift apart.
-func (s *Transcripts) fetchSegments(ctx context.Context, owner domain.Extension, opts ...metaengine.ScanOption) ([]domain.CallTranscriptSegment, error) {
+// options — the ONE home for the transcript read so Recent, RecentAll,
+// Search and Export cannot drift apart. scope names the read's reach
+// in the failure message (one owner, or all owners for the admin
+// seam); the owner FILTER is an explicit scan option each caller
+// passes (or omits, deliberately, on the admin path).
+func (s *Transcripts) fetchSegments(ctx context.Context, scope string, opts ...metaengine.ScanOption) ([]domain.CallTranscriptSegment, error) {
 	views, err := s.reader.Scan(ctx, opts...)
 	if err != nil {
-		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.transcript_scan", "scan transcripts for %s", owner.String())
+		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.transcript_scan", "scan transcripts for %s", scope)
 	}
 	rows := make([]domain.CallTranscriptSegment, 0, len(views))
 	for _, v := range views {

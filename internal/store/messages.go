@@ -497,6 +497,112 @@ func (s *Messages) MarkThreadRead(ctx context.Context, owner domain.Extension, i
 	return nil
 }
 
+// The three *Any/ListAll reads below are the DELIBERATE cross-owner
+// seams of the admin surface (owner-scoping stays the rule everywhere
+// else, pinned by owner_scoping_test.go): they are reachable only from
+// admin-gated handlers, and they exist because an admin's question is
+// exactly the one the owner filter forbids — "every line's
+// conversations, newest first". Names carry the contract: no method
+// without Any/ListAll in its name may skip the owner filter.
+
+// ListAllThreads returns every owner's threads, most recently active
+// first, bounded by limit — the admin surface's cross-line conversation
+// inventory. Archived threads are INCLUDED (their archived flag rides
+// the summary so the view can badge them): an admin's inventory must not
+// resurrect what archive hid per line, it must show what exists.
+func (s *Messages) ListAllThreads(ctx context.Context, limit int) ([]ThreadSummary, error) {
+	rows, err := s.db.QueryContext(ctx, `
+		SELECT t.id, t.owner, t.network, t.remote, t.last_activity_at, t.unread,
+		       t.pinned, t.archived, t.muted,
+		       m.body, m.direction, m.channel,
+		       EXISTS (SELECT 1 FROM attachments a WHERE a.message_id = m.id)
+		FROM threads t
+		LEFT JOIN messages m ON m.id = (
+			SELECT id FROM messages WHERE thread_id = t.id ORDER BY created_at DESC, rowid DESC LIMIT 1
+		)
+		ORDER BY t.last_activity_at DESC
+		LIMIT ?
+	`, limit)
+	if err != nil {
+		return nil, errorfamily.WrapInfrastructuref(err, "store.threads_list_all", "list all threads")
+	}
+	defer rows.Close() //nolint:errcheck // read-side close on defer; rows.Err owns the verdict
+	var out []ThreadSummary
+	for rows.Next() {
+		summary, err := scanThreadSummary(rows)
+		if err != nil {
+			return nil, errorfamily.WrapInfrastructuref(err, "store.threads_list_all", "scan all-threads row")
+		}
+		out = append(out, summary)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errorfamily.WrapInfrastructuref(err, "store.threads_list_all", "iterate all threads")
+	}
+	return out, nil
+}
+
+// GetThreadAny fetches one thread by id across owners (the admin
+// surface's deep link); the returned Thread carries its Owner, so the
+// admin read path re-enters the OWNER-SCOPED methods from there — only
+// the by-id lookup itself crosses the line.
+func (s *Messages) GetThreadAny(ctx context.Context, id domain.ThreadID) (domain.Thread, error) {
+	var (
+		ownerStr, networkStr, remoteStr string
+		lastActivity                    int64
+		unread                          int
+		pinned, archived, muted         int
+	)
+	err := s.db.QueryRowContext(ctx, `
+		SELECT owner, network, remote, last_activity_at, unread, pinned, archived, muted
+		FROM threads WHERE id = ?
+	`, id.String()).Scan(&ownerStr, &networkStr, &remoteStr, &lastActivity, &unread, &pinned, &archived, &muted)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.Thread{}, ErrNotFound
+	}
+	if err != nil {
+		return domain.Thread{}, errorfamily.WrapInfrastructuref(err, "store.thread_get_any", "get thread %s (admin)", id)
+	}
+	return domain.Thread{
+		ID:             id,
+		Owner:          domain.MustParseExtension(ownerStr),
+		Remote:         domain.MustParseAddress(domain.MustNetwork(networkStr), remoteStr),
+		LastActivityAt: time.Unix(lastActivity, 0),
+		Unread:         unread,
+		Pinned:         pinned == 1,
+		Archived:       archived == 1,
+		Muted:          muted == 1,
+	}, nil
+}
+
+// AttachmentByIDAny resolves one attachment across owners (the admin
+// surface's read-only stream); everything about the row except its
+// reach is identical to AttachmentByID.
+func (s *Messages) AttachmentByIDAny(ctx context.Context, id domain.AttachmentID) (domain.Attachment, error) {
+	var (
+		attachmentID, messageID, name, mime, path string
+		size                                      int64
+	)
+	err := s.db.QueryRowContext(ctx, `
+		SELECT a.id, a.message_id, a.name, a.mime_type, a.size_bytes, a.path
+		FROM attachments a
+		WHERE a.id = ?
+	`, id.String()).Scan(&attachmentID, &messageID, &name, &mime, &size, &path)
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.Attachment{}, ErrNotFound
+	}
+	if err != nil {
+		return domain.Attachment{}, errorfamily.WrapInfrastructuref(err, "store.attachment_get_any", "get attachment %s (admin)", id)
+	}
+	return domain.Attachment{
+		ID:        domain.MustAttachmentID(attachmentID),
+		MessageID: domain.MustMessageID(messageID),
+		Name:      name,
+		MimeType:  mime,
+		SizeBytes: size,
+		Path:      path,
+	}, nil
+}
+
 // AttachmentByID resolves one attachment scoped to the owner (the
 // attachment's message must belong to her).
 func (s *Messages) AttachmentByID(

@@ -224,6 +224,40 @@ func (s *Faxes) Get(ctx context.Context, owner domain.Extension, id domain.FaxID
 	return view.toJob(), nil
 }
 
+// ListAll and GetAny are the DELIBERATE cross-owner seams of the admin
+// surface (owner-scoping stays the rule everywhere else): reachable
+// only from admin-gated handlers.
+
+// ListAll returns every owner's fax jobs, newest first, bounded by
+// limit — the admin surface's cross-line fax inventory.
+func (s *Faxes) ListAll(ctx context.Context, limit int) ([]domain.FaxJob, error) {
+	views, err := s.reader.Scan(ctx,
+		metaengine.WithSort("created_at", true),
+		metaengine.WithLimit(limit),
+	)
+	if err != nil {
+		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.fax_list_all", "list all faxes")
+	}
+	out := make([]domain.FaxJob, 0, len(views))
+	for _, v := range views {
+		out = append(out, v.toJob())
+	}
+	return out, nil
+}
+
+// GetAny fetches one job across owners (the admin surface's read-only
+// document stream); the returned job carries its Owner.
+func (s *Faxes) GetAny(ctx context.Context, id domain.FaxID) (domain.FaxJob, error) {
+	view, found, err := s.reader.Get(ctx, domain.FaxKey{ID: id.String()})
+	if err != nil {
+		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "readmodels.fax_get_any", "load fax job (admin)")
+	}
+	if !found {
+		return domain.FaxJob{}, notFound(errorfamily.Newf(errorfamily.Rejection, "readmodels.fax_missing", "fax %s", id.String()))
+	}
+	return view.toJob(), nil
+}
+
 // ByProviderRef resolves a job by its gateway correlation id — the
 // status webhook's lookup path. An empty ref answers not-found (the
 // SQL store's guard).
