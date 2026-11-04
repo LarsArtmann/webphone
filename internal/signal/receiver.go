@@ -61,20 +61,20 @@ func NewReceiver(client *Client, owner domain.Extension, sink chatloop.Sink, rec
 // anything the socket missed while down).
 func (r *Receiver) Run(ctx context.Context) error {
 	r.client.OnEnvelope(r.handle)
-	backoff := time.Second
+	attempt := 1
 	for {
 		if ctx.Err() != nil {
 			return nil
 		}
 		if err := r.client.Ping(ctx); err != nil {
 			var alive bool
-			backoff, alive = chatloop.Backoff(ctx, r.log, "signal: daemon unreachable", err, backoff, 60*time.Second)
+			attempt, alive = chatloop.Backoff(ctx, r.log, "signal: daemon unreachable", err, attempt, 60*time.Second)
 			if !alive {
 				return nil
 			}
 			continue
 		}
-		backoff = time.Second
+		attempt = 1
 		if !chatloop.Sleep(ctx, 30*time.Second) {
 			return nil
 		}

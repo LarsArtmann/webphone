@@ -150,11 +150,12 @@ func NewReceiver(client *Client, owner domain.Extension, sink chatloop.Sink, cur
 	return &Receiver{client: client, owner: owner, sink: sink, cursor: cursor, log: chatloop.Default(log)}
 }
 
-// Run blocks on the sync loop until ctx is done. Errors back off
-// (1s..30s doubling); every successful round persists the cursor
+// Run blocks on the sync loop until ctx is done. Errors back off on
+// the shared jittered ladder (Rejections stop the loop loudly — see
+// chatloop.Backoff); every successful round persists the cursor
 // BEFORE the next long-poll, so a crash loses at most the live batch.
 func (r *Receiver) Run(ctx context.Context) error {
-	backoff := time.Second
+	attempt := 1
 	for {
 		if err := ctx.Err(); err != nil {
 			return nil
@@ -163,7 +164,7 @@ func (r *Receiver) Run(ctx context.Context) error {
 		if err != nil {
 			r.log.Error("matrix: load sync cursor", "error", err)
 			var alive bool
-			backoff, alive = chatloop.Backoff(ctx, r.log, "matrix: retrying cursor load", err, backoff, 30*time.Second)
+			attempt, alive = chatloop.Backoff(ctx, r.log, "matrix: retrying cursor load", err, attempt, 30*time.Second)
 			if !alive {
 				return nil
 			}
@@ -179,13 +180,13 @@ func (r *Receiver) Run(ctx context.Context) error {
 				return nil
 			}
 			var alive bool
-			backoff, alive = chatloop.Backoff(ctx, r.log, "matrix: sync", err, backoff, 30*time.Second)
+			attempt, alive = chatloop.Backoff(ctx, r.log, "matrix: sync", err, attempt, 30*time.Second)
 			if !alive {
 				return nil
 			}
 			continue
 		}
-		backoff = time.Second
+		attempt = 1
 		r.ingest(ctx, resp)
 		if err := r.cursor.Save(ctx, resp.NextBatch); err != nil {
 			r.log.Error("matrix: save sync cursor", "error", err)
