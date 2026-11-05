@@ -58,7 +58,7 @@ Scope: this report covers ONLY this resumed session's work (the T16 tail through
 
 1. **War stories belong in docs/lessons.md the same day.** The ghost-seam (a shipped-and-documented seam that never ran, invisible to every gate for 12 days) and the host-templ-vs-pinned-templ regen are exactly the "hard-won rules" class; they currently live in commit messages. Write both entries (owner: next session, 10 min).
 2. **Client-side clone check before every code push.** The pre-commit hook only parses; the clone gate runs in CI. A `scripts/pre-push`-invocable check (or a manual habit: `go run github.com/LarsArtmann/art-dupl/cmd/art-dupl@v0.7.2 check . -t 1 --baseline-path .art-dupl-baseline.json` before `git push`) would have prevented §d-1 entirely.
-3. **The `-rn` trap needs a mechanical guard.** A line in `.githooks/pre-commit` (GATE 3?) grepping STAGED files for ` rg -rn ` in shell scripts and docs verify-blocks — the reports themselves carried the bug until T22 normalized them, and my fingers still produce it.
+3. **The `-rn` trap needs a mechanical guard.** A line in `.githooks/pre-commit` (GATE 3?) grepping STAGED files for `rg -rn` in shell scripts and docs verify-blocks — the reports themselves carried the bug until T22 normalized them, and my fingers still produce it.
 4. **Foreground-first for long commands.** The background mechanism loses shells to interrupts on this host; long gates should either run foreground (auto-background handles the timeout) or be structured as resumable scripts.
 5. **Wiring-parity thinking should cover LOOPS, not just deps.** `TestAppWiresEveryServerDep` pins server.Deps wiring; nothing pinned "the loops the app returns actually START" until this session. The generalizable pin: any function returning closures-for-later needs a start-pin test. `TestAppStartRunsChatReceiverLoops` is the template.
 6. **Gate-keeping a concurrent session is right but should be VISIBLY bounded** — every repair I made for the admin train touched generated artifacts (registry, baseline, templ bytes), never their authored logic. Keep that line bright; consider a shared convention (a `GATE-REPAIR:` commit prefix?) so the other session sees what was done on its behalf. (Owner call, §g-2.)
@@ -125,4 +125,4 @@ Scope: this report covers ONLY this resumed session's work (the T16 tail through
 
 ---
 
-*Snapshot close: main CI-green at `97a3656d`; one docs-only daemon commit unpushed; buildflow running; the night's reds all attributed and repaired; T16–T26 complete with the ghost-seam catch the plan never knew to ask for.*
+_Snapshot close: main CI-green at `97a3656d`; one docs-only daemon commit unpushed; buildflow running; the night's reds all attributed and repaired; T16–T26 complete with the ghost-seam catch the plan never knew to ask for._

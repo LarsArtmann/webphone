@@ -23,7 +23,6 @@ func configLeafPaths(t *testing.T) []string {
 	var walk func(rt reflect.Type, prefix string)
 	walk = func(rt reflect.Type, prefix string) {
 		for field := range rt.Fields() {
-			field := field
 			if field.PkgPath != "" {
 				continue
 			}

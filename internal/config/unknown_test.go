@@ -167,7 +167,7 @@ func TestLoadCleanConfigWarnsNothing(t *testing.T) {
 func TestWarnUnknownConfigKeysCapsTheList(t *testing.T) {
 	t.Parallel()
 	raw := map[string]any{}
-	for i := 0; i < unknownKeyWarnCap+5; i++ {
+	for i := range unknownKeyWarnCap + 5 {
 		raw[strings.Repeat("x", i+1)] = i
 	}
 	// Direct slog capture through the exported shape: the WARN is a log

@@ -22,8 +22,8 @@ func schemaPaths() (known map[string]bool, dynamic map[string]bool) {
 	dynamic = map[string]bool{}
 	var walk func(t reflect.Type, parent string)
 	walk = func(t reflect.Type, parent string) {
-		for i := 0; i < t.NumField(); i++ {
-			field := t.Field(i)
+		for field := range t.Fields() {
+			field := field
 			tag := field.Tag.Get("koanf")
 			if tag == "" || tag == "-" {
 				continue
