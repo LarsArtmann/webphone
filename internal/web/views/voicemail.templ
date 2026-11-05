@@ -89,7 +89,13 @@ templ VoicemailRow(msg pbx.VoicemailMessage, contacts CRMContacts, lang Lang, as
 	// the fallback surface, which is why it stays in the DOM either way.
 	<article class={ "wp-row wp-vm-row", templ.KV("wp-unread", !msg.Read) } id={ "vm-" + msg.UUID }>
 		<span class="wp-thread-text">
-			<strong class="wp-thread-remote">{ vmCaller(msg, contacts, lang) }</strong>
+			<strong class="wp-thread-remote">
+				if vmCRMName(msg.CIDNumber, contacts) != "" {
+					@crmNameLink(msg.CIDNumber, contacts, lang)
+				} else {
+					{ vmCaller(msg, contacts, lang) }
+				}
+			</strong>
 			<span class="wp-muted">{ vmWhen(msg.Created, lang) } · { fmtInt(msg.Seconds) }s</span>
 		</span>
 		<span class="wp-row-actions">
@@ -171,6 +177,22 @@ func vmCaller(msg pbx.VoicemailMessage, contacts CRMContacts, lang Lang) string 
 		return msg.CIDNumber
 	}
 	return T(lang, "vm.unknown")
+}
+
+// vmCRMName is the CRM-resolved display name for the voicemail's caller,
+// or "" when the number is absent or unknown to the integration. The row
+// renders the LINKED name through crmNameLink when this resolves and the
+// vmCaller ladder otherwise — the CRM-served name is an identity (it has
+// a profile to open), the provider's CIDName is untrusted display text
+// that can never link anywhere.
+func vmCRMName(number string, contacts CRMContacts) string {
+	if number == "" {
+		return ""
+	}
+	if contact, ok := contacts[number]; ok && contact.Name != "" {
+		return contact.Name
+	}
+	return ""
 }
 
 func vmWhen(createdUnix int64, lang Lang) string {

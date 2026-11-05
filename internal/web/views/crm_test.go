@@ -4,6 +4,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/larsartmann/webphone/internal/pbx"
 )
 
 // TestCRMNameLinkIsTheOneLinkHome pins the deep-link contract from both
@@ -150,9 +152,88 @@ func TestCRMContextStripEscapesOperatorData(t *testing.T) {
 	}
 }
 
-func TestFormatThousands(t *testing.T) {
+// TestVoicemailRowLinksTheKnownCRMContact pins the CRM data-mesh
+// consistency fix: a caller the CRM resolves renders the LINKED name
+// inside the row's strong (the same crmNameLink contract as every other
+// surface — new tab, noopener), the vmCaller ladder otherwise. Zero
+// config and CRM misses must not grow an anchor.
+func TestVoicemailRowLinksTheKnownCRMContact(t *testing.T) {
 	t.Parallel()
 
+	linked := CRMContacts{"+441632960961": {
+		Name: "Alice",
+		URL:  "https://crm.example/contacts/01M",
+	}}
+
+	msg := pbx.VoicemailMessage{UUID: "u1", CIDNumber: "+441632960961", CIDName: "Alice", Seconds: 12,
+		AudioURL: "/phone-api/voicemail/1001/messages/u1/audio"}
+
+	page := renderComponent(t, VoicemailRow(msg, linked, LangEN, false))
+	for _, want := range []string{
+		`<a class="wp-crm-link"`,
+		`href="https://crm.example/contacts/01M"`,
+		`target="_blank"`,
+		"Alice",
+	} {
+		if !strings.Contains(page, want) {
+			t.Errorf("linked voicemail caller missing %q; got:\n%s", want, page)
+		}
+	}
+
+	// A name the CRM does NOT know (provider CIDName only) keeps the
+	// unlinked ladder — display text with no profile must never anchor.
+	miss := renderComponent(t, VoicemailRow(msg, nil, LangEN, false))
+	if strings.Contains(miss, "<a") || !strings.Contains(miss, "Alice (+441632960961)") {
+		t.Errorf("CRM miss must keep the vmCaller ladder without a link:\n%s", miss)
+	}
+
+	anonymous := pbx.VoicemailMessage{UUID: "u2", CIDName: "Withheld", Seconds: 8,
+		AudioURL: "/phone-api/voicemail/1001/messages/u2/audio"}
+	anon := renderComponent(t, VoicemailRow(anonymous, linked, LangEN, false))
+	if strings.Contains(anon, "<a") || !strings.Contains(anon, "Withheld") {
+		t.Errorf("an anonymous voicemail must render the ladder, no link:\n%s", anon)
+	}
+}
+
+// TestCRMDraftContactLinksTheKnownCaller pins the drafts panel's link
+// arm (the last of the five CRM-name surfaces): the CRM-resolved
+// contact renders linked with the dialable number kept beside it, the
+// contactLabel ladder otherwise. Zero CRM config stays byte-identical.
+func TestCRMDraftContactLinksTheKnownCaller(t *testing.T) {
+	t.Parallel()
+
+	linked := CRMContacts{"493012345678": {
+		Name: "Ada Lovelace",
+		URL:  "https://crm.example/contacts/01M",
+	}}
+
+	page := renderComponent(t, crmDraftContact(linked, "493012345678", LangEN))
+	for _, want := range []string{
+		`<a class="wp-crm-link"`,
+		`href="https://crm.example/contacts/01M"`,
+		"Ada Lovelace",
+		"+493012345678",
+	} {
+		if !strings.Contains(page, want) {
+			t.Errorf("linked draft contact missing %q; got:\n%s", want, page)
+		}
+	}
+
+	// Known name, no URL template: the ladder keeps name · +number, no anchor.
+	nameOnly := CRMContacts{"493012345678": {Name: "Ada Lovelace"}}
+	plain := renderComponent(t, crmDraftContact(nameOnly, "493012345678", LangEN))
+	if strings.Contains(plain, "<a") || !strings.Contains(plain, "Ada Lovelace · +493012345678") {
+		t.Errorf("name-without-URL must keep the ladder without a link:\n%s", plain)
+	}
+
+	unknown := renderComponent(t, crmDraftContact(linked, "44999999", LangEN))
+	if strings.Contains(unknown, "<a") || !strings.Contains(unknown, "+44999999") {
+		t.Errorf("unknown number must render the ladder, no link:\n%s", unknown)
+	}
+}
+
+func TestFormatThousands(t *testing.T) {
+	t.Parallel()
 	cases := map[int64]string{
 		0:          "0",
 		7:          "7",

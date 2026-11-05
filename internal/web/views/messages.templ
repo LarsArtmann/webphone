@@ -933,7 +933,7 @@ templ DraftsPanel(props DraftsPanelProps) {
 			for _, draft := range props.Drafts.Drafts {
 				<article class="wp-draft" id={ "wp-draft-" + draft.ID }>
 					<header class="wp-draft-head">
-						<span class="wp-draft-contact">{ contactLabel(props.CRM, draft.Contact) }</span>
+						<span class="wp-draft-contact">@crmDraftContact(props.CRM, draft.Contact, props.Lang)</span>
 						<span class="wp-draft-meta" title={ draft.CreatedAt }>
 							{ draftMeta(draft, time.Now()) }
 							if draft.Trigger != "" && strings.HasPrefix(draft.Trigger, "missedcall") {
@@ -982,12 +982,12 @@ templ DraftsPanel(props DraftsPanelProps) {
 				<footer class="wp-drafts-foot">
 					for _, frozen := range props.Drafts.Frozen {
 						<p class="wp-drafts-note">
-							⚠ { contactLabel(props.CRM, frozen.Contact) }: { T(props.Lang, "drafts.frozen") } · { frozen.Reason }
+							⚠ @crmDraftContact(props.CRM, frozen.Contact, props.Lang): { T(props.Lang, "drafts.frozen") } · { frozen.Reason }
 						</p>
 					}
 					for _, suppressed := range props.Drafts.Suppressed {
 						<p class="wp-drafts-note">
-							⊗ { contactLabel(props.CRM, suppressed.Contact) }: { T(props.Lang, "drafts.suppressed") } ({ suppressed.Keyword })
+							⊗ @crmDraftContact(props.CRM, suppressed.Contact, props.Lang): { T(props.Lang, "drafts.suppressed") } ({ suppressed.Keyword })
 						</p>
 					}
 				</footer>

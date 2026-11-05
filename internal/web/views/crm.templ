@@ -34,6 +34,23 @@ templ remoteLabel(number string, contacts CRMContacts, lang Lang) {
 	<strong class="wp-thread-remote">@crmNameLink(number, contacts, lang)</strong>
 }
 
+// crmDraftContact is a draft's caller label: the CRM-served name LINKED
+// through crmNameLink (with the dialable number kept beside it — the
+// draft's whole point is who to call back), the contactLabel ladder
+// otherwise. Zero CRM config renders byte-identically to the
+// pre-integration product, so the drafts panel gains an affordance only
+// when the deployment can actually serve one. Draft contacts are keyed
+// WITHOUT the leading + (the drafts store's own vocabulary), which is why
+// this component exists beside remoteLabel instead of reusing it.
+templ crmDraftContact(contacts CRMContacts, contact string, lang Lang) {
+	if crmProfileURL(contact, contacts) != "" {
+		@crmNameLink(contact, contacts, lang)
+		<span class="wp-crm-muted">+{ contact }</span>
+	} else {
+		{ contactLabel(contacts, contact) }
+	}
+}
+
 // crmContextItem is the ONE home of a context item's shape: a muted uppercase
 // key, the value, and an optional muted tail. Four hand-kept copies of this
 // markup would drift the day one of them gains an attribute, and the detector
