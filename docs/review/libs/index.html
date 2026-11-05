@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>webphone × LarsArtmann stack — 19-library utilization audit (2026-11-04)</title>
+    <title>webphone × LarsArtmann stack — 19-library utilization audit (2026-11-04 · currency 2026-11-05)</title>
     <style>
       /* =========================================================================
          BAUHAUS LIGHT — Editorial template
@@ -948,6 +948,10 @@
             families average <strong>76/100</strong> at audit time (79 after the closeout adoptions landed the same day); the audit found <strong>one genuine
             correctness gap</strong> (blob durability, LANDED 2026-11-04), <strong>one standing finding from the
             2026-09-24 audit</strong> (MaxBodySize, LANDED 2026-11-04), and a handful of cheap wins.
+            Currency refresh 2026-11-05: the templ-wave train landed the day after the audit
+            (templ v0.3.1100, go-sse v0.7.0, templ-components v1.27.0, loginpage v4.16.0,
+            cqrs-htmx v4.16.0, usermgmt v4.19.0, go-health v0.10.0, go-health-dashboard v0.13.2) —
+            every scored family is now at its upstream latest; scores are rubric-bound and unchanged.
           </p>
           <div class="callout callout-amber">
             <strong>The bottom line</strong>
@@ -982,7 +986,7 @@
             movement annotations record direction, not precision. Daemon commits after the
             audit stamp move <code>go.mod @ main</code> pins without moving these rows — the
             verdicts cite source shapes, not commit hashes; re-rendered at the 2026-11-04
-            closeout close.</em>
+            closeout close, currency re-verified 2026-11-05 (the templ-wave train).</em>
           </p>
           <div class="table-wrapper" role="region" aria-label="Per-library adoption scorecard" tabindex="0">
             <table class="compare">
@@ -997,15 +1001,15 @@
                 </tr>
               </thead>
               <tbody>
-                <tr><th scope="row"><a href="cqrs-htmx.md">cqrs-htmx</a></th><td>direct ×5</td><td>v4.15.0 / ≥ pin</td><td class="yes">100</td><td>Affirmed at the round-3 ceiling; setup stays rejected; the bounded-AuditLog ask shipped upstream (issue #32 closed 2026-10-28, bound in pin v4.18.0)</td></tr>
-                <tr><th scope="row"><a href="go-health-dashboard.md">go-health-dashboard</a></th><td>direct</td><td>v0.13.0 / v0.13.0</td><td class="yes">88</td><td>Deep wiring; the auth seam (<code>WithMiddleware</code>) is the one open decision; v0.13.0 tagged by the closeout train (upstream tag was missing)</td></tr>
+                <tr><th scope="row"><a href="cqrs-htmx.md">cqrs-htmx</a></th><td>direct ×5</td><td>v4.16.0 / v4.16.0</td><td class="yes">100</td><td>Affirmed at the round-3 ceiling; setup stays rejected; the bounded-AuditLog ask shipped upstream (issue #32 closed 2026-10-28, bound in pin v4.19.0); the 2026-11-05 templ-wave train landed root v4.16.0 + usermgmt v4.19.0 + loginpage v4.16.0</td></tr>
+                <tr><th scope="row"><a href="go-health-dashboard.md">go-health-dashboard</a></th><td>direct</td><td>v0.13.2 / v0.13.2</td><td class="yes">88</td><td>Deep wiring; the auth seam (<code>WithMiddleware</code>) is the one open decision; v0.13.0 tagged by the closeout train (upstream tag was missing), v0.13.2 landed 2026-11-05 with the templ-wave</td></tr>
                 <tr><th scope="row"><a href="httputil.md">httputil</a></th><td>direct</td><td>v1.8.0 / v1.8.0</td><td class="yes">95</td><td>Configured, not defaulted; MaxBodySize adopted 2026-11-04 (14 route mounts; two ruled one-home funnels)</td></tr>
-                <tr><th scope="row"><a href="go-health.md">go-health</a></th><td>direct</td><td>v0.9.0 / v0.9.0</td><td class="yes">100</td><td>Injector-discovered probe, one readiness truth; <code>CoerceValidUTF8</code> wave landed 2026-11-04</td></tr>
-                <tr><th scope="row"><a href="go-cqrs-lite.md">go-cqrs-lite</a></th><td>direct ×4</td><td>v4.20.0 / v4.20.0</td><td class="yes">83</td><td>metaengine IS the read-model substrate; adopt <code>EnforceCap</code> for the trim caps</td></tr>
-                <tr><th scope="row"><a href="go-sse.md">go-sse</a></th><td>direct</td><td>v0.6.2 / v0.7.0</td><td>67</td><td>Thin by composition (cqrs-htmx wraps it); ssetest pins the wire contract; v0.7.0 bump BLOCKED on the cqrs-htmx templ-wave (2026-11-04 errata)</td></tr>
+                <tr><th scope="row"><a href="go-health.md">go-health</a></th><td>direct</td><td>v0.10.0 / v0.10.0</td><td class="yes">100</td><td>Injector-discovered probe, one readiness truth; <code>CoerceValidUTF8</code> wave landed 2026-11-04, v0.10.0 (tooling/docs delta) 2026-11-05</td></tr>
+                <tr><th scope="row"><a href="go-cqrs-lite.md">go-cqrs-lite</a></th><td>direct ×4</td><td>v4.20.0 / v4.20.0</td><td class="yes">83</td><td>metaengine IS the read-model substrate; <code>EnforceCap</code> RULED NO-GO (engine cap is collection-GLOBAL, webphone's are per-OWNER — one owner's flood would evict another's rows); hand loops stay</td></tr>
+                <tr><th scope="row"><a href="go-sse.md">go-sse</a></th><td>direct</td><td>v0.7.0 / v0.7.0</td><td>67</td><td>Thin by composition (cqrs-htmx wraps it); ssetest pins the wire contract; the BLOCKED v0.7.0 bump LANDED 2026-11-05 once the cqrs-htmx templ-wave published (score stays rubric-bound — replay remains a deliberate MISS)</td></tr>
                 <tr><th scope="row"><a href="httputil-server-timing.md">httputil/server_timing</a></th><td>direct</td><td>v1.0.3 / v1.0.3</td><td>67</td><td>Env-gated edge middleware exactly as designed; named spans unused (do not pre-instrument)</td></tr>
                 <tr><th scope="row"><a href="go-error-family.md">go-error-family</a></th><td>direct</td><td>v0.12.0 / v0.12.0</td><td>64</td><td>The error culture&rsquo;s backbone; Conflict family and retry-policy consumption unused</td></tr>
-                <tr><th scope="row"><a href="templ-components.md">templ-components</a></th><td>direct ×3</td><td>v1.26.0 / v1.26.0</td><td>50</td><td>Deepening on deliberate boundaries; four cheap wins (StatusBadge, SimpleEmptyState, Alert, PageHeader)</td></tr>
+                <tr><th scope="row"><a href="templ-components.md">templ-components</a></th><td>direct ×3</td><td>v1.27.0 / v1.27.0</td><td>50</td><td>Deepening on deliberate boundaries; four cheap wins (StatusBadge, SimpleEmptyState, Alert, PageHeader); v1.27.0 landed 2026-11-05 with the templ-wave (tw.css rebuilt)</td></tr>
                 <tr><th scope="row"><a href="go-etag.md">go-etag</a></th><td>direct (entitytag + server)</td><td>v0.6.1 / v0.6.1</td><td class="yes">adopted</td><td>assets conditional-GET rides <code>entitytag</code> (RFC-weak comparison) AND the server middleware mounted on <code>/openapi.json</code> + <code>/manifest.webmanifest</code> (304s; the mount is the Skip set); root v0.7.0 tag excludes the submodule — drift filed upstream</td></tr>
                 <tr><th scope="row"><a href="go-retry.md">go-retry</a></th><td>direct</td><td>v0.9.0 / v0.9.0</td><td class="yes">adopted (fit half)</td><td>LANDED 2026-11-04: reconnect loops ride <code>ComputeDelay</code> jitter (hard-capped) + the Rejection-stops-loudly gate; <code>retry.Do</code> still declined (reconnect loops cannot exhaust)</td></tr>
                 <tr><th scope="row"><a href="go-branded-id.md">go-branded-id</a></th><td>direct (adjacent)</td><td>v0.7.1 / v0.7.1</td><td class="yes">74</td><td>Adjacent audit 2026-11-04: six brands + raw-value JSON wire + linter clean; the 09-24 gaps re-ruled DELIBERATE (parseID owns prefix/shape/Corruption; Scan would mint ids from unvalidated strings)</td></tr>
@@ -1134,15 +1138,17 @@
           </div>
 
           <div class="issue issue-nice" id="issue-5">
-            <span class="severity severity-important">1 of 3 LANDED 2026-11-04 &middot; 1 BLOCKED &middot; 1 LANDED same day</span>
+            <span class="severity severity-important">3 of 3 LANDED (2026-11-04 + the 2026-11-05 templ-wave)</span>
             <h3>Close the three version gaps</h3>
-            <div class="where">go-health v0.8.1→v0.9.0 LANDED (+dashboard v0.13.0, tag completed upstream) · go-sse v0.6.2→v0.7.0 BLOCKED on the cqrs-htmx templ-wave · go-etag LANDED BOTH halves (entitytag swap + server middleware mount: <code>/openapi.json</code> + manifest answer bodyless 304s; submodule stays v0.6.1 — the root v0.7.0 tag excludes it)</div>
+            <div class="where">go-health v0.8.1→v0.9.0→v0.10.0 LANDED (+dashboard v0.13.0→v0.13.2, tag completed upstream 2026-11-04) · go-sse v0.6.2→v0.7.0 LANDED 2026-11-05 (templ-wave published: templ v0.3.1100 + templ-components v1.27.0 + loginpage v4.16.0 + cqrs-htmx v4.16.0 / usermgmt v4.19.0) · go-etag LANDED BOTH halves (entitytag swap + server middleware mount: <code>/openapi.json</code> + manifest answer bodyless 304s; submodule stays v0.6.1 — the root v0.7.0 tag excludes it)</div>
             <p>
               go-health v0.9.0&rsquo;s <code>CoerceValidUTF8</code> was the substantive one and
               landed (probe JSON can never break on invalid UTF-8). The go-sse v0.7.0 bump was
-              attempted and REVERTED: its templ v0.3.1100 requirement breaks
-              cqrs-htmx/loginpage v4.13.0, which has no compatible release — reopen when the
-              cqrs-htmx wave publishes (errata in go-sse.md). The go-etag finding closed fully
+              attempted and REVERTED 2026-11-04: its templ v0.3.1100 requirement broke
+              cqrs-htmx/loginpage v4.13.0, which had no compatible release. The reopen trigger
+              FIRED 2026-11-05 — loginpage v4.16.0 published with templ ≥ v0.3.1100 — and the
+              prescribed ONE train landed the same day (all gates green; errata in go-sse.md
+              carries the resolution). The go-etag finding closed fully
               the same day: the <code>etag.New</code> middleware now serves the generated
               contract with bodyless 304 revalidation (go-etag.md § Ruling).
             </p>

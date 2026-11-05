@@ -5,71 +5,23 @@ through (docs-health: shipped work moves to CHANGELOG / FEATURES — one home
 per fact). Long-shot ideas and owner calls live in ROADMAP.md; every row
 cites its source report in Evidence.
 
-Last sweep: 2026-11-05 (TODO-execution session, opened on a RED main): the
-concurrent session's templ regen (8565e877) used a compiler stamped
-"v0.3.1114" that does NOT exist upstream and emits `templruntime.NewAttributeExpression`,
-which go.mod's templ v0.3.1070 lacks — every view failed to compile; healed by
-regenerating with the PINNED devshell compiler (v0.3.1020, the 97a3656d precedent).
-Executed: F89 History review-state SSE nudge SHIPPED end-to-end (new
-`domain.ReviewSaved` event — the readmodels fact is NOT an Event, so the closed
-event set grew a slim notification shape; Notifier policy case + payload-less
-`review` SSE event + `api.Deps.Notify` seam + History panel `hx-trigger="sse:review"`
-with filter-preserving include; pending+present ladder pinned). CRM data-mesh
-deferred tail #1 SHIPPED (voicemail caller + the three drafts-panel labels ride
-`crmNameLink`; zero-config byte-parity pinned) — plus the withheld-name `Name ()`
-quirk found and fixed on the way. Verified ALREADY-SHIPPED at HEAD: ai-phone L8
-(lag stamp + once-per-streak warn, `transcribe.test.mjs` pins it) — row deleted.
-Prior sweep: 2026-10-29 (ai-phone deep dive — external prior art read at source): the
-docs-versus-code configuration pin SHIPPED (`internal/config/docpin_test.go`: documented keys must
-exist, every key must be documented, config-owned defaults must match) and it immediately documented
-EIGHT undocumented keys (`crm.token_file` + the four `matrix.*` + three `signal.*`); generation-closing
-for live transcripts SHIPPED (late segment saves but no longer announces or re-creates a settled
-call's log, two island specs); a pre-existing island-lint failure in the dial gate healed; the report
-and its five open actions live in the new section below.
-Prior sweep: 2026-10-28 EVENING (multi-actor whole-list session): the morning red-CI fix
-(clone groups: draftMeta helper + panel-audit closure; build-tw-css cold-cache heal; CI verified
-green on 2ce711c) · **D1 line switcher SHIPPED** (POST /api/session/switch, extensions wire
-field, JS-created #wp-ext-switch, 6+5 pins) · **#7 redial cooldown COMPLETED** (island leg +
-last_at/window verdict fields + e2e pins + docs; the morning train had landed the seam) ·
-**D5 durable agent-audit read model SHIPPED** (readmodels agent_audit + dual-write + Settings
-Recent-agent-actions section, error codes registered same-commit) · **#9 residual verified
-FULLY SHIPPED at HEAD** (stale row corrected) · **row 6 baseline verified HEALTHY** (74/78
-live; the "matched nothing" observation was pre-re-establishment; 7 new findings left for the
-governance triage cadence) · **D3 kept security-review-gated with a ready v1 design sketch**;
-D2 stays stack-side (webphone's age substrate already landed).
-Prior sweep: 2026-10-28 (whole-list execution session, concurrent with the dialer train):
-whitespace-drift formatter adjudication + `__wpClock` clock seam + branching-flow
-triage (36 reasoned nolints + fresh 78-entry governed baseline) SHIPPED · advisory
-tw-freshness CI lane + drifted artifacts rebuilt SHIPPED · chat lane v2 (compose-new
-by address shape + matrix m.read receipts) SHIPPED · catalog cross-link
-(specifications frontmatter + spec files in the export tree) SHIPPED · fleet ask
-FILED as pma#348 (verified at source) · cqrs-htmx M12/M13/M14 closed as
-ALREADY-SHIPPED upstream (issue #32 + e7b62cd9 ring buffer; usermgmt README §
-Projection readiness; crush-config a9aeb2a — no duplicates filed) · dial-code
-registry healed (the concurrent train's split registration) · KMP spike DEFERRED
-(live concurrent call-stack train in webphone-android — Gradle surgery would
-collide; Tier-0 may-stay-unstarted by its own plan).
-Prior sweep: 2026-10-27 (multi-call dock + agent-UX SUPERB train executed end-to-end: M1–M14 + M16–M18 shipped, tails recorded below) (whole-list execution session: the unpushed go.sum
-daemon commit triaged canonical (`go mod tidy` no-op; vendorHash insensitive;
-pushed green) · stale rows closed with evidence re-verified at HEAD (go-appkit
-flight recorder + latency metrics SHIPPED, branching-flow unskip EXECUTED,
-F74/F85/F86 closed, catalog push confirmed on origin/main, the stale passkey
-gopls handoff retired — LSP clean) · push-seam Settings surface SHIPPED
-(Ring-while-closed row + read-only device list, conditional, token never
-rendered) · ASR #13 saved-to-History affordance + #21 whisper.cpp
-`/inference` provider variant SHIPPED · metaengine v4.19.0→v4.20.0 bump train
-EXECUTED (codec contract read at source, capability assertions held, all
-gates green incl. KVM drill, vendorHash re-pinned, asyncapi regenerated
-content-inertly) · the seven catalog-exporter candidates FILED upstream
-(go-cqrs-lite #91–#97, premises source-verified, dupes searched, drafts in
-docs/drafts/catalog-exporter-2026-10-25/)) · GitHub-issue review session:
-all five open issues handled — #5 daemon-audit flag closed as healed
-(flagged commits rewritten away in the day's rebase, tree canonical at
-HEAD), #6–#8 dialer-adoption claims verified with corrections posted and
-triaged into the new section below, #9 Kith switch-on corrected (no crm
-module options exist; webphone slice scoped below)).
-Prior sweep: 2026-10-18 (round-5 resumed execution closed the data-model, metaengine, ASR, and process tails: metaengine row CLOSED — G3 shipped via v2.9.0 (`0f1031d` verified in-tag), F019 Volume hints landed on all five query declarations, F026 adjudicated NOT-DO (no cursor pagination at HEAD to cache); series-3 harvest row executed via round-5 E9–E11; ASR hardening/polish/test-debt bullets closed (#22/#23/#37/#39–#44/#47/#5 + #11/#12); island D-train executed (ef29ea9); module-cache janitor landed + live-swept; upstream templ-components #27 + branching-flow #9/#15/#16 verified ALREADY-FILED-COMPLETED — no duplicate filings; go-modularize §f 1–40 annotated with routing verdicts; carve row LOC refresh 4,056 wiring / 5,204 tree, two methods agree).
-Prior sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList adoption, the first art-dupl `-t 1` deep sweep + baseline + CI dup-gate, the daemon dep-guard commit hook + push-stall watchdog, and ASR test debt #32/#33/#34/#36/#38 — rows updated below; still open from that plan: voicemail transcribe-button test #37, 429-combined-load #5, ASR retry/backoff + toast #43/#44, the docs cluster, the branching-flow unskip re-triage). Same-day prior sweep (SUPERB unified-auth train tails harvest: the 10-52 report's non-gated (f) items executed same-session — stack suite asserts + module-mirror eval check + docs; the owner-gated T13/T15 cluster, the three owner questions, and the hardening tail row below are what remains; 06-55 residuals verified against stack code and routed). Prior sweep: 2026-10-11 (branching-flow sitting harvest: all five dedup open owner calls ratified+recorded — `-t 1`/zero/upstream-FP-filing, settingsRow→ADOPT `display.DefinitionList`, registry=ONE home, quarterly suppressed-set audits, CRM/Paperless routed upstream; new section below + branching-flow#8/#9 filed + the stale branching-flow NO-nolint AGENTS note corrected). Prior sweep: 2026-10-08 (SUPERB ASR train M7 harvest: 16-54/18-15 §f + plan remainders folded into the ASR-follow-ups row below; visual-harness row refreshed to the 18-shot matrix). Prior sweep: 2026-10-06 (docs-health v7: 23:22 §f harvest below; the 2026-09 verdict/decision cohort annotated + archived — 11 files; TODO/ROADMAP/FEATURES citation repoints; briefing rows 36–38). Prior sweep: 2026-10-05 (Pareto-plan execution session). Folded then: the 14:50 mixin-review session §f (daemon-commit verification DONE — remote `5a4f9db`, content intact; QMD `get` diagnosis DONE — crush `#3846`, see Standing watches; compose noise-floor DONE — registry sweep log 16:40; mixin/CRM/Paperless/vcard/errorfamily.Join owner calls → briefing rows 29–32); stack CI verdict recorded (RED by 1h timeout); erraudit re-measured early (tier-1/2a/2b = 0/0/0 after 7 reasoned suppressions; boot surfaces re-graded intact). Prior sweep 2026-10-04 (passkey train-tail session; AGENTS-over-cap row removed, tail code-polish executed, boot-contract runbook patched, `890a526` CI re-dispatched).
+Last sweep: 2026-11-05 (hygiene train, assistant): CI-verified the CONCURRENT bump
+train GREEN (go-sse v0.7.0 + templ v0.3.1100 + loginpage v4.16.0 + cqrs-htmx v4.16.0 +
+usermgmt v4.19.0 + go-health v0.10.0 + templ-components v1.27.0; vendorHash re-pinned
+by its session after the named-hash red; full local suite green — its fleet-libs row
+below records the landing and the one residual). Executed this sweep: the retention
+test package (destructive sweeper had zero pins — see the hygiene-train section),
+tracked-artifact untracking (fsprobe + ui-shots-before), and the TODO_LIST truth
+sweep: executed sections DELETED (live-smoke CI, the dock-train M18 + E2E tails, the
+error-agents shipped enumeration, the cqrs-htmx + loginpage tails, the catalog and
+wire-contracts shipped prose, the declarative tier log, gate-recovery, the v2.8.0
+deploy tail — prod verified on v2.9.0, the island-honesty E2E leg — discharged
+2026-10-29, the samber/do tails — folded into /health, the god-package carve record —
+blueprint lives in docs/modularization/, the hub cross-link [x]); contradictions fixed
+at their rows (the #7/#8 header, the ai-phone dangling clause, the catalog
+"push pending" header); the stack-E2E mention sprawl collapsed to its ONE home
+(Cross-repo obligations). Sweep history lives in CHANGELOG + docs/status — this front
+matter no longer carries it (one home per fact, per the rule above).
 
 ## Open tasks
 
@@ -123,8 +75,8 @@ swap, fax badge, 2 empty states) lives in CHANGELOG + the per-library reports �
    v4.16.0 (with cqrs-htmx v4.16.0, usermgmt v4.19.0, go-health v0.10.0) accepts
    templ ≥ v0.3.1100; go.mod carries go-sse v0.7.0 + templ v0.3.1100 +
    templ-components v1.27.0, the views were regenerated, and the vendorHash tail was
-   re-pinned (`T2Q64uGG…`) after the named-hash red. Full local suite green; the CI
-   run on the re-pin commit is the train's last gate (watched by its session).
+   re-pinned (`T2Q64uGG…`) after the named-hash red. Full local suite green AND CI GREEN on the re-pin commit (run
+   42075231935, 2026-11-05) — the train is fully landed.
    Residual, no consumer today: the ssetest `WithLastEventID(sse.EventID)` branding
    ride — schedule it only when a Last-Event-ID replay surface exists (the
    `/events` heartbeat row below is NO-GO until drop-class evidence).
@@ -145,27 +97,27 @@ Every NO-GO/declined/keep-as-is ruling carries a written trigger in its report
 sweep answers "is any trigger fired?" in one read; re-litigate a ruling ONLY when its
 trigger fires, never on a schedule.
 
-| Fires when                                                                                      | Library                | Then                                                                                                                              |
-| ----------------------------------------------------------------------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| metaengine grows a per-group cap (tracked as go-cqrs-lite#114)                                  | go-cqrs-lite           | migrate `trimOwner`/`trimCall`/`trimWindows` in one train                                                                         |
-| usermgmt major bump, or a second identity consumer                                              | cqrs-htmx              | re-run the family audit (adminui re-check)                                                                                        |
-| `internal/domain` gains a second Go consumer                                                    | go-branded-id          | ratified modularization trigger — brands need their own module                                                                    |
-| A client-facing `Idempotency-Key` contract appears on a public API                              | go-idempotency         | re-run the adoption ruling (metaengine DedupStore vs the SDK)                                                                     |
-| A self-managed versioned blob format or event signing requirement                               | go-codec               | `DeterministicCodec` is the entry point                                                                                           |
-| A drop-folder/intake feature, or live-config-reload demand                                      | go-filewatcher         | re-run the NO-GO ruling                                                                                                           |
-| A `Type=notify` conversion, or a unix-socket machine surface                                    | go-daemon, go-appkit   | re-run both rulings together                                                                                                      |
-| A CLI subcommand outputs structured data                                                        | go-output              | adopt the renderer                                                                                                                |
-| A non-systemd target, credential-compliance rule, mutable secrets                               | go-credentials-store   | re-run the NO-GO ruling                                                                                                           |
-| A new file-persisting feature (export, backup, rotation)                                        | go-atomic-write        | ride `WriteWithPerm`/`WriteIfChanged`                                                                                             |
-| A latency investigation the histogram aggregates cannot localize                                | httputil/server_timing | instrument 2–3 named spans behind the same env gate                                                                               |
-| User-visible missed-update reports on flaky mobile links                                        | go-sse                 | ssetest-pinned Last-Event-ID replay                                                                                               |
-| A second retry-shaped loop (e.g. ASR uploads)                                                   | go-retry               | `retry.Do` is the natural home                                                                                                    |
-| A dashboard deployment without the Caddy front                                                  | go-health-dashboard    | re-decide the fence (see the 2026-11-04 fence memo)                                                                               |
-| A read model crossing ~10k rows/owner, or a second engine                                       | go-cqrs-lite           | keyset pagination / failover audit                                                                                                |
-| A second readiness consumer or multi-instance deployment                                        | go-health              | re-run the probe-topology ruling                                                                                                  |
-| A templ-components release with a new status/toast component; the subtitle/✓-chip taste rulings | templ-components       | owner-taste re-litigation, not adoption gaps                                                                                      |
-| The dashboard library swaps its embedded SDK version                                            | go-datastar            | re-verify the /health CSP scope                                                                                                   |
-| The library ships a parse-with-rules hook or a new linter rule                                  | go-branded-id          | migrate the invariant INTO the seam / adopt the rule                                                                              |
+| Fires when                                                                                      | Library                | Then                                                           |
+| ----------------------------------------------------------------------------------------------- | ---------------------- | -------------------------------------------------------------- |
+| metaengine grows a per-group cap (tracked as go-cqrs-lite#114)                                  | go-cqrs-lite           | migrate `trimOwner`/`trimCall`/`trimWindows` in one train      |
+| usermgmt major bump, or a second identity consumer                                              | cqrs-htmx              | re-run the family audit (adminui re-check)                     |
+| `internal/domain` gains a second Go consumer                                                    | go-branded-id          | ratified modularization trigger — brands need their own module |
+| A client-facing `Idempotency-Key` contract appears on a public API                              | go-idempotency         | re-run the adoption ruling (metaengine DedupStore vs the SDK)  |
+| A self-managed versioned blob format or event signing requirement                               | go-codec               | `DeterministicCodec` is the entry point                        |
+| A drop-folder/intake feature, or live-config-reload demand                                      | go-filewatcher         | re-run the NO-GO ruling                                        |
+| A `Type=notify` conversion, or a unix-socket machine surface                                    | go-daemon, go-appkit   | re-run both rulings together                                   |
+| A CLI subcommand outputs structured data                                                        | go-output              | adopt the renderer                                             |
+| A non-systemd target, credential-compliance rule, mutable secrets                               | go-credentials-store   | re-run the NO-GO ruling                                        |
+| A new file-persisting feature (export, backup, rotation)                                        | go-atomic-write        | ride `WriteWithPerm`/`WriteIfChanged`                          |
+| A latency investigation the histogram aggregates cannot localize                                | httputil/server_timing | instrument 2–3 named spans behind the same env gate            |
+| User-visible missed-update reports on flaky mobile links                                        | go-sse                 | ssetest-pinned Last-Event-ID replay                            |
+| A second retry-shaped loop (e.g. ASR uploads)                                                   | go-retry               | `retry.Do` is the natural home                                 |
+| A dashboard deployment without the Caddy front                                                  | go-health-dashboard    | re-decide the fence (see the 2026-11-04 fence memo)            |
+| A read model crossing ~10k rows/owner, or a second engine                                       | go-cqrs-lite           | keyset pagination / failover audit                             |
+| A second readiness consumer or multi-instance deployment                                        | go-health              | re-run the probe-topology ruling                               |
+| A templ-components release with a new status/toast component; the subtitle/✓-chip taste rulings | templ-components       | owner-taste re-litigation, not adoption gaps                   |
+| The dashboard library swaps its embedded SDK version                                            | go-datastar            | re-verify the /health CSP scope                                |
+| The library ships a parse-with-rules hook or a new linter rule                                  | go-branded-id          | migrate the invariant INTO the seam / adopt the rule           |
 
 ### Fax enablement (owner + carrier action, 2026-10-30)
 
@@ -261,6 +213,7 @@ with the verification comment on #6.
    deploy the pbx-artmann train, then verify the acceptance bar (inbound
    caller name; `call_logged` on the contact journal; a revoked token turns
    the Settings tri-state red).
+
 ### ai-phone steal-list (2026-10-29 deep dive — 3 SHIPPED, 4 actions open)
 
 Source + grading: [docs/research/2026-10-29_ai-phone-deep-dive.html](docs/research/2026-10-29_ai-phone-deep-dive.html)
@@ -779,6 +732,7 @@ honest future move — BOTH login modes into an auth package — reopens on the
 next auth-surface change; the blueprint and dependency map live in
 `docs/modularization/2026-10-17_PROPOSAL.html`, the full adjudication in git
 history (the 2026-10-12 + 2026-10-17 entries).
+
 ### Mic pre-warm live verification + gates
 
 **Status:** 🟡 `PARTIALLY DONE` (code + gates green; live ritual owner) · **Priority:** Medium · **Effort:** S
