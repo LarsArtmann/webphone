@@ -1,7 +1,7 @@
 # go-cqrs-lite — library utilization audit
 
 **Verdict:** the 2026-10-15 readmodels train turned this from "0% direct" into the deepest dogfooding in the repo: metaengine IS the read-model substrate, and the catalog lanes (OpenAPI/AsyncAPI/EventCatalog) ride its exporters. **Adoption 83/100 (high)** — 7.5 of 9 applicable rows.
-**Pin:** catalog/v4 v4.12.0, metaengine/v4 v4.20.0, metaengine/sqliteengine/v4 v4.6.0, record/v4 v4.6.2 (all direct; ~21 more /v4 modules indirect via cqrs-htmx) · **Latest (family tag):** cmd/cqrs-lint/v4.20.0 · **Currency:** current at the four required modules · **Status:** direct dep
+**Pin:** catalog/v4 v4.12.0, metaengine/v4 v4.20.0, metaengine/sqliteengine/v4 v4.6.0, record/v4 v4.6.2 (all direct; 29 more /v4 modules indirect via cqrs-htmx — 33 family modules in the resolved graph after the 2026-11-05 templ-wave added `commandlifecycle/v4 v4.3.1`) · **Latest (family tag):** cmd/cqrs-lint/v4.20.0 · **Currency:** current at the four required modules · **Status:** direct dep
 **Audited:** 2026-11-04 · **Prior reports:** [2026-10-24 catalog deep-dive](../../research/2026-10-24_go-cqrs-lite-catalog-deep-dive.html) (0/100 snapshot, gap closed same day — read its Addenda first); [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html) (n/a at the time: zero direct imports — fully superseded).
 
 ## Errata — EnforceCap ruled NO-GO (T07 verification, 2026-11-04)

@@ -181,6 +181,7 @@ More than one Crush session can work this repo at once (tell-tale: uncommitted f
 ## Conventions
 
 - One home per fact: README sells + documents contracts, FEATURES inventories status, TODO_LIST holds open work, CHANGELOG logs history, docs/lessons.md holds war stories, this file keeps the rules.
+- `docs/status/INDEX.md` is GENERATED (`python3 scripts/status-index.py`; `--check` exits 1 when a report is missing from, stale in, or renamed under the index — mutation-proven 2026-11-05) — never hand-edit the index; a report dropped into `docs/status/` is indexed by the next regen.
 - CHANGELOG bar (RATIFIED 2026-10-11): committed code-path changes get an `[Unreleased]` line — polish/one-home trains included (the 10-04 `csrf.js` and 10-06 `authedFetch` lines); test-only and docs-only deltas stay changelog-silent.
 - Cite stable names (ids, function names, option names), not `file:line`.
 - Behavior parity rules ports: port logic verbatim first, refactor in a second, separately-verified change.

@@ -58,7 +58,7 @@ def parsed_rows(text: str) -> list[tuple[str, str]]:
     import re
 
     # The daemon/dprint aligns table cells with padding; match content only.
-    row = re.compile(r"^\|\s*`\[(.+?)\]\([^)]+\)`\s*\|\s*(.+?)\s*\|$")
+    row = re.compile(r"^\|\s*\[`(.+?)`\]\([^)]+\)\s*\|\s*(.+?)\s*\|$")
     rows = []
     for line in text.splitlines():
         m = row.match(line)
