@@ -107,3 +107,9 @@ htmlcov/
 # check_thread_layout() and the per-surface DOM markers.
 /ui-shots/
 /ui-shots-fax-off/
+
+# Regenerable probe/screenshot artifacts (2026-11-05 sweep, same doctrine
+# as the /ui-shots/ budget decision: the shots are eyeball material;
+# the assertions that make them evidence live in scripts/ui-capture.py).
+/buildflow-fsprobe-*
+/ui-shots-before/
