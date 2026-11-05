@@ -170,8 +170,13 @@ func vmCaller(msg pbx.VoicemailMessage, contacts CRMContacts, lang Lang) string 
 			return contact.Name
 		}
 	}
-	if msg.CIDName != "" && msg.CIDName != msg.CIDNumber {
+	if msg.CIDName != "" && msg.CIDName != msg.CIDNumber && msg.CIDNumber != "" {
 		return msg.CIDName + " (" + msg.CIDNumber + ")"
+	}
+	if msg.CIDName != "" {
+		// A withheld caller carries the provider's name with no number:
+		// the bare name is the honest row label, an empty "()" is not.
+		return msg.CIDName
 	}
 	if msg.CIDNumber != "" {
 		return msg.CIDNumber

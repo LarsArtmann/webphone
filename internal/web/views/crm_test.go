@@ -183,15 +183,15 @@ func TestVoicemailRowLinksTheKnownCRMContact(t *testing.T) {
 	// A name the CRM does NOT know (provider CIDName only) keeps the
 	// unlinked ladder — display text with no profile must never anchor.
 	miss := renderComponent(t, VoicemailRow(msg, nil, LangEN, false))
-	if strings.Contains(miss, "<a") || !strings.Contains(miss, "Alice (+441632960961)") {
+	if strings.Contains(miss, "<a class") || !strings.Contains(miss, "Alice (+441632960961)") {
 		t.Errorf("CRM miss must keep the vmCaller ladder without a link:\n%s", miss)
 	}
 
 	anonymous := pbx.VoicemailMessage{UUID: "u2", CIDName: "Withheld", Seconds: 8,
 		AudioURL: "/phone-api/voicemail/1001/messages/u2/audio"}
 	anon := renderComponent(t, VoicemailRow(anonymous, linked, LangEN, false))
-	if strings.Contains(anon, "<a") || !strings.Contains(anon, "Withheld") {
-		t.Errorf("an anonymous voicemail must render the ladder, no link:\n%s", anon)
+	if strings.Contains(anon, "<a class") || !strings.Contains(anon, "Withheld") || strings.Contains(anon, "Withheld ()") {
+		t.Errorf("a withheld caller renders the bare name, no link, no empty parens:\n%s", anon)
 	}
 }
 
