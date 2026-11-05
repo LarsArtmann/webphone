@@ -6,10 +6,10 @@
 
 ## Status
 
-| | |
-|---|---|
-| Modules | `go-etag/server` (middleware + config), `go-etag/entitytag` (tag type, parse/compare) |
-| In webphone | direct: `entitytag` (assets.go) + `server` (server.go route table, TWO mounts) |
+|             |                                                                                       |
+| ----------- | ------------------------------------------------------------------------------------- |
+| Modules     | `go-etag/server` (middleware + config), `go-etag/entitytag` (tag type, parse/compare) |
+| In webphone | direct: `entitytag` (assets.go) + `server` (server.go route table, TWO mounts)        |
 
 ## What the library offers
 
@@ -23,11 +23,11 @@
 
 ## Fit analysis
 
-| Option | What it buys | Cost / risk |
-|---|---|---|
-| **A. Swap `ifNoneMatch` for `entitytag.ParseETagList` + `MatchesIfMatch`** | spec-exact list semantics (`*`, W/ prefix handling) for ~10 deleted lines; zero new runtime surface (module already in graph) | smallest; almost pure win |
-| **B. Full `etag.New` middleware for `/openapi.json` + `/manifest.webmanifest`** | conditional GETs on surfaces that re-serve big-ish static bytes; free 304s for polling clients | must `Skip` session/credential/SSE surfaces — a `Skip` misconfiguration would cache-gate an auth surface; test cost |
-| **C. Client transport** | — | no webphone HTTP-client caching need (server-to-server calls are CRM/paperless/pbx APIs) |
+| Option                                                                          | What it buys                                                                                                                  | Cost / risk                                                                                                         |
+| ------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **A. Swap `ifNoneMatch` for `entitytag.ParseETagList` + `MatchesIfMatch`**      | spec-exact list semantics (`*`, W/ prefix handling) for ~10 deleted lines; zero new runtime surface (module already in graph) | smallest; almost pure win                                                                                           |
+| **B. Full `etag.New` middleware for `/openapi.json` + `/manifest.webmanifest`** | conditional GETs on surfaces that re-serve big-ish static bytes; free 304s for polling clients                                | must `Skip` session/credential/SSE surfaces — a `Skip` misconfiguration would cache-gate an auth surface; test cost |
+| **C. Client transport**                                                         | —                                                                                                                             | no webphone HTTP-client caching need (server-to-server calls are CRM/paperless/pbx APIs)                            |
 
 ## Ruling
 

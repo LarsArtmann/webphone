@@ -81,8 +81,16 @@ test("a failed save keeps the draft and the retry affordance", async () => {
     assert.equal(notePuts.length, 1);
     const keptInput = row.querySelector(".call-note-input");
     assert.ok(keptInput, `status ${status}: the draft stays editable`);
-    assert.equal(keptInput.value, "draft survives the failure", `status ${status}: the draft text survives`);
-    assert.equal(row.querySelector(".call-note-save").disabled, false, `status ${status}: the retry stays open`);
+    assert.equal(
+      keptInput.value,
+      "draft survives the failure",
+      `status ${status}: the draft text survives`,
+    );
+    assert.equal(
+      row.querySelector(".call-note-save").disabled,
+      false,
+      `status ${status}: the retry stays open`,
+    );
   }
   globalThis.fetch = previousFetch;
 });

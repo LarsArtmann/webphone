@@ -6,10 +6,10 @@
 
 ## Status
 
-| | |
-|---|---|
-| Module | `github.com/larsartmann/go-filewatcher` |
-| In webphone | absent (0 references) |
+|             |                                         |
+| ----------- | --------------------------------------- |
+| Module      | `github.com/larsartmann/go-filewatcher` |
+| In webphone | absent (0 references)                   |
 
 ## What the library offers
 

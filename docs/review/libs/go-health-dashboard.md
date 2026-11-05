@@ -6,12 +6,12 @@
 
 ## Status
 
-| | |
-|---|---|
-| Module | `github.com/larsartmann/go-health-dashboard` |
-| Pinned | v0.13.0 direct (bumped 2026-11-04) |
-| Latest release | v0.13.0 (the coordinated go-health v0.9.0 wave) |
-| Usage | internal/app/dashboard.go (construction), internal/server/server.go:641-668 (mount + fence) |
+|                |                                                                                             |
+| -------------- | ------------------------------------------------------------------------------------------- |
+| Module         | `github.com/larsartmann/go-health-dashboard`                                                |
+| Pinned         | v0.13.0 direct (bumped 2026-11-04)                                                          |
+| Latest release | v0.13.0 (the coordinated go-health v0.9.0 wave)                                             |
+| Usage          | internal/app/dashboard.go (construction), internal/server/server.go:641-668 (mount + fence) |
 
 ## What the library offers
 
@@ -27,14 +27,14 @@
 
 ## Gap analysis
 
-| # | Capability area | Status | Evidence / reason |
-|---|---|---|---|
-| 1 | Full wiring (routes, rate limit, trend, datastar, CSS, nonce) | 🟢 Fully leveraged | dashboard.go:46-75 |
-| 2 | `RecommendedCSP` + scoped stylesheet | 🟢 Fully leveraged | dashboard.go:88-92; scripts/build-health-css.sh |
-| 3 | Same-probe aliases (`/health/livez|readyz|startupz`) | 🟢 Fully leveraged | Routes table; one probe instance |
-| 4 | **Auth seam (`WithMiddleware`)** | 🟡 Partial | unused: the surface sits on the open mux behind the Caddy fence (SSO forwardAuth / loopback). The seam exists precisely for in-process fencing; the current posture relies on the reverse proxy. A standalone-binary deployment (no Caddy) would leak check names + version |
-| n/a | Push knobs (intervals, connection caps, drain) | ⚪ N/A | defaults fit a single-operator dashboard; no fleet scale |
-| n/a | `WithWebhook` / `WithMetrics` / `WithIntrospection` / `WithGrouping` / `WithPublicMode` | ⚪ N/A | webhook = push owned by `internal/push`; metrics owned by `/metrics`; introspection/grouping are fleet-scale conveniences |
+| #   | Capability area                                                                         | Status             | Evidence / reason                                                                                                                                                                                                                                                           |
+| --- | --------------------------------------------------------------------------------------- | ------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Full wiring (routes, rate limit, trend, datastar, CSS, nonce)                           | 🟢 Fully leveraged | dashboard.go:46-75                                                                                                                                                                                                                                                          |
+| 2   | `RecommendedCSP` + scoped stylesheet                                                    | 🟢 Fully leveraged | dashboard.go:88-92; scripts/build-health-css.sh                                                                                                                                                                                                                             |
+| 3   | Same-probe aliases (`/health/livez                                                      | readyz             | startupz`)                                                                                                                                                                                                                                                                  |
+| 4   | **Auth seam (`WithMiddleware`)**                                                        | 🟡 Partial         | unused: the surface sits on the open mux behind the Caddy fence (SSO forwardAuth / loopback). The seam exists precisely for in-process fencing; the current posture relies on the reverse proxy. A standalone-binary deployment (no Caddy) would leak check names + version |
+| n/a | Push knobs (intervals, connection caps, drain)                                          | ⚪ N/A             | defaults fit a single-operator dashboard; no fleet scale                                                                                                                                                                                                                    |
+| n/a | `WithWebhook` / `WithMetrics` / `WithIntrospection` / `WithGrouping` / `WithPublicMode` | ⚪ N/A             | webhook = push owned by `internal/push`; metrics owned by `/metrics`; introspection/grouping are fleet-scale conveniences                                                                                                                                                   |
 
 **Score:** rows 1-3 = 1.0 (3.0) + row 4 = 0.5 → **3.5 / 4 = 88/100, very high band.**
 

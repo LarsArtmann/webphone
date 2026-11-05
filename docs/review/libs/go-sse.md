@@ -9,12 +9,13 @@
 ## Errata — bump attempted and reverted (2026-11-04, closeout train)
 
 The v0.6.2→v0.7.0 bump was executed and REVERTED in the same train. The cascade, verified live: v0.7.0's go.mod requires `github.com/a-h/templ v0.3.1100` (webphone pins v0.3.1070); the upgrade compiles go-sse itself but breaks two templ-consuming pins in webphone's graph — `templ-components v1.26.0` (fixed by the already-published v1.27.0) and then **`cqrs-htmx/loginpage v4.13.0`** (`templ.ResolveAttributeValue`/`templ.JoinURLErrs` undefined), for which NO templ-v0.3.1100-compatible release exists: the local cqrs-htmx checkout sits ~55 commits past an UNPUBLISHED v4.16.0 tag. Landing v0.7.0 therefore requires releasing the cqrs-htmx wave first — a fleet release operation outside a consumer currency bump's scope (Verschlimmbessern guard: a boring bump must not drag an unreleased multi-module wave). **Reopen trigger: cqrs-htmx/loginpage publishing a release whose go.mod accepts templ ≥ v0.3.1100** (the v0.7.0 changelog drift — the undocumented templ requirement is exactly the consumer-critical fact — FILED 2026-11-04 as [go-sse#12](https://github.com/LarsArtmann/go-sse/issues/12)) (then: go-sse v0.7.0 + templ-components latest + loginpage in ONE train, plus the ssetest `WithLastEventID(sse.EventID)` branding adjustments — verified the v0.7.0 API shapes: `EventID = brandid.ID[eventBrand, string]`, constructed via `sse.NewEventID`).
-| | |
-|---|---|
-| Module | `github.com/larsartmann/go-sse` (+ `ssetest` test module, `sseparse` parser module) |
-| Pinned | v0.6.2 / ssetest v0.5.0; sseparse v0.2.1 indirect |
+
+|                |                                                                                                                                                                                                          |
+| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Module         | `github.com/larsartmann/go-sse` (+ `ssetest` test module, `sseparse` parser module)                                                                                                                      |
+| Pinned         | v0.6.2 / ssetest v0.5.0; sseparse v0.2.1 indirect                                                                                                                                                        |
 | Latest release | v0.7.0 (local checkout tag) — exported `DefaultSubscriberBuffer`, `EventID` branding at boundaries, ssetest `WithLastEventID(sse.EventID)` (breaking), security docs for parsing untrusted Last-Event-ID |
-| Usage | internal/server/sse.go (prod, `sse.Event` only), sse_test.go + notifier_test.go + hub_bench_test.go (ssetest) |
+| Usage          | internal/server/sse.go (prod, `sse.Event` only), sse_test.go + notifier_test.go + hub_bench_test.go (ssetest)                                                                                            |
 
 ## What the library offers
 
@@ -28,20 +29,20 @@ Root: `Event{Event,ID,Data,Retry}`; generic `Broadcaster[T]` (Subscribe/Subscrib
 
 ## Gap analysis
 
-| # | Capability area | Status | Evidence / reason |
-|---|---|---|---|
-| 1 | Event type + broadcast through the cqrs-htmx wrap | 🟢 Fully leveraged | sse.go:165; the wrap is the documented composition |
-| 2 | ssetest wire-contract pinning | 🟢 Fully leveraged | sse_test.go; the 09-24 audit's standout praise |
-| 3 | **Last-Event-ID replay** (`Replay`/`EventStore`, `LastEventIDFromRequest`) | 🔴 Missed | `rg -in "last-event" internal/` → 0 hits. Deliberate-adjacent: the shell heals a dropped stream by re-fetching nav + open tab (morph-swap design), so missed events are recovered at reconnect. Replay would make reconnects cheap and gap-free; today a busy thread can lose events seen only by the missed push (the next nudge re-fetches, so the window is bounded by event frequency) |
-| n/a | Hub policy (filter hooks, on-drop, buffer sizing) | ⚪ N/A | cqrs-htmx's Broadcaster owns hub policy; webphone's reaper uses `SubscriberCount` |
-| n/a | `Stream`/writers direct use | ⚪ N/A | cqrs-htmx `ServeSSE` owns serving; raw writers would bypass the wrap |
-| n/a | `sseparse` | ⚪ N/A | parser for SSE *consumers*; webphone only produces |
+| #   | Capability area                                                            | Status             | Evidence / reason                                                                                                                                                                                                                                                                                                                                                                          |
+| --- | -------------------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Event type + broadcast through the cqrs-htmx wrap                          | 🟢 Fully leveraged | sse.go:165; the wrap is the documented composition                                                                                                                                                                                                                                                                                                                                         |
+| 2   | ssetest wire-contract pinning                                              | 🟢 Fully leveraged | sse_test.go; the 09-24 audit's standout praise                                                                                                                                                                                                                                                                                                                                             |
+| 3   | **Last-Event-ID replay** (`Replay`/`EventStore`, `LastEventIDFromRequest`) | 🔴 Missed          | `rg -in "last-event" internal/` → 0 hits. Deliberate-adjacent: the shell heals a dropped stream by re-fetching nav + open tab (morph-swap design), so missed events are recovered at reconnect. Replay would make reconnects cheap and gap-free; today a busy thread can lose events seen only by the missed push (the next nudge re-fetches, so the window is bounded by event frequency) |
+| n/a | Hub policy (filter hooks, on-drop, buffer sizing)                          | ⚪ N/A             | cqrs-htmx's Broadcaster owns hub policy; webphone's reaper uses `SubscriberCount`                                                                                                                                                                                                                                                                                                          |
+| n/a | `Stream`/writers direct use                                                | ⚪ N/A             | cqrs-htmx `ServeSSE` owns serving; raw writers would bypass the wrap                                                                                                                                                                                                                                                                                                                       |
+| n/a | `sseparse`                                                                 | ⚪ N/A             | parser for SSE _consumers_; webphone only produces                                                                                                                                                                                                                                                                                                                                         |
 
 **Score:** rows 1-2 = 1.0 (2.0) + row 3 = 0 → **2.0 / 3 ≈ 67/100, moderate band.**
 
 ## Ruling
 
-The thin surface is a composition decision, not neglect — keep it. Two small actions if ever scheduled: (a) bump to **v0.7.0** (EventID branding + ssetest breaking change ride the same train; mechanical), (b) adopt `Replay` + `LastEventIDFromRequest` only if a live-update gap is ever *observed* (the re-fetch design is the written alternative; do not pre-build an event store for it).
+The thin surface is a composition decision, not neglect — keep it. Two small actions if ever scheduled: (a) bump to **v0.7.0** (EventID branding + ssetest breaking change ride the same train; mechanical), (b) adopt `Replay` + `LastEventIDFromRequest` only if a live-update gap is ever _observed_ (the re-fetch design is the written alternative; do not pre-build an event store for it).
 
 **Refresh trigger:** user-visible missed-update reports on flaky mobile links; the cqrs-htmx wrap gaining replay passthrough.
 

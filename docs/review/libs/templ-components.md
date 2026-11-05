@@ -14,10 +14,10 @@
 
 ## Status
 
-| | |
-|---|---|
-| Module family | root + icons + utils (+ datastar/htmx indirect; feedback/navigation/recipes/charts/errorpage present upstream) |
-| Usage | `.templ` surfaces: icons ×24 call sites (16 distinct of 105 constants), display ×15 (Button ×8, EmptyState ×6, DefinitionList ×1), forms ×4, layout.Base ×2, utils.BaseProps ×4 |
+|               |                                                                                                                                                                                 |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Module family | root + icons + utils (+ datastar/htmx indirect; feedback/navigation/recipes/charts/errorpage present upstream)                                                                  |
+| Usage         | `.templ` surfaces: icons ×24 call sites (16 distinct of 105 constants), display ×15 (Button ×8, EmptyState ×6, DefinitionList ×1), forms ×4, layout.Base ×2, utils.BaseProps ×4 |
 
 ## What the library offers
 
@@ -33,19 +33,19 @@ Root: `display` (49 components — badges, cards, charts, tables, tabs, modal/dr
 
 ## Gap analysis
 
-| # | Capability area | Status | Evidence / reason |
-|---|---|---|---|
-| 1 | layout.Base option surface | 🟢 Fully leveraged | both invocations set the deliberate option set incl. NoThemeScript |
-| 2 | display adoption (Button/EmptyState/DefinitionList) | 🟢 Fully leveraged | ×15 sites; matches the adopted verdicts |
-| 3 | icons | 🟢 Fully leveraged | 16/105 pulled on demand — an icon library is pull-as-need, not max-out |
-| 4 | forms | 🟡 Partial | 4 components used; contacts add form, snippet picker and quick-send compose are hand-rolled `<form>` markup |
-| 5 | **Status badges** (`FaxStatusBadge`, `OutboundStatusBadge`, `wp-status` spans) vs `display.StatusBadge`/`Badge` | 🟡 Partial 2026-11-04 | Fax badge adopted (`display.Badge` + tone table; `wp-status-*` fax classes deleted). Messages badge DECLINED: byte-pinned ×5 (incl. the delivered ✓ affordance) and bubble-integrated via `:has()` selectors — see the errata |
-| 6 | **`wp-empty` inline paragraphs** (11 sites at closeout time) vs `display.SimpleEmptyState` | 🟡 Partial 2026-11-04 | 2 TRUE empty states swapped (push devices, snippets); the 9 others ruled un-swappable (4 subtitles, 2 `<code>`-rich, 2 id-pinned, 1 role+class capability notice) — see the errata for the per-site triage |
-| 7 | **errorBanner/ErrorPanel** vs `feedback.Alert`/`InlineError` | 🔵 DECLINED 2026-11-04 | `.wp-error` IS the htmx responseHandling selector (pinned in server_test.go:391 + literal `class="wp-error"` pins ×2) — the class is the island's error-swap wire contract, not styling; Alert composes classes and changes role/structure. See the errata |
-| 8 | **panelHead** vs `display.PageHeader`/`SectionHeading` | 🔵 DECLINED 2026-11-04 | Already the documented ONE home for all 7 panel headers (no duplication to remove); its class carries contracts: forbidden in SSE fragments (sse_test.go:73) and its h2 is the tab-navigation focus target (shell.js:1444). See the errata |
-| n/a | Avatars (`avatarFor`/`avatarHue`) vs `display.Avatar` | ⚪ N/A | ruled DELIBERATE hand-roll (AGENTS.md: avatars stay, with helper tests) |
-| n/a | `RelativeTime`, `CountBadge`, `errorpage` | ⚪ N/A | ruled REJECTED 2026-09-22 (timestamps are server-formatted with stable classes; 404 must render inside the session shell) — do not re-propose without new evidence |
-| n/a | navigation/recipes/charts/feedback-toasts/datastar/htmx components | ⚪ N/A | no consuming surface: nav is the shell's own bottom bar + rail; toasts are island-owned (`#toasts` aria-live); charts have no product home; datastar ships only via the health dashboard bundle |
+| #   | Capability area                                                                                                 | Status                 | Evidence / reason                                                                                                                                                                                                                                          |
+| --- | --------------------------------------------------------------------------------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | layout.Base option surface                                                                                      | 🟢 Fully leveraged     | both invocations set the deliberate option set incl. NoThemeScript                                                                                                                                                                                         |
+| 2   | display adoption (Button/EmptyState/DefinitionList)                                                             | 🟢 Fully leveraged     | ×15 sites; matches the adopted verdicts                                                                                                                                                                                                                    |
+| 3   | icons                                                                                                           | 🟢 Fully leveraged     | 16/105 pulled on demand — an icon library is pull-as-need, not max-out                                                                                                                                                                                     |
+| 4   | forms                                                                                                           | 🟡 Partial             | 4 components used; contacts add form, snippet picker and quick-send compose are hand-rolled `<form>` markup                                                                                                                                                |
+| 5   | **Status badges** (`FaxStatusBadge`, `OutboundStatusBadge`, `wp-status` spans) vs `display.StatusBadge`/`Badge` | 🟡 Partial 2026-11-04  | Fax badge adopted (`display.Badge` + tone table; `wp-status-*` fax classes deleted). Messages badge DECLINED: byte-pinned ×5 (incl. the delivered ✓ affordance) and bubble-integrated via `:has()` selectors — see the errata                              |
+| 6   | **`wp-empty` inline paragraphs** (11 sites at closeout time) vs `display.SimpleEmptyState`                      | 🟡 Partial 2026-11-04  | 2 TRUE empty states swapped (push devices, snippets); the 9 others ruled un-swappable (4 subtitles, 2 `<code>`-rich, 2 id-pinned, 1 role+class capability notice) — see the errata for the per-site triage                                                 |
+| 7   | **errorBanner/ErrorPanel** vs `feedback.Alert`/`InlineError`                                                    | 🔵 DECLINED 2026-11-04 | `.wp-error` IS the htmx responseHandling selector (pinned in server_test.go:391 + literal `class="wp-error"` pins ×2) — the class is the island's error-swap wire contract, not styling; Alert composes classes and changes role/structure. See the errata |
+| 8   | **panelHead** vs `display.PageHeader`/`SectionHeading`                                                          | 🔵 DECLINED 2026-11-04 | Already the documented ONE home for all 7 panel headers (no duplication to remove); its class carries contracts: forbidden in SSE fragments (sse_test.go:73) and its h2 is the tab-navigation focus target (shell.js:1444). See the errata                 |
+| n/a | Avatars (`avatarFor`/`avatarHue`) vs `display.Avatar`                                                           | ⚪ N/A                 | ruled DELIBERATE hand-roll (AGENTS.md: avatars stay, with helper tests)                                                                                                                                                                                    |
+| n/a | `RelativeTime`, `CountBadge`, `errorpage`                                                                       | ⚪ N/A                 | ruled REJECTED 2026-09-22 (timestamps are server-formatted with stable classes; 404 must render inside the session shell) — do not re-propose without new evidence                                                                                         |
+| n/a | navigation/recipes/charts/feedback-toasts/datastar/htmx components                                              | ⚪ N/A                 | no consuming surface: nav is the shell's own bottom bar + rail; toasts are island-owned (`#toasts` aria-live); charts have no product home; datastar ships only via the health dashboard bundle                                                            |
 
 **Score:** rows 1-3 = 1.0 (3.0) + row 4 = 0.5 + rows 5-8 = 0 → **3.5 / 7 = 50/100, moderate band.**
 

@@ -6,10 +6,10 @@
 
 ## Status
 
-| | |
-|---|---|
-| Module | `github.com/larsartmann/go-output` (multi-module: root table/tree/graph builders + markdown, markup, delimited, serialization, graph, d2, plantuml, daghtml, tree, tui, nom, escape, testhelpers) |
-| In webphone | absent (0 references) |
+|             |                                                                                                                                                                                                   |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Module      | `github.com/larsartmann/go-output` (multi-module: root table/tree/graph builders + markdown, markup, delimited, serialization, graph, d2, plantuml, daghtml, tree, tui, nom, escape, testhelpers) |
+| In webphone | absent (0 references)                                                                                                                                                                             |
 
 ## What the library offers
 

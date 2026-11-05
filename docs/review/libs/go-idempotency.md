@@ -6,10 +6,10 @@
 
 ## Status
 
-| | |
-|---|---|
-| Module | `github.com/larsartmann/go-idempotency` |
-| In webphone | indirect only; **zero imports** |
+|             |                                         |
+| ----------- | --------------------------------------- |
+| Module      | `github.com/larsartmann/go-idempotency` |
+| In webphone | indirect only; **zero imports**         |
 
 ## What the library offers
 

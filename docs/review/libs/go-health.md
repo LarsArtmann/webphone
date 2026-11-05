@@ -6,12 +6,12 @@
 
 ## Status
 
-| | |
-|---|---|
-| Module | `github.com/larsartmann/go-health` |
-| Pinned | v0.8.1 direct |
+|                |                                                                                                                               |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| Module         | `github.com/larsartmann/go-health`                                                                                            |
+| Pinned         | v0.8.1 direct                                                                                                                 |
 | Latest release | v0.9.0 (local checkout tag) — branded `InstanceID`, `CoerceValidUTF8` (successor of `SanitizeResponse`), `StatusSince` rename |
-| Usage | internal/app/app.go (probe construction + lifecycle), internal/server/server.go (livez/startupz fallback) |
+| Usage          | internal/app/app.go (probe construction + lifecycle), internal/server/server.go (livez/startupz fallback)                     |
 
 ## What the library offers
 
@@ -27,18 +27,18 @@
 
 ## Gap analysis
 
-| # | Capability area | Status | Evidence / reason |
-|---|---|---|---|
-| 1 | Injector discovery (`do.HealthcheckerWithContext`) | 🟢 Fully leveraged | app.go:367 |
-| 2 | Critical/non-critical roll-up | 🟢 Fully leveraged | `WithCriticalServices("sqlite","blob-dir")` |
-| 3 | Probe lifecycle + refresh cadence | 🟢 Fully leveraged | dashboard-on ⇒ 1s, else live-eval |
-| 4 | Liveness + startup handlers | 🟢 Fully leveraged | server.go:639-640 |
-| 5 | Readiness serving | 🟡 Partial | Deliberately delegated to `cqrshtmx.ReadinessHandler` for per-check timeouts and the projections leg — documented divergence, not neglect; using go-health here too would create a second readiness truth |
-| 6 | Probe-eval timeout (`WithTimeout`) | 🟡 Partial | unused; per-check budgets live in cqrs-htmx `NamedCheck`; the probe eval itself runs on defaults |
-| 7 | **Response sanitization (`CoerceValidUTF8`, v0.9.0)** | 🟢 Adopted 2026-11-04 | Bumped to v0.9.0; the coercion is applied INSIDE the library at its single serialization seam (handlers.go `writeHealthResponse` → `marshalResponse(CoerceValidUTF8(resp))`), so `/livez`+`/startupz` are fixed with zero webphone-side wiring — webphone never marshals a `health.Response` itself. `/healthz` (cqrs-htmx `ReadinessHandler`) marshals via encoding/json v1, which coerces invalid UTF-8 silently — no v2 500 risk there |
-| n/a | Instance ID / version / boot-time observability | ⚪ N/A | single binary; `/version` + bootreport own identity |
-| n/a | Evaluation hooks / recorders / `ChainRecorders` | ⚪ N/A | the dashboard subscribes internally; no second recorder use case |
-| n/a | `aggregate` / `federation` / `checks` batteries | ⚪ N/A | one process, no federated probes; disk/memory thresholds are a NixOS monitoring concern |
+| #   | Capability area                                       | Status                | Evidence / reason                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| --- | ----------------------------------------------------- | --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Injector discovery (`do.HealthcheckerWithContext`)    | 🟢 Fully leveraged    | app.go:367                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| 2   | Critical/non-critical roll-up                         | 🟢 Fully leveraged    | `WithCriticalServices("sqlite","blob-dir")`                                                                                                                                                                                                                                                                                                                                                                                               |
+| 3   | Probe lifecycle + refresh cadence                     | 🟢 Fully leveraged    | dashboard-on ⇒ 1s, else live-eval                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 4   | Liveness + startup handlers                           | 🟢 Fully leveraged    | server.go:639-640                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| 5   | Readiness serving                                     | 🟡 Partial            | Deliberately delegated to `cqrshtmx.ReadinessHandler` for per-check timeouts and the projections leg — documented divergence, not neglect; using go-health here too would create a second readiness truth                                                                                                                                                                                                                                 |
+| 6   | Probe-eval timeout (`WithTimeout`)                    | 🟡 Partial            | unused; per-check budgets live in cqrs-htmx `NamedCheck`; the probe eval itself runs on defaults                                                                                                                                                                                                                                                                                                                                          |
+| 7   | **Response sanitization (`CoerceValidUTF8`, v0.9.0)** | 🟢 Adopted 2026-11-04 | Bumped to v0.9.0; the coercion is applied INSIDE the library at its single serialization seam (handlers.go `writeHealthResponse` → `marshalResponse(CoerceValidUTF8(resp))`), so `/livez`+`/startupz` are fixed with zero webphone-side wiring — webphone never marshals a `health.Response` itself. `/healthz` (cqrs-htmx `ReadinessHandler`) marshals via encoding/json v1, which coerces invalid UTF-8 silently — no v2 500 risk there |
+| n/a | Instance ID / version / boot-time observability       | ⚪ N/A                | single binary; `/version` + bootreport own identity                                                                                                                                                                                                                                                                                                                                                                                       |
+| n/a | Evaluation hooks / recorders / `ChainRecorders`       | ⚪ N/A                | the dashboard subscribes internally; no second recorder use case                                                                                                                                                                                                                                                                                                                                                                          |
+| n/a | `aggregate` / `federation` / `checks` batteries       | ⚪ N/A                | one process, no federated probes; disk/memory thresholds are a NixOS monitoring concern                                                                                                                                                                                                                                                                                                                                                   |
 
 **Score:** rows 1-4 = 1.0 (4.0) + rows 5-6 = 0.5 (1.0) + row 7 = 1.0 (bumped 2026-11-04) → **6.0 / 6 = 100/100, top band.**
 

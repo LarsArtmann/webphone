@@ -8,16 +8,16 @@ Session scope: one instruction, "review ALL open GitHub issues and fix them". 15
 
 **Tracker: 12 of 15 issues resolved, each with an evidence comment.**
 
-| Issue | Resolution | Evidence anchor |
-|---|---|---|
-| #7 dial cooldown | Closed completed | Shipped 2026-10-28 dial-gate seam; `TestDialGate*`, wiring-parity test, smoke dialgate scenario |
-| #8 AI call review | Closed completed | `dispatchAutoReview` in settleEndedCall; `call_reviews` readmodel; History rendering; the unconfigured-seam-is-visible lesson honored |
-| #6 call dispositions | Closed completed | Island chips, `POST /api/calls/{id}/disposition`, History chip + filter, `crm.crmOutcome` vocabulary bridge pinned |
-| #18 art-dupl red | Closed completed (stale) | Failing run was 2026-10-28; run 41898856490 green end-to-end on 2026-11-04 |
-| #13, #14, #15, #16, #17 | Closed not-planned (duplicates) | literal-`HEAD` era flags that escaped the 209-issue bulk close because they were unlabeled; all point to #230 per that precedent |
-| #230 canonical flag | Closed completed (verdict) | Verified in git: sweep `96087662` carried go-branded-id v0.7.1 + vendorHash re-pin; human train `13c47cf5` landed 4 min later; CI green across both |
-| #21 OAuth2 302 contract | Closed completed + PINNED | Handler unchanged; `TestSSOBeginParksTheAttemptAndRedirects` now also asserts `Referrer-Policy: no-referrer` and `Cache-Control: no-store` |
-| #11 post-call moment | Closed completed + IMPLEMENTED | See the code work below |
+| Issue                   | Resolution                      | Evidence anchor                                                                                                                                     |
+| ----------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| #7 dial cooldown        | Closed completed                | Shipped 2026-10-28 dial-gate seam; `TestDialGate*`, wiring-parity test, smoke dialgate scenario                                                     |
+| #8 AI call review       | Closed completed                | `dispatchAutoReview` in settleEndedCall; `call_reviews` readmodel; History rendering; the unconfigured-seam-is-visible lesson honored               |
+| #6 call dispositions    | Closed completed                | Island chips, `POST /api/calls/{id}/disposition`, History chip + filter, `crm.crmOutcome` vocabulary bridge pinned                                  |
+| #18 art-dupl red        | Closed completed (stale)        | Failing run was 2026-10-28; run 41898856490 green end-to-end on 2026-11-04                                                                          |
+| #13, #14, #15, #16, #17 | Closed not-planned (duplicates) | literal-`HEAD` era flags that escaped the 209-issue bulk close because they were unlabeled; all point to #230 per that precedent                    |
+| #230 canonical flag     | Closed completed (verdict)      | Verified in git: sweep `96087662` carried go-branded-id v0.7.1 + vendorHash re-pin; human train `13c47cf5` landed 4 min later; CI green across both |
+| #21 OAuth2 302 contract | Closed completed + PINNED       | Handler unchanged; `TestSSOBeginParksTheAttemptAndRedirects` now also asserts `Referrer-Policy: no-referrer` and `Cache-Control: no-store`          |
+| #11 post-call moment    | Closed completed + IMPLEMENTED  | See the code work below                                                                                                                             |
 
 **Code: two commits, both verified on origin/main.**
 
@@ -25,6 +25,7 @@ Session scope: one instruction, "review ALL open GitHub issues and fix them". 15
 - `9ea90d06` island: post-call note editor on the ended card (#11). `noteRow` in calls.js renders a draft box over the SAME slot History renders (`PUT /api/calls/{id}/note`), appended unconditionally in morphToEndedCall so a call that never connected gets the identical editor (the dialer's PR #54 edge case). 204 collapses to a saved line; the 409 note-list-full and any failure keep the draft editable and announce. En + de i18n keys, island/style.css block, 3 new tests in `calls-note.test.mjs`, CHANGELOG Added entry, AGENTS.md post-call clause.
 
 **Verification performed.**
+
 - Island suite 286/286 green, run twice (before and after the formatter reflow).
 - `tsc -p . --noEmit` green (the island type gate).
 - Targeted Go test green (`-run TestSSOBegin -count=1`).
@@ -33,6 +34,7 @@ Session scope: one instruction, "review ALL open GitHub issues and fix them". 15
 - Watch-dedup spot-check (the previous session's open thread): zero new daemon-audit issues after 19:44 UTC across five+ watch runs. The sha-resolution + dedup fix holds.
 
 **Deliberate keeps (3 issues left open, with comments).**
+
 - #9: blocked, cross-repo (PBX pki trust + CRM token provisioning live in the stack). Untouched, as documented.
 - #10: narrowed by comment. Audible inbound ring: already shipped (`audio.js`, pinned by `audio.test.mjs`/`ring-queue.test.mjs`). Live-call CRM context panel: still open, needs an island-facing endpoint AND an owner decision on strip contents.
 - #12: premise corrected by comment. "Pure projection over existing SQLite CDR data" has no substrate: CDR rows are fetched live from the PBX API and deliberately unjoined to local verdicts. Real shape is three trains: CDR ingestion readmodel, aggregation readmodel, then the surface (tab vs section is an owner call).
@@ -57,7 +59,7 @@ Session scope: one instruction, "review ALL open GitHub issues and fix them". 15
 
 Nothing destroyed, nothing reverted, no data loss, main was not broken by this session: both commits verified green in every CI lane they touch. Three things deserve the harshest honest light:
 
-1. **#13/#14/#15 (whitespace-drift flags) were closed under #230, a guarded-files canonical, on precedent, without verifying the underlying drift was ever canonicalized.** The 2026-10-28 whitespace-drift rework (formatter reflow acquits) makes the old flags moot as *alarms*, but the actual 20-line and 188-line drifts they named were never re-adjudicated. A `--ref` pass over that era would settle it; I skipped it because the precedent pointed the other way.
+1. **#13/#14/#15 (whitespace-drift flags) were closed under #230, a guarded-files canonical, on precedent, without verifying the underlying drift was ever canonicalized.** The 2026-10-28 whitespace-drift rework (formatter reflow acquits) makes the old flags moot as _alarms_, but the actual 20-line and 188-line drifts they named were never re-adjudicated. A `--ref` pass over that era would settle it; I skipped it because the precedent pointed the other way.
 2. **#230 was closed on presumed delegation.** The doctrine says "verdicts stay human"; I read "fix them" as the owner delegating batch triage and closed with an explicit "owner-delegated" comment. If that reading was too generous, the issue is one reopen away, but the presumption was mine.
 3. **The #11 close cited "starting the next call replaces the card" as pre-existing without a pin.** The acceptance line in the issue asked for it; I leaned on the shipped card lifecycle instead of adding the assertion. That is the one acceptance point closed on trust rather than test.
 
@@ -130,7 +132,7 @@ Ordered roughly by what this session made adjacent. Items 1-8 are direct descend
 
 1. **#230 ratification**: I closed it under an "owner-delegated batch triage" reading of "fix them", but the doctrine says daemon-audit verdicts stay human. Was the delegation reading correct, or do you want it reopened for your own ruling?
 2. **Dispositions without CRM**: the island's verdict chips are `crmEnabled`-gated, yet History renders and filters dispositions regardless of the CRM seam. Should chips render for CRM-off deployments too (making the operator verdict a first-class citizen everywhere), or is the gate the intended scoping?
-3. **Unsaved note drafts on Close**: dismissing the ended card silently discards an unsaved draft (the issue text only promises nothing *already saved* is lost). Ratify the silent discard, or should Close warn or preserve the draft into History?
+3. **Unsaved note drafts on Close**: dismissing the ended card silently discards an unsaved draft (the issue text only promises nothing _already saved_ is lost). Ratify the silent discard, or should Close warn or preserve the draft into History?
 
 ## Session timeline (one line each)
 

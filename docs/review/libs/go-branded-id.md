@@ -19,11 +19,11 @@
 
 ## Fit analysis
 
-| Candidate | What it buys | Why not (yet) |
-|---|---|---|
-| Replace `parseID` with `UnmarshalText` | one less hand function | loses prefix tolerance, shape validation, and the Corruption class — the domain's invariant set, enforced at the one door client ids enter |
-| Ride `Scan`/`Value` in the store | typed SQL boundary | mints ids from unvalidated strings; the current conversion validates every row-read id at the same shape bar |
-| Adopt `Compare`/`Or` | sort/fallback ergonomics | no call site wants them today |
+| Candidate                              | What it buys             | Why not (yet)                                                                                                                              |
+| -------------------------------------- | ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| Replace `parseID` with `UnmarshalText` | one less hand function   | loses prefix tolerance, shape validation, and the Corruption class — the domain's invariant set, enforced at the one door client ids enter |
+| Ride `Scan`/`Value` in the store       | typed SQL boundary       | mints ids from unvalidated strings; the current conversion validates every row-read id at the same shape bar                               |
+| Adopt `Compare`/`Or`                   | sort/fallback ergonomics | no call site wants them today                                                                                                              |
 
 ## Ruling
 

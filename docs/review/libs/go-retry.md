@@ -6,9 +6,9 @@
 
 ## Status
 
-| | |
-|---|---|
-| Module | `github.com/larsartmann/go-retry` |
+|             |                                                                                                                                               |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Module      | `github.com/larsartmann/go-retry`                                                                                                             |
 | In webphone | direct: `internal/chatloop` (`nextDelay` via `ComputeDelay`, the Rejection-stop gate in `Backoff`); consumers: matrix + signal receiver loops |
 
 ## What the library offers
@@ -23,12 +23,12 @@
 
 ## Fit analysis
 
-| Aspect | go-retry | webphone loop | Fit |
-|---|---|---|---|
-| Termination model | bounded attempts (`MaxAttempts`) | unbounded reconnect until ctx cancel | ✗ — a reconnect loop cannot exhaust; `Do` is the wrong shape |
-| Delay computation | `ComputeDelay`: exp + **additive jitter**, Retry-After aware | fixed double with cap; **thundering-herd prone** on shared infra (all sessions reconnect simultaneously after a server restart) | ✓ — the real gap |
-| Retryable classification | `errorfamily.IsRetryable` predicate | logs every error, retries unconditionally | ✓ — free once the errorfamily seams already classify |
-| OnRetry/OnExhausted hooks | yes | inline logging | neutral |
+| Aspect                    | go-retry                                                     | webphone loop                                                                                                                   | Fit                                                          |
+| ------------------------- | ------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Termination model         | bounded attempts (`MaxAttempts`)                             | unbounded reconnect until ctx cancel                                                                                            | ✗ — a reconnect loop cannot exhaust; `Do` is the wrong shape |
+| Delay computation         | `ComputeDelay`: exp + **additive jitter**, Retry-After aware | fixed double with cap; **thundering-herd prone** on shared infra (all sessions reconnect simultaneously after a server restart) | ✓ — the real gap                                             |
+| Retryable classification  | `errorfamily.IsRetryable` predicate                          | logs every error, retries unconditionally                                                                                       | ✓ — free once the errorfamily seams already classify         |
+| OnRetry/OnExhausted hooks | yes                                                          | inline logging                                                                                                                  | neutral                                                      |
 
 ## Ruling
 

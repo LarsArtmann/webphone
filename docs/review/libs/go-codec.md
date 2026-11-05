@@ -6,9 +6,9 @@
 
 ## Status
 
-| | |
-|---|---|
-| Module | `github.com/larsartmann/go-codec` |
+|             |                                                  |
+| ----------- | ------------------------------------------------ |
+| Module      | `github.com/larsartmann/go-codec`                |
 | In webphone | indirect only; **zero imports** in webphone code |
 
 ## What the library offers
@@ -17,12 +17,12 @@
 
 ## Webphone overlap analysis
 
-| Surface | What webphone does | Codec relevance |
-|---|---|---|
-| HTTP JSON DTOs (internal/server/api/*, apidocs) | `encoding/json` | none — deterministic CBOR targets store/signing bytes, not wire APIs |
-| Gateway multipart forms | `go-playground/form` + honest part headers (byte-pinned golden) | none |
-| Engine persistence | metaengine/sqliteengine encodes payloads **through go-codec internally** | transitive benefit already realized: webphone's read-model views and event payloads persist in the engine's canonical encoding without webphone touching the module |
-| Matrix/signal/chat receivers | bespoke JSON against upstream protocols | none — wire compatibility owns the format |
+| Surface                                         | What webphone does                                                       | Codec relevance                                                                                                                                                     |
+| ----------------------------------------------- | ------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| HTTP JSON DTOs (internal/server/api/*, apidocs) | `encoding/json`                                                          | none — deterministic CBOR targets store/signing bytes, not wire APIs                                                                                                |
+| Gateway multipart forms                         | `go-playground/form` + honest part headers (byte-pinned golden)          | none                                                                                                                                                                |
+| Engine persistence                              | metaengine/sqliteengine encodes payloads **through go-codec internally** | transitive benefit already realized: webphone's read-model views and event payloads persist in the engine's canonical encoding without webphone touching the module |
+| Matrix/signal/chat receivers                    | bespoke JSON against upstream protocols                                  | none — wire compatibility owns the format                                                                                                                           |
 
 **No hand-rolled codec exists to replace** — `rg "go-codec|msgp|CBOR" internal/` shows no parallel implementation.
 

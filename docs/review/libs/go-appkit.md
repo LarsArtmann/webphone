@@ -2,17 +2,17 @@
 
 **Verdict:** AFFIRMED — not a dependency and stays that way. The 2026-10-23 audit's per-module ruling stands unchanged; this report re-verifies absence and re-states the ruling without re-litigating. **Adoption: n/a (non-adoption affirmed).**
 **Pin:** none (absent from go.mod; `go-flightrecorder` is the one family module webphone rides DIRECTLY) · **Latest (family tag):** health/v0.3.0 · **Status:** not a dependency
-**Audited:** 2026-11-04 · **Authoritative prior:** [2026-10-23 deep-dive](../../research/2026-10-23_go-appkit-deep-dive.html) (score 77/100 over 14 rows — the score grades the *audit target*, the ruling is DO-NOT-ADOPT; the per-module calls live there and in AGENTS.md).
+**Audited:** 2026-11-04 · **Authoritative prior:** [2026-10-23 deep-dive](../../research/2026-10-23_go-appkit-deep-dive.html) (score 77/100 over 14 rows — the score grades the _audit target_, the ruling is DO-NOT-ADOPT; the per-module calls live there and in AGENTS.md).
 
 ## Re-verification (this tree, 2026-11-04)
 
-| Prior claim | Status |
-|---|---|
-| `core`/`health`/`realtime`/`security`/`cqrs` re-wrap libraries webphone composes directly (httputil, go-health, go-sse, metaengine) | ✅ unchanged — none of those seams moved to appkit |
-| `errorpages` DECLINED — the styled 404 must render inside the session/CSRF shell (`views.NotFoundPanel`), not a standalone minimal page | ✅ unchanged — `h.notFound` contract intact (AGENTS.md § error contract) |
-| `otel`/`docs` solve problems this deployment does not have | ✅ unchanged — no OTel surface in the product |
-| `systemd` (sd_notify needs `Type=notify` + a module change) and `flightrecorder` unadopted | ✅ flight-recorder need is met DIRECTLY by `go-flightrecorder` v0.2.1 (go.mod:25, internal/server/trace.go); `systemd` still unscheduled (see [go-daemon](go-daemon.md) for the sd_notify borderline slice) |
-| Absence from the module graph | ✅ `rg "go-appkit" go.mod` → 0 |
+| Prior claim                                                                                                                             | Status                                                                                                                                                                                                      |
+| --------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `core`/`health`/`realtime`/`security`/`cqrs` re-wrap libraries webphone composes directly (httputil, go-health, go-sse, metaengine)     | ✅ unchanged — none of those seams moved to appkit                                                                                                                                                          |
+| `errorpages` DECLINED — the styled 404 must render inside the session/CSRF shell (`views.NotFoundPanel`), not a standalone minimal page | ✅ unchanged — `h.notFound` contract intact (AGENTS.md § error contract)                                                                                                                                    |
+| `otel`/`docs` solve problems this deployment does not have                                                                              | ✅ unchanged — no OTel surface in the product                                                                                                                                                               |
+| `systemd` (sd_notify needs `Type=notify` + a module change) and `flightrecorder` unadopted                                              | ✅ flight-recorder need is met DIRECTLY by `go-flightrecorder` v0.2.1 (go.mod:25, internal/server/trace.go); `systemd` still unscheduled (see [go-daemon](go-daemon.md) for the sd_notify borderline slice) |
+| Absence from the module graph                                                                                                           | ✅ `rg "go-appkit" go.mod` → 0                                                                                                                                                                              |
 
 ## Ruling
 

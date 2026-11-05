@@ -7,7 +7,7 @@
 One consumer's adjudication record, all with the pinned v0.7.2 `-t 1` (this repo's CI gate):
 
 - 2026-10-23 (chat-networks train): 9 new groups, 5 templ span pairs judged coincidental.
-- 2026-10-27 (CRM train): label-for pair; the sweep-log ruling added: *"if a fifth markup-shape group lands, FILE UPSTREAM (art-dupl short-span matching in `.templ`), do not keep blessing them."*
+- 2026-10-27 (CRM train): label-for pair; the sweep-log ruling added: _"if a fifth markup-shape group lands, FILE UPSTREAM (art-dupl short-span matching in `.templ`), do not keep blessing them."_
 - 2026-10-29 (CRM completion train): 4 markup-shape groups accepted in one sweep.
 - 2026-11-05 (admin-surface train): **10 templ-shape groups in a single landing** — settings-head twins (`admin.templ:86` vs `:110`), chip/muted span pairs, a `formatStamp` tail, `<a` blocks, `if x > 0` conditionals over different fields. Baseline grew 86 → 98 in one train; every group ACCEPT.
 

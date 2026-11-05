@@ -6,12 +6,12 @@
 
 ## Status
 
-| | |
-|---|---|
-| Module | `github.com/larsartmann/httputil/server_timing` (zero-dep module) |
-| Pinned | v1.0.3 direct |
-| Latest release | v1.0.3 |
-| Usage | 1 import site (internal/server/server.go:25), env-gated |
+|                |                                                                   |
+| -------------- | ----------------------------------------------------------------- |
+| Module         | `github.com/larsartmann/httputil/server_timing` (zero-dep module) |
+| Pinned         | v1.0.3 direct                                                     |
+| Latest release | v1.0.3                                                            |
+| Usage          | 1 import site (internal/server/server.go:25), env-gated           |
 
 ## What the library offers
 
@@ -24,11 +24,11 @@
 
 ## Gap analysis
 
-| # | Capability area | Status | Evidence / reason |
-|---|---|---|---|
-| 1 | Edge middleware (env-gated) | 🟢 Fully leveraged | server.go:733; nil-pred-disabled semantics used correctly |
-| 2 | SSE-safe writer integration | 🟢 Fully leveraged | inherited by the chain; SSE compatibility is why this module was chosen over hand-rolling |
-| 3 | **Named spans** (`MeasureServerTiming` in hot handlers: SSE broadcast, sqlite apply, gateway forward) | 🔴 Missed | Only the auto `total` is produced; no handler records a named span, so a debug session sees one number, not a breakdown |
+| # | Capability area                                                                                       | Status             | Evidence / reason                                                                                                       |
+| - | ----------------------------------------------------------------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------- |
+| 1 | Edge middleware (env-gated)                                                                           | 🟢 Fully leveraged | server.go:733; nil-pred-disabled semantics used correctly                                                               |
+| 2 | SSE-safe writer integration                                                                           | 🟢 Fully leveraged | inherited by the chain; SSE compatibility is why this module was chosen over hand-rolling                               |
+| 3 | **Named spans** (`MeasureServerTiming` in hot handlers: SSE broadcast, sqlite apply, gateway forward) | 🔴 Missed          | Only the auto `total` is produced; no handler records a named span, so a debug session sees one number, not a breakdown |
 
 **Score:** rows 1-2 = 1.0 (2.0) + row 3 = 0 → **2.0 / 3 = 67/100, moderate band.**
 

@@ -147,6 +147,7 @@ Honest ranking — nothing catastrophic, three real defects:
 ## f) Up to 50 things we should get done next
 
 **A-rank (audit findings ready to land, impact-ordered):**
+
 1. Adopt go-atomic-write for `blob.Save` (`atomicwrite.Write`; new direct dep → vendorHash
    re-pin ritual rides the same commit per the dependency doctrine).
 2. First VERIFY the blob write/persist ordering, then restate the finding's failure mode with
@@ -178,60 +179,60 @@ Honest ranking — nothing catastrophic, three real defects:
 **B-rank (verification + consistency of THIS audit):**
 18. Run the full gate (buildflow) over the audit's HEAD so the done-bar item is true, not narrowed.
 19. Run `go list -m -versions` for cqrs-htmx + templ-components + the three gapped libs; correct
-    the "latest" column in the affected reports if the proxy disagrees with local tags.
+the "latest" column in the affected reports if the proxy disagrees with local tags.
 20. Verify the `blob.Save` signature claim (content fully in memory) by reading the caller chain.
 21. Check `cqrs-htmx` family→status error mapping vs `errorfamily.HTTPStatus` overlap; annotate
-    go-error-family.md §HTTP with the result.
+go-error-family.md §HTTP with the result.
 22. Add the "adjacent family libs NOT audited" scope note to index.html (go-branded-id,
-    go-flightrecorder, go-paperless, go-sqlitestore, go-datastar).
+go-flightrecorder, go-paperless, go-sqlitestore, go-datastar).
 23. Add score-movement columns (now vs 09-24) to the six reports that have prior scores.
 24. Prefix verify blocks with their run directory in all 19 reports.
 25. Re-run the full 66-command replay after the go-retry.md fix for a clean 66/66 ledger line.
 26. File upstream (verify-before-filing gate first): go-sse CHANGELOG says v0.7.0 "Unreleased"
-    while the tag exists; go-etag tag v0.7.0 has no CHANGELOG section.
+while the tag exists; go-etag tag v0.7.0 has no CHANGELOG section.
 27. Re-check `--muted` exists in the editorial kit's token set (my caption CSS falls back
-    silently if not).
+silently if not).
 
 **C-rank (bookkeeping loops this report owes):**
 28. docs-health HARVEST: move A-rank items 1–17 into TODO_LIST.md (the skill's closing rule).
 29. Watch the daemon commit the three uncommitted files; verify with `git ls-remote` + CI green.
 30. Suggest CHANGELOG convention note: audit/docs trains stay changelog-silent (already the
-    rule; nothing owed this session).
+rule; nothing owed this session).
 
 **D-rank (roadmap fuel — owner calls, not commitments):**
 31. Complete the family audit: go-branded-id (09-24 score 68, "parse hand-rolled" finding
-    possibly still open), go-flightrecorder, go-paperless, go-sqlitestore, go-datastar.
+possibly still open), go-flightrecorder, go-paperless, go-sqlitestore, go-datastar.
 32. Re-audit templ-components adoption trajectory after items 8–10 land (50 → target 65+).
 33. Ask upstream (cqrs-htmx) for a bounded AuditLog read projection — the standing refresh trigger.
 34. server_timing: named spans ONLY when a latency investigation demands them (standing do-not-
-    pre-instrument ruling).
+pre-instrument ruling).
 35. go-sse: Last-Event-ID replay ONLY on observed missed-update reports (standing re-fetch ruling).
 36. go-filewatcher / go-daemon / go-output / go-credentials-store: closed NO-GOs — reopen only
-    via their written triggers (drop-folder intake; Type=notify; data-bearing CLI; non-systemd target).
+via their written triggers (drop-folder intake; Type=notify; data-bearing CLI; non-systemd target).
 37. go-appkit: stays non-dependency; re-open only on the 10-23 triggers.
 38. Fleet-roll: offer this audit's method (report skeleton + replay harness) to sibling repos —
-    owner decision, scope-creep guarded.
+owner decision, scope-creep guarded.
 39. Consider a tiny `scripts/audit-verify.sh` that replays every `docs/review/libs/*.md` verify
-    block from repo root (this session built the harness ad hoc in /tmp).
+block from repo root (this session built the harness ad hoc in /tmp).
 40. AGENTS.md: add the replay-harness command as the audit-series verification recipe.
 
 **E-rank (polish, no urgency):**
 41. index.html sidebar lacks a Scorecard-table anchor link (section `#scorecard-table`).
 42. Screenshot is one tall 594 KB jpg; a hero-crop variant could serve the research README row.
 43. go-cqrs-lite.md: note that `Volume(humanScaleVolume=1)` semantics were agent-reported —
-    re-read `query_config.go` before relying on them.
+re-read `query_config.go` before relying on them.
 44. The indirect pull-in chains in four reports came from checkouts' go.mod + `go mod why -m`;
-    add the `go mod why` output as the canonical citation format for future reports.
+add the `go mod why` output as the canonical citation format for future reports.
 45. Mark in index.html that scores use the 1/0.5/0 rubric with N/A rows excluded (currently only
-    in the appendix prose).
+in the appendix prose).
 46. Consider annotating the 09-24 fleet report as superseded-per-library inline (docs-health
-    ANNOTATE mode), not just via the new reports' citations.
+ANNOTATE mode), not just via the new reports' citations.
 47. `docs/review/` has no README of its own; decide whether the libs/ index is the only door.
 48. Spot-check three random 🟢 rows across reports against source (sampling pass for the series).
 49. Move the /tmp replay harness learnings into the library-deep-dive skill? (upstream skill
-    repo — owner call).
+repo — owner call).
 50. After any of items 1–17 land: update the per-lib report's score + AGENTS.md outcome line in
-    the SAME train (the reports are point-in-time; they must not rot silently).
+the SAME train (the reports are point-in-time; they must not rot silently).
 
 ## g) Questions I can NOT figure out myself
 

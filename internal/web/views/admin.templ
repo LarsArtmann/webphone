@@ -10,7 +10,6 @@ import (
 	"github.com/larsartmann/webphone/internal/store"
 )
 
-
 // AdminPanel is the Admin tab: read-only visibility across EVERY line of
 // the phone system — accounts, numbers, conversations, faxes and calls.
 // It renders only for admin sessions (the server gates route + panel);
@@ -82,7 +81,6 @@ type AdminCDRRow struct {
 templ AdminPanel(props AdminPanelProps) {
 	<section class="wp-panel" id="admin-panel">
 		@panelHead(props.Lang, "tab.admin", "admin.subtitle")
-
 		<h3 class="wp-settings-head" id="wp-admin-users">{ T(props.Lang, "admin.users.title") }</h3>
 		if len(props.Users) == 0 {
 			<p class="wp-empty">{ T(props.Lang, "admin.users.empty") }</p>
@@ -106,7 +104,6 @@ templ AdminPanel(props AdminPanelProps) {
 				</span>
 			</div>
 		}
-
 		<h3 class="wp-settings-head" id="wp-admin-numbers">{ T(props.Lang, "admin.numbers.title") }</h3>
 		if len(props.Numbers) == 0 {
 			<p class="wp-empty">{ T(props.Lang, "admin.numbers.empty") }</p>
@@ -126,7 +123,6 @@ templ AdminPanel(props AdminPanelProps) {
 				</span>
 			</div>
 		}
-
 		<h3 class="wp-settings-head" id="wp-admin-threads">{ T(props.Lang, "admin.threads.title") }</h3>
 		@panelError(props.ThreadsError)
 		if props.ThreadsError == "" && len(props.Threads) == 0 {
@@ -159,7 +155,6 @@ templ AdminPanel(props AdminPanelProps) {
 				</span>
 			</a>
 		}
-
 		<h3 class="wp-settings-head" id="wp-admin-faxes">{ T(props.Lang, "admin.faxes.title") }</h3>
 		@panelError(props.FaxesError)
 		if props.FaxesError == "" && len(props.Faxes) == 0 {
@@ -187,7 +182,6 @@ templ AdminPanel(props AdminPanelProps) {
 				</span>
 			</div>
 		}
-
 		<h3 class="wp-settings-head" id="wp-admin-calls">{ T(props.Lang, "admin.calls.title") }</h3>
 		if props.CDROff {
 			<p class="wp-empty">{ T(props.Lang, "admin.calls.cdrOff") }</p>
@@ -202,7 +196,6 @@ templ AdminPanel(props AdminPanelProps) {
 				@AdminCDRRowView(row, props.Lang)
 			}
 		}
-
 		<h3 class="wp-settings-head" id="wp-admin-transcripts">{ T(props.Lang, "admin.calls.transcripts") }</h3>
 		@panelError(props.TranscriptsError)
 		if props.TranscriptsError == "" && len(props.Transcripts) == 0 {
@@ -276,7 +269,7 @@ templ AdminThread(props AdminThreadProps) {
 		<div class="wp-transcript-wrap">
 			<div class="wp-transcript">
 				if len(props.Messages) == 0 {
-				@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, "admin.threads.empty"), Icon: icons.Inbox})
+					@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, "admin.threads.empty"), Icon: icons.Inbox})
 				} else {
 					@Transcript(props.Messages, props.Lang, false)
 				}
