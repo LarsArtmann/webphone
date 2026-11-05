@@ -855,6 +855,49 @@ func contactLabel(contacts CRMContacts, contact string) string {
 	return "+" + contact
 }
 
+// draftsNote is the ONE home of the drafts footer's note shape: marker,
+// linked contact, state label, and a state-specific tail.
+templ draftsNote(marker string, contacts CRMContacts, contact string, lang Lang, label string, tail string) {
+	<p class="wp-drafts-note">
+		{ marker } @crmDraftContact(contacts, contact, lang): { label }{ tail }
+	</p>
+}
+
+// draftNoteItem flattens the two footer states (frozen, suppressed) into
+// one render list — the two loops were hand-kept siblings until the
+// crmDraftContact rewiring made them token-identical and the detector
+// called the clone; one merged list is the ruling.
+type draftNoteItem struct {
+	marker  string
+	contact string
+	label   string
+	tail    string
+}
+
+func draftNotes(reviews *textagent.Reviews, lang Lang) []draftNoteItem {
+	if reviews == nil {
+		return nil
+	}
+	items := make([]draftNoteItem, 0, len(reviews.Frozen)+len(reviews.Suppressed))
+	for _, frozen := range reviews.Frozen {
+		items = append(items, draftNoteItem{
+			marker:  "⚠",
+			contact: frozen.Contact,
+			label:   T(lang, "drafts.frozen"),
+			tail:    " · " + frozen.Reason,
+		})
+	}
+	for _, suppressed := range reviews.Suppressed {
+		items = append(items, draftNoteItem{
+			marker:  "⊗",
+			contact: suppressed.Contact,
+			label:   T(lang, "drafts.suppressed"),
+			tail:    " (" + suppressed.Keyword + ")",
+		})
+	}
+	return items
+}
+
 // DraftsPanel is the supervised-agent review list: every pending AI
 // draft with Approve / Edit / Discard, its English gloss behind a
 // disclosure (the owner reads PL/DE, the gloss proves understanding),
@@ -980,15 +1023,8 @@ templ DraftsPanel(props DraftsPanelProps) {
 			}
 			if len(props.Drafts.Frozen) > 0 || len(props.Drafts.Suppressed) > 0 {
 				<footer class="wp-drafts-foot">
-					for _, frozen := range props.Drafts.Frozen {
-						<p class="wp-drafts-note">
-							⚠ @crmDraftContact(props.CRM, frozen.Contact, props.Lang): { T(props.Lang, "drafts.frozen") } · { frozen.Reason }
-						</p>
-					}
-					for _, suppressed := range props.Drafts.Suppressed {
-						<p class="wp-drafts-note">
-							⊗ @crmDraftContact(props.CRM, suppressed.Contact, props.Lang): { T(props.Lang, "drafts.suppressed") } ({ suppressed.Keyword })
-						</p>
+					for _, note := range draftNotes(props.Drafts, props.Lang) {
+						@draftsNote(note.marker, props.CRM, note.contact, props.Lang, note.label, note.tail)
 					}
 				</footer>
 			}
