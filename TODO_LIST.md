@@ -73,6 +73,43 @@ Prior sweep: 2026-10-12 (TODO-execution session: settingsRow→DefinitionList ad
 
 ## Open tasks
 
+### 2026-11-05 hygiene train (assistant sweep — tests + docs + repo hygiene)
+
+Executed: the destructive sweeper `internal/retention` (zero pins since plan T25)
+got its test package — a deterministic `sweepOnce` seam plus race-green pins for the
+expired-tenant sweep with REAL file unlinks, the corrupt-path containment, the
+disabled default, and the immediate-first-sweep loop contract (both containment pins
+mutation-proven: they FAIL when the rule is broken). One semantic discovery pinned in
+place: a transcript's retention clock is its ARRIVAL time (`Seq = now` at Append), not
+`StartedAt`. Repo hygiene: the tracked regenerable artifacts untracked
+(`buildflow-fsprobe-2193036538`, `ui-shots-before/` — the same doctrine as the
+/ui-shots/ budget decision). TODO_LIST surgery: executed sections deleted, the
+E2E-mention sprawl collapsed to ONE home (Cross-repo obligations), contradictions
+fixed at their rows.
+
+Deferred engineering findings (each verified at HEAD 2026-11-05; none urgent):
+
+1. **CSP has no violation reporting** (`report-uri`/`report-to` absent from the
+   server.go CSP const) — a live XSS-class event is unobservable. Needs an owner
+   decision on where reports land (a `/csp-report` endpoint + Caddy wiring) before
+   anything is wired.
+2. **`/metrics`, `/version`, `/openapi.json` are fenced only by the module's vhost** —
+   with `caddy.enable = false` they are open to anyone who can reach the port (the
+   server.go comment says "fenced per-location by the module's vhost"; nothing
+   enforces it). A module-level eval-time warning (or a bind-interface default)
+   closes the silent-exposure class.
+3. **The NixOS module's secret-leak guard misses freeform secrets**: it asserts the
+   three typed secret files but not `gateway.webhook_secret` or a TURN secret inside
+   freeform `settings` (those still land in the world-readable store if an operator
+   writes them as literals).
+4. **The templ form-POST surface has no rate bucket**: `/messages/send`, `/fax/send`,
+   contacts import, snippets, flags are unlimited — only the `/api/*` lanes are
+   bucketed. Decide: bucket them or document the session gate as the bound.
+5. **`server.Deps` grows a field per read model** (seven read-model fields, each with
+   a nil-means-503 convention riding every test composition) — an accessor-style
+   collapse (`readmodels.Engine`-shaped) is the refactor candidate for the next read
+   model, not a today change.
+
 ### Fleet-libs closeout residue (2026-11-04, the SUPERB closeout train)
 
 The 2026-11-04 fleet-libs audit's 26-task closeout plan
@@ -82,13 +119,15 @@ day; the residue below is what remains OPEN, with its reopen triggers. The lande
 swap, fax badge, 2 empty states) lives in CHANGELOG + the per-library reports — not here
 (one home per fact).
 
-1. **go-sse v0.7.0 bump train (BLOCKED, one release unblocks it)** — v0.7.0 requires
-   `a-h/templ v0.3.1100`, which breaks `cqrs-htmx/loginpage v4.13.0`; no compatible release
-   exists (the cqrs-htmx local checkout sits ~55 commits past an UNPUBLISHED v4.16.0).
-   Trigger to watch: a loginpage/root cqrs-htmx release whose go.mod accepts templ
-   ≥ v0.3.1100. Then land go-sse v0.7.0 + templ-components latest + loginpage in ONE train
-   (ssetest `WithLastEventID(sse.EventID)` branding + vendorHash tail). Evidence:
-   `docs/review/libs/go-sse.md` § errata.
+1. **go-sse v0.7.0 bump train — TRIGGER FIRED, TRAIN LANDED 2026-11-05**: loginpage
+   v4.16.0 (with cqrs-htmx v4.16.0, usermgmt v4.19.0, go-health v0.10.0) accepts
+   templ ≥ v0.3.1100; go.mod carries go-sse v0.7.0 + templ v0.3.1100 +
+   templ-components v1.27.0, the views were regenerated, and the vendorHash tail was
+   re-pinned (`T2Q64uGG…`) after the named-hash red. Full local suite green; the CI
+   run on the re-pin commit is the train's last gate (watched by its session).
+   Residual, no consumer today: the ssetest `WithLastEventID(sse.EventID)` branding
+   ride — schedule it only when a Last-Event-ID replay surface exists (the
+   `/events` heartbeat row below is NO-GO until drop-class evidence).
 2. **metaengine per-group cap upstream ask — FILED 2026-11-04:
    [go-cqrs-lite#114](https://github.com/LarsArtmann/go-cqrs-lite/issues/114)** —
    EnforceCap is collection-global; webphone's transcript/dial-window caps are
@@ -108,7 +147,6 @@ trigger fires, never on a schedule.
 
 | Fires when                                                                                      | Library                | Then                                                                                                                              |
 | ----------------------------------------------------------------------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------------------------------------------- |
-| cqrs-htmx publishes a release whose go.mod accepts templ ≥ v0.3.1100                            | go-sse                 | ONE train: go-sse v0.7.0 + templ-components latest + loginpage (+ ssetest `WithLastEventID` branding); go-sse#12 tracks the drift |
 | metaengine grows a per-group cap (tracked as go-cqrs-lite#114)                                  | go-cqrs-lite           | migrate `trimOwner`/`trimCall`/`trimWindows` in one train                                                                         |
 | usermgmt major bump, or a second identity consumer                                              | cqrs-htmx              | re-run the family audit (adminui re-check)                                                                                        |
 | `internal/domain` gains a second Go consumer                                                    | go-branded-id          | ratified modularization trigger — brands need their own module                                                                    |
@@ -155,13 +193,6 @@ Verifying the UI after either step: `python3 scripts/webphone-smoke.py
 purchase, no outbound path, no deletion. Record + consequences:
 `docs/planning/2026-10-30_04-15_fax-decision.md`. This section remains
 the re-open recipe; nothing here is scheduled.
-
-### Live smoke in CI — SHIPPED (2026-10-30, plan T6)
-
-The `smoke` job now runs `scripts/webphone-smoke.py` against the freshly
-built binary on every push/PR (loopback-only, self-booting, no PBX
-needed; ~2 min runner time). Dry-run proven locally with the exact CI
-command before landing.
 
 ### Paperless: the invisible seam (capability audit T31, 2026-10-30)
 
@@ -230,15 +261,6 @@ with the verification comment on #6.
    deploy the pbx-artmann train, then verify the acceptance bar (inbound
    caller name; `call_logged` on the contact journal; a revoked token turns
    the Settings tri-state red).
-2. **Stack browser E2E after the UI trains — DONE 2026-10-29 16:05**:
-   re-run against the local tree (`nix build -L .#telephony-browser
-   --override-input webphone path:~/projects/webphone`, stack rev
-   unchanged) with the FULL owed markup set in the tree (disposition
-   filter, CRM tri-state, review dispatch, History review states, dial
-   cooldown chip): `CALL-ESTABLISHED` reached, VM test green. The
-   release-runbook line "a markup change owes a stack E2E re-run" stays
-   as standing policy (M03/F16).
-
 ### ai-phone steal-list (2026-10-29 deep dive — 3 SHIPPED, 4 actions open)
 
 Source + grading: [docs/research/2026-10-29_ai-phone-deep-dive.html](docs/research/2026-10-29_ai-phone-deep-dive.html)
@@ -268,7 +290,7 @@ immediately documented eight previously undocumented keys) and generation-closin
 3. **Detection column in the error contract (L9).** `docs/error-contract.md` answers "what does the
    operator SEE"; ai-phone's failure table also answers "how would anyone KNOW it happened"
    (counters, warm-start timings, a logged line-override). Add a detection column for the quiet
-   classes at the next pass over that document; row 1 of it is the caption lag above.
+   classes at the next pass over that document.
 4. **Caller-perceived latency (L3).** The histogram covers HTTP durations by status class; nothing
    measures dial press → first audible media, or the ASR segment round trip. ai-phone's rule is the
    sharpest phrasing of why that matters: t0 is the last speech, and the silence is INSIDE the
@@ -349,17 +371,6 @@ fixes, the shutdown release-count log, push draft wrap-code pins, errors.AsType,
 Plan + evidence: [docs/planning/2026-10-27_16-04_SUPERB-typescript-and-platform-language-pareto-plan.html](docs/planning/2026-10-27_16-04_SUPERB-typescript-and-platform-language-pareto-plan.html)
 (the plan owns the task count; this row points at it). **Priority:** High · **Effort:** M.
 
-1. **Island type gate (GO — Tier 1)**: JSDoc `// @ts-check` + `tsc --noEmit` + hand-written
-   `types/globals.d.ts` (PBX_CONFIG) and `types/sip.d.ts` (vendored 0.21.2) + a sandbox-safe
-   `island-typecheck` nix check + a progress pin (checked-file set never shrinks, no bare
-   `@ts-ignore`). Served bytes stay IDENTICAL, so no stack browser E2E is owed. T01–T06 + T23 is
-   the scaffold (~4 h); the per-file annotation campaign (T07–T22) is one commit per file.
-2. **Island error-surface conventions (T24) — convention DESIGN only**: the typed rejection shape
-   plus the no-silent-catch rule, worded so the annotations and the error doctrine agree. The
-   runtime half (catch sweep, oxlint gate rules, `error-contract.md` island section) belongs to the
-   sibling plan
-   [docs/planning/2026-10-27_16-05_SUPERB-error-surface-crash-containment-plan.md](docs/planning/2026-10-27_16-05_SUPERB-error-surface-crash-containment-plan.md)
-   (T5/T11/T12); de-overlap recorded in both files.
 3. **KMP protocol-layer spike (CONDITIONAL — T26/T27, `~/projects/webphone-android`)**:
    the codec + digest move to `commonMain` cleanly; `SipEngine` needs its okhttp transport behind
    `expect`/`actual` first (re-estimated at 180 min, not 15). Android stays the ONLY target, then
@@ -381,8 +392,9 @@ UPDATE 2026-10-27 evening: #6 is SHIPPED — typed `domain.Disposition`
 ruling, NOT the dialer's seven-value set), legacy outcome demotion,
 ended-card confirm, `call_logged` verdict travel, history verdict
 filter + badge. #9's typed `crm` NixOS lane, `crm.token_file`, and the
-`/healthz` CRM leg are SHIPPED. #7/#8 remain unstarted. The per-item
-rows keep their original wording for the audit trail.
+`/healthz` CRM leg are SHIPPED. #7 is SHIPPED 2026-10-28 (row 2); #8 is
+MOSTLY SHIPPED (row 3 — the dimensions slice is the open rest). The
+per-item rows keep their original wording for the audit trail.
 
 Owner-filed adoption candidates from the dialer postmortem
 (matthewdonsemail-lab/dialer PRs #20/#54); every gap claim verified against
@@ -548,107 +560,21 @@ journal NO-GO, M19 NO-GO on this host). M1–M14 + M16–M18 shipped across
 agent-mode pill, draft-ready push, call notes with AI prefill, locality
 labels, audit lines). Open tails:
 
-1. **Stack browser E2E re-run** (release-runbook obligation, ~445s
-   budget): any served-markup change owes it; this train touched the
-   calls island + History rows. Owner-runnable from the stack checkout.
-2. **M18 tail — Settings last-N agent-actions row**: needs a durable
-   agent-action read model; the trigger is an operator who needs in-UI
-   history (the `agent <event>` journal line covers audits today).
-3. **M19 re-open trigger — attended transfer**: the stack grows an FS
+1. **M19 re-open trigger — attended transfer**: the stack grows an FS
    lab with an attended-REFER-with-Replaces VM scenario; the island
    delta is small (sketch in
    `docs/research/2026-10-27_attended-transfer-spike.md`).
 
-### Error-agents tooling train (2026-10-26 SUPERB plan — ALL 20 M-tasks SHIPPED same day)
+### Error-agents tooling train (2026-10-26 — SHIPPED; owner calls remain)
 
 Pareto plan: [docs/planning/2026-10-26_10-33_SUPERB-error-agents.md](docs/planning/2026-10-26_10-33_SUPERB-error-agents.md)
-(20 medium / 79 micro tasks, mermaid execution graph; PURE TOOLING — zero
-product code, advisory-first; source: the 2026-10-26 practice scan
-`docs/research/2026-10-26_ai-agent-error-management.html`). SHIPPED, with
-evidence:
-
-1. **P0 — Error-code router** (M1–M2) SHIPPED: `scripts/error-context.py`
-   (`--self-test` 37/37; README troubleshooting one-liner + AGENTS
-   Commands line).
-2. **P0 — Reproduce-first gate** (M3–M5) SHIPPED:
-   `scripts/reproduce-first-check.sh` (`--self-test` 3/3 scenarios) + the
-   advisory `reproduce-first` CI job (`continue-on-error`; blocking flip
-   is a documented later decision).
-3. **P1 — Observers** (M6–M9) SHIPPED: `watch.yml` */15 cron →
-   `main-red-watch.sh` (tracker issue with DRAFT ledger row; `--self-test`
-   8/8) + `daemon-audit.sh` (guarded files + drift via the new
-   `whitespace-drift.sh --ref` mode; `--self-test` 3/3). NO dispatch.
-   First live catch on day one: the drill-era incident class (six daemon
-   commits, zero CI runs, red main ~2.5h) is the ledger row for run
-   40301017699 — exactly what the watcher closes.
-4. **P2 tails** (M10–M20) SHIPPED: `bump-preflight.sh` (verified on two
-   real histories; `--self-test` 4/4), `incident-bundle.sh`
-   (`--self-test` 6/6), the KVM-gated `webphone-error-drill` VM test
-   (built green locally, ~20s VM time), the two gated sketches in
-   `docs/drafts/gated-sketches/` (LLM prose gate, agent dispatch — owner
-   GO recorded as trigger criteria, nothing wired). Plan errata: drill
-   scenarios B/C stay smoke-owned (one home per fact).
-
-REMAINING (owner calls, not tasks): the reproduce-first blocking flip
-(after N clean advisory trains), the two gated GOs, and the daemon
-hook-override fix that lives in the nix-config pma module.
-
-### cqrs-htmx leverage-maximization tails (2026-10-25 SUPERB train — M1–M11 SHIPPED same day)
-
-The critical path is done: identity-train stub tail + vendorHash (un-reds
-main), projections readiness on /healthz, hub Shutdown pre-drain, clone
-detection + auth-audit journal verified live, report re-scored 100/100
-(§07 Addendum). What remains are the optional tails:
-
-1. **Upstream: bounded AuditLog projection ask** (M12) — RESOLVED 2026-10-28
-   without filing: the ask is ALREADY SHIPPED upstream. Issue #32
-   ("AuditLog projection: bound the in-memory entries") existed, and
-   `e7b62cd9` (2026-10-27, on origin/master) implements the ring buffer
-   with cap + eviction + `Dropped()` and no way to re-enable unbounded
-   mode — verified at source, NOT in the pinned usermgmt v4.16.0. Close-
-   out comment posted on #32. Remaining webphone action: bump usermgmt
-   once it tags, then the read-side audit surface unblocks (wire, not
-   file).
-2. **Upstream: usermgmt README pointer** (M13) — RESOLVED 2026-10-28:
-   `usermgmt/README.md` § "Projection readiness (health checks)" already
-   carries the paragraph + the `ReadinessHandler(ProjectionReadinessCheck(svc))`
-   example + the `OnProjectionFailed` twin (landed via the
-   `docs/usermgmt-projection-readiness-pointer` branch, on master). No PR
-   needed.
-3. **Process lessons → crush-config** (M14) — RESOLVED 2026-10-28 as
-   already shipped during the 10-25 train: crush-config `a9aeb2a` carries
-   both rules ("Verify 'exactly N' claims with symbol-level greps" +
-   "Run a cheap build+test baseline at session start").
-4. **loginpage next-tag passive watch** — favicon + NewPageData fixes
-   ride the tag AFTER v4.13.0; bump when it lands, nothing to do now
-   (report finding 5).
-
-Evidence: docs/planning/2026-10-25_19-26_SUPERB-cqrs-htmx-leverage-maximization.md
-(errata filled); docs/research/2026-10-25_cqrs-htmx-deep-dive.html §07.
-
-### loginpage-adoption tail (2026-10-25 train — shipped, two candidates)
-
-The library `/login` page, path rename (`/api/auth/webauthn/login/*`),
-nonce CSP lane, and `login.css` artifact are SHIPPED (CHANGELOG
-[Unreleased]; smoke-verified both modes). Two candidates stay open:
-
-1. **tw.css freshness grep in CI** — SHIPPED 2026-10-28: the advisory
-   `tw-freshness` CI job rebuilds both artifacts via
-   `scripts/build-tw-css.sh` (flake-locked tailwind, go.mod-pinned module
-   sources — byte-stable by construction) and diffs against the
-   committed bytes; both artifacts were rebuilt and committed with the
-   lane (they had drifted behind the agent-UX + review view trains —
-   the lane's first run caught exactly that class). Advisory like
-   reproduce-first (the daemon pushes in-flight view edits before a
-   train's tail rebuilds); flip to blocking after clean trains. Evidence:
-   docs/status/2026-10-25_16-10_loginpage-adoption-build-green.md.
-2. **Forced-theme users see the OS theme on `/login`** — the library
-   ThemeScript follows `prefers-color-scheme` only; the shell's
-   localStorage forced theme does not apply there. Accepted caveat for
-   now (documented in README § Passkey sign-in); revisit only if the
-   owner notices.
-
-**Priority:** Low · **Effort:** S each.
+— all 20 M-tasks shipped the same day (error-code router, reproduce-first
+check + advisory CI job, the two watch.yml observers, bump-preflight,
+incident-bundle, the KVM-gated error-drill VM test, the two gated
+sketches; evidence in the plan + CHANGELOG). REMAINING owner calls: the
+reproduce-first blocking flip (after N clean advisory trains) and the
+two gated GOs (LLM prose gate, agent dispatch — trigger criteria
+recorded in `docs/drafts/gated-sketches/`).
 
 ### Chat networks follow-ups (2026-10-23 train — matrix + signal shipped, session deferred)
 
@@ -669,8 +595,7 @@ Remaining, unscheduled:
   signal-cli systemd unit (nixpkgs 0.14.9, `daemon --socket`, linked-device QR
   bootstrap ritual, 3-month freshness watch) + matrix homeserver choice/config;
   both feed webphone via `settings`/`environmentFile` — no webphone module
-  change required. Served-markup changes (network prefix rows) owe the standing
-  stack browser E2E on the next relock. **Priority:** Medium · **Effort:** M.
+  change required. **Priority:** Medium · **Effort:** M.
 - **Lane v2 fences**: read receipts (matrix `m.read` → delivered) and the
   compose-new-DM affordance are SHIPPED 2026-10-28 (`ParseComposedAddress`
   shape routing + `chatloop.Sink.RemoteRead`; CHANGELOG [Unreleased]). Still
@@ -703,76 +628,23 @@ What remains is the HOST REBUILD plus a browser check that logged-out `/health`
 redirects to the SSO gate and a signed-in operator sees the cards.
 **Priority:** High · **Effort:** S.
 
-### Catalog adoption SHIPPED locally (2026-10-24 — push pending; supersedes the 2026-10-19 inventory-only record)
+### Catalog adoption (2026-10-24 — SHIPPED + pushed 2026-10-25; the hub re-pin is cross-repo)
 
-webphone is now a full federated source of catalog.home.lan:
-`internal/domain/catalog.go` (the four seam events — message.received,
-message.delivery.advanced, thread.flag.changed, fax.advanced — service
-meta, telephony-domain membership, owner lars), a `catalog` CLI
-subcommand (versioned + `-plain` export), catalog/export tests
-(`internal/domain/catalog_test.go`), and `.eventcatalog-hub.json`.
-The 2026-10-19 "inventory-only, an export would fabricate message
-vocabulary" record is superseded by the 2026-10-24 coverage plan: the
-seam events are webphone's real emitted vocabulary, documented AS
-change notifications in their summaries; NO commands are declared
-(the build test asserts zero), so nothing fabricates a CQRS write
-model and no cross-service consumer edges render.
+webphone is a full federated source of catalog.home.lan: the four seam events
+(documented AS change notifications, NO commands declared — nothing fabricates a
+CQRS write model), the `catalog` CLI subcommand, export tests, and
+`.eventcatalog-hub.json` (the 2026-10-19 inventory-only record is superseded).
+`46cc6db` is on origin/main. Remaining leg is CROSS-REPO: the eventcatalog-hub
+re-pin + build (the hub CI clones webphone@main and runs the export; owned by
+the hub/stack session, ritual = webphone-push first, stack re-pin after).
 
-- [x] **Catalog adoption pushed + verified** (2026-10-25): `46cc6db`
-      (the `catalog` command) is on origin/main. REMAINING LEG IS
-      CROSS-REPO: the eventcatalog-hub re-pin + build — the hub CI clones
-      webphone@main and runs the export; ritual unchanged (webphone-push
-      first, stack re-pin after, tri-repo rule). Owned by the hub/stack
-      session, not this repo.
+### Wire contracts (2026-10-24 — SHIPPED; three open rows)
 
-### Wire contracts SHIPPED (2026-10-24 — same catalog universe, the OTHER two lanes)
+The three catalog lanes cover the three real vocabularies (eventcatalog federation
+= seam events, OpenAPI = browser JSON, AsyncAPI = machine-to-machine; the split
+rule lives in [docs/contracts/README.md](docs/contracts/README.md); generation
+evidence in the 16-50 plan + its execution status). Open rows:
 
-The openapi/asyncapi lanes of
-[docs/planning/2026-10-24_16-50_SUPERB-catalog-contracts-plan.md](docs/planning/2026-10-24_16-50_SUPERB-catalog-contracts-plan.md)
-landed the same day (status:
-[docs/status/2026-10-24_19-15_catalog-contracts-execution-status.md](docs/status/2026-10-24_19-15_catalog-contracts-execution-status.md)):
-`/openapi.json` is GENERATED from the handler DTOs via
-go-cqrs-lite/catalog over all eleven session-gated surfaces (the
-hand-written 227-line const is gone; drift test + seam pins keep it
-honest), and `webphone contracts` renders the machine-to-machine lanes
-(five `/hooks/*` types, the `{"provider_ref"}` receipt, five SSE kinds)
-as the committed `docs/contracts/asyncapi.yaml`. The split rule
-(browser JSON→OpenAPI, machine lanes→AsyncAPI, never both) + the
-passkey/SSO conditional-surface note live in
-[docs/contracts/README.md](docs/contracts/README.md). This section
-records the decision the 16-50 plan's M1 gate asked for: ADOPTED by
-ship, extending the eventcatalog supersession above — the three catalog
-lanes (eventcatalog federation, OpenAPI, AsyncAPI) now cover the three
-real vocabularies (seam events, browser JSON, machine-to-machine).
-Remaining tail lives in
-[docs/planning/2026-10-24_19-27_SUPERB-contracts-completion.md](docs/planning/2026-10-24_19-27_SUPERB-contracts-completion.md)
-(freshness gate, upstream exporter filings, android consumption).
-HARVEST 2026-10-24 ~20:05 (the freshness gate + research index + the
-three-catalog ruling SHIPPED since that plan was written):
-
-- [x] **File the seven catalog-exporter candidates upstream — FILED
-      2026-10-25: go-cqrs-lite #91 (response headers), #92 (204 body-schema
-      exemption), #93 (WithParam types), #94 (no fabricated kafka server),
-      #95 (multipart bodies), #96 (operationId dots), #97 (OpenAPI 3.1.0).**
-      Each premise verified at source against the pinned v4.9.0 (file:line
-      cites in the bodies; `caseutil.ToPascal`'s separator set and
-      `validate.go`'s 2xx rule quoted), dupe search over issues AND PRs
-      clean, drafts voice-checked (0 FAIL / 0 WARN) and kept at
-      [docs/drafts/catalog-exporter-2026-10-25/](docs/drafts/catalog-exporter-2026-10-25/).
-      Watch the issues; the local workarounds (typed empty objects, the
-      Retry-After description text, `WithServer("", "")`) retire when the
-      fixes land.
-- [x] **metaengine v4.19.0→v4.20.0 bump train — SHIPPED 2026-10-25.**
-      Executed per the notes' GO recipe: codec contract read at source
-      (`stream_codec.go`: strings as-is / JSON else, `Err` write
-      variants; webphone has ZERO direct stream-codec use — the engine
-      encodes inside the query declarations), readmodels' Open-asserted
-      capabilities held, full suite + race suite + buildflow (exit 0) +
-      format/island/contracts-fresh checks + the KVM backup/restore
-      drill all green, vendorHash re-pinned via the documented rebuild
-      recipe, and the asyncapi.yaml regenerated content-inertly (the
-      shared graph's YAML style flipped; every ref/name identical).
-      go-cqrs-lite/id rode to v4.7.3 with it.
 - [ ] **OWNER-GATED: catalog v4.9.0→v4.10.0 bump** — 213 commits
       (architecture-reference + export-selection features webphone does
       not use; the seven upstream candidates are NOT obviously fixed).
@@ -790,17 +662,15 @@ three-catalog ruling SHIPPED since that plan was written):
       the golden fixture (byte-pinned generated spec). **Priority:** Low
       · **Effort:** S.
 
-### Declarative/DDD model train (2026-10-14 plan — EXECUTED)
+### Declarative/DDD model train (2026-10-14 — EXECUTED; owner calls remain)
 
-**Status:** 🟡 `EXECUTED — trains A/B/C/E DONE 2026-10-14, D DONE 2026-10-18 (island CALL_TRANSITIONS + table-gated hold machine, commit ef29ea9); only owner calls remain` (A: delivery machine, CI green · B: re-adjudicated delivered-by-prior-train, backfills landed — B1.5 resolution-branch fax test, B1.6 P5 annotation, B2.3 README notes · C: AppendToThread + faxMoves/FaxAdvance, C2.5 re-adjudicated against the pinned panel contract (same-status verdicts refresh, dedup stays the seam's job) · E: typed events + `Notifier.Project` projection, memo, docs sweep · D: declarative CALL_TRANSITIONS/applyTransition/viewStateOf in state.js behind the hold machine, sip.js arrivals table-gated with loud refusal warns, 2 new specs) · **Priority:** High · **Effort:** M — full plan + 60-row fine breakdown + execution graph: [docs/planning/2026-10-14_17-15_SUPERB-declarative-ddd-model.md](docs/planning/2026-10-14_17-15_SUPERB-declarative-ddd-model.md).
-
-- **Tier 1% (51%):** DONE — delivery machine as data (`deliveryMoves` + pure `DeliveryAdvance` + `FailureKind` typed; retry literal → `IsRetryable`), byte-parity held.
-- **Tier 4% (64%):** DONE (landed with the series-3 train; verified + backfilled this session) — `gateway.Receipt.Resolution` enum, `identities` key + shared-contact validation at `Load`.
-- **Tier 20% (80%):** DONE — `domain.AppendToThread` invariant fn; `faxMoves` + `FaxAdvance` (replay semantics re-adjudicated: same-status verdicts are legal refreshing moves; inert class = events against the inbound `received` fact).
-- **Tier 100% (partial):** typed domain events + `Notifier.Project` SSE map DONE; DOMAIN_LANGUAGE ratification memo DRAFTED (owner-gated); docs sweep DONE; island `CALL_TRANSITIONS` (D) DONE 2026-10-18 — the stack browser E2E obligation it carried rides the next relock (standing AGENTS rule).
-- **Owner calls minted:** A1.7 out-of-order verdict tightening (recommend: keep today's overwrite); E2 ratify-vs-delete DOMAIN_LANGUAGE.md (memo in the file, ROADMAP cross-linked); g3 Train D sequencing (lean: own fresh session + stack browser E2E).
-
-**Evidence:** `docs/reviews/2026-09-30_data-model-review.html` (three open findings); analysis session 2026-10-14.
+Trains A/B/C/E DONE 2026-10-14, D DONE 2026-10-18 (island CALL_TRANSITIONS +
+table-gated hold machine, `ef29ea9`; delivery machine, typed events +
+`Notifier.Project`, `AppendToThread`/`faxMoves` invariants — evidence in the plan:
+[docs/planning/2026-10-14_17-15_SUPERB-declarative-ddd-model.md](docs/planning/2026-10-14_17-15_SUPERB-declarative-ddd-model.md)).
+Remaining OWNER CALLS: A1.7 out-of-order verdict tightening (recommend: keep
+today's overwrite); E2 ratify-vs-delete DOMAIN_LANGUAGE.md (memo in the file,
+ROADMAP cross-linked); g3 sequencing (lean: own fresh session).
 
 ### SUPERB unified-auth train tails: owner-gated cutover + hardening remainder (2026-10-12 13:45 harvest)
 
