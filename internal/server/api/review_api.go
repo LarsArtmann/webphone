@@ -160,6 +160,15 @@ func (h *Handlers) recordReviewArtifact(owner domain.Extension, callID string, s
 	if err := h.deps.Reviews.Set(context.Background(), owner, callID, state, draftID, text, language, confidence); err != nil {
 		slog.Warn("review: artifact write failed", "error", err, "call", callID,
 			"extension", owner.String(), "state", state.String())
+		return
+	}
+	// The artifact IS the read model: after a successful fold, nudge
+	// the History tab (F89) so an open pending row does not stay stale
+	// until the next manual fetch. The projection (one payload-less
+	// "review" event per save) lives in the Notifier — this site only
+	// reports the fact.
+	if h.deps.Notify != nil {
+		h.deps.Notify(context.Background(), domain.ReviewSaved{Owner: owner, CallID: callID})
 	}
 }
 

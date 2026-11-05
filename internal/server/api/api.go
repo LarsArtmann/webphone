@@ -9,6 +9,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"sync"
 	"time"
@@ -95,6 +96,12 @@ type Deps struct {
 	// DialCooldown is the advisory window length (issue #7). Zero:
 	// the gate route 404s and the island never asks.
 	DialCooldown time.Duration
+	// Notify turns a service-layer fact into the server's SSE
+	// projection (the Notifier — the ONE notification-policy home).
+	// The review job runs detached from any request, so it needs an
+	// explicit callback instead of a response-writer seam. Nil (test
+	// compositions): the job records its artifact without a nudge.
+	Notify func(ctx context.Context, event domain.Event)
 }
 
 // Handlers is the carved JSON surface: one construction per server,

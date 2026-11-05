@@ -53,7 +53,12 @@ func NewNotifier(hubs *ExtensionHubs, messages *store.Messages, faxes *readmodel
 //   - ThreadFlagChanged pushes the list ONLY — the event carries no
 //     thread id on purpose, an empty transcript would wipe the open
 //     conversation;
-//   - FaxAdvanced pushes the fax list.
+//   - FaxAdvanced pushes the fax list;
+//   - ReviewSaved is a payload-less NUDGE on the History tab (the
+//     same pattern as the voicemail/contacts events): the pending
+//     review row a reader has open must not stay stale until the next
+//     manual fetch — the event carries the fact, the panel re-reads
+//     its own store so a pushed payload cannot disagree with a render.
 func (n *Notifier) Project(ctx context.Context, e domain.Event) {
 	switch ev := e.(type) {
 	case domain.MessageReceived:
@@ -64,7 +69,28 @@ func (n *Notifier) Project(ctx context.Context, e domain.Event) {
 		n.messagesChanged(ctx, ev.Owner, domain.ThreadID{})
 	case domain.FaxAdvanced:
 		n.faxesChanged(ctx, ev.Owner)
+	case domain.ReviewSaved:
+		n.reviewChanged(ev.Owner)
 	}
+}
+
+// reviewChanged publishes the payload-less review nudge (F89): the
+// History panel re-fetches its partial via hx-trigger="sse:review".
+// An unparseable owner cannot happen for a fact the store folded, but
+// a silently dropped nudge beats a panic in the notification path.
+func (n *Notifier) reviewChanged(owner domain.Extension) {
+	n.hubs.Publish(owner, sseEventReview, "")
+}
+
+// notifierProject hands the Notifier's projection to consumers built
+// outside the injector (the api JSON surface) with the typed-nil guard
+// kept in ONE place — a test composition's nil Notifier must degrade
+// to "no nudge", never to a panic inside a detached job.
+func notifierProject(n *Notifier) func(context.Context, domain.Event) {
+	if n == nil {
+		return func(context.Context, domain.Event) {}
+	}
+	return n.Project
 }
 
 // messagesChanged pushes a fresh thread list to the extension's tabs

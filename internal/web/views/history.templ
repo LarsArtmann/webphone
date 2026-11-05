@@ -44,7 +44,19 @@ type HistoryPanelProps struct {
 }
 
 templ HistoryPanel(props HistoryPanelProps) {
-	<section class="wp-panel" id="history-panel">
+	<section
+		class="wp-panel"
+		id="history-panel"
+		hx-get="/partials/history"
+		hx-include="#history-panel form.wp-filter"
+		hx-trigger="sse:review"
+		hx-target="#history-panel"
+		hx-swap="outerHTML"
+	>
+		// F89: a saved review nudges this panel (payload-less "review"
+		// SSE event, the voicemail/contacts pattern). The include carries
+		// the live filter form so a background refresh keeps the reader's
+		// active filters instead of resetting them.
 		@panelHead(props.Lang, "tab.history", "history.subtitle")
 		if props.Enabled {
 			// E2: the filter state is URL-addressable — the form pushes its

@@ -436,6 +436,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			Fax:         do.MustInvoke[*fax.Service](i),
 			PhoneAPI:    do.MustInvoke[*pbx.Client](i),
 			Hubs:        do.MustInvoke[*server.ExtensionHubs](i),
+			Notifier:    do.MustInvoke[*server.Notifier](i),
 			Shared:      cfg.Contacts,
 			CRM:         do.MustInvoke[*crm.Resolver](i),
 			ASR:         do.MustInvoke[asr.Provider](i),

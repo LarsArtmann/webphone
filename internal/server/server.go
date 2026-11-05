@@ -176,7 +176,11 @@ type Deps struct {
 	Fax        *fax.Service
 	PhoneAPI   *pbx.Client
 	Hubs       *ExtensionHubs
-	Shared     []domain.SharedContact
+	// Notifier is the change-notification projection (the ONE home of
+	// notification policy). Nil (test compositions): the JSON surface
+	// records review artifacts without SSE nudges.
+	Notifier *Notifier
+	Shared   []domain.SharedContact
 	// CRM is the OPTIONAL Ledger CRM integration (name enrichment + call
 	// logging). Nil or disabled: every surface renders raw numbers and the
 	// island's call-log POST is a no-op.
@@ -335,6 +339,7 @@ func New(deps Deps) http.Handler {
 		TextAgent:    deps.TextAgent,
 		Push:         deps.Push,
 		Devices:      deps.PushDevices,
+		Notify:       notifierProject(deps.Notifier),
 	})
 
 	csrf := httputil.CSRFMiddleware(csrfCfg)

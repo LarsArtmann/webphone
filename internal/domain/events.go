@@ -44,10 +44,23 @@ type FaxAdvanced struct {
 	Fax   FaxID
 }
 
+// ReviewSaved: a call-review artifact landed in its slot (pending,
+// present, failed — issue #8). No draft payload on purpose: the
+// projection is a payload-less nudge and the History panel re-reads
+// its own store, so a pushed fragment can never disagree with a full
+// render. CallID is the island-owned SIP Call-ID (opaque foreign
+// token), same vocabulary the review store keys on.
+// brandid-lint:ignore(BD003) island-owned SIP Call-ID: opaque foreign token, verbatim passthrough (strong-id wire ruling)
+type ReviewSaved struct {
+	Owner  Extension
+	CallID string
+}
+
 func (MessageReceived) isDomainEvent()         {}
 func (MessageDeliveryAdvanced) isDomainEvent() {}
 func (ThreadFlagChanged) isDomainEvent()       {}
 func (FaxAdvanced) isDomainEvent()             {}
+func (ReviewSaved) isDomainEvent()             {}
 
 // ChangeFunc is the ONE seam shape for change notifications: services
 // call it with a typed Event, the server projects (which SSE nudges
