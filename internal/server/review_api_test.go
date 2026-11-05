@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/larsartmann/webphone/internal/domain"
 )
 
 // postReview is the automatic review dispatch: the call id rides the
@@ -298,6 +300,47 @@ func TestCallReviewArtifactLifecycle(t *testing.T) {
 	resp, body = getReview(t, other, "call-art")
 	if resp.StatusCode != http.StatusOK || len(body) != 0 {
 		t.Errorf("another owner's artifact: %d %.100s, want 200 empty", resp.StatusCode, body)
+	}
+}
+
+// TestReviewSaveNudgesHistory pins F89: every successful artifact save
+// publishes exactly one payload-less "review" SSE event to the OWNER's
+// hub, so an open History tab re-fetches its rows instead of showing a
+// stale pending chip until the next manual fetch. A dispatched review
+// saves TWICE (pending at dispatch, present when the job lands) — two
+// nudges, never more.
+func TestReviewSaveNudgesHistory(t *testing.T) {
+	stub := newStubReviewAPI(t)
+	srv := serverWithAgentAndASR(t, stub.server.URL)
+	c := clientFor(t, srv)
+	c.login("1001", "pw")
+	if resp, _ := postTranscript(t, c, "call-nudge", "in", "+4989123456", "words"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("seed transcript: %d", resp.StatusCode)
+	}
+
+	owner := domain.MustParseExtension("1001")
+	events := srv.hubs.get(owner).Hub().Subscribe()
+	t.Cleanup(func() { srv.hubs.get(owner).Hub().Unsubscribe(events) })
+
+	if resp, _ := postReview(t, c, "call-nudge"); resp.StatusCode != http.StatusAccepted {
+		t.Fatalf("dispatch: %d", resp.StatusCode)
+	}
+	deadline := time.After(2 * time.Second)
+	nudges := 0
+	for nudges < 2 {
+		select {
+		case ev := <-events:
+			if ev.Event == "review" {
+				nudges++
+			}
+		case <-deadline:
+			t.Fatalf("only %d review nudges within 2s, want 2 (pending + present)", nudges)
+		}
+	}
+	select {
+	case ev := <-events:
+		t.Fatalf("third push %q: the ladder owes exactly pending + present", ev.Event)
+	case <-time.After(200 * time.Millisecond):
 	}
 }
 

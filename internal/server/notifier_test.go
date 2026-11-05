@@ -15,8 +15,9 @@ import (
 // TestProjectNotificationPolicy pins the event → SSE projection (train
 // E1): message events owe the thread list AND the transcript, a flag
 // change owes the list ONLY (the event carries no thread id on purpose
-// — an empty transcript would wipe the open conversation), and a fax
-// advance owes the fax list. Payload bytes are pinned separately by
+// — an empty transcript would wipe the open conversation), a fax
+// advance owes the fax list, and a review save owes exactly ONE
+// payload-less nudge (F89). Payload bytes are pinned separately by
 // the SSE tests; this is the POLICY table.
 func TestProjectNotificationPolicy(t *testing.T) {
 	db, err := store.Open(":memory:")
@@ -48,6 +49,10 @@ func TestProjectNotificationPolicy(t *testing.T) {
 	notifier.Project(ctx, domain.FaxAdvanced{Owner: owner, Fax: domain.GenerateFaxID()})
 	expectNamed(t, events, "fax")
 	expectQuiet(t, events, "fax advance owes exactly one push")
+
+	notifier.Project(ctx, domain.ReviewSaved{Owner: owner, CallID: "call-1"})
+	expectNamed(t, events, "review")
+	expectQuiet(t, events, "review save owes exactly one nudge")
 }
 
 func expectNamed(t *testing.T, events <-chan sse.Event, name string) {

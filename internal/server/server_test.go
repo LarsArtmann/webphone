@@ -170,6 +170,7 @@ func newTestServerWithConfig(
 		Fax:         fax.New(faxes, blobs, gateway.NewFaxGateway(cfg.Gateway, gateway.DefaultClient()), notifier.Project, cfg.Identities, nil),
 		PhoneAPI:    phoneAPI,
 		Hubs:        hubs,
+		Notifier:    notifier,
 		Shared:      []domain.SharedContact{{Name: "Support", Number: "2000"}},
 		DB:          db,
 		BlobRoot:    blobs.Root(),
