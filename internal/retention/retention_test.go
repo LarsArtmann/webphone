@@ -140,6 +140,12 @@ func TestSweepOnceExpiresOldTenantsAndUnlinksTheirBlobs(t *testing.T) {
 	if err := engine.Faxes().Create(ctx, liveFax); err != nil {
 		t.Fatalf("create live fax: %v", err)
 	}
+	// A segment's retention clock is its ARRIVAL time (Append stamps
+	// Seq = now, not StartedAt — readmodels/transcripts.go), so a
+	// freshly appended segment is never sweepable here; the
+	// expired-segment deletion itself is pinned in the readmodels
+	// suite. What this package must prove is the wiring: the engine
+	// sweep runs, reports its count, and live speech survives.
 	for _, seg := range []domain.CallTranscriptSegment{
 		{Owner: owner, CallID: "old-call", Direction: domain.DirectionInbound, Remote: "+15550000011", StartedAt: old, Text: "old line"},
 		{Owner: owner, CallID: "live-call", Direction: domain.DirectionInbound, Remote: "+15550000012", StartedAt: now, Text: "live line"},
@@ -151,7 +157,7 @@ func TestSweepOnceExpiresOldTenantsAndUnlinksTheirBlobs(t *testing.T) {
 
 	sum := sweepOnce(ctx, db, blobs, engine, cutoff)
 
-	if sum.messages != 1 || sum.threads != 1 || sum.faxes != 1 || sum.transcripts != 1 || sum.blobs != 2 {
+	if sum.messages != 1 || sum.threads != 1 || sum.faxes != 1 || sum.transcripts != 0 || sum.blobs != 2 {
 		t.Fatalf("sweep summary wrong: %+v", sum)
 	}
 	mustNotExist(t, blobPath(blobs, oldMsgBlob), "expired message attachment")
@@ -168,8 +174,8 @@ func TestSweepOnceExpiresOldTenantsAndUnlinksTheirBlobs(t *testing.T) {
 	if _, err := engine.Faxes().Get(ctx, owner, liveFax.ID); err != nil {
 		t.Fatalf("live fax lost: %v", err)
 	}
-	if oldTranscript, err := engine.Transcripts().Call(ctx, owner, "old-call"); err != nil || oldTranscript != nil {
-		t.Fatalf("expired transcript survived: %v %v", oldTranscript, err)
+	if freshTranscript, err := engine.Transcripts().Call(ctx, owner, "old-call"); err != nil || freshTranscript == nil {
+		t.Fatalf("freshly arrived transcript must survive despite its backdated StartedAt: %v %v", freshTranscript, err)
 	}
 	if liveTranscript, err := engine.Transcripts().Call(ctx, owner, "live-call"); err != nil || liveTranscript == nil {
 		t.Fatalf("live transcript lost: %v %v", liveTranscript, err)
