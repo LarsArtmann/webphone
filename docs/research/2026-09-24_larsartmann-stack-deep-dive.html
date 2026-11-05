@@ -888,6 +888,21 @@
         <span class="tag">Method: source-level, local repos</span>
         <span class="tag teal">Overall adoption: 61/100</span>
       </div>
+      <div style="margin-top:1.25rem;padding:0.9rem 1.1rem;border:1px solid rgba(17,17,17,0.25);border-left:4px solid #b45309;background:rgba(180,83,9,0.08);font-size:0.92em;line-height:1.5">
+        <strong>ANNOTATED 2026-11-04 &mdash; superseded per library by the full-utilization audit</strong>
+        (<a href="../../review/libs/index.html" style="text-decoration:underline">docs/review/libs/index.html</a>, one report per library).
+        The scores here are frozen at audit time; the per-library state of record is now:
+        go-cqrs-lite <strong>83</strong> (metaengine is the read-model substrate; the bounded-AuditLog ask shipped upstream #32;
+        per-group cap filed #114), cqrs-htmx <strong>100 affirmed</strong> (the 2026-10-25 round-3 supersedes this report's
+        64 at v4.12.0), go-branded-id <strong>74 adjacent</strong> (the &ldquo;parse hand-rolled&rdquo; deduction premise-inverted:
+        parseID is the domain invariant's home), httputil <strong>95</strong> (MaxBodySize LANDED 2026-11-04),
+        go-health <strong>100</strong> (v0.9.0 wave), go-sse <strong>67</strong> (v0.7.0 BLOCKED on the cqrs-htmx templ-wave),
+        go-error-family <strong>64</strong>, templ-components <strong>50</strong>, server_timing <strong>67</strong>,
+        go-appkit still NOT a dependency (its own 2026-10-23 deep-dive is the state of record),
+        go-retry ADOPTED 2026-11-04 (delay half), go-etag ADOPTED 2026-11-04 (both halves),
+        go-idempotency + go-codec NO-GO affirmed. Read THIS report for the 2026-09-24 snapshot and its
+        two real gaps (both closed 2026-11-04); read the audit index for current truth.
+      </div>
     </header>
 
     <section id="scorecard" class="scorecard">
