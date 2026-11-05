@@ -625,7 +625,9 @@ Remaining, unscheduled:
 `error_page 401 = @telephony_signin_operator`, and
 `services.webphone.settings.dashboard = { enable = true; title = "PBX webphone"; }`.
 What remains is the HOST REBUILD plus a browser check that logged-out `/health`
-redirects to the SSO gate and a signed-in operator sees the cards.
+redirects to the SSO gate and a signed-in operator sees the cards, plus the
+exposure-policy decision (remote_ip vs PublicMode vs basic auth — carried from
+the samber/do train follow-ups; everything else in that section shipped).
 **Priority:** High · **Effort:** S.
 
 ### Catalog adoption (2026-10-24 — SHIPPED + pushed 2026-10-25; the hub re-pin is cross-repo)
@@ -710,64 +712,13 @@ SHIPPED by the train (see CHANGELOG `[Unreleased]`): transcript persistence with
 
 **Evidence:** plan `docs/planning/2026-10-08_07-36_SUPERB-asr-provider-rollout.md`; decisions `docs/planning/2026-10-08_14-05_SUPERB-asr-decisions-and-spikes.md`; pause report `docs/status/2026-10-08_14-08_SUPERB-asr-train-m12-m25-execution-report.md` §g; source §f lists in `docs/status/2026-10-07_16-54_*` and `2026-10-07_18-15_*`
 
-### Gate-recovery session tail (2026-10-06 22:08 report)
+### Passkey tail: deploy proof (owner terminal)
 
-**Status:** 🟡 `PARTIALLY DONE` (critical legs closed 2026-10-06 ~22:45; tails remain) · **Priority:** Medium · **Effort:** S-M
+**Status:** IN_PROGRESS (code + the 3-repo deploy train DONE 2026-10-04; owner legs remain) · **Priority:** High · **Effort:** S
 
-CLOSED this session: the red CI (vendorHash `WYqTip91…` stale after the post-train tidy — re-pinned `5ekZFK2m…`, CI run 37526835020 green) · `TestSQLiteSessionTTLExpiryAndSweep` hardened with an injectable store clock (both session stores; race structurally impossible, suite + buildflow green) · fresh-binary smoke boot (47+4+8, 0 failed) · buildflow verdict rc=0 · AGENTS lessons (kill builtin trap, vendorHash `--rebuild` recipe + tidy-then-repin sequencing, templ-components v1.20.0 poisoned require). REMAINING from the report's (f) list: ui-capture 14-shot visual pass on the v1.20.1 tree (f6 — re-run 2026-10-18 on the round-5 tree, see the round-5 tail row) · vulnix `0/5 deterministic-retry` warning INVESTIGATED-CLOSED 2026-10-12 (f12: the string exists nowhere in this repo — it is vulnix-the-tool's internal eval-recovery message; NOT reproducible at HEAD, two consecutive `nix run .#vulnix` runs byte-identical — 8 derivations, glibc range-match noise triaged distro-patched, zero real advisories, no retry line; the gate's verdict rides the fixture-checked `webphone-vulnix-triage` CLI, never vulnix's raw exit) · GOPROXY fallback chain + BuildFlow retry-wrapper (f9/f10, BuildFlow-repo/crush-config side — the one remainder, F86) · module-cache janitor + leftover zero-byte `.tmp` sweep CLOSED 2026-10-18 (`scripts/module-cache-janitor.sh`: report-only default, `--sweep` deletes only zero-byte + age-floored files, self-tested; 24 stale zero-byte .tmp swept live) · upstream releases: templ-components errorpage tagging discipline CLOSED-UPSTREAM 2026-10-18 (verified: issue #27 + docs/release-checklist.md + the release-smoke workflow already encode the discipline — no duplicate filed). Stack browser E2E for the dep train (f8) rides the next stack session. 23:22 §f remainder folded 2026-10-06 (docs-health v7); closed-later-that-night (round-5 plan execution): whitespace-drift `.nix` gap + self-test (r1 — `.nix` matcher already landed; scratch-repo self-test: whitespace-only `.nix` staged edit exits 1, content edit exits 0) · the two owed lessons stories — outage timeline + `/go.mod` h1 ≠ sha256 oracle (r2, docs/lessons.md Tooling traps + Nix) · CI-flake ledger (r6, docs/ci-flake-ledger.md; AGENTS links it) · v1.20.1 greppable-class byte check `wp-thread-row`/`wp-bubble` (r16 — served-payload probe on a fresh loopback binary: both classes present in list + transcript) · DOM-contract v1.20.1 reasoning note (r17, dom-contract.md § Notes) · run-37496169265 flake-window closure (r30 — ledger records "hardening supersedes confirmation" as the OR-arm closure) · v7-delta hygiene (codespell clean; markdownlint baseline: default MD013@80 is noise, no repo config — one real MD018 hit in lessons.md fixed). REMAINING: stale BuildFlow binary rebuild (r10, BuildFlow-repo side; folds with f9/f10) · buildflow doctor gate in the release-runbook prelude + `timings --regressions` rebaseline (r22/r23) · fleet wedged-go audit + /tmp probe-artifact prune + gopls workspace close (r19/r20/r21; local wchan scan 2026-10-06 ~00:10: one locks_lock_inode_wait hit = a concurrent monitor365 cargo check, left alone per concurrent-session doctrine) · quiesced-host local flake check incl. the KVM backup leg (r15 — DEFERRED: host not quiesced, a concurrent session's `go test -race` suites were running; re-run when idle) · kill-builtin lesson empirical verify at the next natural kill (r14) · go-cqrs-lite release-tooling audit (r13, upstream) · owner legs routed to briefing rows 36–37: devShells dprint/prettier/ruff/lychee additions + lychee auth-vs-exclude (r25/r26). Dropped as landed: r27 (the go get → tidy → vendor → repin chain IS the AGENTS vendorHash bullet).
+Remaining: the OWNER switch + post-switch ritual (rotate `/tmp/pbx-toplevel-current`, record the fresh diff-closures baseline) and the LIVE passkey proof with the fail-closed password-file drill (pbx-artmann TODO §1). OWNER CALLS outstanding: ratify runbook-only enroll + Lars-only v1 mapping; the enroll-begin ULID-secrecy verdict (bind the ceremony to a token-verified server-side session — a usermgmt upstream change — or ratify ULID unguessability as the standing posture; audit 2026-10-06); switch-now-vs-CI-first (VERDICT 2026-10-05: every recent stack `main` CI run cancels at the 1h ceiling inside `nix flake check` — the mod_enum/timeout diagnosis precedes any lock bump); installer release republish timing.
 
-**Evidence:** report `docs/status/2026-10-06_22-08_buildflow-gate-recovery-go-module-train.md` (§f rows); CI `gh run list` 37526835020
-
-### Passkey train tail: deploy proof (owner terminal)
-
-**Status:** 🟡 `IN_PROGRESS` (code polish DONE 2026-10-04; owner legs remain) · **Priority:** High · **Effort:** S
-
-The code train AND the 3-repo deploy train are DONE (webphone `400eaff`
-pushed; sibling `890a526`; pbx-artmann staged `0ngvm4q7…`, probe OK,
-gates green — see CHANGELOG Unreleased + the 17-28 report); AUTH AUDIT 2026-10-06 (13:10): the passkey HTTP surface was code-read audited; one accepted-risk
-observation needs an owner verdict — `POST /api/auth/passkey/enroll/begin` gates on the account
-ULID alone (any well-formed usermgmt UserID drives a registration ceremony; the enrollment TOKEN
-is only enforced one step earlier at /verify). Protection = ULID unguessability (128-bit, never
-exposed except to valid-token holders) + passkeyLimiter + mode default-OFF. Options: bind the
-ceremony to a token-verified server-side session (usermgmt upstream change) or ratify ULID-secrecy
-as the standing posture. Companion reconfirmation: session-row password stays plaintext at rest
-(spike-verdict ratified; 0700 DB + UMask 0077). Same session FIXED: session-cookie Secure behind
-the TLS proxy, real-config CSRF rotation, constant-time webhook secret (CHANGELOG § Security).
-AUTH TAIL 2026-10-06 (D18): renewal Secure re-issue pinned end-to-end (incl. the half-life
-throttle + same-token assertions; `62bc7dc`); slog secret-leak grep over server/userauth/gateway
-CLEAN (attrs are errors/status/family/code/extension only; vendored usermgmt logs the cookie NAME
-and bot id, never values; enroll-token errors are static strings; gateway logs nothing); codespell
-over the CHANGELOG/lessons/status/planning delta EXIT 0 — the four `keep-alives` hits are the
-twice-adjudicated plural noun, now durably in `.codespellrc` ignore-words. Full-repo sweep close
-(b.3/f.6) 2026-10-06 15:50: the five unswept packages are CLEAN — app (one `log.Info` "timezone
-applied" zone attr), pbx + web/views (ZERO log calls), fax (6 slog.Warn: error + fax_id),
-messaging (3 slog.Warn: error + message id + owner extension + remote number — CDR-class data,
-the accepted 18.2 bar); no print/os.Stderr paths anywhere in the five. ISLAND AUDIT 2026-10-06 (D19): clean — adoption ladder correct
-(3 backoff retries, reload last resort); zero raw innerHTML sinks (whoami/snippet/lightbox/errors
-all textContent/value/src); zero credential persistence in localStorage; legacy pbx-contacts
-import deletes only after EVERY row is server-accepted, else retries next login; no
-password/token in any log line. FIXED: authedFetch now imports the csrf.js meta reader (ONE-home
-rule; it had drifted to an inline querySelector). ACCEPTED: passkey/enroll finish carry the
-one-time ceremony session_key as ?user_id= (burned at finish, worthless without the WebAuthn
-assertion + CSRF; exposure = proxy access logs only) — moving it into the POST body is a cheap
-option inside D30's decision space.
-the code-polish tail landed 2026-10-04 (enrollFailed(0)→enrollNetFailed,
-csrf.js single home, userauth /healthz leg, tier-2 pins, whoamiLine→ui.js,
-typed sessionIdentity, plan-doc annotation, AGENTS trim — see CHANGELOG).
-Remaining: the OWNER switch + post-switch ritual (rotate
-`/tmp/pbx-toplevel-current`, record the fresh diff-closures baseline)
-and the LIVE passkey proof with the fail-closed password-file drill
-(pbx-artmann TODO §1 row). OWNER CALLS outstanding: ratify
-runbook-only enroll + Lars-only v1 mapping; switch-now-vs-CI-first
-(VERDICT 2026-10-05: every recent stack `main` CI run cancels at the 1h
-ceiling inside `nix flake check` — aarch64 VM leg green 6m16s, browser
-E2E on-demand never fires; the mod_enum/timeout diagnosis precedes any
-lock bump); installer release republish timing (stale since the
-relock). HANDOFF NOTE: RESOLVED 2026-10-25 — LSP diagnostics on
-`internal/server/passkey_api.go` are clean at HEAD (the note's owning
-session is long gone; verified by this sweep).
-
-**Evidence:** status `docs/status/2026-10-04_17-28_passkey-train-resumed-session-brutal-status.md` (§f harvest source); plan `docs/planning/2026-10-04_12-17_SUPERB-passkey-users.md`
+**Evidence:** status `docs/status/2026-10-04_17-28_passkey-train-resumed-session-brutal-status.md`; plan `docs/planning/2026-10-04_12-17_SUPERB-passkey-users.md`; the 2026-10-06 audits (HTTP surface, slog-leak sweep, island audit) live in that report + CHANGELOG.
 
 ### Boot-contract tail: D3 retry-loop owner call + stack runbook patch
 
@@ -776,14 +727,6 @@ session is long gone; verified by this sweep).
 The boot-error contract SHIPPED 2026-10-02 (5-part render on every boot failure, exit 1 designed / 2 panic, EN-only, class-tagged; `App.Start` de-panicked; arch test confines samber/do; smoke `boot failure scenario` green). The stack runbook patch APPLIED 2026-10-04 (stack `9a21893`: boot-surface + passkey error-contract rows; the parked patch doc is spent). Remaining: (1) OWNER CALL (D3 follow-up) — cap systemd's boot-failure retry loop (`StartLimitBurst`/`StartLimitIntervalSec`) or ratify the 5s `Restart=on-failure` retry as desirable liveness (module deliberately unchanged this train). The boot-surface re-grade landed EARLY 2026-10-05 (contract table vs code: 7 classes + drift pins intact; see the erraudit line in Standing watches)
 
 **Evidence:** plan `docs/planning/2026-10-02_10-23_SUPERB-operator-boot-contract.md`; ruling `docs/error-contract.md` § "Boot surface"; pins `cmd/webphone/bootreport_test.go`; runbook patch = stack `nix-international-telephony@9a21893`
-
-### v2.8.0 deploy tail
-
-**Status:** 🟡 `PARTIALLY DONE` (owner terminal remains) · **Priority:** High · **Effort:** S-M
-
-v2.8.0 deploy tail (OWNER terminal — pbx-artmann AGENTS forbids assistant ssh/deploy): the RELEASE SIDE IS DONE 2026-10-01 — v2.8.0 signed+pushed (number decided autonomously: 2.8.0 so the bridge ">= 2.8" claims stay true; ships the never-tagged 2.7.0 content + nix-review train + honest Content-Type + error-family + caddy module rename). REMAINING (all owner): deploy (stack lock bump → stack gates incl. the browser E2E the EmptyState markup change owes → aarch64 → pbx-artmann relock #5 + re-pin → deploy; COMMAND: `cd ~/projects/pbx-artmann && nixos-rebuild test --flake .#pbx --target-host root@pbx.artmann.tech` → smoke → `nixos-rebuild switch`), then post-deploy `python3 scripts/webphone-smoke.py --base https://pbx.artmann.tech --expect-version <V>`. NOTE: train C refuses self-sends LOCALLY — expect the 422 "messages cannot be sent to your own number" + failed row instead of the provider's 40310 text; the bridge's declared-type preference reaches prod only after the stack relock that rides this tail. If the release number is NOT 2.8.0, reword the bridge-side ">= 2.8" doc claims there to commit/date form (webphone's own AGENTS line is already commit-pinned at `e6ea2c7`). AT THE STACK RELOCK (same train — both stack lines reference the REMOVED nginx option and eval-error against the new rev): `modules/telephony/web.nix` `nginx.enable = lib.mkForce false;` → `caddy.enable = lib.mkForce false;` (comment wording too) and `modules/telephony/default.nix` vhost split-brain assertion `config.services.webphone.nginx.enable` → `caddy.enable` + message wording (webphone caddy rename, 2026-09-30)
-
-**Evidence:** tag `v2.8.0` pushed + gh object published 2026-10-01; stack `3afcf57` (lock bump + caddy guard, E2E×1 green after one self-inflicted load flake + VM + flake check green); aarch64 ELF `b700`; lychee 0 after repointing the never-tagged v2.7.0 links; number = 2.8.0 (bridge ">= 2.8" claims true; ratify at the sitting — briefing row 15)
 
 ### Outbound SMS bridge failure on prod: `POST /messages/send` answered 422 (gateway error)
 
@@ -800,49 +743,6 @@ Outbound SMS bridge failure on prod: `POST /messages/send` answered 422 (gateway
 Deferred/scheduled message sending was cut from T18 (M21.6): the gateway seam has NO deferred-send concept (loopback sends immediately; the webhook bridge is fire-and-forget to the provider), so a scheduled-send UI would show a state the transport cannot honor — violating the island-honesty contract. Revisit only if the provider/stack grows a deferred-send lane; the snippets seam (M21) already covers the "reply faster" problem it was meant to solve.
 
 **Evidence:** design note `docs/planning/2026-10-02_10-02_T18-m21-m22-seam-design.md` (M21.6 cut); owner ratification pending (2026-10-02 §g).
-
-### Gateway honest-Content-Type follow-ups
-
-**Status:** 🟡 `PLANNED` (stack/pbx side only now) · **Priority:** Medium · **Effort:** S
-
-Gateway honest-Content-Type follow-ups (webphone side of `docs/status/archived/2026-09-29_04-32_*` §f): byte-exact part-HEADER-block golden (current golden greps fields individually; a full header-block pin catches reordering) · document the webphone×bridge compat matrix next to the AGENTS gateway-seam bullet (old binary → sniff lane; new → declared lane) · consider a webhook-mode smoke probe (loopback-only today; the webhook lane has zero black-box coverage in this repo). Stack/pbx side (NOT this repo): `ftypqt`→`video/quicktime` sniff fix, stack E2E MMS-outbound coverage, pbx-artmann FEATURES:87 stale sniff text — route via the next stack session/relock
-
-**Evidence:** webphone side DONE `0aab677`: full-body golden `TestProviderFormPartHeaderBlockGolden` (field order, header order, CRLF framing), AGENTS compat matrix, webhook smoke probe DECIDED-AGAINST (golden + bridge contract tests own the shape). Still routed via next stack session: `ftypqt` sniff fix, E2E MMS-outbound, pbx-artmann FEATURES:87 text
-
-### Tooling hygiene batch: markdown-lint posture decision
-
-**Status:** 🟡 `PARTIALLY DONE` 2026-10-01 · **Priority:** Low · **Effort:** S
-
-Tooling hygiene batch: markdown-lint posture decision (5092 detect-only corpus findings — configure markdownlint to house style or record the detect-only posture in AGENTS so nobody "fixes" the corpus by reflowing) · codespell policy for the 2 `pre-emptive` warnings in archived status snapshots (exclude `docs/status/**` like the stack, or fix the words) · reconcile AGENTS buildflow-full claim vs observed skips (gitleaks/codespell/markdown-lint "skipped by build mode 'full'" on 2026-09-26 — AGENTS or `.buildflow.yml` is wrong) · BuildFlow binary freshness advisory (stale binary skews verdicts — rebuild in the BuildFlow repo) · commit the reusable render-diff script (partials-only, webhook-502 error instrument — mechanics in the archived 16:56 report §b) + park its recipe in AGENTS/lessons (carried since the 09-24 18:05 report)
-
-**Evidence:** DONE: codespell real-binary + `.codespellrc` (vendor/go.sum skipped, pre-emptive ignored), AGENTS buildflow-claim reconcile, render-diff script committed (`scripts/render-diff.py`; LIVE-VERIFIED 2026-10-01: 7/7 partials byte-identical + 7/7 error arm), BuildFlow freshness noted via doctor. v6 stragglers DONE 2026-10-04: health-css fmt appended (live-verified: raw rebuild → in-script fmt → byte-identical with HEAD), smoke mypy 8→0 (annotations were the lie; ruff clean), "error families are total" + 104-code registry table in error-contract.md generated and freshness-pinned by `TestErrorCodeRegistryIsFresh` (negative-tested; fixes the SkipAll-walk latent bug in the sibling arch test too). REMAINING (owner): markdownlint posture (briefing row 18) — invocation SETTLED 2026-10-05: `nix run nixpkgs#markdownlint-cli2 -- <docs...>` (v0.23.3, no config = library defaults; baseline over the three 10-05 session docs = 172 findings, 170 MD013 line-length + 2 MD026 heading-punct, all cosmetic — detect-only until the row-18 posture rules otherwise). Round-3 C2 gate-debt close 2026-10-06 03:15 (01-40 report addendum has the detail): buildflow EXIT 0 over `43091cc` (incl. `2b52fbf`), island JS 186/186 pass, on-demand codespell EXIT 0 (raw scan: one pre-existing warning-level `keep-alives` in CHANGELOG prose — not session debt). Round-3 C10 daemon zero-churn observation 2026-10-06 03:20: five daemon commits since the `2b52fbf` regen (`e9caa75`, `43091cc`, `be4d5e0`, `b245b73`, `e62fe34`) left `docs/error-contract.md` untouched — md5 stable at `d25d4a50…`; the churn kill now has observational backing, not just the 130-row byte-verification (canary stays open: any future daemon commit touching the file must show a zero reflow diff). C9 landed same session: writer framing + uniform-row-length pins in `rewriteRegistryBlock`, 00-52 report table re-flowed. Round-4 D25 hygiene 2026-10-06: near-aligned-table
-sweep over every 10-05/10-06 status+planning doc found exactly ONE mixed-shape table (the 03-40
-report) — normalized to the daemon-canonical compact shape; the detector (mixed column widths +
-extra cell padding) now reports ZERO across the corpus. `scripts/whitespace-drift.sh` landed:
-staged-diff `-w` divergence check over formatter-OWNED files only (Go/JS/MJS/CSS/Nix; md
-deliberately excluded — unowned means no drift definition), self-tested in a scratch repo
-(whitespace-only Go edit EXIT 1 with the `nix fmt` fix, substantive EXIT 0, md-only "unowned"),
-wired as an AGENTS Commands habit line — kills the e62fe34 class at add-time. D18.3 durability:
-`keep-alives` joined `.codespellrc` ignore-words after its second adjudication. d.1 fix 2026-10-06
-15:40 (hardened twice by 16:45): the detector is now a COMMITTED instrument —
-`scripts/md-table-shape.py` (self-test 8/8: mixed flags, compact clean, fully-aligned clean =
-D1.4's question, unbalanced-padding flags, mid-cell wrapped rows clean, prose-after-table never
-glues, escaped pipes never split a cell, display-width-aligned emoji columns clean); default
-scope docs/status/ live = ZERO; explicit rerun over the exact 10-05/10-06 status+planning sweep
-set = ZERO, reproducing the claim from the repo. v1 miscounted wrapped tables (fragmented rows)
-and escaped pipes; v3/v4 were caught by dogfooding against the session's own report and the
-daemon's own output (e.3 rule) — v4 measures DISPLAY width because the daemon's aligner pads
-emoji to terminal cells, not codepoints. Full-corpus run 16:45: ZERO findings (v3's 25 shrank to
-1 real finding after the daemon's 16:18 aligning pass + display-width fix; the samber-do
-scorecard's Status column was normalized to compact on the spot).
-f.7 canary FIRED 2026-10-06 16:18 (`2fbdfd7`): the daemon's reflow pass touched the normalized
-03-40 table and REFLOWED it compact → fully-aligned (content-inert, no mix introduced; detector
-ZERO post-pass). VERDICT INVERTED for D1.4: the daemon IS the aligner — near-aligned mixes come
-from sessions appending compact rows onto daemon-aligned tables (the briefing rows-29–34
-pattern), and the daemon normalizes them on its next md pass. The same daemon pass reformatted
-`scripts/md-table-shape.py` (style-only; self-test still 8/8) and bumped `flake.lock` nixpkgs
-(494ce7fd → 151fa4e8 — rides the next push; CI judges).
-Was: 09-26 §d3/§f11-12; 09-24 12:41 §f19-20; 04:32 §f14-15
 
 ### OWNER-calls batch session
 
@@ -870,46 +770,15 @@ Standing watches — QUARTERLY RE-CHECK, next due 2026-12-20 (named triggers fir
 
 **Evidence:** AGENTS erraudit bar + templ-components bullet; re-checked 2026-09-23/24 during the pareto cycle (C22/M22)
 
-### internal/server god-package carve
+### internal/server auth-package carve (dormant trigger)
 
-**Status:** 🟢 `DONE — executed 2026-10-17 (round-5 E7 train): server/hooks + server/api landed, adjudicated closed at two phases` · **Priority:** Medium · **Effort:** M
-
-internal/server god-package carve — TRIGGER: the next file added to internal/server (26 files / 4859 non-test LOC + 8630 test LOC re-measured 2026-10-14, two independent count methods; the 09-30 baseline read 19 files / 3268 LOC / 6073 test LOC / 12-of-15 sibling imports / most-touched package since 09-23 at 51 file-events; exported surface only 29 doc lines, so it is an OPAQUE composition surface, not a god module — but it sits ON the >1000-LOC/>20-file review threshold).
-**EXECUTED (2026-10-17, round-5 plan E7/E8):** phase 1 `internal/server/hooks` (webhook ingest + idem gates; `hooks.DedupWindow`/`Gate`/`BearerGate`/`RetryAfterHint` exported; app/dedup.go adapter + sweeper retargeted; 401-writer contract test scans the new package; error-code registry follows `webhook.fax_pages`) and phase 2 `internal/server/api` (the five TRUE leaves: csrf, contacts, calls, transcribe, transcripts — moved verbatim under a narrow `api.Server` seam: `RequireSession` + `NotifyContactsChanged` exported on the wiring hub so the 401 wording and the SSE push keep one home; `api.ContactSaveFailed` shared with the tab handlers; contacts fuzz + recordCallIdem contract tests moved with their code). Verification: full server/api/hooks/app/arch suites green, session-behavior suite green, live smoke 47+4+8+9/0-failed against the carved binary, branching-flow baseline refreshed for moved paths with the `api.Server` IFACE_COMPLETE rationale in-source.
-**Phase-3 ADJUDICATION (session_api STAYS):** the round-5 plan ordered the session carve last under an `auth:` prefix, but the dependency map vetoes it — `verifyDirectoryCredentials`/`mintSession`/`sessionIdentityResponse` are the shared auth spine of BOTH login modes (passkey_api reuses all three), and the handlers also ride wiring-private state (cookies, csrfCfg); moving the three HTTP handlers alone would split the login subsystem across packages behind an 8-leg interface (a shuffle, not a carve). The honest future move is BOTH login modes together into an auth package — its own train, reopened on the next auth-surface change. Likewise `passkey_settings` (re-renders the settings partial; view-coupled) and `internal_directory` (machine surface over wiring-owned seams: Sessions, Config.SIP, remoteHostKey) stay in the wiring. Post-carve counts: internal/server 19 non-test files (under the 20-file trigger), hooks +2, api +6. LOC refresh 2026-10-18 (two methods agree): wiring-only 4,056 non-test LOC; whole tree incl. api/hooks 27 files / 5,204 LOC (was 26/4,999 flat on 10-17 — the round-5 trains added ~150 net wiring LOC).
-Trigger adjudication (2026-10-06 session): the 09-30 baseline reading
-fires on `passkey_api.go` (landed 10-04), but the round-2 plan
-(2026-10-05 20:30, §F15 "do NOT start") supersedes — the trigger is
-the NEXT file landing in `internal/server` AFTER that plan; stays
-gated until then.
-**TRIGGER FIRED — adjudicated 2026-10-12 (TODO-execution session):** SEVEN files
-landed after the 2026-10-05 20:30 plan: `transcribe.go`+test (10-07 16:32),
-`transcripts_api.go`+test (10-07 17:31/43), `internal_directory.go`+test
-(10-12 05:28), `passkey_settings.go` (10-12 06:11), `auth_audit.go`+test
-(10-12 06:16). The package is now 25 non-test files, ~13k LOC incl. tests.
-Dependency map (done, so the executing train skips the research): every API
-file hangs methods off the `handlers` hub (pages.go) — session_api alone
-calls 5 shared server methods (`sessionIdentityResponse`, `identityFor`,
-`verifyDirectoryCredentials`, `mintSession`, `numbersFor`); contacts calls
-`notifyContactsChanged`; calls uses `callsIdem` + `recordCallIdem`; webhooks
-uses `hooksIdem` + `applyStatusWebhook` + `unread`. Carve design that falls
-out: the new packages get their OWN deps structs built at construction from
-`handlers` (limiters, idem stores, cookie policy, csrfCfg), with the shared
-methods either passed as a narrow interface server implements or moved into
-the carving package where they have exactly one consumer. Phase order for
-the train: (1) `server/hooks` (webhooks+idempotency, smaller, no session
-surface), (2) `server/api` (csrf_api is a zero-dependency leaf — carve it
-first inside the package, then calls, contacts, session LAST with an
-`auth:` prefix + the TestServer session-behavior suite), (3) newer JSON
-files (transcribe, transcripts, passkey_*, internal_directory, auth_audit)
-are a SEPARATE adjudication — the row names four endpoints; do not gold-plate
-the first carve. Deliberately NOT started inside the 2026-10-12 TODO session:
-an auth-surface structural move stacked on a day with two self-inflicted
-reds and 13 unpushed commits is the fastest-over-best trap; the map above is
-the session's honest contribution.
-
-**Evidence:** arch review 2026-09-30 finding #1 + §05 go-modularize verdict (NO go.mod split — zero Go consumers, Nix vendorHash + release-ritual cost, arch test already enforces the DAG; revisit trigger = a second Go consumer); 2026-10-17 4th series entry re-affirms and pre-arms the dormant split blueprint: `docs/modularization/2026-10-17_PROPOSAL.html`; execution + adjudications recorded above (2026-10-17).
-
+The 2026-10-17 hooks/api carve is DONE and phase-3 adjudicated (session_api
+STAYS — it is the shared auth spine of both login modes; passkey_api reuses
+its three shared methods, and the handlers ride wiring-private state). The
+honest future move — BOTH login modes into an auth package — reopens on the
+next auth-surface change; the blueprint and dependency map live in
+`docs/modularization/2026-10-17_PROPOSAL.html`, the full adjudication in git
+history (the 2026-10-12 + 2026-10-17 entries).
 ### Mic pre-warm live verification + gates
 
 **Status:** 🟡 `PARTIALLY DONE` (code + gates green; live ritual owner) · **Priority:** Medium · **Effort:** S
@@ -917,22 +786,6 @@ the session's honest contribution.
 `mic.js` pre-warm (speak ASAP after accept) shipped with T07 (2026-10-01, code + island pins) and the T11 perf train added the mic-indicator timing baseline; suite/smoke green. Remaining: ONE live-call ritual on the stack (accept→speak sub-second, indicator at ring, warm release on reject/missed) — owner terminal.
 
 **Evidence:** `docs/status/archived/2026-10-01_04-07_mic-prewarm-accept-latency-train-status.md` §b/§f; T11 timing baseline `scripts/perf-baseline.py`.
-
-### Island-honesty train follow-ups
-
-**Status:** 🟡 `PARTIALLY DONE` (webphone side done; stack lane remains) · **Priority:** Medium · **Effort:** S
-
-Hold machine + `#offline-banner` shipped (`cc98c2e`); T15 landed the pending-copy split, Terminated/watchdog `holdPending` clearing, and the T23 visual pass covers the screenshot leg; vulnix (zero real advisories) + aarch64 exit-green done at the T22 close-out (ELF-byte verify owed at each final-gate cross-build). Remaining: the stack browser E2E the T11–T19 served-markup delta owes (blocked by the stack FreeSWITCH `mod_enum` build break — repair that first), then the runbook obligation closes.
-
-**Evidence:** `docs/status/archived/2026-10-01_05-26_island-honesty-hold-offline-banner-train-status.md` §b/§f; T15/T22/T23 session reports 2026-10-02.
-
-### samber/do composition-root + dashboard train follow-ups
-
-**Status:** 🟡 `PARTIALLY DONE` (webphone side done; two owner calls) · **Priority:** Medium · **Effort:** S
-
-health.css: input + staged rebuild script (`scripts/build-health-css.sh`, locked-nixpkgs + staged build — the artifact sat inside its own @source root) + `checks.health-css` canary landed; the 2026-10-02 rebuild fixed a genuinely stale artifact (zombie classes, missing `--blur-xs`). Family pins landed (T22: `store.thread_flag`, `store.count_archived`, snippets). The local-behind-remote divergence is LIVE daemon behavior (observed twice: named commit rewritten 2026-10-02, same content new hashes — never verify via push logs, only `git ls-remote`). Remaining: stack `/health` exposure policy (remote_ip vs PublicMode vs basic auth) + the v2.9.0 fold decision (default: one release, owner §g2) — both owner.
-
-**Evidence:** `docs/status/archived/2026-10-01_02-12_samber-do-composition-root-health-dashboard-train.md`; T21/T22 session report 2026-10-02 11:43 §a; T18–T23 session report 2026-10-02 11:41 §d.
 
 ### Visual harness: shot disposition + optional vision cross-check
 
@@ -944,20 +797,32 @@ health.css: input + staged rebuild script (`scripts/build-health-css.sh`, locked
 
 ### Cross-repo obligations (stack / pbx-artmann)
 
-**Status:** 🟡 `PLANNED` · **Priority:** Medium · **Effort:** S-M
+**Status:** PLANNED · **Priority:** Medium · **Effort:** S-M — THE ONE HOME for the standing stack-E2E obligation.
 
-Owner/stack legs that block or derive from webphone work: repair the stack FreeSWITCH `mod_enum` build → run the stack browser E2E → relock to webphone `cc98c2e` (or newer) + pbx-artmann re-pin; **the cascade-fix train (2026-10-04, island style scoped to `.island` + history filter `wp-mini`) AND the passkey-tail session (same day: csrf.js module, whoamiLine move, enroll error copy) changed served markup/assets — the stack browser E2E re-run above covers both trains' obligation**; stack `services.webphone.paperless` module option + smoke arm; the WebTransport-not-adopted verdict doc; telephony `deploy.md` secret PATH column; ops-runbook demo-call recipe (`originate user/1000 &playback(local_stream://moh)` + the `/var/lib/telephony-secrets/` password path); MOH audibility + `/recordings/` + CDR check; the gateway stack-side bits (`ftypqt`→`video/quicktime` sniff, E2E MMS-outbound, pbx-artmann FEATURES:87 stale text). No assistant ssh — verified handovers only.
+Owner/stack legs that block or derive from webphone work: repair the stack
+FreeSWITCH `mod_enum` build (it produces the stack CI 1h ceiling that cancels every
+`nix flake check` run and gates each relock) → relock to webphone main +
+pbx-artmann re-pin. The standing stack browser E2E obligation was DISCHARGED
+2026-10-29 16:05 (green with the full owed markup set in the tree, VM test green);
+a FUTURE served-markup change re-owes it per the release-runbook standing rule
+(M03/F16). Also: stack `services.webphone.paperless` module option + smoke arm;
+the WebTransport-not-adopted verdict doc; telephony `deploy.md` secret PATH column;
+ops-runbook demo-call recipe (`originate user/1000 &playback(local_stream://moh)` +
+the `/var/lib/telephony-secrets/` password path); MOH audibility + `/recordings/` +
+CDR check; the gateway stack-side bits (`ftypqt`→`video/quicktime` sniff, E2E
+MMS-outbound, pbx-artmann FEATURES:87 stale text). No assistant ssh — verified
+handovers only. Evidence: owner command sheet
+`docs/planning/2026-09-24_19-25_owner-terminal-command-sheet.md`.
 
-**Evidence:** 02:54 / 04:07 / 05:26 reports §f; owner command sheet `docs/planning/2026-09-24_19-25_owner-terminal-command-sheet.md`.
+### Round-5 plan tail (2026-10-17 harvest — d2 + markdownlint posture remain)
 
-### Round-5 plan tail: process folds + row hygiene (2026-10-17 harvest)
-
-**Status:** 🟡 `PARTIALLY DONE — 2026-10-18 closed F75/F76/F79–F84; 2026-10-25 row-hygiene sweep closed F74/F85/F86; remains d2 + markdownlint posture (both owner-gated)` · **Priority:** Low · **Effort:** S — full plan: [docs/planning/2026-10-17_20-55_SUPERB-round5-pareto-plan.md](docs/planning/2026-10-17_20-55_SUPERB-round5-pareto-plan.md) (E17–E23, F74–F87)
-
-- CLOSED 2026-10-18: lessons folds (self-verifying scripts + verify-before-describing, appended to the daemon-race entry; IO-storm scoping refinement folded into the local-suite corollary) · module-cache janitor (`scripts/module-cache-janitor.sh`, self-tested, 24 live sweeps) · templ-components tagging note VERIFIED ALREADY-UPSTREAM (#27 + release-checklist + workflow) · branching-flow drafts VERIFIED ALREADY-FILED-COMPLETED (#9, #15/#16) · go-modularize §f 1–40 routing audit (annotated inline; items 30/31 → ROADMAP, 40 → cross-repo row) · carve LOC refresh (wiring 4,056 / tree 27 files 5,204 LOC, two methods agree) · metaengine row CLOSED (G3 via v2.9.0 verified in-tag) · F019 Volume hints landed on all five declarations (`humanScaleVolume`); F026 NOT-DO (no cursor pagination at HEAD to cache — reopens only if a surface adopts cursor paging).
-- CLOSED 2026-10-25 (row-hygiene sweep, evidence re-verified at HEAD): F74 (the run's DOM assertions + shot inventory recorded in the 2026-10-18 closing reports; the EYEBALL stays owner §g1) · F85 (snapshot-rot header adopted: both 10-18 reports carry it, AGENTS Conventions line landed) · F86 (verified at source: the retry-or-kill wrapper ask is SUBSUMED by BuildFlow's 10-13 retry-economics train — starvation-floor retry + the no-output watchdog cover the 4.5h network-wedge class; the fleet GOPROXY fallback chain stays the owner's §g-3 network-posture decision, crush-config side). REMAINS: d2 cheat-sheet upstream fix (`style.stroke-dash` on v0.9.0; blocked on the sitting's Q3) + human eyeball of the 2026-10-17 D2 pair (image-blind assistant ceiling) · markdownlint posture execution (post-sitting row-18 verdict).
-
-**Evidence:** status reports `docs/status/2026-10-17_20-16_*` + `2026-10-17_20-34_*`; round-5 plan Errata §1–§3; 2026-10-18 closing report.
+2026-10-18 closed F75/F76/F79–F84; 2026-10-25 row-hygiene sweep closed F74/F85/F86
+(evidence re-verified at HEAD; the closed-work paragraphs were deleted with the
+2026-11-05 sweep — history lives in the plan + its status reports).
+REMAINS: d2 cheat-sheet upstream fix (`style.stroke-dash` on v0.9.0; blocked on the
+sitting's Q3) + the human eyeball of the 2026-10-17 D2 pair (image-blind assistant
+ceiling) + markdownlint posture execution (post-sitting row-18 verdict). Plan:
+[docs/planning/2026-10-17_20-55_SUPERB-round5-pareto-plan.md](docs/planning/2026-10-17_20-55_SUPERB-round5-pareto-plan.md).
 
 ### Native-app train: ring-while-closed legs (2026-10-23 ship, webphone side closed)
 
@@ -965,19 +830,5 @@ Owner/stack legs that block or derive from webphone work: repair the stack FreeS
 
 - **Stack leg (nix-international-telephony):** the FS dialplan must POST `webphone:/hooks/ring` (Bearer webhook secret; `{owner, from, call_id, state: ring|end}`) on inbound-call ring + ring-end — the same bridge pattern as the Telnyx webhooks. Until this lands, the seam is inert (fire-and-forget 202, no devices rung). Config to expose: `services.telephony.webphone.push.*` (freeform `settings` already carries it; document in the stack's deploy docs).
 - **Shell leg (webphone-android):** first device train — exercise the SIP UA against the live WSS gateway (REGISTER/INVITE/BYE/DTMF/hold + incoming INVITE + REFER/NOTIFY are implemented but UNTESTED against FreeSWITCH), compose the real CallStyle notification (v0.1 posts the FSI heads-up), the origin-picker settings UI (App.origin is a constant today), and the `/api/session` field-name check against the served sessionIdentity shape.
-- **Deferred row SHIPPED 2026-10-25 (this repo):** the Settings tab now carries the push seam state row + the extension's registered devices (read-only; the wake address never renders) — the .templ/i18n surface landed once the chat-networks train went quiet. The served-markup delta rides the standing stack browser E2E obligation (next relock).
 
 **Evidence:** decision doc `docs/planning/2026-10-23_16-13_native-app-platform-decision.md` (status: DECIDED + SHIPPING); `~/projects/webphone-android` README honesty markers; `internal/push` + `internal/server/hooks/ring_test.go` + `internal/server/push_api_test.go` for the shipped server contract.
-
-- [x] **Hub cross-link: webphone's wire contracts from its inventory page**
-      (eventcatalog-hub) — SHIPPED 2026-10-28 via webphone's OWN exported page:
-      the catalog declares EventCatalog `specifications` (asyncapi + openapi)
-      and `webphone catalog` renders both spec files into the export tree from
-      the pure generators behind `webphone contracts` and GET /openapi.json
-      (`server.RenderOpenAPIContract`, newly exported), pinned by a cmd-level
-      export test. The SystemNix inventory-module option is unnecessary now.
-      (Was: DISCOVERED 2026-10-24: the hub's `services/` AND `domains/` are
-      GENERATED (gitignored; merge.py unions source trees, bodies preserved
-      first-source-wins). A direct `services/webphone/index.mdx` edit is
-      drift (tested: appended content sits untracked until the next build
-      clobbers it — restored byte-exact 2026-10-24).)

@@ -1,7 +1,7 @@
 # go-health — library utilization audit
 
 **Verdict:** exactly the composition the 09-24 audit praised — injector-discovered probe, one readiness truth, zero duplication. The response-sanitization gap **LANDED 2026-11-04** (bumped + the library applies `CoerceValidUTF8` at its own write seam). **Adoption 100/100 (top band, post-bump)** — 6 of 6 applicable rows.
-**Pin:** v0.9.0 (go.mod) · **Latest:** v0.9.0 · **Currency:** current · **Status:** direct dep (bumped 2026-11-04 with go-health-dashboard v0.13.0 — the coordinated wave's consumer side; the dashboard's release commit existed but its tag was missing, which the closeout train completed: verified the release commit green in a detached worktree, tagged v0.13.0, pushed, waited for proxy propagation, then bumped both)
+**Pin:** v0.10.0 (go.mod) · **Latest:** v0.10.0 · **Currency:** current · **Status:** direct dep (bumped v0.9.0 on 2026-11-04 with go-health-dashboard v0.13.0 — the coordinated wave's consumer side, whose stalled release the closeout train completed by tagging the untagged release commit; then v0.9.0 → v0.10.0 on 2026-11-05 riding the templ-wave train — the dashboard's v0.13.2 requires go-health v0.10.0. The v0.9.0→v0.10.0 delta is release/CI tooling + docs, no API change: webphone's build and full suite passed untouched)
 **Audited:** 2026-11-04 · **Prior reports:** [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html) (80/100 at v0.3.0). **Movement: → 100 at this audit (+20 — the v0.9.0 wave landed same-day and the readiness wiring verified at the ceiling)**.
 
 ## Status
@@ -9,8 +9,8 @@
 |                |                                                                                                                               |
 | -------------- | ----------------------------------------------------------------------------------------------------------------------------- |
 | Module         | `github.com/larsartmann/go-health`                                                                                            |
-| Pinned         | v0.8.1 direct                                                                                                                 |
-| Latest release | v0.9.0 (local checkout tag) — branded `InstanceID`, `CoerceValidUTF8` (successor of `SanitizeResponse`), `StatusSince` rename |
+| Pinned         | v0.10.0 direct (bumped 2026-11-05; v0.9.0 on 2026-11-04)                                                                      |
+| Latest release | v0.10.0 (release/CI tooling + docs over v0.9.0; API surface unchanged) — v0.9.0 branded `InstanceID`, `CoerceValidUTF8` (successor of `SanitizeResponse`), `StatusSince` rename |
 | Usage          | internal/app/app.go (probe construction + lifecycle), internal/server/server.go (livez/startupz fallback)                     |
 
 ## What the library offers
@@ -56,5 +56,5 @@ All commands run from the **webphone checkout root** (repo-relative paths; `git 
 rg -n "health.New\(" internal/app/app.go
 rg -n "LivenessHandler|StartupHandler" internal/server/server.go | head -4
 rg -n "cqrshtmx.ReadinessHandler" internal/server/server.go | head -2    # the one readiness truth
-rg -n "go-health v" go.mod                                               # expect v0.9.0 (bumped 2026-11-04)
+rg -n "go-health v" go.mod                                               # expect v0.10.0 (bumped 2026-11-05; v0.9.0 on 2026-11-04)
 ```

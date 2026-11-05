@@ -1,7 +1,7 @@
 # go-appkit — library utilization audit
 
 **Verdict:** AFFIRMED — not a dependency and stays that way. The 2026-10-23 audit's per-module ruling stands unchanged; this report re-verifies absence and re-states the ruling without re-litigating. **Adoption: n/a (non-adoption affirmed).**
-**Pin:** none (absent from go.mod; `go-flightrecorder` is the one family module webphone rides DIRECTLY) · **Latest (family tag):** health/v0.3.0 · **Status:** not a dependency
+**Pin:** none (absent from go.mod; `go-flightrecorder` is the one family module webphone rides DIRECTLY) · **Latest (root tag):** v0.9.0 (checked 2026-11-05 — release-guard tooling; the DO-NOT-ADOPT ruling is unchanged: root `core`/`health`/`realtime`/`security`/`cqrs` still re-wrap libraries webphone composes directly) · **Status:** not a dependency
 **Audited:** 2026-11-04 · **Authoritative prior:** [2026-10-23 deep-dive](../../research/2026-10-23_go-appkit-deep-dive.html) (score 77/100 over 14 rows — the score grades the _audit target_, the ruling is DO-NOT-ADOPT; the per-module calls live there and in AGENTS.md).
 
 ## Re-verification (this tree, 2026-11-04)
