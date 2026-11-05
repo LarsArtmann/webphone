@@ -41,19 +41,27 @@ rule everywhere else: the only cross-owner reads are the deliberate
   own repair commits ("baseline the admin train's gate prologues and
   templ shapes", 49aa34bd) settled them.
 
-## What is NOT verified
+## What is NOT verified (addendum 18:15: both former gates CLOSED)
 
-- **A completed `buildflow` run for this train.** The final full run
-  was started but its background job was interrupted and lost before a
-  verdict; it was NOT re-run afterwards. CI green is not the repo's own
-  gate doctrine — buildflow remains owed before treating the train as
-  closed.
+- ~~A completed `buildflow` run for this train~~ **CLOSED 2026-11-05
+  07:01** — run `20261105-055334-271d2092` (started 06:53, full mode,
+  `BUILDFLOW_NO_RESULT_CACHE=1`, tree at 3dab5c6c): **68/68 steps green,
+  0 fail, 100%**. Verdict source: `buildflow history` (the streamed log
+  tail was lost to output buffering; the state DB is the authority).
+  Later same-day runs against other sessions' in-flight trees are not
+  this train's verdict.
 - No real browser ceremony (passkey/SSO) → admin tab flow was run; the
   gate reads the session row, so the mint path is covered by
   construction, but the honest label is "ceremony-untested".
-- The consuming stack's browser E2E has not been re-run against these
-  served-markup changes (the documented obligation for markup changes;
-  it lives in the stack repo).
+- The consuming stack's browser E2E ~~has not been re-run~~ **CLOSED
+  2026-11-05 02:06, evidence-verified**: the stack pinned webphone
+  9cb5c64d (admin train included; unattributed daemon commit abbe2de at
+  02:00:57) and the E2E output
+  `/nix/store/c5a2b0pmnj4z03npfivp6pm212kswszr-vm-test-run-telephony-browser`
+  was registered 02:06:23; the log shows the full suite (registration,
+  WebRTC call, DTMF, reconnect-recovery watchdog, fs_cli drain)
+  finishing in 245.08s with no failure. No-admin config = the E2E's
+  default, so this also proves the byte-parity claim end-to-end.
 
 ## Gaps deliberately left (scope rulings this train)
 

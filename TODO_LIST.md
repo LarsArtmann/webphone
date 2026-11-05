@@ -238,6 +238,7 @@ with the verification comment on #6.
    cooldown chip): `CALL-ESTABLISHED` reached, VM test green. The
    release-runbook line "a markup change owes a stack E2E re-run" stays
    as standing policy (M03/F16).
+
 ### ai-phone steal-list (2026-10-29 deep dive — 3 SHIPPED, 4 actions open)
 
 Source + grading: [docs/research/2026-10-29_ai-phone-deep-dive.html](docs/research/2026-10-29_ai-phone-deep-dive.html)
@@ -268,7 +269,7 @@ immediately documented eight previously undocumented keys) and generation-closin
    operator SEE"; ai-phone's failure table also answers "how would anyone KNOW it happened"
    (counters, warm-start timings, a logged line-override). Add a detection column for the quiet
    classes at the next pass over that document; row 1 of it is the caption lag above.
-5. **Caller-perceived latency (L3).** The histogram covers HTTP durations by status class; nothing
+4. **Caller-perceived latency (L3).** The histogram covers HTTP durations by status class; nothing
    measures dial press → first audible media, or the ASR segment round trip. ai-phone's rule is the
    sharpest phrasing of why that matters: t0 is the last speech, and the silence is INSIDE the
    budget. Lowest of the five: needs a reporting home and an island metric, so measure the question

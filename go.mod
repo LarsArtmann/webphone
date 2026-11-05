@@ -3,7 +3,7 @@ module github.com/larsartmann/webphone
 go 1.27.2
 
 require (
-	github.com/a-h/templ v0.3.1070
+	github.com/a-h/templ v0.3.1100
 	github.com/coreos/go-oidc/v3 v3.21.0
 	github.com/dustin/go-humanize v1.1.0
 	github.com/knadh/koanf/parsers/json v1.0.1
@@ -12,10 +12,10 @@ require (
 	github.com/knadh/koanf/providers/file v1.2.1
 	github.com/knadh/koanf/v2 v2.4.1
 	github.com/larsartmann/cqrs-htmx/identity-model/v4 v4.15.0
-	github.com/larsartmann/cqrs-htmx/loginpage/v4 v4.13.0
-	github.com/larsartmann/cqrs-htmx/usermgmt/v4 v4.18.0
+	github.com/larsartmann/cqrs-htmx/loginpage/v4 v4.16.0
+	github.com/larsartmann/cqrs-htmx/usermgmt/v4 v4.19.0
 	github.com/larsartmann/cqrs-htmx/usermgmt/webauthn/v4 v4.13.0
-	github.com/larsartmann/cqrs-htmx/v4 v4.15.0
+	github.com/larsartmann/cqrs-htmx/v4 v4.16.0
 	github.com/larsartmann/go-atomic-write v0.6.2
 	github.com/larsartmann/go-branded-id v0.7.1
 	github.com/larsartmann/go-cqrs-lite/catalog/v4 v4.12.0
@@ -26,18 +26,18 @@ require (
 	github.com/larsartmann/go-etag/entitytag v0.6.1
 	github.com/larsartmann/go-etag/server v0.6.1
 	github.com/larsartmann/go-flightrecorder v0.2.1
-	github.com/larsartmann/go-health v0.9.0
-	github.com/larsartmann/go-health-dashboard v0.13.0
+	github.com/larsartmann/go-health v0.10.0
+	github.com/larsartmann/go-health-dashboard v0.13.2
 	github.com/larsartmann/go-idempotency v0.3.2
 	github.com/larsartmann/go-paperless v0.5.0
 	github.com/larsartmann/go-retry v0.9.0
-	github.com/larsartmann/go-sse v0.6.2
+	github.com/larsartmann/go-sse v0.7.0
 	github.com/larsartmann/go-sse/ssetest v0.5.0
 	github.com/larsartmann/httputil v1.8.0
 	github.com/larsartmann/httputil/server_timing v1.0.3
-	github.com/larsartmann/templ-components v1.26.0
-	github.com/larsartmann/templ-components/icons v1.26.0
-	github.com/larsartmann/templ-components/utils v1.26.0
+	github.com/larsartmann/templ-components v1.27.0
+	github.com/larsartmann/templ-components/icons v1.27.0
+	github.com/larsartmann/templ-components/utils v1.27.0
 	github.com/onsi/ginkgo/v2 v2.33.1
 	github.com/onsi/gomega v1.44.0
 	github.com/samber/do/v2 v2.1.0
@@ -81,6 +81,7 @@ require (
 	github.com/larsartmann/go-codec v0.3.3 // indirect
 	github.com/larsartmann/go-cqrs-lite/claiming/v4 v4.0.2 // indirect
 	github.com/larsartmann/go-cqrs-lite/command/v4 v4.14.1 // indirect
+	github.com/larsartmann/go-cqrs-lite/commandlifecycle/v4 v4.3.1 // indirect
 	github.com/larsartmann/go-cqrs-lite/decider/v4 v4.8.0 // indirect
 	github.com/larsartmann/go-cqrs-lite/dedup/v4 v4.3.0 // indirect
 	github.com/larsartmann/go-cqrs-lite/dispatcher/v4 v4.5.2 // indirect
@@ -105,8 +106,8 @@ require (
 	github.com/larsartmann/go-datastar/static v0.6.1 // indirect
 	github.com/larsartmann/go-sqlitestore v0.1.1 // indirect
 	github.com/larsartmann/go-sse/sseparse v0.2.1 // indirect
-	github.com/larsartmann/templ-components/datastar v1.26.0 // indirect
-	github.com/larsartmann/templ-components/htmx v1.26.0 // indirect
+	github.com/larsartmann/templ-components/datastar v1.27.0 // indirect
+	github.com/larsartmann/templ-components/htmx v1.27.0 // indirect
 	github.com/lithammer/shortuuid/v3 v3.0.7 // indirect
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/maypok86/otter/v2 v2.4.0 // indirect
