@@ -39,7 +39,7 @@ Fleet-libs utilization audit (2026-11-04, docs/review/libs/ — index.html + one
 ```console
 nix develop                        # Go, templ, golangci-lint, esbuild, … — GOTOOLCHAIN=local; bare `go` works inside. Host go is below the 1.27.1 floor: OUTSIDE-the-shell go commands need `nix develop -c`
 nix develop .#ci                   # minimal CI shell (go + templ + golangci-lint only); what the `go-tests` CI job enters
-templ generate ./internal/web/views/   # after ANY .templ edit (committed *_templ.go)
+templ generate ./internal/web/views/   # after ANY .templ edit (committed *_templ.go) — the PINNED compiler is the devshell templ (v0.3.1020, pkgs.templ): regenerating with a newer CLI (the 2026-11-05 "v0.3.1114" class, a stamp that does not even exist upstream) emits templruntime.NewAttributeExpression, which go.mod's templ library lacks, and REDS MAIN on every view
 nix develop -c go run ./cmd/webphone catalog -o work/out/webphone   # render the EventCatalog export tree (catalog.home.lan federation; add -plain for the hub's governance-lint tree; pure render, no config/db — .eventcatalog-hub.json carries the exact recipe CI uses)
 nix develop -c go run ./cmd/webphone contracts   # regenerate docs/contracts/asyncapi.yaml (the /hooks/* + receipt + SSE wire contracts; pure render — NEVER hand-edit the yaml)
 nix develop -c go test -count=1 ./...  # -count=1: the result cache has lied during investigations

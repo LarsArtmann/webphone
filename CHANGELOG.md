@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- History review-state SSE nudge (2026-11-05, F89): every call-review
+  artifact save (pending at dispatch, present when the AI draft lands,
+  failed on a refusal/outage) publishes one payload-less `review` SSE
+  event, and an open History tab re-fetches its rows on it (filters
+  preserved) — a pending review row no longer sits stale until the
+  next manual fetch. The projection is the Notifier's policy table;
+  the detached review job reports through an explicit `Notify` seam
+  (nil-safe for test compositions).
+- CRM name links reach the last two surfaces (2026-11-05, closing the
+  CRM data-mesh deferred tail): a voicemail caller the CRM resolves
+  now renders the linked profile name (same new-tab/noopener contract
+  as the other three surfaces), and the drafts panel's caller labels
+  (pending, frozen, suppressed) render linked with the dialable number
+  kept beside them. Zero CRM config renders byte-identically to the
+  pre-integration product on both surfaces.
 - Admin surface: read-only visibility across every line (2026-11-04).
   An account carrying `admin: true` on the shared `auth.users` mapping
   gets an Admin tab (`/admin`) with the account inventory (live session
@@ -36,6 +51,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A voicemail caller carrying only a withheld-name (CIDName, no CID
+  number) rendered `Name ()` with an empty parenthesised number — the
+  bare name is the row label now (2026-11-05).
 - The chat-network lanes never started (2026-11-04, found by the
   go-retry closeout's research step): `wireChatNetworks` was born
   without a caller on 2026-10-23 — the matrix `/sync` and signal ping

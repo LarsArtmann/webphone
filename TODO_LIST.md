@@ -5,7 +5,21 @@ through (docs-health: shipped work moves to CHANGELOG / FEATURES — one home
 per fact). Long-shot ideas and owner calls live in ROADMAP.md; every row
 cites its source report in Evidence.
 
-Last sweep: 2026-10-29 (ai-phone deep dive — external prior art read at source): the
+Last sweep: 2026-11-05 (TODO-execution session, opened on a RED main): the
+concurrent session's templ regen (8565e877) used a compiler stamped
+"v0.3.1114" that does NOT exist upstream and emits `templruntime.NewAttributeExpression`,
+which go.mod's templ v0.3.1070 lacks — every view failed to compile; healed by
+regenerating with the PINNED devshell compiler (v0.3.1020, the 97a3656d precedent).
+Executed: F89 History review-state SSE nudge SHIPPED end-to-end (new
+`domain.ReviewSaved` event — the readmodels fact is NOT an Event, so the closed
+event set grew a slim notification shape; Notifier policy case + payload-less
+`review` SSE event + `api.Deps.Notify` seam + History panel `hx-trigger="sse:review"`
+with filter-preserving include; pending+present ladder pinned). CRM data-mesh
+deferred tail #1 SHIPPED (voicemail caller + the three drafts-panel labels ride
+`crmNameLink`; zero-config byte-parity pinned) — plus the withheld-name `Name ()`
+quirk found and fixed on the way. Verified ALREADY-SHIPPED at HEAD: ai-phone L8
+(lag stamp + once-per-streak warn, `transcribe.test.mjs` pins it) — row deleted.
+Prior sweep: 2026-10-29 (ai-phone deep dive — external prior art read at source): the
 docs-versus-code configuration pin SHIPPED (`internal/config/docpin_test.go`: documented keys must
 exist, every key must be documented, config-owned defaults must match) and it immediately documented
 EIGHT undocumented keys (`crm.token_file` + the four `matrix.*` + three `signal.*`); generation-closing
@@ -166,25 +180,21 @@ Source: [docs/status/2026-10-29_19-44_crm-data-mesh-train-closeout-status.md](do
 CRM-side `GET /api/contacts/{id}/context`, the outcome-vocabulary bridge) is
 SHIPPED and green; these are the deliberately deferred edges.
 
-1. **Two surfaces still render plain names**: voicemail's `vmCaller` returns
-   mixed name/number text (split it before wrapping) and the drafts panel's
-   `contactLabel` is unlinked. Three surfaces link, two do not — an
-   inconsistency a user will read as a bug.
-2. **"Add to CRM" for misses**: today a caller the CRM does not know is a dead
+1. **"Add to CRM" for misses**: today a caller the CRM does not know is a dead
    end. The affordance is a link into the CRM's create form (still no
    browser→CRM traffic, no contact creation in the phone).
-3. **Batch identity (`by-phone?numbers=` on the producer)**: lists ask N times;
+2. **Batch identity (`by-phone?numbers=` on the producer)**: lists ask N times;
    a batch product collapses it to one. Owner-side (Kith) work, worth doing
    when a list ever exceeds ~20 numbers per render.
-4. **Contract snapshot test**: pin webphone's exact `/context` request + parse
+3. **Contract snapshot test**: pin webphone's exact `/context` request + parse
    against the producer's published shape, so the vocabulary-break class (a
    closed set drifting under a consumer that keeps sending the old value)
    fails in CI instead of on a customer's answered call.
-5. **Full `nix flake check` as ONE gate**: the KVM-gated
+4. **Full `nix flake check` as ONE gate**: the KVM-gated
    `webphone-backup`, `webphone-backup-drill` and `webphone-module` checks were
    not part of this train's verdict set (each verified individually when it
    last changed).
-6. **Kith side (`blocked` on Q3, below)**: the endpoint's docs landed
+5. **Kith side (`blocked` on Q3, below)**: the endpoint's docs landed
    (README, FEATURES, CHANGELOG); `/docs` is generated from the EventCatalog and
    does NOT cover machine-API REST routes, so no generated-wire entry is owed.
    What remains is the PUSH: the branch is 16 commits ahead of `origin/master`
@@ -228,23 +238,7 @@ with the verification comment on #6.
    cooldown chip): `CALL-ESTABLISHED` reached, VM test green. The
    release-runbook line "a markup change owes a stack E2E re-run" stays
    as standing policy (M03/F16).
-3. **History review-state SSE nudge (F89 — DESIGNED, not landed; island
-   collision)**: pending review rows stay stale until the next History
-   fetch. Seam map, ready to execute: the `domain.CallReviewSaved` fact
-   already exists (readmodels folds it); `server.Notifier.Project` is the
-   ONE notification-policy home (add `case domain.CallReviewSaved:` → a
-   payload-less nudge on the `contacts`/`voicemail` pattern, new
-   `sseEventReview` in `sse.go`); the write path is the review API
-   handler (`review_api.go` after `Reviews.Set` succeeds), so `api.Deps`
-   needs a `Notify(domain.Event)` callback wired in the `api.Deps{}`
-   literal in `server.go` (the hand-copy field — see the wiring-parity
-   note); island arm = add the event name to the main.js SSE list (the
-   `voicemail` line) with refreshNav on it. Tests: `notifier_test.go`
-   case + island stub event. NOT landed 2026-10-29: the concurrent
-   UI-UX train owns island/shell edits right now; land this in a quiet
-   window (~30 min total).
-
-### ai-phone steal-list (2026-10-29 deep dive — 2 SHIPPED, 5 actions open)
+### ai-phone steal-list (2026-10-29 deep dive — 3 SHIPPED, 4 actions open)
 
 Source + grading: [docs/research/2026-10-29_ai-phone-deep-dive.html](docs/research/2026-10-29_ai-phone-deep-dive.html)
 (oxnw/ai-phone read at source; the report carries the ten mechanics and the six declines).
@@ -261,12 +255,7 @@ immediately documented eight previously undocumented keys) and generation-closin
    is an outage on every deployment. Owner call: the NixOS module writes a freeform `settings` map,
    so file-strictness changes boot semantics for a deployment carrying an extra key today. Pairs
    with the `docpin_test.go` key tree (same reflection helper can feed the allowed-key set).
-2. **Live-caption lag signal (L8).** The segment loop is careful everywhere else (silence gate,
-   shared 429 cooldown, exponential backoff, bounded save queue, bounded strip) but a provider
-   slower than the 4 s cadence makes captions drift with no warning and no timestamp on the segment
-   path. Stamp each segment and warn (once per streak) when the queue passes a lag threshold; island
-   only, gated by `tsc -p . --noEmit` + the node suite.
-3. **Agent liveness contract for D3 (L6).** Prior art worth borrowing before the agent-token lane is
+2. **Agent liveness contract for D3 (L6).** Prior art worth borrowing before the agent-token lane is
    designed: ai-phone's relay mode answers a stalled client with a filler at 1.5 s, another at 10 s,
    a polite goodbye and BYE at 25 s; a dead `listen` client frees the listener slot on socket EOF so
    the next call falls back to the autonomous mode; `hangup` waits 30 s + 10 s and then fails with a
@@ -275,7 +264,7 @@ immediately documented eight previously undocumented keys) and generation-closin
    for D3 LANDED 2026-10-29 (M18/F75-F77):
    `docs/planning/2026-10-29_16-17_D3-agent-liveness-design.md` — liveness ladder, slot release,
    named exit codes, and the webphone seam map; still owner-GO + security-review gated.
-4. **Detection column in the error contract (L9).** `docs/error-contract.md` answers "what does the
+3. **Detection column in the error contract (L9).** `docs/error-contract.md` answers "what does the
    operator SEE"; ai-phone's failure table also answers "how would anyone KNOW it happened"
    (counters, warm-start timings, a logged line-override). Add a detection column for the quiet
    classes at the next pass over that document; row 1 of it is the caption lag above.
