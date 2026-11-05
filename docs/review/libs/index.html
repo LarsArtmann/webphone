@@ -962,10 +962,11 @@
             <strong>Adjacent families deliberately outside the scored 19:</strong>
             <a href="go-branded-id.md">go-branded-id</a> (adjacent audit LANDED 2026-11-04, 74/100 — the
             09-24 &ldquo;parse hand-rolled&rdquo; deduction premise-inverted: the hand parse IS the domain
-            invariant&rsquo;s home), with <code>go-flightrecorder</code>, <code>go-sqlitestore</code>,
-            the Datastar templ bindings, and <code>go-paperless</code> getting their own adjacent
-            audits in the same closeout train. Adjacent audits carry scores but do not move the
-            scored-19 mean. The cqrs-htmx submodules (usermgmt, loginpage, adminui, identity-model,
+            invariant&rsquo;s home), with <a href="go-flightrecorder.md">go-flightrecorder</a> (88),
+            <a href="go-sqlitestore.md">go-sqlitestore</a> (NO-GO, transitive),
+            <a href="go-datastar.md">go-datastar</a> (NO-GO, transitive), and
+            <a href="go-paperless.md">go-paperless</a> (85) audited in the same closeout train.
+            Adjacent audits carry scores but do not move the scored-19 mean. The cqrs-htmx submodules (usermgmt, loginpage, adminui, identity-model,
             webauthn, catalog) are scored <em>inside</em> the cqrs-htmx family row — one home per family.
           </p>
         </section>
@@ -1007,6 +1008,10 @@
                 <tr><th scope="row"><a href="go-etag.md">go-etag</a></th><td>direct (entitytag + server)</td><td>v0.6.1 / v0.6.1</td><td class="yes">adopted</td><td>assets conditional-GET rides <code>entitytag</code> (RFC-weak comparison) AND the server middleware mounted on <code>/openapi.json</code> + <code>/manifest.webmanifest</code> (304s; the mount is the Skip set); root v0.7.0 tag excludes the submodule — drift filed upstream</td></tr>
                 <tr><th scope="row"><a href="go-retry.md">go-retry</a></th><td>direct</td><td>v0.9.0 / v0.9.0</td><td class="yes">adopted (fit half)</td><td>LANDED 2026-11-04: reconnect loops ride <code>ComputeDelay</code> jitter (hard-capped) + the Rejection-stops-loudly gate; <code>retry.Do</code> still declined (reconnect loops cannot exhaust)</td></tr>
                 <tr><th scope="row"><a href="go-branded-id.md">go-branded-id</a></th><td>direct (adjacent)</td><td>v0.7.1 / v0.7.1</td><td class="yes">74</td><td>Adjacent audit 2026-11-04: six brands + raw-value JSON wire + linter clean; the 09-24 gaps re-ruled DELIBERATE (parseID owns prefix/shape/Corruption; Scan would mint ids from unvalidated strings)</td></tr>
+                <tr><th scope="row"><a href="go-flightrecorder.md">go-flightrecorder</a></th><td>direct (adjacent)</td><td>v0.2.1 / v0.2.1</td><td class="yes">88</td><td>Adjacent audit 2026-11-04: the opt-in trace seam rides the library exactly as designed (async snapshots off a detached context, OnErrorOrLatency trigger, Shutdowner drain); the server seam keeps the framework out of handlers</td></tr>
+                <tr><th scope="row"><a href="go-paperless.md">go-paperless</a></th><td>direct (adjacent)</td><td>v0.5.0 / v0.5.0</td><td class="yes">85</td><td>Adjacent audit 2026-11-04: the fax Archiver adapter rides the SDK&rsquo;s branded ids (no second brand layer); write-only provenance, blob store stays the storage truth</td></tr>
+                <tr><th scope="row"><a href="go-datastar.md">go-datastar</a></th><td>indirect (adjacent)</td><td>v0.6.2 / v0.6.3</td><td class="no">NO-GO</td><td>Adjacent audit 2026-11-04: transitive-only (the dashboard&rsquo;s embedded SDK); the app&rsquo;s realtime deliberately rides SSE+htmx &mdash; a second reactive idiom buys nothing</td></tr>
+                <tr><th scope="row"><a href="go-sqlitestore.md">go-sqlitestore</a></th><td>indirect (adjacent)</td><td>v0.1.1 / v0.1.1</td><td class="no">NO-GO</td><td>Adjacent audit 2026-11-04: zero imports &mdash; rides in through cqrs-htmx and projectionhost; webphone&rsquo;s two sqlite homes (store ladder, metaengine engine) already own the fact</td></tr>
                 <tr><th scope="row"><a href="go-idempotency.md">go-idempotency</a></th><td>indirect</td><td>v0.3.2 / v0.3.2</td><td class="no">NO-GO</td><td>Semantics differ (check-first vs CheckAndRecord); metaengine DedupStore already IS the capability</td></tr>
                 <tr><th scope="row"><a href="go-codec.md">go-codec</a></th><td>indirect</td><td>v0.3.3 / v0.3.3</td><td class="no">NO-GO</td><td>Event-store payload codec; webphone benefits transitively, HTTP JSON is not codec territory</td></tr>
                 <tr><th scope="row"><a href="go-atomic-write.md">go-atomic-write</a></th><td>absent</td><td>— / v0.6.2</td><td>fit: HIGH</td><td><strong>blob.Save writes user data with bare os.WriteFile — no fsync/rename (ordering verified file-then-row; window = row-committed-before-file-durable).</strong> Top finding</td></tr>
