@@ -106,6 +106,10 @@ type Config struct {
 	// every SIP invite. Zero Cooldown = off: no route, no island ask,
 	// byte-identical product.
 	Dial Dial `json:"dial" koanf:"dial"`
+	// Reports carries the Reports tab's feedback knob (issue #12): the
+	// optional weekly talk-time budget its one bar measures against.
+	// Zero = no budget, no bar — the tab still reports talk time.
+	Reports Reports `json:"reports" koanf:"reports"`
 	// RetentionDays bounds how long stored content lives: 0 (default)
 	// keeps everything forever; a positive value makes the daily sweep
 	// delete messages (with attachments), fax jobs (with documents) and
@@ -934,6 +938,9 @@ func validate(cfg Config) error {
 	if err := validateDial(cfg.Dial); err != nil {
 		return err
 	}
+	if err := validateReports(cfg.Reports); err != nil {
+		return err
+	}
 	return validatePush(cfg.Push)
 }
 
@@ -1043,6 +1050,28 @@ func validateDial(cfg Dial) error {
 	if cfg.Cooldown < 0 {
 		return errorfamily.NewRejection("config.dial.cooldown", "dial.cooldown is negative — set a positive duration (e.g. \"2m\") or remove the key")
 	}
+	return nil
+}
+
+// Reports configures the Reports tab's feedback (issue #12). It holds
+// no data of its own: the tab is a pure projection over the phone API's
+// CDR page, so the only thing a deployment can choose is the goal it
+// measures against.
+type Reports struct {
+	// WeeklyTalkBudget is the talk time the current week is allowed to
+	// spend, rendered as one bar under the week's headline. Zero (the
+	// default) renders no bar at all — a personal phone has no goal
+	// unless its owner sets one.
+	WeeklyTalkBudget time.Duration `json:"weekly_talk_budget" koanf:"weekly_talk_budget"`
+}
+
+// validateReports rejects a negative budget: a goal below zero cannot be
+// met by any week, which is a typo, not a tighter goal.
+func validateReports(cfg Reports) error {
+	if cfg.WeeklyTalkBudget < 0 {
+		return errorfamily.NewRejection("config.reports.weekly_talk_budget", "reports.weekly_talk_budget is negative — set a positive duration (e.g. \"10h\") or remove the key")
+	}
+
 	return nil
 }
 
