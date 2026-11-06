@@ -602,10 +602,30 @@ func TestLoadValidatesCRMConfig(t *testing.T) {
 			wantErr: "not an absolute http(s) URL template",
 		},
 		{
+			// A trust anchor for a CRM this deployment cannot query is a
+			// credential with nowhere to go (issue #9's CA lane).
+			name: "ca file without a crm",
+			env: map[string]string{
+				"WEBPHONE_CRM__CA_FILE": "/etc/webphone/crm-ca.pem",
+			},
+			wantErr: "crm.ca_file is set without crm.url",
+		},
+		{
 			name: "valid crm section loads",
 			env: map[string]string{
 				"WEBPHONE_CRM__URL":   "https://crm.example.org",
 				"WEBPHONE_CRM__TOKEN": "sekrit",
+			},
+		},
+		{
+			// The CA's CONTENT is validated where it is used (a readable
+			// file with no certificate is a runtime fact, not a shape), so
+			// a configured path alone loads.
+			name: "valid crm section with a private ca bundle",
+			env: map[string]string{
+				"WEBPHONE_CRM__URL":     "https://crm.example.org",
+				"WEBPHONE_CRM__TOKEN":   "sekrit",
+				"WEBPHONE_CRM__CA_FILE": "/etc/webphone/crm-ca.pem",
 			},
 		},
 		{
@@ -634,6 +654,9 @@ func TestLoadValidatesCRMConfig(t *testing.T) {
 				}
 				if cfg.CRM.ContactURL != tc.env["WEBPHONE_CRM__CONTACT_URL"] {
 					t.Errorf("crm.contact_url = %q, want %q", cfg.CRM.ContactURL, tc.env["WEBPHONE_CRM__CONTACT_URL"])
+				}
+				if cfg.CRM.CAFile != tc.env["WEBPHONE_CRM__CA_FILE"] {
+					t.Errorf("crm.ca_file = %q, want %q", cfg.CRM.CAFile, tc.env["WEBPHONE_CRM__CA_FILE"])
 				}
 				return
 			}

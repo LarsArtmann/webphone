@@ -86,7 +86,7 @@ func crmResolverFor(t *testing.T, stub *crmStub) *crm.Resolver {
 	srv := httptest.NewServer(http.HandlerFunc(stub.handler))
 	t.Cleanup(srv.Close)
 
-	client, err := crm.NewClient(srv.URL, "crm-token")
+	client, err := crm.NewClient(srv.URL, "crm-token", "")
 	if err != nil {
 		t.Fatalf("crm client: %v", err)
 	}
@@ -433,7 +433,7 @@ func TestMetricsRendersCRMLookupCounters(t *testing.T) {
 	stub.lookupJSON = `{"results":[{"id":"01M","first_name":"Ada","last_name":"Lovelace","email":"ada@example.com"}]}`
 	stub.logStatus = http.StatusNoContent
 	upstream := httptest.NewServer(http.HandlerFunc(stub.handler))
-	client, err := crm.NewClient(upstream.URL, "crm-token")
+	client, err := crm.NewClient(upstream.URL, "crm-token", "")
 	if err != nil {
 		t.Fatalf("crm client: %v", err)
 	}

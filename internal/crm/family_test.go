@@ -8,6 +8,7 @@ package crm_test
 import (
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"testing"
 
 	"github.com/larsartmann/go-error-family"
@@ -36,7 +37,7 @@ func TestLookupStatusSplitAndTransport(t *testing.T) {
 			}))
 			defer srv.Close()
 
-			client, err := crm.NewClient(srv.URL, "token")
+			client, err := crm.NewClient(srv.URL, "token", "")
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -54,7 +55,7 @@ func TestLookupStatusSplitAndTransport(t *testing.T) {
 		url := closed.URL
 		closed.Close()
 
-		client, err := crm.NewClient(url, "token")
+		client, err := crm.NewClient(url, "token", "")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -65,6 +66,20 @@ func TestLookupStatusSplitAndTransport(t *testing.T) {
 		errorfamilytest.AssertFamily(t, err, errorfamily.Transient)
 		errorfamilytest.AssertCode(t, err, "crm.transport")
 	})
+}
+
+// TestCAFileRejectionIsFamilyPinned pins issue #9's boot-side lane: a
+// mistyped or certificate-free CA bundle is operator input, so it is a
+// Rejection named by its own code, never a transport surprise at the
+// first lookup.
+func TestCAFileRejectionIsFamilyPinned(t *testing.T) {
+	_, err := crm.NewClient("https://crm.example.org", "token", filepath.Join(t.TempDir(), "absent.pem"))
+	if err == nil {
+		t.Fatal("missing ca bundle: want error")
+	}
+
+	errorfamilytest.AssertFamily(t, err, errorfamily.Rejection)
+	errorfamilytest.AssertCode(t, err, "crm.ca_file")
 }
 
 func TestCallLogStatusSplit(t *testing.T) {
@@ -83,7 +98,7 @@ func TestCallLogStatusSplit(t *testing.T) {
 			}))
 			defer srv.Close()
 
-			client, err := crm.NewClient(srv.URL, "token")
+			client, err := crm.NewClient(srv.URL, "token", "")
 			if err != nil {
 				t.Fatal(err)
 			}

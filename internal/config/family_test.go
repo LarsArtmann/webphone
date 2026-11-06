@@ -38,6 +38,9 @@ func TestConfigValidationFailuresAreRejections(t *testing.T) {
 		// parsed at boot in the composition root, not here.
 		{"push ntfy token without url", map[string]string{"WEBPHONE_PUSH__NTFY__TOKEN": "secret"}, "config.push.ntfy.url"},
 		{"push ntfy relative url", map[string]string{"WEBPHONE_PUSH__NTFY__URL": "ntfy.example.org"}, "config.push.ntfy.url"},
+		// CRM: a private-CA bundle for a CRM this deployment cannot query
+		// is a credential with nowhere to go (issue #9's CA lane).
+		{"crm ca file without url", map[string]string{"WEBPHONE_CRM__CA_FILE": "/etc/webphone/crm-ca.pem"}, "config.crm.ca_file"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			for k, v := range tc.env {

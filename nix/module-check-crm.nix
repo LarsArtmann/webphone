@@ -57,6 +57,12 @@ let
         crm.url = "https://crm.example.org";
       };
     };
+    ca-file-without-enable = {
+      fragment = "set enable = true";
+      extra = {
+        crm.caFile = "/etc/ssl/certs/crm-ca.pem";
+      };
+    };
     leaked-token-to-store = {
       fragment = "world-readable Nix store";
       extra = validCRM // {
@@ -82,6 +88,7 @@ in
         ok =
           c.settings.crm.url == "https://crm.example.org"
           && c.settings.crm.token_file == "/run/credentials/webphone.service/webphone-crm-token"
+          && !(c.settings.crm ? ca_file)
           && lib.elem "webphone-crm-token:/run/secrets/webphone-crm-token" unit.LoadCredential
           && failedAssertions validCRM == [ ];
       in
@@ -89,6 +96,32 @@ in
         "typed crm renders the app block with the credential path and routes the token through LoadCredential"
       else
         throw "webphone-module check: typed crm did not render the expected settings.crm or LoadCredential shape"
+    );
+  }
+  {
+    # The private-CA lane (issue #9): caFile renders crm.ca_file as the
+    # operator's host path — public material read in place, so it must
+    # NOT ride LoadCredential — and it stays absent when unset.
+    name = "crm-ca-file-render";
+    path = pkgs.writeText "crm-ca-file-render" (
+      let
+        withCA = validCRM // {
+          crm = validCRM.crm // {
+            caFile = "/etc/ssl/certs/crm-ca.pem";
+          };
+        };
+        ev = evaluated withCA;
+        c = ev.config.services.webphone;
+        unit = ev.config.systemd.services.webphone.serviceConfig;
+        ok =
+          c.settings.crm.ca_file == "/etc/ssl/certs/crm-ca.pem"
+          && !(lib.any (entry: lib.hasInfix "crm-ca" entry) unit.LoadCredential)
+          && failedAssertions withCA == [ ];
+      in
+      if ok then
+        "crm.caFile renders crm.ca_file as a host path and never routes it through LoadCredential"
+      else
+        throw "webphone-module check: crm.caFile did not render as a plain settings.crm.ca_file"
     );
   }
   {

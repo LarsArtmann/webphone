@@ -184,7 +184,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		return pbx.NewClient(cfg.PhoneAPIURL)
 	})
 	do.Provide(injector, func(i do.Injector) (*crm.Client, error) {
-		return crm.NewClient(cfg.CRM.URL, cfg.CRM.Token)
+		return crm.NewClient(cfg.CRM.URL, cfg.CRM.Token, cfg.CRM.CAFile)
 	})
 	do.Provide(injector, func(i do.Injector) (*crm.Resolver, error) {
 		return crm.NewResolver(do.MustInvoke[*crm.Client](i), cfg.CRM.ContactURL, log), nil

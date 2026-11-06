@@ -361,6 +361,14 @@ type CRM struct {
 	// the UI behind the reverse proxy), so deriving one from the other
 	// would mint links nobody can open.
 	ContactURL string `json:"contact_url,omitempty" koanf:"contact_url"`
+	// CAFile is the OPTIONAL PEM bundle that vouches for the CRM vhost's
+	// TLS chain. It exists because a private-CA CRM (the normal
+	// deployment: a *.cloud vhost the PBX host does not trust) would
+	// otherwise force host-wide trust — security.pki on the host, or
+	// SSL_CERT_FILE in the process — vouching for every TLS connection
+	// the machine makes. One file, one client: the trust boundary stays
+	// as narrow as the need (issue #9). Empty = the system trust store.
+	CAFile string `json:"ca_file,omitempty" koanf:"ca_file"`
 }
 
 // Paperless configures the optional Paperless-ngx archive for inbound
@@ -920,6 +928,9 @@ func validate(cfg Config) error {
 	if err := validateCRMContactURL(cfg.CRM); err != nil {
 		return err
 	}
+	if err := validateCRMCAFile(cfg.CRM); err != nil {
+		return err
+	}
 	if err := validateDial(cfg.Dial); err != nil {
 		return err
 	}
@@ -946,6 +957,25 @@ func validateCRMContactURL(cfgCRM CRM) error {
 	u, err := url.Parse(strings.Replace(cfgCRM.ContactURL, "{id}", "x", 1))
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
 		return errorfamily.Newf(errorfamily.Rejection, "config.crm.contact_url", "crm.contact_url %q is not an absolute http(s) URL template (e.g. https://crm.example/contacts/{id})", cfgCRM.ContactURL)
+	}
+
+	return nil
+}
+
+// validateCRMCAFile checks the optional private-CA bundle: a trust anchor
+// for a CRM this deployment cannot query would be a credential with
+// nowhere to go, the same argument as crm.contact_url. The bundle's
+// CONTENT is validated where it is used (crm.NewClient), because a
+// readable file that holds no certificate is a runtime fact, not a
+// config shape.
+func validateCRMCAFile(cfgCRM CRM) error {
+	if cfgCRM.CAFile == "" {
+		return nil
+	}
+
+	if cfgCRM.URL == "" {
+		return errorfamily.NewRejection("config.crm.ca_file",
+			"crm.ca_file is set without crm.url: a trust anchor for a CRM this deployment cannot query (set crm.url, or clear crm.ca_file)")
 	}
 
 	return nil

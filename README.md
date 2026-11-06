@@ -155,6 +155,7 @@ design and are exempt.
 | `crm.token`                             | _empty_                      | Bearer token of the CRM's machine API (`-api-token` there); both keys together or neither                                                                                                                                                                                                                                                                                                                                                                                 |
 | `crm.token_file`                        | _empty_                      | Read the CRM bearer from a runtime file (the NixOS module's systemd `LoadCredential` lane) instead of `crm.token`; at most one of the two may be set                                                                                                                                                                                                                                                                                                                      |
 | `crm.contact_url`                       | _empty_ = no links           | Deep-link template into the CRM's own UI; `{id}` is replaced with the CRM contact id (e.g. `https://crm.example/contacts/{id}`). Needs `crm.url`; a template without `{id}` refuses the boot                                                                                                                                                                                                                                                                              |
+| `crm.ca_file`                           | _empty_ = system roots       | PEM bundle that vouches for the CRM vhost's TLS chain, trusted by the CRM client ALONE (a private-CA CRM without host-wide `security.pki` or `SSL_CERT_FILE` trust). Needs `crm.url`; a file holding no certificate refuses the boot |
 | `paperless.url`                         | _empty_ = disabled           | Paperless-ngx base URL for the optional inbound-fax archive (e.g. `http://127.0.0.1:2280`); both keys together or neither                                                                                                                                                                                                                                                                                                                                                 |
 | `paperless.token`                       | _empty_                      | Paperless-ngx API token (Profile → My Profile → API token)                                                                                                                                                                                                                                                                                                                                                                                                                |
 | `asr.provider`                          | `openai`                     | Provider kind: `openai` (any `/v1/audio/transcriptions` server), `whispercpp` (native whisper.cpp `/inference` server), or `google` (Cloud Speech-to-Text V2)                                                                                                                                                                                                                                                                                                             |
@@ -272,9 +273,20 @@ no CRM records (the in-process cache is a render-time memo, not a
 replica), never creates contacts, and renders each surface exactly as well
 as before when the CRM is unreachable.
 
+- **Private CA** (`crm.ca_file`): a CRM behind a certificate from a
+  private authority (the usual `*.cloud` vhost) needs that CA to be
+  trusted. Pointing `crm.ca_file` at the CA bundle extends the trust
+  store for THIS client only — the webphone's other outbound TLS (the
+  OIDC issuer, the Paperless archive, the ASR provider) keeps the
+  system roots untouched, which host-wide `security.pki` or a
+  process-wide `SSL_CERT_FILE` cannot promise. The bundle is additive
+  (system roots stay valid), read and parsed at boot, and a path that is
+  missing or certificate-free refuses the boot with `crm.ca_file`.
+
 Enable it on both sides: webphone gets `crm.url` + `crm.token`, the CRM
 gets `-api-token <same value>` (its machine API is unmounted without
-that flag).
+that flag). The NixOS module wires all three (plus `crm.caFile`) through
+`services.telephony.webphone.crm`.
 
 ### Paperless-ngx fax archive (optional)
 

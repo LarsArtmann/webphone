@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `crm.ca_file` (2026-11-06, issue #9's in-repo half): an optional
+  PEM bundle that vouches for the CRM vhost's TLS chain, trusted by the
+  CRM client ALONE. A private-CA CRM (the usual `*.cloud` vhost) no
+  longer forces host-wide `security.pki` trust or a process-wide
+  `SSL_CERT_FILE` — both of which would vouch for every TLS connection
+  the machine makes, the OIDC issuer included. The bundle is additive
+  (system roots stay valid), read and parsed at boot, refuses the boot
+  with `crm.ca_file` when missing or certificate-free, and the NixOS
+  module gains the matching `services.webphone.crm.caFile` (a plain
+  host path: a CA certificate is public material, so it never rides
+  `LoadCredential`). Zero config stays byte-identical.
 - History review-state SSE nudge (2026-11-05, F89): every call-review
   artifact save (pending at dispatch, present when the AI draft lands,
   failed on a refusal/outage) publishes one payload-less `review` SSE
