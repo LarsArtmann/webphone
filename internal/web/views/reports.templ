@@ -105,31 +105,23 @@ templ reportsWeek(props ReportsPanelProps) {
 templ reportsTotals(props ReportsPanelProps) {
 	{{ totals := props.Report.Totals }}
 	<section class="wp-reports-totals">
-		<div class="wp-stat">
-			<span class="wp-stat-value">{ fmtInt(totals.Calls) }</span>
-			<span class="wp-stat-label">{ T(props.Lang, "reports.stat.calls") }</span>
-		</div>
-		<div class="wp-stat">
-			<span class="wp-stat-value">{ talkTimeLabel(totals.Talk) }</span>
-			<span class="wp-stat-label">{ T(props.Lang, "reports.stat.talk") }</span>
-		</div>
-		<div class="wp-stat">
-			<span class="wp-stat-value">{ fmtInt(totals.Inbound) }</span>
-			<span class="wp-stat-label">{ T(props.Lang, "reports.stat.inbound") }</span>
-		</div>
-		<div class="wp-stat">
-			<span class="wp-stat-value">{ fmtInt(totals.Outbound) }</span>
-			<span class="wp-stat-label">{ T(props.Lang, "reports.stat.outbound") }</span>
-		</div>
-		<div class="wp-stat">
-			<span class="wp-stat-value">{ fmtInt(totals.Answered) }</span>
-			<span class="wp-stat-label">{ T(props.Lang, "reports.stat.answered") }</span>
-		</div>
-		<div class={ "wp-stat", templ.KV("wp-stat-alert", totals.Missed > 0) }>
-			<span class="wp-stat-value">{ fmtInt(totals.Missed) }</span>
-			<span class="wp-stat-label">{ T(props.Lang, "reports.stat.missed") }</span>
-		</div>
+		@reportsStat(fmtInt(totals.Calls), T(props.Lang, "reports.stat.calls"), false)
+		@reportsStat(talkTimeLabel(totals.Talk), T(props.Lang, "reports.stat.talk"), false)
+		@reportsStat(fmtInt(totals.Inbound), T(props.Lang, "reports.stat.inbound"), false)
+		@reportsStat(fmtInt(totals.Outbound), T(props.Lang, "reports.stat.outbound"), false)
+		@reportsStat(fmtInt(totals.Answered), T(props.Lang, "reports.stat.answered"), false)
+		@reportsStat(fmtInt(totals.Missed), T(props.Lang, "reports.stat.missed"), totals.Missed > 0)
 	</section>
+}
+
+// reportsStat is the totals grid's ONE home: a value over its localized
+// label, the alert tone reserved for counts the operator must not skim
+// past (missed calls).
+templ reportsStat(value, label string, alert bool) {
+	<div class={ "wp-stat", templ.KV("wp-stat-alert", alert) }>
+		<span class="wp-stat-value">{ value }</span>
+		<span class="wp-stat-label">{ label }</span>
+	</div>
 }
 
 // reportsDays is the per-day ladder, each day's talk time bar sized
