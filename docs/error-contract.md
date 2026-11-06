@@ -284,6 +284,7 @@ a deliberate code change, regenerate:
 | config.paperless.url                         | Rejection                 | internal/config/config.go          |
 | config.push.fcm                              | Rejection                 | internal/push/fcm.go               |
 | config.push.ntfy.url                         | Rejection                 | internal/config/config.go          |
+| config.reports.weekly_talk_budget            | Rejection                 | internal/config/config.go          |
 | config.retention_days                        | Rejection                 | internal/config/config.go          |
 | config.session_max_ttl                       | Rejection                 | internal/config/config.go          |
 | config.session_ttl                           | Rejection                 | internal/config/config.go          |

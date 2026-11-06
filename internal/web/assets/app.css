@@ -2876,8 +2876,9 @@ dialog.wp-lightbox img {
   font-size: 0.82em;
 }
 
-/* The hour ladder has no bar (an hour is a label, not a share); its
- * third column stays for the meta to align with the day rows above. */
-.wp-reports-row > .wp-reports-day-meta:last-child {
-  grid-column: 3;
+/* The hour and contact ladders carry no bar (an hour is a label, not a
+ * share), so they collapse to two columns instead of leaving an empty
+ * track where the day rows draw theirs. */
+.wp-reports-row-pair {
+  grid-template-columns: minmax(6.5rem, auto) minmax(0, 1fr);
 }

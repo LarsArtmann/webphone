@@ -28,6 +28,7 @@ but usable against any SIP/WebSocket PBX (FreeSWITCH/sofia or compatible).
 | Voicemail       | List, play (inline scrubber + speed control), delete — straight from the PBX's per-extension API                                                                                                                                                                                         |
 | Call history    | Server-side CDR records through the same API; outcome filters (missed/answered), day grouping, shareable filter URLs; per-call notes + reassembled live transcripts with search                                                                                                          |
 | Contacts        | Shared (config) + personal (per extension), vCard import/export, click-to-dial                                                                                                                                                                                                           |
+| Reports         | A pure fold of the same call records History lists: talk time, calls by direction and outcome, the per-day and busiest-hour ladders, the contacts that consumed the time, and an optional weekly talk-time budget as one bar (`reports.weekly_talk_budget`) |
 | Data export     | One session-gated download (Settings tab) zips every thread, fax job and personal contact of the signed-in extension                                                                                                                                                                     |
 | TURN auth       | Optional short-lived coturn REST credentials derived per response (`turn_rest.secret`) — long-lived TURN passwords never ship                                                                                                                                                            |
 | Live updates    | Per-extension SSE feed: threads, open transcripts, fax list, voicemail                                                                                                                                                                                                                   |
@@ -142,6 +143,7 @@ design and are exempt.
 | `turn_rest.ttl`                         | `48h`                        | Validity window of the derived TURN credentials (per-response freshness; the pair expires with the username's unix timestamp)                                                                                                                                                                                                                                                                                                                                             |
 | `contacts`                              | _empty_                      | Shared directory entries (`name`, `number`); a number with no dialable characters fails the boot naming the entry                                                                                                                                                                                                                                                                                                                                                         |
 | `dial.cooldown`                         | `0` (off)                    | Advisory per-(extension, remote) redial cooldown (a duration, e.g. `2h`): every dial asks `POST /api/dials` first; a remote inside its window gets the state line (last call age, time left) with a one-shot inline **Dial anyway** override. Off = no route, no ask, byte-identical product; the gate advises, it never traps (404/unreachable dials anyway)                                                                                                             |
+| `reports.weekly_talk_budget`            | `0` (no bar)                 | Talk time the current week may spend, rendered as one bar under the Reports tab's week headline (a duration, e.g. `10h`). Zero renders no bar — the tab still reports talk time |
 | `identities`                            | _empty_                      | Extension → presented number (DID) shown as the user's own number (header, whoami, composers); display-only — a key that isn't a normalized extension fails the boot naming the key                                                                                                                                                                                                                                                                                       |
 | `gateway.mode`                          | `loopback`                   | `loopback` or `webhook`                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `gateway.webhook_url`                   | _empty_                      | Provider base URL in webhook mode (required there)                                                                                                                                                                                                                                                                                                                                                                                                                        |
@@ -235,6 +237,28 @@ Example file:
   }
 }
 ```
+
+## Reports tab
+
+History answers "what happened"; Reports answers "what is this adding
+up to". It is a pure projection over the same call records the History
+tab lists (`GET /history` on the operator phone API, one page of up to
+500 records), folded by `internal/reports`: total talk time, call counts
+split by direction (in/out) and outcome (answered/missed — two
+independent axes, so an outbound call that never connected is neither),
+the per-day ladder, the busiest hours, and the contacts that consumed
+the most time. Top contacts are named through the CRM when the
+integration is configured.
+
+Nothing is stored: the numbers are reproducible from the same records,
+which is why the tab needs no read model and no rebuild step. Calls
+whose start timestamp cannot be parsed still count in the totals and the
+contact ranking and are reported as "records without a readable
+timestamp", so the time ladders are never silently short.
+
+Set `reports.weekly_talk_budget` (e.g. `10h`) to get the feedback a goal
+gives: the week's talk time against the budget, flagged when the week
+overspends instead of merely clamping the bar.
 
 ## Integration contracts
 

@@ -160,7 +160,7 @@ templ reportsBusiestHours(props ReportsPanelProps) {
 			<h3 class="wp-reports-head">{ T(props.Lang, "reports.hours") }</h3>
 			for i, hour := range busy {
 				if i < busiestHourRows {
-					<div class="wp-reports-row">
+					<div class="wp-reports-row wp-reports-row-pair">
 						<span class="wp-reports-day">{ hourSpan(hour.Hour) }</span>
 						<span class="wp-muted wp-reports-day-meta">
 							{ fmtInt(hour.Calls) } · { talkTimeLabel(hour.Talk) }
@@ -180,7 +180,7 @@ templ reportsTopContacts(props ReportsPanelProps) {
 			<h3 class="wp-reports-head">{ T(props.Lang, "reports.contacts") }</h3>
 			for i, contact := range props.Report.Contacts {
 				if i < TopContactRows {
-					<div class="wp-reports-row">
+					<div class="wp-reports-row wp-reports-row-pair">
 						<span class="wp-reports-contact">@remoteLabel(contact.Number, props.CRM, props.Lang)</span>
 						<span class="wp-muted wp-reports-day-meta">
 							{ fmtInt(contact.Calls) } · { talkTimeLabel(contact.Talk) }

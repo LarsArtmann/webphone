@@ -762,7 +762,7 @@ func reportsBusiestHours(props ReportsPanelProps) templ.Component {
 			}
 			for i, hour := range busy {
 				if i < busiestHourRows {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "<div class=\"wp-reports-row\"><span class=\"wp-reports-day\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 52, "<div class=\"wp-reports-row wp-reports-row-pair\"><span class=\"wp-reports-day\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -855,7 +855,7 @@ func reportsTopContacts(props ReportsPanelProps) templ.Component {
 			}
 			for i, contact := range props.Report.Contacts {
 				if i < TopContactRows {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "<div class=\"wp-reports-row\"><span class=\"wp-reports-contact\">")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 59, "<div class=\"wp-reports-row wp-reports-row-pair\"><span class=\"wp-reports-contact\">")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}

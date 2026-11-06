@@ -4143,8 +4143,8 @@ dialog.wp-lightbox img {
   margin: 0;
   font-size: 0.82em;
 }
-.wp-reports-row > .wp-reports-day-meta:last-child {
-  grid-column: 3;
+.wp-reports-row-pair {
+  grid-template-columns: minmax(6.5rem, auto) minmax(0, 1fr);
 }
 @property --tw-rotate-x {
   syntax: "*";
