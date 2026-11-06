@@ -441,7 +441,7 @@ and the evidence. Newest last is NOT enforced — group by topic.
   knob; webphone consumes it, serves its own same-origin
   `/assets/theme-preload.js` (which sets `data-theme` pre-paint — the
   library script never did), and dropped the hash plus the
-  `!important`s. Lesson: when a dependency forces a CSP exception, the
+  `!important` declarations. Lesson: when a dependency forces a CSP exception, the
   fix belongs upstream — and the exception class (hash pinning
   dependency bytes) was the real recurring cost, not the one-time pin.
 

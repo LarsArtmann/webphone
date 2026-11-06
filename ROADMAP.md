@@ -217,7 +217,7 @@ the stack browser E2E passed on the bumped tree. What remains:
 - GitHub Release objects per tag (notes/visibility) vs tags +
   CHANGELOG only (v2.0.0 has a tag, no Release object).
 - Go module-path policy for v2+ tags: `/v2` suffix vs NOT-DO record
-  (a flake-consumed app never `go get`s itself).
+  (a flake-consumed app never runs `go get` on itself).
 - Loopback gateway semantics: simulate `delivered` (like fax loopback
   resolves `transmitted`) or keep `sent` as the honest terminal state?
 - Handler gating: keep the deliberate dual layer (`requireSession`
@@ -571,8 +571,8 @@ unshipped fuel — refine into TODO_LIST only on demand.
   only), debounce indicator (21:43 §e5/§f27-28).
 - Typeahead follow-ons: also search thread remotes (contacts only
   today), recent-calls recency boost in `rankContacts`.
-- Jump-chip coalescing of rapid pushes; hover `title`s for the nav
-  badge and voicemail rows too.
+- Jump-chip coalescing of rapid pushes; hover `title` tooltips on the
+  nav badge and voicemail rows too.
 - Missed-badge / jump-chip localization — only if the owner ever
   overturns the language-neutral-shell decision (D3).
 - Voicemail transcription (demand-gated; verify the phone API even

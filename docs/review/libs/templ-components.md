@@ -26,7 +26,7 @@ Root: `display` (49 components — badges, cards, charts, tables, tabs, modal/dr
 ## How webphone uses it
 
 - **layout.Base ×2** (internal/web/views/layout.templ:63 Shell, enroll.templ:23) with the full deliberate option set: `CSSPath:"/assets/app.css"`, `Locale` = session lang, `SEO{NoIndex:true}`, **`NoThemeScript:true`** (CSP — theme-preload is the same-origin `/assets/theme-preload.js`), ThemeColor/DarkThemeColor, Favicon; HTMX script served from cqrs-htmx assets (SRI default suppressed path untouched).
-- **display**: `Button` ×8 (secondary/sm variants), `EmptyState` ×6, `DefinitionList` in Settings (13 `DefinitionItem`s).
+- **display**: `Button` ×8 (secondary/sm variants), `EmptyState` ×6, `DefinitionList` in Settings (13 `DefinitionItem` nodes).
 - **forms**: `Input` ×3, `Textarea` ×1 with `utils.BaseProps`.
 - **icons**: `icons.Icon(name, "wp-icon …")` ×24 across settings/messages/history/fax/voicemail/phone/contacts.
 - **Boundaries held from the 09-22 audit**: `rg "RelativeTime|CountBadge|errorpage"` → 0 hits; the gray-family/token remap and cascade-layer contract documented in AGENTS.md still govern.

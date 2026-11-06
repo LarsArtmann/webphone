@@ -43,8 +43,7 @@ rule everywhere else: the only cross-owner reads are the deliberate
 
 ## What is NOT verified (addendum 18:15: both former gates CLOSED)
 
-- ~~A completed `buildflow` run for this train~~ **CLOSED 2026-11-05
-  07:01** — run `20261105-055334-271d2092` (started 06:53, full mode,
+- ~~A completed `buildflow` run for this train~~ done at `3dab5c6c` — run `20261105-055334-271d2092` (started 06:53, full mode,
   `BUILDFLOW_NO_RESULT_CACHE=1`, tree at 3dab5c6c): **68/68 steps green,
   0 fail, 100%**. Verdict source: `buildflow history` (the streamed log
   tail was lost to output buffering; the state DB is the authority).

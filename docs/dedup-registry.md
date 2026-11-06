@@ -156,7 +156,7 @@ file implements that proposal and records the supersession).
    classes only), old-vs-new binary render diff per protocol. EXECUTED 2026-10-12: the
    settings facts `dl` renders via `display.DefinitionList` (Class
    `wp-settings` kept so app.css keeps the visual identity; rows built
-   in `settingsItems`, conditional/link shapes as `DetailComponent`s);
+   in `settingsItems`, conditional/link shapes as `DetailComponent` instances);
    the shortcuts `dl` STAYS hand-rolled (`Term` is a plain string —
    `<kbd>` semantics are not expressible). Render diff (protocol): 6/7
    partials byte-identical, `/partials/settings` intentionally differs
