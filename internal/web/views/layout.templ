@@ -69,6 +69,12 @@ type ShellProps struct {
 	// live mapping). False keeps the served shell byte-equivalent to a
 	// non-admin build.
 	Admin bool
+	// LiveContext renders the island's live-call context slot (issue #10):
+	// the aside gains an empty container the shell fills from
+	// /partials/live-context while a call runs. False (the CRM off, which
+	// is the default) keeps the served markup byte-identical to a
+	// deployment that never had the integration.
+	LiveContext bool
 	// Lang drives the server-rendered strings.
 	Lang Lang
 }
@@ -162,6 +168,13 @@ templ ShellBody(props ShellProps) {
 	<div class="wp-body">
 		<aside class="wp-island" id="wp-island" aria-label="Phone">
 			@PhoneIsland(PhoneIslandProps{Passkey: props.Passkey, SSO: props.SSO})
+			// The live call's CRM context (issue #10). One fixed slot, filled
+			// by the shell from /partials/live-context when a call starts and
+			// emptied when the last one ends: an empty answer renders nothing
+			// inside it, so the slot costs no layout shift.
+			if props.LiveContext {
+				<div id="wp-live-context" class="wp-live-context"></div>
+			}
 		</aside>
 		<div class="wp-main-col">
 			<nav class="wp-nav" id="wp-nav" aria-label="Sections">

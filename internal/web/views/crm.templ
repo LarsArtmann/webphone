@@ -82,22 +82,33 @@ templ crmContextItem(key, value, tail string) {
 templ crmContextStrip(crm *CRMContext, lang Lang) {
 	if crm != nil {
 		<aside class="wp-crm-context" id="wp-crm-context" aria-label={ T(lang, "crm.context") }>
-			if crm.Company != "" {
-				@crmContextItem(T(lang, "crm.company"), crm.Company, "")
-			}
-			for _, deal := range crm.Deals {
-				@crmContextItem(T(lang, "crm.deal")+" · "+deal.Stage, deal.Title, dealValue(deal))
-			}
-			if crm.MoreDeals > 0 {
-				<span class="wp-crm-item wp-crm-muted">+{ fmtInt(crm.MoreDeals) }</span>
-			}
-			if crm.OpenTasks > 0 {
-				@crmContextItem(T(lang, "crm.tasks"), fmtInt(crm.OpenTasks), crmNextTaskTail(*crm, lang))
-			}
-			if !crm.LastActivity.IsZero() {
-				@crmContextItem(T(lang, "crm.lastActivity"), relativeTime(crm.LastActivity, lang), "")
-			}
+			@crmContextItems(crm, lang)
 		</aside>
+	}
+}
+
+// crmContextItems is the ONE home of the context row's content: the
+// company, the open deals, the outstanding task count and the last touch.
+// Two surfaces render these lines — the conversation head's strip and the
+// live-call panel beside the island — and a second hand-kept copy would
+// drift the day one of them learns a new fact.
+templ crmContextItems(crm *CRMContext, lang Lang) {
+	if crm != nil {
+		if crm.Company != "" {
+			@crmContextItem(T(lang, "crm.company"), crm.Company, "")
+		}
+		for _, deal := range crm.Deals {
+			@crmContextItem(T(lang, "crm.deal")+" · "+deal.Stage, deal.Title, dealValue(deal))
+		}
+		if crm.MoreDeals > 0 {
+			<span class="wp-crm-item wp-crm-muted">+{ fmtInt(crm.MoreDeals) }</span>
+		}
+		if crm.OpenTasks > 0 {
+			@crmContextItem(T(lang, "crm.tasks"), fmtInt(crm.OpenTasks), crmNextTaskTail(*crm, lang))
+		}
+		if !crm.LastActivity.IsZero() {
+			@crmContextItem(T(lang, "crm.lastActivity"), relativeTime(crm.LastActivity, lang), "")
+		}
 	}
 }
 

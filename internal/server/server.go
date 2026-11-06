@@ -367,6 +367,9 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("GET /partials/voicemail", h.partialVoicemail)
 	protected.HandleFunc("GET /partials/history", h.partialHistory)
 	protected.HandleFunc("GET /partials/reports", h.partialReports)
+	// The live call's CRM context (issue #10): a quiet fragment the shell
+	// swaps into the island's slot; every degraded answer is an empty body.
+	protected.HandleFunc("GET /partials/live-context", h.liveContextPartial)
 	protected.HandleFunc("GET /partials/contacts", h.partialContacts)
 	protected.HandleFunc("GET /partials/settings", h.partialSettings)
 	protected.HandleFunc("GET /partials/nav", h.partialNav)

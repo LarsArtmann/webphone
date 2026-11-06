@@ -805,6 +805,12 @@ function announceCallState(entry, dataState) {
 function addCallCard(id, target) {
   const card = document.createElement("div");
   card.className = "call-card";
+  // The remote party as data, not just text: the shell reads it to fetch
+  // the live call's CRM context beside the island (issue #10). The shell
+  // owns that fetch on purpose — it must work when the island scripts
+  // fail, and a data attribute is the one channel both sides share
+  // without importing each other.
+  card.dataset.remote = target;
   const head = document.createElement("div");
   head.className = "call-state";
   const targetEl = document.createElement("span");

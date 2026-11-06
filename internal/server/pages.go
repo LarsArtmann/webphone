@@ -84,6 +84,10 @@ func (h *handlers) renderShell(w http.ResponseWriter, r *http.Request, tab views
 	// wired; a disabled deployment keeps the extension-only login card.
 	props.Passkey = h.deps.Config.Auth.Passkey.Enabled()
 	props.SSO = h.deps.SSO != nil
+	// The live-call context slot exists only when the CRM seam is on: zero
+	// CRM config keeps the served shell byte-identical to a deployment
+	// that never had the integration (issue #10).
+	props.LiveContext = h.deps.CRM != nil && h.deps.CRM.Enabled()
 
 	if sess, ok := session.From(r.Context()); ok {
 		props.SignedIn = sess.Extension.String()
