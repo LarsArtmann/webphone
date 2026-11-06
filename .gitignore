@@ -46,7 +46,13 @@ workflow-audit-log.*
 
 ## Reports and coverage
 /coverage
-reports/
+# ROOT-ANCHORED on purpose: this ignores the tooling's generated report
+# output at the repo root, never a source package. The unanchored form
+# (`reports/`) silently swallowed `internal/reports/` — the Reports tab's
+# projection package — so a whole package was invisible to git while every
+# local build passed and the sandbox build (which only sees tracked files)
+# failed with "no required module provides package".
+/reports/
 
 ## Go
 *.exe

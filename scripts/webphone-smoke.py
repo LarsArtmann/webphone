@@ -1256,6 +1256,30 @@ def run_checks(
             f"{status} badge missing: {nav_authed[:80]!r}",
         )
 
+        # 10c. The Reports tab (issue #12): a deep link renders the full
+        # shell with the panel, and the partial answers on its own. The
+        # loopback smoke runs WITHOUT a phone API, so the panel must say
+        # which knob is missing rather than render a quiet week of zeros —
+        # the same honesty the History tab owes.
+        status, body, _ = s.request("GET", "/reports")
+        reports_page = body.decode("utf-8", "replace")
+        c.ok(
+            "reports deep link renders the panel",
+            status == 200
+            and 'id="reports-panel"' in reports_page
+            and 'data-tab="reports"' in reports_page,
+            f"{status} panel or nav entry missing",
+        )
+        status, body, _ = s.request("GET", "/partials/reports")
+        reports_partial = body.decode("utf-8", "replace")
+        c.ok(
+            "reports names the missing phone API",
+            status == 200
+            and "phone_api_url" in reports_partial
+            and "wp-stat-value" not in reports_partial,
+            f"{status} disabled-API shape wrong: {reports_partial[:80]!r}",
+        )
+
         # 11. Thread row exists; opening it shows the transcript bubble region.
         _, body, _ = s.request("GET", "/partials/messages")
         rows = re.findall(r'hx-get="/partials/messages/([^"]+)"', body.decode())
