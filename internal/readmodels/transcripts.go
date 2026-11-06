@@ -48,14 +48,15 @@ const transcriptFetchWindow = 2000
 // row mirrors the retired SQL row verbatim (parity port).
 // brandid-lint:ignore(BD003) engine projection row: the json tags are the storage schema; CallID is the opaque island token (strong-id wire ruling)
 type TranscriptSegmentView struct {
-	ID        string           `json:"id"`
-	Owner     string           `json:"owner"`
-	CallID    string           `json:"call_id"`
-	Direction domain.Direction `json:"direction"`
-	Remote    string           `json:"remote"`
-	StartedAt int64            `json:"started_at"`
-	Seq       int64            `json:"seq"`
-	Text      string           `json:"text"`
+	Key       domain.TranscriptSegmentKey `json:"key"`
+	ID        string                      `json:"id"`
+	Owner     string                      `json:"owner"`
+	CallID    string                      `json:"call_id"`
+	Direction domain.Direction            `json:"direction"`
+	Remote    string                      `json:"remote"`
+	StartedAt int64                       `json:"started_at"`
+	Seq       int64                       `json:"seq"`
+	Text      string                      `json:"text"`
 }
 
 // transcriptsCollection names the engine collection (query name).
@@ -72,6 +73,7 @@ var transcriptsQuery = metaengine.Query[transcriptInput, TranscriptSegmentView](
 	metaengine.OnRecord(domain.TranscriptAppended{},
 		func(_ record.Record, e domain.TranscriptAppended) (domain.TranscriptSegmentKey, TranscriptSegmentView) {
 			return e.Key, TranscriptSegmentView{
+				Key:       e.Key,
 				ID:        e.Key.ID,
 				Owner:     e.Owner,
 				CallID:    e.CallID,

@@ -24,9 +24,10 @@ const DialWindowsMaxPerExtension = 500
 // row mirrors the domain fact verbatim (the fold is a plain insert).
 // brandid-lint:ignore(BD003) engine projection row: the json tags are the storage schema (strong-id wire ruling)
 type DialWindowView struct {
-	Owner  string `json:"owner"`
-	Remote string `json:"remote"`
-	At     int64  `json:"at"`
+	Key    domain.DialWindowKey `json:"key"`
+	Owner  string               `json:"owner"`
+	Remote string               `json:"remote"`
+	At     int64                `json:"at"`
 }
 
 // DialOverrideView is the engine-side projection of the one-shot
@@ -37,10 +38,11 @@ type DialWindowView struct {
 // row mirrors the domain fact verbatim (the fold is a plain insert).
 // brandid-lint:ignore(BD003) engine projection row: the json tags are the storage schema (strong-id wire ruling)
 type DialOverrideView struct {
-	Owner    string `json:"owner"`
-	Remote   string `json:"remote"`
-	Consumed bool   `json:"consumed"`
-	At       int64  `json:"at"`
+	Key      domain.DialWindowKey `json:"key"`
+	Owner    string               `json:"owner"`
+	Remote   string               `json:"remote"`
+	Consumed bool                 `json:"consumed"`
+	At       int64                `json:"at"`
 }
 
 const (
@@ -63,6 +65,7 @@ var dialWindowsQuery = metaengine.Query[dialWindowInput, DialWindowView](dialWin
 	metaengine.OnRecord(domain.DialAttempted{},
 		func(_ record.Record, e domain.DialAttempted) (domain.DialWindowKey, DialWindowView) {
 			return e.Key, DialWindowView{
+				Key:    e.Key,
 				Owner:  e.Owner,
 				Remote: e.Remote,
 				At:     e.At.Unix(),
@@ -81,6 +84,7 @@ var dialOverridesQuery = metaengine.Query[dialWindowInput, DialOverrideView](dia
 	metaengine.OnRecord(domain.DialOverrideSaved{},
 		func(_ record.Record, e domain.DialOverrideSaved) (domain.DialWindowKey, DialOverrideView) {
 			return e.Key, DialOverrideView{
+				Key:      e.Key,
 				Owner:    e.Owner,
 				Remote:   e.Remote,
 				Consumed: e.Consumed,
