@@ -563,6 +563,9 @@
   .table {
     display: table;
   }
+  .table-cell {
+    display: table-cell;
+  }
   .table-row {
     display: table-row;
   }
@@ -4164,8 +4167,7 @@ dialog.wp-lightbox img {
 .wp-live-context-head .wp-thread-remote {
   font-size: 1.05em;
 }
-.wp-live-context .wp-crm-context,
-.wp-live-context.wp-crm-context {
+.wp-live-context .wp-crm-context {
   border-top: 0;
   padding-top: 0;
 }
