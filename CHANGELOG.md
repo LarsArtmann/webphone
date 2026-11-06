@@ -23,6 +23,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The JSON contracts ride catalog v4.13: the transcript upload declares its
   multipart body, and the fabricated server entry that the asyncapi export
   used to invent is gone.
+- The Reports tab's stat cards render through one `reportsStat` component
+  (2026-11-06): the six hand-rolled card blocks in the totals grid collapsed
+  into a single home, render-diff-proven byte-identical, so a future card
+  change cannot miss one of six copies. Pinning view tests added.
 - One-command documentation health check (2026-11-06): `scripts/docs-gates.sh`
   runs the documentation ritual in the order that actually works — format
   first, then the issue gates (harvest freshness, struck-verdict evidence,
