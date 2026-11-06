@@ -18,9 +18,58 @@ let ringbackTimer = null;
 /** @type {ReturnType<typeof setInterval> | null} */
 let ringToneTimer = null;
 
+// The operator's chosen output, when the audio-out picker offers one. A
+// RING must land on the device the operator is wearing: on a
+// multi-output desk the USB headset is the phone, and a ring on the
+// motherboard speaker is a missed call. WebAudio's AudioContext.setSinkId
+// (Chrome 110+) is the half that routing needs; remembered here so a
+// picker choice made BEFORE the first tone still applies when the
+// context is finally created by a gesture.
+/** @type {string} */
+let preferredSink = "";
+
+// applySink routes the context's OUTPUT to a device. Feature-detected
+// structurally (the DOM lib and older browsers disagree about this
+// method's existence), and never fatal: where the sink cannot be set the
+// ring stays a room alarm, which is exactly the pre-picker product.
+/** @param {AudioContext} audio @param {string} deviceId @returns {void} */
+function applySink(audio, deviceId) {
+  const sinkable =
+    /** @type {AudioContext & { setSinkId?: (id: string) => Promise<void> | void }} */ (
+      audio
+    );
+  if (typeof sinkable.setSinkId !== "function") return;
+  try {
+    const verdict = sinkable.setSinkId(deviceId);
+    if (verdict && typeof verdict.then === "function") {
+      verdict.catch((err) => {
+        console.warn(
+          `webphone: ring tone output switch failed: ${errorMessage(err)}`,
+        );
+      });
+    }
+  } catch (err) {
+    console.warn(
+      `webphone: ring tone output switch failed: ${errorMessage(err)}`,
+    );
+  }
+}
+
+// setToneSink is the audio-out picker's other half: the same chosen device
+// carries the remote audio (a media element) AND every locally generated
+// tone. Called with "" to return to the browser default.
+/** @param {string} deviceId */
+export function setToneSink(deviceId) {
+  preferredSink = deviceId || "";
+  if (ctx) applySink(ctx, preferredSink);
+}
+
 /** @returns {AudioContext} */
 function audioCtx() {
-  ctx = ctx || new AudioContext();
+  if (!ctx) {
+    ctx = new AudioContext();
+    if (preferredSink) applySink(ctx, preferredSink);
+  }
   return ctx;
 }
 

@@ -628,6 +628,44 @@
     document.addEventListener("wp:calls-changed", updateCallBadge);
     updateCallBadge();
 
+    // 2c2. Live-call context (issue #10): while a call runs, the island's
+    //      slot (aside #wp-live-context, rendered only when the CRM seam is
+    //      configured) shows who is on the line and what is outstanding
+    //      with them. The island owns the call lifecycle and publishes each
+    //      card's remote as data-remote; the shell owns the FETCH, because
+    //      the shell must work when the island scripts fail and because a
+    //      tab affordance never belongs in an island module.
+    //
+    //      Every degraded answer is an empty body (seam off, no match, no
+    //      context, CRM down), so this code has one job: ask once per
+    //      remote, clear the slot when the last call ends, and never let a
+    //      slow CRM block anything. An empty answer renders nothing into
+    //      the slot — the container is a fixed slot, so nothing shifts.
+    /** @type {HTMLElement | null} */
+    var liveContextSlot = document.getElementById("wp-live-context");
+    var liveContextRemote = "";
+    var updateLiveContext = function () {
+      liveContextSlot = liveContextSlot || document.getElementById("wp-live-context");
+      if (!liveContextSlot) return;
+      var calls = document.getElementById("calls");
+      var card = calls ? calls.querySelector(".call-card[data-remote]") : null;
+      var remote = card ? card.getAttribute("data-remote") || "" : "";
+      if (remote === liveContextRemote) return;
+      liveContextRemote = remote;
+      if (!remote) {
+        liveContextSlot.replaceChildren();
+        return;
+      }
+      if (!window.htmx) return;
+      window.htmx.ajax(
+        "GET",
+        "/partials/live-context?remote=" + encodeURIComponent(remote),
+        { target: "#wp-live-context", swap: "innerHTML" },
+      );
+    };
+    document.addEventListener("wp:calls-changed", updateLiveContext);
+    updateLiveContext();
+
     // 2d. Missed-call presence: the island dispatches wp:call-missed when
     //     an inbound call ended without being answered (the caller gave
     //     up, or an accepted call died before media). A deliberate user
