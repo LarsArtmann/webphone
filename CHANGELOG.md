@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Declarative per-owner retention caps (2026-11-06): the dial windows and call
+  transcripts now declare their per-extension bound instead of hand-looping an
+  expunge after every write, which is what let one owner's flood compete with
+  another's rows. The per-call transcript floor stays a loop, because a cap
+  still addresses one group and the floor needs owner-and-call nesting.
+- Typed response headers in the API contract (2026-11-06): the 17 throttling
+  responses now declare `Retry-After` as a header in `/openapi.json` instead of
+  only describing it in prose, so a generated client can read the wait time.
+
+### Changed
+
+- The JSON contracts ride catalog v4.13: the transcript upload declares its
+  multipart body, and the fabricated server entry that the asyncapi export
+  used to invent is gone.
 - One-command documentation health check (2026-11-06): `scripts/docs-gates.sh`
   runs the documentation ritual in the order that actually works — format
   first, then the issue gates (harvest freshness, struck-verdict evidence,

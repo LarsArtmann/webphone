@@ -132,13 +132,7 @@ swap, fax badge, 2 empty states) lives in CHANGELOG + the per-library reports �
    Residual, no consumer today: the ssetest `WithLastEventID(sse.EventID)` branding
    ride — schedule it only when a Last-Event-ID replay surface exists (the
    `/events` heartbeat row below is NO-GO until drop-class evidence).
-2. **metaengine per-group cap upstream ask — FILED 2026-11-04:
-   [go-cqrs-lite#114](https://github.com/LarsArtmann/go-cqrs-lite/issues/114)** —
-   EnforceCap is collection-global; webphone's transcript/dial-window caps are
-   per-owner/per-call (NO-GO ruling re-verified at the pin v4.20.0,
-   `docs/review/libs/go-cqrs-lite.md` § errata). If #114 lands upstream, migrate
-   `trimOwner`/`trimCall`/`trimWindows` in one train.
-3. **templ-components taste calls** — owner decisions, not adoption gaps: the ✓ delivered
+2. **templ-components taste calls** — owner decisions, not adoption gaps: the ✓ delivered
    chip (or a Badge prefix/icon slot) and whether section subtitles should render as muted
    empty-states. Re-litigate only if the owner asks.
 
@@ -149,27 +143,27 @@ Every NO-GO/declined/keep-as-is ruling carries a written trigger in its report
 sweep answers "is any trigger fired?" in one read; re-litigate a ruling ONLY when its
 trigger fires, never on a schedule.
 
-| Fires when                                                                                      | Library                | Then                                                           |
-| ----------------------------------------------------------------------------------------------- | ---------------------- | -------------------------------------------------------------- |
-| metaengine grows a per-group cap (tracked as go-cqrs-lite#114)                                  | go-cqrs-lite           | migrate `trimOwner`/`trimCall`/`trimWindows` in one train      |
-| usermgmt major bump, or a second identity consumer                                              | cqrs-htmx              | re-run the family audit (adminui re-check)                     |
-| `internal/domain` gains a second Go consumer                                                    | go-branded-id          | ratified modularization trigger — brands need their own module |
-| A client-facing `Idempotency-Key` contract appears on a public API                              | go-idempotency         | re-run the adoption ruling (metaengine DedupStore vs the SDK)  |
-| A self-managed versioned blob format or event signing requirement                               | go-codec               | `DeterministicCodec` is the entry point                        |
-| A drop-folder/intake feature, or live-config-reload demand                                      | go-filewatcher         | re-run the NO-GO ruling                                        |
-| A `Type=notify` conversion, or a unix-socket machine surface                                    | go-daemon, go-appkit   | re-run both rulings together                                   |
-| A CLI subcommand outputs structured data                                                        | go-output              | adopt the renderer                                             |
-| A non-systemd target, credential-compliance rule, mutable secrets                               | go-credentials-store   | re-run the NO-GO ruling                                        |
-| A new file-persisting feature (export, backup, rotation)                                        | go-atomic-write        | ride `WriteWithPerm`/`WriteIfChanged`                          |
-| A latency investigation the histogram aggregates cannot localize                                | httputil/server_timing | instrument 2–3 named spans behind the same env gate            |
-| User-visible missed-update reports on flaky mobile links                                        | go-sse                 | ssetest-pinned Last-Event-ID replay                            |
-| A second retry-shaped loop (e.g. ASR uploads)                                                   | go-retry               | `retry.Do` is the natural home                                 |
-| A dashboard deployment without the Caddy front                                                  | go-health-dashboard    | re-decide the fence (see the 2026-11-04 fence memo)            |
-| A read model crossing ~10k rows/owner, or a second engine                                       | go-cqrs-lite           | keyset pagination / failover audit                             |
-| A second readiness consumer or multi-instance deployment                                        | go-health              | re-run the probe-topology ruling                               |
-| A templ-components release with a new status/toast component; the subtitle/✓-chip taste rulings | templ-components       | owner-taste re-litigation, not adoption gaps                   |
-| The dashboard library swaps its embedded SDK version                                            | go-datastar            | re-verify the /health CSP scope                                |
-| The library ships a parse-with-rules hook or a new linter rule                                  | go-branded-id          | migrate the invariant INTO the seam / adopt the rule           |
+| Fires when                                                                                      | Library                | Then                                                                |
+| ----------------------------------------------------------------------------------------------- | ---------------------- | ------------------------------------------------------------------- |
+| metaengine grows NESTED group addressing (a per-call floor inside a per-owner group)            | go-cqrs-lite           | `trimCall` is the last hand loop; delete it for the declarative cap |
+| usermgmt major bump, or a second identity consumer                                              | cqrs-htmx              | re-run the family audit (adminui re-check)                          |
+| `internal/domain` gains a second Go consumer                                                    | go-branded-id          | ratified modularization trigger — brands need their own module      |
+| A client-facing `Idempotency-Key` contract appears on a public API                              | go-idempotency         | re-run the adoption ruling (metaengine DedupStore vs the SDK)       |
+| A self-managed versioned blob format or event signing requirement                               | go-codec               | `DeterministicCodec` is the entry point                             |
+| A drop-folder/intake feature, or live-config-reload demand                                      | go-filewatcher         | re-run the NO-GO ruling                                             |
+| A `Type=notify` conversion, or a unix-socket machine surface                                    | go-daemon, go-appkit   | re-run both rulings together                                        |
+| A CLI subcommand outputs structured data                                                        | go-output              | adopt the renderer                                                  |
+| A non-systemd target, credential-compliance rule, mutable secrets                               | go-credentials-store   | re-run the NO-GO ruling                                             |
+| A new file-persisting feature (export, backup, rotation)                                        | go-atomic-write        | ride `WriteWithPerm`/`WriteIfChanged`                               |
+| A latency investigation the histogram aggregates cannot localize                                | httputil/server_timing | instrument 2–3 named spans behind the same env gate                 |
+| User-visible missed-update reports on flaky mobile links                                        | go-sse                 | ssetest-pinned Last-Event-ID replay                                 |
+| A second retry-shaped loop (e.g. ASR uploads)                                                   | go-retry               | `retry.Do` is the natural home                                      |
+| A dashboard deployment without the Caddy front                                                  | go-health-dashboard    | re-decide the fence (see the 2026-11-04 fence memo)                 |
+| A read model crossing ~10k rows/owner, or a second engine                                       | go-cqrs-lite           | keyset pagination / failover audit                                  |
+| A second readiness consumer or multi-instance deployment                                        | go-health              | re-run the probe-topology ruling                                    |
+| A templ-components release with a new status/toast component; the subtitle/✓-chip taste rulings | templ-components       | owner-taste re-litigation, not adoption gaps                        |
+| The dashboard library swaps its embedded SDK version                                            | go-datastar            | re-verify the /health CSP scope                                     |
+| The library ships a parse-with-rules hook or a new linter rule                                  | go-branded-id          | migrate the invariant INTO the seam / adopt the rule                |
 
 ### Fax enablement (owner + carrier action, 2026-10-30)
 
