@@ -2882,3 +2882,39 @@ dialog.wp-lightbox img {
 .wp-reports-row-pair {
   grid-template-columns: minmax(6.5rem, auto) minmax(0, 1fr);
 }
+
+/* --- Live-call context beside the island (issue #10) --------------- *
+ * The slot sits under the phone in the island column: the most valuable
+ * pixels in a phone app are the ones next to a live call, and a caller's
+ * outstanding work belongs there rather than behind a tab. It borrows the
+ * CRM strip's flat-row language (the same facts, the same rendering) and
+ * adds only the head line that names WHO is on the line: inside the
+ * island column there is no panel head to carry that. */
+.wp-live-context {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: var(--hairline);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 0.85em;
+}
+
+.wp-live-context-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.wp-live-context-head .wp-thread-remote {
+  font-size: 1.05em;
+}
+
+/* The strip inside the slot is an in-place continuation, not a second
+ * box: drop its own top hairline so the head and the facts read as one
+ * block. */
+.wp-live-context .wp-crm-context {
+  border-top: 0;
+  padding-top: 0;
+}

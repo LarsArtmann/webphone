@@ -32,12 +32,14 @@ func (p LiveContextProps) Empty() bool {
 
 templ LiveContextPanel(props LiveContextProps) {
 	if !props.Empty() {
-		<aside class="wp-crm-context wp-live-context" aria-label={ T(props.Lang, "liveContext.label") }>
+		<aside class="wp-live-context" aria-label={ T(props.Lang, "liveContext.label") }>
 			<div class="wp-live-context-head">
 				<span class="wp-crm-key">{ T(props.Lang, "liveContext.label") }</span>
 				@crmNameLink(props.Remote, props.CRM, props.Lang)
 			</div>
-			@crmContextItems(props.Context, props.Lang)
+			<div class="wp-crm-context">
+				@crmContextItems(props.Context, props.Lang)
+			</div>
 		</aside>
 	}
 }

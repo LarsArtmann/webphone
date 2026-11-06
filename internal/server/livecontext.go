@@ -26,6 +26,14 @@ import (
 // render.
 func (h *handlers) liveContextPartial(w http.ResponseWriter, r *http.Request) {
 	lang := h.lang(r)
+	// SESSION-GATED, and not merely for consistency: the answer is resolved
+	// with the SERVER's CRM bearer, so an anonymous caller could otherwise
+	// enumerate numbers and read contact names, companies and deal values
+	// out of the phone. The gate rides the project's one helper.
+	if _, ok := h.RequireSession(w, r); !ok {
+		return
+	}
+
 	w.Header().Set("Cache-Control", "no-store")
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 

@@ -22,7 +22,7 @@ but usable against any SIP/WebSocket PBX (FreeSWITCH/sofia or compatible).
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Phone calls     | Multi-line (N-deep ring queue + call dock), hold/focus/mute, blind + attended transfer, DTMF keypad; ended calls keep a post-call card (freeform note, optional AI summarize → draft SMS)                                                                                                |
 | Resilience      | Bounded reconnect watchdog with re-registration; live calls survive                                                                                                                                                                                                                      |
-| Call comfort    | Dial typeahead from your contacts, call state chip, missed-call badge, audio output picker for multi-output desks                                                                                                                                                                        |
+| Call comfort    | Dial typeahead from your contacts, call state chip, missed-call badge, audio output picker for multi-output desks (the chosen device carries the call audio AND the locally generated ring tones), live-call context beside the island when the CRM knows the caller                                                                                                                                                                        |
 | SMS & MMS       | Threads with unread badges, attachments in/out, delivery receipts, live updates, search over remote + message bodies; pin/mute/archive a conversation, quick reply snippets, optimistic send with retry                                                                                  |
 | Fax             | Send PDFs, receive documents, per-job status timeline, resend failed jobs, download; optional fire-and-forget Paperless-ngx archive of inbound faxes. **Per-deployment**: a server with no fax lane hides the send form and says so (`fax.send` / `fax.receive`, see _Fax capabilities_) |
 | Voicemail       | List, play (inline scrubber + speed control), delete — straight from the PBX's per-extension API                                                                                                                                                                                         |
@@ -283,6 +283,15 @@ CRM must run with `-api-token <same-token>`):
   link into the CRM's own contact page, opened in a new tab so the SIP
   island is never unloaded. Unset = plain names, byte-identical to a
   deployment without links; a number with no CRM match stays raw text.
+- **Live call context** (`GET /partials/live-context`): while a call is up,
+  the slot under the island shows who is on the line and the same
+  outstanding-work line the conversation strip renders — company, open
+  deals, the next follow-up, the last touch. The shell asks once per remote
+  and empties the slot when the last call ends; every degraded answer (seam
+  off, unknown number, CRM down or without the product) is an EMPTY body, so
+  the slot never holds an empty shell, a spinner or an error. Session-gated:
+  the answer is resolved with the server's CRM token, so it is never an
+  anonymous enumeration surface for contact names.
 - **Contact context** (`GET /api/contacts/{id}/context` on the CRM): opening
   a conversation with a known contact shows one quiet line of what is
   outstanding, their company, the deals in flight with values, the open

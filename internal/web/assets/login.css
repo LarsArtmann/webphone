@@ -4146,6 +4146,29 @@ dialog.wp-lightbox img {
 .wp-reports-row-pair {
   grid-template-columns: minmax(6.5rem, auto) minmax(0, 1fr);
 }
+.wp-live-context {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border: var(--hairline);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: 0.85em;
+}
+.wp-live-context-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+.wp-live-context-head .wp-thread-remote {
+  font-size: 1.05em;
+}
+.wp-live-context .wp-crm-context,
+.wp-live-context.wp-crm-context {
+  border-top: 0;
+  padding-top: 0;
+}
 @property --tw-rotate-x {
   syntax: "*";
   inherits: false;
