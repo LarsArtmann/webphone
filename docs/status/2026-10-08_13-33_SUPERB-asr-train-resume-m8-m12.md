@@ -17,9 +17,9 @@ this session produced (no narrative commits made; expected per AGENTS).
    the TEST stub, not the implementation: `segment += 1` ran at
    fetch-invocation (all 52 synchronous) but the stub's
    `json: async () => ({text: \`seg-${segment}\`})`read the counter
-   LAZILY at`.json()`time — every segment resolved to`seg-52`, making
+   LAZILY at `.json()` time — every segment resolved to `seg-52`, making
    the drop-oldest assertions meaningless. Fix: eager capture
-   (`const n = (segment += 1)`) inside`fetchImpl`. An instrumented
+   (`const n = (segment += 1)`) inside `fetchImpl`. An instrumented
    debug spec (written, run, trashed) proved the queue logic was already
    correct: cap 50, exactly 2 drops from 52 failing emits, order
    preserved, full drain.`calls-transcribe.test.mjs` 4/4 green.

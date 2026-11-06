@@ -37,7 +37,7 @@ user-visible bug:
 - **T03** — stack browser E2E re-run (proves registration + REAL WebRTC media
   with the changed island; the closest thing to T01 that is fully automated).
 - **T04** — smoke binary boot (`go build` + `scripts/webphone-smoke.py`).
-- **T09** — ring-silence fix: the `AudioContext`s are created outside a user
+- **T09** — ring-silence fix: the `AudioContext` objects are created outside a user
   gesture (`audio.js:10,37`) → suspended → the ring tone may be silent. The
   only KNOWN bug in the island; three reports old.
 

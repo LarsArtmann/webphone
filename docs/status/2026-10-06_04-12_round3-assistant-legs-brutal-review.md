@@ -38,7 +38,7 @@ C1 owner sitting (briefing ready) · C3–C6/C8 owner+ssh legs · C7 (gated on C
 1. **Session-exit gate checklist v2, order-matters:** after ANY Go edit → `nix fmt` FIRST (oxfmt is not the Go format authority here), then tests, then commit. Declare any subset explicitly in the commit body. The checklist exists since 01-40 §e.1; it needs the fmt-first ordering and I need to actually run it before committing, not after CI embarrasses me.
 2. **Act on the edit tool's warnings.** "Whitespace-equivalent match, re-indented — verify" on indented code means: view the diff hunk before committing. The e62fe34 drift was visible at edit time for the price of one `view`.
 3. **Stop hand-aligning markdown tables; change the convention instead.** Either (a) accept one daemon churn commit per new doc (cheapest, honest), or (b) promote a byte-exact aligner (the test's alignment algorithm) to a script. Near-aligned is the worst position — it LOOKS aligned and still churns. This report uses lists on purpose.
-4. **Receipts discipline:** capture run `databaseId`s at poll time, never reconstruct or guess them. (Fixed tonight in the 03-40 report; the habit is the fix.)
+4. **Receipts discipline:** capture run `databaseId` values at poll time, never reconstruct or guess them. (Fixed tonight in the 03-40 report; the habit is the fix.)
 5. **Exit-code hygiene on piped gates:** `${PIPESTATUS[0]}` or no pipe. It is in lessons.md; internalize it.
 6. **Push bar until the owner rules:** manual push ONLY when (red main AND verified local fix) OR stall > 60 minutes on any main state. Written down here so the next session inherits a number instead of a mood.
 

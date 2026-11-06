@@ -31,10 +31,10 @@ stack/pbx-side rows were deliberately untouched.
    (registry ruling #2, 2026-10-11). The Settings facts `dl` renders
    through the adopted component (Class `wp-settings` kept so app.css
    keeps the visual identity); rows built in a testable `settingsItems`
-   helper, conditional/link shapes as `DetailComponent`s
+   helper, conditional/link shapes as `DetailComponent` instances
    (`serviceDetail`/`asrDetail`/`exportLink`). The shortcuts `dl` STAYS
    hand-rolled (`Term` is a plain string — `<kbd>` semantics are not
-   expressible). `templ generate`d; views suite green.
+   expressible). regenerated with `templ generate`; views suite green.
 4. **Render-once pins added** (`TestSettingsSnippetsSection`): exactly
    two `<dl>`s and one shortcuts head — the duplication bug I
    introduced mid-train (see d.1) can never pass again.

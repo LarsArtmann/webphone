@@ -200,7 +200,7 @@ Documentation-only: zero product code touched.
 27. Consider a committable docs-health helper (emit→pair→verify driver) so the
     next sweep does not re-derive the pipeline (recurring below-the-bar item;
     rises if another 30-file sweep happens).
-28. Record the mv-ordering + ~~ -pre-scan rules into the docs-health skill's
+28. Record the mv-ordering + `~~` pre-scan rules into the docs-health skill's
     annotate-status-items docstring/workflow (upstream, crush-config repo) —
     they are general, not webphone-specific.
 29. The 00:35 report's own f-list: any items not superseded by this closure

@@ -155,8 +155,8 @@ concurrent session's work (13 files including a `flake.lock` nixpkgs bump).
    red** for the art-dupl clone groups (my set fixes only the lint half).
 7. **Small misfires, caught before landing:** wrote a `console.log` into source (above); a first
    doc-pin parser trimmed backticks before whitespace (every later row parsed as `key\`), fixed; a
-   table I appended to``docs/research/README.md`was near-aligned (the repo's own churn-bait class),
-   caught by`md-table-shape.py`and rebuilt aligned; the report initially dropped its`</main></div>`
+   table I appended to `docs/research/README.md` was near-aligned (the repo's own churn-bait class),
+   caught by `md-table-shape.py` and rebuilt aligned; the report initially dropped its `</main></div>`
    pair (caught by a tag-balance pass, not by a browser).
 8. **`nix fmt` reported "0 changed" while treefmt only owns CSS/JS** — my Go test file and the two
    `.mjs` specs are owned by **oxfmt** (BuildFlow), which I only ran after noticing. `calls-transcribe.test.mjs`

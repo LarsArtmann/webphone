@@ -8,7 +8,7 @@ respects them; the ones that touch them are flagged inline.
 
 - `CSP` — no inline scripts / `style` attributes; behavior in `shell.js` or
   island modules, styles in `app.css` / scoped `tw.css`.
-- `MORPH` — stateful nodes in morph surfaces need stable `id`s.
+- `MORPH` — stateful nodes in morph surfaces need stable `id` attributes.
 - `DOM` — greppable ids/classes; changing them updates
   `docs/dom-contract.md` + re-runs the stack browser E2E.
 - `E2E` — needs the stack browser E2E on the wire.
