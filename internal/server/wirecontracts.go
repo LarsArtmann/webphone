@@ -122,12 +122,11 @@ func BuildWireContracts() *catalog.Catalog {
 }
 
 // wireContractsDocument exports the declared lanes as an AsyncAPI
-// document. The exporter's default server stanza is a kafka broker —
-// pure fabrication for these HTTP lanes — so the empty host suppresses
-// the Servers section entirely.
+// document. catalog v4.13.0 omits the servers object entirely when no
+// WithServer is declared (the old kafka-broker fabrication and the
+// empty-host suppression hack are both gone).
 func wireContractsDocument() *asyncapi.Document {
 	return asyncapi.NewExporter(WireContractsTitle, WireContractsVersion,
-		asyncapi.WithServer("webphone", "", ""),
 		asyncapi.WithDescription(
 			"Generated from the handler wire types (go-cqrs-lite/catalog). "+
 				"The lanes are plain HTTPS calls: the telephony stack POSTs the "+
