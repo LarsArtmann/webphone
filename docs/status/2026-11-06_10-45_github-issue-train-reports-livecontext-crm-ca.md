@@ -196,3 +196,57 @@ requires a stack change, since `crm.caFile` is additive and unused by default.
 - **Findings gate** exits ERROR on 50 pre-existing tier-3 findings. Not this session's
   business, but it means a bare `buildflow` can never be green, which trains readers to
   ignore its exit code — the same failure mode as the retired baseline file.
+
+## f) Up to 50 things we should get done next
+
+_(brainstorm, not a commitment list — most belong in TODO_LIST/ROADMAP via docs-health
+HARVEST, not here. Sorted by impact; source in brackets. Written 2026-11-06 11:45 during
+the docs-health v8 sweep, which also verified this report's claims.)_
+
+**Now / this week**
+
+1. **Push the 14 local commits** — the manual-push bar is met (first unpushed commit
+   `216ed28e` at 09:30; ~75 min at 10:45) and CI has never seen this train. Everything
+   else on this list is cheaper once main is green remotely [§ Push state].
+2. **Merge PR #234** (ginkgo 2.33.1→2.34.0, green on `a2ad2815`) — the bump is an owner
+   call; the tidy → re-pin → watch tail is already on the branch [§ Open ends].
+3. **Stack `crm.caFile` pass-through** — `nix-international-telephony`'s typed CRM front
+   renders only `crm.url` + the env-file token, so the new option cannot reach the PBX
+   host [§ Open ends].
+4. **Issue #9 acceptance criteria 1–2** — needs `/run/secrets/crm_api_token` (root/unit
+   scoped by design) and the PBX host: an inbound call must show the Kith name and
+   `call_logged` must land on the journal [§ Open ends].
+5. **Audit `.gitignore` for unanchored directory rules** — `reports/` silently ignored the
+   new `internal/reports/` package and only the sandbox build caught it; `docs`, `work`,
+   `ui-shots` are the same hazard class [§ Three findings 1].
+6. **Decide the `crm` health leg's criticality** — a CRM outage reds `/healthz` readiness
+   even though the phone keeps working, while the library treats crm as non-critical.
+   Nothing routes traffic on that endpoint today, so this stays an alarm channel until it
+   is made explicit [§ Three findings 3].
+7. **Findings-gate posture** — `buildflow` cannot exit 0 while 50 pre-existing tier-3
+   findings stand, which trains readers to ignore its exit code (the retired-baseline
+   failure mode, one layer up) [§ Open ends].
+8. **Re-run the hub fan-out benchmark on a quiet host** — the 2026-11-06 attempt (this
+   sweep, `load ~22/32`) was inconclusive; its trigger (cqrs-htmx v4.16.0 + go-sse v0.7.0)
+   has been fired for two trains [docs/reviews/2026-09-18_hub-fanout-baseline.md].
+9. **Store test train** — `internal/store` sits at 64.8%, below the 75.3% the 2026-09-20
+   owner-scoping suite recorded; the admin read seams, thread-flag columns and migration
+   v5 grew faster than their suites [docs/reviews/2026-09-20_coverage-baseline.md].
+10. **Wire the docs-gates battery into CI** — this sweep adopted it locally; the pre-canon
+    archive residue is ratcheted, but nothing reds main when it GROWS [docs-health v8].
+
+**Owner-gated, sitting and cheap once answered**
+
+11. Answer the fresh 2026-10-29 owner-decision packet (unlocks 10 planned tasks) [TODO].
+12. Ratify the fax carrier legs (`fax.send`/`fax.receive` enablement needs carrier action)
+    [TODO Fax enablement].
+13. Post the release announcements backlog (v2.1.0–v2.8.0 drafts) [TODO].
+
+**Small, self-contained**
+
+14. `/context` contract snapshot test pinning webphone's parse against Kith's published
+    shape.
+15. History nudge for the **notes** save path (`call_notes` PUT leaves a second tab stale
+    — the F89 shape, different slot).
+16. `scripts/templ-generate.sh` wrapper that pins the regen compiler to go.mod's version
+    and asserts the generated header stamp (the 2026-11-05 wave's near-miss class).

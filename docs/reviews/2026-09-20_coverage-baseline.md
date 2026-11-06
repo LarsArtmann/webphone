@@ -1,5 +1,10 @@
 # Coverage Baseline — 2026-09-20
 
+> **LIVING BASELINE — append a new dated section per re-run; never overwrite an
+> older one.** The 2026-09-20 table below is the original snapshot; the newest
+> section is the current reference. Latest re-run: **2026-11-06** (§ 2026-11-06
+> re-run, HEAD `54c8bb17`).
+
 - **Command:** `nix develop -c go test -count=1 -cover ./...`
 - **Why persisted:** the 2026-09-20 audit session computed numbers that
   lived only in chat. This file is the reference point the next coverage
@@ -50,6 +55,69 @@
 | 2026-09-20 | store   | 59.4% → 75.3%  | Owner-scoping suite (plan T15) |
 | 2026-09-20 | gateway | 76.5% → 77.6%  | Webhook error branches (T17)   |
 | 2026-09-20 | domain  | 54.1% → 72.1%  | Parser edge table (T18)        |
+
+## 2026-11-06 re-run — HEAD `54c8bb17` (docs-health v8 sweep)
+
+Same command, same host. Island JS separately:
+`nix run nixpkgs#nodejs -- --test --test-force-exit
+'internal/web/assets/island-tests/*.test.mjs'` → **289 specs, 289 pass,
+0 fail** (was 22 specs on 2026-09-20).
+
+| Package                 | 2026-11-06 | 2026-09-20 snapshot / delta | Note                                                                   |
+| ----------------------- | ---------- | --------------------------- | ---------------------------------------------------------------------- |
+| `internal/sipcred`      | 100.0%     | new package                 | Derived-credential primitive (2026-10-12 brokering train)              |
+| `internal/admin`        | 95.5%      | new package                 | Read-only cross-line surface (2026-11-04)                              |
+| `internal/chatloop`     | 94.7%      | new package                 | Matrix/signal receiver loops (2026-10-23)                              |
+| `internal/reports`      | 94.4%      | new package                 | Pure CDR projection (2026-11-06, issue #12)                            |
+| `internal/paperless`    | 92.7%      | new package                 | Inbound-fax archiver seam                                              |
+| `internal/vcard`        | 92.4%      | 92.6%                       | Unchanged, still the best parser suite                                 |
+| `internal/session`      | 88.5%      | 67.0% (→ 67.0%)             | The SQLite store + sliding-renewal suites                              |
+| `internal/pbx`          | 85.7%      | 87.1%                       | Live-probe + httptest client                                           |
+| `internal/sso`          | 85.2%      | new package                 | OIDC lane                                                              |
+| `internal/config`       | 85.0%      | 83.0%                       | Env/file precedence + the both-or-neither validation families          |
+| `internal/domain`       | 81.9%      | 54.1% (→ 72.1%)             | Parser edge table + the network/address axis                           |
+| `internal/server`       | 81.9%      | 87.6%                       | Denominator grew with the admin/reports/live-context handlers          |
+| `internal/textagent`    | 82.1%      | new package                 | Agent seam                                                             |
+| `internal/asr`          | 82.4%      | new package                 | ASR client                                                             |
+| `internal/authmap`      | 80.9%      | new package                 | Identity mapping                                                       |
+| `internal/crm`          | 80.8%      | new package                 | CRM resolver + vocabulary bridge                                       |
+| `internal/gateway`      | 80.0%      | 76.5% (→ 77.6%)             | Webhook error branches + honest part headers                           |
+| `internal/retention`    | 80.0%      | new package                 | The 2026-11-05 hygiene train's sweeper pins                            |
+| `internal/web/assets`   | 80.0%      | 0.0%                        | Go-side embed helpers; JS behavior stays in island-tests               |
+| `internal/push`         | 76.4%      | new package                 | ntfy + FCM transports                                                  |
+| `internal/matrix`       | 75.4%      | new package                 | Chat-network receiver                                                  |
+| `internal/blob`         | 73.7%      | 0.0%                        | Direct tests since the 2026-11-04 atomic-write train                   |
+| `internal/readmodels`   | 73.2%      | new package                 | Engine store, caps, admin read seams                                   |
+| `internal/fax`          | 64.2%      | 0.0%                        | Direct lifecycle tests beside the server-level fax suite               |
+| `internal/store`        | 64.8%      | 59.4% (→ 75.3%)             | **Below the 2026-09-20 post-suite figure** — see the reading below     |
+| `internal/signal`       | 68.8%      | new package                 | Signal socket reader                                                   |
+| `internal/userauth`     | 58.2%      | new package                 | Identity layer; ceremony paths run through the server suites           |
+| `internal/app`          | 56.5%      | new package                 | Composition root; wiring asserted adapter-side                         |
+| `internal/server/hooks` | 53.8%      | new package                 | `/hooks/*` idempotency + ring lane                                     |
+| `cmd/webphone`          | 42.2%      | 0.0%                        | Wiring + boot-report; the smoke suite boots the real binary            |
+| `internal/web/views`    | 42.4%      | 1.3%                        | Helpers carry tests; render paths stay transitive (T26 decision holds) |
+| `internal/messaging`    | 37.9%      | 0.0%                        | Sender registry + address routing; receive paths exercised via server  |
+| `internal/server/api`   | 7.1%       | new package                 | Thin JSON writers; the DTO contract tests live one level up            |
+| `internal/arch`         | —          | —                           | Pure test package (import-graph gate)                                  |
+
+**Honest reading (2026-11-06):**
+
+- Two numbers moved the WRONG way and both are explained by denominator
+  growth, not by deleted tests: `internal/server` (new admin/reports/
+  live-context handlers) and `internal/store`. The store figure is the one
+  worth a train: the 2026-09-20 owner-scoping suite still pins the original
+  surface, but the store has since grown the admin read seams
+  (`ListAllThreads`/`GetThreadAny`/`AttachmentByIDAny`), the thread-flag
+  columns and migration v5 — each with a narrower direct suite than the
+  surface it adds.
+- The 20 packages that are new since 2026-09-20 all arrive WITH tests (the
+  lowest are `server/api` 7.1% and `messaging` 37.9%, both deliberately thin
+  writers/registries whose behavior is asserted one level up).
+- Island JS is where the real growth happened: 22 → 289 specs, with the
+  `node:test` harness now gating `nix flake check` (`island-js`).
+- Percentages still measure STATEMENTS, not error paths. The 2026-09-20
+  reading stands: high % ≠ high trust, and `server/api` at 7.1% is fine
+  because its bytes are contract-pinned.
 
 ## Decision: views coverage stays transitive (plan T26)
 

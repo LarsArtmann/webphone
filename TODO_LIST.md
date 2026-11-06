@@ -5,25 +5,65 @@ through (docs-health: shipped work moves to CHANGELOG / FEATURES — one home
 per fact). Long-shot ideas and owner calls live in ROADMAP.md; every row
 cites its source report in Evidence.
 
-Last sweep: 2026-11-05 (hygiene train, assistant): CI-verified the CONCURRENT bump
-train GREEN (go-sse v0.7.0 + templ v0.3.1100 + loginpage v4.16.0 + cqrs-htmx v4.16.0 +
-usermgmt v4.19.0 + go-health v0.10.0 + templ-components v1.27.0; vendorHash re-pinned
-by its session after the named-hash red; full local suite green — its fleet-libs row
-below records the landing and the one residual). Executed this sweep: the retention
-test package (destructive sweeper had zero pins — see the hygiene-train section),
-tracked-artifact untracking (fsprobe + ui-shots-before), and the TODO_LIST truth
-sweep: executed sections DELETED (live-smoke CI, the dock-train M18 + E2E tails, the
-error-agents shipped enumeration, the cqrs-htmx + loginpage tails, the catalog and
-wire-contracts shipped prose, the declarative tier log, gate-recovery, the v2.8.0
-deploy tail — prod verified on v2.9.0, the island-honesty E2E leg — discharged
-2026-10-29, the samber/do tails — folded into /health, the god-package carve record —
-blueprint lives in docs/modularization/, the hub cross-link [x]); contradictions fixed
-at their rows (the #7/#8 header, the ai-phone dangling clause, the catalog
-"push pending" header); the stack-E2E mention sprawl collapsed to its ONE home
-(Cross-repo obligations). Sweep history lives in CHANGELOG + docs/status — this front
-matter no longer carries it (one home per fact, per the rule above).
+Last sweep: 2026-11-06 (docs-health v8, assistant): harvested the GitHub-issue
+train's residue (§ below), re-verified every living doc against HEAD `54c8bb17`,
+archived the August/September cohort's resolved snapshots, and adopted the
+`docs-gates` battery (`scripts/docs-gates.sh` + `.docs-gates.json`) as the
+standing docs health gate. Prior sweeps live in CHANGELOG + docs/status — this
+front matter does not carry their history (one home per fact, per the rule above).
 
 ## Open tasks
+
+### 2026-11-06 GitHub-issue train residue (harvest from the 10:45 report)
+
+The 2026-11-06 train closed 4 of 5 open GitHub issues (Reports tab #12, live-call
+context + ring routing #10, two stale red-CI flags) and shipped `crm.ca_file`.
+What remains, each with its ONE home:
+
+1. **Push the 14 local commits** and watch CI. Manual-push bar MET (first unpushed
+   commit `216ed28e`, 2026-11-06 09:30; ~75 min at 10:45). Nothing else here is
+   cheaper until remote `main` carries the train.
+2. **Merge PR #234** (ginkgo 2.33.1→2.34.0, green on `a2ad2815`, vendored-module
+   hash already re-pinned). Owner call; the tidy → re-pin → watch tail is done.
+3. **Stack `crm.caFile` pass-through** — `nix-international-telephony`'s typed CRM
+   front renders only `crm.url` + the env-file token, so the option cannot reach the
+   PBX host. Cross-repo; the standing home is the Cross-repo obligations section.
+4. **Issue #9 acceptance criteria 1–2** — needs `/run/secrets/crm_api_token`
+   (root/unit-scoped by design) and the PBX host: an inbound call must render the
+   Kith name and `call_logged` must land on the journal. The webphone slice is
+   complete; the residue is pbx-artmann-side.
+5. **Audit `.gitignore` for unanchored directory rules** — the unanchored `reports/`
+   rule silently ignored the new `internal/reports/` package and ONLY the sandbox
+   build caught it (`nix flake check`); `docs`, `work`, `ui-shots` are the same
+   class. One grep + anchoring pass closes it.
+6. **Decide the `crm` health leg's criticality** — a CRM outage reds `/healthz`
+   readiness although the phone keeps working, while the library treats crm as
+   non-critical. Nothing routes traffic on it today (unit `Type=simple`, Caddy
+   fences the probes), so it stays an alarm channel until made explicit.
+7. **Findings-gate posture** — `buildflow` cannot exit 0 while 50 pre-existing
+   tier-3 findings stand, which trains readers to ignore its exit code (the
+   retired-baseline failure mode one layer up). Decide: elevate and fix, or a
+   sanctioned, visible baseline.
+8. **Re-run the hub fan-out benchmark on a quiet host** — the 2026-11-06 attempt was
+   inconclusive (load ~22 on 32 cores; spreads ~2×). Its trigger (cqrs-htmx v4.16.0 +
+   go-sse v0.7.0) has been fired for two trains.
+9. **Store test train** — `internal/store` reads 64.8%, below the 75.3% the 2026-09-20
+   owner-scoping suite recorded: the admin read seams, thread-flag columns and
+   migration v5 grew faster than their suites.
+10. **Wire the `docs-gates` battery into CI** — adopted locally this sweep
+    (`scripts/docs-gates.sh`, `.docs-gates.json`); the pre-canon archive residue is
+    RATCHETED, so nothing reds main when new drift appears until the CI leg lands.
+11. **Bulk verdict pass over the archive residue** — 73 status reports still carry
+    un-inventoried rows (1 878 bare rows measured 2026-11-06; ~1 000 of them are
+    §f brainstorm lists). Plan: per-file `status-items` strikes for §a/§b shipped
+    tables, `r` routed verdicts for §f rows, then `check-rows`/`bare-rows` BEFORE
+    each `git mv`.
+12. **`/context` contract snapshot test** pinning webphone's parse against Kith's
+    published shape (a CRM-side schema change is invisible today).
+13. **History nudge for the notes save path** — a `call_notes` PUT leaves a second
+    tab stale (the F89 shape, different slot).
+14. **`scripts/templ-generate.sh` wrapper** that pins the regen compiler to go.mod's
+    version and asserts the generated header stamp (the 2026-11-05 near-miss class).
 
 ### 2026-11-05 hygiene train (assistant sweep — tests + docs + repo hygiene)
 
