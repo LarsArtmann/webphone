@@ -165,7 +165,7 @@ func (s *DialWindows) ArmOverride(ctx context.Context, owner domain.Extension, r
 	}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "readmodels.dial_override_arm", "arm override")
 	}
-	return s.trimWindows(ctx, owner.String())
+	return s.enforceCaps(ctx)
 }
 
 // Last returns the slot's last allowed dial (found=false when none).
@@ -233,55 +233,20 @@ func (s *DialWindows) recordAttempt(ctx context.Context, owner domain.Extension,
 	}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "readmodels.dial_attempt", "record dial attempt")
 	}
-	return s.trimWindows(ctx, owner.String())
+	return s.enforceCaps(ctx)
 }
 
-// trimWindows expunges the owner's oldest rows past the cap on BOTH
-// collections (the transcripts posture: system facts are trimmed,
-// never user content).
-//
-// Deliberately NOT metaengine.EnforceCap (ruled 2026-11-04, T07): the
-// engine's cap is collection-global, webphone's is per-owner — see
-// the go-cqrs-lite.md errata for the ruling and reopen trigger.
-func (s *DialWindows) trimWindows(ctx context.Context, owner string) error {
-	wins, err := s.windows.Scan(ctx,
-		metaengine.WithFilter("owner", metaengine.FilterEq, owner),
-		metaengine.WithSort("at", true),
-		metaengine.WithLimit(DialWindowsMaxPerExtension+1),
-	)
-	if err != nil {
-		return errorfamily.WrapInfrastructuref(err, "readmodels.dial_trim", "scan window trim window")
+// enforceCaps trims every capped collection to its declared bounds. Both
+// dial collections declare WithCapPerGroup("owner", DialWindowsMaxPerExtension):
+// each owner keeps its newest slots, one owner's flood can never evict
+// another's, and the sqlite engine trims each group in one windowed DELETE.
+// This replaces the hand-rolled per-owner loop ruled out 2026-11-04 (T07) —
+// the reopen trigger (a per-group cap in metaengine) shipped as #114,
+// ADR-0164.
+func (s *DialWindows) enforceCaps(ctx context.Context) error {
+	if _, err := s.models.EnforceCaps(ctx); err != nil {
+		return errorfamily.WrapInfrastructuref(err, "readmodels.dial_cap", "enforce dial-window caps")
 	}
-	for _, v := range safeTail(wins) {
-		if err := s.models.Apply(ctx, metaengine.EventTypeName(domain.DialWindowExpunged{}), domain.DialWindowExpunged{
-			Key: domain.DialWindowKey{Owner: v.Owner, Remote: v.Remote},
-		}); err != nil {
-			return errorfamily.WrapInfrastructuref(err, "readmodels.dial_trim", "expunge window row")
-		}
-	}
-	ovs, err := s.overrides.Scan(ctx,
-		metaengine.WithFilter("owner", metaengine.FilterEq, owner),
-		metaengine.WithSort("at", true),
-		metaengine.WithLimit(DialWindowsMaxPerExtension+1),
-	)
-	if err != nil {
-		return errorfamily.WrapInfrastructuref(err, "readmodels.dial_trim", "scan override trim window")
-	}
-	for _, v := range safeTail(ovs) {
-		if err := s.models.Apply(ctx, metaengine.EventTypeName(domain.DialOverrideExpunged{}), domain.DialOverrideExpunged{
-			Key: domain.DialWindowKey{Owner: v.Owner, Remote: v.Remote},
-		}); err != nil {
-			return errorfamily.WrapInfrastructuref(err, "readmodels.dial_trim", "expunge override row")
-		}
-	}
+
 	return nil
-}
-
-// safeTail returns the rows past the cap (an empty slice for
-// at-cap scans).
-func safeTail[T any](views []T) []T {
-	if len(views) <= DialWindowsMaxPerExtension {
-		return nil
-	}
-	return views[DialWindowsMaxPerExtension:]
 }

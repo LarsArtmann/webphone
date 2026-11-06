@@ -27,6 +27,12 @@ const TranscriptSegmentsMaxPerExtension = 5000
 // reassemblable.
 const TranscriptSegmentsMaxPerCall = 1500
 
+// transcriptsGlobalCeiling is the collection-global safety net ABOVE the
+// per-owner grouped cap (see dialWindowsGlobalCeiling for the rationale):
+// sized for hundreds of owners at the full per-extension budget without
+// ever competing with the grouped bound.
+const transcriptsGlobalCeiling = 1_000_000
+
 // transcriptFetchWindow is the segment read window behind Recent and
 // Search: wide enough that the maxCalls newest calls reassemble whole
 // even when one call alone produced hundreds of segments.
@@ -81,6 +87,8 @@ var transcriptsQuery = metaengine.Query[transcriptInput, TranscriptSegmentView](
 	metaengine.FilterOnField[TranscriptSegmentView]("call_id", metaengine.FilterEq),
 	metaengine.FilterOnField[TranscriptSegmentView]("seq", metaengine.FilterLt),
 	metaengine.SortOnField[TranscriptSegmentView]("seq", true),
+	metaengine.WithCap(transcriptsGlobalCeiling, "seq"),
+	metaengine.WithCapPerGroup("owner", TranscriptSegmentsMaxPerExtension),
 	metaengine.Volume(humanScaleVolume),
 )
 
@@ -103,11 +111,13 @@ func newTranscripts(models *metaengine.Store, agg metaengine.AggregateReader) *T
 	}
 }
 
-// Append stores one segment and trims past both caps: the owner's
-// oldest rows past the per-extension cap, then the call's oldest past
-// the per-call cap. Both trims scan the newest window and expunge the
-// excess by key — bounded by the cap, never materializing a keep-list
-// of the whole store.
+// Append stores one segment and enforces both retention bounds: the
+// per-EXTENSION cap is a declarative WithCapPerGroup enforced via
+// EnforceCaps (metaengine #114, ADR-0164 — it replaced this file's
+// hand-rolled owner loop, the 2026-11-04 T07 ruling's reopen trigger);
+// the per-CALL floor stays a hand-rolled loop because metaengine's
+// grouped cap declares ONE group per collection and the per-call bound
+// needs a second, nested grouping (owner+call).
 func (s *Transcripts) Append(ctx context.Context, seg domain.CallTranscriptSegment) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -124,45 +134,20 @@ func (s *Transcripts) Append(ctx context.Context, seg domain.CallTranscriptSegme
 	}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "readmodels.transcript_append", "append transcript")
 	}
-	if err := s.trimOwner(ctx, seg.Owner.String()); err != nil {
-		return err
+	if _, err := s.models.EnforceCaps(ctx); err != nil {
+		return errorfamily.WrapInfrastructuref(err, "readmodels.transcript_cap", "enforce per-owner transcript caps")
 	}
 	return s.trimCall(ctx, seg.Owner.String(), seg.CallID)
 }
 
-// trimOwner expunges the owner's oldest rows past the per-extension
-// cap: scan the newest cap+1 by seq and expunge everything the window
-// cannot hold, repeating until the owner fits — one bounded scan sees
-// only cap+1 rows, so a flood converges over passes (each removes at
-// least one row).
-//
-// Deliberately NOT metaengine.EnforceCap (ruled 2026-11-04, T07): the
-// engine's cap is collection-global — a global cap would let one
-// owner's flood evict another owner's segments. The owner/call filters
-// here ARE the grouped semantics; reopen only when metaengine grows a
-// per-group cap (docs/review/libs/go-cqrs-lite.md § errata).
-func (s *Transcripts) trimOwner(ctx context.Context, owner string) error {
-	for {
-		views, err := s.reader.Scan(ctx,
-			metaengine.WithFilter("owner", metaengine.FilterEq, owner),
-			metaengine.WithSort("seq", true),
-			metaengine.WithLimit(TranscriptSegmentsMaxPerExtension+1),
-		)
-		if err != nil {
-			return errorfamily.WrapInfrastructuref(err, "readmodels.transcript_trim", "scan transcript trim window")
-		}
-		if len(views) <= TranscriptSegmentsMaxPerExtension {
-			return nil
-		}
-		for _, v := range views[TranscriptSegmentsMaxPerExtension:] {
-			if err := s.expunge(ctx, v.ID); err != nil {
-				return err
-			}
-		}
-	}
-}
+// trimCall expunges the call's oldest rows past the per-call floor: scan
+// the newest cap+1 by seq and expunge everything the window cannot hold,
+// repeating until the call fits — one bounded scan sees only cap+1 rows,
+// so a marathon call converges over passes (each removes at least one
+// row). The per-EXTENSION bound is declarative (WithCapPerGroup above);
+// this loop exists because the per-call floor needs a second, nested
+// grouping metaengine does not declare yet.
 
-// trimCall is trimOwner against one call with the per-call cap.
 // brandid-lint:ignore(BD003) opaque island Call-ID passthrough into the engine filter (strong-id wire ruling)
 func (s *Transcripts) trimCall(ctx context.Context, owner, callID string) error {
 	for {
