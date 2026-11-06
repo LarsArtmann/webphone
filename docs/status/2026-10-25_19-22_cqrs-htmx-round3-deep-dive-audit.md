@@ -144,6 +144,7 @@ run — see (d) and (b).
 
 ## f) Next tasks (ranked, feeds docs-health HARVEST)
 
+<!-- check-rows:ledger -->
 | #  | Task                                                                                                                                                  | Impact | Effort | Category            |
 | -- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------------- |
 | 1  | Wire `ProjectionReadinessCheck(auth.Usermgmt())` as a second /healthz userauth check + `OnProjectionFailed` WARN in userauth.New                      | High   | S      | Feature/Reliability |

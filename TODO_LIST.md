@@ -64,6 +64,16 @@ What remains, each with its ONE home:
     tab stale (the F89 shape, different slot).
 14. **`scripts/templ-generate.sh` wrapper** that pins the regen compiler to go.mod's
     version and asserts the generated header stamp (the 2026-11-05 near-miss class).
+15. **Attended-transfer UI vs the NO-GO ruling** — `FEATURES.md` claimed the row
+    FULLY_FUNCTIONAL while `docs/research/2026-10-27_attended-transfer-spike.md` says
+    the bridge is UNVERIFIED (the stack has no Replaces dialplan handling); the status
+    is now PARTIALLY_FUNCTIONAL. Decide whether the dock's "Attended" button should be
+    hidden until a FreeSWITCH lab proves `Replaces` — the island's honesty contract
+    forbids a 200-OK that silently does nothing.
+16. **`reverseLines` → `slices.Reverse`** — the 2026-10-11 sweep converted
+    `internal/store`, but the hand-rolled two-pointer helper still lives in
+    `internal/readmodels/transcripts.go` (item 40 of the 03-29 report, verified open
+    2026-11-06).
 
 ### 2026-11-05 hygiene train (assistant sweep — tests + docs + repo hygiene)
 

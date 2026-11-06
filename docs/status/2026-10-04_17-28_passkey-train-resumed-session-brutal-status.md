@@ -195,6 +195,7 @@ stale again (see d7).**
 
 ## f) Next (impact-sorted; ids referenced nowhere else — this list is the harvest source)
 
+<!-- check-rows:ledger -->
 | #  | Task                                                                                                                                                                                            | Repo     | Impact                        | Effort |
 | -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ----------------------------- | ------ |
 | 1  | Owner switch (the handed-over `nixos-rebuild switch … --target-host root@pbx.artmann.tech`) + post-switch: rotate `-current`, record the diff-closures baseline, `verify-live.sh`               | pbx      | High (everything waits on it) | 10min  |

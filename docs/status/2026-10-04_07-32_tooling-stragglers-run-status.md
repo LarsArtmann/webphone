@@ -217,6 +217,7 @@ sandbox lane; nothing was added unwired.
 
 ## f) Next things to get done (brainstorm, impact-sorted; most beyond the first block are ROUTING fuel for docs-health HARVEST, not commitments)
 
+<!-- check-rows:ledger -->
 | #  | Thing                                                                                                                                | Effort | Route                                   |
 | -- | ------------------------------------------------------------------------------------------------------------------------------------ | ------ | --------------------------------------- |
 | 1  | Explain + fix the 47-vs-48 smoke count (verify the enrichment-conditional hypothesis; pin AGENTS to the suite's summary)             | S      | TODO tooling row                        |

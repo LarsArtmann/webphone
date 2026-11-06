@@ -224,6 +224,7 @@ recovered, all with root causes named:
 
 ## f) Next tasks (ranked; feeds HARVEST)
 
+<!-- check-rows:ledger -->
 | #  | Task                                                                                                                                                                       | Impact | Effort | Cat           |
 | -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
 | 1  | TODO_LIST: apply the `error_rules` block (in `.buildflow.yml`) the day the installed BuildFlow knows the key                                                               | High   | S      | Quality       |

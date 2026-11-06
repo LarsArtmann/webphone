@@ -143,6 +143,7 @@ touched; no project-wide research was performed.
 
 ## f) NEXT (impact-sorted; ids referenced nowhere else — this is the harvest source)
 
+<!-- check-rows:ledger -->
 | #  | Task                                                                                                                                                      | Repo     | Impact | Effort  |
 | -- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------- |
 | 1  | Owner: push-lag call NOW LIVE — 7 commits unpushed across two repos; ratify the threshold or push manually                                                | both     | High   | 5min    |

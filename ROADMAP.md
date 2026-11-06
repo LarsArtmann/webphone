@@ -200,6 +200,17 @@ the stack browser E2E passed on the bumped tree. What remains:
   coverage) or on any regression, versus staying informational. Fleet-wide
   by nature (the step lives upstream) and it interacts with per-package vs
   union attribution — see the `-coverpkg` idea above. Owner policy call.
+- **CI-bar subset policy for docs/test-only changes** (§g-Q1, raised
+  2026-10-06 in `docs/status/2026-10-06_04-12_round3-assistant-legs-brutal-review.md`
+  and re-surfaced in the 13:12 review; routed 2026-11-06 — it lived only in
+  timestamped reports). Which CI legs may be skipped for a docs-only or
+  test-only commit, and which must NEVER be (tonight's red argues the
+  formatter gate must never be the dropped subset)? Pairs with the session-exit
+  fmt-first checklist question in that same report.
+- **Daemon-format coupling note home** (§g-Q3, same pair, routed 2026-11-06):
+  where does the note live that says the auto-commit daemon's reflow and the
+  gates' formatter are coupled — a test comment, the error-contract preamble,
+  or AGENTS? Three candidate homes, no decision.
 - IO-storm source investigation (2026-10-14 go-modularize §f item 30,
   routed 2026-10-18): the box tripped the no-heavy-builds gate 6× in
   60 min (freeze #5/#25 class); a `/proc/pressure/io` watch during the

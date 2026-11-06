@@ -156,6 +156,7 @@ pbx-artmann; the stack (nix-international-telephony) needs only a lock bump
 
 ## f) Next tasks (impact-sorted; ids map to the plan doc)
 
+<!-- check-rows:ledger -->
 | #      | Task                                                                                                                                                                                                                                                                                                                                                     | Why next                                       |
 | ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------- |
 | ~~1~~  | ~~F15 `views/enroll.templ` + `h.enrollPage`~~ done (render-pinned by TestEnrollPageRendersStandalone)                                                                                                                                                                                                                                                    | ~~THE compile blocker~~                        |
