@@ -369,10 +369,10 @@ a deliberate code change, regenerate:
 | readmodels.contact_missing                   | Rejection                 | internal/readmodels/contacts.go    |
 | readmodels.contact_save                      | Infrastructure            | internal/readmodels/contacts.go    |
 | readmodels.dial_attempt                      | Infrastructure            | internal/readmodels/dialwindows.go |
+| readmodels.dial_cap                          | Infrastructure            | internal/readmodels/dialwindows.go |
 | readmodels.dial_override_arm                 | Infrastructure            | internal/readmodels/dialwindows.go |
 | readmodels.dial_override_consume             | Infrastructure            | internal/readmodels/dialwindows.go |
 | readmodels.dial_override_load                | Infrastructure            | internal/readmodels/dialwindows.go |
-| readmodels.dial_trim                         | Infrastructure            | internal/readmodels/dialwindows.go |
 | readmodels.dial_window_load                  | Infrastructure            | internal/readmodels/dialwindows.go |
 | readmodels.disposition_save                  | Infrastructure            | internal/readmodels/callnotes.go   |
 | readmodels.enroll_burn                       | Infrastructure            | internal/readmodels/enroll.go      |
@@ -408,6 +408,7 @@ a deliberate code change, regenerate:
 | readmodels.snippet_save                      | Infrastructure            | internal/readmodels/snippets.go    |
 | readmodels.transcript_append                 | Infrastructure            | internal/readmodels/transcripts.go |
 | readmodels.transcript_call                   | Infrastructure            | internal/readmodels/transcripts.go |
+| readmodels.transcript_cap                    | Infrastructure            | internal/readmodels/transcripts.go |
 | readmodels.transcript_count                  | Infrastructure            | internal/readmodels/transcripts.go |
 | readmodels.transcript_delete                 | Infrastructure            | internal/readmodels/transcripts.go |
 | readmodels.transcript_scan                   | Infrastructure            | internal/readmodels/transcripts.go |
