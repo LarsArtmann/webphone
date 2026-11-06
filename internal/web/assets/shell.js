@@ -645,7 +645,8 @@
     var liveContextSlot = document.getElementById("wp-live-context");
     var liveContextRemote = "";
     var updateLiveContext = function () {
-      liveContextSlot = liveContextSlot || document.getElementById("wp-live-context");
+      liveContextSlot =
+        liveContextSlot || document.getElementById("wp-live-context");
       if (!liveContextSlot) return;
       var calls = document.getElementById("calls");
       var card = calls ? calls.querySelector(".call-card[data-remote]") : null;

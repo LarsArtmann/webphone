@@ -218,6 +218,22 @@ assume both:
   states both lanes in all deployments; its pill class
   (`wp-service-on`/`wp-service-off`) follows whether any lane is up.
 
+### Live-call context slot (served only with the CRM seam — 2026-11-06)
+
+- `wp-live-context` — the island aside's slot for the live call's CRM
+  context (issue #10). Rendered ONLY when the CRM integration is
+  configured; the shell fills it from `GET /partials/live-context?remote=…`
+  and empties it when the last call ends. Most answers are EMPTY: the seam
+  off, an unknown number, no published context or an unreachable CRM all
+  render nothing inside the slot, so the E2E must assert presence-OR-empty,
+  never content.
+- `.call-card[data-remote]` — the island's live call card publishes its
+  remote party as a data attribute; it is the ONE channel the shell reads to
+  decide which number to ask about (shell.js must work when island scripts
+  fail, so no island import).
+- `.wp-live-context-head`, `.wp-live-context .wp-crm-context` — the head
+  line naming the caller and the reused context strip inside the slot.
+
 ### Reports tab ids (served per tab — 2026-11-06)
 
 The Reports tab (issue #12) is a pure fold of the call records the History

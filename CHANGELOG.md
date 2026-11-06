@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Live-call context beside the island (2026-11-06, issue #10): while a
+  call is up, the phone column shows who is on the line and what is
+  outstanding with them in the CRM — the same company/deals/follow-up line
+  the conversation strip renders, from the same helper. The shell asks once
+  per remote and empties the slot when the last call ends; every degraded
+  answer (seam off, unknown number, CRM down) is an empty body, so the slot
+  never holds an empty shell, a spinner or an error. Session-gated, because
+  the answer is resolved with the server's CRM token.
+- Ring tones follow the audio output picker (2026-11-06, issue #10): the
+  chosen device now carries both halves of call audio — the remote stream
+  and the locally generated ring — through WebAudio's `setSinkId`
+  (feature-detected). On a multi-output desk the ring lands where the
+  operator's headset is instead of on the system speaker, and choosing
+  "Default" now moves the call audio back (it was silently skipped).
+  Browsers without the WebAudio half keep the room alarm.
 - Reports tab (2026-11-06, issue #12): the call log's arithmetic beside
   the log itself. A pure projection (`internal/reports`) over the same
   CDR page History lists — total talk time, calls split by direction and
