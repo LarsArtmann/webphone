@@ -77,6 +77,20 @@ What remains, each with its ONE home:
     `internal/readmodels/transcripts.go` (item 40 of the 03-29 report, verified open
     2026-11-06).
 
+17. **Make freshness WARN on a §f-less newest report** — the gate PASSED on the
+    2026-11-06 10:45 report because it carried no §f at all ("nothing to check"),
+    so the ritual certified nothing (the vacuous-PASS class). A newest report
+    without §f should be a finding, not a green.
+18. **Enforce CHANGELOG coverage for code-path commits** — the metaengine
+    per-group cap train (2026-11-06 17:59) landed with no `[Unreleased]` line and
+    nothing reds. Cheapest shape: a buildflow step diffing non-test Go/JS paths
+    against CHANGELOG.md.
+19. **Record the DF-brittleness + standalone-verb gotchas UPSTREAM** (docs-gates
+    repo, Artmann-Technologies): `audit_max` shifts with living-doc growth because
+    "generic" is a document-frequency threshold (observed 330 → 331 from one
+    CHANGELOG paragraph), and a standalone verb ignores `.docs-gates.json` while
+    `run` honors it.
+
 ### 2026-11-05 hygiene train (assistant sweep — tests + docs + repo hygiene)
 
 Executed: the destructive sweeper `internal/retention` (zero pins since plan T25)

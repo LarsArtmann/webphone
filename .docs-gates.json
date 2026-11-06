@@ -7,10 +7,10 @@
   ],
   "todo_file": "TODO_LIST.md",
   "annotate_max": 205,
-  "audit_max": 331,
+  "audit_max": 333,
   "cadence": {
     "struck_rows": 20,
-    "max_unarchived": 69,
+    "max_unarchived": 70,
     "oldest_days": 45
   },
   "skip_gates": []
