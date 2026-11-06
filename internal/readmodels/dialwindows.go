@@ -46,6 +46,12 @@ type DialOverrideView struct {
 const (
 	dialWindowsCollection   = "dial_windows"
 	dialOverridesCollection = "dial_overrides"
+
+	// dialWindowsGlobalCeiling is the collection-global safety net ABOVE
+	// the per-owner grouped cap: it exists so an unbounded owner population
+	// cannot grow the collection forever, and is sized far above the honest
+	// owner count so it never competes with the grouped bound.
+	dialWindowsGlobalCeiling = 100_000
 )
 
 // brandid-lint:ignore(BD003) engine key-extraction input: wire shape (strong-id wire ruling)
@@ -65,6 +71,8 @@ var dialWindowsQuery = metaengine.Query[dialWindowInput, DialWindowView](dialWin
 	metaengine.OnRecord(domain.DialWindowExpunged{}, metaengine.Remove[DialWindowView]()),
 	metaengine.FilterOnField[DialWindowView]("owner", metaengine.FilterEq),
 	metaengine.SortOnField[DialWindowView]("at", false),
+	metaengine.WithCap(dialWindowsGlobalCeiling, "at"),
+	metaengine.WithCapPerGroup("owner", DialWindowsMaxPerExtension),
 	metaengine.Volume(humanScaleVolume),
 )
 
@@ -82,6 +90,8 @@ var dialOverridesQuery = metaengine.Query[dialWindowInput, DialOverrideView](dia
 	metaengine.OnRecord(domain.DialOverrideExpunged{}, metaengine.Remove[DialOverrideView]()),
 	metaengine.FilterOnField[DialOverrideView]("owner", metaengine.FilterEq),
 	metaengine.SortOnField[DialOverrideView]("at", false),
+	metaengine.WithCap(dialWindowsGlobalCeiling, "at"),
+	metaengine.WithCapPerGroup("owner", DialWindowsMaxPerExtension),
 	metaengine.Volume(humanScaleVolume),
 )
 
