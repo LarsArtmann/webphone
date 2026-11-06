@@ -13,6 +13,11 @@ const (
 	TabFax       Tab = "fax"
 	TabVoicemail Tab = "voicemail"
 	TabHistory   Tab = "history"
+	// TabReports answers "what is this adding up to" over the same call
+	// records History lists (issue #12): talk time, direction and
+	// outcome, the daily shape, the busiest hours and the contacts that
+	// consumed the time.
+	TabReports   Tab = "reports"
 	TabContacts  Tab = "contacts"
 	TabSettings  Tab = "settings"
 	// TabAdmin is the cross-line admin surface (read-only visibility
@@ -25,7 +30,7 @@ const (
 
 // AllTabs is the navigation order (TabAdmin rides at the end; NavLinks
 // hides it from non-admin sessions).
-var AllTabs = []Tab{TabMessages, TabFax, TabVoicemail, TabHistory, TabContacts, TabSettings, TabAdmin}
+var AllTabs = []Tab{TabMessages, TabFax, TabVoicemail, TabHistory, TabReports, TabContacts, TabSettings, TabAdmin}
 
 // Path returns the tab's route.
 func (t Tab) Path() string { return "/" + string(t) }

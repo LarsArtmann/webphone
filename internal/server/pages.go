@@ -172,6 +172,10 @@ func (h *handlers) partialHistory(w http.ResponseWriter, r *http.Request) {
 	h.partial(w, r, views.TabHistory)
 }
 
+func (h *handlers) partialReports(w http.ResponseWriter, r *http.Request) {
+	h.partial(w, r, views.TabReports)
+}
+
 func (h *handlers) partialContacts(w http.ResponseWriter, r *http.Request) {
 	h.partial(w, r, views.TabContacts)
 }
@@ -262,6 +266,8 @@ func tabFromPath(path string) views.Tab {
 		return views.TabVoicemail
 	case "/history", "/history/":
 		return views.TabHistory
+	case "/reports", "/reports/":
+		return views.TabReports
 	case "/contacts", "/contacts/":
 		return views.TabContacts
 	case "/settings", "/settings/":

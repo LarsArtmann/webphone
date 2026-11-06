@@ -351,6 +351,7 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("GET /fax", h.tabPage)
 	protected.HandleFunc("GET /voicemail", h.tabPage)
 	protected.HandleFunc("GET /history", h.tabPage)
+	protected.HandleFunc("GET /reports", h.tabPage)
 	protected.HandleFunc("GET /contacts", h.tabPage)
 	protected.HandleFunc("GET /settings", h.tabPage)
 	// The admin surface (read-only cross-line visibility): every route
@@ -365,6 +366,7 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("GET /partials/fax", h.partialFax)
 	protected.HandleFunc("GET /partials/voicemail", h.partialVoicemail)
 	protected.HandleFunc("GET /partials/history", h.partialHistory)
+	protected.HandleFunc("GET /partials/reports", h.partialReports)
 	protected.HandleFunc("GET /partials/contacts", h.partialContacts)
 	protected.HandleFunc("GET /partials/settings", h.partialSettings)
 	protected.HandleFunc("GET /partials/nav", h.partialNav)

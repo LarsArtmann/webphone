@@ -602,6 +602,8 @@ func (h *handlers) tabComponent(r *http.Request, tab views.Tab, sess session.Ses
 		return h.voicemailPanel(r, sess)
 	case views.TabHistory:
 		return h.historyPanel(r, sess)
+	case views.TabReports:
+		return h.reportsPanel(r, sess)
 	case views.TabContacts:
 		return h.contactsPanel(r, sess)
 	case views.TabAdmin:
