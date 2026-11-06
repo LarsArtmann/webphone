@@ -20,16 +20,16 @@ All committed by the auto-commit daemon (HEAD `2b4807b`; tree clean at
 report time). Every item below was verified with a real gate, not by
 inspection alone.
 
-| #  | Change | Verification                                                                                                                                                                                          |
-| -- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ~~ | 1      | Split `nix/module-check.nix` (355 → 185 lines) into `module-check-base.nix` (shared eval + NixOS stand-in), `module-check-csrf.nix`, `module-check-backup.nix`.                                       |
-| ~~ | 2      | Stand-in module gained `freeformType = lib.types.attrsOf lib.types.anything` in `module-check-base.nix`.                                                                                              |
-| ~~ | 3      | `services.webphone.package` moved from raw `mkOption` to `lib.mkPackageOption pkgs "webphone" { default = null; ... }`.                                                                               |
-| ~~ | 4      | Added `devShells.ci` (`mkShellNoCC`, go_1_27 + templ + golangci-lint, `GOTOOLCHAIN=local`) in `nix/devshell.nix`.                                                                                     |
-| ~~ | 5      | `.github/workflows/ci.yml` `go-tests` job switched to `nix develop .#ci -c go test ./...`.                                                                                                            |
-| ~~ | 6      | Split `package/nixos-module.nix` (464 → 213 lines) under the ~300-line guideline: config only; imports `package/options.nix` (209), `package/caddy-vhost.nix` (39), `package/backup-script.nix` (39). |
-| ~~ | 7      | Added a complete `meta` block to the `webphone-vulnix-triage` package.                                                                                                                                |
-| ~~ | 8      | Documented the whole train: `AGENTS.md` (flake layout bullet + Commands block) and `CHANGELOG.md` (Unreleased → Changed).                                                                             |
+| #     | Change | Verification                                                                                                                                                                                          |
+| ----- | ------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~ ~~ | 1      | Split `nix/module-check.nix` (355 → 185 lines) into `module-check-base.nix` (shared eval + NixOS stand-in), `module-check-csrf.nix`, `module-check-backup.nix`.                                       |
+| ~~ ~~ | 2      | Stand-in module gained `freeformType = lib.types.attrsOf lib.types.anything` in `module-check-base.nix`.                                                                                              |
+| ~~ ~~ | 3      | `services.webphone.package` moved from raw `mkOption` to `lib.mkPackageOption pkgs "webphone" { default = null; ... }`.                                                                               |
+| ~~ ~~ | 4      | Added `devShells.ci` (`mkShellNoCC`, go_1_27 + templ + golangci-lint, `GOTOOLCHAIN=local`) in `nix/devshell.nix`.                                                                                     |
+| ~~ ~~ | 5      | `.github/workflows/ci.yml` `go-tests` job switched to `nix develop .#ci -c go test ./...`.                                                                                                            |
+| ~~ ~~ | 6      | Split `package/nixos-module.nix` (464 → 213 lines) under the ~300-line guideline: config only; imports `package/options.nix` (209), `package/caddy-vhost.nix` (39), `package/backup-script.nix` (39). |
+| ~~ ~~ | 7      | Added a complete `meta` block to the `webphone-vulnix-triage` package.                                                                                                                                |
+| ~~ ~~ | 8      | Documented the whole train: `AGENTS.md` (flake layout bullet + Commands block) and `CHANGELOG.md` (Unreleased → Changed).                                                                             |
 
 Gate summary for the session: `nix flake check --no-build --keep-going`
 → **"all checks passed!"**; `checks.{format,statix,deadnix,webphone-module,vulnix-triage}`
@@ -40,24 +40,24 @@ files; `nix fmt` idempotent.
 
 ## b) PARTIALLY DONE
 
-| #  | Item | What's missing / why                           |
-| -- | ---- | ---------------------------------------------- |
-| ~~ | 1    | Verification breadth                           |
-| ~~ | 2    | aarch64                                        |
-| ~~ | 3    | The earlier status report                      |
-| ~~ | 4    | `go-standard` migration (§ check "Structural") |
-| ~~ | 5    | `TODO_LIST.md`                                 |
+| #     | Item | What's missing / why                           |
+| ----- | ---- | ---------------------------------------------- |
+| ~~ ~~ | 1    | Verification breadth                           |
+| ~~ ~~ | 2    | aarch64                                        |
+| ~~ ~~ | 3    | The earlier status report                      |
+| ~~ ~~ | 4    | `go-standard` migration (§ check "Structural") |
+| ~~ ~~ | 5    | `TODO_LIST.md`                                 |
 
 ---
 
 ## c) NOT STARTED
 
-| #  | Item | Why not started                            |
-| -- | ---- | ------------------------------------------ |
-| ~~ | 1    | Version/tag drift guard                    |
-| ~~ | 2    | `actionlint` on `.github/workflows/ci.yml` |
-| ~~ | 3    | Splitting any remaining files              |
-| ~~ | 4    | `nixos-module.nix` further decomposition   |
+| #     | Item | Why not started                            |
+| ----- | ---- | ------------------------------------------ |
+| ~~ ~~ | 1    | Version/tag drift guard                    |
+| ~~ ~~ | 2    | `actionlint` on `.github/workflows/ci.yml` |
+| ~~ ~~ | 3    | Splitting any remaining files              |
+| ~~ ~~ | 4    | `nixos-module.nix` further decomposition   |
 
 ---
 

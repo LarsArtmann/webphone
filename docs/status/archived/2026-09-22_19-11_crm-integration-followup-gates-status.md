@@ -224,7 +224,7 @@ first ~15 are already harvested into TODO_LIST.md)
    session's uncommitted `cmd/crm-server/main.go` WIP.
 7. Island unit test for `recordCrmCall` (helpers.mjs fetch stubs).
 8. Idempotency key on `POST /api/calls`.
-9. Single-flight lookups in `crm.Resolver`.
+9. ~~Single-flight lookups in `crm.Resolver`.~~ done — landed — the Resolver single-flights name lookups (AGENTS § CRM seam)
 10. Lookup hit/miss/timeout counters (replace debug-only slog).
 11. Stack-side wiring story for `crm.url`/`crm.token` (secrets dir).
 12. Cross-doc CRM surfaces into the stack runbook § error contract.

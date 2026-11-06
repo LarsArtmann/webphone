@@ -172,7 +172,7 @@ lanes: `internal/server`, `internal/server/api`, `internal/server/hooks`,
 
 1. Register the 3 error codes (`-update`), review generated rows.
 2. `nix develop -c go test -count=1 ./...` green.
-3. `nix fmt`; `bash scripts/whitespace-drift.sh` after staging.
+3. ~~`nix fmt`; `bash scripts/whitespace-drift.sh` after staging.~~ done — both are standing AGENTS commands; whitespace-drift is pre-commit GATE 1
 4. One-call commit; push (manual bar applies: red with verified fix);
    watch CI to green (state the anchor).
 5. Fix the smoke's OpenAPI version pin (3.1.0 → 3.0.3) + its comment.
@@ -191,7 +191,7 @@ lanes: `internal/server`, `internal/server/api`, `internal/server/hooks`,
 14. M11/F49: flake check leg — resolve treefmt-vs-generated-YAML first.
 15. M12/F50–51: HARVEST (f)-list into TODO_LIST (docs-health mode).
 16. M13/F52–56: metaengine v4.20.0 delta read + bump-train note.
-17. M14/F57–58: docs/research/README.md index (8 reports).
+17. ~~M14/F57–58: docs/research/README.md index (8 reports).~~ done — landed — docs/research/README.md exists and indexes the reports
 18. M16/F61: hub inventory page → link asyncapi.yaml.
 19. M17/F62–65: webphone-android consumes /openapi.json + asyncapi.yaml.
 20. AGENTS.md Commands block: add `webphone contracts` one-liner.

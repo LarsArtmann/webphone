@@ -12,12 +12,12 @@ The v0.6.2→v0.7.0 bump was executed and REVERTED in the 2026-11-04 closeout tr
 
 **RESOLVED 2026-11-05:** the reopen trigger FIRED — `cqrs-htmx/loginpage v4.16.0` published with a go.mod requiring templ ≥ v0.3.1100 (plus `templ-components v1.27.0` + `go-sse v0.7.0`), and the cqrs-htmx root v4.16.0 / usermgmt v4.19.0 wave rode the same templ. The prescribed ONE train landed the same day: templ v0.3.1070→v0.3.1100, go-sse v0.6.2→v0.7.0, templ-components v1.26.0→v1.27.0, loginpage v4.13.0→v4.16.0, cqrs-htmx v4.15.0→v4.16.0, usermgmt v4.18.0→v4.19.0, plus the coupled go-health v0.9.0→v0.10.0 and go-health-dashboard v0.13.0→v0.13.2 (dashboard v0.13.2 requires templ v0.3.1100 + templ-components v1.27.0 itself). The anticipated ssetest `WithLastEventID(sse.EventID)` branding adjustments were MOOT: ssetest's latest is v0.5.0 (already pinned) and webphone never calls `WithLastEventID` (its ssetest usage is NewStreamReader/MustReadNextEvent/RequireEventType/RequireData/RequireDataContains-class asserters only). Full gates green post-train: go build + full `go test -count=1` suite, smoke 49+4+8+9+9+8 (0 failed), tsc, island 286, nix build with the re-pinned vendorHash.
 
-|                |                                                                                                                                                                                                          |
-| -------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Module         | `github.com/larsartmann/go-sse` (+ `ssetest` test module, `sseparse` parser module)                                                                                                                      |
-| Pinned         | v0.7.0 / ssetest v0.5.0; sseparse v0.2.1 indirect                                                                                                                                                        |
-| Latest release | v0.7.0 — exported `DefaultSubscriberBuffer`, `EventID` branding at boundaries, ssetest `WithLastEventID(sse.EventID)` (breaking), security docs for parsing untrusted Last-Event-ID                        |
-| Usage          | internal/server/sse.go (prod, `sse.Event` only), sse_test.go + notifier_test.go + hub_bench_test.go (ssetest)                                                                                            |
+|                |                                                                                                                                                                                     |
+| -------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Module         | `github.com/larsartmann/go-sse` (+ `ssetest` test module, `sseparse` parser module)                                                                                                 |
+| Pinned         | v0.7.0 / ssetest v0.5.0; sseparse v0.2.1 indirect                                                                                                                                   |
+| Latest release | v0.7.0 — exported `DefaultSubscriberBuffer`, `EventID` branding at boundaries, ssetest `WithLastEventID(sse.EventID)` (breaking), security docs for parsing untrusted Last-Event-ID |
+| Usage          | internal/server/sse.go (prod, `sse.Event` only), sse_test.go + notifier_test.go + hub_bench_test.go (ssetest)                                                                       |
 
 ## What the library offers
 

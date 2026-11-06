@@ -196,38 +196,38 @@ bullet).
 
 ## f) Next things (ranked; 1–10 unblock/complete the release)
 
-| #  | Task | Impact                                                                                                                                                                 | Effort   |
-| -- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
-| ~~ | 1    | OWNER ROOT: heal /run/binfmt (sheet §0 — mkdir + interpreter symlink; restart heals NOTHING)                                                                           | Critical |
-| ~~ | 2    | Re-run the full release.sh dry-run to completion (owed after the last 2 edits; needs quiet tree)                                                                       | High     |
-| ~~ | 3    | Launch attempt 2: `nix develop -c scripts/release.sh 2.7.0 > /tmp/release-2.7.0-2.log 2>&1`, tail the file, run NOTHING else during E2E                                | Critical |
-| ~~ | 4    | E2E ×2 green → wall times into the watches row (M22 tail, budget 445s)                                                                                                 | High     |
-| ~~ | 5    | aarch64 cross-build + ELF b700 byte verify (step 8)                                                                                                                    | High     |
-| ~~ | 6    | gh release v2.7.0 — extractor now verified + empty-notes guard live; then verify notes + tag links resolve                                                             | High     |
-| ~~ | 7    | Post-release closes: stack hash into sheet §1/§2; release TODO rows (webphone + stack IN_PROGRESS row); AGENTS train line to final state                               | High     |
-| ~~ | 8    | Closing sweep per runbook step 9: one no-cache buildflow via scripts/buildflow.sh, ls-remote verify, dead-process proofs (incl. my watcher)                            | High     |
-| ~~ | 9    | Re-grep "spike" at the tag (release-tree spike-free proof)                                                                                                             | Medium   |
-| ~~ | 10   | OWNER: deploy 2.7.0 straight over 2.6.0 + smoke `--expect-version 2.7.0`                                                                                               | High     |
-| ~~ | 11   | OWNER: live checks — self-send 422 local refusal + typeahead shows shared contacts (sheet §3)                                                                          | High     |
-| ~~ | 12   | OWNER: pbx-artmann relock #5 + re-pin (sheet §2)                                                                                                                       | High     |
-| ~~ | 13   | OWNER: telnyx-webhooks journal triage (row 40, prod SMS bridge)                                                                                                        | High     |
-| ~~ | 14   | OWNER: announcement approvals v2.1.0–v2.7.0 (drafts at docs/announcements/)                                                                                            | Medium   |
-| ~~ | 15   | OWNER: owner-calls batch (unblocks the parked policy list)                                                                                                             | High     |
-| ~~ | 16   | OWNER durable: `boot.binfmt.emulatedSystems` in host config (or drop `/run/binfmt` from extra-sandbox-paths) — kills the class + the GC-rot risk of the hard store pin | High     |
-| ~~ | 17   | lessons.md: the awk-portability + comments-claim-fixes bullet (e7 above)                                                                                               | Medium   |
-| ~~ | 18   | Root-cause or alert on the stalled push daemons (webphone 04:07→, stack 19:00→; I pushed manually 6×)                                                                  | Medium   |
-| ~~ | 19   | Optional belt: smoke + island node tests re-stamp on the `f70cfa4` tree before the release does it                                                                     | Low      |
-| ~~ | 20   | Verdict-doc tw.css drift (14.5 vs 18.9KB) — coordinate with the concurrent session that regenerated it                                                                 | Low      |
-| ~~ | 21   | templ-components v1.19.3 patch ride at the next dep sweep (vendorHash same-breath rule)                                                                                | Low      |
-| ~~ | 22   | tw.css regen on every templ-components bump (recipe in the verdict doc)                                                                                                | Low      |
-| ~~ | 23   | erraudit tier-2 re-measure due 2026-10-22 (baseline 127/113, must shrink)                                                                                              | Medium   |
-| ~~ | 24   | Quarterly watches re-check due 2026-12-20                                                                                                                              | Low      |
-| ~~ | 25   | Post-2.7.0: restart [Unreleased] discipline in CHANGELOG                                                                                                               | Low      |
-| ~~ | 26   | M18 park watch: revisit if a go-health release makes StartupHandler Evaluate (parked with evidence, TODO row 48)                                                       | Low      |
-| ~~ | 27   | Send-failure F: keep NOT building it unless self-sends recur post-C                                                                                                    | Low      |
-| ~~ | 28   | templ-components v1.20.x watch: RelativeTime only if it gains server-render mode                                                                                       | Low      |
-| ~~ | 29   | Consider a tiny bash test harness for release.sh's pure functions (extractor, load_gate) — the guard exists but no automated test                                      | Low      |
-| ~~ | 30   | Watcher expiry ~08:33: re-arm or hand off if the session ends before the heal                                                                                          | Medium   |
+| #     | Task | Impact                                                                                                                                                                 | Effort   |
+| ----- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| ~~ ~~ | 1    | OWNER ROOT: heal /run/binfmt (sheet §0 — mkdir + interpreter symlink; restart heals NOTHING)                                                                           | Critical |
+| ~~ ~~ | 2    | Re-run the full release.sh dry-run to completion (owed after the last 2 edits; needs quiet tree)                                                                       | High     |
+| ~~ ~~ | 3    | Launch attempt 2: `nix develop -c scripts/release.sh 2.7.0 > /tmp/release-2.7.0-2.log 2>&1`, tail the file, run NOTHING else during E2E                                | Critical |
+| ~~ ~~ | 4    | E2E ×2 green → wall times into the watches row (M22 tail, budget 445s)                                                                                                 | High     |
+| ~~ ~~ | 5    | aarch64 cross-build + ELF b700 byte verify (step 8)                                                                                                                    | High     |
+| ~~ ~~ | 6    | gh release v2.7.0 — extractor now verified + empty-notes guard live; then verify notes + tag links resolve                                                             | High     |
+| ~~ ~~ | 7    | Post-release closes: stack hash into sheet §1/§2; release TODO rows (webphone + stack IN_PROGRESS row); AGENTS train line to final state                               | High     |
+| ~~ ~~ | 8    | Closing sweep per runbook step 9: one no-cache buildflow via scripts/buildflow.sh, ls-remote verify, dead-process proofs (incl. my watcher)                            | High     |
+| ~~ ~~ | 9    | Re-grep "spike" at the tag (release-tree spike-free proof)                                                                                                             | Medium   |
+| ~~ ~~ | 10   | OWNER: deploy 2.7.0 straight over 2.6.0 + smoke `--expect-version 2.7.0`                                                                                               | High     |
+| ~~ ~~ | 11   | OWNER: live checks — self-send 422 local refusal + typeahead shows shared contacts (sheet §3)                                                                          | High     |
+| ~~ ~~ | 12   | OWNER: pbx-artmann relock #5 + re-pin (sheet §2)                                                                                                                       | High     |
+| ~~ ~~ | 13   | OWNER: telnyx-webhooks journal triage (row 40, prod SMS bridge)                                                                                                        | High     |
+| ~~ ~~ | 14   | OWNER: announcement approvals v2.1.0–v2.7.0 (drafts at docs/announcements/)                                                                                            | Medium   |
+| ~~ ~~ | 15   | OWNER: owner-calls batch (unblocks the parked policy list)                                                                                                             | High     |
+| ~~ ~~ | 16   | OWNER durable: `boot.binfmt.emulatedSystems` in host config (or drop `/run/binfmt` from extra-sandbox-paths) — kills the class + the GC-rot risk of the hard store pin | High     |
+| ~~ ~~ | 17   | lessons.md: the awk-portability + comments-claim-fixes bullet (e7 above)                                                                                               | Medium   |
+| ~~ ~~ | 18   | Root-cause or alert on the stalled push daemons (webphone 04:07→, stack 19:00→; I pushed manually 6×)                                                                  | Medium   |
+| ~~ ~~ | 19   | Optional belt: smoke + island node tests re-stamp on the `f70cfa4` tree before the release does it                                                                     | Low      |
+| ~~ ~~ | 20   | Verdict-doc tw.css drift (14.5 vs 18.9KB) — coordinate with the concurrent session that regenerated it                                                                 | Low      |
+| ~~ ~~ | 21   | templ-components v1.19.3 patch ride at the next dep sweep (vendorHash same-breath rule)                                                                                | Low      |
+| ~~ ~~ | 22   | tw.css regen on every templ-components bump (recipe in the verdict doc)                                                                                                | Low      |
+| ~~ ~~ | 23   | erraudit tier-2 re-measure due 2026-10-22 (baseline 127/113, must shrink)                                                                                              | Medium   |
+| ~~ ~~ | 24   | Quarterly watches re-check due 2026-12-20                                                                                                                              | Low      |
+| ~~ ~~ | 25   | Post-2.7.0: restart [Unreleased] discipline in CHANGELOG                                                                                                               | Low      |
+| ~~ ~~ | 26   | M18 park watch: revisit if a go-health release makes StartupHandler Evaluate (parked with evidence, TODO row 48)                                                       | Low      |
+| ~~ ~~ | 27   | Send-failure F: keep NOT building it unless self-sends recur post-C                                                                                                    | Low      |
+| ~~ ~~ | 28   | templ-components v1.20.x watch: RelativeTime only if it gains server-render mode                                                                                       | Low      |
+| ~~ ~~ | 29   | Consider a tiny bash test harness for release.sh's pure functions (extractor, load_gate) — the guard exists but no automated test                                      | Low      |
+| ~~ ~~ | 30   | Watcher expiry ~08:33: re-arm or hand off if the session ends before the heal                                                                                          | Medium   |
 
 ## g) Questions I cannot answer myself
 

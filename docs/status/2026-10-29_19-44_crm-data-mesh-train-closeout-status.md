@@ -123,16 +123,16 @@ session would rewrite something.
 
 **Tier 0 — close this train's own holes (~2 h)**
 
-| # | Task                                                                                                             | Min |
-| - | ---------------------------------------------------------------------------------------------------------------- | --- |
-| 1 | Add the "CRM context absent/unreachable" row to `error-contract.md` § Detection column (D2)                      | 10  |
-| 2 | Push Kith (`master` is 16 ahead) after its catalog gate is green, so the producer actually ships                 | 15  |
-| 3 | Kith CHANGELOG + wire-reference entry for `GET /api/contacts/{id}/context`                                       | 25  |
-| 4 | Delete or render `Context.Tags` / `Context.Name` (D3) — my default: delete, add back with the UI that needs them | 20  |
-| 5 | Add `FEATURES.md` rows for both capabilities (C5)                                                                | 15  |
-| 6 | Move the deferred tail from the plan doc into `TODO_LIST.md` (C5)                                                | 20  |
-| 7 | Fix the AGENTS citation `crm.outcomeForDisposition` → `crm.crmOutcome` (D8)                                      | 5   |
-| 8 | Test that `crmContextFor` refuses matrix/session addresses (the guard exists, nothing pins it)                   | 15  |
+| #     | Task                                                                                                                                   | Min   |
+| ----- | -------------------------------------------------------------------------------------------------------------------------------------- | ----- |
+| 1     | Add the "CRM context absent/unreachable" row to `error-contract.md` § Detection column (D2)                                            | 10    |
+| 2     | Push Kith (`master` is 16 ahead) after its catalog gate is green, so the producer actually ships                                       | 15    |
+| 3     | Kith CHANGELOG + wire-reference entry for `GET /api/contacts/{id}/context`                                                             | 25    |
+| 4     | Delete or render `Context.Tags` / `Context.Name` (D3) — my default: delete, add back with the UI that needs them                       | 20    |
+| 5     | Add `FEATURES.md` rows for both capabilities (C5)                                                                                      | 15    |
+| 6     | Move the deferred tail from the plan doc into `TODO_LIST.md` (C5)                                                                      | 20    |
+| ~~7~~ | ~~Fix the AGENTS citation `crm.outcomeForDisposition` → `crm.crmOutcome` (D8)~~ done — landed — AGENTS § CRM seam cites crm.crmOutcome | ~~5~~ |
+| 8     | Test that `crmContextFor` refuses matrix/session addresses (the guard exists, nothing pins it)                                         | 15    |
 
 **Tier 1 — make the new thing provable (~3 h)**
 

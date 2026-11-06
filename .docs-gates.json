@@ -1,0 +1,17 @@
+{
+  "rule_f": true,
+  "rule_f_extensions": [
+    ".md",
+    ".sh",
+    ".nix"
+  ],
+  "todo_file": "TODO_LIST.md",
+  "annotate_max": 205,
+  "audit_max": 331,
+  "cadence": {
+    "struck_rows": 20,
+    "max_unarchived": 69,
+    "oldest_days": 45
+  },
+  "skip_gates": []
+}

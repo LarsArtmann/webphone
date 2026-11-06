@@ -13,13 +13,13 @@
 
 ## Round-3 verdicts — re-verified in this tree
 
-| Round-3 finding                                     | Status in this tree  | Evidence                                                                                                                                                                 |
-| --------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| ProjectionReadinessCheck + OnProjectionFailed wired | ✅                   | internal/server/server.go:585 (`ProjectionReadinessCheck` in the /healthz checks); internal/userauth/userauth.go:131-133 (`OnProjectionFailed` WARN hook)                |
+| Round-3 finding                                     | Status in this tree  | Evidence                                                                                                                                                                                                                       |
+| --------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ProjectionReadinessCheck + OnProjectionFailed wired | ✅                   | internal/server/server.go:585 (`ProjectionReadinessCheck` in the /healthz checks); internal/userauth/userauth.go:131-133 (`OnProjectionFailed` WARN hook)                                                                      |
 | Identity train fully landed (usermgmt v4.16+ then)  | ✅ + bumped          | pins now usermgmt v4.19.0 / identity-model v4.15.0 (v4.19.0 landed 2026-11-05 with the templ-wave train); clone detection pinned by test; durable auth-audit journal verified queryable in a live boot (AGENTS.md, 2026-10-25) |
-| `ExtensionHubs.Shutdown` pre-drain                  | ✅                   | internal/server/sse.go:116 (releases live /events streams before the 30s HTTP drain; cmd/webphone/main.go:196)                                                           |
-| `setup` bundle stays REJECTED                       | ✅ unchanged         | cmd/webphone/main.go:189-193 records the measured +68% binary delta go/no-go; lifecycle rides `httputil.NewServer`                                                       |
-| Remaining gap: memory-only AuditLog read projection | ✅ still the one gap | UPSTREAM (usermgmt audit_log.go, DefaultAuditLogLimit=10_000, memory-only); webphone's durable alternative is its own auth-audit journal + `agent_audit` store           |
+| `ExtensionHubs.Shutdown` pre-drain                  | ✅                   | internal/server/sse.go:116 (releases live /events streams before the 30s HTTP drain; cmd/webphone/main.go:196)                                                                                                                 |
+| `setup` bundle stays REJECTED                       | ✅ unchanged         | cmd/webphone/main.go:189-193 records the measured +68% binary delta go/no-go; lifecycle rides `httputil.NewServer`                                                                                                             |
+| Remaining gap: memory-only AuditLog read projection | ✅ still the one gap | UPSTREAM (usermgmt audit_log.go, DefaultAuditLogLimit=10_000, memory-only); webphone's durable alternative is its own auth-audit journal + `agent_audit` store                                                                 |
 
 ## How webphone uses it (surface summary)
 

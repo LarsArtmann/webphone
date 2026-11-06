@@ -122,6 +122,7 @@ Claims verified as of 18:31 (snapshot-rot: push/CI statements rot fastest).
 ## f) NEXT (grounded in this session + the train's open registry)
 
 Owner decisions (blocking product scope):
+
 1. Admin voicemail visibility (per-line boxes via each line's
    credentials) — in scope? Privacy-shaped.
 2. Write-shaped admin actions (resend/delete/flag AS admin) — build the
@@ -131,15 +132,15 @@ Owner decisions (blocking product scope):
 
 Concurrent trains (verify only, do not duplicate):
 4. Dep-bump tail: tidy → vendorHash re-pin → CI green (in flight at
-   18:30, d7b53394 queued).
+18:30, d7b53394 queued).
 5. Repair the red `fast flake checks` + `webphone-smoke` legs.
 6. Stack-side relock attribution doc (abbe2de + the 02:06 E2E run).
 7. Devshell templ compiler pin is stale AGAIN post-bump: go.mod now
-   expects v0.3.1100-shaped output while the devshell pins v0.3.1020 —
-   the owning session must re-pin the devshell templ AND the AGENTS.md
-   pinned-compiler note, or the next regen reds main (documented class).
+expects v0.3.1100-shaped output while the devshell pins v0.3.1020 —
+the owning session must re-pin the devshell templ AND the AGENTS.md
+pinned-compiler note, or the next regen reds main (documented class).
 8. Once the bump lands: verify the 08:46 run's 21 failures were
-   mid-flight noise (per-step detail).
+mid-flight noise (per-step detail).
 
 Admin-surface follow-ups (from the train report, untouched):
 9. Smoke-script admin scenario (`scripts/webphone-smoke.py`).
@@ -147,36 +148,36 @@ Admin-surface follow-ups (from the train report, untouched):
 11. CDR two-leg dedup in the merged admin view.
 12. Admin panel search/filter.
 13. Passkey/SSO ceremony E2E for the admin tab (today's honest label:
-    "ceremony-untested").
+"ceremony-untested").
 14. Admin-configured browser coverage in the stack E2E (prove the tab
-    renders and drives, not just its absence).
+renders and drives, not just its absence).
 15. 404-shell Admin nav link (cosmetic, self-recovering).
 
 Ops/quality observed this session:
 16. Triage and own the nix-build-verify 86% chronic-failure stat.
 17. Re-verify the govulncheck tool_paths pin (the go1.26-build noise
-    reappeared in the 06:53 run despite the ~/go/bin pin).
+reappeared in the 06:53 run despite the ~/go/bin pin).
 18. Fix the daemon-commits-dependencies hole fleet-wide (pma unit's
-    GIT_CONFIG override bypasses hooks; second observed instance) —
-    nix-config policy call.
+GIT_CONFIG override bypasses hooks; second observed instance) —
+nix-config policy call.
 19. Drill the 16:25Z art-dupl red window's cause (healed, unexplained).
 20. Monthly error-tier re-measure is DUE TODAY (AGENTS.md: next
-    2026-11-05; tiers 1+2, tier-2 must stay 0).
+2026-11-05; tiers 1+2, tier-2 must stay 0).
 21. buildflow state DB VACUUM (0.74 GB preflight warning).
 22. Pin dprint plugins locally (remote-fetch preflight warning).
 23. Add lychee excludes for archived doc dirs (preflight warning).
 24. Resolve the pbx ResolvePath canonical-helper re-declaration
-    (dedup-audit playbook warning).
+(dedup-audit playbook warning).
 25. Record "E2E verdict by store path + registration time" as an
-    acceptable E2E evidence form in the release runbook.
+acceptable E2E evidence form in the release runbook.
 26. Confirm the daemon pushed 3dab5c6c (was 1 min old at 06:53;
-    presumed swept since — unverified).
+presumed swept since — unverified).
 27. TODO_LIST D4 refresh once the owner decides (b).
 28. Revisit FEATURES/README admin rows if voicemail/write-admin approved.
 29. AGENTS.md size check after the bump session's edits (191 lines at my
-    edit; cap 377).
+edit; cap 377).
 30. dom-contract.md: extend the admin conditional-ids note if the stack
-    E2E grows admin coverage.
+E2E grows admin coverage.
 
 ## g) QUESTIONS (cannot be figured out from the repo)
 

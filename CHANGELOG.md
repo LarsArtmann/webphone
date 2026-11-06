@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- One-command documentation health check (2026-11-06): `scripts/docs-gates.sh`
+  runs the documentation ritual in the order that actually works — format
+  first, then the issue gates (harvest freshness, struck-verdict evidence,
+  routing, archive cadence), then a damage detector for the table-shape rot a
+  formatter pass can leave behind. Thresholds live in `.docs-gates.json` and
+  are ratchets: each pins today's measured backlog so a NEW problem turns the
+  check red while the old one drains, and they can only be lowered.
+  `scripts/status-index.py` now formats its own output, so regenerating the
+  report index no longer leaves the tree dirty.
 - Live-call context beside the island (2026-11-06, issue #10): while a
   call is up, the phone column shows who is on the line and what is
   outstanding with them in the CRM — the same company/deals/follow-up line

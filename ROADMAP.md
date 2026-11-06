@@ -207,6 +207,14 @@ the stack browser E2E passed on the bumped tree. What remains:
   test-only commit, and which must NEVER be (tonight's red argues the
   formatter gate must never be the dropped subset)? Pairs with the session-exit
   fmt-first checklist question in that same report.
+- **`--border-strong` vs WCAG 1.4.11** (routed 2026-11-06 from the
+  `docs/status/2026-10-04_19-42_cascade-fix-verification-t4-t8-status.md` §g.3;
+  it lived only in that timestamped report). The strong border token measures
+  1.86:1 (light) / 1.53:1 (dark) against its surface, below 1.4.11's 3:1 for
+  non-text UI. Decide: ACCEPT AND RECORD (the border is decorative separation,
+  the surrounding affordances carry the contrast) or RETUNE the token — the
+  retune touches every input/panel edge, so it is a visual-identity call, not a
+  colour tweak. Owner decision.
 - **Daemon-format coupling note home** (§g-Q3, same pair, routed 2026-11-06):
   where does the note live that says the auto-commit daemon's reflow and the
   gates' formatter are coupled — a test comment, the error-contract preamble,

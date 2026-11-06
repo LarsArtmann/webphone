@@ -145,58 +145,58 @@ HW-4 infos on `internal/app/app.go` (the named services ARE eagerly invoked in
 
 ## f) Up to 50 things to get done next (priority-ordered)
 
-| #  | Task | Parent                                                                   |
-| -- | ---- | ------------------------------------------------------------------------ |
-| ~~ | 1    | Confirm island suite green (host node, changed files)                    |
-| ~~ | 2    | T08: `aria-current` nav-partial pin                                      |
-| ~~ | 3    | T08: skeleton reveal/hide island pin                                     |
-| ~~ | 4    | T08: optimistic-bubble-morph-removed edge pin                            |
-| ~~ | 5    | T08: fix `#wp-live` over-promising comment (`layout.templ`)              |
-| ~~ | 6    | T08: release-runbook stack-E2E obligation note                           |
-| ~~ | 7    | T20: dispatch 3 errcheck findings                                        |
-| ~~ | 8    | T20: `nix run .#vulnix` verdict via `webphone-vulnix-triage`             |
-| ~~ | 9    | T20: aarch64 ELF `e_machine=183` verify                                  |
-| ~~ | 10   | T20: root-cause the KVM VM-test timeout                                  |
-| ~~ | 11   | T10: ETag+304 for `/assets/*` (reconcile `server.go` comment)            |
-| ~~ | 12   | T10: scoped gzip for static handlers (never `/events`)                   |
-| ~~ | 13   | T10: curls timing baseline before/after                                  |
-| ~~ | 14   | T11: `modulepreload` for the island ESM graph                            |
-| ~~ | 15   | T11: outgoing-call mic warm (mirror incoming)                            |
-| ~~ | 16   | T11: ICE panel gathering-duration + time-to-first-media                  |
-| ~~ | 17   | T11: `iceServers` trimming evaluation                                    |
-| ~~ | 18   | T12: M9 dial affordances (A4/A5/A8/A9/K5)                                |
-| ~~ | 19   | T12: M12 over-limit segment countdown                                    |
-| ~~ | 20   | T13: M11 history filters (D8–D10)                                        |
-| ~~ | 21   | T13: M16 URL state (E2/E3/E7/E8)                                         |
-| ~~ | 22   | T14: M13 voicemail playback (C1–C3/C9/C10)                               |
-| ~~ | 23   | T14: M14 fax depth (C4–C6)                                               |
-| ~~ | 24   | T15: M17 feedback/trust (J2/J3/J4/J7/J8/J9)                              |
-| ~~ | 25   | T16: M15 visual tokens + M20 theming + M26 sizing                        |
-| ~~ | 26   | T17: M18 onboarding + M19 mobile extras                                  |
-| ~~ | 27   | T18: M21 messaging richness + M22 pin/archive/mute (server design first) |
-| ~~ | 28   | T19: M24 i18n/RTL/status dots + M25 call depth                           |
-| ~~ | 29   | T21: module-output golden fixture + check entry                          |
-| ~~ | 30   | T21: `release.sh` `webphoneVersion`↔`git describe` guard                 |
-| ~~ | 31   | T21: run KVM backup VM + drill post-split                                |
-| ~~ | 32   | T21: `actionlint` over CI workflow                                       |
-| ~~ | 33   | T21: dedupe `devShells.ci`/`default` Go env                              |
-| ~~ | 34   | T21: record accepted exceptions + declined `go-standard`                 |
-| ~~ | 35   | T22: commit `health.css` build script + CI rebuild wiring                |
-| ~~ | 36   | T22: `family_test.go` pins for new error codes                           |
-| ~~ | 37   | T22: investigate local-main-ahead-of-remote divergence                   |
-| ~~ | 38   | T23: persist `scripts/ui-capture.py` + 12-shot matrix                    |
-| ~~ | 39   | T23: AGENTS "visual gate" note                                           |
-| ~~ | 40   | Fix `docs/status/dedup-registry.md` broken links (or remove duplicate)   |
-| ~~ | 41   | `chmod +x scripts/render-diff.py` (ruff EXE001)                          |
-| ~~ | 42   | Fix 8 `mypy` findings in `scripts/webphone-smoke.py`                     |
-| ~~ | 43   | Clear 7 `oxlint` unused-var warnings in island tests                     |
-| ~~ | 44   | Suppress 2 `samber-linter` HW-4 infos with reasoned comment              |
-| ~~ | 45   | T26: compact `AGENTS.md` 705 → ≤377 lines (war stories → lessons)        |
-| ~~ | 46   | T26: markdownlint posture ratification                                   |
-| ~~ | 47   | T25: document `schema_version` trigger (gate on first ALTER)             |
-| ~~ | 48   | T25: `internal/server` carve (trigger: next file added)                  |
-| ~~ | 49   | T27: annotate/archive recent status reports                              |
-| ~~ | 50   | Final gates: buildflow full + flake check + smoke after all edits        |
+| #     | Task | Parent                                                                   |
+| ----- | ---- | ------------------------------------------------------------------------ |
+| ~~ ~~ | 1    | Confirm island suite green (host node, changed files)                    |
+| ~~ ~~ | 2    | T08: `aria-current` nav-partial pin                                      |
+| ~~ ~~ | 3    | T08: skeleton reveal/hide island pin                                     |
+| ~~ ~~ | 4    | T08: optimistic-bubble-morph-removed edge pin                            |
+| ~~ ~~ | 5    | T08: fix `#wp-live` over-promising comment (`layout.templ`)              |
+| ~~ ~~ | 6    | T08: release-runbook stack-E2E obligation note                           |
+| ~~ ~~ | 7    | T20: dispatch 3 errcheck findings                                        |
+| ~~ ~~ | 8    | T20: `nix run .#vulnix` verdict via `webphone-vulnix-triage`             |
+| ~~ ~~ | 9    | T20: aarch64 ELF `e_machine=183` verify                                  |
+| ~~ ~~ | 10   | T20: root-cause the KVM VM-test timeout                                  |
+| ~~ ~~ | 11   | T10: ETag+304 for `/assets/*` (reconcile `server.go` comment)            |
+| ~~ ~~ | 12   | T10: scoped gzip for static handlers (never `/events`)                   |
+| ~~ ~~ | 13   | T10: curls timing baseline before/after                                  |
+| ~~ ~~ | 14   | T11: `modulepreload` for the island ESM graph                            |
+| ~~ ~~ | 15   | T11: outgoing-call mic warm (mirror incoming)                            |
+| ~~ ~~ | 16   | T11: ICE panel gathering-duration + time-to-first-media                  |
+| ~~ ~~ | 17   | T11: `iceServers` trimming evaluation                                    |
+| ~~ ~~ | 18   | T12: M9 dial affordances (A4/A5/A8/A9/K5)                                |
+| ~~ ~~ | 19   | T12: M12 over-limit segment countdown                                    |
+| ~~ ~~ | 20   | T13: M11 history filters (D8–D10)                                        |
+| ~~ ~~ | 21   | T13: M16 URL state (E2/E3/E7/E8)                                         |
+| ~~ ~~ | 22   | T14: M13 voicemail playback (C1–C3/C9/C10)                               |
+| ~~ ~~ | 23   | T14: M14 fax depth (C4–C6)                                               |
+| ~~ ~~ | 24   | T15: M17 feedback/trust (J2/J3/J4/J7/J8/J9)                              |
+| ~~ ~~ | 25   | T16: M15 visual tokens + M20 theming + M26 sizing                        |
+| ~~ ~~ | 26   | T17: M18 onboarding + M19 mobile extras                                  |
+| ~~ ~~ | 27   | T18: M21 messaging richness + M22 pin/archive/mute (server design first) |
+| ~~ ~~ | 28   | T19: M24 i18n/RTL/status dots + M25 call depth                           |
+| ~~ ~~ | 29   | T21: module-output golden fixture + check entry                          |
+| ~~ ~~ | 30   | T21: `release.sh` `webphoneVersion`↔`git describe` guard                 |
+| ~~ ~~ | 31   | T21: run KVM backup VM + drill post-split                                |
+| ~~ ~~ | 32   | T21: `actionlint` over CI workflow                                       |
+| ~~ ~~ | 33   | T21: dedupe `devShells.ci`/`default` Go env                              |
+| ~~ ~~ | 34   | T21: record accepted exceptions + declined `go-standard`                 |
+| ~~ ~~ | 35   | T22: commit `health.css` build script + CI rebuild wiring                |
+| ~~ ~~ | 36   | T22: `family_test.go` pins for new error codes                           |
+| ~~ ~~ | 37   | T22: investigate local-main-ahead-of-remote divergence                   |
+| ~~ ~~ | 38   | T23: persist `scripts/ui-capture.py` + 12-shot matrix                    |
+| ~~ ~~ | 39   | T23: AGENTS "visual gate" note                                           |
+| ~~ ~~ | 40   | Fix `docs/status/dedup-registry.md` broken links (or remove duplicate)   |
+| ~~ ~~ | 41   | `chmod +x scripts/render-diff.py` (ruff EXE001)                          |
+| ~~ ~~ | 42   | Fix 8 `mypy` findings in `scripts/webphone-smoke.py`                     |
+| ~~ ~~ | 43   | Clear 7 `oxlint` unused-var warnings in island tests                     |
+| ~~ ~~ | 44   | Suppress 2 `samber-linter` HW-4 infos with reasoned comment              |
+| ~~ ~~ | 45   | T26: compact `AGENTS.md` 705 → ≤377 lines (war stories → lessons)        |
+| ~~ ~~ | 46   | T26: markdownlint posture ratification                                   |
+| ~~ ~~ | 47   | T25: document `schema_version` trigger (gate on first ALTER)             |
+| ~~ ~~ | 48   | T25: `internal/server` carve (trigger: next file added)                  |
+| ~~ ~~ | 49   | T27: annotate/archive recent status reports                              |
+| ~~ ~~ | 50   | Final gates: buildflow full + flake check + smoke after all edits        |
 
 ---
 

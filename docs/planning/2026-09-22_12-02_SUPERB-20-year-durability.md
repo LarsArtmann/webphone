@@ -1,5 +1,11 @@
 # SUPERB — Webphone for the Next 20 Years (Durability Pareto Plan)
 
+> STATUS 2026-11-06 (docs-health v8 re-verification): EXECUTED through §7's live
+> execution log; the six durability theses it argues are now load-bearing AGENTS
+> rules (honest probes, boot contract, error families, morph swaps, CSP, backup
+> drill). Kept LIVE, not archived: 217 table rows are un-inventoried by the strike
+> canon (row-level verdict pass owed — TODO_LIST § 2026-11-06 item 11).
+
 - **Date:** 2026-09-22 12:02 CEST
 - **Input state:** TODO_LIST (8 rows), ROADMAP (open ideas, watches,
   long-tails, open questions), FEATURES (PLANNED/WORTH_CONSIDERING

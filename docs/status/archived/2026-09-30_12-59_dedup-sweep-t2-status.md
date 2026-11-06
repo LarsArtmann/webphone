@@ -154,49 +154,49 @@ on it; do not refactor the table speculatively.
 
 **Dedup/process domain (this session's home ground):**
 
-| #  | Task | Who                                                                                                    |
-| -- | ---- | ------------------------------------------------------------------------------------------------------ |
-| ~~ | 1    | Ratify dedup baseline: `-t 3` ritual vs `-t 2` deep sweeps vs always-both                              |
-| ~~ | 2    | `settingsRow`: build the component or accept the dt/dd rows permanently (surfaced in ALL six sweeps)   |
-| ~~ | 3    | Ratify the registry as the ONE acceptance home (open since 09-23 03:01, re-raised twice)               |
-| ~~ | 4    | Record a suppression ruling: is shown-only the ratified scope, or add a periodic suppressed-set audit? |
-| ~~ | 5    | Bake "every sweep-log line links its status doc" into the registry protocol step 4 text                |
-| ~~ | 6    | Record the canonical art-dupl invocation + flags in the registry protocol                              |
-| ~~ | 7    | Script the paste-vs-rerun group diff (makes protocol step 1 mechanically provable)                     |
-| ~~ | 8    | Decide if `-t 1` ultra-deep passes ever recur (precedent: 09-18, 09-23 01:12) or retire that mode      |
-| ~~ | 9    | Light ANNOTATE pass: backfill explicit doc paths for old sweep-log refs ("§a.5" etc.)                  |
-| ~~ | 10   | Add art-dupl (host-PATH availability + invocation) to AGENTS.md Commands block                         |
+| #     | Task | Who                                                                                                    |
+| ----- | ---- | ------------------------------------------------------------------------------------------------------ |
+| ~~ ~~ | 1    | Ratify dedup baseline: `-t 3` ritual vs `-t 2` deep sweeps vs always-both                              |
+| ~~ ~~ | 2    | `settingsRow`: build the component or accept the dt/dd rows permanently (surfaced in ALL six sweeps)   |
+| ~~ ~~ | 3    | Ratify the registry as the ONE acceptance home (open since 09-23 03:01, re-raised twice)               |
+| ~~ ~~ | 4    | Record a suppression ruling: is shown-only the ratified scope, or add a periodic suppressed-set audit? |
+| ~~ ~~ | 5    | Bake "every sweep-log line links its status doc" into the registry protocol step 4 text                |
+| ~~ ~~ | 6    | Record the canonical art-dupl invocation + flags in the registry protocol                              |
+| ~~ ~~ | 7    | Script the paste-vs-rerun group diff (makes protocol step 1 mechanically provable)                     |
+| ~~ ~~ | 8    | Decide if `-t 1` ultra-deep passes ever recur (precedent: 09-18, 09-23 01:12) or retire that mode      |
+| ~~ ~~ | 9    | Light ANNOTATE pass: backfill explicit doc paths for old sweep-log refs ("§a.5" etc.)                  |
+| ~~ ~~ | 10   | Add art-dupl (host-PATH availability + invocation) to AGENTS.md Commands block                         |
 
 **Session follow-ups (observed this run, small and concrete):**
 
-| #  | Task | Who                                                                                                                                               |
-| -- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ~~ | 11   | Re-verify `git ls-remote` end state after the daemon's push settles (remote `b0458d2` vs local `b1d494f`)                                         |
-| ~~ | 12   | Review the concurrent session's `nixos-module.nix` rework (−97/+143) AFTER its session declares it done                                           |
-| ~~ | 13   | Confirm `module-check.nix` stand-ins still cover any NEW config keys that rework writes (flake-check gate)                                        |
-| ~~ | 14   | Confirm the fax-paperless plan doc is claimed by its session (it rode the daemon commit unreviewed by me)                                         |
-| ~~ | 15   | Standing trigger reminder: ANY future templ markup change → re-run the stack's browser E2E (AGENTS rule; this sweep read but didn't touch markup) |
+| #     | Task | Who                                                                                                                                               |
+| ----- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~ ~~ | 11   | Re-verify `git ls-remote` end state after the daemon's push settles (remote `b0458d2` vs local `b1d494f`)                                         |
+| ~~ ~~ | 12   | Review the concurrent session's `nixos-module.nix` rework (−97/+143) AFTER its session declares it done                                           |
+| ~~ ~~ | 13   | Confirm `module-check.nix` stand-ins still cover any NEW config keys that rework writes (flake-check gate)                                        |
+| ~~ ~~ | 14   | Confirm the fax-paperless plan doc is claimed by its session (it rode the daemon commit unreviewed by me)                                         |
+| ~~ ~~ | 15   | Standing trigger reminder: ANY future templ markup change → re-run the stack's browser E2E (AGENTS rule; this sweep read but didn't touch markup) |
 
 **Known standing work from AGENTS.md context (NOT re-verified this session —
 recorded here as-is, per the no-other-research instruction):**
 
-| #  | Task | Source                                                                                                                                              |
-| -- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ~~ | 16   | v2.7.0 train: stack re-lock + re-pin (stack forward-locked at `94ae28d`, lowercase contacts assert flipped, awaiting the ride)                      |
-| ~~ | 17   | erraudit tiers 1+2 monthly re-measure — due **2026-10-22**, tier-2 must stay 0                                                                      |
-| ~~ | 18   | Setup-shell adoption: poll cqrs-htmx upstream for the two seams (`Config.DisableAuth`, service-optional `New()`)                                    |
-| ~~ | 19   | Pre-measure + record the pre-adoption stripped-binary baseline so the ≤ +8 MB / ≤ +20 % footprint gate is ready                                     |
-| ~~ | 20   | After any dep bump the daemon sweeps: same-breath vendorHash roundtrip (recurred at `0a7a732`)                                                      |
-| ~~ | 21   | pbx-artmann relock ritual when the v2.7.0 train closes (docs/release-runbook.md dance)                                                              |
-| ~~ | 22   | aarch64 cross-build verify by ELF bytes on next release train                                                                                       |
-| ~~ | 23   | `nix run .#vulnix` gate before next release                                                                                                         |
-| ~~ | 24   | Re-measure stack browser E2E budget if scenarios grow again (445 s baseline, FOUC +~15 s)                                                           |
-| ~~ | 25   | Harvest THIS report's section (f) into TODO_LIST/ROADMAP via docs-health HARVEST after owner review                                                 |
-| ~~ | 26   | Consider making the dedup sweep a recurring ritual (e.g. monthly, paired with the erraudit measure)                                                 |
-| ~~ | 27   | Decide whether the registry ruling table should track which sweeps saw each group (light provenance) — do NOT build speculatively                   |
-| ~~ | 28   | i18n_test.go sits in dedup reports as clone-noise; check whether art-dupl's test-file suppression SHOULD cover Go test files (it currently doesn't) |
-| ~~ | 29   | Sweep-log growth: at 7 entries consider archiving pre-registry-era entries (09-18) to a provenance note                                             |
-| ~~ | 30   | When the setup-shell adoption lands, re-run this sweep — new middleware surface = new clone candidates                                              |
+| #     | Task | Source                                                                                                                                              |
+| ----- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~ ~~ | 16   | v2.7.0 train: stack re-lock + re-pin (stack forward-locked at `94ae28d`, lowercase contacts assert flipped, awaiting the ride)                      |
+| ~~ ~~ | 17   | erraudit tiers 1+2 monthly re-measure — due **2026-10-22**, tier-2 must stay 0                                                                      |
+| ~~ ~~ | 18   | Setup-shell adoption: poll cqrs-htmx upstream for the two seams (`Config.DisableAuth`, service-optional `New()`)                                    |
+| ~~ ~~ | 19   | Pre-measure + record the pre-adoption stripped-binary baseline so the ≤ +8 MB / ≤ +20 % footprint gate is ready                                     |
+| ~~ ~~ | 20   | After any dep bump the daemon sweeps: same-breath vendorHash roundtrip (recurred at `0a7a732`)                                                      |
+| ~~ ~~ | 21   | pbx-artmann relock ritual when the v2.7.0 train closes (docs/release-runbook.md dance)                                                              |
+| ~~ ~~ | 22   | aarch64 cross-build verify by ELF bytes on next release train                                                                                       |
+| ~~ ~~ | 23   | `nix run .#vulnix` gate before next release                                                                                                         |
+| ~~ ~~ | 24   | Re-measure stack browser E2E budget if scenarios grow again (445 s baseline, FOUC +~15 s)                                                           |
+| ~~ ~~ | 25   | Harvest THIS report's section (f) into TODO_LIST/ROADMAP via docs-health HARVEST after owner review                                                 |
+| ~~ ~~ | 26   | Consider making the dedup sweep a recurring ritual (e.g. monthly, paired with the erraudit measure)                                                 |
+| ~~ ~~ | 27   | Decide whether the registry ruling table should track which sweeps saw each group (light provenance) — do NOT build speculatively                   |
+| ~~ ~~ | 28   | i18n_test.go sits in dedup reports as clone-noise; check whether art-dupl's test-file suppression SHOULD cover Go test files (it currently doesn't) |
+| ~~ ~~ | 29   | Sweep-log growth: at 7 entries consider archiving pre-registry-era entries (09-18) to a provenance note                                             |
+| ~~ ~~ | 30   | When the setup-shell adoption lands, re-run this sweep — new middleware surface = new clone candidates                                              |
 
 Items 31–50: intentionally unused. The remaining ideas I could generate would be
 padding (e.g. "document each ACCEPT row more") — the honest backlog is ~30 items.

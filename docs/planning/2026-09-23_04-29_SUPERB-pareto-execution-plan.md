@@ -1,5 +1,12 @@
 # SUPERB Pareto Execution Plan — the v2.6.0 state (2026-09-23 04:29 CEST)
 
+> STATUS 2026-11-06 (docs-health v8 re-verification): CLOSED — the plan's own tail
+> reads "every assistant-executable task in this plan is done and verified; the
+> release is out (v2.6.0 tag `807ca0c`), the deploy chain is locked and green
+> end-to-end", and the owner-terminal legs live in docs/release-runbook.md +
+> TODO_LIST, never here. Kept LIVE, not archived only because 118 table rows are
+> un-inventoried by the strike canon (row-level verdict pass owed).
+
 Source of truth: `TODO_LIST.md` (17 rows, rebuilt by the 2026-09-23
 04:26 docs-health AUDIT) + `ROADMAP.md` open questions. This plan is a
 point-in-time snapshot — annotate, never rewrite. Every task below maps

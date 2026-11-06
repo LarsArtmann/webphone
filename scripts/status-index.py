@@ -12,6 +12,7 @@ not trip the check (the treefmt-cache lesson: formatter output ACQUITS).
 
 import argparse
 import pathlib
+import subprocess
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -92,7 +93,30 @@ def main() -> int:
 
     INDEX.write_text(render(rows))
     print(f"wrote {INDEX.relative_to(ROOT)} ({len(rows)} reports)")
+    _format_with_dprint()
     return 0
+
+
+def _format_with_dprint() -> None:
+    """Leave the tree CANONICAL, not just written.
+
+    dprint owns table-cell alignment in this repo, so a freshly rendered index
+    is unformatted by construction: the next `dprint check` would red on a file
+    nobody edited. Formatting here keeps "regenerate the index" a single
+    command. Best-effort by design, a missing dprint must not fail the regen.
+    """
+    try:
+        subprocess.run(
+            ["dprint", "fmt", str(INDEX.relative_to(ROOT))],
+            cwd=ROOT,
+            check=True,
+            capture_output=True,
+        )
+    except (OSError, subprocess.CalledProcessError):
+        print(
+            "note: dprint not available/failed — run `dprint fmt` before the gates",
+            file=sys.stderr,
+        )
 
 
 if __name__ == "__main__":

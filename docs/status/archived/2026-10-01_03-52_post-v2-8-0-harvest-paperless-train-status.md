@@ -76,13 +76,13 @@ override flagged, same as the 02:14 report).
 
 ## b) PARTIALLY DONE
 
-| Item | What remains               |
-| ---- | -------------------------- |
-| ~~   | AGENTS net-neutrality      |
-| ~~   | Archive completeness gates |
-| ~~   | TODO row 1 freshness       |
-| ~~   | Daemon push lag            |
-| ~~   | Pipe-rc discipline         |
+| Item  | What remains               |
+| ----- | -------------------------- |
+| ~~ ~~ | AGENTS net-neutrality      |
+| ~~ ~~ | Archive completeness gates |
+| ~~ ~~ | TODO row 1 freshness       |
+| ~~ ~~ | Daemon push lag            |
+| ~~ ~~ | Pipe-rc discipline         |
 
 ## c) NOT STARTED (deliberately, with reasons)
 

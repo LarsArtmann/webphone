@@ -87,7 +87,7 @@ Code landed (daemon commit `cf138ca`, 8 files); tests partially landed (`ce7318f
 10. `session.Token` brand part 2: `sipcred.Derive` + TestServer suite green (`auth:` prefix, session-behavior suite).
 11. `domain.RelPath` type home + blob edge conversion + arch-test note.
 12. `NewInboundMessage`/`NewOutboundMessage` constructors + illegal-pair test.
-13. `NewInboundFax`/`NewOutboundFax` + test.
+13. ~~`NewInboundFax`/`NewOutboundFax` + test.~~ done — landed — domain.NewInboundFaxJob/NewOutboundFaxJob with tests, used by internal/fax
 14. Collapse `UpdateStatus` loose params onto the delivery-machine value.
 
 **E11 (audits + perf, F49–F54):**

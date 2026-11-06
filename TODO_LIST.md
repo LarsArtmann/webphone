@@ -53,11 +53,13 @@ What remains, each with its ONE home:
 10. **Wire the `docs-gates` battery into CI** — adopted locally this sweep
     (`scripts/docs-gates.sh`, `.docs-gates.json`); the pre-canon archive residue is
     RATCHETED, so nothing reds main when new drift appears until the CI leg lands.
-11. **Bulk verdict pass over the archive residue** — 73 status reports still carry
-    un-inventoried rows (1 878 bare rows measured 2026-11-06; ~1 000 of them are
-    §f brainstorm lists). Plan: per-file `status-items` strikes for §a/§b shipped
-    tables, `r` routed verdicts for §f rows, then `check-rows`/`bare-rows` BEFORE
-    each `git mv`.
+11. **Bulk verdict pass over the archive residue** — after the v8 sweep archived 68
+    reports, 68 remain live (the 69th file is this sweep's own report), each blocked by un-inventoried §a/§b table rows
+    (~1 600 measured 2026-11-06; those reports use a Verdict COLUMN instead of the
+    strike canon). Plan: per-file `status-items` strikes for §a/§b shipped tables,
+    `r` routed verdicts for §f rows, then `check-rows`/`bare-rows` BEFORE each
+    `git mv`. The cadence ratchet (69 unarchived, 45d) holds the residency and may
+    only move DOWN.
 12. **`/context` contract snapshot test** pinning webphone's parse against Kith's
     published shape (a CRM-side schema change is invisible today).
 13. **History nudge for the notes save path** — a `call_notes` PUT leaves a second

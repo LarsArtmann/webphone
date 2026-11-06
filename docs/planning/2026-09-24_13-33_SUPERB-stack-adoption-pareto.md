@@ -1,5 +1,11 @@
 # SUPERB — Stack Adoption Pareto Plan
 
+> STATUS 2026-11-06 (docs-health v8 re-verification): SUPERSEDED — its 1% legs
+> shipped (bounded upload body → `httputil.MaxBodySize` mounts; the dependency
+> train → go-sse v0.7.0 + templ v0.3.1100 wave), its owner legs are in TODO_LIST,
+> and its remaining spikes are owner-gated. Kept LIVE, not archived only because
+> 123 table rows are un-inventoried by the strike canon (row-level pass owed).
+
 **Created:** 2026-09-24 13:33 (CLI-dated)
 **Inputs:** library-utilization audit `docs/research/2026-09-24_larsartmann-stack-deep-dive.html` (commit `c2b0050`) + `TODO_LIST.md` sweep 2026-09-23 evening (7 open rows) + repo state verified green (`go mod tidy` repair applied this session; full build green).
 **Question answered:** what should we _really_ do next with the audit findings and the open TODO backlog — ranked by customer value, impact, effort.

@@ -157,7 +157,7 @@ daemon activity (the 10-08 truncation class did not recur).
 
 16. pma dep-bump disable (needs g.2).
 17. Fail-fast vendorHash guard (go.sum newer than pin = block).
-18. Red-main CI alerting.
+18. ~~Red-main CI alerting.~~ done — landed — scripts/main-red-watch.sh + the watch.yml */15 observer file tracker issues
 19. Branch protection: require green CI (g.3).
 20. buildflow binary rebuild (25b07c4 → 8efa968 delta).
 21. lychee: authenticate-vs-exclude + archived-dir excludes.
@@ -190,7 +190,7 @@ daemon activity (the 10-08 truncation class did not recur).
 36. `page/limit` paging struct.
 37. SSE parity pin: EventName set == sse-swap attribute set.
 38. `expectEvent` → typed constants; deadline constant one-home.
-39. `renderBootFailure` guard symmetry (`copyRows[f.class]`).
+39. ~~`renderBootFailure` guard symmetry (`copyRows[f.class]`).~~ done — landed — bootreport.go indexes copyRows behind one bounds condition (both reads guarded)
 40. `reverseLines` → `slices.Reverse`.
 41. vcard `flush` restructure (silence the nil-deref FP).
 42. idemStore/unreadCache registry cross-ref comments.

@@ -10,14 +10,14 @@ flags with real verdicts, two were feature issues that shipped). **One stays ope
 `#9`, CRM switch-on — because the code half is done and the rest needs a root-only
 secret and the PBX host. One dependabot PR that was failing CI is now green.
 
-| # | Kind | Outcome |
-| --- | --- | --- |
-| 232 | red-main `41927384287` | **CLOSED** — not a flake: stale generated views + unbaselined clones; healed same night by `97a3656d` + `49aa34bd`. Ledger row added. |
-| 233 | daemon-audit `9a30581` (go.mod/go.sum) | **CLOSED** — content was the intended 2026-11-05 templ wave; the landing shape was the defect (daemon carried it with no vendorHash re-pin, red 14 min). Ledger row added. |
-| 12 | Reports surface over CDR | **CLOSED — shipped.** New Reports tab: pure projection over the same CDR page. |
-| 10 | Live-call context + audible alert | **CLOSED — shipped**, with one premise correction (the ringtone already existed; it just ignored the output picker). |
-| 9 | Switch on the Kith CRM | **OPEN** — `crm.ca_file` private-CA lane shipped + `crm` health leg re-verified live; acceptance criteria 1–2 need the CRM token (root-only) and the host. |
-| PR 234 | dependabot ginkgo 2.33.1→2.34.0 | **GREEN** — re-pinned the vendored-module hash; all required checks pass on `a2ad2815`. |
+| #      | Kind                                   | Outcome                                                                                                                                                                    |
+| ------ | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 232    | red-main `41927384287`                 | **CLOSED** — not a flake: stale generated views + unbaselined clones; healed same night by `97a3656d` + `49aa34bd`. Ledger row added.                                      |
+| 233    | daemon-audit `9a30581` (go.mod/go.sum) | **CLOSED** — content was the intended 2026-11-05 templ wave; the landing shape was the defect (daemon carried it with no vendorHash re-pin, red 14 min). Ledger row added. |
+| 12     | Reports surface over CDR               | **CLOSED — shipped.** New Reports tab: pure projection over the same CDR page.                                                                                             |
+| 10     | Live-call context + audible alert      | **CLOSED — shipped**, with one premise correction (the ringtone already existed; it just ignored the output picker).                                                       |
+| 9      | Switch on the Kith CRM                 | **OPEN** — `crm.ca_file` private-CA lane shipped + `crm` health leg re-verified live; acceptance criteria 1–2 need the CRM token (root-only) and the host.                 |
+| PR 234 | dependabot ginkgo 2.33.1→2.34.0        | **GREEN** — re-pinned the vendored-module hash; all required checks pass on `a2ad2815`.                                                                                    |
 
 ## Scope — what this session VERIFIED vs did NOT verify
 
@@ -110,7 +110,7 @@ name, a company and a deal value.
 **Ring routing.** The issue's premise that no ringtone exists was stale — `audio.js`
 already generates a distinct incoming ring. What was missing is what the acceptance
 criterion actually asks: it did not follow the audio output picker, which carried an
-explicit *"ring tones stay room-alarms by decision"* ruling. That ruling is now
+explicit _"ring tones stay room-alarms by decision"_ ruling. That ruling is now
 superseded (owner decision recorded at the site): the picker's device carries BOTH
 halves of call audio via `AudioContext.setSinkId` (feature-detected, remembered across
 the lazy context creation, so a pick made before the first ring still applies). A

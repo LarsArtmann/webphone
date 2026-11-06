@@ -166,33 +166,33 @@ bricks stacked beside it.
 
 **Tier 3 — make it look like something (~2 h)**
 
-| #  | Task                                                                               | Min |
-| -- | ---------------------------------------------------------------------------------- | --- |
-| 21 | `app.css`: `.wp-crm-link` (inherit colour, dotted underline, hover solid)          | 10  |
-| 22 | `app.css`: `.wp-crm-context` strip (flex wrap, gap, subtle top border, small type) | 25  |
-| 23 | `app.css`: `.wp-crm-chip`, `.wp-crm-key`, `.wp-crm-muted`, `.wp-crm-more`          | 20  |
-| 24 | Rebuild `login.css` (`scripts/build-tw-css.sh`) — it inlines `app.css`             | 10  |
-| 25 | Verify `tw.css` unaffected (no Tailwind classes added)                             | 10  |
-| 26 | `ui-capture.py --surface thread` run, both themes, with a seeded CRM stub          | 30  |
-| 27 | Dark-mode contrast check on the strip chips (the AA rule)                          | 15  |
+| #      | Task                                                                                                                                                                         | Min    |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 21     | `app.css`: `.wp-crm-link` (inherit colour, dotted underline, hover solid)                                                                                                    | 10     |
+| 22     | `app.css`: `.wp-crm-context` strip (flex wrap, gap, subtle top border, small type)                                                                                           | 25     |
+| ~~23~~ | ~~`app.css`: `.wp-crm-chip`, `.wp-crm-key`, `.wp-crm-muted`, `.wp-crm-more`~~ done — naming evolved — .wp-crm-link/.wp-crm-context/.wp-crm-item/-key/-muted in app.css today | ~~20~~ |
+| 24     | Rebuild `login.css` (`scripts/build-tw-css.sh`) — it inlines `app.css`                                                                                                       | 10     |
+| 25     | Verify `tw.css` unaffected (no Tailwind classes added)                                                                                                                       | 10     |
+| 26     | `ui-capture.py --surface thread` run, both themes, with a seeded CRM stub                                                                                                    | 30     |
+| 27     | Dark-mode contrast check on the strip chips (the AA rule)                                                                                                                    | 15     |
 
 **Tier 4 — gates and history (~3 h)**
 
-| #  | Task                                                                                                         | Min |
-| -- | ------------------------------------------------------------------------------------------------------------ | --- |
-| 28 | `templ generate` final + `nix fmt`                                                                           | 10  |
-| 29 | `go test -count=1 ./...` full suite                                                                          | 25  |
-| 30 | `tsc -p . --noEmit` + island `node --test`                                                                   | 20  |
-| 31 | `nix build --no-link .#checks.x86_64-linux.{island-js,island-lint,island-typecheck,treefmt,contracts-fresh}` | 30  |
-| 32 | `buildflow` (full, `BUILDFLOW_NO_RESULT_CACHE=1`)                                                            | 60  |
-| 33 | `scripts/webphone-smoke.py --bin <fresh>`                                                                    | 20  |
-| 34 | `art-dupl -t 1` (CI-pinned v0.7.2) + adjudicate any new group                                                | 20  |
-| 35 | Narrative commits per phase (auth/config/docs prefixes as the convention demands)                            | 30  |
-| 36 | CHANGELOG `[Unreleased]` (3 Added, 1 Changed)                                                                | 15  |
-| 37 | AGENTS invariant: "the CRM owns the contact; the phone owns the conversation"                                | 20  |
-| 38 | `docs/dom-contract.md`: `wp-crm-context`, `wp-crm-link` (optional, not required)                             | 15  |
-| 39 | Update the consumer contract table in the planning doc with the shipped wire shape                           | 15  |
-| 40 | Verify CI green after push (`gh run list`)                                                                   | 15  |
+| #      | Task                                                                                                                         | Min    |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 28     | `templ generate` final + `nix fmt`                                                                                           | 10     |
+| 29     | `go test -count=1 ./...` full suite                                                                                          | 25     |
+| 30     | `tsc -p . --noEmit` + island `node --test`                                                                                   | 20     |
+| 31     | `nix build --no-link .#checks.x86_64-linux.{island-js,island-lint,island-typecheck,treefmt,contracts-fresh}`                 | 30     |
+| ~~32~~ | ~~`buildflow` (full, `BUILDFLOW_NO_RESULT_CACHE=1`)~~ done — routine gate run — recorded in buildflow history for this train | ~~60~~ |
+| 33     | `scripts/webphone-smoke.py --bin <fresh>`                                                                                    | 20     |
+| 34     | `art-dupl -t 1` (CI-pinned v0.7.2) + adjudicate any new group                                                                | 20     |
+| 35     | Narrative commits per phase (auth/config/docs prefixes as the convention demands)                                            | 30     |
+| 36     | CHANGELOG `[Unreleased]` (3 Added, 1 Changed)                                                                                | 15     |
+| 37     | AGENTS invariant: "the CRM owns the contact; the phone owns the conversation"                                                | 20     |
+| 38     | `docs/dom-contract.md`: `wp-crm-context`, `wp-crm-link` (optional, not required)                                             | 15     |
+| 39     | Update the consumer contract table in the planning doc with the shipped wire shape                                           | 15     |
+| 40     | Verify CI green after push (`gh run list`)                                                                                   | 15     |
 
 **Tier 5 — the mesh's second half (not this train; needs the owner)**
 

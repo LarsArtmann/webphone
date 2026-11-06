@@ -1,5 +1,13 @@
 # SUPERB — webphone + bridge error excellence (2026-09-22 01:20)
 
+> STATUS 2026-11-06 (docs-health v8 re-verification): EXECUTED — the plan's own
+> § Execution log records the seams converted (blob→store→domain→session→config→
+> pbx→crm→gateway→server→cmd), tier-2 132 → 0 and tier-1 green, and that bar is
+> today's AGENTS § erraudit tier rule. The ONE item it defers (the oops/D2
+> question) stays owner-gated and is unchanged. Kept LIVE, not archived: 95 table
+> rows are un-inventoried by the strike canon (the row-level verdict pass is the
+> blocker, tracked in TODO_LIST § 2026-11-06 item 11).
+
 ## Why this plan exists
 
 The owner re-ran erraudit after the 2026-09-21 triage and the verdict was

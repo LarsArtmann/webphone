@@ -226,7 +226,7 @@ mishap list:
 32. Accessibility pass on tabs (focus order after HTMX swap, aria-live on SSE regions). → ROADMAP
 33. Draft persistence for composers (localStorage) — complements swap-safety. → ROADMAP
 34. Image attachment thumbnails inline in bubbles (link-only today). → ROADMAP
-35. Fax cover-page templating. → ROADMAP
+35. Fax cover-page templating. → ROADMAP **→ ROADMAP § Composer/UX raw ideas — fax cover pages**
 36. SQLite backup/restore runbook (`.backup` procedure documented or exposed). → ROADMAP
 37. Per-extension data export (messages + faxes dump). → ROADMAP
 38. Multiple-tab glare warning (two tabs registering one extension). → ROADMAP
