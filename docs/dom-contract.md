@@ -218,6 +218,26 @@ assume both:
   states both lanes in all deployments; its pill class
   (`wp-service-on`/`wp-service-off`) follows whether any lane is up.
 
+### Reports tab ids (served per tab — 2026-11-06)
+
+The Reports tab (issue #12) is a pure fold of the call records the History
+tab lists, so its ids render only for `GET /reports` and
+`GET /partials/reports` — the E2E drives it by clicking the nav entry, never
+by assuming the nodes on another tab:
+
+- `reports-panel` — the tab's panel
+- `.wp-stat`, `.wp-stat-value`, `.wp-stat-label` — the six-cell totals grid
+  (calls, talk time, incoming, outgoing, answered, missed); `.wp-stat-alert`
+  marks a non-zero missed count, and a zero never carries it
+- `.wp-reports-row` — one ladder row (day, busiest hour, or top contact);
+  `.wp-reports-row-pair` marks the bar-less rows so they collapse to two
+  columns instead of leaving an empty track
+- `.wp-budget-meter` (+ `.wp-budget-over` when the week overspends) — the
+  optional weekly talk-time bar; present ONLY when
+  `reports.weekly_talk_budget` is configured
+- `.wp-reports-undated` — the honesty note naming records whose start could
+  not be parsed (they still count in the totals)
+
 ### Layout ids (served, but NOT required — 2026-10-29)
 
 These are in the served bytes of every signed-in shell but are deliberately

@@ -41,6 +41,8 @@ func TestConfigValidationFailuresAreRejections(t *testing.T) {
 		// CRM: a private-CA bundle for a CRM this deployment cannot query
 		// is a credential with nowhere to go (issue #9's CA lane).
 		{"crm ca file without url", map[string]string{"WEBPHONE_CRM__CA_FILE": "/etc/webphone/crm-ca.pem"}, "config.crm.ca_file"},
+		// Reports: a goal below zero cannot be met by any week.
+		{"negative weekly talk budget", map[string]string{"WEBPHONE_REPORTS__WEEKLY_TALK_BUDGET": "-1h"}, "config.reports.weekly_talk_budget"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			for k, v := range tc.env {

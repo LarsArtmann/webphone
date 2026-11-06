@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Reports tab (2026-11-06, issue #12): the call log's arithmetic beside
+  the log itself. A pure projection (`internal/reports`) over the same
+  CDR page History lists — total talk time, calls split by direction and
+  outcome (two independent axes, so an outbound call that never
+  connected is neither), a per-day talk-time ladder, the busiest hour
+  buckets, and the contacts that consumed the most time, CRM-named when
+  the integration is configured. The current ISO week is measured
+  against the new optional `reports.weekly_talk_budget` as one bar,
+  flagged when the week overspends. Nothing is stored and nothing is
+  reconstructed: the same records always reproduce the same numbers, and
+  records whose start timestamp cannot be parsed still count in the
+  totals (reported as "without a readable timestamp") so the ladders are
+  never silently short.
 - `crm.ca_file` (2026-11-06, issue #9's in-repo half): an optional
   PEM bundle that vouches for the CRM vhost's TLS chain, trusted by the
   CRM client ALONE. A private-CA CRM (the usual `*.cloud` vhost) no
