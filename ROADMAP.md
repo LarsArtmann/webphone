@@ -192,6 +192,14 @@ the stack browser E2E passed on the bumped tree. What remains:
   it and record accepted absence (memo with consequences appended to
   the file 2026-10-14, SUPERB train E2 — the declarative trains made
   its vocabulary load-bearing in code).
+- Should coverage have **teeth**? (routed 2026-11-06 from the
+  `docs/status/2026-09-18_16-52_tests-and-architecture-status.html` report,
+  whose §f obligations were harvested in its own session and whose one open
+  question was never homed.) The BuildFlow gate passes at ANY coverage level
+  today. Options: enforce a floor (e.g. fail below 50% hand-written union
+  coverage) or on any regression, versus staying informational. Fleet-wide
+  by nature (the step lives upstream) and it interacts with per-package vs
+  union attribution — see the `-coverpkg` idea above. Owner policy call.
 - IO-storm source investigation (2026-10-14 go-modularize §f item 30,
   routed 2026-10-18): the box tripped the no-heavy-builds gate 6× in
   60 min (freeze #5/#25 class); a `/proc/pressure/io` watch during the
@@ -595,11 +603,16 @@ node:test suite plus the E2E caught everything).
 
 ## Test-infra follow-ups (from the 2026-09-20 testing train)
 
-- Long-tail coverage: `internal/blob` still has no direct tests
-  (exercised only through the server suite); `internal/fax` and
-  `internal/messaging` gained direct suites 2026-09-24 (family +
-  selfsend). `views` stays transitive BY DECISION (see
-  `docs/reviews/2026-09-20_coverage-baseline.md`).
+- Long-tail coverage (re-read 2026-11-06 against the live baseline): the
+  2026-09-20 note that `internal/blob` had "no direct tests" is SUPERSEDED —
+  blob reads 73.7% since the 2026-11-04 atomic-write train, fax 64.2%,
+  messaging 37.9% (thin by design: the sender registry's behavior is asserted
+  one level up). The remaining honest gaps are `internal/store` at 64.8%
+  (below the 75.3% its 2026-09-20 owner-scoping suite achieved — the admin
+  read seams, thread-flag columns and migration v5 outgrew their suites; the
+  test train is a TODO row) and `internal/server/api` at 7.1% (deliberate:
+  thin JSON writers, contract-pinned one level up). `views` stays transitive
+  BY DECISION (see `docs/reviews/2026-09-20_coverage-baseline.md` § 2026-11-06).
 - The fuzz target (`FuzzContactsAPISave`) runs its seed corpus in CI;
   a scheduled longer `-fuzztime` run (and more targets: message send
   bodies, vcard parser) is unstarted.
