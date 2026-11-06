@@ -8,14 +8,11 @@ package crm
 import (
 	"bytes"
 	"context"
-	"crypto/tls"
-	"crypto/x509"
 	"encoding/json/v2"
 	"errors"
 	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -85,46 +82,6 @@ func NewClient(baseURL, token, caFile string) (*Client, error) { //nolint:branch
 		token:  token,
 		client: httpClient,
 	}, nil
-}
-
-// newHTTPClient builds the seam's HTTP client. Without caFile it is the
-// stock client. With caFile it ADDS that bundle's certificates to the
-// system roots for the CRM client ALONE.
-//
-// Scoping is the whole point. A private-CA vhost (the usual deployment:
-// the CRM behind a cert the host's trust store does not know) can be
-// trusted host-wide via security.pki, or process-wide via SSL_CERT_FILE —
-// and both vouch for every TLS connection the machine makes afterwards,
-// including the OIDC issuer, the paperless archive and the ASR provider.
-// One client, one CA: the trust boundary stays exactly as wide as the
-// need. Additive, never replacing, so a public-CA deployment keeps its
-// chains.
-func newHTTPClient(caFile string) (*http.Client, error) {
-	if caFile == "" {
-		return &http.Client{Timeout: requestTimeout}, nil
-	}
-
-	bundle, err := os.ReadFile(caFile)
-	if err != nil {
-		return nil, errorfamily.WrapRejectionf(err, "crm.ca_file", "crm.ca_file %s", caFile)
-	}
-
-	pool, err := x509.SystemCertPool()
-	if err != nil {
-		// A host without a system bundle has no roots to extend; start
-		// from an empty pool rather than lose the configured CA too.
-		pool = x509.NewCertPool()
-	}
-
-	if !pool.AppendCertsFromPEM(bundle) {
-		return nil, errorfamily.Newf(errorfamily.Rejection, "crm.ca_file",
-			"crm.ca_file %s holds no PEM certificate: point it at the CA bundle that signed the CRM vhost", caFile)
-	}
-
-	transport := http.DefaultTransport.(*http.Transport).Clone()
-	transport.TLSClientConfig = &tls.Config{RootCAs: pool, MinVersion: tls.VersionTLS12}
-
-	return &http.Client{Timeout: requestTimeout, Transport: transport}, nil
 }
 
 // Enabled reports whether a CRM is wired up.
