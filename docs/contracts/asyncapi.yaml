@@ -62,6 +62,20 @@ channels:
         messages:
             event.wire.sse.fax:
                 $ref: '#/components/messages/event.wire.sse.fax'
+    events.wire.sse.notes:
+        address: webphone-wire.events.wire.sse.notes
+        title: SSE notes event Channel
+        description: 'GET /events event "notes": payload-less nudge after a post-call note save — the History panel re-fetches.'
+        messages:
+            event.wire.sse.notes:
+                $ref: '#/components/messages/event.wire.sse.notes'
+    events.wire.sse.review:
+        address: webphone-wire.events.wire.sse.review
+        title: SSE review event Channel
+        description: 'GET /events event "review": payload-less nudge — the History panel re-fetches (F89).'
+        messages:
+            event.wire.sse.review:
+                $ref: '#/components/messages/event.wire.sse.review'
     events.wire.sse.thread:
         address: webphone-wire.events.wire.sse.thread
         title: SSE thread event Channel
@@ -103,6 +117,28 @@ operations:
             $ref: '#/channels/events.wire.sse.fax'
         messages:
             -   $ref: '#/channels/events.wire.sse.fax/messages/event.wire.sse.fax'
+        tags:
+            -   name: events
+            -   name: webphone-wire
+    publishwire.sse.notes:
+        title: Publish SSE notes
+        summary: 'GET /events event "notes": payload-less nudge after a post-call note save — the History panel re-fetches.'
+        action: send
+        channel:
+            $ref: '#/channels/events.wire.sse.notes'
+        messages:
+            -   $ref: '#/channels/events.wire.sse.notes/messages/event.wire.sse.notes'
+        tags:
+            -   name: events
+            -   name: webphone-wire
+    publishwire.sse.review:
+        title: Publish SSE review
+        summary: 'GET /events event "review": payload-less nudge — the History panel re-fetches (F89).'
+        action: send
+        channel:
+            $ref: '#/channels/events.wire.sse.review'
+        messages:
+            -   $ref: '#/channels/events.wire.sse.review/messages/event.wire.sse.review'
         tags:
             -   name: events
             -   name: webphone-wire
@@ -387,6 +423,10 @@ components:
             type: object
         event.wire.sse.fax:
             type: object
+        event.wire.sse.notes:
+            type: object
+        event.wire.sse.review:
+            type: object
         event.wire.sse.thread:
             type: object
         event.wire.sse.threads:
@@ -464,6 +504,24 @@ components:
             contentType: application/json
             payload:
                 $ref: '#/components/schemas/event.wire.sse.fax'
+            tags:
+                -   name: events
+        event.wire.sse.notes:
+            name: wire.sse.notes
+            title: SSE notes
+            summary: 'GET /events event "notes": payload-less nudge after a post-call note save — the History panel re-fetches.'
+            contentType: application/json
+            payload:
+                $ref: '#/components/schemas/event.wire.sse.notes'
+            tags:
+                -   name: events
+        event.wire.sse.review:
+            name: wire.sse.review
+            title: SSE review
+            summary: 'GET /events event "review": payload-less nudge — the History panel re-fetches (F89).'
+            contentType: application/json
+            payload:
+                $ref: '#/components/schemas/event.wire.sse.review'
             tags:
                 -   name: events
         event.wire.sse.thread:

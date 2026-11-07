@@ -109,5 +109,9 @@ func (h *Handlers) SetCallNote(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not save the note", http.StatusInternalServerError)
 		return
 	}
+	// The save succeeded: nudge every surface the owner has open. The nudge is
+	// payload-less (no note text on the wire) and fires only on success, so a
+	// conflict or a store failure leaves other tabs alone.
+	h.deps.Server.NotifyCallNotesChanged(sess.Extension)
 	w.WriteHeader(http.StatusNoContent)
 }

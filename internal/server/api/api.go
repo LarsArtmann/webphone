@@ -49,6 +49,11 @@ type Server interface {
 	// NotifyContactsChanged nudges the extension's surfaces with the
 	// payload-less "contacts" SSE event.
 	NotifyContactsChanged(extension domain.Extension)
+	// NotifyCallNotesChanged nudges the extension's surfaces with the
+	// payload-less "notes" SSE event after a post-call note save, so a
+	// second tab showing the same call re-fetches instead of holding a
+	// stale box.
+	NotifyCallNotesChanged(extension domain.Extension)
 	// AuditAgent writes one greppable agent-action audit line (the
 	// ONE home of the vocabulary is the server's agentAudit; the JSON
 	// lane reaches it through this seam). actorEmail carries the

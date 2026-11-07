@@ -49,12 +49,16 @@ templ HistoryPanel(props HistoryPanelProps) {
 		id="history-panel"
 		hx-get="/partials/history"
 		hx-include="#history-panel form.wp-filter"
-		hx-trigger="sse:review"
+		hx-trigger="sse:review, sse:notes"
 		hx-target="#history-panel"
 		hx-swap="outerHTML"
 	>
 		// F89: a saved review nudges this panel (payload-less "review"
-		// SSE event, the voicemail/contacts pattern). The include carries
+		// SSE event, the voicemail/contacts pattern). P2-3: a saved post-call
+		// NOTE nudges it too ("notes"), so a second tab showing the same call
+		// picks up the edit instead of holding a stale box; both are
+		// payload-less and re-fetched through this tab's own session.
+		// The include carries
 		// the live filter form so a background refresh keeps the reader's
 		// active filters instead of resetting them.
 		@panelHead(props.Lang, "tab.history", "history.subtitle")

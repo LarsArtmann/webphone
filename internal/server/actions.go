@@ -331,6 +331,17 @@ func (h *handlers) NotifyContactsChanged(extension domain.Extension) {
 	h.deps.Hubs.Publish(extension, sseEventContacts, "")
 }
 
+// NotifyCallNotesChanged nudges the extension's surfaces with the
+// payload-less "notes" SSE event (the post-call note save path). Same shape as
+// the contacts nudge: the payload carries no note text, because the note is
+// reachable only through the owner's own session.
+func (h *handlers) NotifyCallNotesChanged(extension domain.Extension) {
+	if h.deps.Hubs == nil {
+		return
+	}
+	h.deps.Hubs.Publish(extension, sseEventNotes, "")
+}
+
 // deleteContact removes a personal contact.
 func (h *handlers) deleteContact(w http.ResponseWriter, r *http.Request) {
 	sess, ok := h.RequireSession(w, r)

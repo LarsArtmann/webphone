@@ -29,6 +29,8 @@ func (contextSessionGate) RequireSession(w http.ResponseWriter, r *http.Request)
 
 func (contextSessionGate) NotifyContactsChanged(domain.Extension) {}
 
+func (contextSessionGate) NotifyCallNotesChanged(domain.Extension) {}
+
 // AuditAgent: the fuzz fake mirrors the Server seam but has no audit sink —
 // the contacts lane never calls it (the agent lanes do).
 func (contextSessionGate) AuditAgent(event, actorEmail, extension, draftID, outcome string) {}

@@ -5,6 +5,9 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/larsartmann/webphone/internal/domain"
 )
 
 // getCallNote / putCallNote are the History note affordance's wire.
@@ -104,5 +107,45 @@ func TestCallNoteNilSeamIs503(t *testing.T) {
 	}
 	if resp, _ := putCallNote(t, c, "call-n4", "x"); resp.StatusCode != http.StatusServiceUnavailable {
 		t.Errorf("nil-seam save: %d, want 503", resp.StatusCode)
+	}
+}
+
+// TestCallNoteSaveNudgesHistory pins P2-3: every successful note save publishes
+// exactly one payload-less "notes" SSE event to the OWNER's hub, so a second
+// open tab showing the same call re-fetches instead of holding a stale box.
+//
+// The nudge is deliberately not published on FAILURE: a 409 (note list full) or
+// a store error must leave other tabs exactly as they were — a nudge there
+// would make every open tab re-fetch and re-render the same unchanged note.
+func TestCallNoteSaveNudgesHistory(t *testing.T) {
+	srv := newTestServer(t)
+	c := clientFor(t, srv)
+	c.login("1001", "pw")
+
+	owner := domain.MustParseExtension("1001")
+	events := srv.hubs.get(owner).Hub().Subscribe()
+	t.Cleanup(func() { srv.hubs.get(owner).Hub().Unsubscribe(events) })
+
+	if resp, _ := putCallNote(t, c, "call-nudge-note", "called back"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("note save: %d", resp.StatusCode)
+	}
+
+	select {
+	case ev := <-events:
+		if ev.Event != "notes" {
+			t.Fatalf("nudge event = %q, want \"notes\"", ev.Event)
+		}
+		if len(ev.Data) != 0 {
+			t.Errorf("the notes nudge must be payload-less, got %.80s", ev.Data)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("no notes nudge within 2s — a second tab would keep a stale note box")
+	}
+
+	// Exactly one, never a burst.
+	select {
+	case ev := <-events:
+		t.Fatalf("second push %q: a save owes exactly one nudge", ev.Event)
+	case <-time.After(200 * time.Millisecond):
 	}
 }

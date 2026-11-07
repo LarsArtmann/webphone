@@ -116,8 +116,14 @@ What remains, each with its ONE home:
     residency and may only move DOWN.
 12. **`/context` contract snapshot test** pinning webphone's parse against Kith's
     published shape (a CRM-side schema change is invisible today).
-13. **History nudge for the notes save path** — a `call_notes` PUT leaves a second
-    tab stale (the F89 shape, different slot).
+13. [x] **History nudge for the notes save path — DONE 2026-11-07 (P2-3)**: a
+        successful `call_notes` PUT publishes the payload-less `notes` SSE event
+        (`NotifyCallNotesChanged` on the api Server seam, same shape as the contacts
+        nudge, fired only on success), the History panel subscribes with
+        `hx-trigger="sse:review, sse:notes"`, and the generated wire contract now
+        declares BOTH `review` (F89 shipped it undeclared) and `notes`. Pinned by
+        `TestCallNoteSaveNudgesHistory` (exactly one payload-less nudge to the
+        owner's hub).
 14. **`scripts/templ-generate.sh` wrapper** that pins the regen compiler to go.mod's
     version and asserts the generated header stamp (the 2026-11-05 near-miss class).
 15. **Attended-transfer UI vs the NO-GO ruling** — `FEATURES.md` claimed the row
