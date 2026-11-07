@@ -2180,7 +2180,10 @@
           // The label comes from the nav text, never the unread badge: a
           // link reading "Messages4" must not become "Go to Messages4".
           var name = link.textContent.trim();
-          var badge = link.querySelector(".wp-nav-badge");
+          var badge =
+            typeof link.querySelector === "function"
+              ? link.querySelector(".wp-nav-badge")
+              : null;
           if (badge && badge.textContent) {
             var at = name.indexOf(badge.textContent);
             if (at >= 0) {
@@ -2371,6 +2374,7 @@
         document.activeElement
       );
       panel.hidden = false;
+      input.setAttribute("aria-expanded", "true");
       input.value = "";
       input.placeholder =
         mode === "commands" ? "Type a command…" : "Shortcuts — Esc closes";

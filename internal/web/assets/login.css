@@ -2109,6 +2109,31 @@ h3 {
   color: var(--text);
   border-color: var(--accent);
 }
+.wp-palette-open {
+  display: none;
+}
+@media (pointer: coarse) {
+  .wp-palette-open {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 30px;
+    padding: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--muted);
+    border-radius: 999px;
+    cursor: pointer;
+    transition:
+      color 120ms ease,
+      border-color 120ms ease;
+  }
+  .wp-palette-open:hover {
+    color: var(--text);
+    border-color: var(--accent);
+  }
+}
 .wp-skip {
   position: absolute;
   left: -9999px;

@@ -211,7 +211,14 @@ export function installBrowserGlobals() {
     // Minimal text node: only append() consumes it (merging the text into
     // the target element's textContent).
     createTextNode: (text) => ({ textNode: true, textContent: String(text) }),
-    querySelectorAll: () => [],
+    querySelectorAll(selector) {
+      const found = [];
+      for (const root of registry.values()) {
+        const sub = root.querySelectorAll(selector);
+        for (const node of sub) found.push(node);
+      }
+      return found;
+    },
     // Scans the registered roots' subtrees (makeEl.querySelector answers
     // exact-selector hits), so tests that plant nodes under registry
     // elements can exercise document-level lookups like the drafts
