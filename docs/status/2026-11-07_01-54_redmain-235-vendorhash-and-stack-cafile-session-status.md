@@ -116,21 +116,36 @@
 
 ## f) Next things (prioritized checklist)
 
-- [ ] 1. Rerun stack run 42307510576's flake check in a quieter window (three infra cancels tonight); a green run is the CI proof for the caFile knob.
-- [ ] 2. Verify webphone run on `9f60a226` (AGENTS.md docs push) is green.
-- [ ] 3. Post the issue #9 comment (knob landed + eval pins + CI caveat + unchanged owner steps).
-- [ ] 4. Owner: mint the Kith token → `~/.pbx-prod-secrets/webphone_crm_token` → `scripts/push-secrets.sh` (pbx-artmann side).
-- [ ] 5. Owner: wire `services.telephony.webphone.crm.{enable,url,tokenFile,caFile}` on the PBX host (uses tonight's knob).
-- [ ] 6. Owner: acceptance e2e on #9 — inbound caller shows the Kith name; `call_logged` lands on the journal; revoked token reds the Settings tri-state within a cycle.
-- [ ] 7. Owner decision flagged in #9: `/healthz` currently GATES on the crm leg (503 during a CRM outage while the phone keeps working) — keep as alarm channel or demote to advisory.
-- [ ] 8. Watch LarsArtmann/crm#5 (per-consumer API tokens) — prerequisite for webphone's own-token posture.
-- [ ] 9. Next stack webphone-ride bump needs its OWN lock-guard attribution row (tonight's changelog record covers `9cb5c64d → 36f0c6f4` only; main has moved past it with my pushes).
-- [ ] 10. Add the caFile-ABSENT case to `tests/eval.nix`'s crmCheck (currently pinned only by my ad-hoc evals; the eval test pins the present-case only).
-- [ ] 11. Consider making `build-tw-css.sh` a pre-commit GATE for `*.css.input`/`*.templ` touches (today it is advisory CI; tonight's red was exactly that drift).
-- [ ] 12. Run `scripts/docs-gates.sh` after tonight's doc additions (status report + registry rows + ledger) to confirm no ratchet tripped.
-- [ ] 13. AGENTS.md tri-repo section: mention the stack's caFile knob so the typed front is documented cross-repo.
-- [ ] 14. If GitHub runner shutdowns persist at the ~50-min mark, file/track with the provider; until then treat stack flake-check reds as cancel-class first, real second.
-- [ ] 15. Quarterly dedup audit unchanged (due 2027-01-11); art-dupl#14 (short-span .templ matching) keeps absorbing accept-volume — monitor.
+-
+  1. [ ] Rerun stack run 42307510576's flake check in a quieter window (three infra cancels tonight); a green run is the CI proof for the caFile knob.
+-
+  2. [ ] Verify webphone run on `9f60a226` (AGENTS.md docs push) is green.
+-
+  3. [ ] Post the issue #9 comment (knob landed + eval pins + CI caveat + unchanged owner steps).
+-
+  4. [ ] Owner: mint the Kith token → `~/.pbx-prod-secrets/webphone_crm_token` → `scripts/push-secrets.sh` (pbx-artmann side).
+-
+  5. [ ] Owner: wire `services.telephony.webphone.crm.{enable,url,tokenFile,caFile}` on the PBX host (uses tonight's knob).
+-
+  6. [ ] Owner: acceptance e2e on #9 — inbound caller shows the Kith name; `call_logged` lands on the journal; revoked token reds the Settings tri-state within a cycle.
+-
+  7. [ ] Owner decision flagged in #9: `/healthz` currently GATES on the crm leg (503 during a CRM outage while the phone keeps working) — keep as alarm channel or demote to advisory.
+-
+  8. [ ] Watch LarsArtmann/crm#5 (per-consumer API tokens) — prerequisite for webphone's own-token posture.
+-
+  9. [ ] Next stack webphone-ride bump needs its OWN lock-guard attribution row (tonight's changelog record covers `9cb5c64d → 36f0c6f4` only; main has moved past it with my pushes).
+-
+  10. [ ] Add the caFile-ABSENT case to `tests/eval.nix`'s crmCheck (currently pinned only by my ad-hoc evals; the eval test pins the present-case only).
+-
+  11. [ ] Consider making `build-tw-css.sh` a pre-commit GATE for `*.css.input`/`*.templ` touches (today it is advisory CI; tonight's red was exactly that drift).
+-
+  12. [ ] Run `scripts/docs-gates.sh` after tonight's doc additions (status report + registry rows + ledger) to confirm no ratchet tripped.
+-
+  13. [ ] AGENTS.md tri-repo section: mention the stack's caFile knob so the typed front is documented cross-repo.
+-
+  14. [ ] If GitHub runner shutdowns persist at the ~50-min mark, file/track with the provider; until then treat stack flake-check reds as cancel-class first, real second.
+-
+  15. [ ] Quarterly dedup audit unchanged (due 2027-01-11); art-dupl#14 (short-span .templ matching) keeps absorbing accept-volume — monitor.
 
 ## g) Questions
 

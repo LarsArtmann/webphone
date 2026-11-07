@@ -1246,6 +1246,9 @@
               <code>#0b0d11</code> for the dark background &mdash; change both
               files together, they are the same fact.
             </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T03):</strong> ThemeColor now <code>#0e8752</code> / DarkThemeColor <code>#17a467</code>; the manifest's <code>theme_color</code>/<code>background_color</code> carry the same tokens, and <code>applyTheme</code> collapses the media-scoped metas to the forced scheme (restored on &ldquo;auto&rdquo;).
+            </div>
           </div>
 
           <!-- F3 -->
@@ -1280,6 +1283,9 @@
               the destructive action (the <code>.wp-mini.wp-danger</code> tint
               exists &mdash; use it on the archive/delete glyph).
             </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T22):</strong> Archive-on moves ask once: a localized confirm (en+de) plus the <code>wp-danger</code> tint on the row/head archive buttons and History's delete.
+            </div>
           </div>
 
           <!-- F4 -->
@@ -1305,6 +1311,9 @@
               <strong>Fix (one line)</strong>
               Add the off arm:
               <code>templ.KV("wp-service-off", state != "connected")</code>.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T03):</strong> <code>crmDetail</code> carries the <code>wp-service-off</code> arm beside its siblings, so the strip reports a down CRM instead of silence.
             </div>
           </div>
 
@@ -1334,6 +1343,9 @@
               Pick one English convention &mdash; Kitchen (<code>1:45PM</code>)
               everywhere is the friendlier voice &mdash; and let
               <code>formatWhen</code>'s English branch ride it.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T05):</strong> <code>formatStamp</code> renders one voice in English (<code>Jan 2, 3:04PM</code>), and the cooldown notice gained its &ldquo;just now&rdquo; branch (both languages).
             </div>
           </div>
 
@@ -1367,6 +1379,9 @@
               <code>FaxCapability</code> already established), so the afford
               exists only when the seam can answer.
             </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T05+T23):</strong> The note-prefill button renders only when <code>AgentEnabled</code> says the seam can answer; the gate is pinned in <code>panels_test.go</code> (the review's prefill GAP).
+            </div>
           </div>
 
           <!-- F7 (island) -->
@@ -1392,6 +1407,9 @@
               Resolve the incoming number through the same contact source the
               typeahead uses; render name + avatar chip on the banner and let
               the assertive announce speak the name.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T07):</strong> <code>#dial-error</code> is a <code>role=status</code> region; a <code>data-i18n-arialabel</code> mechanism localizes the dial destination, audio-out and language controls. The reg-status live region and ring announce were verified already-correct.
             </div>
           </div>
 
@@ -1422,6 +1440,9 @@
               (or the replaced node's container) &mdash; called from the five
               sites. The shell's focus-to-heading move already models the
               pattern.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T08):</strong> All four <code>role=img</code> content spans are gone; the direction chips carry <code>role=img</code> with their label directly.
             </div>
           </div>
 
@@ -1460,6 +1481,9 @@
               announcement); route the labels through
               <code>defineMessages</code>; correct the announce call.
             </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T09):</strong> <code>focusAfterReplace</code> is the one home, wired into the banner, ended-card, disposition, note-save and incoming-slot swaps; pinned in <code>focus-replace.test.mjs</code>.
+            </div>
           </div>
 
           <!-- F10 (views) -->
@@ -1491,6 +1515,9 @@
               the row read naturally; where a compact name helps, put the
               label on an inner summary element, not the container.
             </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T10):</strong> The drafts poll defers while a composer edit is open; draft captures are thread-scoped and the sent-clear uses the request-start thread. Pinned in <code>drafts-guard.test.mjs</code>.
+            </div>
           </div>
 
           <!-- F11 (views) -->
@@ -1517,6 +1544,9 @@
               current value to the last-saved draft and skip/defer the swap
               while they differ (the same morph-preservation guarantee the
               transcript already honors).
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T11):</strong> The palette is a wired combobox (roles, expanded, activedescendant), badge digits never leak into rows, starts-with ranks first, Home/End jump, and a served <code>#wp-palette-open</code> button appears on coarse pointers. Pinned in <code>palette.test.mjs</code>.
             </div>
           </div>
 
@@ -1554,6 +1584,9 @@
               theme toggle costs one icon); switch selection state to
               <code>aria-selected</code>.
             </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T12):</strong> Contact names resolve through the shared <code>findContact</code> seam: banner, incoming slots, assertive announce, missed toast and dock chip all render &ldquo;Name (digits)&rdquo;. Pinned in <code>ring-names.test.mjs</code>.
+            </div>
           </div>
 
           <!-- F13 (shell) -->
@@ -1584,6 +1617,9 @@
               ch.length, 0)</code> &mdash; code points whose
               <code>length</code> is 2 add both units).
             </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T04):</strong> <code>ucs2Segments</code> counts UTF-16 code units; the emoji billing ladder (35/36/70) is pinned in the composer spec.
+            </div>
           </div>
 
           <!-- F14 -->
@@ -1606,6 +1642,9 @@
               Grow the hit area without growing the glyph: keep the 18px
               visual, add padding + negative margin (or a
               <code>::before</code> hit-expander) to reach 24px.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T15):</strong> The chip remove button grew a hit expander to 24px, toast eviction moves focus to the newest survivor, and the dismissal hint is a real <code>title</code>.
             </div>
           </div>
 
@@ -1630,6 +1669,9 @@
               <strong>Fix</strong>
               Let History's empty state borrow Voicemail's three-beat shape
               (what / who acts / what happens next). One sentence each.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T16):</strong> History's disabled empty state borrows Voicemail's three beats: what it is, who acts, what happens next (en+de).
             </div>
           </div>
 
@@ -1657,6 +1699,9 @@
               0.95) as custom properties, and migrate opportunistically &mdash;
               new panels must pick from the scale, the corpus catches up as
               panels are touched.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T14):</strong> Three type-scale tokens (<code>--text-xs/sm/md</code>) exist and 41 sites migrated to the nearest step; the sub-scale micro sizes catch up as their surfaces are touched.
             </div>
           </div>
 
@@ -1686,6 +1731,9 @@
               Fold the 8px outliers into the existing scale (6 or 9 &mdash; pick
               per surface), and introduce 2&ndash;3 spacing tokens for the row
               and panel rhythms. No visual change required, only names.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T21):</strong> The 8px radius outliers folded into <code>--radius</code>/<code>--radius-sm</code>; <code>--panel-pad</code>, <code>--row-pad</code> and <code>--row-gap</code> now name the rhythms.
             </div>
           </div>
 
@@ -1718,6 +1766,9 @@
               Settings, transcripts); drop it from the day divider (sentence
               case, it already has the hairline) and humanize the
               reconnecting pill copy.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T22):</strong> The day divider, the unread divider and the status pill dropped uppercase (headers keep it), and the reconnecting pill says &ldquo;reconnecting in 2s&hellip;&rdquo; &mdash; the try counter stays in the event log.
             </div>
           </div>
 
@@ -1752,6 +1803,9 @@
               its ids; the nav is the only region that changes shape by
               session state.
             </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T13):</strong> The nav renders links only for a signed-in session; the anonymous shell centers the welcome/login stack (<code>wp-signed-out</code>). Smoke and the DOM-contract test pin it.
+            </div>
           </div>
 
           <!-- F20 (IA) -->
@@ -1782,6 +1836,9 @@
               (snippets; consider adopting the island's language and speaker
               pickers as visible rows), "My data" (export). No routes change;
               only grouping.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T21):</strong> Settings reads in three audiences &mdash; My preferences, My data, and the collapsed server section (en+de); the moved view pins assert the split.
             </div>
           </div>
 
