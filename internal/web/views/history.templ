@@ -171,9 +171,9 @@ templ TranscriptSection(props HistoryPanelProps) {
 				<summary>
 					<span aria-hidden="true">
 						if group.Direction == "in" {
-							↓
+							@icons.Icon(icons.ArrowDown, "wp-icon")
 						} else {
-							↑
+							@icons.Icon(icons.ArrowUp, "wp-icon")
 						}
 					</span>
 					<strong>{ displayName(group.Remote, props.CRM) }</strong>
@@ -216,7 +216,7 @@ templ TranscriptSection(props HistoryPanelProps) {
 					data-copy-transcript
 					aria-label={ T(props.Lang, "history.transcript.copy") }
 					title={ T(props.Lang, "history.transcript.copy") }
-				>⧉</button>
+				>@icons.Icon(icons.Clipboard, "wp-icon")</button>
 				// Download affordance (#40): same row-locality — shell.js
 				// builds a text/plain blob from the rendered transcript and
 				// triggers one file save named after the call.
@@ -225,7 +225,7 @@ templ TranscriptSection(props HistoryPanelProps) {
 					data-download-transcript={ group.CallID }
 					aria-label={ T(props.Lang, "history.transcript.download") }
 					title={ T(props.Lang, "history.transcript.download") }
-				>↓</button>
+				>@icons.Icon(icons.Download, "wp-icon")</button>
 				// End-user erasure (GDPR leg): confirm-gated delete of the
 				// whole call. The button only carries data — shell.js owns
 				// the confirm + DELETE + row removal (the shell works when
@@ -314,7 +314,7 @@ templ CDRRow(cdr pbx.CDR, contacts CRMContacts, lang Lang) {
 			class={ "wp-dir-chip", templ.KV("wp-dir-in", cdr.Context == "public"), templ.KV("wp-dir-missed", cdrMissed(cdr)) }
 			role="img"
 			aria-label={ cdrDirLabel(cdr, lang) }
-		>{ cdrDirGlyph(cdr) }</span>
+		>@icons.Icon(cdrDirGlyph(cdr), "wp-icon")</span>
 		<span class="wp-thread-text">
 			@remoteLabel(cdrTarget(cdr), contacts, lang)
 			<span class="wp-muted">{ cdr.Start } · { durationLabel(cdr.Billsec) }</span>
@@ -329,7 +329,7 @@ templ CDRRow(cdr pbx.CDR, contacts CRMContacts, lang Lang) {
 					data-name={ firstNonEmpty(cdr.CallerIDName, displayName(cdrTarget(cdr), contacts)) }
 					aria-label={ T(lang, "contacts.saveAs") }
 					title={ T(lang, "contacts.saveAs") }
-				>☆</button>
+				>@icons.Icon(icons.Star, "wp-icon")</button>
 			</span>
 		}
 	</article>
@@ -355,14 +355,14 @@ func dispositionConfirmed(raw string) bool {
 	return err == nil && disposition != domain.DispositionUnknown
 }
 
-func cdrDirGlyph(cdr pbx.CDR) string {
+func cdrDirGlyph(cdr pbx.CDR) icons.Name {
 	if cdrMissed(cdr) {
-		return "✖"
+		return icons.XCircle
 	}
 	if cdr.Context == "public" {
-		return "↓"
+		return icons.ArrowDown
 	}
-	return "↑"
+	return icons.ArrowUp
 }
 
 func cdrDirLabel(cdr pbx.CDR, lang Lang) string {
