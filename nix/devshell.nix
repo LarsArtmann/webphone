@@ -42,6 +42,14 @@
           # The docs-health battery (scripts/docs-gates.sh) — the SAME
           # derivation CI uses, so a green run here means a green run there.
           config.packages.docs-gates
+          # dprint formats the markdown/json/yaml the battery judges; the
+          # wrapper fail-closes when it is missing, and a CI runner has no
+          # host dprint to inherit (local shells silently borrow
+          # ~/.nix-profile). Pinning it HERE is what makes the battery
+          # runnable outside this host at all. Formatting behavior comes
+          # from the wasm plugins pinned in dprint.json, not the CLI, so
+          # the nixpkgs build cannot drift from the host one.
+          pkgs.dprint
           # go-licenses rebuilt on Go 1.27: the stock 2.0.1 rides go
           # 1.26.8, and its nixpkgs wrapper BAKES that GOROOT into the
           # binary — the package loader then dies (F1004, "crypto/mldsa
