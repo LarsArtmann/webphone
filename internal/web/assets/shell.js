@@ -1106,10 +1106,19 @@
       var source = active
         ? "/partials/nav?active=" + active.dataset.tab
         : "/partials/nav";
-      window.htmx.ajax("GET", source, {
-        target: "#wp-nav",
-        swap: "morph:innerHTML",
-      });
+      // M23: a failed nav refresh must not half-apply the language
+      // switch silently — the promise carries the verdict; the throttle
+      // keeps a flapping session from spamming toasts.
+      window.htmx
+        .ajax("GET", source, {
+          target: "#wp-nav",
+          swap: "morph:innerHTML",
+        })
+        .catch(function () {
+          showThrottledError(
+            "The tab strip could not refresh. Reload the page to see it.",
+          );
+        });
       // E8: a morph re-render can leave the ACTIVE tab outside the
       // strip's scroll window on narrow screens; "nearest" scrolls
       // only when it is genuinely out of view.

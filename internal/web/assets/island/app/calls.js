@@ -136,6 +136,9 @@ async function holdSession(id, hold) {
     // A held call carries no audio either way — pause the capture so
     // the provider never receives (and hallucinates on) silence.
     pauseLiveTranscription(id, hold);
+    // M22: the SETTLED state is the announcement (the pending chip text
+    // swaps silently) — the screen reader hears where the call landed.
+    announce(t(hold ? "heldAnnounce" : "resumedAnnounce"), "info");
   } catch (err) {
     log(`hold toggle failed: ${errorMessage(err)}`, "error");
     announce(
@@ -905,6 +908,9 @@ function addCallCard(id, target) {
       if (!entry) return;
       entry.muted = !entry.muted;
       setTracks(entry, { send: !entry.held && !entry.muted });
+      // M22: the settled mute state announces — the button label swap
+      // is silent by design (announceCallState owns transitions).
+      announce(t(entry.muted ? "mutedAnnounce" : "unmutedAnnounce"), "info");
       renderCalls();
     }),
     mkBtn(t("hold"), "hold-btn", () => {

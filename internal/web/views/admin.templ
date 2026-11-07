@@ -44,7 +44,10 @@ type AdminPanelProps struct {
 	// CDRFailed lists the lines whose CDR page could not be fetched —
 	// one honest notice, the surviving lines still render.
 	CDRFailed []string
-	Lang      Lang
+	// Query echoes the admin find filter into the search input so a
+	// morph/swap keeps the typed text (the thread-search precedent).
+	Query string
+	Lang  Lang
 }
 
 // AdminUserRow is one account of the users inventory.
@@ -81,6 +84,31 @@ type AdminCDRRow struct {
 templ AdminPanel(props AdminPanelProps) {
 	<section class="wp-panel" id="admin-panel">
 		@panelHead(props.Lang, "tab.admin", "admin.subtitle")
+		// M1: the read-only doctrine made visible — every affordance here
+		// is a read or a download; acting stays on each line's own login.
+		<p class="wp-muted">
+			<span class="wp-admin-chip">{ T(props.Lang, "admin.readonly") }</span>
+		</p>
+		// M1: the find filter narrows the data sections server-side; the
+		// pushed URL keeps a filtered view addressable (the History E2
+		// pattern).
+		<form
+			class="wp-filter"
+			hx-get="/partials/admin"
+			hx-target="#admin-panel"
+			hx-swap="outerHTML"
+			hx-trigger="submit"
+			hx-push-url="true"
+		>
+			<input
+				type="search"
+				name="q"
+				placeholder={ T(props.Lang, "admin.filter.ph") }
+				value={ props.Query }
+				aria-label={ T(props.Lang, "admin.filter.label") }
+			/>
+			<button type="submit" class="wp-mini">{ T(props.Lang, "admin.filter") }</button>
+		</form>
 		<h3 class="wp-settings-head" id="wp-admin-users">{ T(props.Lang, "admin.users.title") }</h3>
 		if len(props.Users) == 0 {
 			<p class="wp-empty">{ T(props.Lang, "admin.users.empty") }</p>

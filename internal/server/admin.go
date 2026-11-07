@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"sort"
+	"strings"
 
 	"github.com/a-h/templ"
 
@@ -147,11 +148,66 @@ func (h *handlers) adminPanel(r *http.Request, sess session.Session) (templ.Comp
 		return views.NotFoundPanel(r.URL.Path, h.lang(r)), nil
 	}
 	props := views.AdminPanelProps{Lang: h.lang(r)}
+	// M1: the find filter narrows the data sections server-side; the
+	// filter form pushes its URL so a filtered view stays addressable
+	// (the History E2 pattern). An empty q renders everything.
+	props.Query = strings.TrimSpace(r.URL.Query().Get("q"))
 	h.fillAdminIdentity(r, &props)
 	h.fillAdminThreads(r, &props)
 	h.fillAdminFaxes(r, &props)
 	h.fillAdminCalls(r, &props)
+	adminApplyFilter(&props)
 	return views.AdminPanel(props), nil
+}
+
+// adminApplyFilter narrows the panel's data sections to the find query:
+// case-insensitive substring across each row's human fields (owner,
+// remote party, text). The inventories (users, numbers) stay unfiltered
+// — they are the operator's config, not the searchable data.
+func adminApplyFilter(props *views.AdminPanelProps) {
+	q := strings.ToLower(props.Query)
+	if q == "" {
+		return
+	}
+	threads := props.Threads[:0]
+	for _, thread := range props.Threads {
+		if adminMatches(q, thread.Thread.Owner.String(), thread.Thread.Remote.String(), thread.LastBody) {
+			threads = append(threads, thread)
+		}
+	}
+	props.Threads = threads
+	faxes := props.Faxes[:0]
+	for _, fax := range props.Faxes {
+		if adminMatches(q, fax.Owner.String(), fax.Remote.String()) {
+			faxes = append(faxes, fax)
+		}
+	}
+	props.Faxes = faxes
+	transcripts := props.Transcripts[:0]
+	for _, tx := range props.Transcripts {
+		if adminMatches(q, tx.Owner, tx.Remote) {
+			transcripts = append(transcripts, tx)
+		}
+	}
+	props.Transcripts = transcripts
+	cdrs := props.CDRs[:0]
+	for _, row := range props.CDRs {
+		if adminMatches(q, row.Extension, row.CDR.CallerIDNumber, row.CDR.CallerIDName, row.CDR.DestinationNumber) {
+			cdrs = append(cdrs, row)
+		}
+	}
+	props.CDRs = cdrs
+}
+
+// adminMatches is the find rule: q arrives lowercase; ANY field match
+// keeps the row.
+func adminMatches(q string, fields ...string) bool {
+	for _, field := range fields {
+		if strings.Contains(strings.ToLower(field), q) {
+			return true
+		}
+	}
+	return false
 }
 
 // fillAdminIdentity fills the users and numbers inventories from the
