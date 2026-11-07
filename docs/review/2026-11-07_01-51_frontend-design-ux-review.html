@@ -1080,6 +1080,65 @@
                 >
               </div>
             </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The dial typeahead behaves like a real keyboard
+                control</strong>
+                <span
+                  >Arrow-key navigation, Enter to accept, Escape to dismiss,
+                  active-row highlighting &mdash; and the suggestion rows even
+                  carry the dial-cooldown window inline, so the state travels
+                  with the name. (The ARIA wiring has gaps &mdash; Finding&nbsp;12
+                  covers the palette &mdash; but the keyboard behavior itself is
+                  right.)</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Optimistic sends fail honestly</strong>
+                <span
+                  >A pending message renders as a dashed, dimmed bubble; a
+                  failed send keeps the text and attachments visible, repaints
+                  the bubble in the danger voice, and offers Retry and
+                  Dismiss in place &mdash; the draft is never lost to a
+                  network error. The island tests pin the whole
+                  transition.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Two languages, enforced parity</strong>
+                <span
+                  >Every string lives in the <code>i18n.go</code> dictionaries
+                  (or <code>defineMessages</code> on the island) under
+                  parity and unused-key tests, so a missing German string is a
+                  build failure, not a discovery. The German copy reads
+                  naturally where it was spot-checked; the stiffness items are
+                  small and listed in the matrix.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>State ladders make the invisible legible</strong>
+                <span
+                  >The delivery ladder gives queued, sent, delivered and
+                  failed distinct ink (delivered earns a deeper tone plus an
+                  underline &mdash; one more confirmation, one more visual
+                  step); the fax timeline draws its three-step progress as
+                  colored segments; a pending hold or resume pulses its dot
+                  while the re-INVITE is in flight and freezes when settled.
+                  States are visible, distinct, and honest about pending
+                  versus confirmed.</span
+                >
+              </div>
+            </div>
           </div>
         </section>
 
