@@ -153,6 +153,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The docs-health battery's new CI step red-ed on every push (2026-11-07):
+  the wrapper fail-closes on a missing dprint, and the devShell only ever
+  found dprint through the host PATH — which exists on the owner's
+  workstation but not on a GitHub runner. `pkgs.dprint` is now pinned in
+  the devShell itself, so the battery runs anywhere the flake does;
+  formatting behavior stays pinned by the wasm plugins in dprint.json, not
+  the CLI build.
 - A voicemail caller carrying only a withheld-name (CIDName, no CID
   number) rendered `Name ()` with an empty parenthesised number — the
   bare name is the row label now (2026-11-05).
