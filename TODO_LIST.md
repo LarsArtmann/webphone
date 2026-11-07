@@ -126,10 +126,11 @@ What remains, each with its ONE home:
     is now PARTIALLY_FUNCTIONAL. Decide whether the dock's "Attended" button should be
     hidden until a FreeSWITCH lab proves `Replaces` — the island's honesty contract
     forbids a 200-OK that silently does nothing.
-16. **`reverseLines` → `slices.Reverse`** — the 2026-10-11 sweep converted
-    `internal/store`, but the hand-rolled two-pointer helper still lives in
-    `internal/readmodels/transcripts.go` (item 40 of the 03-29 report, verified open
-    2026-11-06).
+16. [x] **`reverseLines` → `slices.Reverse` — DONE 2026-11-07 (P2-5)**: the
+        hand-rolled two-pointer helper in `internal/readmodels/transcripts.go` is
+        gone; its only caller now uses `slices.Reverse`, which also retires the
+        `//nolint:branching-flow` the helper's own arithmetic needed. Behavior is
+        identical (newest-first per call) and the readmodels suite is green.
 
 17. **Make freshness WARN on a §f-less newest report** — the gate PASSED on the
     2026-11-06 10:45 report because it carried no §f at all ("nothing to check"),

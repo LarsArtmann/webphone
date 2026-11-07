@@ -2,6 +2,7 @@ package readmodels
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -418,13 +419,11 @@ func reassembleTranscripts(rows []domain.CallTranscriptSegment, maxCalls int) []
 		}
 	}
 	for i := range groups {
-		reverseLines(groups[i].Lines)
+		// The store yields oldest-first per call; the UI reads top-down, so
+		// each call's lines are presented newest-first. slices.Reverse is the
+		// stdlib home for this (the hand-rolled two-pointer helper it replaces
+		// carried a nolint purely for its own arithmetic).
+		slices.Reverse(groups[i].Lines)
 	}
 	return groups
-}
-
-func reverseLines(lines []string) {
-	for i, j := 0, len(lines)-1; i < j; i, j = i+1, j-1 {
-		lines[i], lines[j] = lines[j], lines[i] //nolint:branching-flow // two-pointer swap under i < j: bounds-safe by construction
-	}
 }
