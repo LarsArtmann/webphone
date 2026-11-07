@@ -188,6 +188,18 @@ above stays complete without them, and the E2E must not assume them:
 
 ## Notes
 
+### Served, not contracted: the palette disclosure (2026-11-07)
+
+`wp-palette-open` is served on every signed-in page but is NOT in the pinned
+block, because it is invisible to a pointer:fine desktop (app.css reveals it
+only on `pointer: coarse`). It is a DISCLOSURE, so it carries
+`aria-controls="wp-palette"` (the native `<dialog>` the shell builds on first
+open) and `aria-expanded`, which `shell.js` keeps in step with the dialog —
+`false` while closed, `true` while the palette covers the page. An E2E that
+clicks it should assume nothing about the attribute until it has opened the
+palette, and the dialog itself is JS-created, so it never appears in served
+bytes.
+
 ### Optional integration ids (served only when configured — 2026-10-29)
 
 Conditional by construction, so the E2E must not assume them:

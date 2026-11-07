@@ -2419,11 +2419,14 @@
       });
     };
 
-    /** @param {string} mode */
     // The served coarse-pointer palette button is a DISCLOSURE: its
     // aria-expanded must track the dialog it opens, or a screen reader is told
     // the palette is closed while it covers the page. Declared as a function so
-    // openOverlay/closeOverlay can call it before the button wiring below runs.
+    // openOverlay/closeOverlay can call it before the button wiring below runs;
+    // it sits ABOVE openOverlay's JSDoc so the @param stays attached to it.
+    /**
+     * @param {boolean} expanded
+     */
     function setPaletteExpanded(expanded) {
       var button = document.getElementById("wp-palette-open");
       if (button) {
@@ -2431,6 +2434,7 @@
       }
     }
 
+    /** @param {string} mode */
     var openOverlay = function (mode) {
       if (!overlay) buildOverlay();
       var panel = overlay;
