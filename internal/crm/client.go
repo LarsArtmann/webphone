@@ -138,6 +138,12 @@ func (c *Client) do(
 	}
 
 	req.Header.Set("Authorization", "Bearer "+c.token)
+	// Accept is not decoration: the CRM's machine API shares an origin with its
+	// HUMAN UI in some deployments, and a content-negotiating proxy is free to
+	// answer HTML when the client does not ask for JSON. Without this header a
+	// 200 HTML page would reach the decoder and surface as a decode error that
+	// reads like a CRM bug (pinned by TestContactContextRequestShapeIsPinned).
+	req.Header.Set("Accept", "application/json")
 	if len(body) > 0 {
 		req.Header.Set("Content-Type", "application/json")
 	}
