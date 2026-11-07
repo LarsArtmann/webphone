@@ -2173,6 +2173,16 @@ h3 {
   container-type: inline-size;
   container-name: tabcol;
 }
+.wp-main-col.wp-signed-out {
+  justify-content: center;
+}
+.wp-main-col.wp-signed-out .wp-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 0;
+}
 @media (min-width: 901px) {
   .wp-island-collapsed .wp-body {
     grid-template-columns: minmax(0, 1fr);

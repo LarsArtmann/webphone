@@ -1059,17 +1059,17 @@ def run_checks(
         else "",
     )
 
-    # 4b. /partials/nav contract (AGENTS-documented, now smoked): labels
-    # render anonymously — badges NEVER do; the signed-in re-fetch below
-    # is the only badge source. A fresh Smoke keeps it session-free even
-    # mid-suite.
+    # 4b. /partials/nav contract (F19): a signed-out session gets ZERO
+    # links — the desk's tab row is for sessions that can use it; the
+    # signed-in re-fetch below is the only badge source. A fresh Smoke
+    # keeps it session-free even mid-suite.
     anon_nav = Smoke(s.base)
     status, body, _ = anon_nav.request("GET", "/partials/nav")
     nav_anon = body.decode("utf-8", "replace")
     c.ok(
         "nav partial anonymous shape",
-        status == 200 and "wp-nav-link" in nav_anon and "wp-nav-badge" not in nav_anon,
-        f"{status} labels/badges wrong: {nav_anon[:80]!r}",
+        status == 200 and "wp-nav-link" not in nav_anon,
+        f"{status} anonymous nav should be link-free: {nav_anon[:80]!r}",
     )
 
     # 4c. Unknown paths render the STYLED 404: shell chrome around the

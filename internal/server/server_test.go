@@ -358,14 +358,26 @@ func TestServedPageHoldsTheDomContract(t *testing.T) {
 	if !strings.Contains(page, "WebPhone") {
 		t.Error("brand missing")
 	}
+	// F19: a signed-out page is a door, not a floor plan — the tab row
+	// renders only for a session that can use it. The anonymous shell
+	// keeps the #wp-nav region (the post-login re-fetch target) with
+	// zero links; the welcome + login stack centers instead.
+	if strings.Contains(page, "wp-nav-link") {
+		t.Error("anonymous page renders nav links — the signed-out shape is nav-free (F19)")
+	}
 	// The active tab is announced to screen readers with the spec-exact
 	// aria-current="page"; every other tab states "false" explicitly, so
 	// the shell's swap-time toggle flips between two definite values
-	// (shell.js §1) instead of adding/removing the attribute.
-	if !strings.Contains(page, `aria-current="page"`) {
+	// (shell.js §1) instead of adding/removing the attribute. A signed-in
+	// fact: F19 removed the tab row from the anonymous page, so the
+	// assertion reads the authed page.
+	c.login("1001", "pw")
+	_, authedBody := c.do(http.MethodGet, "/", nil, "")
+	authed := string(authedBody)
+	if !strings.Contains(authed, `aria-current="page"`) {
 		t.Error("served page lost aria-current=page on the active tab")
 	}
-	if !strings.Contains(page, `aria-current="false"`) {
+	if !strings.Contains(authed, `aria-current="false"`) {
 		t.Error("served page lost aria-current=false on the inactive tabs")
 	}
 	// The toast host is the WHOLE feedback channel's live region: without

@@ -363,6 +363,22 @@ h3 {
   container-name: tabcol;
 }
 
+/* F19: signed out, the column is a door — the welcome + login stack
+ * centers instead of filling a desk built for a session that does not
+ * exist yet (the tab row is server-side absent, so no dead chrome to
+ * push the stack around). */
+.wp-main-col.wp-signed-out {
+  justify-content: center;
+}
+
+.wp-main-col.wp-signed-out .wp-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 0;
+}
+
 /* --- collapsible island (P2) --------------------------------------------- */
 
 /* Desktop-only: on phones the island is part of the single-column flow and
