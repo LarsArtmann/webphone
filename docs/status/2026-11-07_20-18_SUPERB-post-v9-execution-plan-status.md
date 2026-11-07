@@ -150,3 +150,31 @@ OWNER need a decision; the rest are assistant-executable.
    close-out). I have left its files alone and re-verified around them, but two
    sessions on one mandate will keep costing re-verification and keep splitting
    narrative commits into `chore:` noise. Do you want one of us to stand down?
+
+## h) Addendum — the in-flight buildflow run finished RED, with 2 unnamed steps
+
+Written 2026-11-07 20:26 CET, after the run reported above completed. It is
+recorded here rather than edited into §b because the CLAIM changed, not the
+work:
+
+- The run ended `59 steps / 57 pass / 2 fail`, and the blocking error was
+  `[Infrastructure:pipeline.step_failure] workflow step failure (2 step(s)
+  failed)`.
+- **That is progress on the P1-5b question, and the important half of the
+  answer**: the `findings_gate` error that blocked the same command earlier
+  ("51 findings at or above severity error") is GONE. Accepting the 46
+  file-size findings per-finding did what it was supposed to do — the gate no
+  longer fires — so what remains is TWO ordinary step failures, not a
+  suppression problem.
+- **I cannot name those two steps from the persisted state**: the fleet state
+  DB is shared across repos (`/home/lars/.local/state/buildflow/buildflow.db`)
+  and its `resume_steps` rows are keyed by repo hash, with this repo's newest
+  run not among the recent rows; the display truncates run ids so
+  `buildflow explain <run>` rejects the prefix. The next run must capture its
+  own output (`| tee`) instead of tailing 25 lines — that is my mistake, not a
+  tool defect, and it is the reason §b's "still in flight" is now "red with an
+  unattributed cause".
+- `transient` is the family recorded for every historical failure row in that
+  DB, which is consistent with the two steps being timing/tool flakes on a host
+  that carried foreign nix builds all session — but "consistent with" is not
+  evidence, and I am not spending the claim.
