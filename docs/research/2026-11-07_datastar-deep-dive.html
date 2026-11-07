@@ -1,0 +1,1607 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Datastar — Full Client-Side Adoption Deep-Dive (2026-11-07)</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS LIGHT — Editorial template
+         Design language: form follows function. Primary colors on warm paper.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Light) --- */
+        --color-paper: #f4f4f0;
+        --color-paper-2: #ffffff;
+        --color-paper-3: #e8e8e2;
+        --color-ink: #111111;
+        --color-red: #e63946;
+        --color-blue: #1d3557;
+        --color-yellow: #f4d35e;
+        --color-hairline: rgba(17, 17, 17, 0.14);
+        --color-hairline-strong: rgba(17, 17, 17, 0.3);
+
+        /* --- Semantic layer (shared vocabulary with dark template) --- */
+        --surface: var(--color-paper);
+        --surface-raised: var(--color-paper-2);
+        --surface-sunken: var(--color-paper-3);
+        --text: var(--color-ink);
+        --text-muted: rgba(17, 17, 17, 0.72);
+        --text-faint: rgba(17, 17, 17, 0.5);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-red);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber: var(--warning);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 22%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 12%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 12%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px;
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .sidebar a {
+        font-size: 0.86rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-left: 4px solid transparent;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      h1 {
+        font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+        line-height: 1.05;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px solid var(--text);
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--text);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin-bottom: 0.9rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0 0 1rem;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.6rem;
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+      }
+      .tag.amber {
+        background: var(--warning);
+        border-color: var(--warning);
+        color: var(--text);
+      }
+      .tag.teal {
+        background: var(--solution);
+        border-color: var(--solution);
+        color: var(--surface);
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 90px;
+        margin-bottom: 1.2rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        right: 180px;
+        width: 64px;
+        height: 64px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 26px;
+        right: 90px;
+        width: 56px;
+        height: 56px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-left: 32px solid transparent;
+        border-right: 32px solid transparent;
+        border-bottom: 56px solid var(--warning);
+      }
+      .hero-shapes .bar {
+        position: absolute;
+        bottom: 0;
+        right: 230px;
+        width: 100px;
+        height: 14px;
+        background: var(--text);
+      }
+
+      /* --- Scorecard / stat cards --- */
+      .scorecard,
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        margin: 1.5rem 0 2rem;
+        border: 3px solid var(--text);
+      }
+      .score-card,
+      .stat-card {
+        padding: 1.3rem 1rem;
+        text-align: center;
+        border-right: 3px solid var(--text);
+        background: var(--surface-raised);
+      }
+      .score-card:last-child,
+      .stat-card:last-child {
+        border-right: none;
+      }
+
+      .score,
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.6rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-card .label,
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 0.5rem;
+      }
+      /* Semantic state classes — no nth-child decoration, no !important */
+      .score-good,
+      .stat-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .score-warn,
+      .stat-warn {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .score-bad,
+      .stat-bad {
+        background: var(--problem);
+        color: var(--surface);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.6rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid var(--text);
+        color: var(--text);
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: var(--warning);
+      }
+      .badge-medium {
+        background: var(--surface-sunken);
+      }
+      .badge-low {
+        background: var(--surface-raised);
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      /* --- Callouts --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-sunken);
+        font-size: 0.92rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-teal,
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 10%,
+          var(--surface-raised)
+        );
+      }
+      .callout-amber,
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 18%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Strengths --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.3rem;
+        line-height: 1.3;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+        border: 2px solid var(--text);
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--text);
+        color: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border-strong);
+      }
+      th:last-child {
+        border-right: none;
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+      }
+      td:last-child {
+        border-right: none;
+      }
+      tr:nth-child(even) td {
+        background: var(--surface-sunken);
+      }
+      table.compare td.yes {
+        color: var(--solution);
+        font-weight: 700;
+      }
+      table.compare td.no {
+        color: var(--problem);
+        font-weight: 700;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--text);
+        color: var(--surface);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        border: 2px solid var(--text);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--warning);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: #95e1d3;
+      }
+      .tok-comment {
+        color: rgba(244, 244, 240, 0.45);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #6eb5ff;
+      }
+      .tok-number {
+        color: var(--warning);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #6eb5ff;
+      }
+      .tok-punct {
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .tok-attr {
+        color: var(--warning);
+      }
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 2px solid var(--text);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--surface-sunken);
+        border: 1px solid var(--text);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1.1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.94rem;
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 3px solid var(--text);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .scorecard,
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-right: none;
+        }
+        .score-card:nth-child(1),
+        .stat-card:nth-child(1),
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-bottom: 3px solid var(--text);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+        .hero-shapes {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
+    <div class="top-bar">
+      <span>LIBRARY DEEP DIVE</span>
+      <span>2026-11-07</span>
+      <span>Datastar &middot; client-side adoption</span>
+    </div>
+
+    <div class="layout">
+      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#scorecard">Scorecard</a>
+          <a href="#strengths">Current usage</a>
+          <a href="#findings">Findings</a>
+          <a href="#proposal">Full-adoption bill</a>
+          <a href="#appendix">Appendix</a>
+        </nav>
+      </aside>
+
+      <!-- Main content -->
+      <main class="main">
+        <!-- Hero -->
+        <header class="hero">
+          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
+          <div class="hero-shapes">
+            <div class="bar"></div>
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="eyebrow">LIBRARY DEEP DIVE &middot; 2026-11-07</div>
+          <h1>Datastar &mdash; Full Client-Side Adoption</h1>
+          <p class="subtitle">
+            The owner question: webphone carries ~9,800 lines of custom JS &mdash;
+            shouldn&rsquo;t the client side ride Datastar fully? Answer: no. 36% of
+            that surface is WebRTC/SIP-imperative code Datastar&rsquo;s own architecture
+            fences off, the declarative remainder already exists on HTMX, and the
+            one real finding is a CSP lane the embedded engine can now retire.
+          </p>
+          <div class="meta">
+            <span class="tag amber">Verdict: NO-GO (product shell)</span>
+            <span class="tag">Engine: v1.0.3 (embedded)</span>
+            <span class="tag">SDK: go-datastar v0.6.2 (indirect)</span>
+            <span class="tag teal">Posture score: 78/100</span>
+          </div>
+        </header>
+
+        <!-- Scorecard -->
+        <section id="scorecard" class="scorecard">
+          <div class="score-card score-good">
+            <div class="score">78</div>
+            <div class="label">Posture score /100 (high band)</div>
+          </div>
+          <div class="score-card">
+            <div class="score">3,560</div>
+            <div class="label">LOC media-imperative (36% of client JS)</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">164</div>
+            <div class="label">hx-* sites already declarative</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">1</div>
+            <div class="label">Missed opportunity (/health nonce lane)</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">0</div>
+            <div class="label">Anti-patterns</div>
+          </div>
+        </section>
+
+        <!-- Summary -->
+        <section id="summary">
+          <h2><span class="num">00</span>Summary</h2>
+          <p>
+            The premise is half right: webphone serves 9,844 lines of JS (custom
+            + vendored), and none of it is a framework. But the shape of that
+            code is the answer to the question. 3,560 lines across eight island
+            modules are WebRTC/SIP orchestration &mdash; sip.js sessions,
+            RTCPeerConnection, getUserMedia, AudioContext capture, device
+            routing, hold/ring state machines &mdash; which Datastar's own
+            vocabulary (<code>data-ignore</code>, web components) exists to
+            fence OFF, not absorb. The shell's server-driven surface is
+            already declarative: 164 pinned <code>hx-*</code> attributes with
+            morph swaps over the same go-sse transport Datastar builds on. What
+            remains are thin delegated affordances whose replacement would cost
+            a third CSP lane and a second reactive idiom.
+          </p>
+          <div class="callout callout-amber">
+            <strong>The bottom line</strong>
+            Full client-side adoption is a NO. It reaffirms the 2026-11-04
+            transitive ruling (docs/review/libs/go-datastar.md) with the
+            client-side evidence that ruling lacked, and it supersedes that
+            ruling's refresh-trigger paragraph: the trigger does not fire.
+            The audit ships one actionable finding: /health's 'unsafe-eval'
+            grant is now avoidable &mdash; the embedded v1.0.3 engine ships a
+            nonce + Trusted Types lane the dashboard library does not use yet
+            (filed in TODO_LIST).
+          </div>
+        </section>
+
+        <!-- Current usage -->
+        <section id="strengths">
+          <h2><span class="num">&#9670;</span>Current usage</h2>
+          <p>
+            Datastar is not absent from webphone &mdash; it is deliberately
+            scoped to the one surface whose shape fits it. This is the baseline
+            the adoption question starts from.
+          </p>
+
+          <div class="strengths">
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The health dashboard already rides it</strong>
+                <span
+                  >internal/app/dashboard.go:55 &mdash;
+                  <code>dashboard.WithEmbeddedDatastarSDK()</code>; the embedded
+                  engine (v1.0.3, 33,538 bytes) serves from
+                  <code>/health/datastar.js</code>. A live server-driven metrics
+                  page with zero custom JS is exactly Datastar's sweet
+                  spot.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The realtime fabric is shared</strong>
+                <span
+                  >/events rides go-sse &mdash; the same transport go-datastar
+                  builds its patches-as-values model on (SDK README: every patch
+                  is an <code>sse.Event</code>). Adopting the protocol later
+                  would reuse the existing hub, not replace it.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The tab surface is already declarative</strong>
+                <span
+                  >164 <code>hx-*</code> attributes across the templ views (42
+                  hx-swap, 36 hx-target, 22 hx-post, 16 hx-get, &hellip;) with
+                  <code>morph:innerHTML</code> swaps on five live surfaces
+                  &mdash; the same reactive-server pattern Datastar's element
+                  patches implement, already pinned by the DOM contract and the
+                  stack browser E2E.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The island's state machines are test-owned</strong>
+                <span
+                  >46 node:test modules pin hold pending/queued transitions,
+                  ring queueing, dial-gate verdicts, transcription lifecycle,
+                  drafts guards &mdash; the honesty contract is executable, not
+                  aspirational.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>CSP postures are test-fenced</strong>
+                <span
+                  >strict shell (TestServedPageSatisfiesStrictCSP,
+                  internal/server/server_test.go:516), nonce lane only on /login
+                  (login_page_test.go:18), eval lane only on /health
+                  (TestAppDashboardMountsHealthSubtree,
+                  internal/app/app_test.go:135).</span
+                >
+              </div>
+            </div>
+          </div>
+
+          <p>
+            Dependency shape: go-datastar v0.6.2 + go-datastar/static v0.6.1 +
+            templ-components/datastar v1.27.0, all indirect, all consumed
+            exclusively through the dashboard lane &mdash; webphone's own Go
+            code imports none of them. The engine bundle carries a v1.0.3 header
+            and boots one of two expression lanes: bare
+            <code>Function()</code> (eval) or, when
+            <code>&lt;html data-nonce&gt;</code> is present, a Trusted Types
+            policy + nonced script injection &mdash; both verified in the
+            bundle's bytes.
+          </p>
+        </section>
+
+        <!-- Findings -->
+        <section id="findings">
+          <h2><span class="num">01</span>Findings</h2>
+          <p>
+            Ordered by impact. F1&ndash;F3 carry the verdict; F4 is the one
+            actionable miss; F5&ndash;F7 close the remaining pro-adoption
+            arguments honestly.
+          </p>
+
+          <!-- F1 -->
+          <div class="issue issue-critical" id="finding-1">
+            <span class="severity severity-critical"
+              >Verdict core &middot; Architecture</span
+            >
+            <h3>
+              F1 &middot; The island is exactly what Datastar fences off &mdash;
+              3,560 lines stay imperative under any posture
+            </h3>
+            <div class="where">
+              internal/web/assets/island/app/ &middot; calls.js 1,847 &middot;
+              transcribe.js 535 &middot; connection.js 469 &middot; ice.js 201
+              &middot; audio.js 142 &middot; audioout.js 140 &middot; mic.js
+              116 &middot; pcsetup.js 96
+            </div>
+            <p>
+              This is the decisive fact. The island is sip.js session
+              orchestration (INVITE/REFER/NOTIFY sipfrag, DTMF as
+              application/dtmf-relay), RTCPeerConnection setup, getUserMedia
+              device capture, AudioContext ASR routing with setSinkId tone
+              routing, a watchdog around sip.js 0.21.2's known reconnect hang,
+              and pending-state machines (hold pending/queued, ring queue).
+              Upstream Datastar's own answer for code like this is to keep it
+              imperative: <code>data-ignore</code> skips a subtree entirely
+              (the reference frames it as the escape hatch for third-party
+              libraries), and the framework's sanctioned bridge for imperative
+              code is wrapping it in a web component &mdash; the data-star.dev
+              homepage demo is itself an imperative star-field custom element
+              driven by <code>data-attr:*</code>. "Full Datastar" therefore
+              means hosting these 3,560 lines <em>unchanged</em> behind a fence:
+              zero lines removed, one paradigm added.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Resolution</strong>
+              Keep the island imperative. Its boundaries are already enforced:
+              internal/arch/arch_test.go pins the acyclic module graph, and
+              TestIslandModulesMatchImportClosure pins the entry surface.
+            </div>
+          </div>
+
+          <!-- F2 -->
+          <div class="issue issue-important" id="finding-2">
+            <span class="severity severity-important"
+              >Verdict core &middot; One-idiom doctrine</span
+            >
+            <h3>
+              F2 &middot; The declarative surface already exists &mdash; it is
+              HTMX, and it is load-bearing
+            </h3>
+            <div class="where">
+              internal/web/views/*.templ &middot; 164 hx-* attribute instances
+              &middot; cqrs-htmx foundation (100/100, 2026-10-25 audit)
+            </div>
+            <p>
+              The tabs are not hand-rolled JS &mdash; they are server-rendered
+              templ fragments swapped by htmx with
+              <code>hx-swap="morph:innerHTML"</code> (idiomorph) on the thread
+              list, transcript, fax list, contacts panel and voicemail re-fetch;
+              focus, drafts and listeners survive swaps by design. Datastar's
+              element patches implement the same
+              server-morphs-DOM pattern &mdash; adopting them beside htmx buys a
+              second morph idiom that can disagree with the first, and replacing
+              htmx orphans the cqrs-htmx response vocabulary the whole server is
+              shaped around. The 2026-11-04 ruling priced exactly this ("a
+              second reactive idiom for zero product gain"); this audit adds the
+              number that mattered: the would-be replacement surface is 164
+              pinned sites, not greenfield.
+            </p>
+          </div>
+
+          <!-- F3 -->
+          <div class="issue issue-important" id="finding-3">
+            <span class="severity severity-important"
+              >Verdict core &middot; Security posture</span
+            >
+            <h3>
+              F3 &middot; Expressions are eval-shaped &mdash; the strict shell
+              CSP is the wall, and the nonce lane is not free
+            </h3>
+            <div class="where">
+              datastar.js (go-datastar/static@v0.6.1) &middot; 1
+              Function( occurrence in the bundle &middot; pins:
+              internal/server/server_test.go:516, internal/server/login_page_test.go:18
+            </div>
+            <p>
+              Every <code>data-on:*</code> expression compiles at runtime. The
+              bundle's bytes show the two lanes: bare <code>Function()</code>
+              (needs script-src 'unsafe-eval') or, if
+              <code>&lt;html data-nonce&gt;</code> is set, a Trusted Types
+              policy plus nonced script injection (eval-free). The main shell's
+              CSP is strict-pinned with zero exceptions today; the ONE nonce
+              lane is /login, minted per request for the loginpage library.
+              Putting the product shell in nonce mode for Datastar means a
+              third CSP posture plus nonce plumbing through layout.Base &mdash;
+              to replace affordances shell.js already implements as 5&ndash;15
+              line delegated handlers (79 document-level listeners, each with a
+              visible-surface error path per the 2026-10-27 owner ruling).
+            </p>
+          </div>
+
+          <!-- F4 -->
+          <div class="issue issue-critical" id="finding-4">
+            <span class="severity severity-critical"
+              >Missed opportunity &middot; Actionable</span
+            >
+            <h3>
+              F4 &middot; /health keeps 'unsafe-eval' although the embedded
+              engine can now run without it
+            </h3>
+            <div class="where">
+              go-health-dashboard@v0.13.2/csp.go:24 appends 'unsafe-eval'
+              unconditionally &middot; engine v1.0.3 nonce lane unused &middot;
+              webphone pin: internal/app/app_test.go:135 expects it
+            </div>
+            <p>
+              The dashboard library's CSP builder still adds 'unsafe-eval'
+              ("required because the Datastar SDK" compiles expressions) &mdash;
+              true when the lane was built, no longer true for engine v1.0.3:
+              the same bundle now ships the data-nonce + Trusted Types path.
+              This is the audit's only genuine gap against the library's
+              current capability set, and it is upstream-first: go-health-dashboard
+              would emit <code>data-nonce</code> on its page and grant
+              <code>'nonce-&hellip;'</code> instead of 'unsafe-eval' on the
+              subtree; webphone then re-pins TestAppDashboardMountsHealthSubtree
+              to assert the nonce form.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Filed in TODO_LIST (2026-11-07 section): upstream change in
+              go-health-dashboard, then flip the app_test.go:135 assertion from
+              unsafe-eval to nonce- and keep the dashboard's eval lane gone.
+            </div>
+          </div>
+
+          <!-- F5 -->
+          <div class="issue issue-nice" id="finding-5">
+            <span class="severity severity-nice"
+              >Declined with reason &middot; Low impact</span
+            >
+            <h3>
+              F5 &middot; templ-components/datastar rides unconsumed in the
+              v1.27.0 pin &mdash; correctly
+            </h3>
+            <div class="where">
+              templ-components/datastar@v1.27.0 &middot; indicator,
+              live_region, loading_button, polled_region, sse_error_handling,
+              sdk_script
+            </div>
+            <p>
+              The component family is one <code>go get</code> away, but every
+              component drags the Datastar runtime in, and each overlaps a
+              byte-pinned affordance: loading_button duplicates the sendIndicator
+              one-home spinner + hx-disabled-elt pattern; live_region duplicates
+              #toasts/#wp-live (role=status, pinned); sse_error_handling
+              duplicates the .wp-error responseHandling contract (byte-pinned in
+              server_test.go). The 2026-11-04 templ-components sweep's decline
+              stance extends to these by construction.
+            </p>
+          </div>
+
+          <!-- F6 -->
+          <div class="issue issue-nice" id="finding-6">
+            <span class="severity severity-nice"
+              >Counterexample &middot; Low impact</span
+            >
+            <h3>
+              F6 &middot; The JSON-up action model fights honest multipart
+              &mdash; file sends are the wall
+            </h3>
+            <div class="where">
+              gateway seam: createFilePart (honest Content-Type, byte-pinned
+              part headers) &middot; compose paths: MMS attachments, fax PDFs
+            </div>
+            <p>
+              Datastar's backend actions are JSON-up/HTML-down, and its file
+              binding serialises file inputs as base64 signals. The compose
+              paths ride multipart with honest part headers &mdash; deliberately,
+              because the Telnyx bridge sniffs only as the octet-stream
+              fallback. Base64-in-JSON inflates multi-megabyte MMS/fax payloads
+              by ~33% and re-encodes at the boundary; the current
+              <code>hx-encoding</code> FormData path is the honest wire.
+            </p>
+          </div>
+
+          <!-- F7 -->
+          <div class="issue issue-nice" id="finding-7">
+            <span class="severity severity-nice"
+              >Held &middot; Refresh trigger</span
+            >
+            <h3>
+              F7 &middot; Signals would buy nothing the fragment contract
+              doesn't deliver &mdash; the live Reports tab is the canonical
+              future trigger
+            </h3>
+            <div class="where">
+              Notifier.Project table (event&rarr;SSE policy) &middot; Reports:
+              pure projection, static by design (issue #12)
+            </div>
+            <p>
+              Every live surface either morphs server HTML (threads, transcript,
+              fax, voicemail, contacts) or is media-imperative. The one
+              signal-shaped surface webphone could grow is a live-updating
+              Reports tab &mdash; fine-grained numeric state pushed as
+              <code>datastar-patch-signals</code> is exactly what signals are
+              for. That is the sharpened refresh trigger this report leaves
+              behind; it does not fire today.
+            </p>
+          </div>
+        </section>
+
+        <!-- Proposal: the bill -->
+        <section id="proposal">
+          <h2><span class="num">02</span>What full adoption would actually cost</h2>
+          <p>
+            "Leverage Datastar fully" has exactly one coherent meaning: the
+            island moves behind <code>data-ignore</code> fences / web-component
+            wrappers, and the shell + tabs re-encode their reactive surface in
+            data-* attributes. Priced:
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Item</th>
+                <th>Scale</th>
+                <th>Reversible?</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>DOM contract re-pin</td>
+                <td>every id/class datastar re-encodes; TestServedPageHoldsTheDomContract + docs/dom-contract.md</td>
+                <td class="no">Expensively</td>
+              </tr>
+              <tr>
+                <td>Stack browser E2E re-record</td>
+                <td>full suite; it greps served bytes, fails at no compile time</td>
+                <td class="no">Expensively</td>
+              </tr>
+              <tr>
+                <td>Island/shell spec rewrite</td>
+                <td>46 node:test modules; shell-side specs re-conceived as attribute assertions</td>
+                <td>Partially</td>
+              </tr>
+              <tr>
+                <td>Third CSP lane on the product shell</td>
+                <td>per-request nonce plumbing through layout.Base + pin churn</td>
+                <td>Yes</td>
+              </tr>
+              <tr>
+                <td>Second reactive bundle</td>
+                <td>engine 33.5 KB (11.90 KiB gzip) beside htmx + /htmx-ext.js, both morphing DOM</td>
+                <td>Yes</td>
+              </tr>
+              <tr>
+                <td>Island re-host behind web components</td>
+                <td>3,560 LOC moved, zero removed; DOM contract + E2E strings churn</td>
+                <td class="no">Large rewrite</td>
+              </tr>
+              <tr>
+                <td>Net island LOC removed</td>
+                <td><span class="highlight">0</span> &mdash; the fence is the point</td>
+                <td>&mdash;</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout callout-teal">
+            <strong>The target state is the current state</strong>
+            The stack keeps: imperative island (fenced by tests, not by a
+            framework), htmx morph surface (pinned), strict CSP (pinned),
+            go-sse transport (shared with any future Datastar surface). What
+            ships from this audit is F4 alone.
+          </div>
+
+          <h3>Opportunities, ranked (impact &times; ease)</h3>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Opportunity</th>
+                <th>Impact</th>
+                <th>Ease</th>
+                <th>Priority</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>Retire /health 'unsafe-eval' via the engine's nonce lane (upstream go-health-dashboard, then re-pin)</td>
+                <td class="yes">4</td>
+                <td class="yes">4</td>
+                <td><span class="highlight">16</span></td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>Sharpened refresh triggers recorded (ruling pointer + live-Reports trigger) &mdash; done in this train</td>
+                <td class="yes">3</td>
+                <td class="yes">5</td>
+                <td><span class="highlight">15</span></td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Live-updating Reports tab on datastar-patch-signals &mdash; hold until the product wants it</td>
+                <td>3</td>
+                <td>2</td>
+                <td>6 (hold)</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>Engine/SDK bumps (v0.6.3 SDK) &mdash; transitive, ride the dashboard consumer</td>
+                <td>1</td>
+                <td>5</td>
+                <td>5 (no webphone action)</td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>templ-components/datastar components &mdash; declined (runtime drag-in, pinned overlaps)</td>
+                <td>1</td>
+                <td>1</td>
+                <td>1 (declined)</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Appendix -->
+        <section id="appendix">
+          <h2><span class="num">03</span>Appendix</h2>
+
+          <h3>A &middot; Capability inventory (score source)</h3>
+          <p>
+            Adoption-posture score: 12 capability rows, 3 excluded as Not
+            Applicable (with reasons), 9 applicable scored &mdash; 6 sound
+            declines (1 each), 2 partial via the dashboard lane (0.5 each), 1
+            missed (0). 7/9 = 78/100, band <em>high</em>. The score measures
+            decision quality against product needs, not library quality.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Datastar capability</th>
+                <th>Status</th>
+                <th>One-line reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td>SSE element patches (morph default)</td>
+                <td class="yes">Declined, sound</td>
+                <td>Already owned: htmx morph:innerHTML + idiomorph, 164 pinned sites</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td>Signals + computed + data-bind</td>
+                <td class="yes">Declined, sound</td>
+                <td>No surface wants client-reactive state; island state machines own rendering</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td>Backend actions @get/@post (JSON-up)</td>
+                <td class="yes">Declined, sound</td>
+                <td>Fights honest multipart for MMS/fax file sends (F6)</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td>Expression attributes data-on:*</td>
+                <td class="yes">Declined, sound</td>
+                <td>Eval-shaped; strict shell CSP is pinned, third lane not worth it (F3)</td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td>data-ignore / custom-element bridge</td>
+                <td>N/A</td>
+                <td>That IS the island &mdash; the code stays identical either way (F1)</td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td>Web components authoring model</td>
+                <td class="yes">Declined, sound</td>
+                <td>Re-host 3,560 LOC for a zero-LOC win; DOM contract + E2E churn</td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td>Pro attributes (animate, persist, &hellip;)</td>
+                <td>N/A</td>
+                <td>Paid tier; no product want</td>
+              </tr>
+              <tr>
+                <td>8</td>
+                <td>Go SDK patches-as-values, broadcast/replay</td>
+                <td>Partial</td>
+                <td>Dashboard-only consumer, by design; /events stays fragment-shaped</td>
+              </tr>
+              <tr>
+                <td>9</td>
+                <td>Embedded JS client + ScriptHandler (ETag)</td>
+                <td>Partial</td>
+                <td>Dashboard-only; webphone assets already ETag via go-etag</td>
+              </tr>
+              <tr>
+                <td>10</td>
+                <td>templ-components/datastar components</td>
+                <td class="yes">Declined, sound</td>
+                <td>Each drags the runtime in; overlaps byte-pinned affordances (F5)</td>
+              </tr>
+              <tr>
+                <td>11</td>
+                <td>Nonce + Trusted Types CSP lane (v1.0.3)</td>
+                <td class="no">Missed</td>
+                <td>/health could drop 'unsafe-eval' &mdash; filed (F4)</td>
+              </tr>
+              <tr>
+                <td>12</td>
+                <td>Signal-patch reactivity, live numeric surfaces</td>
+                <td>N/A</td>
+                <td>No such surface today; live Reports is the documented trigger (F7)</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>B &middot; The custom-JS surface, classified</h3>
+          <p>
+            9,844 LOC total (snapshot 2026-11-07; a concurrent session is
+            editing island files &mdash; counts move by single digits).
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Class</th>
+                <th>Modules</th>
+                <th>LOC</th>
+                <th>Share</th>
+                <th>Datastar verdict</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Media/SIP imperative</td>
+                <td>calls, transcribe, connection, ice, audio, audioout, mic, pcsetup</td>
+                <td>3,560</td>
+                <td>36.2%</td>
+                <td class="no">Stays &mdash; fenced off by upstream's own design</td>
+              </tr>
+              <tr>
+                <td>Shell affordance glue</td>
+                <td>shell.js (79 delegated listeners)</td>
+                <td>2,684</td>
+                <td>27.3%</td>
+                <td class="no">Stays &mdash; already thin, CSP-blocked, htmx-coupled</td>
+              </tr>
+              <tr>
+                <td>Boot / session / UI / i18n</td>
+                <td>session, ui, main, panels, i18n, typeahead, state, config, auth, dialgate, notify, shortcuts, selftest, ssoerror, csrf</td>
+                <td>3,220</td>
+                <td>32.7%</td>
+                <td class="no">Stays &mdash; imperative plumbing the island consumes</td>
+              </tr>
+              <tr>
+                <td>Standalone surfaces</td>
+                <td>enroll (webauthn + enroll), theme-preload</td>
+                <td>310</td>
+                <td>3.1%</td>
+                <td class="no">Stays &mdash; theme-preload runs pre-paint, before any framework boot</td>
+              </tr>
+              <tr>
+                <td>Vendored</td>
+                <td>sip.min.js (pinned 0.21.2)</td>
+                <td>70</td>
+                <td>0.7%</td>
+                <td class="no">Stays &mdash; the product</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>C &middot; How to verify</h3>
+          <p>
+            Run from the webphone checkout root, inside
+            <code>nix develop</code> where noted.
+          </p>
+          <pre><code>wc -l internal/web/assets/island/app/*.js internal/web/assets/shell.js
+# the per-module surface (appendix B sums these)
+
+wc -l internal/web/assets/island/app/{calls,transcribe,connection,ice,audio,audioout,mic,pcsetup}.js | tail -1
+# expect 3560
+
+rg -o 'hx-[a-z-]+' internal/web/views -g '*.templ' | wc -l
+# expect 164 (snapshot; the 2026-11-07 UX train adds sites)
+
+ls internal/web/assets/island-tests/*.test.mjs | wc -l
+# expect 46
+
+rg -n "WithEmbeddedDatastarSDK" internal/app/dashboard.go
+# expect line 55
+
+rg -n "unsafe-eval" internal/app/app_test.go internal/app/dashboard.go
+# the /health pins (app_test.go:135 asserts the eval+nonce policy today)
+
+nix develop -c go test -count=1 ./internal/app/ -run 'TestAppDashboard|TestAppDashboardDisabled'
+# CSP posture pins green
+
+nix develop -c bash -c 'B=$(go env GOMODCACHE)/github.com/larsartmann/go-datastar/static@v0.6.1/datastar.js; head -c 20 "$B"; wc -c "$B"; grep -c "Function(" "$B"'
+# expect: "// Datastar v1.0.3" header, 33538 bytes, 1 Function( occurrence</code></pre>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+          <p>
+            Generated 2026-11-07 &middot; Reviewed against engine v1.0.3
+            (go-datastar/static v0.6.1), go-datastar v0.6.2, upstream
+            data-star.dev, and webphone HEAD &middot; All engine claims verified
+            against the bundle's bytes
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
