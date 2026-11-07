@@ -984,6 +984,15 @@ h3 {
   cursor: pointer;
   font: inherit;
   font-size: 0.9em;
+  /* F14: the glyph stays 18px but the finger gets 24 — the invisible
+   * ::after extends the hit area without touching the layout. */
+  position: relative;
+}
+
+.wp-chip-x::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
 }
 
 .wp-chip-x:hover {

@@ -2655,6 +2655,12 @@ h3 {
   cursor: pointer;
   font: inherit;
   font-size: 0.9em;
+  position: relative;
+}
+.wp-chip-x::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
 }
 .wp-chip-x:hover {
   color: var(--danger);

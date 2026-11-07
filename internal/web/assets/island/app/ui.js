@@ -152,9 +152,11 @@ export function announce(message, kind = "info", { assertive = false } = {}) {
   toast.textContent = message;
   // Focusable so keyboard users can dismiss (Enter/Space/Escape); the
   // container's role="status" aria-live="polite" already announced it to
-  // screen readers — focus is never stolen on creation.
+  // screen readers — focus is never stolen on creation. The title is
+  // the visible-cursor's explanation (M25): click dismisses.
   toast.tabIndex = 0;
-  const dismiss = () => toast.remove();
+  toast.title = "Dismiss";
+  const dismiss = () => removeToast(toast);
   toast.addEventListener("click", dismiss);
   toast.addEventListener("keydown", (event) => {
     if (event.key === "Enter" || event.key === " " || event.key === "Escape") {
@@ -163,9 +165,28 @@ export function announce(message, kind = "info", { assertive = false } = {}) {
     }
   });
   els.toasts.append(toast);
-  while (els.toasts.children.length > TOAST_MAX)
-    els.toasts.firstChild?.remove();
+  while (els.toasts.children.length > TOAST_MAX) {
+    removeToast(/** @type {HTMLElement} */ (els.toasts.firstChild));
+  }
   setTimeout(dismiss, TOAST_MS[kind] ?? TOAST_MS.info);
+}
+
+// M42: a toast that held focus must not evict it to <body> when it is
+// removed — by expiry, by the stack cap, or by dismissal. Focus moves
+// to the newest surviving toast; with none left it lands on the host's
+// next focusable (the browser default for a removed focused node would
+// be the body, a dead end for keyboard users).
+/** @param {HTMLElement} toast */
+function removeToast(toast) {
+  const active = document.activeElement;
+  if (active && toast.contains(active)) {
+    const rest = /** @type {HTMLElement[]} */ (
+      Array.from(els.toasts.children)
+    ).filter((node) => node !== toast);
+    const next = rest.length ? rest[rest.length - 1] : null;
+    if (next) next.focus();
+  }
+  toast.remove();
 }
 
 /** @type {ReturnType<typeof setTimeout> | null} */
