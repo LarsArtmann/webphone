@@ -27,10 +27,12 @@ F1 ink direction, F19 signed-out shape.
 
 Residue harvested 2026-11-07 (the execution train's open items):
 
-- [ ] M20 (report §f item 37): voicemail reload failure copy — surface the
-      silent `!res.ok` paths in the history/contacts loads the way the
-      voicemail refresh names its failure; the reload affordance needs the
-      same honest copy.
+- [x] M20 (report §f item 37) DONE 2026-11-07 (commit 5c368085): voicemail
+      reload failure got its own copy (`vmLoadFailed` — 401 keeps the auth
+      line), and the history/contacts loads announce a warn toast on both
+      the `!res.ok` and thrown-fetch arms (`historyLoadFailed`/
+      `contactsLoadFailed`, en+de). Pinned by
+      panels-load-failures.test.mjs (6 specs, suite 318/318, tsc green).
 - [x] Gate evidence closed 2026-11-07: train-start buildflow 74/74 (run
       20261107-032044), train-end 74/74 (run 20261107-084827), `nix flake
   check` all-checks-passed; run ids filed in the status report.
