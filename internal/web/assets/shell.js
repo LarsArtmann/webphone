@@ -698,14 +698,39 @@
       missedCount += 1;
       renderMissedBadge();
     });
+    /** @type {HTMLElement | null} */
+    var pendingHistoryClear = null;
     document.addEventListener("click", function (event) {
       var link = closestHTMLElement(
         eventElement(event),
         "[data-tab='history']",
       );
-      if (!link) return;
-      missedCount = 0;
-      renderMissedBadge();
+      // M38: the click only ARMS the clear — the badge survives a failed
+      // swap (the History tab never arrived, so the reads did not
+      // happen), and clears when THIS link's response succeeds.
+      pendingHistoryClear = link;
+    });
+    document.addEventListener("htmx:afterRequest", function (event) {
+      if (!pendingHistoryClear) return;
+      var elt =
+        (eventDetail(event) && eventDetail(event).elt) || eventElement(event);
+      if (elt !== pendingHistoryClear) return;
+      if (eventDetail(event) && eventDetail(event).successful) {
+        missedCount = 0;
+        renderMissedBadge();
+      }
+      pendingHistoryClear = null;
+    });
+
+    // M26: the tab-error slot renders above the panel, and a SUCCESSFUL
+    // response clears it — a stale error banner must not outlive the
+    // request that supersedes it (failed responses keep it: the banner
+    // IS their surface).
+    document.addEventListener("htmx:afterRequest", function (event) {
+      var detail = eventDetail(event);
+      if (!detail || !detail.successful) return;
+      var slot = document.getElementById("wp-tab-error");
+      if (slot && slot.firstChild) slot.replaceChildren();
     });
 
     // 2d-2. Agent-mode pill (M13): the textagent's draft autonomy,
@@ -2123,6 +2148,22 @@
       document.documentElement.classList.contains("wp-island-collapsed"),
     );
 
+    // M31: a live call force-re-expands the island (the CSS :has() rule
+    // is the belt) — this listener is the suspenders: aria-expanded tells
+    // the truth and a screen reader hears WHY the layout moved. The
+    // stored preference is not rewritten; the next call-less state
+    // returns to it.
+    document.addEventListener("wp:calls-changed", function () {
+      var live = document.querySelector(".call-card:not(.wp-ended-card)");
+      if (
+        live &&
+        document.documentElement.classList.contains("wp-island-collapsed")
+      ) {
+        applyIslandCollapsed(false);
+        announceLive("Call in progress — the phone panel expanded.");
+      }
+    });
+
     if (islandToggle) {
       islandToggle.addEventListener("click", function () {
         var collapsed = !document.documentElement.classList.contains(
@@ -2149,13 +2190,14 @@
       ["H", "Hang up the focused call"],
       ["M", "Mute / unmute the focused call"],
       ["P", "Hold / resume the focused call"],
-      ["Esc", "Reject incoming, or hang up"],
-      ["Enter", "Send the message you are typing"],
+      [ "Esc", "Reject incoming, or hang up" ],
+      [ "[ / ]", "Switch between live calls" ],
+      [ "Enter", "Send the message you are typing" ],
       ["Shift+Enter", "New line in the composer"],
       ["Ctrl/Cmd+K", "Command palette"],
       ["?", "This help"],
     ];
-    /** @type {HTMLElement | null} */
+    /** @type {HTMLDialogElement | null} */
     var overlay = null;
     /** @type {HTMLInputElement | null} */
     var overlayInput = null;
@@ -2206,6 +2248,14 @@
         label: "Call a number",
         run: function () {
           var dest = document.getElementById("dest");
+          // M32: the island may be collapsed — expanding first is the
+          // action's whole point; the stored preference is not
+          // rewritten, the expansion is as transient as the call.
+          if (
+            document.documentElement.classList.contains("wp-island-collapsed")
+          ) {
+            applyIslandCollapsed(false);
+          }
           if (dest) dest.focus();
         },
       });
@@ -2306,11 +2356,11 @@
     };
 
     var buildOverlay = function () {
-      var panel = document.createElement("div");
+      // M33: a NATIVE dialog — focus containment, scroll lock and ESC
+      // come from the platform instead of hand-rolled traps.
+      var panel = document.createElement("dialog");
       panel.id = "wp-palette";
       panel.className = "wp-overlay";
-      panel.hidden = true;
-      panel.setAttribute("role", "dialog");
       panel.setAttribute("aria-label", "Command palette");
       var input = document.createElement("input");
       input.type = "text";
@@ -2375,7 +2425,7 @@
       overlayReturnFocus = /** @type {HTMLElement | null} */ (
         document.activeElement
       );
-      panel.hidden = false;
+      panel.showModal();
       input.setAttribute("aria-expanded", "true");
       input.value = "";
       input.placeholder =
@@ -2386,7 +2436,7 @@
 
     var closeOverlay = function () {
       if (overlay) {
-        overlay.hidden = true;
+        if (overlay.open) overlay.close();
         var input = overlayInput;
         if (input) input.setAttribute("aria-expanded", "false");
       }
@@ -2400,7 +2450,7 @@
     var paletteOpen = document.getElementById("wp-palette-open");
     if (paletteOpen) {
       paletteOpen.addEventListener("click", function () {
-        if (overlay && !overlay.hidden) closeOverlay();
+        if (overlay && overlay.open) closeOverlay();
         else openOverlay("commands");
       });
     }
@@ -2411,7 +2461,7 @@
         (event.key === "k" || event.key === "K")
       ) {
         event.preventDefault();
-        if (overlay && !overlay.hidden) closeOverlay();
+        if (overlay && overlay.open) closeOverlay();
         else openOverlay("commands");
         return;
       }

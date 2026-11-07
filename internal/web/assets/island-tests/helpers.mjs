@@ -133,13 +133,16 @@ export function installBrowserGlobals() {
         };
         return node === this || walk(this);
       },
-      // Native <dialog> surface (the lightbox singleton): showModal/close
-      // are observable as flags on the stub.
+      // Native <dialog> surface (the lightbox + the palette overlay):
+      // showModal/close are observable as BOTH flags — `opened` is the
+      // lightbox tests' legacy name, `open` is the real DOM property.
       showModal() {
         this.opened = true;
+        this.open = true;
       },
       close() {
         this.opened = false;
+        this.open = false;
       },
       style: {},
       dataset: {},

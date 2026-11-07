@@ -2294,10 +2294,6 @@ a:focus-visible {
   background: var(--scrim);
 }
 
-.wp-overlay[hidden] {
-  display: none;
-}
-
 .wp-overlay-input {
   width: 100%;
   max-width: 480px;

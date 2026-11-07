@@ -596,7 +596,7 @@ test("Ctrl+K opens the palette, filters, runs, and closes", () => {
     });
     const overlay = findOverlay();
     assert.ok(overlay, "overlay created");
-    assert.equal(overlay.hidden, false);
+    assert.equal(overlay.open, true);
     const input = overlay.children[0];
     const list = overlay.children[1];
     assert.ok(list.children.length >= 4, "tabs plus shell actions listed");
@@ -611,7 +611,7 @@ test("Ctrl+K opens the palette, filters, runs, and closes", () => {
     fireOn(input, "input");
     fireOn(input, "keydown", { key: "Enter" });
     assert.deepEqual(clicked, ["messages"], "Enter runs the selected row");
-    assert.equal(overlay.hidden, true, "overlay closes after running");
+    assert.equal(overlay.open, false, "overlay closes after running");
   } finally {
     doc.querySelectorAll = realQuerySelectorAll;
   }
@@ -626,10 +626,10 @@ test("Escape closes the palette without running anything", () => {
       preventDefault: () => {},
     });
     const overlay = findOverlay();
-    assert.equal(overlay.hidden, false);
+    assert.equal(overlay.open, true);
     const input = overlay.children[0];
     fireOn(input, "keydown", { key: "Escape" });
-    assert.equal(overlay.hidden, true);
+    assert.equal(overlay.open, false);
   } finally {
     doc.querySelectorAll = realQuerySelectorAll;
   }
@@ -642,14 +642,14 @@ test("? opens the shortcut help outside typing fields", () => {
     preventDefault: () => {},
   });
   const overlay = findOverlay();
-  assert.equal(overlay.hidden, false);
+  assert.equal(overlay.open, true);
   const list = overlay.children[1];
   assert.ok(list.children.length >= 8, "every real binding is listed");
   assert.match(list.children[0].textContent, /Answer/);
 
   const input = overlay.children[0];
   fireOn(input, "keydown", { key: "Escape" });
-  assert.equal(overlay.hidden, true);
+  assert.equal(overlay.open, false);
 
   // Typing "?" inside a field must not hijack the key.
   doc.dispatch("keydown", {
