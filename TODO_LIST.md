@@ -145,10 +145,11 @@ What remains, each with its ONE home:
     "generic" is a document-frequency threshold (observed 330 → 331 from one
     CHANGELOG paragraph, then 354 → 360 in one session); **LOCAL CALIBRATION
     2026-11-07 (P1-4 tail)**: `generic_df` is now 16 in `.docs-gates.json`
-    (~0.37 % of the 4 300-line living corpus) instead of the upstream default 8,
-    which alone dropped the residue 360 → 101 — the sweep of values (8→360,
-    12→181, 16→101, 20→76, 30→40) is the evidence, and a planted nonsense §f
-    item is still flagged. Upstream should scale the default with corpus size
+    (**the rule: a token on more than ~0.5 % of the living corpus's lines is too
+    common to prove a harvest**, so it is re-derived from the line count each
+    sweep) instead of the upstream default 8, which alone dropped the residue
+    360 → 71 — the sweep of values (8→360, 12→181, 16→101, 20→76, 22→71, 30→40)
+    is the evidence, and a planted nonsense §f item is still flagged. Upstream should scale the default with corpus size
     and expose it on the CLI (it is config-file-only today). Also: a standalone
     verb ignores `.docs-gates.json`'s ratchets while `run` honors them.
 20. [x] **Frontend-UX verification tail — DONE 2026-11-07 (P1-4)**: three pins
@@ -157,8 +158,9 @@ What remains, each with its ONE home:
         keep its leading space, and stay one unbreakable German compound — so there
         is no wrap point inside "Transkriptzeilen"); (b) the F20 three-audience
         Settings structure is pinned as an ORDER (prefs < data < collapsed server
-        `<details>` between them) plus the 10 hand-written shortcut rows, which no
-        helper generates; (c) `#wp-palette-open` is now a real disclosure —
+        `<details>` between them) plus a per-section dl-count pin (the 10
+        hand-written shortcut rows, which no helper generates); (c)
+        `#wp-palette-open` is now a real disclosure —
         `aria-controls="wp-palette"` + `aria-expanded`, kept in step by `shell.js`
         at runtime, documented in docs/dom-contract.md § Notes.
 21. **annotate.go/docs-gates tooling nits** (found by the docs-health v9 sweep

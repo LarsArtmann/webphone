@@ -1,12 +1,12 @@
 {
   "annotate_max": 205,
-  "audit_max": 101,
+  "audit_max": 71,
   "cadence": {
     "max_unarchived": 65,
     "oldest_days": 45,
     "struck_rows": 20
   },
-  "generic_df": 16,
+  "generic_df": 22,
   "rule_f": true,
   "rule_f_extensions": [
     ".md",
