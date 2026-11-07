@@ -142,8 +142,14 @@ What remains, each with its ONE home:
 19. **Record the DF-brittleness + standalone-verb gotchas UPSTREAM** (docs-gates
     repo, Artmann-Technologies): `audit_max` shifts with living-doc growth because
     "generic" is a document-frequency threshold (observed 330 → 331 from one
-    CHANGELOG paragraph), and a standalone verb ignores `.docs-gates.json` while
-    `run` honors it.
+    CHANGELOG paragraph, then 354 → 360 in one session); **LOCAL CALIBRATION
+    2026-11-07 (P1-4 tail)**: `generic_df` is now 16 in `.docs-gates.json`
+    (~0.37 % of the 4 300-line living corpus) instead of the upstream default 8,
+    which alone dropped the residue 360 → 101 — the sweep of values (8→360,
+    12→181, 16→101, 20→76, 30→40) is the evidence, and a planted nonsense §f
+    item is still flagged. Upstream should scale the default with corpus size
+    and expose it on the CLI (it is config-file-only today). Also: a standalone
+    verb ignores `.docs-gates.json`'s ratchets while `run` honors them.
 20. [x] **Frontend-UX verification tail — DONE 2026-11-07 (P1-4)**: three pins
         landed in `internal/web/views/settings_structure_test.go`. (a) the admin
         line-count copy is pinned in BOTH languages (it must name the transcript,
