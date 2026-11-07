@@ -119,6 +119,34 @@ Same command, same host. Island JS separately:
   reading stands: high % ≠ high trust, and `server/api` at 7.1% is fine
   because its bytes are contract-pinned.
 
+## 2026-11-07 delta — `internal/store` 64.8% → 82.4 % (P1-1 store test train)
+
+One new file, `internal/store/legacy_import_test.go`, closed the biggest
+untested block in the package: the transitional reads of the RETIRED SQL tables
+(`contacts`, `fax_jobs`, `snippets`, `call_transcripts`) plus the `app_flags`
+helpers. These are not screen paths — they run once at boot on an upgraded
+deployment and then stamp "imported", so a regression imports nothing and
+leaves the flag behind. Before this train four readers and four translators sat
+at 0.0%.
+
+| Function                                 | before | after  |
+| ---------------------------------------- | ------ | ------ |
+| `ReadLegacyContacts` / `ToContact`       | 0.0%   | 100.0% |
+| `ReadLegacyFaxes` / `ToFax`              | 0.0%   | 100% / 81.2% |
+| `ReadLegacySnippets` / `ToSnippet`       | 0.0%   | 100.0% |
+| `ReadLegacyTranscripts` / `ToSegment`    | 0.0%   | 100.0% |
+| `FlagPresent` / `FlagValue` / `SetFlag`  | 0.0%   | 85.7% / 85.7% / 66.7% |
+| **package total**                        | 64.8%  | **82.4%** |
+
+The admin read seams the 2026-11-06 reading flagged were already pinned by
+`store/admin_reads_test.go` (both directions: the `*Any` seam crosses lines, its
+owner-scoped sibling still refuses); this train only measured them
+(`ListAllThreads` 76.9%, `GetThreadAny` 85.7%, `AttachmentByIDAny` 85.7% — the
+remainder is the `errorfamily.WrapInfrastructuref` branch) and mutation-proved
+one assertion: replacing `ToContact`'s owner parse with a constant makes
+`TestToContactSkipsCorruptRowsAndDemotesTheID` fail, then passes again on
+restore.
+
 ## Decision: views coverage stays transitive (plan T26)
 
 `internal/views` renders templ components; DIRECT render tests would
