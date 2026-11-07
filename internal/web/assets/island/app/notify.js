@@ -57,3 +57,10 @@ export function titleFlashStop() {
   titleFlashTimer = null;
   document.title = originalTitle;
 }
+
+// M18: the in-call title's reset path — calls.js hands the idle title
+// back when the last call ends (the flash machinery above keeps its
+// own timing, this is the plain restore).
+export function restoreTitle() {
+  document.title = originalTitle;
+}

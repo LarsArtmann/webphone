@@ -37,7 +37,7 @@ import {
   refreshServerHistory,
   scheduleVoicemailRefresh,
 } from "./panels.js";
-import { titleFlashStop } from "./notify.js";
+import { restoreTitle, titleFlashStop } from "./notify.js";
 import { applyTransition, sessions, state, viewStateOf } from "./state.js";
 import {
   CAPTION_LINE_CAP,
@@ -807,7 +807,43 @@ export function renderCalls() {
   // the module-graph invariant the arch test enforces).
   document.dispatchEvent(new CustomEvent("wp:calls-changed"));
   if (outgoingCount() === 0) ringbackStop();
+  renderInCallTitle();
 }
+
+// M18: the tab title carries the live call — "what is my phone doing"
+// is answerable from any other tab. The 1s render tick IS the clock
+// (mm:ss from the oldest established call's start); notify.js's ring
+// flash owns the title while ringing, so this takes over only once
+// established and hands it back when the last call ends.
+let inCallTitle = false;
+function renderInCallTitle() {
+  let oldest;
+  sessions.forEach((entry) => {
+    if (
+      entry.session.state === SIP.SessionState.Established &&
+      (!oldest || entry.startedAt < oldest.startedAt)
+    ) {
+      oldest = entry;
+    }
+  });
+  if (oldest) {
+    document.title = `● ${t("inCall")} · ${durationLabel(oldest.startedAt)}`;
+    inCallTitle = true;
+  } else if (inCallTitle) {
+    restoreTitle();
+    inCallTitle = false;
+  }
+}
+
+// M17: closing the tab mid-call hangs up silently — make the browser
+// ask first. A live call is the only reason; closing an idle phone
+// must never nag.
+window.addEventListener("beforeunload", (event) => {
+  if (sessions.size > 0) {
+    event.preventDefault();
+    event.returnValue = "";
+  }
+});
 
 // announceCallState speaks only state TRANSITIONS through the toast
 // live region: the state text itself swaps silently, and once
@@ -1186,9 +1222,18 @@ function toggleTransferRow(card, id) {
   attended.textContent = t("transferAttended");
   blind.addEventListener("click", () => {
     const dest = input.value.trim();
-    if (dest) blindTransfer(id, dest);
+    if (dest) {
+      blindTransfer(id, dest);
+    } else {
+      // M24: an empty destination is a mistake to correct, not a no-op
+      // to swallow — the row stays open for editing.
+      announce(t("transferEmpty"), "warn");
+    }
   });
   attended.addEventListener("click", () => attendedTransfer(id));
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") row.remove();
+  });
   row.append(input, blind, attended);
   card.append(row);
   input.focus();
