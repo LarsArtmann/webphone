@@ -31,8 +31,8 @@ const (
 	// second open tab showing the same call would otherwise keep a stale box
 	// until it reloaded. Payload-less by design — the receiving tab re-fetches
 	// through its own session, exactly like the contacts nudge.
-	sseEventNotes EventName = "notes"
-	sseEventReview    EventName = "review"
+	sseEventNotes  EventName = "notes"
+	sseEventReview EventName = "review"
 )
 
 // ExtensionHubs gives every signed-in extension its own broadcast hub, so

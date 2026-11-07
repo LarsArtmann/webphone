@@ -41,6 +41,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- A saved post-call note now refreshes every open tab (2026-11-07): the save
+  publishes a payload-less live-update nudge the way reviews already did, so a
+  second tab showing the same call stops holding a stale note box. The
+  generated wire contract also declares the review nudge it had shipped
+  undeclared.
 - The command palette's touch button now announces its state: it names the
   dialog it opens and reports whether the palette is showing, so a screen
   reader user is no longer told the palette is closed while it covers the page.
