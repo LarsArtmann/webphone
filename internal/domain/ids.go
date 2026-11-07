@@ -6,6 +6,7 @@
 package domain
 
 import (
+	"encoding/json"
 	"strings"
 
 	id "github.com/larsartmann/go-branded-id"
@@ -43,6 +44,13 @@ func (e Extension) String() string { return e.value }
 
 // IsZero reports whether the extension is the zero value.
 func (e Extension) IsZero() bool { return e.value == "" }
+
+// MarshalJSON renders the raw extension (the id.ID doctrine: branded
+// values JSON-marshal their raw value, never a wrapper object). Under
+// encoding/json v2 semantics an unexported-only struct is a marshal
+// ERROR rather than `{}`, so identity shapes carrying Extensions need
+// this to stay serializable in both modes.
+func (e Extension) MarshalJSON() ([]byte, error) { return json.Marshal(e.String()) }
 
 // Phone is a sanitized remote number (digits with an optional leading +,
 // plus * and # which some dialplans use). The island's dial field uses the

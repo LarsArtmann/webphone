@@ -579,9 +579,13 @@ func TestDiscoveryCacheExpiresAndFailuresStayUncached(t *testing.T) {
 // The groups claim is journal-only admission evidence (2026-10-24):
 // the audit line names who knocked with which groups, and the groups
 // NEVER reach the mapped identity or anything session-shaped.
+//
+// NOT parallel: the test swaps the PROCESS-GLOBAL default slog handler
+// to its own buffer. Under t.Parallel the sibling sso tests keep
+// logging their own "oidc login claims" lines THROUGH that buffer
+// while this test reads it — the data race run 42308961304 detected.
+// Sequential execution is the only sound way to own a global.
 func TestLoginClaimsAuditLineCarriesGroupsOnlyInTheJournal(t *testing.T) {
-	t.Parallel()
-
 	var buf bytes.Buffer
 	prev := slog.Default()
 	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
