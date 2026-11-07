@@ -178,11 +178,11 @@ templ ThreadRow(summary store.ThreadSummary, contacts CRMContacts, lang Lang) {
 		// (the row renders the flip of its current state). The archived
 		// view offers only the way back — the filing cabinet keeps no pins.
 		if summary.Thread.Archived {
-			@threadFlagButton(summary.Thread.ID, "archive", T(lang, "threads.unarchive"), icons.ArchiveBox, 0)
+			@threadFlagButton(summary.Thread.ID, "archive", T(lang, "threads.unarchive"), "", icons.ArchiveBox, 0)
 		} else {
-			@threadFlagButton(summary.Thread.ID, "pin", flagLabel(lang, !summary.Thread.Pinned, "threads.pin", "threads.unpin"), icons.Bookmark, wantInt(!summary.Thread.Pinned))
-			@threadFlagButton(summary.Thread.ID, "mute", flagLabel(lang, !summary.Thread.Muted, "threads.mute", "threads.unmute"), muteIcon(summary.Thread.Muted), wantInt(!summary.Thread.Muted))
-			@threadFlagButton(summary.Thread.ID, "archive", T(lang, "threads.archive"), icons.ArchiveBox, 1)
+			@threadFlagButton(summary.Thread.ID, "pin", flagLabel(lang, !summary.Thread.Pinned, "threads.pin", "threads.unpin"), "", icons.Bookmark, wantInt(!summary.Thread.Pinned))
+			@threadFlagButton(summary.Thread.ID, "mute", flagLabel(lang, !summary.Thread.Muted, "threads.mute", "threads.unmute"), "", muteIcon(summary.Thread.Muted), wantInt(!summary.Thread.Muted))
+			@threadFlagButton(summary.Thread.ID, "archive", T(lang, "threads.archive"), T(lang, "threads.archiveConfirm"), icons.ArchiveBox, 1)
 		}
 	</div>
 }
@@ -191,33 +191,62 @@ templ ThreadRow(summary store.ThreadSummary, contacts CRMContacts, lang Lang) {
 // DESIRED state; the SSE threads nudge re-renders the list, so the
 // button itself swaps nothing (hx-swap none, 204 by responseHandling).
 // Icons are inline SVG strokes (templ-components icons) — platform
-// emoji rendered differently on every OS and read as decoration.
-templ threadFlagButton(id domain.ThreadID, flag, labelKey string, icon icons.Name, on int) {
-	<button
-		type="button"
-		class="wp-mini wp-thread-flag"
-		aria-label={ labelKey }
-		title={ labelKey }
-		hx-post={ flagURL(id, flag, on) }
-		hx-swap="none"
-	>@icons.Icon(icon, "wp-icon")</button>
+// emoji rendered differently on every OS and read as decoration. F3:
+// the archive move is the trash-adjacent misfire risk — it wears the
+// danger tint and asks once (a non-empty confirm) before moving the
+// thread; every other toggle stays one-click.
+templ threadFlagButton(id domain.ThreadID, flag, labelKey, confirm string, icon icons.Name, on int) {
+	if confirm != "" {
+		<button
+			type="button"
+			class="wp-mini wp-thread-flag wp-danger"
+			aria-label={ labelKey }
+			title={ labelKey }
+			hx-post={ flagURL(id, flag, on) }
+			hx-swap="none"
+			hx-confirm={ confirm }
+		>@icons.Icon(icon, "wp-icon")</button>
+	} else {
+		<button
+			type="button"
+			class="wp-mini wp-thread-flag"
+			aria-label={ labelKey }
+			title={ labelKey }
+			hx-post={ flagURL(id, flag, on) }
+			hx-swap="none"
+		>@icons.Icon(icon, "wp-icon")</button>
+	}
 }
 
 // headFlagButton is threadFlagButton aimed at the head itself (M22): a
 // head toggle swaps the header outerHTML — the response is the freshly
 // rendered head with the confirmed state — while the transcript, the
 // scroll place and any reply draft stay untouched. The row variant
-// (above) swaps nothing and rides the SSE list nudge instead.
-templ headFlagButton(id domain.ThreadID, flag, labelKey string, icon icons.Name, on int) {
-	<button
-		type="button"
-		class="wp-mini wp-thread-flag"
-		aria-label={ labelKey }
-		title={ labelKey }
-		hx-post={ flagURL(id, flag, on) }
-		hx-target="#wp-thread-head"
-		hx-swap="outerHTML"
-	>@icons.Icon(icon, "wp-icon")</button>
+// (above) swaps nothing and rides the SSE list nudge instead. F3: the
+// same archive confirm/danger ruling as the row variant.
+templ headFlagButton(id domain.ThreadID, flag, labelKey, confirm string, icon icons.Name, on int) {
+	if confirm != "" {
+		<button
+			type="button"
+			class="wp-mini wp-thread-flag wp-danger"
+			aria-label={ labelKey }
+			title={ labelKey }
+			hx-post={ flagURL(id, flag, on) }
+			hx-target="#wp-thread-head"
+			hx-swap="outerHTML"
+			hx-confirm={ confirm }
+		>@icons.Icon(icon, "wp-icon")</button>
+	} else {
+		<button
+			type="button"
+			class="wp-mini wp-thread-flag"
+			aria-label={ labelKey }
+			title={ labelKey }
+			hx-post={ flagURL(id, flag, on) }
+			hx-target="#wp-thread-head"
+			hx-swap="outerHTML"
+		>@icons.Icon(icon, "wp-icon")</button>
+	}
 }
 
 // ThreadHead is the open conversation's header: the way back, the
@@ -238,11 +267,11 @@ templ ThreadHead(props ThreadViewProps) {
 		>← All messages</a>
 		<h2>{ networkLabel(props.Thread.Remote.Network()) }@crmNameLink(props.Thread.Remote.String(), props.CRM, props.Lang)</h2>
 		if props.Thread.Archived {
-			@headFlagButton(props.Thread.ID, "archive", T(props.Lang, "threads.unarchive"), icons.ArchiveBox, 0)
+			@headFlagButton(props.Thread.ID, "archive", T(props.Lang, "threads.unarchive"), "", icons.ArchiveBox, 0)
 		} else {
-			@headFlagButton(props.Thread.ID, "pin", flagLabel(props.Lang, !props.Thread.Pinned, "threads.pin", "threads.unpin"), icons.Bookmark, wantInt(!props.Thread.Pinned))
-			@headFlagButton(props.Thread.ID, "mute", flagLabel(props.Lang, !props.Thread.Muted, "threads.mute", "threads.unmute"), muteIcon(props.Thread.Muted), wantInt(!props.Thread.Muted))
-			@headFlagButton(props.Thread.ID, "archive", T(props.Lang, "threads.archive"), icons.ArchiveBox, 1)
+			@headFlagButton(props.Thread.ID, "pin", flagLabel(props.Lang, !props.Thread.Pinned, "threads.pin", "threads.unpin"), "", icons.Bookmark, wantInt(!props.Thread.Pinned))
+			@headFlagButton(props.Thread.ID, "mute", flagLabel(props.Lang, !props.Thread.Muted, "threads.mute", "threads.unmute"), "", muteIcon(props.Thread.Muted), wantInt(!props.Thread.Muted))
+			@headFlagButton(props.Thread.ID, "archive", T(props.Lang, "threads.archive"), T(props.Lang, "threads.archiveConfirm"), icons.ArchiveBox, 1)
 		}
 		if props.Thread.Remote.Network() == domain.NetworkSMS {
 			@display.Button(display.ButtonProps{

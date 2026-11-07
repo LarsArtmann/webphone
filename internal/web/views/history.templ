@@ -229,9 +229,10 @@ templ TranscriptSection(props HistoryPanelProps) {
 				// End-user erasure (GDPR leg): confirm-gated delete of the
 				// whole call. The button only carries data — shell.js owns
 				// the confirm + DELETE + row removal (the shell works when
-				// island scripts fail).
+				// island scripts fail). F3: the danger tint marks the one
+				// destructive action among this row's quiet mini buttons.
 				<button
-					class="wp-mini"
+					class="wp-mini wp-danger"
 					data-delete-transcript={ group.CallID }
 					data-confirm={ T(props.Lang, "history.transcript.deleteConfirm") }
 					aria-label={ T(props.Lang, "history.transcript.delete") }
