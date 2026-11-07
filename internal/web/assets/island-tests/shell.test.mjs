@@ -350,7 +350,9 @@ test("missed calls badge in the header and clear when History opens", () => {
     hasAttribute: (name) => name === "data-tab",
   };
   // M38: the click only ARMS the clear — a failed History swap must not
-  // erase counts the operator never saw.
+  // erase counts the operator never saw. The arm is per-click: a spent
+  // arm does not clear on a later stray response; the retry's own click
+  // re-arms.
   doc.dispatch("click", { target: historyNav });
   assert.equal(
     actions.children.some((el) => el.id === "missed-badge"),
@@ -366,6 +368,16 @@ test("missed calls badge in the header and clear when History opens", () => {
     true,
     "a failed History response keeps the badge",
   );
+  doc.dispatch("htmx:afterRequest", {
+    target: historyNav,
+    detail: { elt: historyNav, successful: true },
+  });
+  assert.equal(
+    actions.children.some((el) => el.id === "missed-badge"),
+    true,
+    "a stray success after a spent arm clears nothing",
+  );
+  doc.dispatch("click", { target: historyNav });
   doc.dispatch("htmx:afterRequest", {
     target: historyNav,
     detail: { elt: historyNav, successful: true },
