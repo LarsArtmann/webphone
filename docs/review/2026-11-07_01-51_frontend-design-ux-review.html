@@ -1703,6 +1703,70 @@
             </div>
           </div>
 
+          <!-- F19 (IA) -->
+          <div class="issue issue-important" id="issue-19">
+            <span class="severity severity-important"
+              >Important &middot; information architecture</span
+            >
+            <h3>
+              The signed-out page shows the whole desk with the drawers
+              painted shut
+            </h3>
+            <div class="where">
+              layout.templ <code>Shell</code> / <code>NavLinks</code> &middot;
+              <code>SignInHint</code> placeholder
+            </div>
+            <p>
+              An anonymous visitor gets the complete application chrome:
+              eight navigation tabs, header identity zone, skeleton and error
+              slots &mdash; and behind every tab either a sign-in hint or an
+              empty panel. Seven of the eight destinations are doors into
+              rooms they cannot enter. The welcome panel and the island's
+              login card are both genuinely good, but the IA around them
+              promises an app that does not exist yet. A first impression
+              should be a door, not a floor plan.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Same shell, collapsed promise: signed-out renders without the
+              tab row (or with the nav reduced to a single sign-in anchor)
+              and centers the welcome + login stack. The DOM contract keeps
+              its ids; the nav is the only region that changes shape by
+              session state.
+            </div>
+          </div>
+
+          <!-- F20 (IA) -->
+          <div class="issue issue-important" id="issue-20">
+            <span class="severity severity-important"
+              >Important &middot; audience-mixed panel</span
+            >
+            <h3>Settings serves two masters in one column</h3>
+            <div class="where">
+              settings.templ: server-truth rows ("Operators change these in
+              the config file"), personal snippets, personal data export
+            </div>
+            <p>
+              One panel interleaves three kinds of truth: <em>this
+              server</em> facts (gateway mode, CRM, ASR, fax lanes &mdash;
+              read-only for everyone, actionable only for the operator at
+              the config file), <em>my preferences</em> (reply snippets, and
+              &mdash; scattered across two other surfaces &mdash; language
+              and audio output), and <em>my data</em> (the zip export). An
+              extension user reading Settings cannot tell which rows they
+              could ever act on; the operator's vocabulary leaks into every
+              user's view.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Three sub-sections in the existing panel &mdash; "This server"
+              (collapsed by default, operator voice), "My preferences"
+              (snippets; consider adopting the island's language and speaker
+              pickers as visible rows), "My data" (export). No routes change;
+              only grouping.
+            </div>
+          </div>
+
           <!-- merge marker for agent findings -->
           <!-- AGENT-FINDINGS-MERGE-POINT -->
         </section>
