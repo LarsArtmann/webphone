@@ -117,6 +117,10 @@ func (h *Handlers) SaveContact(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "enter a valid number", http.StatusUnprocessableEntity)
 		return
 	}
+	if len(body.Name) > domain.MaxContactNameLength {
+		http.Error(w, "the contact name is too long", http.StatusUnprocessableEntity)
+		return
+	}
 	contact := domain.Contact{
 		ID:        domain.GenerateContactID(),
 		Owner:     sess.Extension,
