@@ -311,3 +311,14 @@ thread list fragment contains `wp-thread-row` and the transcript page
 contains `wp-bubble`. The templ-components v1.20.0 → v1.20.1 ride
 therefore does not disturb the fragment contract; this note records the
 coverage reasoning so future bumps can re-run the same probe.
+
+### Conditional nav region (F19, 2026-11-07)
+
+`#wp-nav` stays served on every full page (the post-login re-fetch and
+the language switch target it), but its LINKS are session-conditional:
+a signed-out page renders the region with zero `wp-nav-link` anchors —
+the desk's tab row is for sessions that can use it, and the signed-out
+main column (`wp-main-col wp-signed-out`) centers the welcome + login
+stack instead. Pinned by `TestServedPageHoldsTheDomContract` (anonymous
+page must be nav-free; the aria-current contract moved to the authed
+page) and the smoke's nav-partial check.

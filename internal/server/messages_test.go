@@ -156,16 +156,17 @@ func TestNavPartialAndLiveMarkRead(t *testing.T) {
 		t.Fatalf("mark read must be idempotent, got %d", resp.StatusCode)
 	}
 
-	// Anonymous visitors get labels (no session, no badge): the nav is
-	// visible pre-login and the language switch works there too.
+	// F19: a signed-out session gets ZERO links — the desk's tab row is
+	// for sessions that can use it. The nav region still answers (the
+	// post-login re-fetch target), just empty, and never carries badges.
 	anon := newClient(t)
 	resp, body := anon.do(http.MethodGet, "/partials/nav", nil, "")
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("anonymous nav partial: %d", resp.StatusCode)
 	}
 	navBody = string(body)
-	if !strings.Contains(navBody, `data-tab="messages"`) {
-		t.Errorf("anonymous nav partial missing links: %.200s", navBody)
+	if strings.Contains(navBody, `data-tab=`) {
+		t.Errorf("anonymous nav partial must not carry links: %.200s", navBody)
 	}
 	if strings.Contains(navBody, "wp-nav-badge") {
 		t.Errorf("anonymous nav partial must not carry badges: %.200s", navBody)

@@ -252,6 +252,11 @@ func (h *handlers) partialNav(w http.ResponseWriter, r *http.Request) {
 		Lang:      h.lang(r),
 	}
 	if sess, ok := session.From(r.Context()); ok {
+		// F19: the signed-in gate lives in NavLinks — an anonymous nav
+		// renders zero links — so this partial must carry the session
+		// like the full page does or a signed-in re-fetch would wipe the
+		// tab row.
+		props.SignedIn = sess.Extension.String()
 		props.Unread = h.countUnread(r, sess)
 		props.NewVoicemail = h.countVoicemail(r, sess)
 		props.Admin = h.isAdminSession(sess)
