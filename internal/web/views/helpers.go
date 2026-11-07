@@ -183,10 +183,11 @@ func formatClock(lang Lang, t time.Time) string {
 }
 
 // formatStamp renders a beyond-24h timestamp for row meta: German gets
-// the numeric date convention ("22.09. 16:09"), English its
-// existing "Sep 22, 16:09".
+// the numeric date convention ("22.09. 16:09"), English its meridiem
+// form ("Sep 22, 4:09PM") — the same clock formatClock speaks, so an
+// English page never mixes 24h row meta with 12h bubble meta.
 func formatStamp(lang Lang, t time.Time) string {
-	return formatFor(lang, t, "02.01. 15:04", "Jan 2, 15:04")
+	return formatFor(lang, t, "02.01. 15:04", "Jan 2, 3:04PM")
 }
 
 // fullStamp renders the unambiguous absolute moment (date, year, time)

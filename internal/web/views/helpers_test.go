@@ -97,7 +97,7 @@ func TestFormatClockAndStampFollowLanguage(t *testing.T) {
 		clock string
 		stamp string
 	}{
-		{"english keeps the meridiem clock", LangEN, "4:09PM", "Sep 22, 16:09"},
+		{"english keeps the meridiem clock everywhere", LangEN, "4:09PM", "Sep 22, 4:09PM"},
 		{"german goes 24h + numeric date", LangDE, "16:09", "22.09. 16:09"},
 	}
 	for _, tc := range cases {

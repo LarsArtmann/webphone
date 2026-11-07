@@ -170,7 +170,9 @@ export const I18N = {
     switchFailed: (status) => `Could not switch lines (HTTP ${status}).`,
     switchDone: (line) => `Switched to line ${line}.`,
     cooldownNotice: (lastAgo, left) =>
-      `Last call ${lastAgo} ago — redial paused${left ? ` (${left} left)` : ""}.`,
+      lastAgo === "now"
+        ? `Last call just now — redial paused${left ? ` (${left} left)` : ""}.`
+        : `Last call ${lastAgo} ago — redial paused${left ? ` (${left} left)` : ""}.`,
     dialAnyway: "Dial anyway",
     cooldownOverrideFailed: "Could not override the cooldown — try again.",
     cooldownRow: (left) => `cooling down${left ? ` · ${left} left` : ""}`,
@@ -396,7 +398,9 @@ export const I18N = {
       `Nebenstellen-Wechsel fehlgeschlagen (HTTP ${status}).`,
     switchDone: (line) => `Auf Nebenstelle ${line} gewechselt.`,
     cooldownNotice: (lastAgo, left) =>
-      `Letzter Anruf vor ${lastAgo} — Wiederholen pausiert${left ? ` (noch ${left})` : ""}.`,
+      lastAgo === "now"
+        ? `Letzter Anruf gerade eben — Wiederholen pausiert${left ? ` (noch ${left})` : ""}.`
+        : `Letzter Anruf vor ${lastAgo} — Wiederholen pausiert${left ? ` (noch ${left})` : ""}.`,
     dialAnyway: "Trotzdem anrufen",
     cooldownOverrideFailed:
       "Abkühlung konnte nicht umgangen werden — erneut versuchen.",
