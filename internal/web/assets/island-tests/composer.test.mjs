@@ -193,3 +193,36 @@ test("segment count and byte countdown combine", () => {
 
   assert.match(counter.textContent, /SMS · 1502\/1600/, "both facts in one line");
 });
+
+test("double-Enter cannot double-send: a second in-flight submit is dropped", () => {
+  const { area } = composer();
+  const transcript = doc.getElementById("thread-transcript");
+  const form = doc.createElement();
+  form.selector = "form.wp-compose";
+  form.className = "wp-compose";
+  form.append(area);
+  area.value = "hi";
+  const send = () =>
+    doc.dispatch("htmx:beforeRequest", { detail: { elt: form } });
+
+  send();
+  send();
+  assert.equal(
+    transcript.querySelectorAll(".wp-opt").length,
+    1,
+    "exactly one pending bubble exists after a double submit",
+  );
+  assert.ok(
+    transcript.querySelector(".wp-status-queued"),
+    "the surviving bubble is still the honest queued one",
+  );
+
+  doc.dispatch("htmx:afterRequest", { detail: { elt: form, successful: true } });
+  area.value = "again";
+  send();
+  assert.equal(
+    transcript.querySelectorAll(".wp-opt").length,
+    2,
+    "a settled send frees the composer for the next one",
+  );
+});

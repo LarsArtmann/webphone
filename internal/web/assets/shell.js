@@ -1354,6 +1354,15 @@
         (eventDetail(event) && eventDetail(event).elt) || eventElement(event);
       if (!form || !form.matches || !form.matches("form.wp-compose")) return;
       if (form.classList.contains("wp-compose-new")) return;
+      // One in-flight send per composer (double-Enter, double-click): a
+      // second submit would overwrite the pending record and orphan the
+      // first bubble as a forever-"sending" ghost. Dropping the request
+      // in beforeRequest keeps htmx from issuing the duplicate POST and
+      // leaves the honest single bubble in place.
+      if (optPending.has(form)) {
+        event.preventDefault();
+        return;
+      }
       var transcript = document.getElementById("thread-transcript");
       if (!transcript) return;
       var area = form.querySelector("textarea.wp-compose-body");
