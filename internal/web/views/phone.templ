@@ -85,7 +85,7 @@ templ PhoneIsland(props PhoneIslandProps) {
 					<button id="logout" class="ghost small" data-i18n="signOut" data-i18n-title="signOutTitle">sign out</button>
 				</div>
 
-				<form id="dial-form" autocomplete="off" aria-describedby="dial-error">
+				<form id="dial-form" autocomplete="off" novalidate aria-describedby="dial-error">
 					<input id="dest" inputmode="tel" data-i18n-placeholder="dialPlaceholder" data-i18n-arialabel="dialDestLabel" aria-label="Number to call" required></input>
 					<button type="submit" class="primary" id="call-btn" data-i18n="call">Call</button>
 				</form>

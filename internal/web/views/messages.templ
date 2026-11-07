@@ -1,12 +1,14 @@
 package views
 
 import (
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/larsartmann/templ-components/display"
 	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/messaging"
 	"github.com/larsartmann/webphone/internal/store"
 	"github.com/larsartmann/webphone/internal/textagent"
 )
@@ -351,6 +353,7 @@ templ composeBody(lang Lang, placeholderKey string, prefill string) {
 		name="body"
 		class="wp-compose-body"
 		rows="1"
+		maxlength={ strconv.Itoa(messaging.MaxBodyLength) }
 		placeholder={ T(lang, placeholderKey) }
 		aria-label={ T(lang, "compose.body.label") }
 	>
@@ -385,7 +388,7 @@ templ NewMessageForm(prefillTo string, prefillBody string, lang Lang, textAgent 
 		if textAgent {
 			@aiDraftButton(lang, "", "innerHTML")
 		}
-		@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Text: T(lang, "compose.send")})
+		@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Icon: sendIndicator(), Text: T(lang, "compose.send")})
 	</form>
 }
 
@@ -606,7 +609,7 @@ templ ThreadDetail(props ThreadViewProps) {
 					@Transcript(props.Messages, props.Lang, props.ASR)
 				}
 			</div>
-			<button type="button" class="wp-jump-latest" hidden aria-label="jump to the latest messages"></button>
+			<button type="button" class="wp-jump-latest" hidden aria-label={ T(props.Lang, "thread.jumpLatest.label") }></button>
 		</div>
 		@identityLine(props.Lang, props.Identity)
 		<form
@@ -636,13 +639,13 @@ templ ThreadDetail(props ThreadViewProps) {
 				name="attachment"
 				multiple
 				accept="image/jpeg,image/png,image/gif,image/bmp,image/webp,image/tiff,audio/mpeg,audio/wav,audio/amr,audio/ogg,video/mp4,video/3gpp,video/quicktime,application/pdf,text/vcard,.vcf"
-				aria-label="Attachments"
+				aria-label={ T(props.Lang, "compose.attach.label") }
 			></input>
 			<span class="wp-segcount" hidden aria-live="polite"></span>
 			if props.TextAgent {
 				@aiDraftButton(props.Lang, props.Thread.ID.String(), "innerHTML show:window:bottom")
 			}
-			@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Text: T(props.Lang, "compose.send")})
+			@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Icon: sendIndicator(), Text: T(props.Lang, "compose.send")})
 			<div class="wp-attach" hidden></div>
 		</form>
 }

@@ -54,7 +54,7 @@ func VoicemailPanel(props VoicemailPanelProps) templ.Component {
 		}
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<section class=\"wp-panel\" id=\"voicemail-panel\" hx-get=\"/partials/voicemail\" hx-trigger=\"sse:voicemail\" hx-target=\"#tab-content\" hx-swap=\"morph:innerHTML show:window:top\"><header class=\"wp-panel-head\"><h2>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<section class=\"wp-panel\" id=\"voicemail-panel\" hx-get=\"/partials/voicemail\" hx-trigger=\"sse:voicemail\" hx-target=\"#tab-content\" hx-swap=\"morph:innerHTML\"><header class=\"wp-panel-head\"><h2>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
