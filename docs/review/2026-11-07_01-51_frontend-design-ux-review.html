@@ -885,9 +885,9 @@
           <p class="subtitle">
             A whole-product pass over the served UI: both stylesheets, every
             panel view, the shell and island scripts, plus 24 live screenshots
-            from the visual harness. One real accessibility defect, several
-            consistency gaps, and a design system that mostly earns its
-            discipline.
+            from the visual harness. One systematic contrast defect, a
+            screen-reader layer with real gaps, and a design system that
+            mostly earns its discipline.
           </p>
           <div class="meta">
             <span class="tag amber">Scope: all 9 tabs + island, light &amp; dark</span>
@@ -899,11 +899,11 @@
         <!-- Scorecard -->
         <section id="scorecard" class="scorecard">
           <div class="score-card score-good">
-            <div class="score">8</div>
+            <div class="score">12</div>
             <div class="label">Verified strengths</div>
           </div>
           <div class="score-card score-warn">
-            <div class="score">6</div>
+            <div class="score">13</div>
             <div class="label">Important findings</div>
           </div>
           <div class="score-card score-bad">
@@ -911,8 +911,8 @@
             <div class="label">AA contrast failure (dark)</div>
           </div>
           <div class="score-card">
-            <div class="score">7</div>
-            <div class="label">Polish items</div>
+            <div class="score">46</div>
+            <div class="label">Findings total (18 carded)</div>
           </div>
         </section>
 
@@ -937,19 +937,26 @@
             text</strong> — the primary Call/Send buttons, the outbound SMS
             bubbles, and the failed-send bubble all print near-white ink on
             bright green/red fills at 1.9–3.2:1, and the hover state is the
-            worst of all. One token flip fixes the entire class. Behind it sit
-            consistency gaps, not defects: a meta theme-color that drifted off
-            the palette, one service row missing its status dot, English
-            mixing 12-hour and 24-hour clocks between panels, and empty states
-            whose helpfulness varies by tab.
+            worst of all. One token flip fixes the entire class. Behind it
+            sits a second, quieter accessibility story: four row surfaces are
+            marked <code>role="img"</code> so screen readers never see their
+            content, dial failures render in a region no screen reader
+            watches, focus is discarded at every island transition, and the
+            command palette is both keyboard-only and missing the combobox
+            wiring. Rounding out the queue: an SMS counter that undercounts
+            emoji, a 30-second poll that can eat an unsent reply, and a
+            handful of consistency gaps (a meta theme-color that drifted off
+            the palette, one service row missing its dot, English mixing
+            12-hour and 24-hour clocks between panels, empty states whose
+            helpfulness varies by tab).
           </p>
           <div class="callout callout-amber">
             <strong>The bottom line</strong>
-            Ship-quality UI with one systematic dark-theme contrast failure
-            (fix: flip dark <code>--on-accent</code> to dark ink — one token,
-            every filled surface, both stylesheets) plus a short polish queue.
-            Nothing here blocks a release; the contrast item is the only one a
-            top-tier reviewer would call a defect.
+            Ship-quality visual system with two fix tranches: the dark
+            <code>--on-accent</code> flip (one token, kills the only WCAG AA
+            failure) and an island/screen-reader pass (focus-on-replace, live
+            regions, palette wiring, ring-time names). Nothing here blocks a
+            release; both tranches are a day or two of focused work.
           </div>
         </section>
 
@@ -1285,8 +1292,225 @@
             </div>
           </div>
 
-          <!-- F7 -->
-          <div class="issue issue-nice" id="issue-7">
+          <!-- F7 (island) -->
+          <div class="issue issue-important" id="issue-7">
+            <span class="severity severity-important"
+              >Important &middot; the ring moment</span
+            >
+            <h3>The phone rings as a number, never a name</h3>
+            <div class="where">
+              island/app/calls.js (<code>renderIncomingSlots</code>,
+              <code>hideIncomingBanner</code>) &middot; i18n
+              <code>incoming.*</code>
+            </div>
+            <p>
+              An incoming call renders the raw DID &mdash; the same caller the
+              Messages tab greets as a contact name, and the dial typeahead
+              resolves in keystrokes, announces as anonymous digits. The ring
+              is the one moment identity decides the answer, and the app's
+              own contact store already holds the fact.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Resolve the incoming number through the same contact source the
+              typeahead uses; render name + avatar chip on the banner and let
+              the assertive announce speak the name.
+            </div>
+          </div>
+
+          <!-- F8 (island) -->
+          <div class="issue issue-important" id="issue-8">
+            <span class="severity severity-important"
+              >Important &middot; keyboard users dropped</span
+            >
+            <h3>Focus is silently discarded at every island transition</h3>
+            <div class="where">
+              <code>hideIncomingBanner</code>,
+              <code>morphToEndedCard</code>, <code>saveCallNote</code>,
+              <code>confirmDisposition</code>,
+              <code>renderIncomingSlots</code> (calls.js)
+            </div>
+            <p>
+              Each of these replaces or removes the focused node without
+              moving focus to its successor &mdash; the browser's fallback lands
+              focus on <code>body</code>, and the next Tab restarts from the
+              top of the page. Answer-then-engage, hang up, save a note,
+              confirm a disposition: every one of the island's state changes
+              ejects a keyboard user from their place (verified by the
+              reviewer walking the flows).
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              One island helper &mdash; on replace, focus the successor control
+              (or the replaced node's container) &mdash; called from the five
+              sites. The shell's focus-to-heading move already models the
+              pattern.
+            </div>
+          </div>
+
+          <!-- F9 (island cluster) -->
+          <div class="issue issue-important" id="issue-9">
+            <span class="severity severity-important"
+              >Important &middot; screen-reader layer, four gaps</span
+            >
+            <h3>
+              Dial failures are silent; the status pill never stops talking;
+              labels and announces leak English
+            </h3>
+            <div class="where">
+              <code>#dial-error</code> (no aria-live) &middot;
+              <code>#reg-status</code> (<code>aria-live="true"</code> on a
+              churning element) &middot; hardcoded English aria-labels in
+              calls.js/session.js &middot; <code>announceIncoming</code> call
+              passes a stray argument, so German hears "incoming call your
+              +44&hellip;"
+            </div>
+            <p>
+              Four verified defects, one layer: a dial denial renders text no
+              screen reader will ever announce (the sighted inline state line
+              has a live twin nowhere); the registration pill is a live
+              region, so every reconnect attempt re-speaks; island-built
+              buttons carry English names into the German UI; and the one
+              assertive announce in the product double-fires with a malformed
+              string. Individually small; together they decide whether the
+              island is operable eyes-free.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              <code>aria-live="polite"</code> (or role="status") on
+              <code>#dial-error</code> only; drop the live region from
+              <code>#reg-status</code> (the offline banner already owns the
+              announcement); route the labels through
+              <code>defineMessages</code>; correct the announce call.
+            </div>
+          </div>
+
+          <!-- F10 (views) -->
+          <div class="issue issue-important" id="issue-10">
+            <span class="severity severity-important"
+              >Important &middot; rows invisible to screen readers</span
+            >
+            <h3>
+              <code>role="img"</code> on list rows erases their content from
+              assistive technology
+            </h3>
+            <div class="where">
+              fax rows, history rows, admin thread rows,
+              live-context call rows (<code>role="img"</code> +
+              <code>aria-label</code>)
+            </div>
+            <p>
+              Four row surfaces are marked up as images with a label. The
+              accessible name replaces the content: a screen reader announces
+              "fax from +44&hellip;" but can offer none of the row &mdash; no
+              status line, no steps, no transcript preview, no actions; none
+              of its children are reachable. The pattern was presumably chosen
+              for a compact announcement, but it deletes the actual data
+              model from the accessibility tree.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Drop <code>role="img"</code>: keep real content elements, let
+              the row read naturally; where a compact name helps, put the
+              label on an inner summary element, not the container.
+            </div>
+          </div>
+
+          <!-- F11 (views) -->
+          <div class="issue issue-important" id="issue-11">
+            <span class="severity severity-important"
+              >Important &middot; silent draft loss</span
+            >
+            <h3>The 30-second drafts poll can wipe an in-progress reply</h3>
+            <div class="where">
+              messages draft autosave: <code>loadDrafts</code> poll target on
+              <code>#tab-content</code>
+            </div>
+            <p>
+              The drafts poll re-fetches the thread partial roughly every 30
+              seconds. A user mid-typing in the reply composer (draft not yet
+              saved &mdash; the save rides blur/interval) gets the swap and
+              their unsaved words vanish. Verified at the markup level; the
+              loss window is inferred but the trigger is deterministic: type
+              for 30 seconds without blurring.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Before applying a drafts poll swap, compare the composer's
+              current value to the last-saved draft and skip/defer the swap
+              while they differ (the same morph-preservation guarantee the
+              transcript already honors).
+            </div>
+          </div>
+
+          <!-- F12 (shell) -->
+          <div class="issue issue-important" id="issue-12">
+            <span class="severity severity-important"
+              >Important &middot; discoverability + ARIA</span
+            >
+            <h3>
+              The command palette is keyboard-only and not yet one accessible
+              control
+            </h3>
+            <div class="where">
+              <code>ensurePalette</code> / <code>openPalette</code> /
+              <code>updatePaletteResults</code> (shell.js) &middot; overlay is
+              a plain div + input
+            </div>
+            <p>
+              The palette opens only from Ctrl/Cmd-K and the overlay input
+              carries no <code>role="combobox"</code> wiring (no
+              <code>aria-expanded</code>, <code>aria-activedescendant</code>,
+              no listbox/option roles on the results), so screen readers get
+              an unlabeled text box and a silent list. The same overlay hosts
+              the "?" help sheet, and neither is reachable from a touch
+              screen &mdash; on a phone or tablet there is no path to the
+              palette or the help at all. Selection styling also encodes
+              itself in a <code>wp-selected</code> class rather than
+              <code>aria-selected</code>.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Combobox pattern on the input (role + expanded +
+              activedescendant + listbox/option children); add a palette
+              affordance for coarse pointers (a header button next to the
+              theme toggle costs one icon); switch selection state to
+              <code>aria-selected</code>.
+            </div>
+          </div>
+
+          <!-- F13 (shell) -->
+          <div class="issue issue-important" id="issue-13">
+            <span class="severity severity-important"
+              >Important &middot; the segment counter can lie</span
+            >
+            <h3>
+              SMS segment counting misses astral-plane characters
+            </h3>
+            <div class="where">
+              <code>ucs2Segments</code> (shell.js &sect;4) &middot;
+              <code>wp-segcount</code>
+            </div>
+            <p>
+              The UCS-2 path counts code points, but SMS UCS-2 segments are
+              charged per UTF-16 code unit &mdash; one emoji is two units. A
+              message padded with emoji reports fewer segments than the
+              carrier will bill (or the gateway will refuse), and the counter
+              &mdash; the UI's only promise about deliverability cost &mdash;
+              under-reports exactly on the content that triggers UCS-2 in the
+              first place. Verified against the counting math, not a live
+              send.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Count UTF-16 units (<code>[...str].reduce((n, ch) =&gt; n +
+              ch.length, 0)</code> &mdash; code points whose
+              <code>length</code> is 2 add both units).
+            </div>
+          </div>
+
+          <!-- F14 -->
+          <div class="issue issue-nice" id="issue-14">
             <span class="severity severity-nice"
               >Nice to have &middot; WCAG 2.5.8 target size</span
             >
@@ -1308,8 +1532,8 @@
             </div>
           </div>
 
-          <!-- F8 -->
-          <div class="issue issue-nice" id="issue-8">
+          <!-- F15 -->
+          <div class="issue issue-nice" id="issue-15">
             <span class="severity severity-nice"
               >Nice to have &middot; empty-state voice depth</span
             >
@@ -1332,8 +1556,8 @@
             </div>
           </div>
 
-          <!-- F9 -->
-          <div class="issue issue-nice" id="issue-9">
+          <!-- F16 -->
+          <div class="issue issue-nice" id="issue-16">
             <span class="severity severity-nice"
               >Nice to have &middot; type-scale hygiene</span
             >
@@ -1359,8 +1583,8 @@
             </div>
           </div>
 
-          <!-- F10 -->
-          <div class="issue issue-nice" id="issue-10">
+          <!-- F17 -->
+          <div class="issue issue-nice" id="issue-17">
             <span class="severity severity-nice"
               >Nice to have &middot; token bypasses</span
             >
@@ -1388,8 +1612,8 @@
             </div>
           </div>
 
-          <!-- F11 -->
-          <div class="issue issue-nice" id="issue-11">
+          <!-- F18 -->
+          <div class="issue issue-nice" id="issue-18">
             <span class="severity severity-nice"
               >Nice to have &middot; rhetorical calibration</span
             >
