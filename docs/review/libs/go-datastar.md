@@ -9,6 +9,8 @@
 
 NO-GO as a direct dependency. The CSP story already prices Datastar honestly: `unsafe-eval` is scoped to `/health` ONLY (Datastar compiles at runtime) and everything else stays strict. **Refresh trigger:** the dashboard library swapping its embedded SDK version (then webphone re-verifies the CSP scope); a product surface that genuinely wants signal-patch reactivity (none does — the island's state machines own their own rendering).
 
+**Superseded in part 2026-11-07:** the signal-patch refresh trigger was examined and does NOT fire — the client-side deep-dive ([docs/research/2026-11-07_datastar-deep-dive.html](../research/2026-11-07_datastar-deep-dive.html), posture 78/100) affirmed the NO-GO with per-module evidence (36% of the client JS is media-imperative behind Datastar's own fences; tabs already declarative on htmx) and left a sharpened trigger: a live-Reports-shaped surface wanting server-pushed reactive state. The verify block below stays authoritative for the dependency shape.
+
 ## How to verify
 
 ```console

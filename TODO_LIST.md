@@ -28,12 +28,24 @@ F1 ink direction, F19 signed-out shape.
 Residue harvested 2026-11-07 (the execution train's open items):
 
 - [ ] M20 (report §f item 37): voicemail reload failure copy — surface the
-  silent `!res.ok` paths in the history/contacts loads the way the
-  voicemail refresh names its failure; the reload affordance needs the
-  same honest copy.
+      silent `!res.ok` paths in the history/contacts loads the way the
+      voicemail refresh names its failure; the reload affordance needs the
+      same honest copy.
 - [x] Gate evidence closed 2026-11-07: train-start buildflow 74/74 (run
-  20261107-032044), train-end 74/74 (run 20261107-084827), `nix flake
+      20261107-032044), train-end 74/74 (run 20261107-084827), `nix flake
   check` all-checks-passed; run ids filed in the status report.
+
+### 2026-11-07 Datastar deep-dive residue (one home: the report)
+
+The full client-side adoption question is CLOSED (NO-GO, posture 78/100,
+docs/research/2026-11-07_datastar-deep-dive.html — supersedes the 2026-11-04
+go-datastar adjacent ruling's trigger paragraph). One actionable item fell out:
+
+- [ ] Retire `/health` `'unsafe-eval'`: go-health-dashboard upstream adopts the
+      embedded Datastar v1.0.3 nonce + Trusted Types lane (emit `data-nonce` on its
+      page, grant `'nonce-…'` instead of `'unsafe-eval'` in its csp.go), then
+      re-pin `TestAppDashboardMountsHealthSubtree` (app_test.go:135) to assert the
+      nonce form. Evidence: report F4.
 
 ### 2026-11-06 GitHub-issue train residue (harvest from the 10:45 report)
 
@@ -198,6 +210,7 @@ trigger fires, never on a schedule.
 | A second readiness consumer or multi-instance deployment                                        | go-health              | re-run the probe-topology ruling                                    |
 | A templ-components release with a new status/toast component; the subtitle/✓-chip taste rulings | templ-components       | owner-taste re-litigation, not adoption gaps                        |
 | The dashboard library swaps its embedded SDK version                                            | go-datastar            | re-verify the /health CSP scope                                     |
+| A product surface wants server-pushed reactive state (live Reports-shaped, not fragment morphs) | go-datastar            | re-run the client-side NO-GO (2026-11-07 deep-dive, posture 78/100) |
 | The library ships a parse-with-rules hook or a new linter rule                                  | go-branded-id          | migrate the invariant INTO the seam / adopt the rule                |
 
 ### Fax enablement (owner + carrier action, 2026-10-30)
