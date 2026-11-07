@@ -31,10 +31,12 @@ test("toast eviction never drops focus to the body (M42)", () => {
   doc.activeElement = anchored;
   for (let i = 0; i < 4; i++) ui.announce(`n${i}`, "info");
   assert.equal(toasts.children.includes(anchored), false, "the anchored toast was evicted");
+  const focusedSurvivor = toasts.children.find((node) => node.focused);
+  assert.ok(focusedSurvivor, "focus sits on a surviving toast");
   assert.equal(
-    toasts.children.at(-1).focused,
-    true,
-    "focus moved to the newest surviving toast, not the body",
+    focusedSurvivor.textContent,
+    "n2",
+    "focus moved to the then-newest survivor at eviction time, not the body",
   );
   doc.activeElement = null;
 });
