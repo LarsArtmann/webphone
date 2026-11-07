@@ -9,6 +9,24 @@
 > and
 > [docs/status/2026-11-07_04-05_frontend-ux-review-ia-roles-flows.md](../status/2026-11-07_04-05_frontend-ux-review-ia-roles-flows.md)).
 
+> **CLOSED 2026-11-07 — ALL 24 TASKS SHIPPED.** T01–T17 by the first
+> session, T18–T24 by the resuming session; every micro-task landed with
+> its pin (island suite 310/310, tsc green, contacts-name-cap +
+> admin-filter + prefill-gate server pins). Gate evidence: buildflow
+> 74/74 at train start (run 20261107-032044) AND train end (run
+> 20261107-084827); `nix flake check` all-checks-passed; 24-shot
+> ui-capture re-shot over the fixed binary. Review cards: all 20 carry
+> FIXED callouts. Rulings recorded at the sites: M24 (reg-status
+> aria-live) and M35 (lightbox IS a native dialog) verified
+> already-correct — no-ops, not churned; M36 (island call-transcript
+> stays aria-hidden) reaffirmed by its announce-path design; M38's arm
+> is per-click (failed swap keeps counts, the retry's own click re-arms);
+> F20 moved the server facts behind a collapsed details element, and the
+> visual harness expands it before its copy assert. Residue: M20
+> (voicemail reload failure copy) harvested into TODO_LIST; docs-gates
+> cadence red (75 > 70) pending the archive-gate tooling the installed
+> build lacks.
+
 ## Context — what this train executes
 
 A review-only pass produced: 1 WCAG-AA defect (dark-theme accent fills),
