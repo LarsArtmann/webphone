@@ -2322,7 +2322,7 @@
 
     // GSM 03.38: basic charset plus the extension table (its characters
     // cost TWO units). Anything outside the sets forces UCS-2, which
-    // carries 70 chars per segment (67 once concatenated).
+    // carries 70 UTF-16 code units per segment (67 once concatenated).
     var GSM7_BASIC =
       "@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>?" +
       "¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà";
@@ -2332,13 +2332,15 @@
 
     /** @param {string} text @returns {number} */
     function ucs2Segments(text) {
-      var chars = Array.from(text).length;
-      return chars <= 70 ? 1 : Math.ceil(chars / 67);
+      var units = text.length;
+      return units <= 70 ? 1 : Math.ceil(units / 67);
     }
 
     // smsSegments returns the billable segment count for a body. CRLF
-    // is normalized first: the composer textarea submits \r\n. Code
-    // points (not UTF-16 units) count, so emoji cost one UCS-2 char.
+    // is normalized first: the composer textarea submits \r\n. UTF-16
+    // code units count (not code points): an astral emoji travels as a
+    // surrogate pair, and the surrogate pair is exactly what the network
+    // bills — two UCS-2 units per emoji.
     /** @param {unknown} body @returns {number} */
     function smsSegments(body) {
       var text = String(body == null ? "" : body).replace(/\r\n/g, "\n");

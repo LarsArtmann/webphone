@@ -59,10 +59,14 @@ test("segment counter: non-GSM characters force UCS-2 70/67", () => {
 
   type("Grüße"); // ü and ß ARE GSM-7 — stays silent
   assert.ok(counter.hidden, "German umlauts stay in GSM-7");
+  type("★".repeat(70));
+  assert.ok(counter.hidden, "70 BMP non-GSM chars = 70 UTF-16 units = one segment");
+  type("😀".repeat(35));
+  assert.ok(counter.hidden, "35 emoji = 70 UTF-16 units (surrogate pairs billed) = one segment");
+  type("😀".repeat(36));
+  assert.equal(counter.textContent, "2 SMS", "36 emoji = 72 units spill into 67+5");
   type("😀".repeat(70));
-  assert.ok(counter.hidden, "70 UCS-2 chars is one segment");
-  type("😀".repeat(71));
-  assert.equal(counter.textContent, "2 SMS", "71 UCS-2 chars spill into 67+4");
+  assert.equal(counter.textContent, "3 SMS", "70 emoji = 140 units, not the code-point 70");
 });
 
 test("Enter sends the composer, Shift+Enter and IME composition do not", () => {
