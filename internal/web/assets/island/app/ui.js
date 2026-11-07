@@ -3,7 +3,7 @@
 // contract — external E2E harnesses drive this page through them (see
 // AGENTS.md before renaming anything).
 
-import { sipDomain } from "./config.js";
+import { callerDisplay, sipDomain } from "./config.js";
 import { t } from "./i18n.js";
 import { state } from "./state.js";
 
@@ -256,7 +256,7 @@ export function renderIncomingSlots() {
   if (!queue.length) return;
   els.incoming.hidden = false;
   setIncomingFocusMode(true);
-  els.incomingFrom.textContent = queue[0].from;
+  els.incomingFrom.textContent = callerDisplay(queue[0].from);
   if (!els.incomingQueue) return;
   let heldSlotId = "";
   const active = document.activeElement;
@@ -286,7 +286,7 @@ export function renderIncomingSlots() {
         row.id = `wp-incoming-slot-${i}`;
         const label = document.createElement("span");
         label.className = "incoming-slot-from";
-        label.textContent = `${t("incoming")} ${entry.from}`;
+        label.textContent = `${t("incoming")} ${callerDisplay(entry.from)}`;
         const controls = document.createElement("div");
         controls.className = "controls";
         const answer = document.createElement("button");

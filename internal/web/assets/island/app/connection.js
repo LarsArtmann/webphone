@@ -10,7 +10,12 @@
 // dead Registerer forever).
 
 import { setCredentials, clearCredentials, getCredentials } from "./auth.js";
-import { iceServers, sipDomain, websocketUrl } from "./config.js";
+import {
+  callerDisplay,
+  iceServers,
+  sipDomain,
+  websocketUrl,
+} from "./config.js";
 import { ringbackStop, ringToneStart, ringToneStop } from "./audio.js";
 import { micMediaStreamFactory, releaseWarmMic, warmMic } from "./mic.js";
 import { instrumentSessionDescriptionHandler } from "./pcsetup.js";
@@ -328,7 +333,7 @@ async function buildConnection() {
         // banner is invisible to screen readers — the ringing call is
         // the one message allowed to interrupt (role=alert). Per invite:
         // N simultaneous callers are N announcements.
-        announce(t("incomingCall")(caller), "info", {
+        announce(t("incomingCall")(callerDisplay(caller)), "info", {
           assertive: true,
         });
         // Incoming-call UX: system notification (per caller, so N callers
@@ -359,7 +364,7 @@ async function buildConnection() {
             // The far end gave up before the user answered: say so and
             // keep the attempt in Recent calls (dir in, no duration).
             log(`missed call from ${caller}`, "warn");
-            announce(t("missedCall")(caller), "warn");
+            announce(t("missedCall")(callerDisplay(caller)), "warn");
             // shell.js mirrors this into the missed-call header badge; a
             // deliberate REJECT empties the queue slot first and never
             // lands here (the queue-membership check above).

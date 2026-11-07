@@ -79,37 +79,53 @@ export function contactSource() {
 }
 
 /**
- * The display name for a number across the contact sources (personal
- * wins over shared); "" when unknown — an unknown caller renders raw
- * digits, which is the honest fallback.
+ * The contact for a number across the contact sources (personal wins
+ * over shared); null when unknown. Exact match first, then a
+ * digits-only match — "+49…" and "030 …" forms of one number resolve
+ * to the same card.
+ * @param {string} number
+ * @returns {PBXSharedContact | null}
+ */
+export function findContact(number) {
+  const wanted = String(number || "").trim();
+  if (!wanted) return null;
+  const source = contactSource();
+  for (const contact of source) {
+    if (String(contact.number) === wanted) return contact;
+  }
+  const digits = wanted.replace(/\D/g, "");
+  if (!digits) return null;
+  for (const contact of source) {
+    if (String(contact.number || "").replace(/\D/g, "") === digits) {
+      return contact;
+    }
+  }
+  return null;
+}
+
+/**
+ * The display name for a number; "" when unknown — an unknown caller
+ * renders raw digits, which is the honest fallback.
  * @param {string} number
  * @returns {string}
  */
 export function contactName(number) {
-  const wanted = String(number || "").trim();
-  if (!wanted) return "";
-  const source = contactSource();
-  for (const contact of source) {
-    if (String(contact.number) === wanted) return String(contact.name || "");
-  }
-  const digits = wanted.replace(/\D/g, "");
-  if (!digits) return "";
-  for (const contact of source) {
-    if (String(contact.number || "").replace(/\D/g, "") === digits) {
-      return String(contact.name || "");
-    }
-  }
-  return "";
+  const contact = findContact(number);
+  return contact ? String(contact.name || "") : "";
 }
 
 /**
  * "Name (digits)" for a known caller, the raw digits otherwise — the
  * one shape every ring surface (banner, queue slots, the assertive
- * announce, the missed-call toast, dock chips) shows.
+ * announce, the missed-call toast, dock chips) shows. The digits shown
+ * are the CONTACT's stored form: it is the display the user wrote.
  * @param {string} number
  * @returns {string}
  */
 export function callerDisplay(number) {
-  const name = contactName(number);
-  return name ? `${name} (${number})` : String(number || "");
+  const wanted = String(number || "").trim();
+  if (!wanted) return "";
+  const contact = findContact(wanted);
+  if (contact && contact.name) return `${contact.name} (${contact.number})`;
+  return wanted;
 }

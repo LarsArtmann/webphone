@@ -17,6 +17,7 @@ import {
   asrEnabled,
   asrLocality,
   agentEnabled,
+  callerDisplay,
   crmEnabled,
   sipDomain,
 } from "./config.js";
@@ -746,7 +747,7 @@ function chipAvatar(target) {
 function chipName(target) {
   const name = document.createElement("span");
   name.className = "wp-chip-name";
-  name.textContent = target;
+  name.textContent = callerDisplay(target);
   return name;
 }
 

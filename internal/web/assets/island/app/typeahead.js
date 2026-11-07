@@ -3,8 +3,15 @@
 // keyboard-driven, and invisible whenever anything is missing (no
 // contacts, no dial form, no JS). Pure client-side over config data.
 
-import { contactSource, setExtraContacts as storeExtraContacts } from "./config.js";
-import { cooldownFor, cooldownRemainder, refreshDialSlots } from "./dialgate.js";
+import {
+  contactSource,
+  setExtraContacts as storeExtraContacts,
+} from "./config.js";
+import {
+  cooldownFor,
+  cooldownRemainder,
+  refreshDialSlots,
+} from "./dialgate.js";
 import { t } from "./i18n.js";
 import { els } from "./ui.js";
 
