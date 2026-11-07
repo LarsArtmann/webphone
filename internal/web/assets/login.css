@@ -3721,6 +3721,12 @@ a:focus-visible {
   letter-spacing: 0.06em;
   color: var(--muted);
 }
+.wp-settings-server > summary.wp-settings-head {
+  cursor: pointer;
+}
+.wp-settings-server[open] > summary.wp-settings-head {
+  margin-bottom: 12px;
+}
 .wp-admin-ext {
   flex: none;
   padding: 0.1em 0.55em;

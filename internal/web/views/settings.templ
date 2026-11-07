@@ -85,20 +85,33 @@ type SettingsPanelProps struct {
 templ SettingsPanel(props SettingsPanelProps) {
 	<section class="wp-panel" id="settings-panel">
 		@panelHead(props.Lang, "tab.settings", "settings.subtitle")
-		@display.DefinitionList(display.DefinitionListProps{
-			Class: "wp-settings",
-			Items: settingsItems(props),
-		})
-		if props.Push {
-			@PushDevicesSection(props.PushDevices, props.Lang)
-		}
+		// F20: the panel reads in three audiences — what THIS session owns
+		// and can act on, what leaves with you, and the operator's
+		// deployment truth (collapsed: it answers "what is this server",
+		// not "what can I change").
+		<h3 class="wp-settings-head">{ T(props.Lang, "settings.group.prefs") }</h3>
 		@SnippetsSection(props.Snippets, props.Lang)
-		if len(props.AgentAuditRows) > 0 || props.Agent {
-			@AgentAuditSection(props.AgentAuditRows, props.Lang)
-		}
 		if props.Passkeys.Available {
 			@PasskeysSection(props.Passkeys)
 		}
+		if props.Push {
+			@PushDevicesSection(props.PushDevices, props.Lang)
+		}
+		if len(props.AgentAuditRows) > 0 || props.Agent {
+			@AgentAuditSection(props.AgentAuditRows, props.Lang)
+		}
+		<h3 class="wp-settings-head">{ T(props.Lang, "settings.group.data") }</h3>
+		@display.DefinitionList(display.DefinitionListProps{
+			Class: "wp-settings wp-settings-mine",
+			Items: myDataItems(props),
+		})
+		<details class="wp-settings-server">
+			<summary class="wp-settings-head">{ T(props.Lang, "settings.group.server") }</summary>
+			@display.DefinitionList(display.DefinitionListProps{
+				Class: "wp-settings",
+				Items: serverItems(props),
+			})
+		</details>
 		<h3 class="wp-settings-head">{ T(props.Lang, "shortcuts.title") }</h3>
 		<dl class="wp-settings wp-shortcuts">
 			<dt><kbd>A</kbd></dt><dd>{ T(props.Lang, "shortcuts.a") }</dd>
@@ -270,11 +283,20 @@ func settingsFaxKey(cap FaxCapability) string {
 	}
 }
 
-// settingsItems builds the deployment-facts rows for the DefinitionList
-// (the settingsRow adoption, dedup registry 2026-10-11 ruling #2): plain
-// Detail strings for text values, DetailComponent where the value is
-// conditional or rich (service state, ASR detail, the export link).
-func settingsItems(props SettingsPanelProps) []display.DefinitionItem {
+// myDataItems builds the rows the session owns in the store: what
+// leaves with you when you export (F20's "My data" audience).
+func myDataItems(props SettingsPanelProps) []display.DefinitionItem {
+	return []display.DefinitionItem{
+		{Term: T(props.Lang, "settings.export"), DetailComponent: exportLink(T(props.Lang, "settings.exportLink"))},
+	}
+}
+
+// serverItems builds the deployment-facts rows for the "This server"
+// group (F20's operator audience; the DefinitionList adoption, dedup
+// registry 2026-10-11 ruling #2): plain Detail strings for text values,
+// DetailComponent where the value is conditional or rich (service
+// state, ASR detail).
+func serverItems(props SettingsPanelProps) []display.DefinitionItem {
 	items := []display.DefinitionItem{
 		{Term: T(props.Lang, "settings.sipDomain"), Detail: orUnset(props.SIPDomain, props.Lang)},
 		{Term: T(props.Lang, "settings.sipWS"), Detail: props.WebsocketURL},
@@ -294,7 +316,6 @@ func settingsItems(props SettingsPanelProps) []display.DefinitionItem {
 		display.DefinitionItem{Term: T(props.Lang, "settings.crm"), DetailComponent: crmDetail(props.CRMState, props.Lang)},
 		display.DefinitionItem{Term: T(props.Lang, "settings.asr"), DetailComponent: serviceDetailExtra(props.ASR, asrDetailWithLocality(props), T(props.Lang, "settings.connected"), T(props.Lang, "settings.unset"))},
 		display.DefinitionItem{Term: T(props.Lang, "settings.shared"), Detail: fmtInt(props.SharedContacts)},
-		display.DefinitionItem{Term: T(props.Lang, "settings.export"), DetailComponent: exportLink(T(props.Lang, "settings.exportLink"))},
 	)
 	// The agent row (M17) surfaces only when the textagent seam is
 	// wired (an always-on "off" row would be noise for every

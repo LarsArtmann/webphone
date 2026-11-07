@@ -2344,6 +2344,17 @@ a:focus-visible {
   color: var(--muted);
 }
 
+/* F20: the "This server" group is the one collapsed region — the
+ * disclosure marker stays (it is the affordance), only the pointer
+ * and the inner spacing change. */
+.wp-settings-server > summary.wp-settings-head {
+  cursor: pointer;
+}
+
+.wp-settings-server[open] > summary.wp-settings-head {
+  margin-bottom: 12px;
+}
+
 /* Admin tab (read-only cross-line inventory): the extension/line chip
  * (mono, the ids ARE the vocabulary), the quiet Admin/Archived badge,
  * and the expandable transcript groups. Tokens only, like every other
