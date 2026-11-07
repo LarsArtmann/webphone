@@ -932,10 +932,12 @@ test("a failed nav refresh announces instead of half-applying (M23)", async () =
     selector === "#wp-nav .wp-nav-link.wp-active" ? link : realQuerySelector.call(doc, selector);
   doc.getElementById("toasts").replaceChildren();
 
-  // Earlier specs fired the throttled error toast; the 8s window is
-  // module state — shift the clock seam past it for this failure.
+  // Earlier specs fired the throttled error toast — one through a
+  // FUTURE-shifted clock, so the module's lastErrorToast sits a minute
+  // ahead. Shift past it for this failure (the 8s window is module
+  // state; the clock seam is the one legitimate lever).
   const realNow = shellApi.clock.now;
-  shellApi.clock.now = () => realNow() + 60_000;
+  shellApi.clock.now = () => realNow() + 120_000;
   try {
     shellApi.refreshNav();
     rejecter(new Error("network down"));
