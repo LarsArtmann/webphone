@@ -864,7 +864,10 @@
           <a href="#scorecard">Scorecard</a>
           <a href="#strengths">Strengths</a>
           <a href="#findings">Findings</a>
-          <a href="#proposal">Proposal</a>
+          <a href="#proposal">Fix queue</a>
+          <a href="#ia">IA &amp; layout</a>
+          <a href="#roles">Roles &times; UI</a>
+          <a href="#flows">User flows</a>
           <a href="#appendix">Appendix</a>
         </nav>
       </aside>
@@ -903,7 +906,7 @@
             <div class="label">Verified strengths</div>
           </div>
           <div class="score-card score-warn">
-            <div class="score">13</div>
+            <div class="score">15</div>
             <div class="label">Important findings</div>
           </div>
           <div class="score-card score-bad">
@@ -911,8 +914,8 @@
             <div class="label">AA contrast failure (dark)</div>
           </div>
           <div class="score-card">
-            <div class="score">46</div>
-            <div class="label">Findings total (18 carded)</div>
+            <div class="score">20</div>
+            <div class="label">Carded findings (&middot; matrix pending)</div>
           </div>
         </section>
 
@@ -1817,9 +1820,441 @@
           </div>
         </section>
 
+        <!-- IA & layout -->
+        <section id="ia">
+          <h2><span class="num">03</span>Information architecture &amp; layout</h2>
+          <p>
+            The first pass audited components; this chapter steps back to the
+            desk itself. Verdict up front: <strong>the one-shell architecture
+            is right and should not change</strong> &mdash; the phone island
+            must survive navigation, so tabs-as-partials around a persistent
+            aside is the correct shape. What the IA gets wrong is smaller and
+            fixable: two layout corrections (below), plus the two finding
+            cards this chapter surfaced (F19, F20).
+          </p>
+
+          <h3>The layout system, as built</h3>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Zone</th>
+                <th>Behavior</th>
+                <th>Assessment</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Header</td>
+                <td>Sticky, blurred surface; brand, identity pill, island
+                toggle, theme toggle</td>
+                <td>Right. Identity + global controls only &mdash; no app
+                actions leak into it.</td>
+              </tr>
+              <tr>
+                <td>Island (aside)</td>
+                <td>Sticky on desktop (320&ndash;400px token column);
+                collapses to nothing via labelled toggle; a live call
+                force-re-expands it; on mobile it stacks first and goes sticky
+                only while a call is live</td>
+                <td>Right, and unusually disciplined: geometry lives in four
+                tokens, the collapse is pre-paint, and <code>:has()</code>
+                makes the call-safety rule structural.</td>
+              </tr>
+              <tr>
+                <td>Main column</td>
+                <td>Container-query region (<code>tabcol</code>): nav rail +
+                tab content + error slot + skeleton; Messages goes
+                master&ndash;detail at 44rem of column width</td>
+                <td>Right. Asking the container (not the viewport) is the
+                load-bearing decision, and the harness proved it.</td>
+              </tr>
+              <tr>
+                <td>Overlay layer</td>
+                <td>Command palette + help sheet (custom fixed overlay),
+                lightbox (native <code>&lt;dialog&gt;</code>)</td>
+                <td>Mixed &mdash; the lightbox does it natively; the palette
+                hand-rolls (Finding&nbsp;12).</td>
+              </tr>
+              <tr>
+                <td>Feedback layer</td>
+                <td>Toasts (top), polite live region, assertive exception for
+                rings, inline error slot per tab</td>
+                <td>Right in shape; gaps are named in Findings 9, 12,
+                16.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>Pages that should exist</h3>
+          <p>
+            Two additions &mdash; both re-groupings inside the existing shell,
+            no new routes:
+          </p>
+          <ol>
+            <li>
+              <strong>A focused signed-out layout</strong> (Finding&nbsp;19):
+              same shell, no tab row, welcome + login centered. The door,
+              not the floor plan.
+            </li>
+            <li>
+              <strong>A Settings split by audience</strong> (Finding&nbsp;20):
+              "My preferences" / "My data" / "This server" (collapsed,
+              operator voice). Also gives the island's language and speaker
+              controls a discoverable home.
+            </li>
+          </ol>
+          <p>
+            And two ideas <strong>considered and rejected</strong>, recorded
+            so they stay rejected:
+          </p>
+          <ul>
+            <li>
+              <strong>A "Calls" tab</strong> &mdash; rejected. Call state must
+              live in exactly one place (the island); a second calls surface
+              would split-brain the ring, the hold machine and the dock, all
+              to save one scroll on mobile. The island-first mobile order is
+              the correct call for a phone.
+            </li>
+            <li>
+              <strong>A separate onboarding route</strong> &mdash; rejected.
+              The dismissible welcome panel (M18) already onboards without a
+              route to deep-link to; a page would need its own empty-state
+              lifecycle for zero new capability.
+            </li>
+          </ul>
+          <div class="callout callout-amber">
+            <strong>The bottom line</strong>
+            Eight destinations, one persistent phone, deep-linkable partials,
+            conditional surfaces that render nothing when a capability is
+            absent &mdash; the skeleton of the IA is right. Fix the two
+            groupings, and the map matches the territory.
+          </div>
+        </section>
+
+        <!-- Roles -->
+        <section id="roles">
+          <h2><span class="num">04</span>Roles &amp; permissions &times; UI/UX</h2>
+          <p>
+            Webphone has five identities and one capability axis, and the UI
+            already follows a rule most apps never learn:
+            <strong>a role or capability the deployment lacks renders
+            nothing</strong> &mdash; byte-identical absence, never a disabled
+            control. Fax-off removes the compose form and leaves a notice;
+            admin-absent removes the tab for everyone; push-off turns the
+            routes 404s that read as "cannot ring closed apps". The doctrine
+            is honest and test-pinned. What follows maps each identity to
+            what it should change on screen, and where the current UI meets
+            that bar.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Identity</th>
+                <th>Should change in the UI</th>
+                <th>Today</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Anonymous</td>
+                <td>Sees a door: sign-in surfaces only, no dead navigation
+                (F19)</td>
+                <td>Sees the full desk with dead tabs &mdash; the one IA
+                miss.</td>
+              </tr>
+              <tr>
+                <td>Extension owner</td>
+                <td>Everything owner-scoped; cross-owner data structurally
+                unreachable</td>
+                <td>Met. Owner scoping is the rule everywhere; the
+                deliberate cross-owner seams are admin-gated and
+                test-pinned.</td>
+              </tr>
+              <tr>
+                <td>Multi-line user</td>
+                <td>Line switcher appears only when mapped
+                extensions&nbsp;&gt;&nbsp;1; switch re-mints and reloads;
+                blocked on a live call</td>
+                <td>Met (JS-created <code>#wp-ext-switch</code>, live-call
+                guard, audit line). The active line is visible in the header
+                pill.</td>
+              </tr>
+              <tr>
+                <td>Admin</td>
+                <td>Admin tab appears only for admins; cross-line inventory is
+                read-only and chipped as such; no write actions anywhere</td>
+                <td>Mostly met &mdash; conditional nav is exemplary
+                (nothing minted into the session, resolved per request). Gap:
+                the inventory lacks search/filter (Finding&nbsp;10 in the
+                matrix); read-only-ness could wear a visible badge.</td>
+              </tr>
+              <tr>
+                <td>Operator (hoster)</td>
+                <td>Config truth readable by all, actionable only at the
+                config file; operator surfaces (health dashboard) fenced at
+                the proxy</td>
+                <td>Half met &mdash; the voice is honest but
+                audience-mixed in Settings (F20); <code>/health</code> is
+                correctly proxy-fenced, not app-gated.</td>
+              </tr>
+              <tr>
+                <td>Capability flags<br>(fax/ASR/CRM/push/SSO/passkey)</td>
+                <td>The sibling axis to roles: each flag renders or removes
+                whole affordances; a pushed fragment must not promise more
+                than the full render</td>
+                <td>Met and exemplary (declared capabilities, view-prop
+                gating, parity between pushes and full renders).</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            Four rules worth writing down as doctrine (the codebase mostly
+            already obeys them): <strong>R1</strong> absent role/capability
+            &rarr; render nothing, never a disabled control; <strong>R2</strong>
+            roles gate visibility, capabilities gate affordance, and both are
+            server-rendered (panels read view props, not JS globals);
+            <strong>R3</strong> cross-identity access is read-only and visibly
+            chipped as such; <strong>R4</strong> write actions require the
+            actor's own session authority &mdash; an admin may look at every
+            line but may act only on their own (write-shaped admin actions
+            stay rejected; the D4 delegation item owns that future).
+          </p>
+        </section>
+
+        <!-- Flows (BDD) -->
+        <section id="flows">
+          <h2><span class="num">05</span>User flows, BDD-style</h2>
+          <p>
+            The core journeys as executable specifications. Each scenario
+            names its current behavioral pin where one exists (island
+            <code>node:test</code> specs, Go tests, or smoke scenarios) or
+            <strong>[GAP]</strong> where this review found no coverage &mdash;
+            the gaps are concentrated exactly where the findings are, which
+            is the point of writing flows down.
+          </p>
+
+          <h3>Feature: Sign in &amp; session</h3>
+          <pre><code>Scenario: Passkey sign-in unlocks the desk
+  Given the island shows the passkey front door
+  When the WebAuthn ceremony succeeds
+  Then the shell renders signed in and the tabs unlock
+  And the island resumes its session without reload
+  (pin: island session/resume specs)
+
+Scenario: Passkey ceremony fails
+  When the ceremony is rejected
+  Then a visible error names the failure
+  And no session is minted
+  (pin: enroll/webauthn specs)
+
+Scenario: Extension login is break-glass only
+  Given passkey mode is on
+  Then extension + password hides behind a disclosure
+  (pin: layout markup + passkey view tests)
+
+Scenario: Session resumes on boot
+  Given a live cookie from a previous visit
+  When the island boots
+  Then the session resumes without re-prompting
+  (pin: resume.test.mjs)
+
+Scenario: Line switch is blocked on a live call
+  Given a multi-line user with an active call
+  When they pick another line
+  Then the switch is refused with a visible reason
+  (pin: session-switch.test.mjs)
+
+Scenario: Sign-out with a live call asks first        [GAP]
+  Given an active call
+  When sign out is clicked
+  Then a second-click confirm names the cost
+  And a misclick never kills audio</code></pre>
+
+          <h3>Feature: Place a call</h3>
+          <pre><code>Scenario: Typeahead resolves a contact
+  Given the dial field focused
+  When digits or a name are typed
+  Then suggestions carry name, number and cooldown window
+  And arrows/Enter/Escape behave
+  (pin: typeahead.test.mjs)
+
+Scenario: Dial-gate advises, never traps
+  Given a remote inside its cooldown window
+  When the call is placed
+  Then an inline state line explains and offers "Dial anyway"
+  And the one-shot override is spent by the first allowed dial
+  (pin: dialgate.test.mjs + smoke dialgate scenario)
+
+Scenario: Hold is a pending-state machine
+  Given an established call
+  When hold is toggled twice quickly
+  Then the card shows WORK (holding/resuming), never the hoped-for state
+  And a failed re-INVITE settles back to the true state
+  (pin: calls transitions specs)
+
+Scenario: DTMF reaches the PBX in the legal form
+  Given an established call
+  When a tone is sent from keypad or keyboard
+  Then the relay uses the equals-form the PBX accepts
+  And the trail + event log record it
+  (pin: calls/DTMF specs)
+
+Scenario: The settled card closes the loop
+  When a call ends normally
+  Then the ended card offers disposition, note, and (seam on) draft
+  And teardown-path hangups remove the card instantly
+  (pin: calls-note/calls-summary specs + smoke)
+
+Scenario: Focus survives every transition              [GAP]
+  Given a keyboard user mid-call
+  When answer/hangup/note-save replaces the focused node
+  Then focus lands on the successor control</code></pre>
+
+          <h3>Feature: Receive a call</h3>
+          <pre><code>Scenario: The ring announces assertively, once
+  Given the tab is anywhere
+  When an INVITE arrives
+  Then the banner + Accept/Reject render and one assertive announce fires
+  And focus moves to Accept only if the user is not typing
+  (pin: ring-queue.test.mjs + connection specs)
+
+Scenario: A second caller queues, not replaces
+  Given one ringing call
+  When a second INVITE arrives
+  Then a quieter slot offers its own Accept/Reject pair
+  And a remote cancel removes exactly its own slot
+  (pin: ring-queue.test.mjs)
+
+Scenario: Nobody answers
+  When the caller cancels or the ring times out
+  Then a missed-call badge appears and History records dur: 0
+  (pin: missed-call.test.mjs)
+
+Scenario: The ring names the caller                    [GAP]
+  Given the caller exists in contacts
+  When the banner renders
+  Then it shows the name and the announce speaks it</code></pre>
+
+          <h3>Feature: Messages</h3>
+          <pre><code>Scenario: Opening a thread marks it read
+  Given unread messages in a thread
+  When the thread opens
+  Then the unread divider shows the count and the row clears
+  (pin: transcript push specs)
+
+Scenario: An optimistic send fails honestly
+  Given a composed reply
+  When the send fails
+  Then the bubble repaints danger with Retry and Dismiss in place
+  And the draft restores only into an empty composer
+  (pin: composer.test.mjs + shell optimistic specs)
+
+Scenario: Live pushes never eat drafts
+  Given a half-typed reply
+  When SSE morphs the list and transcript
+  Then the composer, its counter and chosen files survive
+  (pin: shell.test.mjs + swap-safety pins)
+
+Scenario: Voice memos transcribe inline
+  Given the ASR seam on and an audio attachment
+  When it renders (or Play is pressed)
+  Then transcription appears once per source with honest failure text
+  (pin: voicemail-transcribe/captions specs)
+
+Scenario: Compose-new routes by address shape
+  When a matrix or session address is composed
+  Then the sender registry owns delivery; phone shapes ride sms
+  (pin: compose/panel specs)
+
+Scenario: The 30s drafts poll never eats an edit       [GAP]
+  Given an in-progress reply
+  When the drafts poll fires
+  Then the swap is deferred while the composer differs from the last save</code></pre>
+
+          <h3>Feature: Voicemail &amp; fax</h3>
+          <pre><code>Scenario: Voicemail plays one at a time, scrubbable
+  Given a voicemail row
+  When Play is pressed
+  Then the waveform seeks, other players stop, and the row keeps
+       its playing state across morphs
+  (pin: voicemail-transcribe.test.mjs + waveform cache specs)
+
+Scenario: Fax capability is declared, not discovered
+  Given a server without a fax lane
+  When the Fax tab opens
+  Then no compose form renders, only the notice and Settings row
+  (pin: smoke faxcap scenario + fax capability tests)
+
+Scenario: An outbound fax walks its timeline
+  When a PDF is sent
+  Then the three-step timeline walks queued/done and strikes red on failure
+  (pin: fax lifecycle table pins)</code></pre>
+
+          <h3>Feature: History forensics</h3>
+          <pre><code>Scenario: Filters narrow without losing state
+  Given History rows
+  When number/outcome/disposition filters apply
+  Then the empty state names the filter, deep links carry it
+  (pin: history view tests)
+
+Scenario: Notes are never silently expunged
+  Given a saved call note
+  When the store is full and the PUT 409s
+  Then the draft stays editable and the failure announces
+  (pin: server note tests)
+
+Scenario: The AI review artifact tells the truth
+  Given the agent seam off/on/pending
+  Then History shows unconfigured chip / pending / failed / draft
+       accordingly, and prefill renders only when the seam can answer [GAP]</code></pre>
+
+          <h3>Feature: Live updates &amp; failure surfaces</h3>
+          <pre><code>Scenario: SSE truth is visible
+  Given the app open
+  When the event stream connects or drops
+  Then the live dot flips and a drop announces once, after 3 failures
+  (pin: session/sse specs)
+
+Scenario: A failed tab fetch lands visibly
+  When a navigation partial 4xx/5xxs
+  Then the banner retargets into the error slot and a toast fires
+  (pin: server error-surface tests)
+
+Scenario: Offline flips exactly with registration
+  Given a lost SIP registration
+  When the watchdog rebuilds
+  Then the banner and pill tell the same truth at the same moment
+  (pin: connection.test.mjs)</code></pre>
+
+          <h3>Feature: Shell ergonomics</h3>
+          <pre><code>Scenario: The island collapse is safe and reversible
+  Given a signed-in desktop session
+  When the island is collapsed
+  Then a live call force-re-expands it and the toggle stays truthful
+  (pin: island-collapse.test.mjs + harness layout PASS)
+
+Scenario: The palette reaches every user             [GAP]
+  Given a touch-only user
+  When they open the command palette
+  Then a visible affordance exists and the combobox speaks its state
+
+Scenario: Theme changes never flash
+  Given any stored theme or "auto"
+  When the page loads or the toggle cycles
+  Then the pre-paint attribute and color-scheme agree before first paint
+  (pin: theme-preload.test.mjs)</code></pre>
+
+          <div class="callout callout-teal">
+            <strong>How to read the gaps</strong>
+            Every <strong>[GAP]</strong> above corresponds to a finding card
+            (8, 7, 11, 12, 19, 20) &mdash; the flows make the finding
+            countable: each is one scenario away from being a pinned test.
+          </div>
+        </section>
+
         <!-- Appendix -->
         <section id="appendix">
-          <h2><span class="num">03</span>Appendix</h2>
+          <h2><span class="num">06</span>Appendix</h2>
           <p>
             Methodology, links to related files, or a priority matrix can live
             here.
