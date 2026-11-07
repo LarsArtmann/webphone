@@ -394,8 +394,8 @@ func TestSettingsSnippetsSection(t *testing.T) {
 	if !strings.Contains(with, `class="wp-snippet-quick"`) || !strings.Contains(with, `<svg class="wp-icon"`) {
 		t.Errorf("quick marker missing on the first snippet: %s", with)
 	}
-	if got := strings.Count(with, "<dl"); got != 2 {
-		t.Errorf("settings must render exactly two dls (facts + shortcuts), got %d: %s", got, with)
+	if got := strings.Count(with, "<dl"); got != 3 {
+		t.Errorf("settings must render exactly three dls (my data + server + shortcuts), got %d: %s", got, with)
 	}
 	if got := strings.Count(with, ">Keyboard shortcuts</h3>"); got != 1 {
 		t.Errorf("shortcuts head must render exactly once, got %d", got)
@@ -433,8 +433,8 @@ func TestSettingsPushSection(t *testing.T) {
 	if !strings.Contains(on, "Registered devices") || !strings.Contains(on, "pixel-9a01abc") || !strings.Contains(on, "ntfy · 2026-10-25") {
 		t.Errorf("device list missing its rows: %s", on)
 	}
-	if got := strings.Count(on, "<dl"); got != 2 {
-		t.Errorf("settings must render exactly two dls (facts + shortcuts), got %d", got)
+	if got := strings.Count(on, "<dl"); got != 3 {
+		t.Errorf("settings must render exactly three dls (my data + server + shortcuts), got %d", got)
 	}
 	empty := renderComponent(t, SettingsPanel(SettingsPanelProps{Push: true, Lang: LangEN}))
 	if !strings.Contains(empty, "No devices registered yet — the mobile app registers itself at sign-in.") {
