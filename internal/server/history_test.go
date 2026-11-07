@@ -189,8 +189,8 @@ func TestHistoryOutcomeFilterAndDayGroups(t *testing.T) {
 	if head1 >= head2 {
 		t.Errorf("day heads must render in record order")
 	}
-	if !strings.Contains(page, "wp-row-missed") || !strings.Contains(page, "✖") {
-		t.Errorf("the missed record must carry the missed row styling + glyph: %.600s", page)
+	if !strings.Contains(page, "wp-row-missed") || !strings.Contains(page, `aria-label="missed"`) {
+		t.Errorf("the missed record must carry the missed row styling + named chip: %.600s", page)
 	}
 
 	// E2: the filter form pushes its URL — filters are addressable.

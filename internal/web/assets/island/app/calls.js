@@ -1505,7 +1505,10 @@ function noteToneSent(tone) {
     trail = document.createElement("p");
     trail.id = "wp-tones";
     trail.className = "wp-tones";
-    trail.setAttribute("aria-hidden", "true");
+    // M45: the trail is a status region — each sent digit is confirmed
+    // politely to screen readers (the keypad buttons themselves stay
+    // plain buttons; the trail is the one announcement surface).
+    trail.setAttribute("role", "status");
     els.keypad.append(trail);
   }
   tonesSent.push(tone);

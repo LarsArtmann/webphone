@@ -107,7 +107,7 @@ templ VoicemailRow(msg pbx.VoicemailMessage, contacts CRMContacts, lang Lang, as
 					data-save-contact={ msg.CIDNumber }
 					aria-label={ T(lang, "contacts.saveAs") }
 					title={ T(lang, "contacts.saveAs") }
-				>☆</button>
+				>@icons.Icon(icons.Star, "wp-icon")</button>
 			}
 			<button
 				class="wp-mini wp-danger"

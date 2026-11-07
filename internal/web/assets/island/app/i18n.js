@@ -166,6 +166,10 @@ export const I18N = {
     sessionFailed401:
       "The server rejected the tab sign-in — check extension and password.",
     sessionThrottled: "Too many attempts — wait a moment, then try again.",
+    rateLimited: (seconds) =>
+      seconds === null
+        ? "Too many requests"
+        : `Too many requests — retry in ${seconds}s`,
     sessionFailed: (status) =>
       `Tab sign-in failed (HTTP ${status}) — calls keep working, tabs stay locked.`,
     sessionNetFailed:
@@ -307,7 +311,7 @@ export const I18N = {
     resume: "Fortsetzen",
     focus: "Aktivieren",
     mute: "Stumm",
-    unmute: "Stumm aus",
+    unmute: "Stumm aufheben",
     end: "Auflegen",
     incoming: "Eingehender Anruf von",
     accept: "Annehmen",
@@ -352,7 +356,10 @@ export const I18N = {
     contactSaved: (n) => `Kontakt ${n} gespeichert`,
     contactSaveFailed: (detail) =>
       `Kontakt speichern fehlgeschlagen (${detail}); lokal behalten`,
-    contactsMigrated: (n) => `${n} lokale Kontakte auf den Server übernommen`,
+    contactsMigrated: (n) =>
+      n === 1
+        ? "1 lokalen Kontakt auf den Server übernommen"
+        : `${n} lokale Kontakte auf den Server übernommen`,
     voicemail: "Mailbox",
     vmRefresh: "Aktualisieren",
     vmEmpty: "keine Nachrichten",
@@ -398,6 +405,10 @@ export const I18N = {
       "Die Server-Anmeldung wurde abgelehnt — Nebenstelle und Passwort prüfen.",
     sessionThrottled:
       "Zu viele Versuche — bitte kurz warten und erneut versuchen.",
+    rateLimited: (seconds) =>
+      seconds === null
+        ? "Zu viele Anfragen"
+        : `Zu viele Anfragen — erneuter Versuch in ${seconds}s`,
     sessionFailed: (status) =>
       `Server-Anmeldung fehlgeschlagen (HTTP ${status}) — Anrufe funktionieren weiter, Tabs bleiben gesperrt.`,
     sessionNetFailed:

@@ -376,6 +376,10 @@ templ NewMessageForm(prefillTo string, prefillBody string, lang Lang, textAgent 
 		enctype="multipart/form-data"
 		hx-disabled-elt="find button[type=submit]"
 	>
+		// M14: the to-field deliberately has NO inputmode — it accepts SMS
+		// numbers, Matrix addresses (@name:server) and Session hex (05…),
+		// so no keyboard variant is a complete fit; the default text
+		// keyboard is the honest one and the typeahead carries the rest.
 		<input
 			name="to"
 			required
@@ -413,7 +417,7 @@ templ snippetPicker(snippets []domain.Snippet, lang Lang) {
 				<button type="button" class="wp-snippet-item" data-snippet={ snippet.Body } title={ snippet.Body }>
 					{ chipLabel(snippet.Body) }
 					if snippet.Quick {
-						<span class="wp-snippet-quick" aria-hidden="true">⚡</span>
+						<span class="wp-snippet-quick" aria-hidden="true">@icons.Icon(icons.Bolt, "wp-icon")</span>
 					}
 				</button>
 			}
@@ -889,9 +893,9 @@ func contactLabel(contacts CRMContacts, contact string) string {
 
 // draftsNote is the ONE home of the drafts footer's note shape: marker,
 // linked contact, state label, and a state-specific tail.
-templ draftsNote(marker string, contacts CRMContacts, contact string, lang Lang, label string, tail string) {
+templ draftsNote(marker icons.Name, contacts CRMContacts, contact string, lang Lang, label string, tail string) {
 	<p class="wp-drafts-note">
-		{ marker } @crmDraftContact(contacts, contact, lang): { label }{ tail }
+		@icons.Icon(marker, "wp-icon") @crmDraftContact(contacts, contact, lang): { label }{ tail }
 	</p>
 }
 
@@ -900,7 +904,7 @@ templ draftsNote(marker string, contacts CRMContacts, contact string, lang Lang,
 // crmDraftContact rewiring made them token-identical and the detector
 // called the clone; one merged list is the ruling.
 type draftNoteItem struct {
-	marker  string
+	marker  icons.Name
 	contact string
 	label   string
 	tail    string
@@ -913,7 +917,7 @@ func draftNotes(reviews *textagent.Reviews, lang Lang) []draftNoteItem {
 	items := make([]draftNoteItem, 0, len(reviews.Frozen)+len(reviews.Suppressed))
 	for _, frozen := range reviews.Frozen {
 		items = append(items, draftNoteItem{
-			marker:  "⚠",
+			marker:  icons.ExclamationTriangle,
 			contact: frozen.Contact,
 			label:   T(lang, "drafts.frozen"),
 			tail:    " · " + frozen.Reason,
@@ -921,7 +925,7 @@ func draftNotes(reviews *textagent.Reviews, lang Lang) []draftNoteItem {
 	}
 	for _, suppressed := range reviews.Suppressed {
 		items = append(items, draftNoteItem{
-			marker:  "⊗",
+			marker:  icons.NoSymbol,
 			contact: suppressed.Contact,
 			label:   T(lang, "drafts.suppressed"),
 			tail:    " (" + suppressed.Keyword + ")",
@@ -1012,7 +1016,7 @@ templ DraftsPanel(props DraftsPanelProps) {
 						<span class="wp-draft-meta" title={ draft.CreatedAt }>
 							{ draftMeta(draft, time.Now()) }
 							if draft.Trigger != "" && strings.HasPrefix(draft.Trigger, "missedcall") {
-								<span class="wp-draft-flag">☎</span>
+								<span class="wp-draft-flag">@icons.Icon(icons.Phone, "wp-icon")</span>
 							}
 						</span>
 					</header>
