@@ -26,6 +26,7 @@ test("announce caps the stack at four and drops the oldest", () => {
 
 test("toast eviction never drops focus to the body (M42)", () => {
   const toasts = document.getElementById("toasts");
+  toasts.replaceChildren();
   ui.announce("anchored", "info");
   const anchored = toasts.children[0];
   doc.activeElement = anchored;
