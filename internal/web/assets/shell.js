@@ -1975,14 +1975,17 @@
     // even when data-theme says otherwise. A forced theme collapses all
     // of them to the forced scheme's saved color (media dropped so the
     // choice is unambiguous); "auto" restores the served bytes.
+    /** @type {HTMLMetaElement[]} */
     var themeMetas = [];
+    /** @type {{media: string|null, color: string|null}[]} */
     var savedMetas = [];
     var metaNodes = document.querySelectorAll('meta[name="theme-color"]');
     for (var mi = 0; mi < metaNodes.length; mi++) {
-      themeMetas.push(metaNodes[mi]);
+      var metaEl = /** @type {HTMLMetaElement} */ (metaNodes[mi]);
+      themeMetas.push(metaEl);
       savedMetas.push({
-        media: metaNodes[mi].getAttribute("media"),
-        color: metaNodes[mi].getAttribute("content"),
+        media: metaEl.getAttribute("media"),
+        color: metaEl.getAttribute("content"),
       });
     }
     var forcedMetaColor = function () {
