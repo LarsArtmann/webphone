@@ -225,7 +225,10 @@
   box-shadow: var(--shadow);
 }
 
-.island h1 {
+/* The signin card's headings are h2 now — the page h1 is the brand in
+ * the header (M2), so the island's card headings step down one level
+ * and keep exactly this look. */
+.island h2 {
   font-size: 1.3rem;
   font-weight: 700;
   letter-spacing: -0.02em;

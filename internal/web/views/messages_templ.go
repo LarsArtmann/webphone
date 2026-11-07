@@ -2658,7 +2658,7 @@ func Bubble(msg domain.Message, lang Lang, asr bool) templ.Component {
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 175, "\" hidden></div>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 175, "\" aria-live=\"polite\" hidden></div>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}
@@ -3166,9 +3166,9 @@ func DraftsPanel(props DraftsPanelProps) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			var templ_7745c5c3_Var146 string
-			templ_7745c5c3_Var146, templ_7745c5c3_Err = templruntime.NewAttributeExpression(T(props.Lang, "drafts.title")).Resolve(ctx)
+			templ_7745c5c3_Var146, templ_7745c5c3_Err = templruntime.NewAttributeExpression(badgeCount(props.Lang, len(props.Drafts.Drafts), "drafts.countLabel")).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/messages.templ`, Line: 960, Col: 93}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/messages.templ`, Line: 960, Col: 133}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var146)
 			if templ_7745c5c3_Err != nil {
@@ -3181,7 +3181,7 @@ func DraftsPanel(props DraftsPanelProps) templ.Component {
 			var templ_7745c5c3_Var147 string
 			templ_7745c5c3_Var147, templ_7745c5c3_Err = templ.JoinStringErrs(fmtInt(len(props.Drafts.Drafts)))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/messages.templ`, Line: 960, Col: 130}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/messages.templ`, Line: 960, Col: 170}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var147))
 			if templ_7745c5c3_Err != nil {

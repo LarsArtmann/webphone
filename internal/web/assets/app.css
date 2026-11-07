@@ -213,6 +213,13 @@ h3 {
   z-index: 10;
 }
 
+/* M2: the brand is the page's h1 — the reset keeps the wordmark's
+ * exact look (the anchor inside carries the styles). */
+.wp-brand-h1 {
+  margin: 0;
+  font: inherit;
+}
+
 .wp-brand {
   display: inline-flex;
   align-items: center;

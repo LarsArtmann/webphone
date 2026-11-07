@@ -119,15 +119,17 @@ templ Shell(props ShellProps) {
 templ ShellBody(props ShellProps) {
 	<a class="wp-skip" href="#tab-content">{ T(props.Lang, "skip.content") }</a>
 	<header class="wp-header">
-		<a class="wp-brand" href="/" aria-label="WebPhone home">
-			<svg class="wp-brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-				<rect width="32" height="32" rx="7" class="wp-mark-bg"></rect>
-				<path
-					d="M9 7h4l2 5-2.5 2a12 12 0 0 0 5.5 5.5L20 17l5 2v4a2 2 0 0 1-2.2 2A17.8 17.8 0 0 1 7 9.2 2 2 0 0 1 9 7z"
-					class="wp-mark-fg"></path>
-			</svg>
-			<span>WebPhone</span>
-		</a>
+		<h1 class="wp-brand-h1">
+			<a class="wp-brand" href="/" aria-label="WebPhone home">
+				<svg class="wp-brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+					<rect width="32" height="32" rx="7" class="wp-mark-bg"></rect>
+					<path
+						d="M9 7h4l2 5-2.5 2a12 12 0 0 0 5.5 5.5L20 17l5 2v4a2 2 0 0 1-2.2 2A17.8 17.8 0 0 1 7 9.2 2 2 0 0 1 9 7z"
+						class="wp-mark-fg"></path>
+				</svg>
+				<span>WebPhone</span>
+			</a>
+		</h1>
 		<div class="wp-header-actions">
 			if props.SignedIn != "" {
 				<span class="wp-signed-in">{ props.SignedIn }
@@ -186,7 +188,7 @@ templ ShellBody(props ShellProps) {
 			<nav class="wp-nav" id="wp-nav" aria-label="Sections">
 				@NavLinks(props)
 			</nav>
-			<main class="wp-content" id="tab-content">
+			<main class="wp-content" id="tab-content" tabindex="-1">
 				if props.TabContent != nil {
 					@props.TabContent
 				} else {
@@ -267,7 +269,7 @@ func badgeCount(lang Lang, n int, key string) string {
 // stay hand-rolled.
 templ panelHead(lang Lang, titleKey, subtitleKey string) {
 	<header class="wp-panel-head">
-		<h2>{ T(lang, titleKey) }</h2>
+		<h2 tabindex="-1">{ T(lang, titleKey) }</h2>
 		<p class="wp-panel-sub">{ T(lang, subtitleKey) }</p>
 	</header>
 }

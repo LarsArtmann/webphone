@@ -728,7 +728,7 @@ templ Bubble(msg domain.Message, lang Lang, asr bool) {
 						data-transcribe-target={ "att-transcript-" + att.ID.String() }
 						aria-label={ T(lang, "media.transcribe") }
 					>{ T(lang, "media.transcribe") }</button>
-					<div class="wp-attachment-transcript" id={ "att-transcript-" + att.ID.String() } hidden></div>
+					<div class="wp-attachment-transcript" id={ "att-transcript-" + att.ID.String() } aria-live="polite" hidden></div>
 				}
 			}
 		}
@@ -957,7 +957,7 @@ templ DraftsPanel(props DraftsPanelProps) {
 		<h2 class="wp-drafts-head">
 			{ T(props.Lang, "drafts.title") }
 			if props.Drafts != nil && len(props.Drafts.Drafts) > 0 {
-				<span class="wp-nav-badge" id="wp-draft-count" aria-label={ T(props.Lang, "drafts.title") }>{ fmtInt(len(props.Drafts.Drafts)) }</span>
+				<span class="wp-nav-badge" id="wp-draft-count" aria-label={ badgeCount(props.Lang, len(props.Drafts.Drafts), "drafts.countLabel") }>{ fmtInt(len(props.Drafts.Drafts)) }</span>
 			}
 			if props.Drafts != nil && props.Drafts.Mode != "" {
 				<span class="wp-drafts-mode">
