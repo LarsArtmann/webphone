@@ -36,8 +36,8 @@ test("toast eviction never drops focus to the body (M42)", () => {
   assert.ok(focusedSurvivor, "focus sits on a surviving toast");
   assert.equal(
     focusedSurvivor.textContent,
-    "n2",
-    "focus moved to the then-newest survivor at eviction time, not the body",
+    "n3",
+    "focus moved to the newest surviving toast, not the body",
   );
   doc.activeElement = null;
 });
