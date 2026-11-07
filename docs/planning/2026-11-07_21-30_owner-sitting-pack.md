@@ -267,6 +267,7 @@ The `caddy.hsts` option ships opt-in.
   first visit.
 
 ### C4. Where may CI skip? The docs/test-only subset policy (routed from a
+
 2026-10-06 report; it lived only in a timestamped file)
 
 Which CI legs may be skipped for a docs-only or test-only commit, and which must
@@ -398,6 +399,7 @@ commit immediately, or keep hands off and report?
   improvisation is reviewed as if it were policy.
 
 ### D5. Daemon hardening: exclude `docs/status/` and `docs/planning/`, and gate
+
 before sweeping
 
 The heuristic daemon has twice swept half-written reports and has three times
@@ -529,6 +531,7 @@ declarative trains made its vocabulary load-bearing in code.
 ## E. Cross-repo & carrier — outside this repository (11 rulings)
 
 ### E1. Carrier-leg verdicts: inbound-MMS isolation test, Google Voice, and
+
 `+14084757593` ownership
 
 The test was never recorded anywhere. MMS ships and is webhook-tested today, so
@@ -592,6 +595,7 @@ Gates the flip from port-stripped peer-host keys to `KeyExtractorFromClientIP`.
 - **Evidence:** `docs/planning/2026-11-04_23-45_dashboard-fence-decision.md`
 
 ### E8. HSTS posture remains in C3 — no separate ruling; listed so the count in
+
 the ROADMAP closes cleanly.
 
 ### E9. SUPERB prod cutover timing + `staticFallbackExtensions`
@@ -611,6 +615,7 @@ Should prod's first static list name operator/ring-group extensions explicitly?
 - **Cost of the other branch:** ~10 min CI + a second toplevel, forever.
 
 ### E11. Stack-side TEMP-DIAG answer-phase dump in the browser E2E (commit
+
 `b96d4c2` there) — keep or revert?
 
 - **Recommend:** revert. It was diagnostic scaffolding, and a dump that stays
@@ -634,23 +639,23 @@ honest-422? And does the bridge's octet-stream sniff fallback live forever?
 
 ## The payoff map — which answers unlock which work
 
-| Answer | Unlocks (TODO home) |
-| ------ | ------------------- |
-| B1 GO | M07–M09 (group rooms, 3 × 100 min), then M13 |
-| B2 GO | M10–M11 (E2EE decrypt-only) + the backup-set row |
-| B3 GO | M05 (config strictness) |
-| C1 GO | the pma#348 PR (~100 min, cross-repo) |
-| C2 option 1 | the `release.sh` freshness gate |
-| C5 GO | the coverage-floor policy + one upstream ask |
-| C7 GO | the `backup.destDir` assertion row |
-| D1 GO | closes the FIFTH-surfacing dedup row |
-| D3 GO | the `Must*` row + a store hardening train |
-| D5/D6 GO | two pma asks (guard hooks + daemon pre-sweep gate) |
-| D10 GO | the 46-entry baseline becomes derivable |
-| D11 GO | the archive-residue recipe splits live/archived |
-| D12 both | the sweep becomes safe locally AND upstream fixes ship |
-| D14 GO | AGENTS compaction (~120 lines moved to lessons) |
-| E1 GO | the carrier verdict rows close |
+| Answer      | Unlocks (TODO home)                                    |
+| ----------- | ------------------------------------------------------ |
+| B1 GO       | M07–M09 (group rooms, 3 × 100 min), then M13           |
+| B2 GO       | M10–M11 (E2EE decrypt-only) + the backup-set row       |
+| B3 GO       | M05 (config strictness)                                |
+| C1 GO       | the pma#348 PR (~100 min, cross-repo)                  |
+| C2 option 1 | the `release.sh` freshness gate                        |
+| C5 GO       | the coverage-floor policy + one upstream ask           |
+| C7 GO       | the `backup.destDir` assertion row                     |
+| D1 GO       | closes the FIFTH-surfacing dedup row                   |
+| D3 GO       | the `Must*` row + a store hardening train              |
+| D5/D6 GO    | two pma asks (guard hooks + daemon pre-sweep gate)     |
+| D10 GO      | the 46-entry baseline becomes derivable                |
+| D11 GO      | the archive-residue recipe splits live/archived        |
+| D12 both    | the sweep becomes safe locally AND upstream fixes ship |
+| D14 GO      | AGENTS compaction (~120 lines moved to lessons)        |
+| E1 GO       | the carrier verdict rows close                         |
 
 Everything else in the pack closes a ROADMAP bullet with a bounded answer and
 unlocks no train — that is why they are at the bottom of their groups.
@@ -673,20 +678,20 @@ unlocks no train — that is why they are at the bottom of their groups.
 
 ## Source index (every link verified to exist at HEAD `605d2289`)
 
-| Home | What it owns |
-| ---- | ------------ |
-| [2026-10-29 owner decision packet](2026-10-29_15-53_SUPERB-owner-decision-packet.md) | the six cards' evidence one-pagers |
-| [2026-10-29 group-rooms model spike](2026-10-29_12-20_matrix-group-rooms-model-spike.md) | A1's four sub-decisions |
-| [2026-10-29 matrix E2EE go-story](../research/2026-10-29_12-35_matrix-e2ee-go-story.md) | P2's feasibility + the F46 correction |
-| [pma push-leg durability draft](../drafts/pma-push-leg-durability-issue-2026-10-28.md) | C1's root cause + the stall table |
-| [2026-09-22 owner-calls briefing](2026-09-22_13-50_owner-calls-briefing.md) | the 38 rows this pack folds in |
-| [sessions credentials-at-rest review](../reviews/2026-09-30_sessions-credentials-at-rest-review.md) | B6's baseline |
-| [modularization proposal](../modularization/2026-10-17_PROPOSAL.html) | the dormant carve triggers |
-| [native-app platform decision](2026-10-23_16-13_native-app-platform-decision.md) | the P0/P1/P2 split + the Flutter HARD NO |
-| [fax thumbnail decline note](2026-10-02_09-05_fax-thumbnail-decline-note.md) | A1 |
-| [fax capability decision](2026-10-30_04-15_fax-decision.md) | the declared-capability doctrine |
-| [dashboard fence decision](2026-11-04_23-45_dashboard-fence-decision.md) | E7 |
-| [post-v9 execution plan](2026-11-07_18-46_SUPERB-post-v9-execution-plan.md) | where B8, D10, D11 came from |
-| [release runbook](../release-runbook.md) | C9, E2 |
-| [error contract](../error-contract.md) | A3's ruling home |
-| [dedup registry](../dedup-registry.md) | D1 |
+| Home                                                                                                | What it owns                             |
+| --------------------------------------------------------------------------------------------------- | ---------------------------------------- |
+| [2026-10-29 owner decision packet](2026-10-29_15-53_SUPERB-owner-decision-packet.md)                | the six cards' evidence one-pagers       |
+| [2026-10-29 group-rooms model spike](2026-10-29_12-20_matrix-group-rooms-model-spike.md)            | A1's four sub-decisions                  |
+| [2026-10-29 matrix E2EE go-story](../research/2026-10-29_12-35_matrix-e2ee-go-story.md)             | P2's feasibility + the F46 correction    |
+| [pma push-leg durability draft](../drafts/pma-push-leg-durability-issue-2026-10-28.md)              | C1's root cause + the stall table        |
+| [2026-09-22 owner-calls briefing](2026-09-22_13-50_owner-calls-briefing.md)                         | the 38 rows this pack folds in           |
+| [sessions credentials-at-rest review](../reviews/2026-09-30_sessions-credentials-at-rest-review.md) | B6's baseline                            |
+| [modularization proposal](../modularization/2026-10-17_PROPOSAL.html)                               | the dormant carve triggers               |
+| [native-app platform decision](2026-10-23_16-13_native-app-platform-decision.md)                    | the P0/P1/P2 split + the Flutter HARD NO |
+| [fax thumbnail decline note](2026-10-02_09-05_fax-thumbnail-decline-note.md)                        | A1                                       |
+| [fax capability decision](2026-10-30_04-15_fax-decision.md)                                         | the declared-capability doctrine         |
+| [dashboard fence decision](2026-11-04_23-45_dashboard-fence-decision.md)                            | E7                                       |
+| [post-v9 execution plan](2026-11-07_18-46_SUPERB-post-v9-execution-plan.md)                         | where B8, D10, D11 came from             |
+| [release runbook](../release-runbook.md)                                                            | C9, E2                                   |
+| [error contract](../error-contract.md)                                                              | A3's ruling home                         |
+| [dedup registry](../dedup-registry.md)                                                              | D1                                       |

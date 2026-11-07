@@ -104,12 +104,12 @@ verdict that entry owed.
 · load average **0.75 / 2.06 / 9.72** (1 / 5 / 15 min) on 32 threads, sampled
 immediately before the run · medians and extremes of 6:
 
-| Shape (hubs × subs) | median ns/op | min    | max    | 2026-09-24 median | spread |
-| ------------------- | ------------ | ------ | ------ | ----------------- | ------ |
-| 1 × 1               | 33.2         | 32.88  | 33.60  | 35.0              | 2.2 %  |
-| 10 × 2              | 38.4         | 38.08  | 39.06  | 39.8              | 2.5 %  |
-| 100 × 2             | 38.6         | 38.55  | 39.09  | 39.5              | 1.4 %  |
-| 100 × 10            | 104.3        | 97.84  | 106.10 | 105.0             | 8.1 %  |
+| Shape (hubs × subs) | median ns/op | min   | max    | 2026-09-24 median | spread |
+| ------------------- | ------------ | ----- | ------ | ----------------- | ------ |
+| 1 × 1               | 33.2         | 32.88 | 33.60  | 35.0              | 2.2 %  |
+| 10 × 2              | 38.4         | 38.08 | 39.06  | 39.8              | 2.5 %  |
+| 100 × 2             | 38.6         | 38.55 | 39.09  | 39.5              | 1.4 %  |
+| 100 × 10            | 104.3        | 97.84 | 106.10 | 105.0             | 8.1 %  |
 
 **Reading:** every shape is at or below its 2026-09-24 median, and the
 per-shape spreads (1.4–8.1 %) are an order of magnitude tighter than the
