@@ -35,10 +35,12 @@ fail=0
 
 run_gate() {
 	local dir="$1"
-	( set -e
+	(
+		set -e
 		# shellcheck disable=SC1090
 		source "$gate_body"
-		DOCS_GATES_STATUS_DIR="$dir" status_f_gate )
+		DOCS_GATES_STATUS_DIR="$dir" status_f_gate
+	)
 }
 
 echo "selftest: case 1 — newest report WITHOUT '## f)' must fail"

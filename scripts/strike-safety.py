@@ -115,9 +115,8 @@ def check_verdict(value: str) -> str | None:
     for head in VERDICT_HEADS:
         if low.startswith(head) or low.startswith("**" + head):
             return None
-    return (
-        f"non-canonical verdict {value!r} — must start with one of: "
-        + ", ".join(repr(h) for h in VERDICT_HEADS)
+    return f"non-canonical verdict {value!r} — must start with one of: " + ", ".join(
+        repr(h) for h in VERDICT_HEADS
     )
 
 
@@ -173,11 +172,18 @@ def self_test() -> int:
 
     # Verdict vocabulary.
     expect("`done at <hash>` accepted", check_verdict("done at `abc1234`") is None)
-    expect("`done — evidence` accepted", check_verdict("done — docs/lessons.md") is None)
+    expect(
+        "`done — evidence` accepted", check_verdict("done — docs/lessons.md") is None
+    )
     expect("routed `→ TODO_LIST` accepted", check_verdict("→ TODO_LIST §Owner") is None)
-    expect("`**Won't implement — x.**` accepted", check_verdict("**Won't implement — noise.**") is None)
+    expect(
+        "`**Won't implement — x.**` accepted",
+        check_verdict("**Won't implement — noise.**") is None,
+    )
     expect("NOT-DO accepted", check_verdict("NOT-DO — out of scope.") is None)
-    expect("superseded accepted", check_verdict("Superseded — 2026-11-07 report.") is None)
+    expect(
+        "superseded accepted", check_verdict("Superseded — 2026-11-07 report.") is None
+    )
     expect("`UNMAPPED` refused", check_verdict("UNMAPPED") is not None)
     expect("empty verdict refused", check_verdict("  ") is not None)
     expect("bare evidence refused", check_verdict("it works now") is not None)

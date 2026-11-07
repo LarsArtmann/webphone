@@ -20,8 +20,7 @@ setCredentials("1000", "pw");
 
 const panels = await import("../island/app/panels.js?test=load-failures");
 
-const toasts = () =>
-  [...doc.getElementById("toasts").children].map((el) => el.textContent);
+const toasts = () => [...doc.getElementById("toasts").children].map((el) => el.textContent);
 
 // A failing response stub: every panel fetch answers 500 unless the test
 // overrides. ok=false without ok being consulted is fine — panels branch
@@ -80,8 +79,7 @@ test("voicemail transport failure gets its own copy, not the auth line", async (
   await panels.refreshVoicemail();
   const status = doc.getElementById("vm-status").textContent;
   assert.ok(
-    status.includes("could not load voicemail") &&
-      status.includes("gateway timeout"),
+    status.includes("could not load voicemail") && status.includes("gateway timeout"),
     `expected distinct load-failure copy, got "${status}"`,
   );
   assert.ok(
@@ -94,8 +92,5 @@ test("voicemail 401 keeps the auth-failure copy", async () => {
   globalThis.fetch = failFetch(401);
   await panels.refreshVoicemail();
   const status = doc.getElementById("vm-status").textContent;
-  assert.ok(
-    status.includes("operator API"),
-    `expected the auth copy on 401, got "${status}"`,
-  );
+  assert.ok(status.includes("operator API"), `expected the auth copy on 401, got "${status}"`);
 });
