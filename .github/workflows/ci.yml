@@ -74,6 +74,14 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The docs-health battery's annotate gate resolves struck rows
+          # against git history (hash/tag verdict evidence); the default
+          # depth-1 checkout leaves ~2/3 of those references unresolvable
+          # and inflated the finding count from 205 (full history) to 373 —
+          # past the ratchet, red on every push. The changelog-guard job
+          # already needs full history for the same reason.
+          fetch-depth: 0
 
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
 
