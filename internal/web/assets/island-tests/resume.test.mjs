@@ -144,3 +144,74 @@ test("resume with a refused REGISTER drops the stale session and returns the log
     "the rejection reason is shown where the user looks",
   );
 });
+
+// T19 M15/M21: the guards boot — a healthy connect — drives the login
+// in-flight guard and the logout two-click arm.
+const { sessions } = await import("../island/app/state.js");
+const { t } = await import("../island/app/i18n.js");
+const lastToast = () => doc.getElementById("toasts").children.at(-1);
+
+test("a double-submitted login POSTs the session exactly once", async () => {
+  scenario = "guards";
+  await import("../island/app/main.js?case=guards");
+  await flushes();
+
+  const form = doc.getElementById("login-form");
+  const submitsBefore = calls.fetches.filter((f) => f.startsWith("POST /api/session")).length;
+  // Three boots registered submit listeners on the shared registry
+  // element — fire only the guards instance's handler.
+  const fire = () => form.listeners.submit.at(-1)({ preventDefault() {} });
+  const first = fire();
+  fire();
+  await first;
+  await flushes();
+  const afterPair = calls.fetches.filter((f) => f.startsWith("POST /api/session")).length;
+  assert.equal(
+    afterPair - submitsBefore,
+    1,
+    "the concurrent second submit is dropped by the in-flight guard",
+  );
+
+  // The guard RELEASES: a later submit runs a fresh attempt.
+  const second = fire();
+  await second;
+  await flushes();
+  const afterRetry = calls.fetches.filter((f) => f.startsWith("POST /api/session")).length;
+  assert.equal(afterRetry - afterPair, 1, "the guard is not a latch");
+});
+
+test("logout with a live call is a two-click move", async () => {
+  scenario = "guards";
+  sessions.set("live-1", { session: { bye: async () => {} } });
+  doc.getElementById("phone-view").hidden = false;
+  const logout = doc.getElementById("logout");
+  const logoutClick = () => logout.listeners.click.at(-1)({});
+  const toastsBefore = doc.getElementById("toasts").children.length;
+
+  logoutClick();
+  assert.equal(
+    lastToast().textContent,
+    t("logoutLiveCall"),
+    "the first click warns",
+  );
+  assert.equal(
+    doc.getElementById("phone-view").hidden,
+    false,
+    "the first click does not tear down",
+  );
+  assert.equal(
+    doc.getElementById("toasts").children.length,
+    toastsBefore + 1,
+    "no teardown side effects fired",
+  );
+
+  // An idle phone (the arm spent, no calls) signs out on one click.
+  sessions.clear();
+  logoutClick();
+  await flushes();
+  assert.equal(
+    doc.getElementById("phone-view").hidden,
+    true,
+    "the confirmed logout tears down",
+  );
+});

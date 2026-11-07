@@ -1202,12 +1202,13 @@ function copyCardTranscript(target) {
 }
 
 // Transfer row: inline destination input with blind/attended actions.
-/** @param {HTMLElement} card @param {string} id */
+// Returns the open row (null = the toggle closed an existing one).
+/** @param {HTMLElement} card @param {string} id @returns {HTMLElement | null} */
 export function toggleTransferRow(card, id) {
   const existing = card.querySelector(".transfer-row");
   if (existing) {
     existing.remove();
-    return;
+    return null;
   }
   const row = document.createElement("div");
   row.className = "transfer-row";
@@ -1238,6 +1239,7 @@ export function toggleTransferRow(card, id) {
   row.append(input, blind, attended);
   card.append(row);
   input.focus();
+  return row;
 }
 
 /** @param {SipNotification} notification */

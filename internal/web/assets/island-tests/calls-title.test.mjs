@@ -8,6 +8,8 @@ import assert from "node:assert/strict";
 import { installBrowserGlobals } from "./helpers.mjs";
 
 const doc = installBrowserGlobals();
+// notify.js captures the idle title at import — a real page has one.
+document.title = "Webphone";
 globalThis.SIP = {
   SessionState: {
     Establishing: "Establishing",
@@ -53,7 +55,7 @@ test("the render tick carries the established call into the tab title", () => {
   );
   sessions.clear();
   renderCalls();
-  assert.equal(document.title, "", "the idle title is handed back");
+  assert.equal(document.title, "Webphone", "the idle title is handed back");
 });
 
 test("the oldest established call owns the title's clock", () => {
