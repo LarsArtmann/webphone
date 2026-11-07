@@ -101,7 +101,10 @@ test("a browser without AudioContext.setSinkId keeps the room alarm", async () =
   try {
     const audio = await loadAudio("sink-unsupported");
     audio.setToneSink("spk-1");
-    assert.doesNotThrow(() => audio.ringToneStart(), "an unsupported sink must never break the ring");
+    assert.doesNotThrow(
+      () => audio.ringToneStart(),
+      "an unsupported sink must never break the ring",
+    );
     audio.ringToneStop();
   } finally {
     AudioContext.prototype.setSinkId = saved;

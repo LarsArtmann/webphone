@@ -70,7 +70,9 @@ def parsed_rows(text: str) -> list[tuple[str, str]]:
 
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--check", action="store_true", help="verify INDEX.md matches the directory")
+    ap.add_argument(
+        "--check", action="store_true", help="verify INDEX.md matches the directory"
+    )
     args = ap.parse_args()
 
     rows = computed_rows()
