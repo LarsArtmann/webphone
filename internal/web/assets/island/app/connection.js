@@ -99,7 +99,9 @@ function scheduleReconnect() {
   if (stopping || reconnectTimer) return;
   reconnectAttempts += 1;
   const delay = Math.min(30, 2 ** reconnectAttempts);
-  setOfflinePill(t("reconnecting")(delay, reconnectAttempts));
+  // F18: the pill carries the calm truth ("reconnecting in 2s…") — the
+  // attempt counter stays telemetry, it lives in the #log line below.
+  setOfflinePill(t("reconnecting")(delay));
   log(`transport lost; reconnect try ${reconnectAttempts} in ${delay}s`);
   reconnectTimer = setTimeout(() => {
     reconnectTimer = null;

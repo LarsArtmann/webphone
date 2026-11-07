@@ -151,8 +151,6 @@
   padding: 4px 11px 4px 9px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
   font-weight: 550;
   white-space: nowrap;
 }

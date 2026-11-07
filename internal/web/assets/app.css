@@ -1910,8 +1910,6 @@ a:focus-visible {
   margin: 10px 0 6px;
   font-size: 0.72rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
@@ -1932,8 +1930,6 @@ a:focus-visible {
   color: var(--accent-strong);
   font-size: 0.72rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   font-variant-numeric: tabular-nums;
 }
 

@@ -114,8 +114,7 @@ export const I18N = {
     iceHost: "direct local-network path",
     iceLoss: (lost) => `${lost} packets lost on receive — network congestion?`,
     iceFailed: "connection failed — media blocked between the networks",
-    reconnecting: (delay, attempt) =>
-      `reconnecting in ${delay}s (try ${attempt})`,
+    reconnecting: (delay) => `reconnecting in ${delay}s…`,
     loginError: (message) =>
       `Could not connect: ${message}. Check extension/password and that your browser trusts the server certificate.`,
     passkeySection: "Sign in with a passkey",
@@ -384,8 +383,7 @@ export const I18N = {
     iceLoss: (lost) => `${lost} Pakete verloren — Netzüberlastung?`,
     iceFailed:
       "Verbindung fehlgeschlagen — Medien zwischen den Netzen blockiert",
-    reconnecting: (delay, attempt) =>
-      `Neuverbindung in ${delay}s (Versuch ${attempt})`,
+    reconnecting: (delay) => `Neuverbindung in ${delay}s…`,
     loginError: (message) =>
       `Verbindung fehlgeschlagen: ${message}. Prüfen Sie Nebenstelle/Passwort und ob Ihr Browser dem Serverzertifikat vertraut.`,
     callFailed: (detail) => `Anruf fehlgeschlagen: ${detail}`,
