@@ -66,8 +66,8 @@ templ FaxPanel(props FaxPanelProps) {
 				})
 				<input type="file" name="document" required accept="application/pdf,.pdf" aria-label={ T(props.Lang, "fax.document.label") }></input>
 				@display.Button(display.ButtonProps{
-					Type:  display.ButtonHTMLSubmit,
-					Icon:  faxSendIndicator(),
+					Type: display.ButtonHTMLSubmit,
+					Icon: sendIndicator(),
 					Text:  T(props.Lang, "fax.send"),
 				})
 				<div class="wp-attach" hidden></div>
@@ -122,12 +122,6 @@ templ faxUnavailableNotice(lang Lang, key string) {
 	<p class="wp-empty wp-fax-off" role="note">{ T(lang, key) }</p>
 }
 
-
-// faxSendIndicator is the send button's htmx spinner (the request
-// in-flight marker); Button renders it ahead of the label.
-templ faxSendIndicator() {
-	<span class="htmx-indicator" aria-hidden="true">…</span>
-}
 
 // FaxList renders the fax rows (or the empty state). It is the payload of
 // the SSE "fax" event, so it must stay swap-safe: no wrapper, no form. The

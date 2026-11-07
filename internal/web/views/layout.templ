@@ -304,6 +304,14 @@ templ identityLine(lang Lang, identity string) {
 	}
 }
 
+// sendIndicator is the ONE home of the submit-button htmx spinner (the
+// request in-flight marker htmx toggles on .htmx-request forms); Button
+// renders it ahead of the label. Every long-running htmx form submit
+// passes it in the Button's Icon slot — a click must always answer.
+templ sendIndicator() {
+	<span class="htmx-indicator" aria-hidden="true">…</span>
+}
+
 // headExtras applies the theme BEFORE anything paints (render-blocking,
 // same-origin — the CSP allows no inline scripts), loads htmx deferred —
 // AFTER the htmx-config meta, so htmx sees it at startup and skips its

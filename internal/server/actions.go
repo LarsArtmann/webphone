@@ -292,6 +292,10 @@ func (h *handlers) saveContact(w http.ResponseWriter, r *http.Request) {
 	}
 	// FormValue transparently handles urlencoded AND multipart bodies.
 	name := r.FormValue("name")
+	if len(name) > domain.MaxContactNameLength {
+		http.Error(w, "the contact name is too long", http.StatusUnprocessableEntity)
+		return
+	}
 	phone, err := domain.ParsePhone(r.FormValue("number"))
 	if err != nil {
 		http.Error(w, "enter a valid number", http.StatusUnprocessableEntity)
