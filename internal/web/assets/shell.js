@@ -1959,6 +1959,7 @@
       } else {
         document.documentElement.setAttribute("data-theme", theme);
       }
+      syncMetaTheme();
       var button = document.getElementById("theme-toggle");
       if (button) {
         button.textContent = "Theme: " + theme;
@@ -1966,6 +1967,57 @@
         // screen reader hears the theme change without re-reading the
         // visible label.
         button.setAttribute("aria-label", "Color theme: " + theme);
+      }
+    };
+
+    // A forced theme must recolor the browser chrome too: the served
+    // meta tags are media-scoped, so they keep tracking the OS scheme
+    // even when data-theme says otherwise. A forced theme collapses all
+    // of them to the forced scheme's saved color (media dropped so the
+    // choice is unambiguous); "auto" restores the served bytes.
+    var themeMetas = [];
+    var savedMetas = [];
+    var metaNodes = document.querySelectorAll('meta[name="theme-color"]');
+    for (var mi = 0; mi < metaNodes.length; mi++) {
+      themeMetas.push(metaNodes[mi]);
+      savedMetas.push({
+        media: metaNodes[mi].getAttribute("media"),
+        color: metaNodes[mi].getAttribute("content"),
+      });
+    }
+    var forcedMetaColor = function () {
+      var theme = THEMES[themeIndex];
+      if (theme === "auto") return null;
+      var want = theme === "light" ? "light" : "dark";
+      for (var i = 0; i < savedMetas.length; i++) {
+        var media = savedMetas[i].media;
+        if (media && media.indexOf(want) >= 0 && savedMetas[i].color) {
+          return savedMetas[i].color;
+        }
+      }
+      for (var j = 0; j < savedMetas.length; j++) {
+        if (savedMetas[j].color) return savedMetas[j].color;
+      }
+      return null;
+    };
+    var syncMetaTheme = function () {
+      var forced = forcedMetaColor();
+      for (var i = 0; i < themeMetas.length; i++) {
+        var meta = themeMetas[i];
+        var saved = savedMetas[i];
+        if (forced === null) {
+          if (saved.media) {
+            meta.setAttribute("media", saved.media);
+          } else {
+            meta.removeAttribute("media");
+          }
+          if (saved.color) {
+            meta.setAttribute("content", saved.color);
+          }
+        } else {
+          meta.removeAttribute("media");
+          meta.setAttribute("content", forced);
+        }
       }
     };
     applyTheme();

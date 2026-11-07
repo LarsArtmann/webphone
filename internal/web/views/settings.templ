@@ -352,7 +352,7 @@ templ faxLaneDetail(cap FaxCapability, lang Lang) {
 // the bounded probe can distinguish. Unknown state strings fall back to
 // the unset rendering (a stale prop can never claim a live wire).
 templ crmDetail(state string, lang Lang) {
-	<span class={ "wp-service", templ.KV("wp-service-on", state == "connected") }>
+	<span class={ "wp-service", templ.KV("wp-service-on", state == "connected"), templ.KV("wp-service-off", state != "connected") }>
 		if state == "connected" {
 			{ T(lang, "settings.connected") }
 		} else if state == "auth-failed" {
