@@ -41,6 +41,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The command palette's touch button now announces its state: it names the
+  dialog it opens and reports whether the palette is showing, so a screen
+  reader user is no longer told the palette is closed while it covers the page.
 - Panel load failures speak (M20): a failed voicemail reload no longer
   shows the auth-failure line for a network error — it names the real
   cause — and the call-history and contacts loads announce a warning

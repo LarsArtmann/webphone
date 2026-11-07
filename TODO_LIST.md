@@ -144,14 +144,16 @@ What remains, each with its ONE home:
     "generic" is a document-frequency threshold (observed 330 → 331 from one
     CHANGELOG paragraph), and a standalone verb ignores `.docs-gates.json` while
     `run` honors it.
-20. **Frontend-UX verification tail** (harvested 2026-11-07 from
-    `docs/status/2026-11-07_11-07_frontend-ux-train-resumed-completion.md` §f,
-    routed by the docs-health v9 freshness gate): (a) the `admin.calls.lines`
-    value now says "transcript lines" — check the DE wrapping in the admin
-    table at narrow widths; (b) pin the F20 three-audience Settings structure
-    itself (dl counts per section, not just the two relocated pins);
-    (c) verify `aria-expanded` on `#wp-palette-open` (the served touch button
-    has no pressed/expanded state feedback).
+20. [x] **Frontend-UX verification tail — DONE 2026-11-07 (P1-4)**: three pins
+        landed in `internal/web/views/settings_structure_test.go`. (a) the admin
+        line-count copy is pinned in BOTH languages (it must name the transcript,
+        keep its leading space, and stay one unbreakable German compound — so there
+        is no wrap point inside "Transkriptzeilen"); (b) the F20 three-audience
+        Settings structure is pinned as an ORDER (prefs < data < collapsed server
+        `<details>` between them) plus the 10 hand-written shortcut rows, which no
+        helper generates; (c) `#wp-palette-open` is now a real disclosure —
+        `aria-controls="wp-palette"` + `aria-expanded`, kept in step by `shell.js`
+        at runtime, documented in docs/dom-contract.md § Notes.
 21. **annotate.go/docs-gates tooling nits** (found by the docs-health v9 sweep
     2026-11-07, upstream Artmann-Technologies repos): (a) escaped pipes inside a
     code span (`\|`) defeat the table cell splitter, so a per-cell strike
