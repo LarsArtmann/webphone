@@ -41,6 +41,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- CRM machine calls now ask for JSON explicitly (2026-11-07): the client states
+  an `Accept` header, so a proxy in front of a CRM that shares an origin with
+  its human UI can no longer answer HTML that then reads as a decode bug.
 - A saved post-call note now refreshes every open tab (2026-11-07): the save
   publishes a payload-less live-update nudge the way reviews already did, so a
   second tab showing the same call stops holding a stale note box. The
