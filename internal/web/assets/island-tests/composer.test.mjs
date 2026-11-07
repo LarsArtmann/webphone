@@ -200,6 +200,7 @@ test("double-Enter cannot double-send: a second in-flight submit is dropped", ()
   const form = doc.createElement();
   form.selector = "form.wp-compose";
   form.className = "wp-compose";
+  form.matches = (s) => s === form.selector;
   form.append(area);
   area.value = "hi";
   const send = () =>
