@@ -14,6 +14,17 @@ front matter does not carry their history (one home per fact, per the rule above
 
 ## Open tasks
 
+### 2026-11-07 Frontend UX fix-train (one home: the SUPERB plan)
+
+The 2026-11-07 design review
+(docs/review/2026-11-07_01-51_frontend-design-ux-review.html) produced 20
+carded findings + a 47-item agent matrix + 8 flow GAPs. The task inventory
+lives in the plan, NOT here:
+docs/planning/2026-11-07_04-09_SUPERB-frontend-ux-fix-train.md (Pareto
+tiers, 24 comprehensive tasks, 119 micro-tasks, execution graph, gate
+contracts). Harvest rows here only as trains close them. Owner calls open:
+F1 ink direction, F19 signed-out shape.
+
 ### 2026-11-06 GitHub-issue train residue (harvest from the 10:45 report)
 
 The 2026-11-06 train closed 4 of 5 open GitHub issues (Reports tab #12, live-call
