@@ -188,6 +188,12 @@ templ ShellBody(props ShellProps) {
 			<nav class="wp-nav" id="wp-nav" aria-label="Sections">
 				@NavLinks(props)
 			</nav>
+			// M26: the error slot renders ABOVE the panel — at panel height
+			// an error swapped in below the main never scrolled into view,
+			// and a slot the eye never meets is a slot that does not exist.
+			// Still outside #tab-content, so tab swaps cannot remove the
+			// retarget anchor.
+			<div id="wp-tab-error"></div>
 			<main class="wp-content" id="tab-content" tabindex="-1">
 				if props.TabContent != nil {
 					@props.TabContent
@@ -195,7 +201,6 @@ templ ShellBody(props ShellProps) {
 					@SignInHint(props.Lang)
 				}
 			</main>
-			<div id="wp-tab-error"></div>
 			// Skeleton placeholder (F1): the shell reveals this while a
 			// navigation partial is in flight, so a slow tab reads as
 			// loading instead of dead air.

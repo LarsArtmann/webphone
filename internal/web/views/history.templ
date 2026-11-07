@@ -77,7 +77,7 @@ templ HistoryPanel(props HistoryPanelProps) {
 					value={ props.Query }
 					aria-label={ T(props.Lang, "history.filter.label") }
 				/>
-				<select name="dir" aria-label={ T(props.Lang, "history.filter.label") }>
+				<select name="dir" aria-label={ T(props.Lang, "history.dir.label") }>
 					<option value="" selected?={ props.Dir == "" }>{ T(props.Lang, "history.dir.any") }</option>
 					<option value="in" selected?={ props.Dir == "in" }>{ T(props.Lang, "history.dir.in") }</option>
 					<option value="out" selected?={ props.Dir == "out" }>{ T(props.Lang, "history.dir.out") }</option>

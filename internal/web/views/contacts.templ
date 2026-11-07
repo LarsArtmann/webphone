@@ -24,7 +24,7 @@ templ ContactsPanel(props ContactsPanelProps) {
 		hx-get="/partials/contacts"
 		hx-trigger="sse:contacts"
 		hx-target="#tab-content"
-		hx-swap="morph:innerHTML show:window:top"
+		hx-swap="morph:innerHTML"
 	>
 		@panelHead(props.Lang, "tab.contacts", "contacts.subtitle")
 		<form
