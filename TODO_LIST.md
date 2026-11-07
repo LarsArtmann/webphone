@@ -248,6 +248,12 @@ swap, fax badge, 2 empty states) lives in CHANGELOG + the per-library reports �
 2. **templ-components taste calls** — owner decisions, not adoption gaps: the ✓ delivered
    chip (or a Badge prefix/icon slot) and whether section subtitles should render as muted
    empty-states. Re-litigate only if the owner asks.
+3. **go-idempotency upstream ask (2026-11-07)**: the contract suite's NoopOnExistingKey
+   red-ed CI (run 42407471289) when a -race scheduling stall outlasted the scaled shortTTL —
+   the second Record legitimately re-claims the expired window and the wall-sleep assertion
+   reads it as an extension. Webphone's band-aid is TimingScale 5 (stall budget 60 → 100 ms);
+   the durable fix is upstream: an injectable clock instead of wall sleeps. File it through the
+   verify-before-filing + github-voice ritual; evidence: docs/ci-flake-ledger.md row 42407471289.
 
 ### Fleet-libs reopen-trigger registry (2026-11-04, T25 — the ONE table)
 
