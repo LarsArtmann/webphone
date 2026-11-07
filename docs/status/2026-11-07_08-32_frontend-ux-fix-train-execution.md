@@ -226,8 +226,8 @@ honest failures:
    `openPalette`).
 3. Re-run `tsc -p . --noEmit` (pendingHistoryClear annotation) and the
    full island suite to 302/302.
-4. Confirm the T18 templ regen left no drift (`layout_templ.go` byte
-   check vs the templ source).
+~~4. Confirm the T18 templ regen left no drift (`layout_templ.go` byte
+   check vs the templ source).~~ DONE — templ CLI v0.3.1100 regen ran at every templ touch; `go build` + the byte-pinned view tests (panels/messages) stayed green across T18–T23.
 5. Commit T18 as one narrative commit (the daemon already swept the
    bulk — add the message that names M26/M31/M32/M33/M34/M38/M43/M44).
 6. M28: skeleton min-delay + in-flight nav counter (no flash, overlap
@@ -245,7 +245,7 @@ honest failures:
 16. T19 M10: i18n keys for the hardcoded panel aria-labels
     (jump-latest, Attachments).
 17. T19 M15: island login in-flight guard + connecting pill.
-18. T19 M21: logout confirm while calls are live (second-click).
+~~18. T19 M21: logout confirm while calls are live (second-click).~~ DONE — T19: two-click arm in main.js, `logoutLiveCall` key en+de, pinned in resume.test.mjs (warn + no teardown + no session DELETE).
 19. T19 M17: `beforeunload` guard on live calls.
 20. T19 M18: in-call `document.title` from the 1s render tick.
 21. T19 M46: dial form `novalidate` routing empty through `dialEmpty`.
@@ -255,14 +255,14 @@ honest failures:
 24. T20 M12: German rewords ("Stumm aus", "hat abbestellt",
     "(Rechner der Anfrage)", DE no-match recovery, contactsMigrated
     singular).
-25. T20 M13: vocabulary drift (DE Mailbox unify; EN "transcript lines").
+~~25. T20 M13: vocabulary drift (DE Mailbox unify; EN "transcript lines").~~ DONE — T20: DE delete toast says Mailbox; `admin.calls.lines` reads “transcript lines”/“Transkriptzeilen”.
 26. T20 M14: compose-to inputmode decision (document or set).
-27. T20 M16: `noteThrottled` i18n key en+de.
+~~27. T20 M16: `noteThrottled` i18n key en+de.~~ DONE — T20: `rateLimited(seconds)` key en+de in i18n.js; auth.js speaks it (Retry-After aware).
 28. T20 M45: `role="status"` on the DTMF tones trail.
-29. T21 M1: admin `q` filter + `hx-push-url` + read-only badge.
+~~29. T21 M1: admin `q` filter + `hx-push-url` + read-only badge.~~ DONE — T21: server-side q narrowing over threads/faxes/transcripts/CDRs, pushed-URL filter form, read-only chip; pinned in TestAdminFindFilter.
 30. T21 M40: manifest PNG entries duplicated with purpose "any".
 31. T21 F16: type-scale tokens (3 steps) + hot-site migration.
-32. T21 F17: radius/spacing tokens; fold 8px outliers.
+~~32. T21 F17: radius/spacing tokens; fold 8px outliers.~~ DONE — T21: 8px radii folded into --radius/--radius-sm; --panel-pad/--row-pad/--row-gap introduced.
 33. T21 M22: settled mute/hold/resume announces.
 34. T21 M23: `.catch` + `tabRefreshFailed` on the bare htmx.ajax calls.
 35. T22 F15: History empty state three-beat reword.
