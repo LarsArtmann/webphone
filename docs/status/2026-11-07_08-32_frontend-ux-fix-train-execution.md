@@ -226,69 +226,69 @@ honest failures:
    `openPalette`).
 3. Re-run `tsc -p . --noEmit` (pendingHistoryClear annotation) and the
    full island suite to 302/302.
-~~4. Confirm the T18 templ regen left no drift (`layout_templ.go` byte
+   ~~4. Confirm the T18 templ regen left no drift (`layout_templ.go` byte
    check vs the templ source).~~ DONE — templ CLI v0.3.1100 regen ran at every templ touch; `go build` + the byte-pinned view tests (panels/messages) stayed green across T18–T23.
-5. Commit T18 as one narrative commit (the daemon already swept the
+4. Commit T18 as one narrative commit (the daemon already swept the
    bulk — add the message that names M26/M31/M32/M33/M34/M38/M43/M44).
-6. M28: skeleton min-delay + in-flight nav counter (no flash, overlap
+5. M28: skeleton min-delay + in-flight nav counter (no flash, overlap
    safe).
-7. M37: live-context slot error reset + remote-stamped race guard.
-8. V1: runtime-verify the moved tab-error slot's scroll behavior.
-9. V2: runtime double-Enter repro + guard proof.
-10. V3: overlay containment walk (native dialog gives it — verify once).
-11. V4: drafts-loss window repro.
-12. V5: live-context race repro.
-13. T19 M5: maxlength hints aligned with server caps (composer,
+6. M37: live-context slot error reset + remote-stamped race guard.
+7. V1: runtime-verify the moved tab-error slot's scroll behavior.
+8. V2: runtime double-Enter repro + guard proof.
+9. V3: overlay containment walk (native dialog gives it — verify once).
+10. V4: drafts-loss window repro.
+11. V5: live-context race repro.
+12. T19 M5: maxlength hints aligned with server caps (composer,
     contacts, snippets).
-14. T19 M6: `htmx-indicator` on submits beyond fax.
-15. T19 M9: `hx-disabled-elt` on contacts save/import.
-16. T19 M10: i18n keys for the hardcoded panel aria-labels
+13. T19 M6: `htmx-indicator` on submits beyond fax.
+14. T19 M9: `hx-disabled-elt` on contacts save/import.
+15. T19 M10: i18n keys for the hardcoded panel aria-labels
     (jump-latest, Attachments).
-17. T19 M15: island login in-flight guard + connecting pill.
-~~18. T19 M21: logout confirm while calls are live (second-click).~~ DONE — T19: two-click arm in main.js, `logoutLiveCall` key en+de, pinned in resume.test.mjs (warn + no teardown + no session DELETE).
-19. T19 M17: `beforeunload` guard on live calls.
-20. T19 M18: in-call `document.title` from the 1s render tick.
-21. T19 M46: dial form `novalidate` routing empty through `dialEmpty`.
-22. T19 M24: transfer row empty-dest announce + Escape closes.
-23. T20 M11: seven emoji/dingbat glyphs → icons package; strip ✖ from
+16. T19 M15: island login in-flight guard + connecting pill.
+    ~~18. T19 M21: logout confirm while calls are live (second-click).~~ DONE — T19: two-click arm in main.js, `logoutLiveCall` key en+de, pinned in resume.test.mjs (warn + no teardown + no session DELETE).
+17. T19 M17: `beforeunload` guard on live calls.
+18. T19 M18: in-call `document.title` from the 1s render tick.
+19. T19 M46: dial form `novalidate` routing empty through `dialEmpty`.
+20. T19 M24: transfer row empty-dest announce + Escape closes.
+21. T20 M11: seven emoji/dingbat glyphs → icons package; strip ✖ from
     the `history.missed` key.
-24. T20 M12: German rewords ("Stumm aus", "hat abbestellt",
+22. T20 M12: German rewords ("Stumm aus", "hat abbestellt",
     "(Rechner der Anfrage)", DE no-match recovery, contactsMigrated
     singular).
-~~25. T20 M13: vocabulary drift (DE Mailbox unify; EN "transcript lines").~~ DONE — T20: DE delete toast says Mailbox; `admin.calls.lines` reads “transcript lines”/“Transkriptzeilen”.
-26. T20 M14: compose-to inputmode decision (document or set).
-~~27. T20 M16: `noteThrottled` i18n key en+de.~~ DONE — T20: `rateLimited(seconds)` key en+de in i18n.js; auth.js speaks it (Retry-After aware).
-28. T20 M45: `role="status"` on the DTMF tones trail.
-~~29. T21 M1: admin `q` filter + `hx-push-url` + read-only badge.~~ DONE — T21: server-side q narrowing over threads/faxes/transcripts/CDRs, pushed-URL filter form, read-only chip; pinned in TestAdminFindFilter.
-30. T21 M40: manifest PNG entries duplicated with purpose "any".
-31. T21 F16: type-scale tokens (3 steps) + hot-site migration.
-~~32. T21 F17: radius/spacing tokens; fold 8px outliers.~~ DONE — T21: 8px radii folded into --radius/--radius-sm; --panel-pad/--row-pad/--row-gap introduced.
-33. T21 M22: settled mute/hold/resume announces.
-34. T21 M23: `.catch` + `tabRefreshFailed` on the bare htmx.ajax calls.
-35. T22 F15: History empty state three-beat reword.
-36. T22 F18: uppercase zoning (day divider, reconnect pill copy).
-37. T22 M20: voicemail reload failure copy; surface the silent `!res.ok`
+    ~~25. T20 M13: vocabulary drift (DE Mailbox unify; EN "transcript lines").~~ DONE — T20: DE delete toast says Mailbox; `admin.calls.lines` reads “transcript lines”/“Transkriptzeilen”.
+23. T20 M14: compose-to inputmode decision (document or set).
+    ~~27. T20 M16: `noteThrottled` i18n key en+de.~~ DONE — T20: `rateLimited(seconds)` key en+de in i18n.js; auth.js speaks it (Retry-After aware).
+24. T20 M45: `role="status"` on the DTMF tones trail.
+    ~~29. T21 M1: admin `q` filter + `hx-push-url` + read-only badge.~~ DONE — T21: server-side q narrowing over threads/faxes/transcripts/CDRs, pushed-URL filter form, read-only chip; pinned in TestAdminFindFilter.
+25. T21 M40: manifest PNG entries duplicated with purpose "any".
+26. T21 F16: type-scale tokens (3 steps) + hot-site migration.
+    ~~32. T21 F17: radius/spacing tokens; fold 8px outliers.~~ DONE — T21: 8px radii folded into --radius/--radius-sm; --panel-pad/--row-pad/--row-gap introduced.
+27. T21 M22: settled mute/hold/resume announces.
+28. T21 M23: `.catch` + `tabRefreshFailed` on the bare htmx.ajax calls.
+29. T22 F15: History empty state three-beat reword.
+30. T22 F18: uppercase zoning (day divider, reconnect pill copy).
+31. T22 M20: voicemail reload failure copy; surface the silent `!res.ok`
     paths in history/contacts loads.
-38. T23: convert the 8 [GAP] flow scenarios into pinned tests.
-39. T24: train-end buildflow (full, collect BOTH verdicts).
-~~40. T24: `nix flake check` (island gates + format + DOM contract).~~ DONE — all checks passed 2026-11-07 (incl. the KVM-gated backup VM tests). Buildflow verdicts: train-start run 20261107-032044 (74/74, 100%), train-end run 20261107-084827 (74/74, 100%).
-41. T24: CHANGELOG `[Unreleased]` lines for the whole train (code-path
+32. T23: convert the 8 [GAP] flow scenarios into pinned tests.
+33. T24: train-end buildflow (full, collect BOTH verdicts).
+    ~~40. T24: `nix flake check` (island gates + format + DOM contract).~~ DONE — all checks passed 2026-11-07 (incl. the KVM-gated backup VM tests). Buildflow verdicts: train-start run 20261107-032044 (74/74, 100%), train-end run 20261107-084827 (74/74, 100%).
+34. T24: CHANGELOG `[Unreleased]` lines for the whole train (code-path
     changes only).
-42. T24: annotate the review's finding cards with FIXED evidence (F1
+35. T24: annotate the review's finding cards with FIXED evidence (F1
     done; F3/F4/F5/F6/F7/F8/F10/F11/F12/F13/F19/F20 + matrix rows).
-43. T24: `scripts/ui-capture.py` re-shot over the built binary (T02's
+36. T24: `scripts/ui-capture.py` re-shot over the built binary (T02's
     dark-theme evidence + F13/F19/F20 surfaces).
-44. T24: `python3 scripts/status-index.py` regen + `scripts/docs-gates.sh`.
-45. T24: final commit/push + CI watch to green.
-46. Collect + archive the train-start buildflow verdict (shell 051).
-47. Close-out note in the plan doc: tasks done, rulings taken (M24/M25
+37. T24: `python3 scripts/status-index.py` regen + `scripts/docs-gates.sh`.
+38. T24: final commit/push + CI watch to green.
+39. Collect + archive the train-start buildflow verdict (shell 051).
+40. Close-out note in the plan doc: tasks done, rulings taken (M24/M25
     ring-announce, M35 lightbox, M36 call-transcript as
     already-correct/no-op with reasons).
-48. Reconcile AGENTS.md drift the train created (nav conditional, h1
+41. Reconcile AGENTS.md drift the train created (nav conditional, h1
     brand, drafts-guard, palette touch door) — the AGENTS "Layout ids"
     and nav notes need one pass.
-49. The two open questions in §g — answers gate items 1–2's shape.
-50. Decide the fate of `ui-shots/` diff evidence for T02 (screenshot
+42. The two open questions in §g — answers gate items 1–2's shape.
+43. Decide the fate of `ui-shots/` diff evidence for T02 (screenshot
     proof for the F1 card) — local-only per budget, or one committed
     crop as the card's evidence.
 
