@@ -55,7 +55,9 @@ func TestGermanLanguageViaCookieAndHeader(t *testing.T) {
 	// English stays the default (no cookie, plain client).
 	plain := signIn(t, server)
 	_, body = plain.do(http.MethodGet, "/partials/contacts", nil, "")
-	if !strings.Contains(string(body), ">Save<") || strings.Contains(string(body), "Speichern") {
+	// The save button now carries the send-indicator icon ahead of the
+	// label (T19 M6), so the label reads " Save</button>".
+	if !strings.Contains(string(body), " Save</button>") || strings.Contains(string(body), "Speichern") {
 		t.Errorf("default language must be English: %.300s", body)
 	}
 

@@ -373,6 +373,11 @@ test("sent DTMF tones pulse the key and collect a transient trail", async () => 
   const trail = doc.getElementById("wp-tones");
   assert.equal(trail.hidden, false);
   assert.equal(trail.textContent, "1", "the sent tone lands in the trail");
+  assert.equal(
+    trail.getAttribute("role"),
+    "status",
+    "the trail confirms digits to screen readers (M45)",
+  );
 
   await sendDtmf("#");
   assert.equal(trail.textContent, "1·#", "tones accumulate dot-separated");
