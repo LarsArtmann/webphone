@@ -914,8 +914,8 @@
             <div class="label">AA contrast failure (dark)</div>
           </div>
           <div class="score-card">
-            <div class="score">20</div>
-            <div class="label">Carded findings (&middot; matrix pending)</div>
+            <div class="score">67</div>
+            <div class="label">Findings: 20 carded + 47 matrix rows</div>
           </div>
         </section>
 
@@ -1818,6 +1818,12 @@
             token; everything else is consistency debt that compounds quietly
             but never burns.
           </div>
+          <p>
+            The full execution order for every finding above &mdash; 24 tasks,
+            119 micro-steps, gate contracts and the anti-verschlimmbessern
+            rules &mdash; lives in the plan:
+            <a href="../planning/2026-11-07_04-09_SUPERB-frontend-ux-fix-train.md">docs/planning/2026-11-07_04-09_SUPERB-frontend-ux-fix-train.md</a>.
+          </p>
         </section>
 
         <!-- IA & layout -->
@@ -1917,7 +1923,7 @@
             </li>
             <li>
               <strong>A separate onboarding route</strong> &mdash; rejected.
-              The dismissible welcome panel (M18) already onboards without a
+              The dismissible welcome panel already onboards without a
               route to deep-link to; a page would need its own empty-state
               lifecycle for zero new capability.
             </li>
@@ -2254,32 +2260,406 @@ Scenario: Theme changes never flash
 
         <!-- Appendix -->
         <section id="appendix">
-          <h2><span class="num">06</span>Appendix</h2>
+          <h2><span class="num">06</span>Appendix &mdash; the full matrix</h2>
           <p>
-            Methodology, links to related files, or a priority matrix can live
-            here.
+            Every agent finding that did not earn its own card, one row each.
+            Sources: three scoped agent reviews (island JS, server-rendered
+            views, shell) against review HEAD <code>a8d089ba</code>,
+            cross-checked against served bytes. Verify legend:
+            <strong>verified</strong> = the owning agent confirmed the behavior
+            in code or served bytes; <strong>hypothesis</strong> = mechanism
+            identified but not runtime-reproduced (the plan's V1&ndash;V5 sweep
+            closes these); <strong>reported</strong> = as filed, no runtime
+            claim made. The <strong>train</strong> column maps each row to its
+            task in the fix plan (T-numbers).
           </p>
           <table class="compare">
             <thead>
               <tr>
-                <th>Issue</th>
+                <th>ID</th>
+                <th>Surface</th>
+                <th>Finding</th>
                 <th>Severity</th>
-                <th>Effort</th>
-                <th>Status</th>
+                <th>Verify</th>
+                <th>Train</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Issue one</td>
-                <td class="no">Critical</td>
-                <td>Low</td>
-                <td class="no">Open</td>
+                <td>M1</td>
+                <td>Views</td>
+                <td>Admin table has no find filter and no visible read-only badge</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T21</td>
               </tr>
               <tr>
-                <td>Issue two</td>
-                <td class="no">Important</td>
-                <td>Medium</td>
-                <td class="yes">In progress</td>
+                <td>M2</td>
+                <td>Views</td>
+                <td>The brand is not the page's h1; the heading hierarchy starts at h2</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T17</td>
+              </tr>
+              <tr>
+                <td>M3</td>
+                <td>Views</td>
+                <td>Panel-head h2 elements are not focusable, so post-swap focus has no target</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T17</td>
+              </tr>
+              <tr>
+                <td>M4</td>
+                <td>Views</td>
+                <td>Thread rail and row collections are div soup, no ul/li list semantics</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T17</td>
+              </tr>
+              <tr>
+                <td>M5</td>
+                <td>Views</td>
+                <td>No maxlength attributes aligned with the server caps (composer, contacts, snippets)</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T19</td>
+              </tr>
+              <tr>
+                <td>M6</td>
+                <td>Views</td>
+                <td>Submits beyond fax send lack any htmx-indicator busy state</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T19</td>
+              </tr>
+              <tr>
+                <td>M7</td>
+                <td>Views</td>
+                <td>Drafts badge repeats the heading text plus the digit count</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T17</td>
+              </tr>
+              <tr>
+                <td>M8</td>
+                <td>Views</td>
+                <td>Inputs lack aria-describedby error wiring; the ✱ and # keypad keys are unnamed</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T17</td>
+              </tr>
+              <tr>
+                <td>M9</td>
+                <td>Views</td>
+                <td>Contacts save/import forms lack hx-disabled-elt, double-click double-imports</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T19</td>
+              </tr>
+              <tr>
+                <td>M10</td>
+                <td>Views</td>
+                <td>Hardcoded English aria-labels (“jump to the latest messages”, “Attachments”)</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T19</td>
+              </tr>
+              <tr>
+                <td>M11</td>
+                <td>Views</td>
+                <td>Seven emoji/dingbat glyphs violate the icons doctrine (⚡ ☎ ⚠ ⊗ ☆ ⧉ ↓, plus ✖ inside the history.missed key)</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T20</td>
+              </tr>
+              <tr>
+                <td>M12</td>
+                <td>Views</td>
+                <td>German copy: “Stumm aus”, “hat abbestellt”, “(Rechner der Anfrage)”; the DE no-match state drops its recovery line; contactsMigrated singular</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T20</td>
+              </tr>
+              <tr>
+                <td>M13</td>
+                <td>Views</td>
+                <td>Vocabulary drift: DE “Voicemail” vs “Mailbox” in the delete toast; EN “transcript lines” mislabeled</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T20</td>
+              </tr>
+              <tr>
+                <td>M14</td>
+                <td>Views</td>
+                <td>Compose-to inputmode undecided for matrix addresses (@local:…, 05…hex)</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T20</td>
+              </tr>
+              <tr>
+                <td>M15</td>
+                <td>Island</td>
+                <td>Login POST has no in-flight guard or connecting state, double-submit double-POSTs</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T19</td>
+              </tr>
+              <tr>
+                <td>M16</td>
+                <td>Island</td>
+                <td>The 429 note-throttled toast is hardcoded English</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T20</td>
+              </tr>
+              <tr>
+                <td>M17</td>
+                <td>Island</td>
+                <td>No beforeunload guard while a call is live, closing the tab hangs up silently</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T19</td>
+              </tr>
+              <tr>
+                <td>M18</td>
+                <td>Island</td>
+                <td>No in-call document.title signal from the 1s render tick</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T19</td>
+              </tr>
+              <tr>
+                <td>M19</td>
+                <td>Views</td>
+                <td>agoLabel has no just-now branch, History prints “Last call now ago”</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T05</td>
+              </tr>
+              <tr>
+                <td>M20</td>
+                <td>Views</td>
+                <td>Voicemail reload failure has no distinct copy; history/contacts loads swallow !res.ok silently</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T22</td>
+              </tr>
+              <tr>
+                <td>M21</td>
+                <td>Shell</td>
+                <td>Logout is a single misclick that kills a live call, no confirm</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T19</td>
+              </tr>
+              <tr>
+                <td>M22</td>
+                <td>Island</td>
+                <td>Settled mute/hold/resume transitions end silently for screen readers</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T21</td>
+              </tr>
+              <tr>
+                <td>M23</td>
+                <td>Shell</td>
+                <td>The nav language refetch rides a bare htmx.ajax with no .catch</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T21</td>
+              </tr>
+              <tr>
+                <td>M24</td>
+                <td>Island</td>
+                <td>Transfer row accepts an empty destination as a silent no-op; Escape does not close it</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T19</td>
+              </tr>
+              <tr>
+                <td>M25</td>
+                <td>Island</td>
+                <td>Toasts auto-expire with no dismissal affordance</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T16</td>
+              </tr>
+              <tr>
+                <td>M26</td>
+                <td>Shell</td>
+                <td>#wp-tab-error renders below the panel (off-screen at panel height) and is never cleared on success</td>
+                <td class="no">major</td>
+                <td>hypothesis</td>
+                <td>T18</td>
+              </tr>
+              <tr>
+                <td>M27</td>
+                <td>Views</td>
+                <td>The skip link scrolls to a non-focusable target, focus stays on the link</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T17</td>
+              </tr>
+              <tr>
+                <td>M28</td>
+                <td>Shell</td>
+                <td>The tab skeleton can flash on fast swaps; overlapping navigations race the reveal</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T18</td>
+              </tr>
+              <tr>
+                <td>M29</td>
+                <td>Shell</td>
+                <td>The debounced draft save captures the thread id at handler setup, a fast switch files the draft under the old thread</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T18</td>
+              </tr>
+              <tr>
+                <td>M30</td>
+                <td>Shell</td>
+                <td>Palette labels include badge digits (“Go to Messages4”)</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T11</td>
+              </tr>
+              <tr>
+                <td>M31</td>
+                <td>Shell</td>
+                <td>The live-call force-re-expand is silent and aria-expanded lies about the state</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T18</td>
+              </tr>
+              <tr>
+                <td>M32</td>
+                <td>Shell</td>
+                <td>The “Call a number” palette action is dead while the island is collapsed</td>
+                <td>minor</td>
+                <td>hypothesis</td>
+                <td>T18</td>
+              </tr>
+              <tr>
+                <td>M33</td>
+                <td>Shell</td>
+                <td>The palette/help overlay is a focus-leaky div, background scroll and tab escape</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T18</td>
+              </tr>
+              <tr>
+                <td>M34</td>
+                <td>Shell</td>
+                <td>The “?” help omits the [ / ] tab-cycle binding the shortcuts actually implement</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T18</td>
+              </tr>
+              <tr>
+                <td>M35</td>
+                <td>Shell</td>
+                <td>Lightbox close does not return focus to its opener</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T17</td>
+              </tr>
+              <tr>
+                <td>M36</td>
+                <td>Island</td>
+                <td>Transcript containers carry no aria-live, finished transcriptions arrive silently</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T17</td>
+              </tr>
+              <tr>
+                <td>M37</td>
+                <td>Shell</td>
+                <td>The live-context slot keeps stale caller content on fetch failure; a fast remote switch races the response</td>
+                <td>minor</td>
+                <td>hypothesis</td>
+                <td>T18</td>
+              </tr>
+              <tr>
+                <td>M38</td>
+                <td>Shell</td>
+                <td>The missed-call badge can survive a failed tab swap</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T18</td>
+              </tr>
+              <tr>
+                <td>M39</td>
+                <td>Shell</td>
+                <td>applyTheme does not sync the meta theme-color for forced (media-less) themes</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T03</td>
+              </tr>
+              <tr>
+                <td>M40</td>
+                <td>Shell</td>
+                <td>Manifest icons are maskable-only, launchers without masking support get no raster icon</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T21</td>
+              </tr>
+              <tr>
+                <td>M41</td>
+                <td>Shell</td>
+                <td>Palette ranking is substring-order, not starts-with-first</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T11</td>
+              </tr>
+              <tr>
+                <td>M42</td>
+                <td>Island</td>
+                <td>Toast eviction can drop focus to body when the focused toast expires</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T16</td>
+              </tr>
+              <tr>
+                <td>M43</td>
+                <td>Views</td>
+                <td>sse:voicemail/sse:contacts swaps carry show:window:top, every push yanks scroll</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T18</td>
+              </tr>
+              <tr>
+                <td>M44</td>
+                <td>Views</td>
+                <td>The history direction select borrows the search input's label</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T18</td>
+              </tr>
+              <tr>
+                <td>M45</td>
+                <td>Island</td>
+                <td>The DTMF tones trail is not a status region, digits are unconfirmed for screen readers</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T20</td>
+              </tr>
+              <tr>
+                <td>M46</td>
+                <td>Views</td>
+                <td>The dial form's native validation can block the JS empty-dial path from ever speaking</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T19</td>
+              </tr>
+              <tr>
+                <td>M47</td>
+                <td>Shell</td>
+                <td>Double-Enter double-sends the composer; a failed retry can leave a bubble stuck at “sending”</td>
+                <td>minor</td>
+                <td>hypothesis</td>
+                <td>T06</td>
               </tr>
             </tbody>
           </table>
@@ -2288,7 +2668,7 @@ Scenario: Theme changes never flash
         <!-- Footer -->
         <footer class="footer">
           <p>
-            Generated 2026-11-07 &middot; webphone 2.9.0 at HEAD (9f60a226)
+            Generated 2026-11-07 &middot; webphone 2.9.0 at review HEAD (a8d089ba)
             &middot; Contrast ratios computed from the served token values;
             screenshots from <code>scripts/ui-capture.py</code> (24 shots,
             layout assertions PASS) &middot; Findings cite stable names, not
