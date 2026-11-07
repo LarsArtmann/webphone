@@ -52,3 +52,64 @@ export const agentEnabled = config.agent === true;
 export const sharedContacts = Array.isArray(config.contacts)
   ? config.contacts
   : [];
+
+// The contact sources behind the dial typeahead AND the ring surfaces
+// (F7): shared contacts ship in the config, per-extension personal
+// contacts are fed by panels.js once the session exists. Both resolve
+// here so a name resolves in exactly one way everywhere.
+/** @type {PBXSharedContact[]} */
+const personalContacts = [];
+
+/** @param {unknown} contacts */
+export function setExtraContacts(contacts) {
+  const list = Array.isArray(contacts) ? contacts : [];
+  personalContacts.length = 0;
+  for (const contact of list) {
+    if (contact && contact.number) personalContacts.push(contact);
+  }
+}
+
+/** @returns {PBXSharedContact[]} */
+export function contactSource() {
+  const personalNumbers = new Set(personalContacts.map((c) => c.number));
+  return [
+    ...personalContacts,
+    ...sharedContacts.filter((c) => !personalNumbers.has(c.number)),
+  ];
+}
+
+/**
+ * The display name for a number across the contact sources (personal
+ * wins over shared); "" when unknown — an unknown caller renders raw
+ * digits, which is the honest fallback.
+ * @param {string} number
+ * @returns {string}
+ */
+export function contactName(number) {
+  const wanted = String(number || "").trim();
+  if (!wanted) return "";
+  const source = contactSource();
+  for (const contact of source) {
+    if (String(contact.number) === wanted) return String(contact.name || "");
+  }
+  const digits = wanted.replace(/\D/g, "");
+  if (!digits) return "";
+  for (const contact of source) {
+    if (String(contact.number || "").replace(/\D/g, "") === digits) {
+      return String(contact.name || "");
+    }
+  }
+  return "";
+}
+
+/**
+ * "Name (digits)" for a known caller, the raw digits otherwise — the
+ * one shape every ring surface (banner, queue slots, the assertive
+ * announce, the missed-call toast, dock chips) shows.
+ * @param {string} number
+ * @returns {string}
+ */
+export function callerDisplay(number) {
+  const name = contactName(number);
+  return name ? `${name} (${number})` : String(number || "");
+}
