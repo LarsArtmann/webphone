@@ -46,6 +46,11 @@ go-datastar adjacent ruling's trigger paragraph). One actionable item fell out:
       page, grant `'nonce-…'` instead of `'unsafe-eval'` in its csp.go), then
       re-pin `TestAppDashboardMountsHealthSubtree` (app_test.go:135) to assert the
       nonce form. Evidence: report F4.
+- [ ] **Implement the dashboard lane in the library repo** (go-health-dashboard):
+      the nonce emit + CSP grant above, then run ITS gates there — this repo cannot
+      ship the change and must not fake it locally.
+- [ ] **Release the dashboard version** (tag) once the lane lands — owner call per
+      the report's §g1; only then can webphone bump and re-pin the CSP assertion.
 
 ### 2026-11-06 GitHub-issue train residue (harvest from the 10:45 report)
 
