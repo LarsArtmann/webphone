@@ -1198,6 +1198,21 @@
               <code>--accent</code> to ~<code>#108351</code> (white 4.79:1) and
               add a darker hover &mdash; more churn, dimmer brand.
             </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T02):</strong> dark
+              <code>--on-accent</code> flipped to <code>#0b0d11</code> in both
+              mirrored token blocks; the light blocks now declare
+              <code>#ffffff</code> explicitly (the token moved from
+              theme-stable to theme-dependent in <code>tokens_test.go</code>,
+              which pins the mirror). Measured after:
+              <strong>6.06:1</strong> on <code>--accent</code>,
+              <strong>10.42:1</strong> hover, <strong>6.39:1</strong> on
+              <code>--danger</code>, meta 4.56&ndash;4.92:1 &mdash; all five
+              surfaces pass AA; light unchanged (4.56:1). login.css rebuilt
+              (it inlines app.css); the login page's filled buttons inherit
+              the same healed ink via its deliberate
+              <code>--color-white: var(--on-accent)</code> remap.
+            </div>
           </div>
 
           <!-- F2 -->

@@ -53,18 +53,21 @@ func parseTokens(body string) map[string]string {
 // only because app.css's override blocks carry the full shared set).
 // --danger-soft is app-only today (the island consumes no soft-danger
 // surface) — shared-name equality still covers it the day it crosses.
+// --on-accent moved here from themeStable with the 2026-11-07 ink flip:
+// dark fills carry dark ink, light fills keep white ink.
 var themeDependent = []string{
 	"--bg", "--surface", "--surface-2", "--surface-3",
 	"--border", "--border-strong", "--text", "--muted",
 	"--accent", "--accent-strong", "--accent-soft",
 	"--danger", "--warn", "--ok",
+	"--on-accent",
 	"--shadow",
 }
 
 // themeStable must exist in both dark :root blocks (values identical in
 // every theme, so the light blocks inherit them by design).
 var themeStable = []string{
-	"--on-accent", "--scrim", "--radius-sm", "--radius", "--radius-lg",
+	"--scrim", "--radius-sm", "--radius", "--radius-lg",
 }
 
 func assertSharedEqual(t *testing.T, label string, a, b map[string]string) {

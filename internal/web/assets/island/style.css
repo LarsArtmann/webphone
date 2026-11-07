@@ -17,7 +17,10 @@
   --accent: #17a467;
   --accent-strong: #3fd694;
   --accent-soft: rgb(63 214 148 / 13%);
-  --on-accent: #ffffff;
+  /* Dark ink on the bright dark-theme fills (mirror of the app.css token;
+   * white ink measured 3.21:1 on --accent, 1.87:1 on hover). Light keeps
+   * white ink on its darker accent (declared in the light block below). */
+  --on-accent: #0b0d11;
   --scrim: rgb(4 6 10 / 62%);
   --danger: #ef6a5f;
   --danger-strong: #f6837b;
@@ -49,6 +52,7 @@
     --danger-strong: #b52f24;
     --warn: #9a5b0a;
     --ok: #0e8752;
+    --on-accent: #ffffff;
     --led: #a6b2bd;
     --shadow:
       0 1px 2px rgb(16 24 32 / 6%), 0 12px 28px -6px rgb(16 24 32 / 10%);

@@ -23,7 +23,11 @@
   --accent: #17a467;
   --accent-strong: #3fd694;
   --accent-soft: rgb(63 214 148 / 13%);
-  --on-accent: #ffffff;
+  /* Dark ink on the bright dark-theme fills: white ink measured 3.21:1 on
+   * --accent and 1.87:1 on hover — the product's only WCAG AA failure.
+   * The light theme keeps white ink on its darker accent (declared in the
+   * light blocks below). */
+  --on-accent: #0b0d11;
   --scrim: rgb(4 6 10 / 62%);
   --danger: #ef6a5f;
   --danger-soft: rgb(239 106 95 / 14%);
@@ -73,6 +77,7 @@
     --danger-soft: rgb(211 56 44 / 10%);
     --warn: #9a5b0a;
     --ok: #0e8752;
+    --on-accent: #ffffff;
     --shadow:
       0 1px 2px rgb(16 24 32 / 6%), 0 12px 28px -6px rgb(16 24 32 / 10%);
   }
@@ -99,6 +104,7 @@
   --danger-soft: rgb(211 56 44 / 10%);
   --warn: #9a5b0a;
   --ok: #0e8752;
+  --on-accent: #ffffff;
   --shadow: 0 1px 2px rgb(16 24 32 / 6%), 0 12px 28px -6px rgb(16 24 32 / 10%);
 }
 
