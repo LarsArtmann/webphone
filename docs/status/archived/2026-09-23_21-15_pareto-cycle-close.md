@@ -3,7 +3,7 @@
 Session 3 of the pareto execution. Sessions 1–2 landed C9–C17,
 C18–C20, C22–C23 and pre-cleared C1c/C6; this session closed the
 load-gated remainder. The plan's verdict is filled at
-`docs/planning/2026-09-23_04-29_SUPERB-pareto-execution-plan.md`
+`docs/planning/archived/2026-09-23_04-29_SUPERB-pareto-execution-plan.md`
 (Outcomes + Verdict sections). Every assistant-executable coarse
 task is DONE and verified; what remains is owner-terminal by design.
 

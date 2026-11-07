@@ -2044,7 +2044,7 @@ Ships together with the never-separately-tagged [2.7.0] content below
 ### Added (2026-09-22 error-excellence train)
 
 - Typed error families at the two outbound seams (plan:
-  `docs/planning/2026-09-22_01-20_SUPERB-error-excellence.md`):
+  `docs/planning/archived/2026-09-22_01-20_SUPERB-error-excellence.md`):
   gateway transport/receipt failures classify as Transient, form-build
   and store failures as Infrastructure, validation and provider 4xx
   answers as Rejection (`github.com/larsartmann/go-error-family` —

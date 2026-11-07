@@ -5,7 +5,7 @@
   calls already executed under the 2026-09-30 full-execution GO)
 - **Purpose:** one sitting, ~30 minutes. Every row blocks or shapes
   downstream work in the 20-year plan
-  (`docs/planning/2026-09-22_12-02_SUPERB-20-year-durability.md`).
+  (`docs/planning/archived/2026-09-22_12-02_SUPERB-20-year-durability.md`).
   Each row: the question, what it gates, options, MY recommendation.
   Say "go with the recommendation" per row or override — verdicts land
   in their owning docs the same session.

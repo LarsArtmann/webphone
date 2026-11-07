@@ -1,7 +1,7 @@
 # Status 2026-09-22 15:06 — the whole-list execution: v2.5.0 shipped, code trains landed, gates RED mid-flight
 
 Session start ~13:00 CEST, report cut 15:06 CEST. Directive: execute the
-ENTIRE SUPERB 20-year plan (`docs/planning/2026-09-22_12-02_SUPERB-20-year-durability.md`)
+ENTIRE SUPERB 20-year plan (`docs/planning/archived/2026-09-22_12-02_SUPERB-20-year-durability.md`)
 in order, verify each step. This report covers only what this session
 did and noticed.
 

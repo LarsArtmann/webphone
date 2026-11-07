@@ -3,7 +3,7 @@
 Scope: THIS session only (session 3 of the pareto cycle). Sessions
 1–2 are covered by the annotated status reports and the TODO_LIST
 sweep log. Evidence hashes live inline; the plan's Outcomes/Verdict
-section (`docs/planning/2026-09-23_04-29_SUPERB-pareto-execution-plan.md`)
+section (`docs/planning/archived/2026-09-23_04-29_SUPERB-pareto-execution-plan.md`)
 is the cross-session record.
 
 > ARCHIVED 2026-09-29 (docs-health): fully resolved or routed — the

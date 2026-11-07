@@ -198,7 +198,7 @@ marked by reasoned nolints where deliberate. Sentinels stay sentinels
 and take their family from registration (P3); classification never
 changes rendered strings (P4); codes are stable (P5). The seven
 principles and the per-seam table live in the error-excellence plan
-appendix (`docs/planning/2026-09-22_01-20_SUPERB-error-excellence.md`).
+appendix (`docs/planning/archived/2026-09-22_01-20_SUPERB-error-excellence.md`).
 
 `Error()` renders `[family:code] message` and the handler logs add
 `error=`/`family=` fields, so these names are an operator- and

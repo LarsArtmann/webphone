@@ -2,7 +2,7 @@
 
 **Report time:** 2026-09-24 18:03 CEST
 **Session scope:** Full execution mode of the pareto plan
-`docs/planning/2026-09-24_13-33_SUPERB-stack-adoption-pareto.md` (22 medium tasks
+`docs/planning/archived/2026-09-24_13-33_SUPERB-stack-adoption-pareto.md` (22 medium tasks
 M1–M22). This report covers exactly what this session did, broke, and left open.
 **Local head:** `f5aa3c6`; **remote at report time:** `94ae28d` — the last ~8
 commits (M7-verdict-doc through M14) are LOCAL-ONLY; the daemon pushes
