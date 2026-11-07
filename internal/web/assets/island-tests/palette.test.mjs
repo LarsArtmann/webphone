@@ -17,10 +17,11 @@ const fireKey = (input, key) =>
   );
 
 // The header button TOGGLES; tests that mean "open" close any open
-// overlay first so the click cannot land as a close.
+// overlay first so the click cannot land as a close. The M33 dialog
+// conversion made `open` the state channel — `hidden` never moves.
 const openPalette = () => {
   const current = palette();
-  if (current && !current.hidden) {
+  if (current && current.open) {
     fireKey(current.querySelector(".wp-overlay-input"), "Escape");
   }
   doc.getElementById("wp-palette-open").click();

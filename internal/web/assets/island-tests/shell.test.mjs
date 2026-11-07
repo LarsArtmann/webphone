@@ -347,12 +347,33 @@ test("missed calls badge in the header and clear when History opens", () => {
 
   const historyNav = {
     closest: (sel) => (sel === "[data-tab='history']" ? historyNav : null),
+    hasAttribute: (name) => name === "data-tab",
   };
+  // M38: the click only ARMS the clear — a failed History swap must not
+  // erase counts the operator never saw.
   doc.dispatch("click", { target: historyNav });
   assert.equal(
     actions.children.some((el) => el.id === "missed-badge"),
+    true,
+    "the click alone keeps the badge",
+  );
+  doc.dispatch("htmx:afterRequest", {
+    target: historyNav,
+    detail: { elt: historyNav, successful: false },
+  });
+  assert.equal(
+    actions.children.some((el) => el.id === "missed-badge"),
+    true,
+    "a failed History response keeps the badge",
+  );
+  doc.dispatch("htmx:afterRequest", {
+    target: historyNav,
+    detail: { elt: historyNav, successful: true },
+  });
+  assert.equal(
+    actions.children.some((el) => el.id === "missed-badge"),
     false,
-    "opening History clears the badge",
+    "the link's successful response clears the badge",
   );
 
   doc.querySelector = realQuerySelector;
