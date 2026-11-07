@@ -72,10 +72,14 @@ What remains, each with its ONE home:
    (root/unit-scoped by design) and the PBX host: an inbound call must render the
    Kith name and `call_logged` must land on the journal. The webphone slice is
    complete; the residue is pbx-artmann-side.
-5. **Audit `.gitignore` for unanchored directory rules** — the unanchored `reports/`
-   rule silently ignored the new `internal/reports/` package and ONLY the sandbox
-   build caught it (`nix flake check`); `docs`, `work`, `ui-shots` are the same
-   class. One grep + anchoring pass closes it.
+5. [x] **Anchor `.gitignore` against package shadows — DONE 2026-11-07 (P1-2)**:
+       `/result`, `/result-*`, `/.devenv`, `/.direnv` are root-anchored, and
+       `internal/arch/gitignore_test.go` now walks `go list ./...` and fails when any
+       package directory resolves to an ignore rule. `--no-index` is load-bearing:
+       without it the index silently excuses already-tracked packages, which made the
+       planted-rule canary pass until the flag was added. The rules inside the
+       buildflow-managed block (`build/`, `dist/`, `vendor/` …) cannot be edited —
+       `buildflow --fix` re-generates them — so THIS test is their guard.
 6. **Decide the `crm` health leg's criticality** — a CRM outage reds `/healthz`
    readiness although the phone keeps working, while the library treats crm as
    non-critical. Nothing routes traffic on it today (unit `Type=simple`, Caddy

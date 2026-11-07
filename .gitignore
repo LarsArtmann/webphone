@@ -1,8 +1,15 @@
-result
-result-*
+# ROOT-ANCHORED (2026-11-07): a name-based rule matches a directory of that
+# name at ANY depth, so an unanchored `result` would also ignore
+# `internal/result/` — the exact class that once dropped `internal/reports`
+# from history. `internal/arch/gitignore_test.go` walks `go list ./...` and
+# fails when any package directory is ignored, which is the standing guard
+# for rules the buildflow-managed block below re-generates (`build/`,
+# `dist/`, `vendor/` … cannot be edited here without being overwritten).
+/result
+/result-*
 .pre-commit-config.yaml
-.devenv
-.direnv
+/.devenv
+/.direnv
 
 # >>> buildflow-managed (.gitignore) >>>
 # Auto-managed by buildflow. Edit outside these markers; this block is regenerated on `buildflow --fix`.
