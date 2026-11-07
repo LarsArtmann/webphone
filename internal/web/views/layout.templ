@@ -169,7 +169,12 @@ templ ShellBody(props ShellProps) {
 			// keyboard, so this header button opens the same overlay. app.css
 			// reveals the button only on (pointer: coarse) — the desktop
 			// chrome stays byte-identical.
-			<button id="wp-palette-open" class="wp-palette-open" type="button" aria-label="Command palette" title="Command palette">@icons.Icon(icons.Search, "wp-icon")</button>
+			// aria-expanded is the state channel for the dialog it opens: the
+			// button is a disclosure, so a screen reader must be able to tell
+			// whether the palette is showing (it stays false when the overlay
+			// is opened from the keyboard, which is correct — the button is
+			// not the control in that path, and the dialog announces itself).
+			<button id="wp-palette-open" class="wp-palette-open" type="button" aria-label="Command palette" aria-controls="wp-palette" aria-expanded="false" title="Command palette">@icons.Icon(icons.Search, "wp-icon")</button>
 			<button id="theme-toggle" class="wp-theme-toggle" type="button" title="Color theme (auto, light, dark)">Theme: auto</button>
 		</div>
 	</header>

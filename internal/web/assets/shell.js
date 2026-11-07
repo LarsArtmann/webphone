@@ -2420,6 +2420,17 @@
     };
 
     /** @param {string} mode */
+    // The served coarse-pointer palette button is a DISCLOSURE: its
+    // aria-expanded must track the dialog it opens, or a screen reader is told
+    // the palette is closed while it covers the page. Declared as a function so
+    // openOverlay/closeOverlay can call it before the button wiring below runs.
+    function setPaletteExpanded(expanded) {
+      var button = document.getElementById("wp-palette-open");
+      if (button) {
+        button.setAttribute("aria-expanded", expanded ? "true" : "false");
+      }
+    }
+
     var openOverlay = function (mode) {
       if (!overlay) buildOverlay();
       var panel = overlay;
@@ -2435,6 +2446,7 @@
         document.activeElement
       );
       panel.showModal();
+      setPaletteExpanded(true);
       input.setAttribute("aria-expanded", "true");
       input.value = "";
       input.placeholder =
@@ -2444,6 +2456,7 @@
     };
 
     var closeOverlay = function () {
+      setPaletteExpanded(false);
       if (overlay) {
         if (overlay.open) overlay.close();
         var input = overlayInput;
