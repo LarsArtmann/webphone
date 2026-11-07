@@ -115,12 +115,6 @@ run_gate() {
 	rm -f "$log"
 }
 
-if [ "$MODE" = check ]; then
-	echo "docs-gates: [1/4] dprint check (no mutation in --check mode)"
-else
-	echo "docs-gates: [1/4] dprint fmt"
-fi
-
 # Kills the VACUOUS PASS. The freshness gate reads the newest report's §f and
 # certifies "nothing unharvested" when that section is MISSING — a report with
 # no harvest list is not fresh, it is unexamined (observed twice:
@@ -148,8 +142,10 @@ status_f_gate() {
 }
 
 if [ "$MODE" = check ]; then
+	echo "docs-gates: [1/4] dprint check (no mutation in --check mode)"
 	run_gate "format" dprint check
 else
+	echo "docs-gates: [1/4] dprint fmt"
 	dprint fmt
 fi
 
