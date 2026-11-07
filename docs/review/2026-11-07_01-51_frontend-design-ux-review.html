@@ -965,16 +965,111 @@
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength one</strong>
-                <span>Explain why it matters and what it enables.</span>
+                <strong>A real design language, not a template</strong>
+                <span
+                  >Desk-phone vernacular executed deliberately: one teal
+                  accent, flat rows in quiet panels (a hairline earned on
+                  hover, never box-in-box), keypad keys with gradient faces and
+                  a press answer, and one "line light" motif — the glowing LED
+                  dot — echoed exactly three times (registration pill, the
+                  <code>#wp-sse-live</code> dot, call-state dots). The CSS
+                  comments argue their choices; the product matches them.</span
+                >
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength two</strong>
+                <strong>Contrast discipline, measured</strong>
                 <span
-                  >Reference files, metrics, or patterns where possible.</span
+                  >Every measured token pair passes WCAG except the one
+                  systematic dark-fill case in Finding&nbsp;1: muted text 6.9:1
+                  dark / 5.9:1 light, warn 8.3 / 5.4, danger 5.9 / 4.8,
+                  avatar and accent combinations all above 5:1. This is
+                  engineered, not lucky.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Layout asks the container, not the viewport</strong>
+                <span
+                  >The <code>.wp-main-col</code> container query
+                  (<code>tabcol</code>) is the modern-correct architecture for
+                  a collapsible side panel, and the harness proved it end to
+                  end: collapse, persistence across reload, and the Messages
+                  master&ndash;detail split threshold all PASS at six viewport
+                  widths. <code>:has(.call-card)</code> force-re-expands the
+                  island so a live call can never hide &mdash; state encoded in
+                  CSS, not JS bookkeeping.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Honest UI is visible in the product</strong>
+                <span
+                  >The offline banner flips exactly with registration truth;
+                  the fax tab offers a compose form only when the server can
+                  send; Settings reports "caller audio is processed on this
+                  server" next to the transcription state; the 404 echoes the
+                  mistyped path and hands back the way home. The written
+                  doctrine is observable in served bytes.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Reduced motion is complete, including JS-triggered
+                classes</strong>
+                <span
+                  >Beyond the global guard, the island separately kills the
+                  state pulses, the key-sent flash and the held-blip &mdash;
+                  every animation the JS can set has a CSS reduced-motion
+                  answer, so the JS itself never animates.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The root font size is a percentage, and the whole
+                scale rides rem</strong>
+                <span
+                  ><code>html { font-size: 93.75% }</code> keeps every size
+                  tracking the user's browser preference (a px root would pin
+                  it), <code>font-synthesis: none</code> prevents fake bold,
+                  and fluid <code>clamp()</code> display sizes stay inside the
+                  rem scale. Text-scaling users keep the layout.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Pre-paint state, storage-failure safe</strong>
+                <span
+                  ><code>theme-preload.js</code> applies theme, collapsed
+                  island and dismissed welcome before first paint (no flash,
+                  no layout snap) and a failed <code>localStorage</code> read
+                  simply rides the OS theme &mdash; private mode degrades
+                  gracefully.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The empty states teach</strong>
+                <span
+                  >Voicemail's seam-off empty state is the model: what it is
+                  ("Voicemail lives on the PBX"), who acts ("Ask the operator
+                  to enable the phone API"), and what happens after ("messages
+                  will appear here and in the phone panel"). Snippets, fax and
+                  the welcome intro all point at the next action.</span
                 >
               </div>
             </div>
@@ -986,69 +1081,392 @@
           <h2><span class="num">01</span>Findings</h2>
           <p>These are the issues that need attention, ordered by impact.</p>
 
-          <!-- Issue 1 -->
+          <!-- F1 -->
           <div class="issue issue-critical" id="issue-1">
             <span class="severity severity-critical"
-              >Blocking &middot; High impact</span
+              >Defect &middot; WCAG AA failure, dark theme</span
             >
-            <h3>Critical issue title</h3>
+            <h3>
+              Every accent-filled surface prints unreadable ink in the dark
+              theme
+            </h3>
             <div class="where">
-              path/to/file.go:42-58 &middot; short context
+              app.css:23-26 + island/style.css:17-20 (token blocks) &middot;
+              button.wp-primary, island button.primary, .wp-bubble.wp-out
             </div>
             <p>
-              Describe the problem, cite the code or behavior, and explain why
-              it matters to the reader's goals.
+              In the dark theme the accent fill is a bright green
+              (<code>--accent: #17a467</code>, hover <code>--accent-strong:
+              #3fd694</code>) while <code>--on-accent</code> stays white.
+              Measured: <strong>3.21:1</strong> white on #17a467 (fails the
+              4.5:1 AA bar for normal text), dropping to
+              <strong>1.87:1</strong> on hover &mdash; the button gets harder to
+              read the moment you reach for it. The same two tokens paint the
+              outbound SMS bubble (white body text 3.21:1; the timestamp/status
+              meta at 78% opacity falls to <strong>2.52:1</strong>) and the
+              failed-send bubble (white on <code>--danger</code> #ef6a5f,
+              3.04:1; its meta 2.46:1). This is the Send button, the Call
+              button, and every message the user sent &mdash; the most-read
+              surfaces in the product. The light theme passes everywhere
+              (white on #0e8752 = 4.56:1), so the defect is dark-only and
+              systematic: one token pair, five surfaces.
             </p>
-            <pre><code>// Example of the problematic pattern
-func BadExample() {}</code></pre>
+            <pre><code>:root, :root[data-theme="dark"] {
+  --accent: #17a467;
+  --on-accent: #ffffff;   /* 3.21:1 on --accent — fails AA */
+}</code></pre>
             <div class="callout callout-teal">
-              <strong>Fix: recommended action</strong>
-              State the concrete fix, including file names, function names, or
-              configuration changes.
+              <strong>Fix: flip the dark theme's ink, not its brand</strong>
+              Keep the vivid dark-theme accent and switch dark
+              <code>--on-accent</code> to a dark ink (the <code>--bg</code>
+              value): 6.06:1 on <code>--accent</code>, 10.42:1 on
+              <code>--accent-strong</code> hover, 6.39:1 on
+              <code>--danger</code> &mdash; every filled surface passes at once,
+              and a lit key with a dark legend matches the hardware-phone
+              vernacular the island already speaks. The flip must land in BOTH
+              mirrored token blocks (app.css and island/style.css keep the
+              tokens in sync by rule). Alternative: darken dark
+              <code>--accent</code> to ~<code>#108351</code> (white 4.79:1) and
+              add a darker hover &mdash; more churn, dimmer brand.
             </div>
           </div>
 
-          <!-- Issue 2 -->
+          <!-- F2 -->
           <div class="issue issue-important" id="issue-2">
             <span class="severity severity-important"
-              >Important &middot; Medium impact</span
+              >Important &middot; brand-color split brain</span
             >
-            <h3>Important issue title</h3>
-            <div class="where">path/to/another.go:12-19</div>
+            <h3>
+              The browser/PWA tint is a teal that exists nowhere in the app
+            </h3>
+            <div class="where">
+              layout.templ (ThemeColor/DarkThemeColor) &middot;
+              manifest.webmanifest (theme_color/background_color)
+            </div>
             <p>
-              Explain the risk. Important issues are not blockers but would make
-              a careful reviewer hesitate before shipping.
+              Both the meta <code>theme-color</code> and the manifest name
+              <code>#0f766e</code> &mdash; Tailwind's teal-700, a color the
+              design system never uses (the accents are <code>#17a467</code>
+              dark / <code>#0e8752</code> light). Installed as a PWA or viewed
+              on mobile, the browser chrome tint visibly disagrees with the UI
+              beside it. <code>background_color</code> /
+              <code>DarkThemeColor</code> use <code>#10161a</code> against the
+              real <code>--bg</code> <code>#0b0d11</code>, and the manifest
+              splash color is fixed dark even in light mode. Two homes carry
+              the wrong value in lockstep.
             </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Point layout.templ and manifest.webmanifest at the real tokens:
+              <code>#0e8752</code>/<code>#17a467</code> for theme-color and
+              <code>#0b0d11</code> for the dark background &mdash; change both
+              files together, they are the same fact.
+            </div>
           </div>
 
-          <!-- Issue 3 -->
-          <div class="issue issue-nice" id="issue-3">
-            <span class="severity severity-nice"
-              >Nice to have &middot; Low impact</span
+          <!-- F3 -->
+          <div class="issue issue-important" id="issue-3">
+            <span class="severity severity-important"
+              >Important &middot; destructive-action ambiguity</span
             >
-            <h3>Nice-to-have improvement</h3>
-            <div class="where">docs/ or config</div>
+            <h3>
+              Icon-only actions lean on hover tooltips; destructive-looking
+              icons sit beside utility icons at equal weight
+            </h3>
+            <div class="where">
+              ThreadView head (pin/mute/archive trio) &middot; History
+              transcript rows (copy/download/delete trio) &middot;
+              <code>.wp-mini.wp-thread-flag</code>
+            </div>
             <p>
-              Minor polish, documentation gaps, or future-proofing suggestions
-              go here.
+              The thread head and History rows render groups of icon-only
+              buttons whose names live in <code>title</code> tooltips (and
+              aria-labels). Tooltips are hover-only &mdash; keyboard and touch
+              users never see them &mdash; and the icons read ambiguously: the
+              archive glyph is a trash can one pixel-tongue away from delete,
+              at the same visual weight as copy and download. A misfire here
+              archives a conversation or deletes a note. Confirm dialogs exist
+              for contact removal; these rows have none.
             </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              One of: visible text labels on hover-reach (a truncating label
+              like the island toggle already has), a confirm step for the
+              destructive member only, or visually differentiated weight for
+              the destructive action (the <code>.wp-mini.wp-danger</code> tint
+              exists &mdash; use it on the archive/delete glyph).
+            </div>
           </div>
+
+          <!-- F4 -->
+          <div class="issue issue-important" id="issue-4">
+            <span class="severity severity-important"
+              >Important &middot; settings row renders incomplete state</span
+            >
+            <h3>The CRM row is the only service row without a status dot</h3>
+            <div class="where">
+              internal/web/views/settings.templ:355 (<code>crmDetail</code>)
+            </div>
+            <p>
+              Every Settings service row pairs its state phrase with a glance
+              dot &mdash; green (<code>wp-service-on</code>) or muted
+              (<code>wp-service-off</code>). <code>crmDetail</code> emits only
+              the <code>wp-service-on</code> arm, so when the CRM is unset,
+              auth-failed or in setup, the row renders bare &mdash; verified in
+              the captured Settings screenshot, where five rows carry dots and
+              the CRM row does not. The row's four-state copy is deliberate;
+              only the dot is missing.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix (one line)</strong>
+              Add the off arm:
+              <code>templ.KV("wp-service-off", state != "connected")</code>.
+            </div>
+          </div>
+
+          <!-- F5 -->
+          <div class="issue issue-important" id="issue-5">
+            <span class="severity severity-important"
+              >Important &middot; consistency</span
+            >
+            <h3>English mixes 12-hour and 24-hour clocks between panels</h3>
+            <div class="where">
+              internal/web/views/helpers.go:168-197 (<code>formatFor</code>,
+              <code>formatClock</code>, <code>formatWhen</code>,
+              <code>fullStamp</code>)
+            </div>
+            <p>
+              In English, a message bubble says <code>1:45PM</code> (Kitchen
+              format), while a History row on the same screen says
+              <code>Nov 7, 00:45</code> (24-hour), and the hover stamp says
+              <code>Nov 7, 2026, 3:04PM</code> &mdash; three conventions, two
+              clock systems, one locale (verified in captured screenshots 04
+              and 09). German is consistently 24-hour everywhere, which makes
+              the English page the odd one. Times are glue users read dozens
+              of times a day; the mixed format reads as neglect every time.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Pick one English convention &mdash; Kitchen (<code>1:45PM</code>)
+              everywhere is the friendlier voice &mdash; and let
+              <code>formatWhen</code>'s English branch ride it.
+            </div>
+          </div>
+
+          <!-- F6 -->
+          <div class="issue issue-important" id="issue-6">
+            <span class="severity severity-important"
+              >Important &middot; promise the UI cannot keep</span
+            >
+            <h3>
+              "Prefill from AI draft" renders even when the server has no AI
+            </h3>
+            <div class="where">
+              History transcript rows &middot; the same row prints "AI review
+              not configured on this server."
+            </div>
+            <p>
+              A transcript row on a server without the agent seam shows the
+              line "AI review not configured on this server." and, two inches
+              below it, a <em>Prefill from AI draft</em> button. The panel
+              contradicts itself: one element says the capability is absent,
+              the next offers it. Pressing it on such a server fails after the
+              fact. This is exactly the class the repo's own honest-UI doctrine
+              (capability DECLARED, never discovered as a failed action)
+              exists to prevent &mdash; the fax tab already models the fix.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Gate the prefill button on the same view prop that gates the
+              "not configured" line (the pattern
+              <code>VoicemailPanelProps.ASR</code> /
+              <code>FaxCapability</code> already established), so the afford
+              exists only when the seam can answer.
+            </div>
+          </div>
+
+          <!-- F7 -->
+          <div class="issue issue-nice" id="issue-7">
+            <span class="severity severity-nice"
+              >Nice to have &middot; WCAG 2.5.8 target size</span
+            >
+            <h3>Attachment-chip remove buttons are 18&times;18 px</h3>
+            <div class="where">
+              app.css <code>.wp-chip-x</code> (width/height: 18px)
+            </div>
+            <p>
+              The composer's attachment chips carry an 18-pixel remove button
+              &mdash; under the 24&times;24 WCAG 2.5.8 minimum. The coarse-pointer
+              44px bump covers <code>.wp-mini</code> but not this class; on a
+              touchscreen, removing the wrong attachment is a thumb-slip away.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Grow the hit area without growing the glyph: keep the 18px
+              visual, add padding + negative margin (or a
+              <code>::before</code> hit-expander) to reach 24px.
+            </div>
+          </div>
+
+          <!-- F8 -->
+          <div class="issue issue-nice" id="issue-8">
+            <span class="severity severity-nice"
+              >Nice to have &middot; empty-state voice depth</span
+            >
+            <h3>History's empty state is the terse sibling of Voicemail's</h3>
+            <div class="where">
+              history.templ vs voicemail.templ empty states
+            </div>
+            <p>
+              Voicemail explains what, who and effect ("Voicemail lives on the
+              PBX. Ask the operator to enable the phone API (phone_api_url);
+              messages will appear here and in the phone panel."); History,
+              same condition, answers "Needs the operator phone API
+              (phone_api_url)." &mdash; a config-key verdict where the sibling
+              panel teaches. Same server, same user, two levels of help.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Let History's empty state borrow Voicemail's three-beat shape
+              (what / who acts / what happens next). One sentence each.
+            </div>
+          </div>
+
+          <!-- F9 -->
+          <div class="issue issue-nice" id="issue-9">
+            <span class="severity severity-nice"
+              >Nice to have &middot; type-scale hygiene</span
+            >
+            <h3>Fourteen distinct sizes below 1rem blur the hierarchy</h3>
+            <div class="where">
+              app.css meta-text sizes (0.68em&ndash;0.95em, mixing em and rem)
+            </div>
+            <p>
+              Between the body size and the smallest badge, the stylesheet
+              carries fourteen distinct font sizes (0.68, 0.72, 0.75, 0.78,
+              0.8, 0.82, 0.85, 0.86, 0.88, 0.9, 0.92, 0.95&hellip;). Neighbors
+              like 0.72/0.75/0.78 are visually identical at 15px root &mdash;
+              they cost consistency without buying hierarchy, and they make
+              every new panel a fresh guess. The color tokens would never
+              tolerate fourteen greens.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Consolidate to a 3-step secondary scale (e.g. 0.8 / 0.875 /
+              0.95) as custom properties, and migrate opportunistically &mdash;
+              new panels must pick from the scale, the corpus catches up as
+              panels are touched.
+            </div>
+          </div>
+
+          <!-- F10 -->
+          <div class="issue issue-nice" id="issue-10">
+            <span class="severity severity-nice"
+              >Nice to have &middot; token bypasses</span
+            >
+            <h3>
+              Radii and spacing bypass the tokens the palette already has
+            </h3>
+            <div class="where">
+              app.css: 8px radii (<code>.wp-nav-link</code>, <code>#lang</code>,
+              <code>.audio-out select</code>, <code>.wp-typeahead li</code>),
+              untokenized paddings throughout
+            </div>
+            <p>
+              The system defines <code>--radius-sm 6 / --radius 9 /
+              --radius-lg 12</code>, then a handful of rules hardcode 8px, and
+              spacing values (22px, 24px 26px 26px, 10px 12px&hellip;) are freehand
+              while the color vocabulary is strict. The result looks coherent
+              &mdash; the eyeballing was done once, by hand &mdash; but nothing
+              enforces it for the next contributor.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Fold the 8px outliers into the existing scale (6 or 9 &mdash; pick
+              per surface), and introduce 2&ndash;3 spacing tokens for the row
+              and panel rhythms. No visual change required, only names.
+            </div>
+          </div>
+
+          <!-- F11 -->
+          <div class="issue issue-nice" id="issue-11">
+            <span class="severity severity-nice"
+              >Nice to have &middot; rhetorical calibration</span
+            >
+            <h3>The uppercase micro-label is doing the work of seven</h3>
+            <div class="where">
+              <code>.wp-crm-key</code>, <code>.wp-settings-head</code>,
+              <code>.wp-reports-head</code>, <code>.wp-day-head</code>,
+              <code>.wp-unread-divider</code>, <code>.wp-transcripts h3</code>,
+              <code>.status</code>
+            </div>
+            <p>
+              One device &mdash; small tracked-out uppercase &mdash; labels the CRM
+              facts, the Settings sections, the Reports sections, the day
+              separators, the unread divider, the transcript section and the
+              status pill. Individually each is right; together they dull each
+              other, and the connection states ("RECONNECTING IN 2S (TRY 1)")
+              shout in the same voice as the section headers whisper. The
+              retry counter's engineer-speak ("TRY 1") also leaks telemetry
+              into copy where "Reconnecting&hellip;" would carry the same truth
+              more calmly.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Reserve the uppercase voice for section headers (Reports,
+              Settings, transcripts); drop it from the day divider (sentence
+              case, it already has the hairline) and humanize the
+              reconnecting pill copy.
+            </div>
+          </div>
+
+          <!-- merge marker for agent findings -->
+          <!-- AGENT-FINDINGS-MERGE-POINT -->
         </section>
 
         <!-- Proposal -->
         <section id="proposal">
-          <h2><span class="num">02</span>What the solution could look like</h2>
+          <h2><span class="num">02</span>The fix queue, in order</h2>
           <p>
-            If the findings were fixed, what would the new state be? Show the
-            target API, structure, or workflow.
+            Three tranches. The first is one token and a re-pinned screenshot
+            run; the second is a handful of one-liners; the third is taste
+            work the next panel touch should carry, never a dedicated
+            refactor.
           </p>
-          <pre><code>// Target state after the recommended changes
-type BetterAPI struct {
-    Field string
+          <pre><code>/* Tranche 1 — the dark-theme ink flip (both mirrored token blocks) */
+:root,
+:root[data-theme="dark"] {
+  --on-accent: #0b0d11; /* was #ffffff: 3.21:1 on --accent, 1.87:1 on hover */
+  /* --accent stays #17a467; the lit key keeps a dark legend, like the
+     hardware phones the island already imitates. */
 }</code></pre>
+          <ol>
+            <li>
+              <strong>Tranche 1 &mdash; correctness (one sitting):</strong> the
+              <code>--on-accent</code> flip in app.css + island/style.css; the
+              CRM row's <code>wp-service-off</code> arm; re-run
+              <code>scripts/ui-capture.py</code> and re-measure the five
+              filled surfaces.
+            </li>
+            <li>
+              <strong>Tranche 2 &mdash; one-liners (one review):</strong> meta
+              theme-color + manifest onto the real palette; English clock
+              unified on Kitchen time; gate <em>Prefill from AI draft</em> on
+              its seam prop; chip-X hit area to 24px; History's empty state
+              reworded.
+            </li>
+            <li>
+              <strong>Tranche 3 &mdash; taste, carried by future work:</strong>
+              icon-action labeling/confirmation pattern; type-scale
+              consolidation; radius/spacing token adoption; uppercase-voice
+              zoning; reconnect-pill copy.
+            </li>
+          </ol>
           <div class="callout callout-teal">
-            <strong>This is the target</strong>
-            Summarize why this state is better and what it unlocks.
+            <strong>Why this order</strong>
+            Tranche 1 removes the only WCAG failure in the product and costs a
+            token; everything else is consistency debt that compounds quietly
+            but never burns.
           </div>
         </section>
 
@@ -1088,8 +1506,11 @@ type BetterAPI struct {
         <!-- Footer -->
         <footer class="footer">
           <p>
-            Generated YYYY-MM-DD &middot; Reviewed against version X.Y.Z
-            &middot; All claims verified against source code where noted
+            Generated 2026-11-07 &middot; webphone 2.9.0 at HEAD (9f60a226)
+            &middot; Contrast ratios computed from the served token values;
+            screenshots from <code>scripts/ui-capture.py</code> (24 shots,
+            layout assertions PASS) &middot; Findings cite stable names, not
+            line numbers, wherever the pin allows
           </p>
         </footer>
       </main>
