@@ -8,7 +8,7 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/json"
+	"encoding/json/v2"
 	"log/slog"
 	"maps"
 	"math/big"
@@ -189,7 +189,7 @@ func (s *stubIDP) userinfo(w http.ResponseWriter, _ *http.Request) {
 func writeStubJSON(t *testing.T, w http.ResponseWriter, body any) {
 	t.Helper()
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(body); err != nil {
+	if err := json.MarshalWrite(w, body); err != nil {
 		t.Errorf("write JSON: %v", err)
 	}
 }

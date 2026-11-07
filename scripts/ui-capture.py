@@ -527,7 +527,9 @@ def capture(
                     )
                 # A marker is a selector, a (selector, copy) tuple, or a
                 # LIST of those pins (a surface that proves two things).
-                for expand_sel in [SURFACE_EXPAND[name]] if name in SURFACE_EXPAND else []:
+                for expand_sel in (
+                    [SURFACE_EXPAND[name]] if name in SURFACE_EXPAND else []
+                ):
                     expandable = driver.find_elements("css selector", expand_sel)
                     if expandable and expandable[0].is_displayed():
                         expandable[0].click()

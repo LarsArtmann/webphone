@@ -189,21 +189,13 @@ test("logout with a live call is a two-click move", async () => {
   const fetchesBefore = calls.fetches.length;
 
   logoutClick();
-  assert.equal(
-    lastToast().textContent,
-    t("logoutLiveCall"),
-    "the first click warns",
-  );
+  assert.equal(lastToast().textContent, t("logoutLiveCall"), "the first click warns");
   assert.equal(
     doc.getElementById("phone-view").hidden,
     false,
     "the first click does not tear down",
   );
-  assert.equal(
-    calls.fetches.length,
-    fetchesBefore,
-    "the armed click drops no server session",
-  );
+  assert.equal(calls.fetches.length, fetchesBefore, "the armed click drops no server session");
   // The confirmed click and the idle one-click path run the ORIGINAL
   // teardown (destroySession → page reload), which the stub harness
   // bans by design — the arm is this train's new surface and the pin

@@ -132,9 +132,17 @@ test("404 pins the seam off: later asks never round-trip", async () => {
 // pinned here so both languages keep the state line honest.
 test("the cooldown notice names the wait", () => {
   assert.equal(t("cooldownNotice")("47m", "13m"), "Last call 47m ago — redial paused (13m left).");
-  assert.equal(t("cooldownNotice")("now", ""), "Last call just now — redial paused.", "the agoLabel 'now' never renders as 'now ago'");
+  assert.equal(
+    t("cooldownNotice")("now", ""),
+    "Last call just now — redial paused.",
+    "the agoLabel 'now' never renders as 'now ago'",
+  );
   i18n.setLang("de");
-  assert.equal(t("cooldownNotice")("now", ""), "Letzter Anruf gerade eben — Wiederholen pausiert.", "German hears gerade eben, not 'vor now'");
+  assert.equal(
+    t("cooldownNotice")("now", ""),
+    "Letzter Anruf gerade eben — Wiederholen pausiert.",
+    "German hears gerade eben, not 'vor now'",
+  );
   i18n.setLang("en");
   assert.equal(t("dialAnyway"), "Dial anyway");
 });

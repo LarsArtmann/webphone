@@ -970,10 +970,7 @@ test("a successful response clears the tab-error slot; a failed one keeps it", (
     target: doc.createElement(),
     detail: { successful: false },
   });
-  assert.ok(
-    slot.children.includes(banner),
-    "a failed response keeps its banner",
-  );
+  assert.ok(slot.children.includes(banner), "a failed response keeps its banner");
 
   doc.dispatch("htmx:afterRequest", {
     target: doc.createElement(),

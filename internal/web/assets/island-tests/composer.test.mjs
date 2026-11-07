@@ -203,8 +203,7 @@ test("double-Enter cannot double-send: a second in-flight submit is dropped", ()
   form.matches = (s) => s === form.selector;
   form.append(area);
   area.value = "hi";
-  const send = () =>
-    doc.dispatch("htmx:beforeRequest", { detail: { elt: form } });
+  const send = () => doc.dispatch("htmx:beforeRequest", { detail: { elt: form } });
 
   send();
   send();

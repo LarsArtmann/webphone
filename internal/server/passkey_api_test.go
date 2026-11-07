@@ -9,7 +9,7 @@ package server
 import (
 	"bytes"
 	"context"
-	"encoding/json"
+	"encoding/json/v2"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -17,6 +17,8 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"encoding/json/jsontext"
 
 	identitymodel "github.com/larsartmann/cqrs-htmx/identity-model/v4"
 	"github.com/larsartmann/webphone/internal/config"
@@ -313,8 +315,8 @@ func TestPasskeyEnrollHandlersWalkTheCeremony(t *testing.T) {
 		t.Fatalf("enroll begin: %d %s", resp.StatusCode, body)
 	}
 	var begun struct {
-		Options    json.RawMessage `json:"options"`
-		SessionKey string          `json:"session_key"`
+		Options    jsontext.Value `json:"options"`
+		SessionKey string         `json:"session_key"`
 	}
 	if err := json.Unmarshal(body, &begun); err != nil || len(begun.Options) == 0 || begun.SessionKey == "" {
 		t.Fatalf("enroll begin body %q: %v", body, err)

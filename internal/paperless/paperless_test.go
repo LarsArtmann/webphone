@@ -2,7 +2,7 @@ package paperless_test
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/v2"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -59,7 +59,7 @@ func (s *paperlessStub) serve(t *testing.T) *httptest.Server {
 			}
 			created.ID = metadataStubID(r.URL.Path)
 			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(created)
+			_ = json.MarshalWrite(w, created)
 		case r.Method == http.MethodPost && r.URL.Path == "/api/documents/post_document/":
 			if err := r.ParseMultipartForm(1 << 20); err != nil {
 				http.Error(w, "bad multipart", http.StatusBadRequest)

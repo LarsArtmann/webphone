@@ -2,7 +2,7 @@ package app
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/v2"
 	"net/http"
 	"net/http/httptest"
 	"sync/atomic"
@@ -24,7 +24,7 @@ func TestAppStartRunsChatReceiverLoops(t *testing.T) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /_matrix/client/v3/account/whoami", func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(map[string]string{"user_id": "@webphone:example.org"})
+		_ = json.MarshalWrite(w, map[string]string{"user_id": "@webphone:example.org"})
 	})
 	// The initial sync (empty since) answers immediately with a batch
 	// token; every later long-poll blocks until the request context dies,

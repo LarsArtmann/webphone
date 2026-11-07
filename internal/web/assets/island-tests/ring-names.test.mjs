@@ -51,10 +51,7 @@ test("unknown callers stay raw digits", () => {
 
 test("personal contacts win and digits normalize", () => {
   assert.equal(config.contactName("030999888"), "Bob Personal");
-  assert.equal(
-    config.callerDisplay("030999888"),
-    "Bob Personal (030 999 888)",
-  );
+  assert.equal(config.callerDisplay("030999888"), "Bob Personal (030 999 888)");
   assert.equal(config.contactName("+493012345678"), "Marta");
   assert.equal(config.contactName("nosuch"), "");
 });

@@ -32,10 +32,7 @@ test("an empty transfer destination announces and keeps the row", () => {
     lastToast().textContent.includes(t("transferEmpty")),
     `the empty-destination mistake is announced, got ${lastToast().textContent}`,
   );
-  assert.ok(
-    card.children.includes(row),
-    "the row stays open for editing",
-  );
+  assert.ok(card.children.includes(row), "the row stays open for editing");
 });
 
 test("Escape closes the transfer row", () => {

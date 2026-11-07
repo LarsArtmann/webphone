@@ -2,13 +2,15 @@ package matrix
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/v2"
 	"errors"
 	"log/slog"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"encoding/json/jsontext"
 
 	"github.com/larsartmann/webphone/internal/chatloop"
 	"github.com/larsartmann/webphone/internal/domain"
@@ -48,8 +50,8 @@ type roomSync struct {
 // ephemeralEvent is one room-ephemeral event; only m.receipt is
 // consumed, so the content stays raw until the type is known.
 type ephemeralEvent struct {
-	Type    string          `json:"type"`
-	Content json.RawMessage `json:"content"`
+	Type    string         `json:"type"`
+	Content jsontext.Value `json:"content"`
 }
 
 // receiptContent is m.receipt's nested map: event id → receipt type →

@@ -12,9 +12,7 @@ const doc = installBrowserGlobals();
 await import("../shell.js");
 
 const fireKey = (input, key) =>
-  (input.listeners.keydown ?? []).forEach((fn) =>
-    fn({ key, preventDefault() {} }),
-  );
+  (input.listeners.keydown ?? []).forEach((fn) => fn({ key, preventDefault() {} }));
 
 // The header button TOGGLES; tests that mean "open" close any open
 // overlay first so the click cannot land as a close. The M33 dialog
@@ -42,7 +40,11 @@ test("the palette opens as a wired combobox with a touch door", () => {
   const first = list.children[0];
   assert.equal(first.getAttribute("role"), "option");
   assert.equal(first.getAttribute("aria-selected"), "true");
-  assert.equal(input.getAttribute("aria-activedescendant"), first.id, "the SR tracks the selection");
+  assert.equal(
+    input.getAttribute("aria-activedescendant"),
+    first.id,
+    "the SR tracks the selection",
+  );
 });
 
 test("palette rows never read badge digits", () => {
@@ -60,10 +62,7 @@ test("palette rows never read badge digits", () => {
   const panel = openPalette();
   const list = panel.querySelector(".wp-overlay-list");
   const labels = list.children.map((row) => row.textContent);
-  assert.ok(
-    labels.includes("Go to Messages"),
-    "the nav name lands without the badge digit",
-  );
+  assert.ok(labels.includes("Go to Messages"), "the nav name lands without the badge digit");
   assert.ok(
     !labels.some((label) => label.includes("Messages4")),
     "no row ever reads the badge count",
@@ -96,6 +95,10 @@ test("starts-with ranks before substring and Home/End jump", () => {
   assert.equal(input.getAttribute("aria-activedescendant"), last.id, "End jumps to the last row");
   fireKey(input, "Home");
   const firstRow = list.children[0];
-  assert.equal(input.getAttribute("aria-activedescendant"), firstRow.id, "Home returns to the first row");
+  assert.equal(
+    input.getAttribute("aria-activedescendant"),
+    firstRow.id,
+    "Home returns to the first row",
+  );
   assert.equal(firstRow.className.includes("wp-selected"), true, "Home re-paints the selection");
 });
