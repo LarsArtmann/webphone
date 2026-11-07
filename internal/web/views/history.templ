@@ -311,9 +311,10 @@ templ CDRRow(cdr pbx.CDR, contacts CRMContacts, lang Lang) {
 	<article class={ "wp-row", templ.KV("wp-row-missed", cdrMissed(cdr)) }>
 		<span
 			class={ "wp-dir-chip", templ.KV("wp-dir-in", cdr.Context == "public"), templ.KV("wp-dir-missed", cdrMissed(cdr)) }
-			aria-hidden="true"
+			role="img"
+			aria-label={ cdrDirLabel(cdr, lang) }
 		>{ cdrDirGlyph(cdr) }</span>
-		<span class="wp-thread-text" role="img" aria-label={ cdrDirLabel(cdr, lang) }>
+		<span class="wp-thread-text">
 			@remoteLabel(cdrTarget(cdr), contacts, lang)
 			<span class="wp-muted">{ cdr.Start } · { durationLabel(cdr.Billsec) }</span>
 		</span>

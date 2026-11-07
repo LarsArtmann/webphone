@@ -41,6 +41,8 @@ export const I18N = {
     signOut: "sign out",
     signOutTitle: "Unregister and sign out",
     dialPlaceholder: "Number or extension",
+    dialDestLabel: "Number to call",
+    langLabel: "Language",
     call: "Call",
     hold: "Hold",
     resume: "Resume",
@@ -292,6 +294,8 @@ export const I18N = {
     signOut: "abmelden",
     signOutTitle: "Abmelden und Registrierung lösen",
     dialPlaceholder: "Nummer oder Durchwahl",
+    dialDestLabel: "Nummer zum Anrufen",
+    langLabel: "Sprache",
     call: "Anrufen",
     hold: "Halten",
     resume: "Fortsetzen",
@@ -545,5 +549,12 @@ export function applyI18n() {
   document.querySelectorAll("[data-i18n-title]").forEach((node) => {
     const el = /** @type {HTMLElement} */ (node);
     el.title = t(/** @type {IslandI18nKey} */ (el.dataset.i18nTitle));
+  });
+  document.querySelectorAll("[data-i18n-arialabel]").forEach((node) => {
+    const el = /** @type {HTMLElement} */ (node);
+    el.setAttribute(
+      "aria-label",
+      t(/** @type {IslandI18nKey} */ (el.dataset.i18nArialabel)),
+    );
   });
 }

@@ -162,8 +162,8 @@ templ AdminPanel(props AdminPanelProps) {
 		}
 		for _, job := range props.Faxes {
 			<div class={ "wp-row wp-admin-fax-row", templ.KV("wp-fax-in", job.Direction == domain.FaxInbound) }>
-				<span class={ "wp-dir-chip", templ.KV("wp-dir-in", job.Direction == domain.FaxInbound) } aria-hidden="true">{ faxDirGlyph(job) }</span>
-				<span class="wp-thread-text" role="img" aria-label={ faxDirLabel(job, props.Lang) }>
+				<span class={ "wp-dir-chip", templ.KV("wp-dir-in", job.Direction == domain.FaxInbound) } role="img" aria-label={ faxDirLabel(job, props.Lang) }>{ faxDirGlyph(job) }</span>
+				<span class="wp-thread-text">
 					<span class="wp-admin-ext">{ job.Owner.String() }</span>
 					{ " " }
 					{ job.Remote.String() }
@@ -226,9 +226,10 @@ templ AdminCDRRowView(row AdminCDRRow, lang Lang) {
 	<article class={ "wp-row wp-admin-cdr-row", templ.KV("wp-row-missed", cdrMissed(row.CDR)) }>
 		<span
 			class={ "wp-dir-chip", templ.KV("wp-dir-in", row.CDR.Context == "public"), templ.KV("wp-row-missed", cdrMissed(row.CDR)) }
-			aria-hidden="true"
+			role="img"
+			aria-label={ cdrDirLabel(row.CDR, lang) }
 		>{ cdrDirGlyph(row.CDR) }</span>
-		<span class="wp-thread-text" role="img" aria-label={ cdrDirLabel(row.CDR, lang) }>
+		<span class="wp-thread-text">
 			{ row.CDR.CallerIDNumber + " → " + row.CDR.DestinationNumber }
 			<span class="wp-muted">{ row.CDR.Start + " · " + durationLabel(row.CDR.Billsec) }</span>
 		</span>
