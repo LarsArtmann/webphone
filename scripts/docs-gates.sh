@@ -171,11 +171,30 @@ table_damage_gate() {
 	return "$rc"
 }
 
+# The PRE-WRITE guard (P1-3): the strike writer splits rows on `|`, so a cell
+# holding an escaped pipe is cut a cell too far, and a verdict value is written
+# verbatim (a literal "UNMAPPED" survives every existing gate). Both corrupt
+# silently, so the shapes are refused here — before a sweep touches anything —
+# and the corpus is also swept, which is cheap because the rules hold today.
+strike_safety_gate() {
+	if ! command -v python3 >/dev/null 2>&1; then
+		echo "strike-safety: SKIP — python3 not on PATH" >&2
+		return 0
+	fi
+	python3 scripts/strike-safety.py --self-test >/dev/null 2>&1 || {
+		echo "the strike-safety guard cannot FAIL (its own self-test reds)" >&2
+		return 1
+	}
+	python3 scripts/strike-safety.py rows "${DAMAGE_FILES[@]}"
+}
+
 if [ ! -f "$ANNOTATE_GO" ] || ! command -v go >/dev/null 2>&1; then
 	skip_gate "table-damage" "needs go + the docs-health annotate.go (local ritual step; the battery above still ran)"
 else
 	run_gate "table-damage" table_damage_gate
 fi
+
+run_gate "strike-safety" strike_safety_gate
 
 echo "docs-gates: verdict matrix"
 rc=0

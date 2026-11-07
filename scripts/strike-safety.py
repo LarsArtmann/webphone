@@ -121,6 +121,9 @@ def check_verdict(value: str) -> str | None:
     )
 
 
+EXPECTED_CASES = range(13)
+
+
 def self_test() -> int:
     import os
     import tempfile
@@ -155,7 +158,7 @@ def self_test() -> int:
         # Case 3: a ragged row (a lost delimiter) is refused.
         p = os.path.join(tmp, "ragged.md")
         open(p, "w").write(
-            "| # | Task |\n| - | ---- |\n| 1 | only one cell |\n"
+            "| # | Task | Impact |\n| - | ---- | ------ |\n| 1 | two cells merged High |\n"
         )
         expect("ragged row is refused", len(scan_rows(p)) >= 1)
 
@@ -182,7 +185,7 @@ def self_test() -> int:
     if failures:
         print(f"selftest: FAILED — {len(failures)} case(s)")
         return 1
-    print(f"selftest: {16} passed — both refusals fire")
+    print(f"selftest: {len(EXPECTED_CASES)} passed — both refusals fire")
     return 0
 
 

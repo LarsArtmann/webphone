@@ -156,9 +156,14 @@ What remains, each with its ONE home:
     2026-11-07, upstream Artmann-Technologies repos): (a) escaped pipes inside a
     code span (`\|`) defeat the table cell splitter, so a per-cell strike
     silently crosses a cell boundary — hand-fixed one in the durability
-    archive; worth a fixture + a scanner fix; (b) spec verdict values are not
-    shape-validated — a literal "UNMAPPED" verdict passes the banned-words
-    check and would strike as garbage; hard-error non-canonical verdict heads;
+    archive; **LOCAL MITIGATION SHIPPED 2026-11-07 (P1-3)**:
+    `scripts/strike-safety.py rows` refuses the shape before a sweep writes and
+    is a wrapper gate (13-case self-test); still worth the upstream scanner
+    fix; (b) spec verdict values are not shape-validated — a literal "UNMAPPED"
+    verdict passes the banned-words check and would strike as garbage;
+    **LOCAL MITIGATION SHIPPED 2026-11-07 (P1-3)**:
+    `scripts/strike-safety.py verdict` enforces the canonical heads; upstream
+    should hard-error the same way;
     (c) "live reports" has three disagreeing counters (INDEX regen count, raw
     ls count, cadence gate count read 76/75/70 in one moment) — derive one
     from the other or name the differences;
