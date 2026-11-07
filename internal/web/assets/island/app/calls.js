@@ -265,7 +265,7 @@ function morphToEndedCard(id, entry) {
     () =>
       /** @type {HTMLElement | null} */ (
         card.querySelector(".call-note-input") ||
-        card.querySelector(".close-ended-btn")
+          card.querySelector(".close-ended-btn")
       ),
     () => {
       controls.replaceChildren();
@@ -363,7 +363,10 @@ async function confirmDisposition(row, id, entry, value, labelKey) {
     });
     focusAfterReplace(
       row,
-      () => /** @type {HTMLElement | null} */ (row.querySelector(".disposition-ask")),
+      () =>
+        /** @type {HTMLElement | null} */ (
+          row.querySelector(".disposition-ask")
+        ),
       () => row.replaceChildren(saved),
     );
     announce(t("dispositionSaved")(t(labelKey)));
@@ -434,7 +437,10 @@ async function saveCallNote(row, id, body) {
     });
     focusAfterReplace(
       row,
-      () => /** @type {HTMLElement | null} */ (row.querySelector(".call-note-saved")),
+      () =>
+        /** @type {HTMLElement | null} */ (
+          row.querySelector(".call-note-saved")
+        ),
       () => {
         if (input) input.remove();
         if (save) save.remove();

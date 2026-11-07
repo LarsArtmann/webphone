@@ -211,7 +211,17 @@ export function installBrowserGlobals() {
     // the target element's textContent).
     createTextNode: (text) => ({ textNode: true, textContent: String(text) }),
     querySelectorAll: () => [],
-    querySelector: () => null,
+    // Scans the registered roots' subtrees (makeEl.querySelector answers
+    // exact-selector hits), so tests that plant nodes under registry
+    // elements can exercise document-level lookups like the drafts
+    // panel's open-edit guard.
+    querySelector(selector) {
+      for (const root of registry.values()) {
+        const found = root.querySelector(selector);
+        if (found) return found;
+      }
+      return null;
+    },
     // Tests assign this to simulate where keyboard focus sits; the island's
     // focus-on-replace helper reads it.
     activeElement: null,

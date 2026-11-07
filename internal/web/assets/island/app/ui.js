@@ -260,7 +260,10 @@ export function renderIncomingSlots() {
   if (!els.incomingQueue) return;
   let heldSlotId = "";
   const active = document.activeElement;
-  if (active && typeof /** @type {Element} */ (active).closest === "function") {
+  if (
+    active &&
+    typeof (/** @type {Element} */ (active).closest) === "function"
+  ) {
     const slotRow = /** @type {Element} */ (active).closest(".incoming-slot");
     if (slotRow) heldSlotId = slotRow.id || "";
   }

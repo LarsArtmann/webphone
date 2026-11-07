@@ -1312,9 +1312,13 @@
         !closestHTMLElement(area, "textarea.wp-compose-body")
       )
         return;
+      // The thread id is captured NOW, not at timer fire: a fast thread
+      // switch inside the 300ms debounce must not file this composer's
+      // text under the other conversation's key.
+      var draftId = currentDraftId();
       if (draftTimer) clearTimeout(draftTimer);
       draftTimer = setTimeout(function () {
-        saveDraft(currentDraftId(), area.value);
+        saveDraft(draftId, area.value);
       }, 300);
     });
     document.addEventListener("htmx:afterSwap", function () {
@@ -1330,12 +1334,43 @@
       }
       if (draft) area.value = draft;
     });
+    // The SENT draft's key is captured at request start, not at its
+    // afterRequest: by then the response swap may have morphed the
+    // transcript to another thread, and clearing then would leave the
+    // sent conversation's draft behind (a ghost restored on revisit).
+    var sentDraftIds = new WeakMap();
+    document.addEventListener("htmx:beforeRequest", function (event) {
+      var form =
+        (eventDetail(event) && eventDetail(event).elt) || eventElement(event);
+      if (!form || !form.matches || !form.matches("form")) return;
+      if (!form.querySelector("textarea.wp-compose-body")) return;
+      sentDraftIds.set(form, currentDraftId());
+    });
     document.addEventListener("htmx:afterRequest", function (event) {
       var form = eventElement(event);
       if (!form || !form.matches || !form.matches("form")) return;
       if (!eventDetail(event) || !eventDetail(event).successful) return;
       if (!form.querySelector("textarea.wp-compose-body")) return;
-      saveDraft(currentDraftId(), "");
+      var sent = sentDraftIds.get(form);
+      saveDraft(typeof sent === "string" ? sent : currentDraftId(), "");
+      sentDraftIds.delete(form);
+    });
+
+    // The drafts panel polls every 30s (DraftsPanel in messages.templ);
+    // a poll that fires while an edit <details> is open would swap the
+    // panel out from under the textarea and silently eat the typed
+    // change. Dropping the poll request here is the CSP-safe choke
+    // point (htmx trigger filters need eval), and the poll fires again
+    // once the edit closes. Only the panel's own poll is gated: the
+    // approve/discard buttons are children of the panel and keep
+    // working while an edit is open.
+    document.addEventListener("htmx:beforeRequest", function (event) {
+      var elt =
+        (eventDetail(event) && eventDetail(event).elt) || eventElement(event);
+      if (!elt || !elt.matches || !elt.matches("#wp-drafts")) return;
+      if (document.querySelector(".wp-draft-edit[open]")) {
+        event.preventDefault();
+      }
     });
 
     // 3e. Optimistic send: the reply composer appends a pending bubble
