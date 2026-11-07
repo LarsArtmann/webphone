@@ -149,7 +149,12 @@ What remains, each with its ONE home:
     check and would strike as garbage; hard-error non-canonical verdict heads;
     (c) "live reports" has three disagreeing counters (INDEX regen count, raw
     ls count, cadence gate count read 76/75/70 in one moment) — derive one
-    from the other or name the differences.
+    from the other or name the differences;
+    (d) the documented `<!-- fresh:skip -->` exemption does NOT actually exempt
+    an item (tried directly above the item and above the §f heading; the gate
+    still reported 2 unharvested). What DID work was a distinctive token in the
+    item text (`go-health-dashboard`) — so the marker is either undocumented in
+    its real placement or broken; verify upstream and fix the doc or the code.
 
 ### 2026-11-05 hygiene train (assistant sweep — tests + docs + repo hygiene)
 

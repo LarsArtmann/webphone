@@ -140,8 +140,8 @@ the embedded engine's v1.0.3 nonce + Trusted Types lane.
 2. Locate the go-health-dashboard checkout; read csp.go + page rendering at
    HEAD; size the change (emit `data-nonce` on `<html>`, grant
    `'nonce-…'`, drop `'unsafe-eval'`).
-3. Implement the dashboard lane in the library repo; run ITS gates.
-4. Release the dashboard version (tag; owner call per §g1).
+3. Implement the dashboard lane in the `go-health-dashboard` repo; run ITS gates. **→ TODO_LIST § 2026-11-07 Datastar residue**
+4. Release the `go-health-dashboard` version (tag; owner call per §g1). **→ TODO_LIST § 2026-11-07 Datastar residue**
 5. webphone consumption: `go get` → `go mod tidy` → vendorHash re-pin recipe
    (`nix build .#webphone.goModules --rebuild` → apply `got:`).
 6. Flip the pin: `app_test.go:135` asserts nonce, not unsafe-eval.
