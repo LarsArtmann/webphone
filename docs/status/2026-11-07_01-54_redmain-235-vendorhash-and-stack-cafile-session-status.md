@@ -140,7 +140,7 @@
    runner environment is what's failing.
 2. **Issue #9 comment** — post the "knob landed" comment now with the CI
    caveat, or hold until a stack run completes green?
-3. **VendorHash policy** — want the pre-push go.mod/vendadHash gate as a
+3. **VendorHash policy** — want the pre-push go.mod/vendorHash gate as a
    repo hook (item e4), or keep relying on the commit-msg guard + the
    ledger row? (Client-side only; the daemon bypasses hooks by env
    override, so this is detection-and-noise reduction, not prevention.)
