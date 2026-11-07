@@ -219,6 +219,16 @@ the stack browser E2E passed on the bumped tree. What remains:
   where does the note live that says the auto-commit daemon's reflow and the
   gates' formatter are coupled — a test comment, the error-contract preamble,
   or AGENTS? Three candidate homes, no decision.
+- Carrier-leg owner question (routed 2026-11-07 from the archived
+  `docs/planning/archived/2026-09-22_01-20_SUPERB-error-excellence.md`
+  T12, which this sweep's row pass found never confirmed anywhere): the
+  inbound-MMS isolation test (carrier phone → DID) and its Google Voice
+  verdict were never recorded, and the `+14084757593` ownership question
+  rode along un-answered. MMS inbound/outbound ship and are
+  webhook-tested today, so this is a verdict-recording call, not a
+  build gap: run the isolation test on a real carrier line and record
+  the GV verdict + number ownership in FEATURES/AGENTS, or close the
+  question as moot. Owner call (carrier phone required).
 - IO-storm source investigation (2026-10-14 go-modularize §f item 30,
   routed 2026-10-18): the box tripped the no-heavy-builds gate 6× in
   60 min (freeze #5/#25 class); a `/proc/pressure/io` watch during the

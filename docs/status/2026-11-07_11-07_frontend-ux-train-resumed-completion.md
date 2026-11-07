@@ -26,13 +26,13 @@
   (fax consolidated onto it too); contacts save/import disable their
   submit buttons; the dial form gets `novalidate` so the island's
   localized empty-dial message speaks; login carries an in-flight guard
-  + Connecting button; logout with a live call is a two-click move
-  (first click warns, pins prove no teardown and no session DELETE);
-  live calls arm `beforeunload`; the tab title reads
-  "● in call · mm:ss" from the 1s tick (oldest call owns the clock) and
-  hands the title back; the transfer row announces an empty destination
-  and closes on Escape; the two hardcoded English aria-labels moved into
-  both dictionaries.
+  - Connecting button; logout with a live call is a two-click move
+    (first click warns, pins prove no teardown and no session DELETE);
+    live calls arm `beforeunload`; the tab title reads
+    "● in call · mm:ss" from the 1s tick (oldest call owns the clock) and
+    hands the title back; the transfer row announces an empty destination
+    and closes on Escape; the two hardcoded English aria-labels moved into
+    both dictionaries.
 - **T20 copy/i18n cluster (M11/M12/M13/M14/M16/M45)** — all seven
   platform glyphs (↓↑⧉☆✖⚡☎⚠⊗) replaced by icons-package SVGs; `✖`
   stripped out of the `history.missed` key into markup; German rewords

@@ -87,12 +87,16 @@ What remains, each with its ONE home:
     (`scripts/docs-gates.sh`, `.docs-gates.json`); the pre-canon archive residue is
     RATCHETED, so nothing reds main when new drift appears until the CI leg lands.
 11. **Bulk verdict pass over the archive residue** — after the v8 sweep archived 68
-    reports, 68 remain live (the 69th file is this sweep's own report), each blocked by un-inventoried §a/§b table rows
+    reports, the live status-report set is blocked by un-inventoried §a/§b table rows
     (~1 600 measured 2026-11-06; those reports use a Verdict COLUMN instead of the
-    strike canon). Plan: per-file `status-items` strikes for §a/§b shipped tables,
-    `r` routed verdicts for §f rows, then `check-rows`/`bare-rows` BEFORE each
-    `git mv`. The cadence ratchet (69 unarchived, 45d) holds the residency and may
-    only move DOWN.
+    strike canon). PROGRESS 2026-11-07 (v9 sweep): the four executed September plans
+    (error-excellence 95, 20-year-durability 217, pareto-v260 118, stack-adoption 123
+    rows) were per-row verified, struck with evidence and ARCHIVED (gates held before
+    each move; citation repoints incl. archived citers). Remaining: the live status
+    reports (~1 600 rows). Plan: per-file `repair` strikes for §a/§b shipped tables
+    (Verdict-column evidence transcribed + hash-resolved), routed strikes for §f rows,
+    then `check-rows`/`bare-rows` BEFORE each `git mv`. The cadence ratchet holds the
+    residency and may only move DOWN.
 12. **`/context` contract snapshot test** pinning webphone's parse against Kith's
     published shape (a CRM-side schema change is invisible today).
 13. **History nudge for the notes save path** — a `call_notes` PUT leaves a second
@@ -123,6 +127,24 @@ What remains, each with its ONE home:
     "generic" is a document-frequency threshold (observed 330 → 331 from one
     CHANGELOG paragraph), and a standalone verb ignores `.docs-gates.json` while
     `run` honors it.
+20. **Frontend-UX verification tail** (harvested 2026-11-07 from
+    `docs/status/2026-11-07_11-07_frontend-ux-train-resumed-completion.md` §f,
+    routed by the docs-health v9 freshness gate): (a) the `admin.calls.lines`
+    value now says "transcript lines" — check the DE wrapping in the admin
+    table at narrow widths; (b) pin the F20 three-audience Settings structure
+    itself (dl counts per section, not just the two relocated pins);
+    (c) verify `aria-expanded` on `#wp-palette-open` (the served touch button
+    has no pressed/expanded state feedback).
+21. **annotate.go/docs-gates tooling nits** (found by the docs-health v9 sweep
+    2026-11-07, upstream Artmann-Technologies repos): (a) escaped pipes inside a
+    code span (`\|`) defeat the table cell splitter, so a per-cell strike
+    silently crosses a cell boundary — hand-fixed one in the durability
+    archive; worth a fixture + a scanner fix; (b) spec verdict values are not
+    shape-validated — a literal "UNMAPPED" verdict passes the banned-words
+    check and would strike as garbage; hard-error non-canonical verdict heads;
+    (c) "live reports" has three disagreeing counters (INDEX regen count, raw
+    ls count, cadence gate count read 76/75/70 in one moment) — derive one
+    from the other or name the differences.
 
 ### 2026-11-05 hygiene train (assistant sweep — tests + docs + repo hygiene)
 
