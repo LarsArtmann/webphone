@@ -120,6 +120,18 @@ export function installBrowserGlobals() {
       focus() {
         this.focused = true;
       },
+      // contains backs the island's focus-on-replace helper: it needs the
+      // real "is the focused node inside the departing subtree" walk.
+      contains(node) {
+        if (!node) return false;
+        const walk = (el) => {
+          for (const kid of el.children) {
+            if (kid === node || walk(kid)) return true;
+          }
+          return false;
+        };
+        return node === this || walk(this);
+      },
       // Native <dialog> surface (the lightbox singleton): showModal/close
       // are observable as flags on the stub.
       showModal() {
@@ -200,6 +212,9 @@ export function installBrowserGlobals() {
     createTextNode: (text) => ({ textNode: true, textContent: String(text) }),
     querySelectorAll: () => [],
     querySelector: () => null,
+    // Tests assign this to simulate where keyboard focus sits; the island's
+    // focus-on-replace helper reads it.
+    activeElement: null,
     documentElement: makeEl("html"),
     body: makeEl("body"),
     addEventListener(type, fn) {

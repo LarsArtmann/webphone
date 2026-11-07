@@ -53,6 +53,7 @@ import {
   announce,
   els,
   errorMessage,
+  focusAfterReplace,
   hideIncomingBanner,
   log,
   renderIncomingSlots,
@@ -259,19 +260,29 @@ function morphToEndedCard(id, entry) {
   }
   const controls = card.querySelector(".controls");
   if (!controls) return;
-  controls.replaceChildren();
-  controls.append(noteRow(id));
-  if (crmEnabled) {
-    controls.append(dispositionRow(id, entry));
-  }
-  if (agentEnabled && entry.established) {
-    controls.append(summarizeButton(id));
-  }
-  const close = document.createElement("button");
-  close.className = "ghost close-ended-btn";
-  close.textContent = t("close");
-  close.addEventListener("click", () => card.remove());
-  controls.append(close);
+  focusAfterReplace(
+    controls,
+    () =>
+      /** @type {HTMLElement | null} */ (
+        card.querySelector(".call-note-input") ||
+        card.querySelector(".close-ended-btn")
+      ),
+    () => {
+      controls.replaceChildren();
+      controls.append(noteRow(id));
+      if (crmEnabled) {
+        controls.append(dispositionRow(id, entry));
+      }
+      if (agentEnabled && entry.established) {
+        controls.append(summarizeButton(id));
+      }
+      const close = document.createElement("button");
+      close.className = "ghost close-ended-btn";
+      close.textContent = t("close");
+      close.addEventListener("click", () => card.remove());
+      controls.append(close);
+    },
+  );
 }
 
 // dispositionRow is the operator-confirm affordance (issue #6): three
@@ -346,11 +357,14 @@ async function confirmDisposition(row, id, entry, value, labelKey) {
       announce(t("dispositionFailed"), "warn");
       return;
     }
-    row.replaceChildren(
-      Object.assign(document.createElement("span"), {
-        className: "disposition-ask",
-        textContent: t("dispositionSaved")(t(labelKey)),
-      }),
+    const saved = Object.assign(document.createElement("span"), {
+      className: "disposition-ask",
+      textContent: t("dispositionSaved")(t(labelKey)),
+    });
+    focusAfterReplace(
+      row,
+      () => /** @type {HTMLElement | null} */ (row.querySelector(".disposition-ask")),
+      () => row.replaceChildren(saved),
     );
     announce(t("dispositionSaved")(t(labelKey)));
   } catch (err) {
@@ -414,13 +428,18 @@ async function saveCallNote(row, id, body) {
       else announce(t("callNoteFailed"), "warn");
       return;
     }
-    if (input) input.remove();
-    if (save) save.remove();
-    row.append(
-      Object.assign(document.createElement("span"), {
-        className: "call-note-saved",
-        textContent: t("callNoteSaved"),
-      }),
+    const saved = Object.assign(document.createElement("span"), {
+      className: "call-note-saved",
+      textContent: t("callNoteSaved"),
+    });
+    focusAfterReplace(
+      row,
+      () => /** @type {HTMLElement | null} */ (row.querySelector(".call-note-saved")),
+      () => {
+        if (input) input.remove();
+        if (save) save.remove();
+        row.append(saved);
+      },
     );
     announce(t("callNoteSaved"));
   } catch (err) {
