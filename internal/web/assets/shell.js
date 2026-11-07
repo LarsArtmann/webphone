@@ -2239,6 +2239,7 @@
       var source = overlaySource;
       // Starts-with ranks before substring: typing "ca" puts "Call a
       // number" ahead of anything that merely contains the letters.
+      /** @type [Array<{label: string, run?: () => void}>, Array<{label: string, run?: () => void}>] */
       var ranked = [[], []];
       for (var i = 0; i < source.length; i++) {
         var hay = source[i].label.toLowerCase();
@@ -2288,7 +2289,8 @@
       var rows = list.children;
       for (var i = 0; i < rows.length; i++) {
         var selected = i === overlayIndex;
-        rows[i].className = "wp-overlay-item" + (selected ? " wp-selected" : "");
+        rows[i].className =
+          "wp-overlay-item" + (selected ? " wp-selected" : "");
         rows[i].setAttribute("aria-selected", selected ? "true" : "false");
         if (selected && input && rows[i].id) {
           input.setAttribute("aria-activedescendant", rows[i].id);
