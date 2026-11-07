@@ -149,6 +149,7 @@ SURFACE_MARKERS = {
     "history-transcript": "[data-copy-transcript]",  # seeded transcript section
     "contacts": ".wp-export-link",  # unconditional in the panel
     "settings": ("#settings-panel dd .wp-service-on", "openai-compatible"),
+    "not-found": (".wp-panel.wp-notfound", "404 — page not found"),
 }
 
 # F20 split Settings into My preferences / My data / a COLLAPSED server
@@ -157,7 +158,6 @@ SURFACE_MARKERS = {
 # only visible text, so the copy assert needs the section opened first.
 SURFACE_EXPAND = {
     "settings": "details.wp-settings-server > summary",
-    "not-found": (".wp-panel.wp-notfound", "404 — page not found"),
 }
 
 # Anonymous surfaces (2026-10-25): shot per theme BEFORE the session'd
