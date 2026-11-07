@@ -83,7 +83,7 @@ need a decision, not code.
 | 7  | Decide the findings-gate posture so `buildflow`'s exit code stops being ignorable (50 tier-3 findings)                     | High     | M      | TODO §2026-11-06 r7        |
 | 8  | Re-run the hub fan-out benchmark on a quiet host (load < 8) and state a real verdict                                       | Medium   | S      | TODO §2026-11-06 r8        |
 | 9  | Archive-tooling guard: refuse an escaped pipe inside a to-be-struck cell and an unmapped verdict head                      | High     | M      | TODO §2026-11-07 r21(a)(b) |
-| 10 | One counter, one truth: INDEX regen, `ls` and the cadence gate disagreed 76/75/61 in one afternoon                         | Medium   | M      | TODO §2026-11-07 r21(c)    |
+| 10 | `live reports` has three disagreeing counters (INDEX regen, raw `ls`, cadence gate) — derive one from the other            | Medium   | M      | TODO §2026-11-07 r21(c)    |
 | 11 | Archive-residue wave 2: the next ten live reports through the proven drain recipe                                          | Medium   | L      | TODO §2026-11-06 r11       |
 | 12 | `/context` contract snapshot pinning webphone's parse against the producer's published shape                               | Medium   | M      | TODO §2026-11-06 r12       |
 | 13 | History nudge for the `call_notes` PUT so a second open tab re-fetches (the F89 shape, different slot)                     | Low      | S      | TODO §2026-11-06 r13       |
