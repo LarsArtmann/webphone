@@ -2177,8 +2177,22 @@
       var links = document.querySelectorAll("#wp-nav .wp-nav-link");
       for (var i = 0; i < links.length; i++) {
         (function (link) {
+          // The label comes from the nav text, never the unread badge: a
+          // link reading "Messages4" must not become "Go to Messages4".
+          var name = link.textContent.trim();
+          var badge = link.querySelector(".wp-nav-badge");
+          if (badge && badge.textContent) {
+            var at = name.indexOf(badge.textContent);
+            if (at >= 0) {
+              name = (
+                name.slice(0, at) + name.slice(at + badge.textContent.length)
+              )
+                .replace(/\s+/g, " ")
+                .trim();
+            }
+          }
           items.push({
-            label: "Go to " + link.textContent.trim(),
+            label: "Go to " + name,
             run: function () {
               link.click();
             },
@@ -2220,13 +2234,20 @@
       overlayIndex = 0;
       var query = input.value.trim().toLowerCase();
       var source = overlaySource;
+      // Starts-with ranks before substring: typing "ca" puts "Call a
+      // number" ahead of anything that merely contains the letters.
+      var ranked = [[], []];
       for (var i = 0; i < source.length; i++) {
-        if (query && source[i].label.toLowerCase().indexOf(query) < 0) continue;
-        overlayItems.push(source[i]);
+        var hay = source[i].label.toLowerCase();
+        if (query && hay.indexOf(query) < 0) continue;
+        ranked[hay.indexOf(query) === 0 ? 0 : 1].push(source[i]);
       }
+      overlayItems = ranked[0].concat(ranked[1]);
       for (var j = 0; j < overlayItems.length; j++) {
         var li = document.createElement("li");
-        li.className = "wp-overlay-item" + (j === 0 ? " wp-selected" : "");
+        li.className = "wp-overlay-item";
+        li.id = "wp-palette-opt-" + j;
+        li.setAttribute("role", "option");
         li.textContent = overlayItems[j].label;
         (function (index) {
           li.addEventListener("click", function () {
@@ -2236,18 +2257,39 @@
         })(j);
         list.append(li);
       }
+      paintSelection();
     };
 
     /** @param {number} delta */
     var selectOverlay = function (delta) {
-      var list = overlayList;
-      if (!list || overlayItems.length === 0) return;
+      if (!overlayList || overlayItems.length === 0) return;
       overlayIndex =
         (overlayIndex + delta + overlayItems.length) % overlayItems.length;
+      paintSelection();
+    };
+
+    /** @param {number} index */
+    var jumpOverlay = function (index) {
+      if (!overlayList || overlayItems.length === 0) return;
+      overlayIndex = Math.max(0, Math.min(index, overlayItems.length - 1));
+      paintSelection();
+    };
+
+    // One painter for the selection: the wp-selected class, the option's
+    // aria-selected, and the input's aria-activedescendant stay three
+    // views of the one index.
+    var paintSelection = function () {
+      var list = overlayList;
+      var input = overlayInput;
+      if (!list) return;
       var rows = list.children;
       for (var i = 0; i < rows.length; i++) {
-        rows[i].className =
-          "wp-overlay-item" + (i === overlayIndex ? " wp-selected" : "");
+        var selected = i === overlayIndex;
+        rows[i].className = "wp-overlay-item" + (selected ? " wp-selected" : "");
+        rows[i].setAttribute("aria-selected", selected ? "true" : "false");
+        if (selected && input && rows[i].id) {
+          input.setAttribute("aria-activedescendant", rows[i].id);
+        }
       }
     };
 
@@ -2268,10 +2310,16 @@
       var input = document.createElement("input");
       input.type = "text";
       input.className = "wp-overlay-input";
+      input.setAttribute("role", "combobox");
+      input.setAttribute("aria-expanded", "true");
+      input.setAttribute("aria-controls", "wp-palette-list");
+      input.setAttribute("aria-autocomplete", "list");
       input.setAttribute("aria-label", "Search commands");
       input.placeholder = "Type a command…";
       var list = document.createElement("ul");
       list.className = "wp-overlay-list";
+      list.id = "wp-palette-list";
+      list.setAttribute("role", "listbox");
       panel.append(input, list);
       document.body.append(panel);
       // Published before the listeners attach: renderOverlay and the
@@ -2287,6 +2335,12 @@
           event.preventDefault();
         } else if (event.key === "ArrowUp") {
           selectOverlay(-1);
+          event.preventDefault();
+        } else if (event.key === "Home") {
+          jumpOverlay(0);
+          event.preventDefault();
+        } else if (event.key === "End") {
+          jumpOverlay(overlayItems.length - 1);
           event.preventDefault();
         } else if (event.key === "Enter") {
           runOverlayItem();
@@ -2325,10 +2379,25 @@
     };
 
     var closeOverlay = function () {
-      if (overlay) overlay.hidden = true;
+      if (overlay) {
+        overlay.hidden = true;
+        var input = overlayInput;
+        if (input) input.setAttribute("aria-expanded", "false");
+      }
       if (overlayReturnFocus) overlayReturnFocus.focus();
       overlayReturnFocus = null;
     };
+
+    // The palette's coarse-pointer door (F12): the served header button
+    // (wp-palette-open, revealed by app.css only on touch) opens the same
+    // overlay Ctrl/Cmd+K opens.
+    var paletteOpen = document.getElementById("wp-palette-open");
+    if (paletteOpen) {
+      paletteOpen.addEventListener("click", function () {
+        if (overlay && !overlay.hidden) closeOverlay();
+        else openOverlay("commands");
+      });
+    }
 
     document.addEventListener("keydown", function (event) {
       if (

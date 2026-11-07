@@ -162,6 +162,12 @@ templ ShellBody(props ShellProps) {
 					<span class="wp-island-toggle-label">{ T(props.Lang, "shell.island.toggle") }</span>
 				</button>
 			}
+			// The command palette's coarse-pointer entry (F12): keyboard users
+			// own Ctrl/Cmd+K and the "?" help documents it; touch has no
+			// keyboard, so this header button opens the same overlay. app.css
+			// reveals the button only on (pointer: coarse) — the desktop
+			// chrome stays byte-identical.
+			<button id="wp-palette-open" class="wp-palette-open" type="button" aria-label="Command palette" title="Command palette">@icons.Icon(icons.Search, "wp-icon")</button>
 			<button id="theme-toggle" class="wp-theme-toggle" type="button" title="Color theme (auto, light, dark)">Theme: auto</button>
 		</div>
 	</header>

@@ -277,6 +277,38 @@ h3 {
   border-color: var(--accent);
 }
 
+/* The command palette's coarse-pointer entry (F12): the keyboard owns
+   Ctrl/Cmd+K on a desktop, so the button exists only where a keyboard
+   cannot — touch. Hidden by default, revealed by pointer capability,
+   dressed in the theme-toggle's quiet pill grammar. */
+.wp-palette-open {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .wp-palette-open {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 30px;
+    padding: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--muted);
+    border-radius: 999px;
+    cursor: pointer;
+    transition:
+      color 120ms ease,
+      border-color 120ms ease;
+  }
+
+  .wp-palette-open:hover {
+    color: var(--text);
+    border-color: var(--accent);
+  }
+}
+
 /* Skip link (E4): the first tab stop jumps past the island straight to
    the tab content; visible only while focused. */
 .wp-skip {

@@ -19,7 +19,8 @@ export function installBrowserGlobals() {
   const matchesSelector = (node, selector) =>
     node.selector === selector ||
     node.className === selector ||
-    (selector.startsWith(".") && node.className.split(" ").includes(selector.slice(1)));
+    (selector.startsWith(".") && node.className.split(" ").includes(selector.slice(1))) ||
+    (selector.startsWith("#") && node.id === selector.slice(1));
   const makeEl = (id) => {
     const el = {
       id,
