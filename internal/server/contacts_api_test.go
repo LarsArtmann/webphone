@@ -6,6 +6,8 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+
+	"github.com/larsartmann/webphone/internal/domain"
 )
 
 type apiContacts struct {
@@ -65,6 +67,33 @@ func TestContactsAPIRequiresSession(t *testing.T) {
 		if resp.StatusCode != http.StatusUnauthorized && resp.StatusCode != http.StatusForbidden {
 			t.Errorf("anonymous %s %s: %d (want 401/403)", call.method, call.path, resp.StatusCode)
 		}
+	}
+}
+
+// TestContactNameCapAtBothDoors pins M5: the name cap is one rule at
+// both typed doors (the tab form AND the island's JSON API — a
+// maxlength attribute alone would gate only one of them), and the cap
+// boundary itself still saves (the form's maxlength is a pre-gate,
+// not a lie about a smaller server limit).
+func TestContactNameCapAtBothDoors(t *testing.T) {
+	server := newTestServer(t)
+	c := signIn(t, server)
+
+	long := strings.Repeat("x", domain.MaxContactNameLength+1)
+	resp := postJSON(t, c, "/api/contacts", map[string]string{"name": long, "number": "+441632960961"})
+	if resp.StatusCode != http.StatusUnprocessableEntity {
+		t.Errorf("api door over-cap name: %d (want 422)", resp.StatusCode)
+	}
+	form := url.Values{"name": {long}, "number": {"+493012345678"}}.Encode()
+	resp, _ = c.do(http.MethodPost, "/contacts/save", []byte(form), "application/x-www-form-urlencoded")
+	if resp.StatusCode != http.StatusUnprocessableEntity {
+		t.Errorf("tab door over-cap name: %d (want 422)", resp.StatusCode)
+	}
+
+	atCap := url.Values{"name": {strings.Repeat("x", domain.MaxContactNameLength)}, "number": {"+493012345678"}}.Encode()
+	resp, _ = c.do(http.MethodPost, "/contacts/save", []byte(atCap), "application/x-www-form-urlencoded")
+	if resp.StatusCode != http.StatusOK {
+		t.Errorf("name exactly at the cap: %d (want 200)", resp.StatusCode)
 	}
 }
 
