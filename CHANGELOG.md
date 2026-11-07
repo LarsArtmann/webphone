@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Documentation health is now enforced, not remembered (2026-11-07): the
+  docs gates are a pinned flake package present in the devShell CI enters and
+  run as their own CI step, so a docs drift reds the build instead of waiting
+  for a session to volunteer. The wrapper also refuses to certify the newest
+  status report when it carries no harvest section, closing the "fresh" verdict
+  that a report with nothing to check used to earn.
+- CHANGELOG coverage is checked (2026-11-07): a pull request that changes
+  product code without an `[Unreleased]` line now fails a dedicated job, so the
+  ratified bar has teeth instead of being a preference nobody could verify.
 - The frontend-UX fix train (2026-11-07): the UX review's 67 findings land
   as one train — the dark accent ink now passes WCAG AA, the signed-out
   page drops the tab row and centers the login, Settings reads in three

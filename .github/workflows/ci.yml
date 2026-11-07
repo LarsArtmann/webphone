@@ -101,6 +101,26 @@ jobs:
       - name: Docs-health battery (format + freshness + annotate + routing + cadence)
         run: nix develop -c bash scripts/docs-gates.sh --check
 
+  # The CHANGELOG bar (RATIFIED 2026-10-11) had no guard: the metaengine
+  # per-group-cap train landed with no [Unreleased] line and every gate stayed
+  # green. PR-only, because the bar is about what a change SET claims; a push
+  # to main is already merged and cannot be re-drafted. The guard fails open
+  # (WARN + exit 0) when the base ref is unresolvable, so a shallow or
+  # first-push checkout cannot red the build for missing history.
+  changelog-guard:
+    name: CHANGELOG coverage
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Require an [Unreleased] line for product-code changes
+        run: bash scripts/changelog-guard.sh "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
+
   # Ratified dedup ritual (2026-10-11): the -t 1 deep sweep's accepted
   # clones live in .art-dupl-baseline.json (86 groups, re-recorded
   # 2026-11-04 with THIS pinned tool). This gate fails only on clone groups
