@@ -191,6 +191,58 @@ func TestAdminPanelShowsEveryOwnersData(t *testing.T) {
 	}
 }
 
+// TestAdminFindFilter pins M1: the q parameter narrows every data
+// section server-side (case-insensitive substring across the row's
+// human fields), the filter form pushes its URL so the filtered view
+// stays addressable, and the read-only badge renders on the panel.
+func TestAdminFindFilter(t *testing.T) {
+	server, sessions := newAdminServer(t, "")
+	ctx := context.Background()
+
+	neighbor := domain.MustParseExtension("1002")
+	remote := domain.MustParseAddress(domain.NetworkSMS, "+4989555777")
+	threadID, err := server.messages.FindThread(ctx, neighbor, remote, time.Now().Add(-time.Minute))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := server.messages.AppendMessage(ctx, domain.Message{
+		ID: domain.GenerateMessageID(), ThreadID: threadID, Owner: neighbor, Remote: remote,
+		Direction: domain.DirectionInbound, Channel: domain.ChannelSMS,
+		Body: "neighbor line secret", CreatedAt: time.Now(),
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	boss := mintedClient(t, server, sessions, "1001", "boss@example.com")
+
+	_, unfiltered := boss.do(http.MethodGet, "/partials/admin", nil, "")
+	page := string(unfiltered)
+	if !strings.Contains(page, "neighbor line secret") {
+		t.Fatalf("unfiltered panel must show the neighbor thread")
+	}
+	for _, want := range []string{`hx-push-url="true"`, `aria-label="Find"`, ">read-only<"} {
+		if !strings.Contains(page, want) {
+			t.Errorf("admin panel missing %q (filter form / badge)", want)
+		}
+	}
+
+	// A remote-party hit survives; a non-match empties the threads
+	// section (honest empty state), and the users inventory — config,
+	// not searchable data — stays regardless.
+	_, filtered := boss.do(http.MethodGet, "/partials/admin?q=555777", nil, "")
+	if !strings.Contains(string(filtered), "neighbor line secret") {
+		t.Errorf("the matching thread must survive the filter")
+	}
+	_, empty := boss.do(http.MethodGet, "/partials/admin?q=zzz-no-such", nil, "")
+	page = string(empty)
+	if !strings.Contains(page, "No conversations on any line.") {
+		t.Errorf("the filtered-out threads section must show its empty state: %.600s", page)
+	}
+	if !strings.Contains(page, "worker@example.com") {
+		t.Errorf("the users inventory is config — it must not filter away")
+	}
+}
+
 func TestAdminThreadDeepLink(t *testing.T) {
 	server, sessions := newAdminServer(t, "")
 	ctx := context.Background()
