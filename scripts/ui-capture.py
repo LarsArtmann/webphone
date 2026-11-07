@@ -149,6 +149,14 @@ SURFACE_MARKERS = {
     "history-transcript": "[data-copy-transcript]",  # seeded transcript section
     "contacts": ".wp-export-link",  # unconditional in the panel
     "settings": ("#settings-panel dd .wp-service-on", "openai-compatible"),
+}
+
+# F20 split Settings into My preferences / My data / a COLLAPSED server
+# section. The server facts (the ASR provider row among them) are in the
+# DOM but not visible until the details expands — Selenium's .text sees
+# only visible text, so the copy assert needs the section opened first.
+SURFACE_EXPAND = {
+    "settings": "details.wp-settings-server > summary",
     "not-found": (".wp-panel.wp-notfound", "404 — page not found"),
 }
 
@@ -519,6 +527,10 @@ def capture(
                     )
                 # A marker is a selector, a (selector, copy) tuple, or a
                 # LIST of those pins (a surface that proves two things).
+                for expand_sel in [SURFACE_EXPAND[name]] if name in SURFACE_EXPAND else []:
+                    expandable = driver.find_elements("css selector", expand_sel)
+                    if expandable and expandable[0].is_displayed():
+                        expandable[0].click()
                 pins = SURFACE_MARKERS[name]
                 if isinstance(pins, str):
                     pins = [(pins, None)]
