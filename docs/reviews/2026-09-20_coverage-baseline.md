@@ -129,14 +129,14 @@ deployment and then stamp "imported", so a regression imports nothing and
 leaves the flag behind. Before this train four readers and four translators sat
 at 0.0%.
 
-| Function                                 | before | after  |
-| ---------------------------------------- | ------ | ------ |
-| `ReadLegacyContacts` / `ToContact`       | 0.0%   | 100.0% |
-| `ReadLegacyFaxes` / `ToFax`              | 0.0%   | 100% / 81.2% |
-| `ReadLegacySnippets` / `ToSnippet`       | 0.0%   | 100.0% |
-| `ReadLegacyTranscripts` / `ToSegment`    | 0.0%   | 100.0% |
-| `FlagPresent` / `FlagValue` / `SetFlag`  | 0.0%   | 85.7% / 85.7% / 66.7% |
-| **package total**                        | 64.8%  | **82.4%** |
+| Function                                | before | after                 |
+| --------------------------------------- | ------ | --------------------- |
+| `ReadLegacyContacts` / `ToContact`      | 0.0%   | 100.0%                |
+| `ReadLegacyFaxes` / `ToFax`             | 0.0%   | 100% / 81.2%          |
+| `ReadLegacySnippets` / `ToSnippet`      | 0.0%   | 100.0%                |
+| `ReadLegacyTranscripts` / `ToSegment`   | 0.0%   | 100.0%                |
+| `FlagPresent` / `FlagValue` / `SetFlag` | 0.0%   | 85.7% / 85.7% / 66.7% |
+| **package total**                       | 64.8%  | **82.4%**             |
 
 The admin read seams the 2026-11-06 reading flagged were already pinned by
 `store/admin_reads_test.go` (both directions: the `*Any` seam crosses lines, its

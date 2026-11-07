@@ -88,14 +88,14 @@ What remains, each with its ONE home:
    inconclusive (load ~22 on 32 cores; spreads ~2×). Its trigger (cqrs-htmx v4.16.0 +
    go-sse v0.7.0) has been fired for two trains.
 9. [x] **Store test train — DONE 2026-11-07 (P1-1)**: `internal/store` reads
-   **82.4%** (was 64.8%, and 75.3% on 2026-09-20). The gain came from the block
-   nobody had pinned at all — the transitional reads of the retired SQL tables
-   plus the `app_flags` helpers, all four readers and four translators at 0.0%
-   (`internal/store/legacy_import_test.go`). The admin read seams were already
-   pinned both ways by `store/admin_reads_test.go` and are now measured
-   (77–86%; the rest is the infrastructure-error branch), and one assertion is
-   mutation-proved. Delta recorded in
-   `docs/reviews/2026-09-20_coverage-baseline.md` § 2026-11-07.
+       **82.4%** (was 64.8%, and 75.3% on 2026-09-20). The gain came from the block
+       nobody had pinned at all — the transitional reads of the retired SQL tables
+       plus the `app_flags` helpers, all four readers and four translators at 0.0%
+       (`internal/store/legacy_import_test.go`). The admin read seams were already
+       pinned both ways by `store/admin_reads_test.go` and are now measured
+       (77–86%; the rest is the infrastructure-error branch), and one assertion is
+       mutation-proved. Delta recorded in
+       `docs/reviews/2026-09-20_coverage-baseline.md` § 2026-11-07.
 10. **Wire the `docs-gates` battery into CI** — adopted locally this sweep
     (`scripts/docs-gates.sh`, `.docs-gates.json`); the pre-canon archive residue is
     RATCHETED, so nothing reds main when new drift appears until the CI leg lands.
