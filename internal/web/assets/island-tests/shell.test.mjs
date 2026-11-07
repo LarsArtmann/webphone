@@ -956,6 +956,68 @@ test("a failed nav refresh announces instead of half-applying (M23)", async () =
   }
 });
 
+// T24 V1: the M26 contract — a stale tab-error banner must not outlive
+// the request that supersedes it. A successful response clears the slot;
+// a failed response keeps it (the banner IS the failed request's
+// surface).
+test("a successful response clears the tab-error slot; a failed one keeps it", () => {
+  const slot = doc.getElementById("wp-tab-error");
+  const banner = doc.createElement();
+  banner.textContent = "could not load the tab";
+  slot.replaceChildren(banner);
+
+  doc.dispatch("htmx:afterRequest", {
+    target: doc.createElement(),
+    detail: { successful: false },
+  });
+  assert.ok(
+    slot.children.includes(banner),
+    "a failed response keeps its banner",
+  );
+
+  doc.dispatch("htmx:afterRequest", {
+    target: doc.createElement(),
+    detail: { successful: true },
+  });
+  assert.equal(slot.children.length, 0, "success supersedes the banner");
+});
+
+// T24 V5: the live-context ask runs ONCE per remote — repeated
+// wp:calls-changed events for the same call must not re-fetch (the CRM
+// race), and an empty remote clears without asking.
+test("the live context asks once per remote and clears on the last call end", () => {
+  const fetched = [];
+  globalThis.window.htmx = {
+    ajax: (verb, url) => {
+      fetched.push(url);
+      return Promise.resolve();
+    },
+  };
+  const slot = doc.getElementById("wp-live-context");
+  slot.replaceChildren();
+  const calls = doc.getElementById("calls");
+  const card = doc.createElement();
+  card.selector = ".call-card[data-remote]";
+  card.setAttribute("data-remote", "+49301234567");
+  calls.replaceChildren(card);
+
+  doc.dispatch("wp:calls-changed", {});
+  doc.dispatch("wp:calls-changed", {});
+  doc.dispatch("wp:calls-changed", {});
+  assert.deepEqual(
+    fetched,
+    ["/partials/live-context?remote=%2B49301234567"],
+    "one ask per remote, however often the event fires",
+  );
+
+  calls.replaceChildren();
+  doc.dispatch("wp:calls-changed", {});
+  assert.equal(slot.children.length, 0, "the last call end clears the slot");
+  assert.deepEqual(fetched.length, 1, "clearing never re-asks");
+
+  delete globalThis.window.htmx;
+});
+
 // --- voicemail player (M13 C1–C3/C9) ------------------------------------
 
 // Builds one player row from REGISTRY instances: the shell looks every

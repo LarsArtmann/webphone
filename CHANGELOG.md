@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The frontend-UX fix train (2026-11-07): the UX review's 67 findings land
+  as one train — the dark accent ink now passes WCAG AA, the signed-out
+  page drops the tab row and centers the login, Settings reads in three
+  audiences, archive asks once, double submits are guarded (login,
+  composer, contacts), a live call protects itself in the tab title and
+  on beforeunload/logout, focus survives the swaps that replace nodes,
+  the palette works from a touch button, the ring and dock render
+  contact names, missed-call counts survive a failed History load, the
+  Admin tab gains a find filter and its read-only badge, forms carry
+  maxlength/spinners/disabled buttons, the DTMF trail and the reconnect
+  pill speak honestly, and the type scale and geometry collapsed onto
+  tokens. Findings: docs/review/2026-11-07_01-51_frontend-design-ux-review.html.
 - Declarative per-owner retention caps (2026-11-06): the dial windows and call
   transcripts now declare their per-extension bound instead of hand-looping an
   expunge after every write, which is what let one owner's flood compete with
