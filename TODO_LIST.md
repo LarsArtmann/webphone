@@ -31,9 +31,9 @@ Residue harvested 2026-11-07 (the execution train's open items):
   silent `!res.ok` paths in the history/contacts loads the way the
   voicemail refresh names its failure; the reload affordance needs the
   same honest copy.
-- [ ] Train-start buildflow verdict collected (74/74 green, run
-  20261107-032044); train-end run + `nix flake check` close the train's
-  gate evidence — file the run ids in the status report on completion.
+- [x] Gate evidence closed 2026-11-07: train-start buildflow 74/74 (run
+  20261107-032044), train-end 74/74 (run 20261107-084827), `nix flake
+  check` all-checks-passed; run ids filed in the status report.
 
 ### 2026-11-06 GitHub-issue train residue (harvest from the 10:45 report)
 

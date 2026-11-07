@@ -271,7 +271,7 @@ honest failures:
     paths in history/contacts loads.
 38. T23: convert the 8 [GAP] flow scenarios into pinned tests.
 39. T24: train-end buildflow (full, collect BOTH verdicts).
-40. T24: `nix flake check` (island gates + format + DOM contract).
+~~40. T24: `nix flake check` (island gates + format + DOM contract).~~ DONE — all checks passed 2026-11-07 (incl. the KVM-gated backup VM tests). Buildflow verdicts: train-start run 20261107-032044 (74/74, 100%), train-end run 20261107-084827 (74/74, 100%).
 41. T24: CHANGELOG `[Unreleased]` lines for the whole train (code-path
     changes only).
 42. T24: annotate the review's finding cards with FIXED evidence (F1
