@@ -99,8 +99,8 @@ func TestPanelsRenderTheSharedErrorAndIdentityNodes(t *testing.T) {
 // instead of silently drifting six panels.
 func TestPanelHeadPinsBothLanguages(t *testing.T) {
 	cases := map[Lang]string{
-		LangEN: `<header class="wp-panel-head"><h2>Fax</h2><p class="wp-panel-sub">Send PDFs as faxes; received faxes land here.</p></header>`,
-		LangDE: `<header class="wp-panel-head"><h2>Fax</h2><p class="wp-panel-sub">PDFs als Faxe senden; empfangene Faxe erscheinen hier.</p></header>`,
+		LangEN: `<header class="wp-panel-head"><h2 tabindex="-1">Fax</h2><p class="wp-panel-sub">Send PDFs as faxes; received faxes land here.</p></header>`,
+		LangDE: `<header class="wp-panel-head"><h2 tabindex="-1">Fax</h2><p class="wp-panel-sub">PDFs als Faxe senden; empfangene Faxe erscheinen hier.</p></header>`,
 	}
 	for lang, want := range cases {
 		if got := renderComponent(t, panelHead(lang, "tab.fax", "fax.subtitle")); got != want {
