@@ -27,7 +27,15 @@
 #                          cannot fail is decoration.
 #
 # Run from a checkout (the hash/tag rules need .git):
-#   nix develop -c bash scripts/docs-gates.sh
+#   nix develop -c bash scripts/docs-gates.sh            # human: format, then judge
+#   nix develop -c bash scripts/docs-gates.sh --check    # CI: judge only, never mutate
+#
+# --check exists because `dprint fmt` MUTATES: a CI run that formats before
+# judging would certify a tree it had just repaired. CI must run `dprint
+# check` and fail on drift the author left behind. The table-damage gate
+# needs the docs-health skill's annotate.go, which is a local fan-out file
+# and not in CI — under --check it reports SKIP (visible in the matrix,
+# never silent) instead of failing the build for a missing ritual tool.
 #
 # Exit 0 = formatted + all gates green; 1 = a gate failed; 2 = environment.
 set -euo pipefail
@@ -39,15 +47,28 @@ fatal() {
 	exit 2
 }
 
+MODE=human
+case "${1:-}" in
+--check) MODE=check ;;
+"") ;;
+*) fatal "unknown argument '$1' (the only mode flag is --check)" ;;
+esac
+
 command -v dprint >/dev/null 2>&1 ||
 	fatal "dprint not on PATH — run: nix develop -c bash scripts/docs-gates.sh"
+# Fail CLOSED on a missing battery: a CI leg that cannot find the tool must
+# not quietly certify the docs. The devShell provides it (config.packages
+# .docs-gates), so absence is a real misconfiguration.
 command -v docs-gates >/dev/null 2>&1 ||
-	fatal "docs-gates not on PATH — install github:Artmann-Technologies/docs-gates"
-command -v go >/dev/null 2>&1 ||
-	fatal "go not on PATH — the table-damage gate runs the docs-health annotate.go"
+	fatal "docs-gates not on PATH — run: nix develop -c bash scripts/docs-gates.sh (or: nix build .#docs-gates && PATH=\"$(nix build --no-link --print-out-paths .#docs-gates)/bin:$PATH\")"
 ANNOTATE_GO="${DOCS_HEALTH_ANNOTATE_GO:-$HOME/.config/crush/skills/docs-health/assets/annotate.go}"
-[ -f "$ANNOTATE_GO" ] ||
-	fatal "annotate.go not found at $ANNOTATE_GO — the docs-health skill fan-out is missing (override via DOCS_HEALTH_ANNOTATE_GO)"
+if [ ! -f "$ANNOTATE_GO" ]; then
+	if [ "$MODE" = check ]; then
+		echo "docs-gates: WARN: annotate.go not found at $ANNOTATE_GO — the table-damage gate will SKIP (local-only ritual step)" >&2
+	else
+		fatal "annotate.go not found at $ANNOTATE_GO — the docs-health skill fan-out is missing (override via DOCS_HEALTH_ANNOTATE_GO)"
+	fi
+fi
 [ -d "$ROOT/.git" ] || fatal "no .git under $ROOT — the annotate hash/tag rules need a checkout"
 [ -f "$ROOT/dprint.json" ] || fatal "no dprint.json under $ROOT — wrong repo?"
 
@@ -65,11 +86,20 @@ DAMAGE_FILES=(
 
 GATE_NAMES=()
 GATE_RCS=()
+GATE_SKIPPED=()
+
+skip_gate() {
+	GATE_NAMES+=("$1")
+	GATE_RCS+=(0)
+	GATE_SKIPPED+=(1)
+	echo "docs-gates: gate $1 SKIPPED — $2"
+}
 
 run_gate() {
 	local name="$1"
 	shift
 	GATE_NAMES+=("$name")
+	GATE_SKIPPED+=(0)
 	echo "docs-gates: gate $name ..."
 	local log
 	log=$(mktemp)
@@ -85,8 +115,45 @@ run_gate() {
 	rm -f "$log"
 }
 
-echo "docs-gates: [1/3] dprint fmt"
-dprint fmt
+if [ "$MODE" = check ]; then
+	echo "docs-gates: [1/4] dprint check (no mutation in --check mode)"
+else
+	echo "docs-gates: [1/4] dprint fmt"
+fi
+
+# Kills the VACUOUS PASS. The freshness gate reads the newest report's §f and
+# certifies "nothing unharvested" when that section is MISSING — a report with
+# no harvest list is not fresh, it is unexamined (observed twice:
+# 2026-11-06_10-45 and 2026-11-07_19-25). The battery cannot see the
+# difference, so the wrapper asserts the shape BEFORE trusting its verdict.
+status_f_gate() {
+	# DOCS_GATES_STATUS_DIR exists so this gate can be proved RED against a
+	# fixture (a self-test that cannot fail is decoration).
+	local dir="${DOCS_GATES_STATUS_DIR:-docs/status}" newest
+	newest=$(find "$dir" -maxdepth 1 -name '*.md' ! -name 'INDEX.md' -printf '%f\n' | sort | tail -1)
+	[ -n "$newest" ] || {
+		echo "no status report found under docs/status/ — nothing to certify" >&2
+		return 1
+	}
+	if ! grep -qE '^## f\)' "$dir/$newest"; then
+		{
+			echo "the NEWEST status report carries no '## f)' section: $dir/$newest"
+			echo "The freshness gate would PASS it vacuously (nothing to check)."
+			echo "Fix: add '## f) Up to 50 things we should get done next' with ranked rows"
+			echo "whose tokens match their TODO_LIST home, then re-run this wrapper."
+		} >&2
+		return 1
+	fi
+	echo "docs-freshness-precondition: $dir/$newest carries '## f)' — the newest-report verdict is meaningful"
+}
+
+if [ "$MODE" = check ]; then
+	run_gate "format" dprint check
+else
+	dprint fmt
+fi
+
+run_gate "status-f-section" status_f_gate
 
 run_gate "battery" docs-gates run .
 
@@ -108,12 +175,18 @@ table_damage_gate() {
 	return "$rc"
 }
 
-run_gate "table-damage" table_damage_gate
+if [ ! -f "$ANNOTATE_GO" ] || ! command -v go >/dev/null 2>&1; then
+	skip_gate "table-damage" "needs go + the docs-health annotate.go (local ritual step; the battery above still ran)"
+else
+	run_gate "table-damage" table_damage_gate
+fi
 
 echo "docs-gates: verdict matrix"
 rc=0
 for i in "${!GATE_NAMES[@]}"; do
-	if [ "${GATE_RCS[$i]}" -eq 0 ]; then
+	if [ "${GATE_SKIPPED[$i]}" -eq 1 ]; then
+		printf '  SKIP  %s\n' "${GATE_NAMES[$i]}"
+	elif [ "${GATE_RCS[$i]}" -eq 0 ]; then
 		printf '  PASS  %s\n' "${GATE_NAMES[$i]}"
 	else
 		printf '  FAIL  %s (rc=%s)\n' "${GATE_NAMES[$i]}" "${GATE_RCS[$i]}"

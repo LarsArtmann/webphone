@@ -39,6 +39,9 @@
           pkgs.nil
           pkgs.oxlint
           pkgs.vulnix
+          # The docs-health battery (scripts/docs-gates.sh) — the SAME
+          # derivation CI uses, so a green run here means a green run there.
+          config.packages.docs-gates
           # go-licenses rebuilt on Go 1.27: the stock 2.0.1 rides go
           # 1.26.8, and its nixpkgs wrapper BAKES that GOROOT into the
           # binary — the package loader then dies (F1004, "crypto/mldsa

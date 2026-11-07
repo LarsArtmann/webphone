@@ -1,6 +1,6 @@
 {
   "annotate_max": 205,
-  "audit_max": 355,
+  "audit_max": 352,
   "cadence": {
     "max_unarchived": 65,
     "oldest_days": 45,

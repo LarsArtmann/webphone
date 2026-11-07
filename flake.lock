@@ -1,5 +1,22 @@
 {
   "nodes": {
+    "docs-gates": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1793951718,
+        "narHash": "sha256-hy9RjF4z+IASaSr23dtPs6HAJNQD1jI6Pb3djE+RPMQ=",
+        "owner": "Artmann-Technologies",
+        "repo": "docs-gates",
+        "rev": "2278406afdfd1b8df7674e2e594b6ea880694c90",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Artmann-Technologies",
+        "repo": "docs-gates",
+        "rev": "2278406afdfd1b8df7674e2e594b6ea880694c90",
+        "type": "github"
+      }
+    },
     "flake-parts": {
       "inputs": {
         "nixpkgs-lib": [
@@ -38,6 +55,7 @@
     },
     "root": {
       "inputs": {
+        "docs-gates": "docs-gates",
         "flake-parts": "flake-parts",
         "nixpkgs": "nixpkgs",
         "treefmt-nix": "treefmt-nix"

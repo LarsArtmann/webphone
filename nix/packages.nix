@@ -6,6 +6,7 @@
 # only — no build clock, byte-reproducibility preserved).
 {
   self,
+  inputs,
   webphoneVersion,
   ...
 }:
@@ -20,6 +21,22 @@
     {
       packages = {
         default = self'.packages.webphone;
+
+        # The docs-health battery, built from the locked rev of the upstream
+        # repo (flake = false in flake.nix — see the comment there). Stdlib
+        # only, so vendorHash = null; `subPackages` keeps the build inside
+        # cmd/docs-gates and away from the nested pkg/provider module. The
+        # upstream suite needs its own fixtures, and the gate that matters is
+        # the one this repo's corpus exercises, so doCheck stays off.
+        docs-gates = pkgs.buildGoModule {
+          pname = "docs-gates";
+          version = "unstable-2026-11-06";
+          src = inputs.docs-gates;
+          vendorHash = null;
+          subPackages = [ "cmd/docs-gates" ];
+          doCheck = false;
+          env.CGO_ENABLED = "0";
+        };
 
         # The vulnix triage verdict logic as a standalone CLI so the
         # `.#vulnix` app and the fixture check exercise the SAME code:
