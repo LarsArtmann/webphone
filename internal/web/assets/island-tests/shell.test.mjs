@@ -875,7 +875,13 @@ test("restore never overrides a deep link, garbage, or the sign-in hint (E3)", (
 
 test("refreshNav scrolls the active tab back into view (E8)", () => {
   const calls = [];
-  globalThis.window.htmx = { ajax: (verb, url) => calls.push(url) };
+  // M23: htmx.ajax returns a promise; the .catch rides it.
+  globalThis.window.htmx = {
+    ajax: (verb, url) => {
+      calls.push(url);
+      return Promise.resolve();
+    },
+  };
   const link = doc.createElement();
   link.className = "wp-nav-link wp-active";
   // refreshNav reads the tab from dataset (disconnected from
@@ -908,6 +914,44 @@ test("refreshNav scrolls the active tab back into view (E8)", () => {
 
   doc.querySelector = realQuerySelector;
   delete globalThis.window.htmx;
+});
+
+test("a failed nav refresh announces instead of half-applying (M23)", async () => {
+  let rejecter;
+  globalThis.window.htmx = {
+    ajax: () =>
+      new Promise((_resolve, reject) => {
+        rejecter = reject;
+      }),
+  };
+  const link = doc.createElement();
+  link.className = "wp-nav-link wp-active";
+  link.dataset.tab = "history";
+  const realQuerySelector = doc.querySelector;
+  doc.querySelector = (selector) =>
+    selector === "#wp-nav .wp-nav-link.wp-active" ? link : realQuerySelector.call(doc, selector);
+  doc.getElementById("toasts").replaceChildren();
+
+  // Earlier specs fired the throttled error toast; the 8s window is
+  // module state — shift the clock seam past it for this failure.
+  const realNow = shellApi.clock.now;
+  shellApi.clock.now = () => realNow() + 60_000;
+  try {
+    shellApi.refreshNav();
+    rejecter(new Error("network down"));
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const toast = doc.getElementById("toasts").children.at(-1);
+    assert.ok(
+      toast && toast.textContent.includes("tab strip could not refresh"),
+      `the failed refresh names itself, got ${toast && toast.textContent}`,
+    );
+  } finally {
+    shellApi.clock.now = realNow;
+    doc.querySelector = realQuerySelector;
+    delete globalThis.window.htmx;
+  }
 });
 
 // --- voicemail player (M13 C1–C3/C9) ------------------------------------
