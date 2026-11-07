@@ -672,11 +672,20 @@ func TestHistoryTranscriptReviewStates(t *testing.T) {
 	if failed := render(group("failed", "", 0), true); !strings.Contains(failed, "failed") {
 		t.Errorf("failed review must name its state: %s", failed)
 	}
-	if chip := render(group("", "", 0), false); !strings.Contains(chip, "not configured") {
+	chip := render(group("", "", 0), false)
+	if !strings.Contains(chip, "not configured") {
 		t.Errorf("no review + seam off must render the not-configured chip: %s", chip)
 	}
 	if silent := render(group("", "", 0), true); strings.Contains(silent, "wp-call-review") || strings.Contains(silent, "not configured") {
 		t.Errorf("no review + seam on must render nothing (nobody asked): %s", silent)
+	}
+	// The note's AI-prefill button rides the same gate (F6, the review's
+	// prefill-GAP): the affordance exists only when the seam can answer.
+	if !strings.Contains(present, "data-note-draft") {
+		t.Errorf("seam on must offer the note prefill button: %s", present)
+	}
+	if strings.Contains(chip, "data-note-draft") {
+		t.Errorf("seam off must not promise the note prefill: %s", chip)
 	}
 }
 
