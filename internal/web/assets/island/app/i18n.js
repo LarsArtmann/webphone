@@ -104,6 +104,9 @@ export const I18N = {
     vmEmpty: "no messages",
     vmDelete: "delete",
     vmAuthFailed: "voicemail needs the operator API (not reachable)",
+    vmLoadFailed: (detail) => `could not load voicemail: ${detail}`,
+    historyLoadFailed: (detail) => `could not load call history: ${detail}`,
+    contactsLoadFailed: (detail) => `could not load contacts: ${detail}`,
     vmNewCount: (n) => `${n} new`,
     connectionQuality: "Connection quality",
     iceNoMedia:
@@ -372,6 +375,11 @@ export const I18N = {
     vmEmpty: "keine Nachrichten",
     vmDelete: "löschen",
     vmAuthFailed: "Mailbox-API nicht erreichbar",
+    vmLoadFailed: (detail) => `Mailbox konnte nicht geladen werden: ${detail}`,
+    historyLoadFailed: (detail) =>
+      `Anruferliste konnte nicht geladen werden: ${detail}`,
+    contactsLoadFailed: (detail) =>
+      `Kontakte konnten nicht geladen werden: ${detail}`,
     vmNewCount: (n) => `${n} neu`,
     connectionQuality: "Verbindungsqualität",
     iceNoMedia:

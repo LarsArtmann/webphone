@@ -107,12 +107,17 @@ export async function refreshServerHistory() {
   if (!phoneApiEnabled || !authHeaderValue()) return;
   try {
     const res = await authedFetch("/phone-api/history?limit=20");
-    if (!res.ok) return;
+    if (!res.ok) {
+      log(`server history unavailable: HTTP ${res.status}`, "error");
+      announce(t("historyLoadFailed")(res.status), "warn");
+      return;
+    }
     const data = await res.json();
     serverHistory = Array.isArray(data.entries) ? data.entries : [];
     renderHistory();
   } catch (err) {
     log(`server history unavailable: ${errorMessage(err)}`, "error");
+    announce(t("historyLoadFailed")(errorMessage(err)), "warn");
   }
 }
 
@@ -228,13 +233,18 @@ export function clearContacts() {
 export async function loadContacts() {
   try {
     const res = await authedFetch("/api/contacts");
-    if (!res.ok) return;
+    if (!res.ok) {
+      log(`server contacts unavailable: HTTP ${res.status}`, "error");
+      announce(t("contactsLoadFailed")(res.status), "warn");
+      return;
+    }
     const data = await res.json();
     personalContacts = Array.isArray(data.personal) ? data.personal : [];
     renderContacts();
     await migrateLegacyContacts();
   } catch (err) {
     log(`server contacts unavailable: ${errorMessage(err)}`, "error");
+    announce(t("contactsLoadFailed")(errorMessage(err)), "warn");
   }
 }
 document.addEventListener("wp:session-opened", () => {
@@ -518,7 +528,7 @@ export async function refreshVoicemail() {
       }),
     );
   } catch (err) {
-    els.vmStatus.textContent = t("vmAuthFailed");
+    els.vmStatus.textContent = t("vmLoadFailed")(errorMessage(err));
     log(`voicemail unavailable: ${errorMessage(err)}`, "error");
   }
 }

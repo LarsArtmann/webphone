@@ -32,6 +32,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Panel load failures speak (M20): a failed voicemail reload no longer
+  shows the auth-failure line for a network error — it names the real
+  cause — and the call-history and contacts loads announce a warning
+  toast on failure instead of silently leaving the panel stale.
 - The JSON contracts ride catalog v4.13: the transcript upload declares its
   multipart body, and the fabricated server entry that the asyncapi export
   used to invent is gone.
