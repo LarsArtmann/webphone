@@ -173,8 +173,21 @@ resumeSession().catch((err) => {
   showLogin();
 });
 
+// M15: one login in flight at a time — a double-submit must not double
+// POST (the second session row would clobber the first) and the button
+// carries the waiting state while the REGISTER + session round trips run.
+let loginInFlight = false;
 els.loginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (loginInFlight) return;
+  loginInFlight = true;
+  const submitBtn = /** @type {HTMLButtonElement | null} */ (
+    els.loginForm.querySelector("button[type=submit]")
+  );
+  if (submitBtn) {
+    submitBtn.disabled = true;
+    submitBtn.textContent = t("connecting");
+  }
   els.loginError.hidden = true;
   // Permission prompts need a user gesture; the login click is the
   // natural one (a later denied state is shown in the log, not nagged).
@@ -215,6 +228,12 @@ els.loginForm.addEventListener("submit", async (event) => {
     els.loginError.textContent = t("loginError")(errorMessage(err));
     els.loginError.hidden = false;
     log(`connect failed: ${errorMessage(err)}`, "error");
+  } finally {
+    loginInFlight = false;
+    if (submitBtn) {
+      submitBtn.disabled = false;
+      submitBtn.textContent = t("connect");
+    }
   }
 });
 
@@ -266,7 +285,17 @@ function restoreTabsAfterSignIn() {
   });
 }
 
+// M21: logout with a live call is a two-click move — the first click
+// warns (the misclick must not hang up on the operator), the second
+// within the arm window confirms. An idle phone signs out on one click.
+let logoutArmedAt = 0;
 els.logout.addEventListener("click", async () => {
+  if (sessions.size > 0 && Date.now() - logoutArmedAt > 4000) {
+    logoutArmedAt = Date.now();
+    announce(t("logoutLiveCall"), "warn");
+    return;
+  }
+  logoutArmedAt = 0;
   try {
     [...sessions.values()].forEach(({ session }) => {
       // Logout tears the page down next: a failed bye has no surface

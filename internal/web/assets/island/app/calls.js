@@ -817,6 +817,7 @@ export function renderCalls() {
 // established and hands it back when the last call ends.
 let inCallTitle = false;
 function renderInCallTitle() {
+  /** @type {IslandCallEntry | undefined} */
   let oldest;
   sessions.forEach((entry) => {
     if (
