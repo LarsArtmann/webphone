@@ -66,6 +66,6 @@ git checkout 85de30c
 branching-flow panic . --format markdown
 ```
 
-Full adjudication: `docs/status/2026-10-11_02-19_branching-flow-report-triage-status.md` § Panic conditions.
+Full adjudication: `docs/status/archived/2026-10-11_02-19_branching-flow-report-triage-status.md` § Panic conditions.
 
 💘 Generated with Crush

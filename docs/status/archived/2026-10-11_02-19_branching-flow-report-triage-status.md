@@ -1,5 +1,10 @@
 # Status: branching-flow report triage (owner-pasted, 2026-10-11 02:19)
 
+> ARCHIVED 2026-11-07 (docs-health v10 sweep): the branching-flow report triage verdict table. The triage rows are the retired-baseline history; the standing rulings live in the AGENTS branching-flow bullet and `docs/dedup-registry.md`.
+> Its tables are ledger-marked (`<!-- check-rows:ledger -->`): §a–§e are the
+> session's own record and §f is harvest fuel still carried in the
+> audit-all working set — this banner does not claim every §f item was harvested.
+
 Owner pasted the full `branching-flow all . --format markdown` output
 (72 rows across 9 non-empty families). Per the dedup-registry protocol,
 every flagged site was re-read at HEAD and attributed against the
@@ -11,6 +16,8 @@ standing rulings before anything was touched: the registry (10-05 dupe
   attributed. No re-litigated ruling was overturned.
 
 ## Verdict summary
+
+<!-- check-rows:ledger -->
 
 | Family            | Rows | Fixed | Attributed | Notes                                                          |
 | ----------------- | ---- | ----- | ---------- | -------------------------------------------------------------- |

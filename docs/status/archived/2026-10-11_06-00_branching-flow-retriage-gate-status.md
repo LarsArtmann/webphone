@@ -1,5 +1,10 @@
 # Status: branching-flow re-triage + gate enablement (2026-10-11 ~06:00)
 
+> ARCHIVED 2026-11-07 (docs-health v10 sweep): the branching-flow retriage disposition table. The dispositions are history; the nolint/baseline posture is stated in the AGENTS erraudit/branching-flow bullets.
+> Its tables are ledger-marked (`<!-- check-rows:ledger -->`): §a–§e are the
+> session's own record and §f is harvest fuel still carried in the
+> audit-all working set — this banner does not claim every §f item was harvested.
+
 Executed the 2026-10-11 ratification sitting's open condition: "the
 `.buildflow.yml` whole-tool skip survives until the finding set is
 re-triaged into targeted nolints + a baseline." Input: the owner-pasted
@@ -11,6 +16,8 @@ the post-edit full run). Every site was re-read at HEAD before any
 edit; the full set is 46 rows.
 
 ## What landed
+
+<!-- check-rows:ledger -->
 
 | Disposition       | Rows | Mechanism                                                                                                                                                                                                  |
 | ----------------- | ---- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

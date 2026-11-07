@@ -1,5 +1,10 @@
 # Session status: branching-flow report triage (2026-10-11 02:48 CEST)
 
+> ARCHIVED 2026-11-07 (docs-health v10 sweep): the branching-flow triage session that adjudicated 72 report rows. `server.EventName` + the registry sweep-log line are the surviving artefacts; the baseline it recorded was later RETIRED with evidence.
+> Its tables are ledger-marked (`<!-- check-rows:ledger -->`): §a–§e are the
+> session's own record and §f is harvest fuel still carried in the
+> audit-all working set — this banner does not claim every §f item was harvested.
+
 Point-in-time snapshot of the 2026-10-11 ~02:00–02:45 CEST session. Scope:
 owner-pasted `branching-flow all .` report (72 rows, 9 non-empty
 families) triaged, one fix shipped, two gate failures repaired, main
@@ -14,6 +19,8 @@ explicit-format exception.
 ---
 
 ## a) FULLY DONE
+
+<!-- check-rows:ledger -->
 
 | #  | Work                                                                                                                                                                       | Verification                                                              |
 | -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |

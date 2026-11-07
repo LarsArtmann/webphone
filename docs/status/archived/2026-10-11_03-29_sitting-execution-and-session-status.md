@@ -1,5 +1,10 @@
 # Session status: branching-flow triage + owner-call sitting (2026-10-11 03:29 CEST)
 
+> ARCHIVED 2026-11-07 (docs-health v10 sweep): the owner sitting that resolved the five open registry calls. The ratified rulings live in `docs/dedup-registry.md`, the corrections in AGENTS, and the harvested items in TODO_LIST.
+> Its tables are ledger-marked (`<!-- check-rows:ledger -->`): §a–§e are the
+> session's own record and §f is harvest fuel still carried in the
+> audit-all working set — this banner does not claim every §f item was harvested.
+
 Second status report of the session. Covers: the original triage train
 (see [02-48 report](2026-10-11_02-48_branching-flow-triage-session-status.md)),
 then the owner-call sitting (10 questions asked+answered) and its
@@ -16,6 +21,8 @@ daemon activity (the 10-08 truncation class did not recur).
 ---
 
 ## a) FULLY DONE
+
+<!-- check-rows:ledger -->
 
 | #  | Work                                                                                                                                                                                                                                                                                                            | Verification                                                         |
 | -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |

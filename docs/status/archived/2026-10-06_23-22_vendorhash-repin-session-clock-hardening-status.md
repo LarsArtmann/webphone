@@ -1,5 +1,10 @@
 # Status Report — 2026-10-06 23:22 CEST — vendorHash re-pin + session clock hardening
 
+> ARCHIVED 2026-11-07 (docs-health v10 sweep): the vendorHash re-pin and the injectable store-clock hardening of the session TTL test. The clock hardening is CLOSED in `docs/ci-flake-ledger.md` (row 37496169265) and the re-pin recipe is an AGENTS bullet.
+> Its tables are ledger-marked (`<!-- check-rows:ledger -->`): §a–§e are the
+> session's own record and §f is harvest fuel still carried in the
+> audit-all working set — this banner does not claim every §f item was harvested.
+
 Session: webphone, opened with a generic execute-and-verify mandate against a
 clean tree. Picked up the 22:08 gate-recovery report's harvest list, found the
 red CI was TWO different failure classes (one flake, one real break), closed
@@ -15,6 +20,8 @@ failed.
 ---
 
 ## a) FULLY DONE
+
+<!-- check-rows:ledger -->
 
 | # | What                                                                                                                                                                                                                                                                                                                                       | Evidence                                                                                                                                    | Scope                 |
 | - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------- | --------------------- |
@@ -69,6 +76,8 @@ failed.
 7. **AGENTS-rules vs lessons-stories split discipline** — tonight's lessons went in as rules only; the war stories (outage timeline, hash oracle) were left unwritten. When a session harvests a report, sweep BOTH homes in the same train.
 
 ## f) Top next tasks (ranked; feeds docs-health HARVEST)
+
+<!-- check-rows:ledger -->
 
 | #  | Task                                                                                                                                              | Impact | Effort | Category      |
 | -- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |

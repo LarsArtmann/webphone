@@ -1,5 +1,10 @@
 # Status Report — 2026-10-07 00:19 CEST — round-5 plan: local-leg execution
 
+> ARCHIVED 2026-11-07 (docs-health v10 sweep): the round-5 plan's locally executable slice. Its lessons landed as AGENTS conventions (invariant-over-wrap-point fixes, harness-before-custom-probe, gate configs out of `/tmp`).
+> Its tables are ledger-marked (`<!-- check-rows:ledger -->`): §a–§e are the
+> session's own record and §f is harvest fuel still carried in the
+> audit-all working set — this banner does not claim every §f item was harvested.
+
 Session: webphone, mandate = READ/execute/verify
 `docs/planning/2026-10-06_23-47_SUPERB-round5-pareto-plan.md`. The plan's
 22 tasks split cleanly into owner-terminal / cross-repo / live-deploy legs
@@ -22,6 +27,8 @@ table reflow, `0949667` AGENTS/TODO/lessons tails).
 
 ## a) FULLY DONE
 
+<!-- check-rows:ledger -->
+
 | #  | What                                                                                                                                                                                                                                                                                                                                                     | Evidence                                                                                                                                        | Scope                       |
 | -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------- |
 | 1  | **T04/r16 greppable-class byte check on the v1.20.1 tree** — built a fresh loopback binary, logged in, sent a real outbound message, byte-grepped the SERVED payloads: `wp-thread-row` present in the thread-list fragment, `wp-bubble` present in the transcript page. The templ-components v1.20.0→v1.20.1 ride does not disturb the fragment contract | Probe run output: "send status: 200 / wp-thread-row in LIST: True / wp-bubble in TRANSCRIPT: True"; `messages.templ` remains the authoring home | served-markup contract      |
@@ -39,6 +46,8 @@ table reflow, `0949667` AGENTS/TODO/lessons tails).
 
 ## b) PARTIALLY DONE
 
+<!-- check-rows:ledger -->
+
 | # | What                                                                                 | Done                                                                         | Missing                                                                                                                                                                                                                                                     |
 | - | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | **T12 full scope** — v7 self-review e4 named "codespell + markdownlint over v7 docs" | The 23:38/23:43 v7 status pair, the plan, and all files this session touched | The older v7-cohort reports (22:08, 23:22) were NOT in the lint set — scope was interpreted as "the v7 sweep's own delta", which matches "the sweep's own e4 debt paid" but a broader read exists                                                           |
@@ -47,6 +56,8 @@ table reflow, `0949667` AGENTS/TODO/lessons tails).
 | 4 | **T16 quiesced-host full flake check**                                               | Quiescence pre-check executed with process forensics (the M62 leg)           | The check itself deferred — host NOT quiesced (see d/e)                                                                                                                                                                                                     |
 
 ## c) NOT STARTED (in this session's slice — all routed, none dropped)
+
+<!-- check-rows:ledger -->
 
 | # | What                                                                                                                                                                                                                                                                                                                                                                      | Where it lives                                                                                                                                                  |
 | - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -59,6 +70,8 @@ table reflow, `0949667` AGENTS/TODO/lessons tails).
 Nothing destructive: no data loss, no CI red, no cross-session interference,
 no revert of anyone's work. The honest failures, ranked:
 
+<!-- check-rows:ledger -->
+
 | # | Failure                                                                                                                                                                                                           | Cost    | Root cause                                                                                                                                                                       |
 | - | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | **MD018 fix lost a round to the daemon reflow** — my first fix (line-break shuffle) still left `#4` at line start; the daemon then reflowed the long merged line BACK to the broken split. Two wasted edit cycles | ~5 min  | I fixed the symptom (the wrap point) instead of the invariant (a line must not START with `#`), despite AGENTS explicitly warning "the daemon is adversarial to in-flight edits" |
@@ -68,6 +81,8 @@ no revert of anyone's work. The honest failures, ranked:
 | 5 | **Left new /tmp artifacts behind** — `/tmp/webphone-r16`, `/tmp/wp-r16-data`, `/tmp/r16_probe.py`, `/tmp/mdlrc.json`                                                                                              | hygiene | T14/M57 says PRUNE /tmp probe artifacts; I ADDED four while not pruning any (mine or the stale ones)                                                                             |
 
 ## e) WHAT WE SHOULD IMPROVE
+
+<!-- check-rows:ledger -->
 
 | # | Improvement                                                                                | Why                                                                                                                      |
 | - | ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |

@@ -1,5 +1,10 @@
 # Round-4 review fixes — session status
 
+> ARCHIVED 2026-11-07 (docs-health v10 sweep): round-4 review fixes and its three interim `§g` rulings. The rulings landed in AGENTS Conventions (push-bar anchor, CHANGELOG bar) and are re-stated in the ratified-decisions section of `docs/dedup-registry.md`.
+> Its tables are ledger-marked (`<!-- check-rows:ledger -->`): §a–§e are the
+> session's own record and §f is harvest fuel still carried in the
+> audit-all working set — this banner does not claim every §f item was harvested.
+
 **Session:** 2026-10-06 ~15:30–16:50 CEST · scope: the brutal review's
 assistant-executable f) set (f.1/f.2/f.3/f.6/f.7) + explicit rulings on the three
 open §g questions (the user's "keep going" demand authorized deciding them; every
@@ -7,6 +12,8 @@ ruling is interim and owned by the D1 sitting). Entry state verified: the 15-25
 review file daemon-committed as `64fc3a4`; remote `43b6889` CI SUCCESS.
 
 ## The three §g rulings (all INTERIM, all sitting-owned)
+
+<!-- check-rows:ledger -->
 
 | # | Question                                 | Ruling                                                                                                                                                                                                                                          | Receipt                                                                         |
 | - | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------- |

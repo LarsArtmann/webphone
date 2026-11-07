@@ -1,5 +1,10 @@
 # Round-4 review fixes — brutal review
 
+> ARCHIVED 2026-11-07 (docs-health v10 sweep): the brutal self-review of the round-4 fix train. Its findings were folded into the 10-06/10-07 fix trains and the plan rows they cite.
+> Its tables are ledger-marked (`<!-- check-rows:ledger -->`): §a–§e are the
+> session's own record and §f is harvest fuel still carried in the
+> audit-all working set — this banner does not claim every §f item was harvested.
+
 **Session:** 2026-10-06 ~15:30–16:42 CEST · review of THIS session only (the
 f.1/f.2/f.3/f.6/f.7 execution + three interim §g rulings + push/CI close).
 End state: remote = `776f09b` CI SUCCESS (run 37480035135); local = `cb99714`
@@ -8,6 +13,8 @@ dead all session); a fresh daemon reflow pass (16:40ish) re-aligned my three
 just-committed md edits — content-inert, detector ZERO, left to ride.
 
 ## a) FULLY DONE
+
+<!-- check-rows:ledger -->
 
 | # | Item                                                                                                                                                                                                                                      | Receipt                                                                                            |
 | - | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |

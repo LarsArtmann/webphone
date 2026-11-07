@@ -1,5 +1,10 @@
 # Status — docs-health v7: 2026-0* cohort closed (11 files annotated + archived), 23:22 harvest routed, living docs re-verified
 
+> ARCHIVED 2026-11-07 (docs-health v10 sweep): the v7 docs-health sweep of the 2026-0x report cohort. It is superseded by the v8/v9 sweeps and its archive manifest is history, not an action list.
+> Its tables are ledger-marked (`<!-- check-rows:ledger -->`): §a–§e are the
+> session's own record and §f is harvest fuel still carried in the
+> audit-all working set — this banner does not claim every §f item was harvested.
+
 **Date:** 2026-10-06, session ran ~23:0x → 23:5x CEST · **Mandate:** the owner's
 "View ALL *_/2026-0_ files — execute docs-health SUPERBLY — archive
 FULLY done and UPDATED files" order: full AUDIT over the September-and-
@@ -60,6 +65,8 @@ touched (one scoped test run, read-only).
    → ok (the two doc-derived tests).
 
 ## Archive manifest (11 files — classification + deciding reason)
+
+<!-- check-rows:ledger -->
 
 | File (archived to `<dir>/archived/`)                                                   | Class   | Deciding reason                                                                                 |
 | -------------------------------------------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------- |

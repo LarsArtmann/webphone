@@ -1,5 +1,10 @@
 # Status Report — 2026-10-06 22:08 CEST — BuildFlow Gate Recovery + Go Module Train
 
+> ARCHIVED 2026-11-07 (docs-health v10 sweep): the buildflow gate recovery and go-module train after the 4.5 h GOPROXY wedge. The wedge story is in `docs/lessons.md`, the flake rows in `docs/ci-flake-ledger.md`, and the vendorHash recipe in the AGENTS bullet.
+> Its tables are ledger-marked (`<!-- check-rows:ledger -->`): §a–§e are the
+> session's own record and §f is harvest fuel still carried in the
+> audit-all working set — this banner does not claim every §f item was harvested.
+
 Session: webphone, triggered by a red `buildflow --fix --build-mode=full` run
 (exit 69: go-mod-update failure-loop, ruff-check-fix 4 findings, 3
 github-actions-pinning findings). This report covers THAT recovery session.
@@ -9,6 +14,8 @@ user instruction wins, flagged per skill contract).
 ---
 
 ## a) FULLY DONE
+
+<!-- check-rows:ledger -->
 
 | #  | What                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Evidence                                                                                         | Scope                    |
 | -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ------------------------ |
@@ -64,6 +71,8 @@ user instruction wins, flagged per skill contract).
 10. **Interim-conclusion hygiene in session narration** — wrong statements I made mid-flight survive in transcripts; stamp them (this report does).
 
 ## f) Top next tasks (ranked; feeds docs-health HARVEST)
+
+<!-- check-rows:ledger -->
 
 | #  | Task                                                                                                                                                         | Impact   | Effort | Category      |
 | -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | ------ | ------------- |

@@ -68,6 +68,6 @@ git checkout 85de30c
 branching-flow all . --format markdown   # phantom: 14 rows, 13 plumbing
 ```
 
-Triage record: `docs/status/2026-10-11_02-19_branching-flow-report-triage-status.md` (every row attributed).
+Triage record: `docs/status/archived/2026-10-11_02-19_branching-flow-report-triage-status.md` (every row attributed).
 
 💘 Generated with Crush
