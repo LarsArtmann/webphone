@@ -1505,12 +1505,13 @@ function noteToneSent(tone) {
     trail = document.createElement("p");
     trail.id = "wp-tones";
     trail.className = "wp-tones";
-    // M45: the trail is a status region — each sent digit is confirmed
-    // politely to screen readers (the keypad buttons themselves stay
-    // plain buttons; the trail is the one announcement surface).
-    trail.setAttribute("role", "status");
     els.keypad.append(trail);
   }
+  // M45: the trail is a status region — each sent digit is confirmed
+  // politely to screen readers. Set unconditionally (idempotent): a
+  // trail that arrived from anywhere else still becomes the one
+  // announcement surface.
+  trail.setAttribute("role", "status");
   tonesSent.push(tone);
   trail.textContent = tonesSent.slice(-12).join("·");
   trail.hidden = false;
