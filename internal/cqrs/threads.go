@@ -215,9 +215,12 @@ func applyThreadState(s threadState, evt event.Event) (threadState, error) {
 		if msg.Direction == domain.DirectionOutbound {
 			s.Outbound[msg.ID.String()] = msg.DeliveryOf()
 		}
-		for _, att := range fact.Attachments {
-			s.AttachIDs = append(s.AttachIDs, att.ID)
+	case event.Type(metaengine.EventTypeName(domain.AttachmentStored{})):
+		attFact, err := event.DecodePayloadAuto[domain.AttachmentStored](evt)
+		if err != nil {
+			return s, errorfamily.WrapCorruptionf(err, "cqrs.thread_fold", "decode AttachmentStored")
 		}
+		s.AttachIDs = append(s.AttachIDs, attFact.ID)
 	case event.Type(metaengine.EventTypeName(domain.OutboundAdvanced{})):
 		fact, err := event.DecodePayloadAuto[domain.OutboundAdvanced](evt)
 		if err != nil {
@@ -265,12 +268,31 @@ func decideAppendMessage(s threadState, ver event.Version, cmd AppendMessage) ([
 		return nil, errorfamily.NewRejection("cqrs.thread_identity",
 			fmt.Sprintf("message %s targets thread %s, stream holds %s", msgID, cmd.Msg.ThreadID, s.ThreadID))
 	}
-	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.MessageAppended{})),
-		cmd.StreamID(), ThreadsStreamType, ver+1, factMessage(cmd.Msg))
+	fact := factMessage(cmd.Msg)
+	evts := make([]event.Event, 0, 1+len(cmd.Msg.Attachments))
+	appendEvt, err := event.New(event.Type(metaengine.EventTypeName(domain.MessageAppended{})),
+		cmd.StreamID(), ThreadsStreamType, ver+1, fact)
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.thread_append", "build MessageAppended")
 	}
-	return []event.Event{evt}, nil
+	evts = append(evts, appendEvt)
+	for _, att := range cmd.Msg.Attachments {
+		attEvt, attErr := event.New(event.Type(metaengine.EventTypeName(domain.AttachmentStored{})),
+			cmd.StreamID(), ThreadsStreamType, ver+event.Version(len(evts))+1, domain.AttachmentStored{
+				ID:        att.ID.String(),
+				MessageID: att.MessageID.String(),
+				Owner:     cmd.Msg.Owner.String(),
+				Name:      att.Name,
+				MimeType:  att.MimeType,
+				SizeBytes: att.SizeBytes,
+				Path:      att.Path,
+			})
+		if attErr != nil {
+			return nil, errorfamily.WrapInfrastructuref(attErr, "cqrs.thread_append", "build AttachmentStored")
+		}
+		evts = append(evts, attEvt)
+	}
+	return evts, nil
 }
 
 func decideAdvanceDelivery(s threadState, ver event.Version, cmd AdvanceDelivery) ([]event.Event, error) {
@@ -336,20 +358,40 @@ func decideDeleteThread(s threadState, ver event.Version, cmd DeleteThread) ([]e
 	if s.ThreadID == "" {
 		return nil, nil // idempotent: a vanished thread needs no tombstone
 	}
-	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.ThreadDeleted{})),
-		cmd.StreamID(), ThreadsStreamType, ver+1, domain.ThreadDeleted{
-			Owner:         s.Owner,
-			ThreadID:      s.ThreadID,
-			Network:       s.Network,
-			Remote:        s.Remote,
-			MessageIDs:    append([]string(nil), s.Messages...),
-			AttachmentIDs: append([]string(nil), s.AttachIDs...),
-			Reason:        cmd.Reason,
-		})
+	deleted := domain.ThreadDeleted{
+		Owner:         s.Owner,
+		ThreadID:      s.ThreadID,
+		Network:       s.Network,
+		Remote:        s.Remote,
+		MessageIDs:    append([]string(nil), s.Messages...),
+		AttachmentIDs: append([]string(nil), s.AttachIDs...),
+		Reason:        cmd.Reason,
+	}
+	evts := make([]event.Event, 0, 1+len(s.Messages)+len(s.AttachIDs))
+	next := func() event.Version { return ver + event.Version(len(evts)) + 1 }
+	tombstone, err := event.New(event.Type(metaengine.EventTypeName(domain.ThreadDeleted{})),
+		cmd.StreamID(), ThreadsStreamType, next(), deleted)
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.thread_delete", "build ThreadDeleted")
 	}
-	return []event.Event{evt}, nil
+	evts = append(evts, tombstone)
+	for _, msgID := range s.Messages {
+		rem, remErr := event.New(event.Type(metaengine.EventTypeName(domain.MessageRemoved{})),
+			cmd.StreamID(), ThreadsStreamType, next(), domain.MessageRemoved{MessageID: msgID})
+		if remErr != nil {
+			return nil, errorfamily.WrapInfrastructuref(remErr, "cqrs.thread_delete", "build MessageRemoved")
+		}
+		evts = append(evts, rem)
+	}
+	for _, attID := range s.AttachIDs {
+		rem, remErr := event.New(event.Type(metaengine.EventTypeName(domain.AttachmentRemoved{})),
+			cmd.StreamID(), ThreadsStreamType, next(), domain.AttachmentRemoved{ID: attID})
+		if remErr != nil {
+			return nil, errorfamily.WrapInfrastructuref(remErr, "cqrs.thread_delete", "build AttachmentRemoved")
+		}
+		evts = append(evts, rem)
+	}
+	return evts, nil
 }
 
 // snapshotEveryNEvents is D8's conservative start: a phone thread is

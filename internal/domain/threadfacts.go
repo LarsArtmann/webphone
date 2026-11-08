@@ -125,3 +125,28 @@ func (s DeliveryStep) Event() DeliveryEvent {
 		return ProviderVerdict(s.Verdict, s.Detail)
 	}
 }
+
+// MessageRemoved is one keyed row removal of the transcript projection
+// (the delete batch's per-message fact — a fold Remove is keyed, so a
+// thread-wide clear is a batch of these, journal-replayable).
+type MessageRemoved struct {
+	MessageID string
+}
+
+// AttachmentStored is one attachment row's own fact (an MMS appends one
+// MessageAppended plus one AttachmentStored per attachment — map folds
+// are one row per event, so the attachment collection gets its own).
+type AttachmentStored struct {
+	ID        string
+	MessageID string
+	Owner     string
+	Name      string
+	MimeType  string
+	SizeBytes int64
+	Path      string
+}
+
+// AttachmentRemoved is the attachment projection's keyed removal twin.
+type AttachmentRemoved struct {
+	ID string
+}
