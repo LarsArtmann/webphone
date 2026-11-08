@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "threshold": 1,
-  "recordedAt": "2026-11-07T09:59:17.741886737Z",
+  "recordedAt": "2026-11-08T11:14:26.408050084Z",
   "entries": [
     {
       "hash": "0074763f10c77d08",
@@ -72,6 +72,14 @@
       "files": [
         "internal/matrix/receiver.go",
         "internal/matrix/receiver.go"
+      ],
+      "tokens": 8
+    },
+    {
+      "hash": "0f6a4a6fb502b789",
+      "files": [
+        "internal/readmodels/dialwindows.go",
+        "internal/cqrs/dialwindows.go"
       ],
       "tokens": 8
     },
@@ -466,7 +474,6 @@
         "internal/web/views/layout.templ",
         "internal/web/views/messages.templ",
         "internal/web/views/messages.templ",
-        "internal/web/views/crm.templ",
         "internal/web/views/admin.templ",
         "internal/web/views/settings.templ",
         "internal/web/views/settings.templ",
@@ -479,6 +486,7 @@
         "internal/web/views/messages.templ",
         "internal/web/views/voicemail.templ",
         "internal/web/views/history.templ",
+        "internal/web/views/crm.templ",
         "internal/web/views/messages.templ",
         "internal/web/views/messages.templ",
         "internal/web/views/messages.templ",
@@ -497,6 +505,14 @@
         "internal/web/views/messages.templ"
       ],
       "tokens": 2
+    },
+    {
+      "hash": "7b659ca475ff3934",
+      "files": [
+        "internal/cqrs/dialwindows.go",
+        "internal/readmodels/dialwindows.go"
+      ],
+      "tokens": 4
     },
     {
       "hash": "812e8487da80c339",
@@ -539,6 +555,14 @@
         "internal/vcard/vcard.go"
       ],
       "tokens": 6
+    },
+    {
+      "hash": "89e7a60c85914645",
+      "files": [
+        "internal/cqrs/dial.go",
+        "internal/cqrs/dial.go"
+      ],
+      "tokens": 4
     },
     {
       "hash": "8a2fb718353bd733",
@@ -603,8 +627,8 @@
     {
       "hash": "9b554b1498dfd35a",
       "files": [
-        "internal/web/views/livecontext.templ",
-        "internal/web/views/messages.templ"
+        "internal/web/views/messages.templ",
+        "internal/web/views/livecontext.templ"
       ],
       "tokens": 4
     },
@@ -743,6 +767,14 @@
       "tokens": 4
     },
     {
+      "hash": "bcb1b6a4557daa96",
+      "files": [
+        "internal/readmodels/dialwindows.go",
+        "internal/cqrs/dialprojections.go"
+      ],
+      "tokens": 6
+    },
+    {
       "hash": "bef8beaf0e43f74d",
       "files": [
         "internal/web/views/admin.templ",
@@ -778,9 +810,10 @@
       "hash": "c96430c1fbe1eebd",
       "files": [
         "internal/config/config.go",
+        "internal/config/config.go",
         "internal/config/config.go"
       ],
-      "tokens": 4
+      "tokens": 6
     },
     {
       "hash": "cc944e486e5afb7c",
@@ -984,11 +1017,11 @@
         "internal/server/transcripts_api_test.go",
         "internal/server/transcribe_test.go",
         "internal/server/webhooks_test.go",
+        "internal/server/templ_flood_test.go",
         "internal/server/contacts_api_test.go",
         "internal/server/idempotency_test.go",
         "internal/server/contacts_api_test.go",
         "internal/server/contacts_api_test.go",
-        "internal/server/threads_flags_test.go",
         "internal/server/transcripts_api_test.go",
         "internal/server/contacts_api_test.go"
       ],
