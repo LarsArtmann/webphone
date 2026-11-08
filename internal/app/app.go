@@ -70,9 +70,11 @@ var (
 	_ do.HealthcheckerWithContext = (*userauth.Service)(nil)
 	_ do.HealthcheckerWithContext = (*readmodels.Engine)(nil)
 	_ do.HealthcheckerWithContext = (*crm.Resolver)(nil)
+	_ do.HealthcheckerWithContext = (*CqrsService)(nil)
 	_ do.ShutdownerWithError      = (*store.Database)(nil)
 	_ do.ShutdownerWithError      = (*userauth.Service)(nil)
 	_ do.ShutdownerWithError      = (*readmodels.Engine)(nil)
+	_ do.ShutdownerWithError      = (*CqrsService)(nil)
 	_ do.Shutdowner               = (*dashboard.Dashboard)(nil)
 	_ do.Shutdowner               = (*server.ExtensionHubs)(nil)
 )
@@ -180,6 +182,12 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	do.ProvideNamed(injector, "metaengine", func(i do.Injector) (*readmodels.Engine, error) {
 		return readmodels.Open(cfg.DataDir)
 	})
+	// The system composition root (SUPERB plan): the command/event
+	// journal rides its OWN system.db beside the read-model engine —
+	// engine DDL never meets the hand ladder, and the container sees
+	// one more named eager service with probe-discoverable health
+	// (optional non-critical leg while only advisory features ride it).
+	registerCqrs(injector, cfg, log)
 	do.Provide(injector, func(i do.Injector) (*pbx.Client, error) {
 		return pbx.NewClient(cfg.PhoneAPIURL)
 	})
@@ -470,6 +478,9 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	if _, err := do.InvokeNamed[*readmodels.Engine](injector, "metaengine"); err != nil {
 		return nil, wrapf("open read-model engine: %w", err)
 	}
+	if _, err := do.InvokeNamed[*CqrsService](injector, cqrsProviderName); err != nil {
+		return nil, wrapf("open cqrs system: %w", err)
+	}
 	// The four legacy imports share one (sqlite, engine) resolution —
 	// named once, eagerly, per the composition-root doctrine (AGENTS.md).
 	sqlite := do.MustInvokeNamed[*store.Database](injector, "sqlite")        //nolint:branching-flow // composition-root resolution (AGENTS.md): the eager named pair, resolved once for the legacy imports
@@ -663,6 +674,16 @@ func (a *App) Start(ctx context.Context) error {
 	engine, err := do.InvokeNamed[*readmodels.Engine](a.injector, "metaengine") //nolint:branching-flow // composition-root resolution (AGENTS.md): the named metaengine service
 	if err != nil {
 		return wrapf("resolve read-model engine: %w", err)
+	}
+	// The system's projection workers and timers start BEFORE the HTTP
+	// listener accepts traffic (contract §3), so the initial journal
+	// drain never races a request that expects a caught-up view.
+	cqrs, err := do.InvokeNamed[*CqrsService](a.injector, cqrsProviderName) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service
+	if err != nil {
+		return wrapf("resolve cqrs system: %w", err)
+	}
+	if err := cqrs.Start(ctx); err != nil {
+		return wrapf("start cqrs system: %w", err)
 	}
 	retention.Start(ctx, db.SQL(), blobs, engine, time.Duration(a.cfg.RetentionDays)*24*time.Hour)
 	startDedupSweeper(ctx, a.log, engineDedupWindow{store: engine.DedupStore()})
