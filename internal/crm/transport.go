@@ -43,7 +43,15 @@ func newHTTPClient(caFile string) (*http.Client, error) {
 			"crm.ca_file %s holds no PEM certificate: point it at the CA bundle that signed the CRM vhost", caFile)
 	}
 
-	transport := http.DefaultTransport.(*http.Transport).Clone()
+	base, ok := http.DefaultTransport.(*http.Transport)
+	if !ok {
+		// Unreachable while net/http ships its own *http.Transport as
+		// DefaultTransport; guarded so a host that replaced the global
+		// with a custom RoundTripper degrades to a zero-config transport
+		// instead of panicking at boot.
+		base = &http.Transport{}
+	}
+	transport := base.Clone()
 	transport.TLSClientConfig = &tls.Config{RootCAs: pool, MinVersion: tls.VersionTLS12}
 
 	return &http.Client{Timeout: requestTimeout, Transport: transport}, nil
