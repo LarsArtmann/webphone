@@ -27,16 +27,16 @@ push stall; CI green.
 
 Headline numbers:
 
-| Metric                     | Value                                      |
-| -------------------------- | ------------------------------------------ |
-| ~~BD003 findings in~~                     | ~~35 (2 ERROR, 2 WARNING, 31 INFO)~~ — historical scan size; the minted directives are live at HEAD (87 brandid-lint:ignore sites, grep this session) |
-| ~~Findings resolved~~                     | ~~35 (100%)~~ done — the scan re-ran CLEAN 2026-10-25 across the grown corpus (AGENTS strong-id bullet, read this session) |
-| ~~Real type changes made~~                | ~~0 (deliberate — all sites carried rulings)~~ done — deliberate; the doctrine stands in AGENTS |
-| ~~Code deltas~~                           | ~~1 (tautology removal, `userauth.Shutdown`)~~ done — verified live: the dead first-error guard is gone (internal/userauth/userauth.go:163-170, read this session) |
-| ~~Files touched~~                         | ~~18 Go files + AGENTS.md + CHANGELOG.md~~ done — historical; the train's commits exist (git cat-file: 4831358…9a66329, verified this session) |
-| ~~Full test suite~~                       | ~~green (24 packages; server suite 550s)~~ done — historical; CI green continuously since |
-| ~~buildflow~~                             | ~~exit 0~~ done — historical |
-| ~~CI on pushed tip `c029741`~~             | ~~success (run 38814348023)~~ done — historical; superseded by months of green CI since |
+| Metric                         | Value                                                                                                                                                              |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| ~~BD003 findings in~~          | ~~35 (2 ERROR, 2 WARNING, 31 INFO)~~ — historical scan size; the minted directives are live at HEAD (87 brandid-lint:ignore sites, grep this session)              |
+| ~~Findings resolved~~          | ~~35 (100%)~~ done — the scan re-ran CLEAN 2026-10-25 across the grown corpus (AGENTS strong-id bullet, read this session)                                         |
+| ~~Real type changes made~~     | ~~0 (deliberate — all sites carried rulings)~~ done — deliberate; the doctrine stands in AGENTS                                                                    |
+| ~~Code deltas~~                | ~~1 (tautology removal, `userauth.Shutdown`)~~ done — verified live: the dead first-error guard is gone (internal/userauth/userauth.go:163-170, read this session) |
+| ~~Files touched~~              | ~~18 Go files + AGENTS.md + CHANGELOG.md~~ done — historical; the train's commits exist (git cat-file: 4831358…9a66329, verified this session)                     |
+| ~~Full test suite~~            | ~~green (24 packages; server suite 550s)~~ done — historical; CI green continuously since                                                                          |
+| ~~buildflow~~                  | ~~exit 0~~ done — historical                                                                                                                                       |
+| ~~CI on pushed tip `c029741`~~ | ~~success (run 38814348023)~~ done — historical; superseded by months of green CI since                                                                            |
 
 ---
 

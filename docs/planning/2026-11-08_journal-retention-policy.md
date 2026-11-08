@@ -31,7 +31,7 @@ Verified against the PUBLISHED pins (event/v4 v4.15.2, system/v4 v4.17.0, metaen
 
 - `event.Store`/`Journal`/`SeekableJournal` interfaces carry NO delete/trim/purge surface (store.go:101–135).
 - `event`'s tombstone is a **metadata mark** (`TombstoneMark` on stream metadata; replay folds skip tombstoned streams) — semantic deletion, NOT byte deletion. Payload bytes stay.
-- sqliteengine's `DELETE`s are ALL projection-side (caps, map deletes, snapshots, graph, reset) — nothing touches the stream log.
+- sqliteengine `DELETE` statements are ALL projection-side (caps, map deletes, snapshots, graph, reset) — nothing touches the stream log.
 - Upstream doctrine: append-only, tombstone-over-delete (core.md §3.1 / ADR-0114).
 
 Consequence: **§4.2's "delete actually deletes (journal + projection + view)" cannot be met with published pins.** Lane selection per the I/O rule's A/B gate: this is lane **(B) the capability should exist** — design WITH the owner, land it ONCE in the engine family (never satellite SQL beside it, which would be E023 and a fork of the substrate).
