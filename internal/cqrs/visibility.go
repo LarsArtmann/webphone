@@ -117,3 +117,21 @@ func awaitVisibility(ctx context.Context, sys *system.System, projection, afterI
 func warnVisibilityTailFailed(err error, aggregate, owner string) {
 	slog.Warn("write committed but the visibility tail read failed", "err", err, "aggregate", aggregate, "owner", owner)
 }
+
+// awaitOwnWrite is the backends' shared D7 await: read the stream's
+// committed tail (exactly the just-dispatched batch, given the backend
+// mutex), then wait for the projection worker to fold past it. Used
+// only where a same-request re-read follows the write (the contacts
+// panel, the settings partial); best-effort — a tail-read failure
+// WARNs (the write committed) and never fails the request.
+func awaitOwnWrite(ctx context.Context, sys *system.System, streamType id.StreamType, key, projection string, vers streamVersions) {
+	tail, err := committedTail(ctx, sys, streamType, key, vers)
+	if err != nil {
+		warnVisibilityTailFailed(err, string(streamType), key)
+		return
+	}
+	if len(tail) == 0 {
+		return
+	}
+	awaitVisibility(ctx, sys, projection, tail[len(tail)-1].ID().String())
+}

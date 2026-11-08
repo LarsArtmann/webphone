@@ -7,6 +7,7 @@ package app
 
 import (
 	"context"
+	"log/slog"
 	"maps"
 	"slices"
 
@@ -15,6 +16,8 @@ import (
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	"github.com/larsartmann/go-error-family"
+
+	"github.com/larsartmann/webphone/internal/domain"
 )
 
 // importerActor is the journal actor synthetic import events carry (one
@@ -22,6 +25,17 @@ import (
 func importerActor() id.ActorID {
 	actor, _ := id.ParseActorID("system:importer")
 	return actor
+}
+
+// importableOwner is the importers' shared row guard: a legacy row
+// whose owner does not parse as an extension is SKIPPED with a WARN
+// (one bad row must never abort a whole owner's port).
+func importableOwner(log *slog.Logger, importer, owner string) bool {
+	if _, err := domain.ParseExtension(owner); err != nil {
+		log.Warn(importer+": unparseable owner row skipped", "owner", owner, "err", err)
+		return false
+	}
+	return true
 }
 
 // appendJournalFacts raw-appends per-stream fact batches into the

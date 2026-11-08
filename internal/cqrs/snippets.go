@@ -10,7 +10,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"log/slog"
 	"sync"
 	"time"
 
@@ -210,15 +209,7 @@ func NewSnippets(sys *system.System) *Snippets {
 // projection in the SAME request. Best-effort — a tail-read failure
 // WARNs (the write committed) and never fails the request.
 func (s *Snippets) awaitOwnWrite(ctx context.Context, owner string) {
-	tail, err := committedTail(ctx, s.sys, SnippetsStreamType, owner, s.vers)
-	if err != nil {
-		slog.Warn("snippet write committed but the visibility tail read failed", "err", err, "owner", owner)
-		return
-	}
-	if len(tail) == 0 {
-		return
-	}
-	awaitVisibility(ctx, s.sys, "snippets", tail[len(tail)-1].ID().String())
+	awaitOwnWrite(ctx, s.sys, SnippetsStreamType, owner, "snippets", s.vers)
 }
 
 // Save upserts a snippet by id (the decision preserves the slot's

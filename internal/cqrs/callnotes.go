@@ -248,6 +248,17 @@ func (s *Notes) Get(ctx context.Context, owner domain.Extension, callID string) 
 	return &view, nil
 }
 
+// noteDispatchError keeps the decision's coded cap verdict (the 409
+// Conflict contract passes through verbatim) and codes every other
+// dispatch failure as the seam's own Infrastructure wrap — both write
+// doors share it.
+func noteDispatchError(err error, code, op string) error {
+	if errors.Is(err, readmodels.ErrNoteListFull) {
+		return err
+	}
+	return errorfamily.WrapInfrastructuref(err, code, "dispatch %s", op)
+}
+
 // Set upserts the owner's note for one call; the decision keeps an
 // existing disposition. A NEW call past the cap refuses with the
 // ErrNoteListFull Conflict contract.
@@ -259,10 +270,7 @@ func (s *Notes) Set(ctx context.Context, owner domain.Extension, callID, body st
 		func(base *command.BasicCommand) *SaveCallNote {
 			return &SaveCallNote{BasicCommand: base, Owner: owner.String(), CallID: callID, Body: body}
 		}); err != nil {
-		if errors.Is(err, readmodels.ErrNoteListFull) {
-			return err
-		}
-		return errorfamily.WrapInfrastructuref(err, "cqrs.note_save", "dispatch note.save")
+		return noteDispatchError(err, "cqrs.note_save", "note.save")
 	}
 	return nil
 }
@@ -277,10 +285,7 @@ func (s *Notes) SetDisposition(ctx context.Context, owner domain.Extension, call
 		func(base *command.BasicCommand) *SaveCallDisposition {
 			return &SaveCallDisposition{BasicCommand: base, Owner: owner.String(), CallID: callID, Disposition: disposition}
 		}); err != nil {
-		if errors.Is(err, readmodels.ErrNoteListFull) {
-			return err
-		}
-		return errorfamily.WrapInfrastructuref(err, "cqrs.disposition_save", "dispatch note.disposition_save")
+		return noteDispatchError(err, "cqrs.disposition_save", "note.disposition_save")
 	}
 	return nil
 }

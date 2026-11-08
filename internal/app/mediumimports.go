@@ -43,8 +43,7 @@ func importContactsIntoJournal(ctx context.Context, db *store.Database, contacts
 	}
 	perOwner := map[string][]any{}
 	for _, v := range views {
-		if _, err := domain.ParseExtension(v.Owner); err != nil {
-			log.Warn("contacts journal import: unparseable owner row skipped", "owner", v.Owner)
+		if !importableOwner(log, "contacts journal import", v.Owner) {
 			continue
 		}
 		perOwner[v.Owner] = append(perOwner[v.Owner], domain.ContactSaved{
@@ -106,8 +105,7 @@ func importTranscriptsIntoJournal(ctx context.Context, db *store.Database, trans
 	}
 	perCall := map[string][]any{}
 	for _, v := range views {
-		if _, err := domain.ParseExtension(v.Owner); err != nil {
-			log.Warn("transcripts journal import: unparseable owner row skipped", "owner", v.Owner)
+		if !importableOwner(log, "transcripts journal import", v.Owner) {
 			continue
 		}
 		key := cqrs.TranscriptStreamKey(v.Owner, v.CallID)
@@ -170,8 +168,7 @@ func importCallNotesIntoJournal(ctx context.Context, db *store.Database, notes *
 	}
 	perOwner := map[string][]any{}
 	for _, v := range views {
-		if _, err := domain.ParseExtension(v.Owner); err != nil {
-			log.Warn("call-notes journal import: unparseable owner row skipped", "owner", v.Owner)
+		if !importableOwner(log, "call-notes journal import", v.Owner) {
 			continue
 		}
 		perOwner[v.Owner] = append(perOwner[v.Owner], domain.CallNoteSaved{
@@ -230,8 +227,7 @@ func importCallReviewsIntoJournal(ctx context.Context, db *store.Database, revie
 	}
 	perOwner := map[string][]any{}
 	for _, v := range views {
-		if _, err := domain.ParseExtension(v.Owner); err != nil {
-			log.Warn("call-reviews journal import: unparseable owner row skipped", "owner", v.Owner)
+		if !importableOwner(log, "call-reviews journal import", v.Owner) {
 			continue
 		}
 		perOwner[v.Owner] = append(perOwner[v.Owner], domain.CallReviewSaved{

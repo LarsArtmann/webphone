@@ -229,15 +229,7 @@ func NewContacts(sys *system.System) *Contacts {
 // the projection in the SAME request. Best-effort — a tail-read
 // failure WARNs (the write committed) and never fails the request.
 func (s *Contacts) awaitOwnWrite(ctx context.Context, owner string) {
-	tail, err := committedTail(ctx, s.sys, ContactsStreamType, owner, s.vers)
-	if err != nil {
-		warnVisibilityTailFailed(err, "contact", owner)
-		return
-	}
-	if len(tail) == 0 {
-		return
-	}
-	awaitVisibility(ctx, s.sys, contactsCollection, tail[len(tail)-1].ID().String())
+	awaitOwnWrite(ctx, s.sys, ContactsStreamType, owner, contactsCollection, s.vers)
 }
 
 // Save upserts a contact by (owner, phone): an existing slot is renamed

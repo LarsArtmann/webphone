@@ -39,8 +39,7 @@ func importSnippets(ctx context.Context, db *store.Database, snippets *readmodel
 	}
 	perOwner := map[string][]any{}
 	for _, v := range views {
-		if _, err := domain.ParseExtension(v.Owner); err != nil {
-			log.Warn("snippet journal import: unparseable owner row skipped", "owner", v.Owner)
+		if !importableOwner(log, "snippet journal import", v.Owner) {
 			continue
 		}
 		perOwner[v.Owner] = append(perOwner[v.Owner], domain.SnippetSaved{
@@ -87,8 +86,7 @@ func importAgentAudit(ctx context.Context, db *store.Database, audit *readmodels
 	}
 	perOwner := map[string][]any{}
 	for _, v := range views {
-		if _, err := domain.ParseExtension(v.Owner); err != nil {
-			log.Warn("agent-audit journal import: unparseable owner row skipped", "owner", v.Owner)
+		if !importableOwner(log, "agent-audit journal import", v.Owner) {
 			continue
 		}
 		perOwner[v.Owner] = append(perOwner[v.Owner], domain.AgentAuditAppended{
@@ -150,8 +148,7 @@ func importPushDevices(ctx context.Context, db *store.Database, devices *readmod
 	}
 	perOwner := map[string][]any{}
 	for _, v := range views {
-		if _, err := domain.ParseExtension(v.Owner); err != nil {
-			log.Warn("push-device journal import: unparseable owner row skipped", "owner", v.Owner)
+		if !importableOwner(log, "push-device journal import", v.Owner) {
 			continue
 		}
 		perOwner[v.Owner] = append(perOwner[v.Owner], domain.PushDeviceRegistered{

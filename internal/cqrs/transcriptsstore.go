@@ -104,11 +104,7 @@ func (s *Transcripts) Append(ctx context.Context, seg domain.CallTranscriptSegme
 	// enforcement itself is best-effort under a bounded context — the
 	// cap is the durability story, never an invariant, and the next
 	// append retries (the file header's convergence posture).
-	if tail, err := committedTail(ctx, s.sys, TranscriptsStreamType, key, s.vers); err != nil {
-		warnVisibilityTailFailed(err, "transcripts", key)
-	} else if len(tail) > 0 {
-		awaitVisibility(ctx, s.sys, transcriptsCollection, tail[len(tail)-1].ID().String())
-	}
+	awaitOwnWrite(ctx, s.sys, TranscriptsStreamType, key, transcriptsCollection, s.vers)
 	enforceCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
 	defer cancel()
 	if _, err := s.sys.MetaEngine().EnforceCaps(enforceCtx); err != nil {
