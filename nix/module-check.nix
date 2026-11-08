@@ -187,6 +187,36 @@
           );
         }
         {
+          # Metrics fencing: a non-loopback listen with the vhost off
+          # must WARN naming the monitoring surfaces; the loopback
+          # default stays silent, and the same address with caddy on
+          # stays silent too (the vhost is the fence).
+          name = "metrics-fencing";
+          path = pkgs.writeText "metrics-fencing" (
+            let
+              exposed = (lib.evalModules (moduleSet {
+                caddy.enable = false;
+                settings.addr = "0.0.0.0:8080";
+              })).config.warnings;
+              loopbackSilent = (lib.evalModules (moduleSet { })).config.warnings;
+              caddiedSilent = (lib.evalModules (moduleSet {
+                caddy.enable = true;
+                settings.addr = "0.0.0.0:8080";
+              })).config.warnings;
+            in
+            if
+              lib.length exposed == 1
+              && lib.hasInfix "/metrics" (lib.head exposed)
+              && loopbackSilent == [ ]
+              && caddiedSilent == [ ]
+            then
+              "non-loopback listen warns; loopback default and caddied shapes stay silent"
+            else
+              throw
+                "webphone-module check: metrics fencing mis-fires (exposed=${toString (lib.length exposed)}, loopback=${toString (lib.length loopbackSilent)}, caddied=${toString (lib.length caddiedSilent)})"
+          );
+        }
+        {
           # Full-text golden of the generated vhost + retention=7 backup
           # script + settings JSON. Substring checks miss reordering,
           # whitespace, or a dropped line; this pins the whole document.

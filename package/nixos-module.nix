@@ -114,6 +114,16 @@ in
   ];
 
   config = lib.mkIf cfg.enable {
+    warnings = lib.optional metricsExposed ''
+      services.webphone listens on a non-loopback address
+      (${cfg.settings.addr}) with the generated Caddy vhost disabled, so
+      the monitoring surfaces (/metrics, /version, /openapi.json, the
+      health probes) answer on every interface it binds. Close it one of
+      two ways: set settings.addr back to a loopback address and let
+      caddy.enable = true terminate and fence, or front the listener
+      yourself and keep the monitoring surfaces off the wire.
+    '';
+
     assertions = [
       {
         assertion = lib.hasPrefix "/var/lib/" cfg.dataDir && cfg.dataDir != "/var/lib/";
