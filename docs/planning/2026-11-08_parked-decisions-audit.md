@@ -82,6 +82,24 @@ rendering's payload, and the wholesale-replace slot semantics
 renderings; the review slot still replaces wholesale; no dimension field
 exists anywhere in `readmodels` — parked, not half-built.
 
+## Re-confirmation (2026-11-08, portfolio plan P4-13)
+
+All four parks re-verified against the tree this session, triggers live:
+
+- **Scheduled sends**: no scheduler code exists (grep `cron|schedule` in
+  internal/ — no send-lane hit); the ratification ask stays with the
+  sitting pack's F-bulk. NO-GO stands.
+- **Session messenger**: `domain.Network` still carries exactly the four
+  networks (sms|signal|session|matrix, grep-verified); `session` senders
+  stay unregistered in the sender registry. The DM-first v1 fences own
+  the park.
+- **ssetest `WithLastEventID` ride**: go-sse still rides v0.7.0 in
+  go.mod; the upstream branding ask has no local work pending. Dormant
+  by trigger, correctly.
+- **Review-artifact dimensions (#8)**: `call_reviews` still stores the
+  landed verdict shape; no dimension migration exists. Reopens only on
+  an operator ask.
+
 ## The audit's one finding
 
 All four parked items carry live triggers and single homes — **nothing was
