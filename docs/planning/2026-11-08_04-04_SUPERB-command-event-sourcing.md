@@ -586,3 +586,16 @@ Focused hours exclude train gates, releases, and CI waits. Eight release trains 
   dispatch loops are too slow at those sizes; the battery asserts the
   cap at the decision via `errorfamilytest.AssertFamily`, while small
   caps (100/500) exercise the real dispatch path.
+
+### Release-cadence note (2026-11-08, D4 follow-up)
+
+- D4 ruled one release per phase, but nothing shipped between v2.9.0
+  (2026-10-15) and the end of Phase 4 — P2, P3 and P4 all rode
+  `[Unreleased]`. **v2.10.0 (2026-11-08) is the catch-up release carrying
+  P2–P4 plus the island latency beacon; per-phase releases RESUME with
+  Phase 5** (each phase's gates now end with its own release train, per
+  §4.3). The release also rides the upstream journal-trim +
+  cap-lock-order wave (go-cqrs-lite metaengine v4.23.0 /
+  sqliteengine v4.8.0 / system v4.18.0): the EnforceCap deadlock fix
+  (#123) and the `TrimStream`/`TrimJournalBefore` primitives A36's
+  deletion gate requires (#118, closed shipped).
