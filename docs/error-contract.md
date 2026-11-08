@@ -37,6 +37,27 @@ only user feedback.
 | Passkey revoke on an extension with no mapped identity account                                   | Plain-text 404 "no passkey account" (machine-facing state, unreachable through the UI — the section only renders when a mapping exists)                                                                                                                                                                                                                                                                                                                                                       | server `revokePasskey`                                                                              | `TestPasskeySettingsListsAndRevokes` (unmapped arm)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | Internal directory seam off (`GET /internal/directory/{extension}`)                              | Honest 404 — a disabled feature answers like a missing one (ASR-seam convention). Machine-facing (the stack's FS xml_curl bridge), never the browser: loopback + Bearer secret only (403 otherwise), invalid extension 400, unknown/session-less extension answers an EMPTY list so the bridge's static fallback keeps the lockout decision. Stack side — the bridge, fail-closed posture, <2-min rollback drill: nix-international-telephony `docs/ops-runbook.md` § "Dynamic SIP directory" | server `internalDirectory` (bare statuses like every gate — no `sipcred.*` codes, 2026-10-12 train) | `TestInternalDirectoryFailsClosedWithoutASecret` + `TestInternalDirectoryAnswersTheDerivedCredentials` + `TestInternalDirectoryRejectsBadSecrets` + `TestInternalDirectoryUnknownExtensionAnswersEmpty` + `TestInternalDirectoryInvalidExtensionIs400` + `TestInternalDirectoryLoopbackOnly`                                                                                                                                                                                                                                                                                                          |
 
+## Provider-failure terminality — the machine is already right; this states the rule (2026-11-08)
+
+An outbound send that reaches a provider verdict has THREE failure kinds
+(`domain.FailureKind`), and exactly one of them retries:
+
+- **`transient`** (gateway outage / transport 502): the ONLY retryable kind —
+  the bubble offers Retry, a later attempt may succeed.
+- **`rejected`** (the provider refused the send, its reason): terminal by
+  construction — a retry would fail identically, so none is offered.
+- **`provider`** (the provider's asynchronous webhook verdict said failed):
+  TERMINAL — the provider has spoken; no UI retry affordance exists
+  (`FailureKind.IsRetryable` keys the affordance, `internal/domain/delivery.go`)
+  and no later webhook can resurrect the row: out-of-order and replayed
+  verdicts cannot move a terminal state (the machine table's one-way moves,
+  AGENTS § Machine tables). The honest display of a terminal provider failure
+  is the failed bubble with its failure story — not a spinner, not a retry.
+
+The rule stated: **once the provider has answered, the answer is the
+truth.** Only a failure that never reached the provider (transport) may be
+attempted again.
+
 ## `/api` error bodies — plain text, RULED (2026-10-23)
 
 The island JSON endpoints answer failures as plain-text copy with the
