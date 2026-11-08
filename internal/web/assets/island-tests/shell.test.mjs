@@ -434,6 +434,64 @@ test("the missed badge clears when the history panel lands (any door)", () => {
 // 3b-3. Thread-search guard: a live threads push must not stomp an
 // active search; it goes through once the box is empty again. The next
 // keystroke's debounced fetch re-renders the list, so nothing is lost.
+// A5: the thread search is shareable — a successful search-form fetch
+// pushes /messages?q=… (the server's panel route renders the same filter),
+// clearing pushes the bare /messages, a failed fetch pushes nothing, and
+// popstate restores the input and re-fetches WITHOUT creating a new entry.
+test("search deep-links the URL and unwinds on back", () => {
+  const pushed = [];
+  const triggered = [];
+  const realHistory = globalThis.window.history;
+  const realHtmx = globalThis.window.htmx;
+  globalThis.window.history = { pushState: (_s, _t, url) => pushed.push(url) };
+  globalThis.window.htmx = {
+    trigger: (_target, eventName) => triggered.push(eventName),
+  };
+  globalThis.window.location.pathname = "/messages";
+  globalThis.window.location.search = "";
+
+  const input = doc.getElementById("wp-thread-search-input");
+  const form = {
+    classList: { contains: (c) => c === "wp-thread-search" },
+  };
+
+  input.value = "kilt";
+  doc.dispatch("htmx:afterRequest", {
+    target: form,
+    detail: { elt: form, successful: true },
+  });
+  assert.deepEqual(pushed, ["/messages?q=kilt"], "the query deep-links");
+
+  input.value = "";
+  doc.dispatch("htmx:afterRequest", {
+    target: form,
+    detail: { elt: form, successful: true },
+  });
+  assert.deepEqual(pushed[1], "/messages", "clearing pushes the bare path");
+
+  input.value = "strава";
+  globalThis.window.location.search = "?q=%D1%81%D1%82%D1%80%D0%B0%D0%B2%D0%B0";
+  doc.dispatch("popstate", {});
+  assert.equal(input.value, "страва", "popstate decodes the restored query");
+  assert.deepEqual(triggered, ["submit"], "popstate re-fetches via submit");
+
+  doc.dispatch("htmx:afterRequest", {
+    target: form,
+    detail: { elt: form, successful: true },
+  });
+  assert.equal(pushed.length, 2, "the restore does not push a new entry");
+
+  doc.dispatch("htmx:afterRequest", {
+    target: form,
+    detail: { elt: form, successful: false },
+  });
+  assert.equal(pushed.length, 2, "a failed fetch pushes nothing");
+
+  globalThis.window.history = realHistory;
+  globalThis.window.htmx = realHtmx;
+  globalThis.window.location.search = "";
+});
+
 test("live threads pushes are cancelled while a search query is active", () => {
   const list = doc.createElement();
   list.className = "wp-thread-list";

@@ -1260,6 +1260,61 @@
       );
       if (input && input.value.trim() !== "") event.preventDefault();
     });
+    // 3b-4 (A5): the thread search is SHAREABLE. The debounced fetch's
+    //     result rides history.pushState as /messages?q=… — the server's
+    //     panel route reads the same q on a full render, so a share or
+    //     refresh lands the filter, and back unwinds the query stepwise.
+    //     popstate restores the input and re-fetches WITHOUT pushing
+    //     (the restore must not recreate the entry it just unwound); the
+    //     pending-restoring flag is spent by the very next search-form
+    //     response, so a failed restore leaves no stuck guard. A failed
+    //     fetch itself pushes nothing (only successes own the URL).
+    var restoringSearch = false;
+    document.addEventListener("htmx:afterRequest", function (event) {
+      var elt = eventElement(event);
+      if (
+        !elt ||
+        !elt.classList ||
+        !elt.classList.contains("wp-thread-search")
+      )
+        return;
+      if (!(eventDetail(event) && eventDetail(event).successful)) return;
+      if (restoringSearch) {
+        restoringSearch = false;
+        return;
+      }
+      var input = /** @type {HTMLInputElement | null} */ (
+        document.getElementById("wp-thread-search-input")
+      );
+      if (!input) return;
+      var q = input.value.trim();
+      var target =
+        q === "" ? "/messages" : "/messages?q=" + encodeURIComponent(q);
+      if (window.location.pathname + window.location.search !== target) {
+        window.history.pushState({}, "", target);
+      }
+    });
+    window.addEventListener("popstate", function () {
+      var input = /** @type {HTMLInputElement | null} */ (
+        document.getElementById("wp-thread-search-input")
+      );
+      var form = /** @type {HTMLFormElement | null} */ (
+        document.querySelector("form.wp-thread-search")
+      );
+      if (!input || !form || !window.htmx) return;
+      var match = window.location.search.match(/[?&]q=([^&]*)/);
+      var raw = match ? match[1] : "";
+      var decoded = raw;
+      try {
+        decoded = decodeURIComponent(raw.replace(/\+/g, " "));
+      } catch (_e) {
+        decoded = raw;
+      }
+      if (input.value === decoded) return;
+      input.value = decoded;
+      restoringSearch = true;
+      window.htmx.trigger(form, "submit");
+    });
     // The island's language switch re-labels itself and re-fetches the open
     // tab; the nav is shell territory, so it asks via this event.
     document.addEventListener("wp:lang-changed", refreshNav);
