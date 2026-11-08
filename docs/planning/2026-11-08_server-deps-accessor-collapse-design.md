@@ -12,15 +12,15 @@ truth: owner-scoped, engine-backed (readmodels.db), nil-tolerant in test
 compositions, and each consumer branch answers the honest 503 (or the
 seam-specific refusal) when its field is nil:
 
-| Field        | Backing collection   | Nil-503 convention site      |
-| ------------ | -------------------- | ---------------------------- |
-| `Contacts`   | readmodels.Contacts  | contacts handlers + api      |
-| `Snippets`   | readmodels.Snippets  | snippet actions (Settings)   |
-| `Transcripts`| readmodels.Transcripts | transcript POST + History  |
-| `Reviews`    | readmodels call_reviews | review read/dispatch      |
-| `Dials`      | readmodels.DialWindows | the dial-gate check+record |
-| `Notes`      | readmodels call_notes  | note GET/PUT + History     |
-| `AgentAudit` | readmodels agent_audit  | Settings recent-actions    |
+| Field         | Backing collection      | Nil-503 convention site    |
+| ------------- | ----------------------- | -------------------------- |
+| `Contacts`    | readmodels.Contacts     | contacts handlers + api    |
+| `Snippets`    | readmodels.Snippets     | snippet actions (Settings) |
+| `Transcripts` | readmodels.Transcripts  | transcript POST + History  |
+| `Reviews`     | readmodels call_reviews | review read/dispatch       |
+| `Dials`       | readmodels.DialWindows  | the dial-gate check+record |
+| `Notes`       | readmodels call_notes   | note GET/PUT + History     |
+| `AgentAudit`  | readmodels agent_audit  | Settings recent-actions    |
 
 (`Messages`/`Faxes` predate the engine and stay store-seam fields; they are
 NOT in scope — their lifetime and seam differ.)
