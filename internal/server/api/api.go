@@ -102,6 +102,12 @@ type Deps struct {
 	// DialCooldown is the advisory window length (issue #7). Zero:
 	// the gate route 404s and the island never asks.
 	DialCooldown time.Duration
+	// IslandLatency is the OPTIONAL beacon sink behind
+	// POST /api/metrics/latency (the measure-first latency design):
+	// the server-owned histogram recorder. Nil or disabled: the route
+	// answers a terse 404 (the island reads that as "this server does
+	// not measure" and stays silent — it never retries a beacon).
+	IslandLatency IslandBeaconSink
 	// Notify turns a service-layer fact into the server's SSE
 	// projection (the Notifier — the ONE notification-policy home).
 	// The review job runs detached from any request, so it needs an

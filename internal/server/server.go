@@ -353,6 +353,13 @@ func New(deps Deps) http.Handler {
 			loginPage = lp
 		}
 	}
+	// The island beacon intake is config-gated (metrics.island_beacon,
+	// default OFF): nil keeps the route on a terse 404 and /metrics
+	// without the family — the flag-off product stays byte-identical.
+	var islandMetrics *islandLatency
+	if deps.Config.Metrics.IslandBeacon {
+		islandMetrics = newIslandLatency()
+	}
 	h := &handlers{
 		deps:                 deps,
 		loginLimiter:         newKeyedRateLimiter(loginLimit, loginBurst),
@@ -372,6 +379,7 @@ func New(deps Deps) http.Handler {
 		csrfCfg:              csrfCfg,
 		unread:               newUnreadCache(5 * time.Second),
 		latency:              newLatencyRecorder(),
+		island:               islandMetrics,
 	}
 	hooksHandlers := hooks.New(hooks.Deps{
 		Secret:    deps.Config.Gateway.WebhookSecret,
@@ -396,6 +404,7 @@ func New(deps Deps) http.Handler {
 		Reviews:      deps.Reviews,
 		Dials:        deps.Dials,
 		DialCooldown: deps.Config.Dial.Cooldown,
+		IslandLatency: islandMetrics,
 		Notes:        deps.Notes,
 		TextAgent:    deps.TextAgent,
 		Push:         deps.Push,
@@ -580,6 +589,11 @@ func New(deps Deps) http.Handler {
 	// (live calls, voicemail, MMS audio). A disabled seam answers 404.
 	protected.Handle("POST /api/transcribe", h.transcribeLimiter.Middleware()(httputil.MaxBodySize(api.TranscribeBodyLimit)(http.HandlerFunc(apiHandlers.Transcribe))))
 	protected.Handle("POST /api/transcripts", h.transcribeLimiter.Middleware()(httputil.MaxBodySize(api.TranscriptBodyLimit)(http.HandlerFunc(apiHandlers.SaveTranscript))))
+	// The island latency-beacon intake (measure-first latency design):
+	// session-gated like every island endpoint, hook-grade flood budget,
+	// its own 2 KiB cap. Registered unconditionally; the handler 404s
+	// when the seam is off (metrics.island_beacon, default OFF).
+	protected.Handle("POST /api/metrics/latency", h.transcribeLimiter.Middleware()(httputil.MaxBodySize(api.BeaconBodyLimit)(http.HandlerFunc(apiHandlers.LatencyBeacon))))
 	protected.Handle("DELETE /api/transcripts", h.transcribeLimiter.Middleware()(http.HandlerFunc(apiHandlers.DeleteTranscript)))
 	// GET /api/csrf shares the flood budget: the endpoint hands out masked
 	// tokens anonymously, so a client must not churn it unbounded. One

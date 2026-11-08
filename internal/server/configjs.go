@@ -50,7 +50,6 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		// NUMBERS: the opt-in-off contract needs the key ABSENT, not
 		// zero.
 		DialCooldownSeconds *int `json:"dialCooldownSeconds,omitempty"`
-		// ASRLocality is the config-honest trust label ("local"|"remote"):
 		// the caption-strip footer chip names where caller audio goes.
 		ASRLocality string `json:"asrLocality,omitempty"`
 		// SIPCredential tells the island the login ORDER changes: the

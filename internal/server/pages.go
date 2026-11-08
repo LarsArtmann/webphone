@@ -68,6 +68,11 @@ type handlers struct {
 	// Request-duration aggregates for /metrics (the ONE recorder instance:
 	// the middleware writes it, the metrics handler reads it).
 	latency *latencyRecorder
+	// Island latency-beacon histograms for /metrics (the measure-first
+	// latency design; built ONLY when metrics.island_beacon is on — nil
+	// keeps the beacon route on a terse 404 and /metrics without the
+	// family, so the flag-off product stays byte-identical).
+	island *islandLatency
 }
 
 // page renders the full shell for the root URL.

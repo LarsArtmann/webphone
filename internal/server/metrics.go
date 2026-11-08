@@ -72,6 +72,11 @@ func (h *handlers) metrics(w http.ResponseWriter, r *http.Request) {
 	// Request-duration aggregates last: they describe the traffic that
 	// produced the counts above (aggregates only, no path labels).
 	h.latency.writePrometheus(&b)
+	// The island beacon family renders only when the seam is on AND a
+	// beacon has flowed (the recorder itself omits empty exposition).
+	if h.island != nil {
+		h.island.writePrometheus(&b)
+	}
 
 	w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
 	_, _ = w.Write([]byte(b.String())) //nolint:erraudit // best-effort body write; nothing left to do on failure

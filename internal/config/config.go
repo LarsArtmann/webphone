@@ -96,6 +96,16 @@ type Config struct {
 	// client over a local signal-cli daemon unix socket. Zero value =
 	// disabled.
 	Signal Signal `json:"signal" koanf:"signal"`
+	// Metrics carries the OPTIONAL island latency-beacon intake (the
+	// measure-first latency design,
+	// docs/planning/2026-11-08_latency-measure-first-design.md): while
+	// IslandBeacon is on, POST /api/metrics/latency accepts the island's
+	// fire-and-forget latency beacons and folds them into the
+	// webphone_island_latency_seconds{interval,leg} histograms on
+	// /metrics. Zero value = disabled: the route answers a terse 404,
+	// /config.js carries no metrics key, and the product stays
+	// byte-identical.
+	Metrics Metrics `json:"metrics" koanf:"metrics"`
 	// Push is the OPTIONAL push seam behind ring-while-closed: the
 	// registered-device registry rides readmodels unconditionally, but
 	// no transport is configured with a zero value — the device API
@@ -520,6 +530,21 @@ type Signal struct {
 
 // Enabled reports whether the signal lane is configured.
 func (s Signal) Enabled() bool { return s.SocketPath != "" }
+
+// Metrics configures the OPTIONAL island latency observability seam
+// (the measure-first latency design). Zero value = disabled: no beacon
+// route, no island latency histograms, byte-identical product.
+type Metrics struct {
+	// IslandBeacon enables POST /api/metrics/latency (env
+	// WEBPHONE_METRICS__ISLAND_BEACON or config metrics.island_beacon):
+	// the island's fire-and-forget beacons fold into the
+	// webphone_island_latency_seconds{interval,leg} histograms. The
+	// endpoint is instrumentation, not a control surface: a failed or
+	// malformed beacon is dropped SILENTLY (alerting on the instrument
+	// would be the alarm-cries-wolf class), so there is no error
+	// contract to configure.
+	IslandBeacon bool `json:"island_beacon" koanf:"island_beacon"`
+}
 
 // Enabled reports whether an ASR provider is configured. The openai
 // wire enables on URL alone; the google wire on a project id.
