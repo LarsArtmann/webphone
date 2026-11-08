@@ -160,12 +160,7 @@ func (s *AgentAudit) Recent(ctx context.Context, owner domain.Extension, limit i
 	return views, nil
 }
 
-// ExportAll reads every audit row (the journal importer's source;
-// WithLimit rides because the planner's default ceiling is 100).
+// ExportAll reads every audit row (the journal importer's source).
 func (s *AgentAudit) ExportAll(ctx context.Context) ([]AgentAuditView, error) {
-	views, err := s.reader.Scan(ctx, metaengine.WithLimit(1_000_000))
-	if err != nil {
-		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.agent_audit_recent", "export audit rows")
-	}
-	return views, nil
+	return exportAllViews(ctx, s.reader, "readmodels.agent_audit_recent", "export audit rows")
 }

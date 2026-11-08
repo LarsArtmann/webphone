@@ -184,9 +184,5 @@ func (s *PushDevices) ownerViews(ctx context.Context, owner domain.Extension) ([
 // ExportAll reads every registered device (the journal importer's
 // source; ring continuity is the whole point of the import).
 func (s *PushDevices) ExportAll(ctx context.Context) ([]PushDeviceView, error) {
-	views, err := s.reader.Scan(ctx, metaengine.WithLimit(1_000_000))
-	if err != nil {
-		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.push_list", "export push devices")
-	}
-	return views, nil
+	return exportAllViews(ctx, s.reader, "readmodels.push_list", "export push devices")
 }

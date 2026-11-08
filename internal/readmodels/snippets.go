@@ -192,11 +192,7 @@ func (s *Snippets) ownerViews(ctx context.Context, owner domain.Extension) ([]Sn
 // ExportAll reads every legacy snippet row — the journal importer's
 // ONE-TIME source (SUPERB Phase 3).
 func (s *Snippets) ExportAll(ctx context.Context) ([]SnippetView, error) {
-	views, err := s.reader.Scan(ctx, metaengine.WithLimit(1_000_000))
-	if err != nil {
-		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.snippet_list", "export snippets")
-	}
-	return views, nil
+	return exportAllViews(ctx, s.reader, "readmodels.snippet_list", "export snippets")
 }
 
 // Delete removes one snippet scoped to its owner. The id-to-slot
