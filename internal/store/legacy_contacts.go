@@ -21,6 +21,15 @@ import (
 // as complete (value carries the import date for operators).
 const FlagLegacyContactsImported = "legacy_contacts_imported"
 
+// FlagThreadsJournalImported marks the one-time threads journal import
+// (SUPERB A35) as complete. Until it is set, the metrics surface sums the
+// legacy thread/message counts with the journal counts (the seam writes
+// only the journal while pre-import history still lives in webphone.db);
+// after it, the journal holds every row and the legacy tables stop
+// contributing. This file section exists to be deleted when the
+// transitional window closes.
+const FlagThreadsJournalImported = "threads_journal_imported"
+
 // FlagPresent reports whether an app_flags row exists for key.
 func FlagPresent(ctx context.Context, db *sql.DB, key string) (bool, error) {
 	var one int

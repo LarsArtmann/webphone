@@ -141,19 +141,22 @@ func newTestServerWithConfig(
 	if tweakCfg != nil {
 		tweakCfg(&cfg)
 	}
-	// The notifier reads the capability from the SAME config the panels
-	// do (mirroring app.go): a test that declares a fax lane off must get
-	// SSE payloads that agree with the full render.
-	notifier := NewNotifier(hubs, threadGateForTest(t), engine.Faxes(), nil, false, views.FaxCapability{
-		Send:    cfg.Fax.SendEnabled(),
-		Receive: cfg.Fax.ReceiveEnabled(),
-	})
+	// ONE journal system per composition: the notifier and the messaging
+	// service must share the same gate — a second system would split-brain
+	// the SSE pushes away from the writes (the seam's read path).
 	threadSys, err := cqrs.NewThreadsSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = threadSys.Close() })
 	messages := cqrs.NewThreads(threadSys)
+	// The notifier reads the capability from the SAME config the panels
+	// do (mirroring app.go): a test that declares a fax lane off must get
+	// SSE payloads that agree with the full render.
+	notifier := NewNotifier(hubs, messages, engine.Faxes(), nil, false, views.FaxCapability{
+		Send:    cfg.Fax.SendEnabled(),
+		Receive: cfg.Fax.ReceiveEnabled(),
+	})
 	faxes := engine.Faxes()
 	transcripts := engine.Transcripts()
 	// SQLite session store (not the mem store): the /metrics aggregates

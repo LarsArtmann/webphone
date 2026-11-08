@@ -23,6 +23,32 @@ func (h *handlers) metrics(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "counts unavailable", http.StatusInternalServerError)
 		return
 	}
+	// Threads and messages live in the journal-backed projections since
+	// the A34 swap, but pre-import history still counts from the legacy
+	// tables: until the A35 importer stamps its marker the two stores hold
+	// DISJOINT row sets, so the honest total is the SUM. Once the marker
+	// flips the journal holds every row and the legacy tables would
+	// double-count — their contribution drops to zero by reading the same
+	// flag the importer sets.
+	imported, err := store.FlagPresent(r.Context(), h.deps.DB, store.FlagThreadsJournalImported)
+	if err != nil {
+		http.Error(w, "counts unavailable", http.StatusInternalServerError)
+		return
+	}
+	legacyThreads, legacyMessages := counts.Threads, counts.Messages
+	if imported {
+		legacyThreads, legacyMessages = 0, 0
+	}
+	threadCount, err := h.deps.Messages.CountThreads(r.Context())
+	if err != nil {
+		http.Error(w, "counts unavailable", http.StatusInternalServerError)
+		return
+	}
+	messageCount, err := h.deps.Messages.CountMessages(r.Context())
+	if err != nil {
+		http.Error(w, "counts unavailable", http.StatusInternalServerError)
+		return
+	}
 	// Contacts and faxes live in the metaengine read models since the
 	// T07/T11 swaps — the engine's native COUNT aggregate is their
 	// count source now (a dead SQL table would freeze or 500 the
@@ -50,8 +76,8 @@ func (h *handlers) metrics(w http.ResponseWriter, r *http.Request) {
 		fmt.Sprintf(`{version="%s"}`, DisplayVersion()))
 	writeMetric("webphone_uptime_seconds", "Seconds since process start.", "gauge",
 		int64(time.Since(processStart).Seconds()))
-	writeMetric("webphone_threads_total", "Stored conversation threads across all extensions.", "gauge", counts.Threads)
-	writeMetric("webphone_messages_total", "Stored messages (all directions) across all extensions.", "gauge", counts.Messages)
+	writeMetric("webphone_threads_total", "Stored conversation threads across all extensions.", "gauge", legacyThreads+threadCount)
+	writeMetric("webphone_messages_total", "Stored messages (all directions) across all extensions.", "gauge", legacyMessages+messageCount)
 	writeMetric("webphone_faxes_total", "Stored fax jobs across all extensions.", "gauge", faxCount)
 	writeMetric("webphone_contacts_total", "Stored personal contacts across all extensions.", "gauge", contactCount)
 	writeMetric("webphone_transcripts_total", "Stored live-call transcript segments across all extensions.", "gauge", transcriptCount)

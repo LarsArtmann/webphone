@@ -290,12 +290,13 @@ func TestAdminAttachmentAndFaxDocumentFallback(t *testing.T) {
 		t.Fatal(err)
 	}
 	attachmentID := domain.GenerateAttachmentID()
+	messageID := domain.GenerateMessageID()
 	if err := server.messages.AppendMessage(ctx, domain.Message{
-		ID: domain.GenerateMessageID(), ThreadID: threadID, Owner: neighbor, Remote: remote,
+		ID: messageID, ThreadID: threadID, Owner: neighbor, Remote: remote,
 		Direction: domain.DirectionInbound, Channel: domain.ChannelSMS,
 		Body: "with picture", CreatedAt: time.Now(),
 		Attachments: []domain.Attachment{{
-			ID: attachmentID, MessageID: domain.MessageID{}, Name: "pic.png",
+			ID: attachmentID, MessageID: messageID, Name: "pic.png",
 			MimeType: "image/png", SizeBytes: 8, Path: "0001/pic.png",
 		}},
 	}); err != nil {

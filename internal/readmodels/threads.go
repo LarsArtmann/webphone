@@ -95,6 +95,9 @@ type ThreadGate interface {
 	// CountMessages reports the total stored messages across all owners
 	// (the metrics surface's webphone_messages_total).
 	CountMessages(ctx context.Context) (int64, error)
+	// CountThreads reports the total stored threads across all owners
+	// (the metrics surface's webphone_threads_total).
+	CountThreads(ctx context.Context) (int64, error)
 	// DeleteThread is the retention/owner removal seam: it dispatches the
 	// tombstone (folds Remove every row), awaits visibility, then erases
 	// the stream's journal bytes (sys.TrimStream) — the sweep's one call.

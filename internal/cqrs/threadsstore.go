@@ -116,6 +116,7 @@ func threadProjections() []system.ProjectionDeclaration {
 		metaengine.FilterOnField[readmodels.MessageView]("owner", metaengine.FilterEq),
 		metaengine.FilterOnField[readmodels.MessageView]("provider_ref", metaengine.FilterEq),
 		metaengine.FilterOnField[readmodels.MessageView]("message_id", metaengine.FilterEq),
+		metaengine.FilterOnField[readmodels.MessageView]("thread_id", metaengine.FilterEq),
 		metaengine.SortOnField[readmodels.MessageView]("created_at", true),
 	)
 
@@ -207,7 +208,8 @@ func (s *Threads) key(owner domain.Extension, id domain.ThreadID) (string, error
 
 func (s *Threads) threadByID(owner domain.Extension, id domain.ThreadID) (readmodels.ThreadSummaryView, error) {
 	views, err := s.threads.Scan(context.Background(),
-		metaengine.WithFilter("owner", metaengine.FilterEq, owner.String()))
+		metaengine.WithFilter("owner", metaengine.FilterEq, owner.String()),
+		metaengine.WithLimit(0))
 	if err != nil {
 		return readmodels.ThreadSummaryView{}, errorfamily.WrapInfrastructuref(err, "cqrs.thread_lookup",
 			"lookup thread %s for %s", id, owner)
@@ -306,7 +308,8 @@ func (s *Threads) FindThread(
 	key := ThreadStreamKey(owner, remote.Network(), remote)
 	_ = now
 	views, err := s.threads.Scan(ctx,
-		metaengine.WithFilter("owner", metaengine.FilterEq, owner.String()))
+		metaengine.WithFilter("owner", metaengine.FilterEq, owner.String()),
+		metaengine.WithLimit(0))
 	if err != nil {
 		return domain.ThreadID{}, errorfamily.WrapInfrastructuref(err, "cqrs.thread_find", "find thread for %s/%s", owner, remote)
 	}
@@ -462,7 +465,8 @@ func sortSummaries(views []readmodels.ThreadSummaryView) {
 // base).
 func (s *Threads) ownerSummaries(ctx context.Context, owner domain.Extension) ([]readmodels.ThreadSummaryView, error) {
 	views, err := s.threads.Scan(ctx,
-		metaengine.WithFilter("owner", metaengine.FilterEq, owner.String()))
+		metaengine.WithFilter("owner", metaengine.FilterEq, owner.String()),
+		metaengine.WithLimit(0))
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.thread_list", "list threads for %s", owner)
 	}
@@ -547,21 +551,19 @@ func (s *Threads) SearchThreads(ctx context.Context, owner domain.Extension, nee
 }
 
 // threadMessages returns the owner's messages of one thread, newest
-// first (the raw engine order the callers page/reverse from).
+// first (the raw engine order the callers page/reverse from). The
+// thread_id filter is the narrow index; WithLimit(0) lifts the engine's
+// default 100-row ceiling (the paging contract needs every row).
 func (s *Threads) threadMessages(ctx context.Context, owner domain.Extension, threadID domain.ThreadID) ([]readmodels.MessageView, error) {
 	views, err := s.messages.Scan(ctx,
+		metaengine.WithFilter("thread_id", metaengine.FilterEq, threadID.String()),
 		metaengine.WithFilter("owner", metaengine.FilterEq, owner.String()),
-		metaengine.WithSort("created_at", true))
+		metaengine.WithSort("created_at", true),
+		metaengine.WithLimit(0))
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.thread_messages", "list messages of thread %s", threadID)
 	}
-	out := make([]readmodels.MessageView, 0, len(views))
-	for _, v := range views {
-		if v.ThreadID == threadID.String() {
-			out = append(out, v)
-		}
-	}
-	return out, nil
+	return views, nil
 }
 
 // ListMessages returns the messages of one thread, oldest first.
@@ -636,7 +638,8 @@ func (s *Threads) attachAttachments(ctx context.Context, msgs []domain.Message) 
 	rows := make([]readmodels.AttachmentView, 0)
 	for owner := range byOwner {
 		views, err := s.attachs.Scan(ctx,
-			metaengine.WithFilter("owner", metaengine.FilterEq, owner))
+			metaengine.WithFilter("owner", metaengine.FilterEq, owner),
+			metaengine.WithLimit(0))
 		if err != nil {
 			return errorfamily.WrapInfrastructuref(err, "cqrs.attachments_list", "list attachments of %s", owner)
 		}
@@ -666,6 +669,16 @@ func (s *Threads) CountMessages(ctx context.Context) (int64, error) {
 	n, err := engineCount(ctx, s.sys, messagesCollection)
 	if err != nil {
 		return 0, errorfamily.WrapInfrastructuref(err, "cqrs.message_count", "count messages")
+	}
+	return n, nil
+}
+
+// CountThreads reports the total stored threads via the engine's
+// native COUNT (the metrics surface's webphone_threads_total).
+func (s *Threads) CountThreads(ctx context.Context) (int64, error) {
+	n, err := engineCount(ctx, s.sys, threadsCollection)
+	if err != nil {
+		return 0, errorfamily.WrapInfrastructuref(err, "cqrs.thread_count", "count threads")
 	}
 	return n, nil
 }
