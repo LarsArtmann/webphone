@@ -356,18 +356,17 @@ a deliberate code change, regenerate:
 | config.turn_rest.ttl                         | Rejection                 | internal/config/config.go          |
 | config.unmarshal                             | Rejection                 | internal/config/config.go          |
 | config.webhook_secret_file                   | Rejection                 | internal/config/config.go          |
+| cqrs.command_build                           | Infrastructure            | internal/cqrs/dialwindows.go       |
 | cqrs.dial_attempt                            | Infrastructure            | internal/cqrs/dialwindows.go       |
-| cqrs.dial_command                            | Infrastructure            | internal/cqrs/dialwindows.go       |
 | cqrs.dial_fold                               | Corruption                | internal/cqrs/dial.go              |
 | cqrs.dial_import                             | Infrastructure, Rejection | internal/app/dialimport.go         |
 | cqrs.dial_override                           | Infrastructure            | internal/cqrs/dialwindows.go       |
 | cqrs.dial_register                           | Infrastructure            | internal/cqrs/dial.go              |
-| cqrs.dial_stream                             | Rejection                 | internal/cqrs/dialwindows.go       |
 | cqrs.dial_window_load                        | Infrastructure            | internal/cqrs/dialwindows.go       |
 | cqrs.dlq                                     | Infrastructure            | internal/app/cqrs.go               |
 | cqrs.engine                                  | Infrastructure            | internal/app/cqrs.go               |
 | cqrs.open                                    | Infrastructure            | internal/app/cqrs.go               |
-| cqrs.snippet_command                         | Infrastructure            | internal/cqrs/snippets.go          |
+| cqrs.owner_stream                            | Rejection                 | internal/cqrs/dialwindows.go       |
 | cqrs.snippet_delete                          | Infrastructure            | internal/cqrs/snippets.go          |
 | cqrs.snippet_fold                            | Corruption                | internal/cqrs/snippets.go          |
 | cqrs.snippet_list                            | Infrastructure            | internal/cqrs/snippets.go          |
@@ -375,7 +374,6 @@ a deliberate code change, regenerate:
 | cqrs.snippet_missing                         | Rejection                 | internal/cqrs/snippets.go          |
 | cqrs.snippet_register                        | Infrastructure            | internal/cqrs/snippets.go          |
 | cqrs.snippet_save                            | Infrastructure            | internal/cqrs/snippets.go          |
-| cqrs.snippet_stream                          | Rejection                 | internal/cqrs/snippets.go          |
 | cqrs.start                                   | Infrastructure            | internal/app/cqrs.go               |
 | cqrs.worker_failed                           | Infrastructure            | internal/app/cqrs.go               |
 | cqrs.worker_lag                              | Infrastructure            | internal/app/cqrs.go               |
