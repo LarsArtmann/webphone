@@ -25,6 +25,7 @@
       backupCases = import ./module-check-backup.nix { inherit lib pkgs base; };
       oauth2Cases = import ./module-check-oauth2.nix { inherit lib pkgs base; };
       crmCases = import ./module-check-crm.nix { inherit lib pkgs base; };
+      secretCases = import ./module-check-secrets.nix { inherit lib pkgs base; };
 
       # Every streaming-critical directive the DOM/SSE contract rides
       # on must be present in the generated extraConfig: the
@@ -204,7 +205,7 @@
     in
     {
       checks.webphone-module = pkgs.linkFarm "webphone-module-check" (
-        coreCases ++ csrfCases ++ backupCases ++ oauth2Cases ++ crmCases
+        coreCases ++ csrfCases ++ backupCases ++ oauth2Cases ++ crmCases ++ secretCases
       );
     };
 }
