@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Enroll tokens, agent-audit rows and registered push devices answer
+  from the event-sourced journal (SUPERB Phase 3 / A22–A24): per-stream
+  commands and decisions own the semantics — consume-once burns decide
+  inert no-ops for unknown/already-burned hashes (expiry classification
+  stays at the userauth door; the mint-side opportunistic sweep is now
+  burn commands on each expired token's own stream), audit rows land on
+  a per-owner append-only stream carrying actor (`user:<email>`) and
+  command-causation event metadata with the 500-row window trim inside
+  the same event batch, and the device registry's 8-per-owner cap and
+  rotation-replaces semantics live in the decision (the wake token
+  stays write-only; the LIST wire shape is unchanged). The
+  `readmodels.EnrollGate`/`AgentAuditGate`/`PushDeviceGate` interfaces
+  are the seams (engine-backed stores kept as import sources and
+  rollback lanes); agent-audit and push-device rows import once at boot
+  with the crash-safe marker discipline (enroll tokens are EXEMPT —
+  the 15-minute TTL re-mint doctrine). Passkey enrollment, Settings'
+  recent-actions and the ring lane behave identically.
 - The reply-snippet list answers from the event-sourced journal (SUPERB
   Phase 3 / A21): save/list/delete ride per-owner snippet streams, the
   replace-keeps-creation-time semantics and the 100-per-owner cap for

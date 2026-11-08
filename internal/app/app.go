@@ -441,7 +441,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			// The dial gate answers from the journal's decisions since the
 			// SUPERB Phase 2 swap (the engine-backed store stays as the
 			// import source and rollback lane behind the DialGate seam).
-			Dials:       do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).Dials(),
+			Dials: do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).Dials(),
 			// The agent-audit store answers from the journal since the
 			// SUPERB Phase 3 swap (the engine-backed store stays as the
 			// import source behind the AgentAuditGate seam).

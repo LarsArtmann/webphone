@@ -377,6 +377,12 @@ a deliberate code change, regenerate:
 | cqrs.enroll_sweep                            | Infrastructure            | internal/cqrs/enroll.go            |
 | cqrs.open                                    | Infrastructure            | internal/app/cqrs.go               |
 | cqrs.owner_stream                            | Rejection                 | internal/cqrs/dialwindows.go       |
+| cqrs.push_device_fold                        | Corruption                | internal/cqrs/pushdevices.go       |
+| cqrs.push_device_list                        | Infrastructure            | internal/cqrs/pushdevices.go       |
+| cqrs.push_device_list_full                   | Rejection                 | internal/cqrs/pushdevices.go       |
+| cqrs.push_device_register                    | Infrastructure            | internal/cqrs/pushdevices.go       |
+| cqrs.push_device_remove                      | Infrastructure            | internal/cqrs/pushdevices.go       |
+| cqrs.push_device_save                        | Infrastructure            | internal/cqrs/pushdevices.go       |
 | cqrs.snippet_delete                          | Infrastructure            | internal/cqrs/snippets.go          |
 | cqrs.snippet_fold                            | Corruption                | internal/cqrs/snippets.go          |
 | cqrs.snippet_list                            | Infrastructure            | internal/cqrs/snippets.go          |

@@ -217,6 +217,62 @@ func TestAgentAuditImportPortsLegacyRows(t *testing.T) {
 	}
 }
 
+// TestPushDevicesImportPortsLegacyRows pins the A24 continuity:
+// registered devices (the ring lane's wake addresses) survive the
+// journal swap with tokens and stamps, the marker latches, and a
+// second boot imports nothing new.
+func TestPushDevicesImportPortsLegacyRows(t *testing.T) {
+	cfg := testConfig(t, false)
+
+	legacyEngine, err := readmodels.Open(cfg.DataDir)
+	if err != nil {
+		t.Fatalf("open legacy engine: %v", err)
+	}
+	ctx := context.Background()
+	owner := mustExtension(t, "1001")
+	if err := legacyEngine.PushDevices().Upsert(ctx, owner, "phone-1", "ntfy", "topic-a"); err != nil {
+		t.Fatalf("seed legacy device: %v", err)
+	}
+	if err := legacyEngine.Shutdown(); err != nil {
+		t.Fatalf("close legacy engine: %v", err)
+	}
+
+	application, err := New(cfg, discardLogger())
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if err := application.Start(ctx); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	svc := mustResolveCqrs(t, application)
+
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		devices, err := svc.PushDevicesSvc().List(ctx, owner)
+		if err != nil {
+			t.Fatalf("List: %v", err)
+		}
+		if len(devices) == 1 {
+			if devices[0].DeviceID != "phone-1" || devices[0].Token != "topic-a" || devices[0].Transport != "ntfy" {
+				t.Fatalf("ported device drifted: %+v", devices[0])
+			}
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("device never reached the journal projection: got %d", len(devices))
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	done, err := store.FlagPresent(ctx, mustSQL(t, application), flagPushDevicesJournalImported)
+	if err != nil || !done {
+		t.Fatalf("import marker must latch after a full import: done=%v err=%v", done, err)
+	}
+	if err := application.Shutdown(); err != nil {
+		t.Fatalf("Shutdown: %v", err)
+	}
+}
+
 func mustExtension(t *testing.T, raw string) domain.Extension {
 	t.Helper()
 	ext, err := domain.ParseExtension(raw)

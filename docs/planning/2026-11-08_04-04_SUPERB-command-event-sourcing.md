@@ -512,3 +512,36 @@ Focused hours exclude train gates, releases, and CI waits. Eight release trains 
   (display granularity is milliseconds). If µs+ fidelity ever matters,
   the fix home is a `TimeUnixNano` mode upstream in go-codec, never
   webphone payloads.
+
+### Phase 3 as-built notes, second train (A22–A24, 2026-11-08)
+
+- **Zero-event decisions are legal dispatches** (empirically pinned by
+  `TestEnrollBurnInertForUnknown` + `TestPushDevicesRegisterListRemove`'s
+  second remove): a decider returning `(nil, nil)` commits nothing and
+  answers success — the inert no-op contract no longer needs a
+  pre-read or a rejection to express itself.
+- **A22 enroll:** one stream per token HASH (a SHA-256 hex is a valid
+  `id.ParseStreamID` key; there is no owner axis by construction); the
+  mint-side opportunistic sweep survives as burn commands on each
+  expired token's own stream, with a burned-set guard so projection
+  lag cannot make the sweep re-dispatch (burns are inert at the
+  decision anyway — the guard only saves no-op dispatches). Importer
+  EXEMPT per the re-mint doctrine; the userauth door now takes the
+  `readmodels.EnrollGate` interface (its tests keep seeding through the
+  engine store — still the same contract).
+- **A23 agent-audit:** audit events carry actor metadata via
+  `id.ParseActorID("user:<email>")` — a UserID itself must be a ULID,
+  so the email rides as the user-kind raw — plus
+  `event.WithCausation("agent_audit.append", cmd.ID())`. The 500-row
+  window trim moved INTO the decision (append + expunges in one event
+  batch; the state is already bounded, no scan loop). Seq stays
+  unix-nanos (int64 — exact under CBOR, unlike time.Time); ordering
+  within the stream is the event sequence per the ② ruling.
+- **A24 push-devices:** the 8-per-owner cap and rotation-replaces
+  semantics answer from the decision; `ErrListFull` passes through
+  dispatch verbatim (errors.Is). The ring hook (`hooks.Deps.Devices`)
+  and the device API (`api.Deps.Devices`) both took the
+  `readmodels.PushDeviceGate` interface.
+- **The readmodels collections stay declared** (agent_audit,
+  push_devices) per the A16 deferral — import source + rollback lane
+  until P7's retirement; only enroll_tokens has no importer (EXEMPT).
