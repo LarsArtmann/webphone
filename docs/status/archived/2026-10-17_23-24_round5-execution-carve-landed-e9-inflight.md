@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-08 (docs-health drain, portfolio-plan P2-1): gates clean (check-rows --strict + bare-rows green), citations repointed — the carve train landed and E9 was closed by the successor train (2026-10-18_02-23_round5-resumed-trains-landed-ci-red-clone-gate.md: "E9 batch 1 (F37–F42) 🟢 DONE"); the type-safety landings (Must* parsers, retention reject, gateway panics, ParsePhone boundary) are live at HEAD and recorded in AGENTS § Type-safety triage.
+
 # Round-5 execution status — carve train landed, data-model batch 1 in flight
 
 **Written:** 2026-10-17 23:24 CEST · **Session start:** ~21:00 · **Mandate:** "execute the WHOLE round-5 Pareto plan, do not stop"
@@ -31,14 +33,14 @@ Code landed (daemon commit `cf138ca`, 8 files); tests partially landed (`ce7318f
 
 | Item                                                                                                                                   | State                                                                      |
 | -------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| F37 Must* enum parsers (Direction/Channel/OutboundStatus incl. legal zero) in `domain/message.go`                                      | ✅ code + `domain/enums_test.go`                                           |
-| F38 fax leg: `Parse/MustFaxStatus/FaxDirection` in `domain/fax.go`; `legacy_faxes.go` refactored onto them (reject-on-error, one home) | ✅ code (corrupt-row panic test = `store/scan_panic_test.go` ✅)           |
-| F39 transcripts: `legacy_transcripts.go` onto `ParseDirection`; island boundary `SaveTranscript` uses `domain.ParseDirection`          | ✅ code                                                                    |
-| F40 `retention_days < 0` rejected in `config.validate` (`config.retention_days`)                                                       | ✅ code, ❌ test missing                                                   |
-| F41 gateway exhaustive dispatch: unknown mode PANICS (both constructors), Loopback fallback dropped                                    | ✅ code, ❌ test missing                                                   |
-| F42 `ParsePhone` at the transcript POST boundary (stores the SANITIZED remote; 400 on non-dialable)                                    | ✅ code, ❌ test missing (garbage-remote 400 + sanitized round-trip cases) |
-| **Build + test run after the final edits**                                                                                             | ❌ NOT DONE — last verified state predates the E9 edits                    |
-| `nix fmt` + gates + narrative commit                                                                                                   | ❌ NOT DONE                                                                |
+| ~~F37 Must* enum parsers (Direction/Channel/OutboundStatus incl. legal zero) in `domain/message.go`~~ done — LANDED: MustDirection (internal/domain/message.go:58, grep this session) + the enums test | ~~✅ code + `domain/enums_test.go`~~ |
+| ~~F38 fax leg: `Parse/MustFaxStatus/FaxDirection` in `domain/fax.go`; `legacy_faxes.go` refactored onto them (reject-on-error, one home)~~ done — LANDED: MustFaxStatus (internal/domain/fax.go:53, grep this session); scan-panic test exists | ~~✅ code (corrupt-row panic test = `store/scan_panic_test.go` ✅)~~ |
+| ~~F39 transcripts: `legacy_transcripts.go` onto `ParseDirection`; island boundary `SaveTranscript` uses `domain.ParseDirection`~~ done — LANDED (E9 closed by the successor train) | ~~✅ code~~ |
+| ~~F40 `retention_days < 0` rejected in `config.validate` (`config.retention_days`)~~ done — LANDED: config.go:851-852 + TestValidateRejectsNegativeRetentionDays (config_test.go:834, grep this session) | ~~✅ code, ❌ test missing~~ |
+| ~~F41 gateway exhaustive dispatch: unknown mode PANICS (both constructors), Loopback fallback dropped~~ done — LANDED: panics at internal/gateway/gateway.go:109,121 (grep this session) | ~~✅ code, ❌ test missing~~ |
+| ~~F42 `ParsePhone` at the transcript POST boundary (stores the SANITIZED remote; 400 on non-dialable)~~ done — LANDED: TestParsePhoneSanitizesLikeTheIsland (internal/domain/ids_test.go:41, grep this session) | ~~✅ code, ❌ test missing (garbage-remote 400 + sanitized round-trip cases)~~ |
+| ~~**Build + test run after the final edits**~~ done — EXECUTED by the successor train: "E9 batch 1 (F37–F42) 🟢 DONE — the 3 missing tests written… targeted suites green" (docs/status/2026-10-18_02-23_round5-resumed-trains-landed-ci-red-clone-gate.md, commits 519c108/6008c6b) | ~~❌ NOT DONE — last verified state predates the E9 edits~~ |
+| ~~`nix fmt` + gates + narrative commit~~ done — executed by the successor train (same E9 closure) | ~~❌ NOT DONE~~ |
 
 **The full buildflow gate I started (post-carve) was never harvested** — the background shell vanished before I read it; its verdict is unknown/lost (see d).
 
