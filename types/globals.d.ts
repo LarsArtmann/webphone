@@ -33,6 +33,8 @@ interface PBXConfig {
   asrLocality?: PBXASRLocality;
   sipCredential?: boolean;
   contacts?: PBXSharedContact[];
+  /** The island latency-beacon intake is on (POST /api/metrics/latency). */
+  metrics?: boolean;
 }
 
 interface Window {

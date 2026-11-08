@@ -110,6 +110,13 @@ interface IslandTranscriptSegment {
   text: string;
 }
 
+/**
+ * The beacon intake's closed interval vocabulary (the server's
+ * islandLatencyLegs is the ONE authority; a new interval adds there
+ * first).
+ */
+type IslandLatencyInterval = "dial_to_audio" | "asr_round_trip";
+
 /** One unanswered inbound INVITE in the ringing queue. */
 interface IslandIncomingSession {
   invitation: SipInvitation;

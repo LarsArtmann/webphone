@@ -49,6 +49,13 @@ export const asrLocality =
 // → draft SMS". Off by default — the post-call row carries only Close.
 export const agentEnabled = config.agent === true;
 
+// Optional island latency-beacon intake (the measure-first latency
+// design): when the server has metrics.island_beacon on, completed
+// dial/audio and ASR intervals POST one fire-and-forget beacon each to
+// /api/metrics/latency (latency.js). Off by default — the island never
+// beacons and stays byte-identical.
+export const metricsBeacon = config.metrics === true;
+
 export const sharedContacts = Array.isArray(config.contacts)
   ? config.contacts
   : [];

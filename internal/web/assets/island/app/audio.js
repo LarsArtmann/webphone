@@ -140,3 +140,73 @@ export function ringToneStop() {
   if (ringToneTimer) clearInterval(ringToneTimer);
   ringToneTimer = null;
 }
+
+// watchRemoteAudio is the audio-gap leg of the measure-first latency
+// design: it watches one call's remote stream through an AnalyserNode on
+// the shared graph and fires ONCE when the first non-silent sample
+// reaches the render path — the honest "the user hears audio" stamp,
+// distinct from "signaling established" (ringback vs instant-audio
+// deployments differ exactly there).
+//
+// Analysis-only: the source node is NOT connected to the destination, so
+// the watcher cannot double the element's output. Feature-detected and
+// never fatal — a browser without the WebAudio graph pieces (or a stub
+// in the specs) returns a no-op disposer and the leg simply never
+// stamps.
+/**
+ * @param {MediaStream} stream the call's remote stream
+ * @param {() => void} onFirstAudio called once, from a poll tick
+ * @returns {() => void} disposer — stop polling and detach the graph
+ */
+export function watchRemoteAudio(stream, onFirstAudio) {
+  let stopped = false;
+  let timer = null;
+  /** @type {AnalyserNode | null} */
+  let analyser = null;
+  /** @type {MediaStreamAudioSourceNode | null} */
+  let source = null;
+  try {
+    const audio = audioCtx();
+    if (typeof audio.createMediaStreamSource !== "function") return () => {};
+    source = audio.createMediaStreamSource(stream);
+    analyser = audio.createAnalyser();
+    // Small window, coarse resolution: we only need "is any sample away
+    // from the digital-silence midpoint", not spectral fidelity.
+    analyser.fftSize = 512;
+    source.connect(analyser);
+  } catch (err) {
+    console.warn(
+      `webphone: remote audio watcher unavailable: ${errorMessage(err)}`,
+    );
+    return () => {};
+  }
+  const buf = new Uint8Array(analyser.fftSize);
+  // 50 ms poll: the leg's resolution is bounded by the poll, and the
+  // noise floor (any byte deviating from the 128 midpoint by >4, i.e.
+  // roughly -31 dBFS) keeps silence from stamping.
+  timer = setInterval(() => {
+    if (stopped) return;
+    analyser.getByteTimeDomainData(buf);
+    for (let i = 0; i < buf.length; i++) {
+      const deviation = Math.abs(buf[i] - 128);
+      if (deviation > 4) {
+        stopped = true;
+        if (timer) clearInterval(timer);
+        timer = null;
+        onFirstAudio();
+        return;
+      }
+    }
+  }, 50);
+  return () => {
+    stopped = true;
+    if (timer) clearInterval(timer);
+    timer = null;
+    try {
+      source.disconnect();
+      analyser.disconnect();
+    } catch {
+      // A context that closed under us has already detached the graph.
+    }
+  };
+}
