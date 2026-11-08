@@ -521,6 +521,12 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time call-notes import
 	importCallReviewsIntoJournal(context.Background(), sqlite, engine.Reviews(),
 		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time call-reviews import
+	// The core import runs last and BEFORE any dispatch can race it: the
+	// synthetic thread facts land, the projection worker drains them at
+	// Start, and the messages gate opens against the full history (the
+	// metrics surface reads the same marker this importer stamps).
+	importThreadsIntoJournal(context.Background(), sqlite,
+		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time core import
 	if cfg.Auth.Passkey.Enabled() {
 		if _, err := do.InvokeNamed[*userauth.Service](injector, "userauth"); err != nil {
 			return nil, wrapf("open passkey auth: %w", err)
