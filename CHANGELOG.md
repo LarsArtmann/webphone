@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `paperless.token_file` (2026-11-07): the inbound-fax archive's bearer can now
+  come from a runtime file via the same systemd `LoadCredential` lane as
+  `crm.token_file`, so the token never has to sit in the config JSON. The field
+  previously did not exist — a deployment setting it got the key silently
+  dropped and a misleading "token is set without paperless.url" boot failure.
 - Documentation health is now enforced, not remembered (2026-11-07): the
   docs gates are a pinned flake package present in the devShell CI enters and
   run as their own CI step, so a docs drift reds the build instead of waiting

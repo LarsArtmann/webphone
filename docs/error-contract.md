@@ -281,6 +281,8 @@ a deliberate code change, regenerate:
 | config.matrix.owner                          | Rejection                 | internal/config/config.go          |
 | config.matrix.user_id                        | Rejection                 | internal/config/config.go          |
 | config.paperless.token                       | Rejection                 | internal/config/config.go          |
+| config.paperless.token_file                  | Rejection                 | internal/config/config.go          |
+| config.paperless.token_sources               | Rejection                 | internal/config/config.go          |
 | config.paperless.url                         | Rejection                 | internal/config/config.go          |
 | config.push.fcm                              | Rejection                 | internal/push/fcm.go               |
 | config.push.ntfy.url                         | Rejection                 | internal/config/config.go          |
