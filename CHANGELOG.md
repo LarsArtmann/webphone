@@ -9,12 +9,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.10.0] - 2026-11-08
 
-One catch-up release carrying SUPERB Phases 2-4 (dial windows, small
-aggregates, medium aggregates) plus the island latency beacon — per-phase
-releases resume with Phase 5 per D4.
+One catch-up release carrying SUPERB Phases 2-5 (dial windows, small
+aggregates, medium aggregates, THE conversation core) plus the island
+latency beacon. Per D4 as amended by this train: releases cut at
+ship-visible boundaries, and the core swap ships COMPLETE — aggregate,
+swap, importer and retention in one releasable story, never a seam
+that undercounts its own history.
 
 ### Changed
 
+- **The conversation core is event-sourced** (SUPERB Phase 5 / A31-A38):
+  threads, messages and attachments answer from per-thread journal
+  streams in system.db. `domain.AppendToThread` and the delivery
+  machine stay the ONE legality homes (the decider consumes them
+  verbatim; `deliveryMoves` judges at the decision), duplicate message
+  ids are Rejections by decision (importer retries and webhook replays
+  converge instead of double-appending), and the server's seam is
+  `readmodels.ThreadGate` (the SQL store kept as import source and
+  rollback lane). A one-time importer ports webphone.db history with
+  the legacy list's own ordering and stamps (every fact carries the
+  FINAL legacy summary image — read receipts and organization flags
+  are row state the message sequence cannot re-derive), pinned by a
+  dual-run row-by-row diff against the legacy lane; message-less
+  legacy threads drop by design (no thread exists until a message
+  lands). Retention journal-side: expired threads tombstone out of the
+  views AND their journal bytes trim to zero (blob paths return for
+  unlinking — only the swept thread's own), pinned by the deletion gate
+  (journal empty, views gone, fresh replay rebuilds without the
+  content); `webphone_threads_total`/`webphone_messages_total` sum the
+  legacy tables with the journal until the importer's marker flips,
+  then the journal is the one count. D8 snapshots tuned from the A38
+  perf data (EveryNEvents 200 + read-pressure 50): measured — append
+  dispatch ~0.22 ms/op on a fresh thread (budget < 2 ms), the awaited
+  send lane ~0.84 ms/op steady-state on a 1400-event single-thread
+  grind, and the thread-list read ~0.11-0.14 ms vs the legacy SQL's
+  ~0.18-0.20 ms (the projection beats the query it replaced).
 - The go-cqrs-lite pins ride the journal-trim + cap-lock-order upstream
 - wave (metaengine v4.22.0 → v4.23.0, metaengine/sqliteengine v4.7.0 →
 - v4.8.0, system v4.17.0 → v4.18.0): the EnforceCap fold-lock/connection

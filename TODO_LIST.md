@@ -828,9 +828,14 @@ webphone is a full federated source of catalog.home.lan: the four seam events
 (documented AS change notifications, NO commands declared — nothing fabricates a
 CQRS write model), the `catalog` CLI subcommand, export tests, and
 `.eventcatalog-hub.json` (the 2026-10-19 inventory-only record is superseded).
-`46cc6db` is on origin/main. Remaining leg is CROSS-REPO: the eventcatalog-hub
-re-pin + build (the hub CI clones webphone@main and runs the export; owned by
-the hub/stack session, ritual = webphone-push first, stack re-pin after).
+`46cc6db` is on origin/main. **The cross-repo leg EXECUTED 2026-11-08 (P4-10):**
+the hub rides `branch: main` (no sha pin to bump — the "re-pin" is the mirror
++ build), the Forgejo webphone mirror was force-synced to the GitHub tip
+(`mirror-sync-sources.sh webphone` → ✓ at tip), and the hub build was
+dispatched after repairing the CI host's runner state ownership (a NixOS
+switch had renumbered the runner's DynamicUser; the durable-fix row lives in
+the hub's TODO_LIST). The hub build's green verdict + the site freshness are
+the hub-side acceptance; the hourly sync pulls it to catalog.home.lan.
 
 ### Wire contracts (2026-10-24 — SHIPPED; three open rows)
 

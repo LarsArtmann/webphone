@@ -599,3 +599,61 @@ Focused hours exclude train gates, releases, and CI waits. Eight release trains 
   sqliteengine v4.8.0 / system v4.18.0): the EnforceCap deadlock fix
   (#123) and the `TrimStream`/`TrimJournalBefore` primitives A36's
   deletion gate requires (#118, closed shipped).
+
+### Phase-5 as-built (2026-11-08, A31–A38)
+
+- **A32/A33 (aggregate + projections):** landed as designed;
+  `TestThreadPagesBeyondTheEngineCeiling` added post-hire — the
+  metaengine Scan default 100-row ceiling silently truncated
+  `threadMessages` past 100 messages and collapsed the load-older
+  affordance (the AGENTS.md "WithLimit is load-bearing" warning, now
+  battery-pinned at 205 rows with a declared `thread_id` filter as the
+  narrow index).
+- **A34 (swap) — two test-composition defects found by the parity
+  pins, both fixed:** the server test boot minted TWO journal systems
+  (the notifier read one, the service wrote the other — SSE pushed
+  empty lists; one system per composition now), and the admin
+  attachment seed carried a zero `MessageID` (an illegal domain state
+  that panicked the strict row parser — a real message id seeds now).
+- **A35 (importer) — one fidelity ruling worth keeping:** every
+  imported `MessageAppended` fact carries the FINAL legacy summary
+  image, not a stepwise-derived one. Unread counts and the three
+  organization flags are legacy ROW state (mark-read and flag toggles
+  were never events in the old world), so the legacy row is the only
+  honest source; full-image folds + last-write-wins make the final
+  projection row the legacy row exactly, and a replay rebuilds the
+  same state from the same images. Message-less legacy threads (the
+  old empty-row insert) drop by design. The dual-run diff pins:
+  summaries/flags/unread, transcript order under deliberate
+  rowid≠created_at insertion order, attachment paths, provider-ref
+  lookup, owner scoping, marker latch, byte-stable second boot, and a
+  live append continuing an imported stream.
+- **A36 (retention):** `Threads.SweepBefore` is the journal leg (the
+  `Faxes.SweepBefore` shape) — expired threads tombstone → await →
+  `TrimStream`; attachment blob paths return for unlinking filtered to
+  the SWEPT thread's messages only (the first draft collected the
+  owner's whole attachment set — a sibling thread's blobs would have
+  been unlinked; the deletion-gate test now pins the filter). The
+  legacy SQL sweep stays in the pass (the hand ladder is import-only
+  history swept to empty, retired at A45).
+- **A38 (perf, this host, -benchtime=1s -count=3):** fresh-thread
+  append dispatch (the budget's shape) **~0.22 ms/op** — budget
+  p95 < 2 ms met with ~9× headroom (P2 dial baseline: 0.81 ms). The
+  awaited send lane on a single 1400-event thread ground at ~3.3 ms/op
+  under the shipped D8 value (EveryNEvents 500): state restore, not
+  the await, dominated (the live subscriber pushes applies in
+  ~microseconds — bare and awaited dispatch measured identical).
+  Resolved by D8's documented draft values, now wired:
+  `EveryNEvents(200)` + `NewReadPressure(50, WithInnerStrategy(every))`
+  → the same grind measures **~0.84 ms/op** (4× better, under budget
+  even on the pathological shape). Thread-list read **~0.11–0.14 ms**
+  vs the legacy SQL twin's ~0.18–0.20 ms — the projection BEATS the
+  indexed query it replaced (engine scan over 50 threads). No
+  remediation attempts were needed; the §4.9 abort criteria never
+  armed.
+- **D4 cadence amendment (owner burst ratified by ship shape):**
+  2.10.0 carries P2–P5 COMPLETE — a core swap ships its importer and
+  retention in the same release or not at all (a seam that undercounts
+  its own history is not a ship-visible boundary). P6 (faxes) and
+  P7 (unification + closeout) each cut their own release per the
+  original D4.

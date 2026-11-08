@@ -49,11 +49,15 @@ func BenchmarkThreadAppendBareDispatch(b *testing.B) {
 	defer func() { _ = sys.Close() }()
 	ctx := context.Background()
 	owner := mustExt(t, "100")
-	remote := domain.MustParseAddress(domain.NetworkSMS, "+4917000001")
-	key := ThreadStreamKey(owner, remote.Network(), remote)
 
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
+		// A fresh stream per iteration: the budget's "single event"
+		// shape (the P2 dial precedent — tiny state, the decision and
+		// the journal append isolated). The one-stream-to-1400-events
+		// grind is BenchmarkThreadAppendDispatch's job.
+		remote := domain.MustParseAddress(domain.NetworkSMS, fmt.Sprintf("+4917%07d", i))
+		key := ThreadStreamKey(owner, remote.Network(), remote)
 		msg := domain.NewInboundMessage(domain.GenerateMessageID(), domain.ThreadID{}, owner, remote,
 			fmt.Sprintf("bench %d", i), 0, time.Now())
 		msg.ThreadID = threadIDForBench(key)

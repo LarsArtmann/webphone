@@ -469,19 +469,31 @@ func decideDeleteThread(s threadState, ver event.Version, cmd DeleteThread) ([]e
 	return evts, nil
 }
 
-// snapshotEveryNEvents is D8's conservative start: a phone thread is
+// D8's snapshot strategy for the thread aggregate: a phone thread is
 // hundreds of events, not millions, and the state carries the full id
-// lists — snapshots bound the fold cost; A38's perf data tunes the number.
-const snapshotEveryNEvents = 500
+// lists — snapshots bound the fold cost. The A38 perf data resolved the
+// numbers: 200 bounds the tail replay of long-lived threads, and
+// hot-read streams snapshot sooner via ReadPressure (threshold 50) — a
+// thread dispatched into daily rides BOTH edges.
+const (
+	snapshotEveryNEvents          = 200
+	snapshotReadPressureThreshold = 50
+)
 
-// threadSnapshotStrategy is the resolved D8 strategy (EveryNEvents only
-// rejects non-positive N, a compile-adjacent miswire — panic loudly).
+// threadSnapshotStrategy is the resolved D8 strategy: EveryNEvents OR
+// read-pressure, whichever fires first (miswires — non-positive N or a
+// bad threshold — panic loudly at boot).
 var threadSnapshotStrategy = func() snapshot.SnapshotStrategy {
-	strat, err := snapshot.EveryNEvents(snapshotEveryNEvents)
+	every, err := snapshot.EveryNEvents(snapshotEveryNEvents)
 	if err != nil {
 		panic(fmt.Sprintf("cqrs: thread snapshot strategy: %v", err))
 	}
-	return strat
+	rp, err := snapshot.NewReadPressure(snapshotReadPressureThreshold,
+		snapshot.WithInnerStrategy(every))
+	if err != nil {
+		panic(fmt.Sprintf("cqrs: thread snapshot strategy: %v", err))
+	}
+	return rp
 }()
 
 // RegisterThreads wires the thread aggregate into a System (D8: the
