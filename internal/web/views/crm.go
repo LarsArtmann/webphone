@@ -2,6 +2,8 @@ package views
 
 import (
 	"fmt"
+	"net/url"
+	"strings"
 	"time"
 
 	"github.com/dustin/go-humanize"
@@ -69,6 +71,13 @@ func crmProfileURL(number string, contacts CRMContacts) string {
 	}
 
 	return contact.URL
+}
+
+// crmCreateURLFor substitutes the {phone} placeholder in the deployment's
+// create-form template with the caller's dialable number, query-escaped
+// (the leading "+" is a query-param hazard, not decoration).
+func crmCreateURLFor(number, createURL string) string {
+	return strings.Replace(createURL, "{phone}", url.QueryEscape(number), 1)
 }
 
 // dealValue renders a deal's size without locale games: thousands counts

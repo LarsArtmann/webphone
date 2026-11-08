@@ -267,7 +267,7 @@ templ ThreadHead(props ThreadViewProps) {
 			hx-swap="innerHTML show:window:top"
 			hx-push-url="/messages"
 		>← All messages</a>
-		<h2>{ networkLabel(props.Thread.Remote.Network()) }@crmNameLink(props.Thread.Remote.String(), props.CRM, props.Lang)</h2>
+		<h2>{ networkLabel(props.Thread.Remote.Network()) }@crmNameLink(props.Thread.Remote.String(), props.CRM, props.Lang)@crmCreateLink(props.Thread.Remote.String(), props.CRMCreateURL, props.CRM, props.Lang)</h2>
 		if props.Thread.Archived {
 			@headFlagButton(props.Thread.ID, "archive", T(props.Lang, "threads.unarchive"), "", icons.ArchiveBox, 0)
 		} else {
@@ -471,10 +471,11 @@ type ThreadViewProps struct {
 	// CRM carries the optional CRM integration's answers for the numbers
 	// this panel renders (name + deep link); an absent number renders raw.
 	CRM CRMContacts
-	// ASR gates the audio-attachment transcribe buttons on the
-	// speech-to-text seam: with no provider configured the affordance
-	// must not exist.
-	ASR bool
+	// CRMCreateURL is the optional new-contact form template (config
+	// crm.create_url): an unknown caller's head renders the add-to-CRM
+	// affordance from it; empty renders nothing, which is the zero-config
+	// product.
+	CRMCreateURL string
 	// TextAgent gates the reply composer's AI-draft button on the
 	// supervised-agent seam (same rule as ASR: no client, no button).
 	TextAgent bool

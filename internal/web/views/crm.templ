@@ -25,6 +25,26 @@ templ crmNameLink(number string, contacts CRMContacts, lang Lang) {
 	}
 }
 
+// crmCreateLink renders the new-contact affordance for an UNKNOWN number:
+// the deployment's create-form template with {phone} substituted. Empty
+// template renders nothing (the byte-identical zero-config product), a
+// MATCHED number renders nothing (its profile link is the affordance
+// there), and the CRM still owns the record — this opens the CRM's OWN
+// form in a NEW TAB (the SIP island never unloads), which keeps the
+// browser→CRM surface at exactly the operator's own navigation.
+templ crmCreateLink(number string, createURL string, contacts CRMContacts, lang Lang) {
+	if createURL != "" && crmProfileURL(number, contacts) == "" {
+		<a
+			class="wp-crm-create"
+			href={ crmCreateURLFor(number, createURL) }
+			target="_blank"
+			rel="noopener noreferrer"
+			title={ T(lang, "crm.create") }
+			aria-label={ displayName(number, contacts) + ", " + T(lang, "crm.create") }
+		>{ T(lang, "crm.create") }</a>
+	}
+}
+
 // remoteLabel is the ONE home of a row's remote-party label: the resolved
 // name, linked into the CRM when a template is configured, in the row's
 // canonical strong. Fax rows and History's CDR rows both render exactly this,
