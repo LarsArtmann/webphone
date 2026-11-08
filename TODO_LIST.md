@@ -71,6 +71,11 @@ against the tree at harvest time):
 - [ ] Radius/spacing token adoption (F17): tokens exist
       (`--radius-sm/--radius/--radius-lg` app.css:38-40) but hardcoded
       radii remain across panels — sweep the stragglers.
+- [ ] Phase-4 release preflight (harvested 2026-11-08 from the 17-22
+      SUPERB report §f-2 residue): the KVM/local-only flake legs —
+      `nix build .#checks.x86_64-linux.webphone-module`, the
+      `webphone-backup` + `webphone-backup-drill` VM tests — before the
+      SUPERB release train; CI cannot exercise them.
 
 ### 2026-11-07 Datastar deep-dive residue (one home: the report)
 
