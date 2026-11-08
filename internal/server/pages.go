@@ -40,6 +40,9 @@ type handlers struct {
 	// Line switches (D1): session-gated + CSRF-gated, but PBX-bound — a
 	// tight bucket keeps a looping client off the directory.
 	switchLimiter *httputil.KeyedRateLimiter
+	// CSP violation reports: session-free intake (the browser delivers
+	// without credentials), so the bucket is the only flood fence.
+	cspLimiter *httputil.KeyedRateLimiter
 	// loginPageHandler is the library-owned passkey login page
 	// (cqrs-htmx/loginpage), built ONLY when the identity layer is wired;
 	// nil keeps /login on the styled 404 (mode off, or the page build

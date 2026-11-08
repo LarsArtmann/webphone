@@ -55,7 +55,8 @@ import (
 const contentSecurityPolicy = "default-src 'self'; " +
 	"script-src 'self'; style-src 'self'; " +
 	"img-src 'self' data:; media-src 'self'; connect-src 'self' wss:; " +
-	"frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+	"frame-ancestors 'none'; base-uri 'self'; form-action 'self'; " +
+	"report-uri /csp-report; report-to csp-endpoint"
 
 // Rate limits for the two flood-sensitive surfaces, per client IP:
 // login attempts (password guessing) and inbound webhooks (provider
@@ -76,6 +77,10 @@ const (
 	// client from hammering the directory, not an attacker.
 	switchLimit = 6
 	switchBurst = 3
+	// CSP violation reports: a tight bucket (real pages fire one report
+	// per violation; a hostile flood must not own the journal).
+	cspLimit = 30
+	cspBurst = 10
 )
 
 // securityHeadersConfig is the single source for the security-header
@@ -304,6 +309,7 @@ func New(deps Deps) http.Handler {
 		csrfLimiter:       newKeyedRateLimiter(hookLimit, hookBurst),
 		contactsLimiter:   newKeyedRateLimiter(contactsLimit, contactsBurst),
 		switchLimiter:     newKeyedRateLimiter(switchLimit, switchBurst),
+		cspLimiter:        newKeyedRateLimiter(cspLimit, cspBurst),
 		transcribeLimiter: newKeyedRateLimiter(hookLimit, hookBurst),
 		passkeyLimiter:    newKeyedRateLimiter(hookLimit, hookBurst),
 		loginPageHandler:  loginPage,
@@ -705,6 +711,11 @@ func New(deps Deps) http.Handler {
 	open.Handle("GET /version", versionHandler())
 	open.Handle("GET /openapi.json", conditionalGET(http.HandlerFunc(openapiHandler)))
 	open.Handle("/hooks/", h.hookLimiter.Middleware()(hooksHandlers.SecretGate(http.HandlerFunc(hooksHandlers.Webhooks))))
+	// The CSP violation-report intake (session-free — the browser delivers
+	// without credentials; the bucket + the 4 KiB cap are the fences). One
+	// greppable journal line per accepted report makes a live XSS-class
+	// event observable instead of silent.
+	open.Handle("POST /csp-report", h.cspLimiter.Middleware()(http.HandlerFunc(h.cspReport)))
 	// The internal directory endpoint (the stack's FS directory bridge is
 	// the only consumer): outside CSRF/session (webhooks-class — secret
 	// gated), hook-grade flood budget, loopback-only posture in-handler.
@@ -730,6 +741,7 @@ func New(deps Deps) http.Handler {
 	root.Handle("/version", open)
 	root.Handle("/openapi.json", open)
 	root.Handle("/hooks/", open)
+	root.Handle("/csp-report", open)
 	root.Handle("/internal/directory/", open)
 	root.Handle("/internal/flightrecorder", open)
 	root.Handle("/favicon.svg", open)
@@ -768,6 +780,7 @@ func New(deps Deps) http.Handler {
 		cqrshtmx.RequestLoggingSlog(slog.Default()),
 		servertiming.ServerTimingMiddlewareWhen(func(*http.Request) bool { return timingEnabled }),
 		security,
+		reportingEndpointsMiddleware,
 		cqrshtmx.RecoveryMiddleware,
 	)
 	return cqrshtmx.Chain(middlewares...)(root)
