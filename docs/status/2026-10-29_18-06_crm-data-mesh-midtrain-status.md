@@ -133,8 +133,8 @@ bricks stacked beside it.
 
 | # | Task                                                                                    | Min |
 | - | --------------------------------------------------------------------------------------- | --- |
-| 1 | Fix `panels_test.go:562` → assert through `props.CRM` instead of `TranscriptGroup.Name` | 5   |
-| 2 | `go vet ./...` + `go test ./...` to green                                               | 20  |
+| ~~1~~ | ~~Fix `panels_test.go:562` → assert through `props.CRM` instead of `TranscriptGroup.Name`~~ — done in the same train: the test asserts through the panel's ONE directory map (panels_test.go:557, "CRM name arrives through the panel's ONE directory map (props.CRM), never" the group name) | 5   |
+| ~~2~~ | ~~`go vet ./...` + `go test ./...` to green~~ — done same-train and standing green since (full suite green 2026-11-08, this session's pre-push battery) | 20  |
 
 **Tier 1 — make the claims true (~4 h)**
 
@@ -181,7 +181,7 @@ bricks stacked beside it.
 | #      | Task                                                                                                                         | Min    |
 | ------ | ---------------------------------------------------------------------------------------------------------------------------- | ------ |
 | 28     | `templ generate` final + `nix fmt`                                                                                           | 10     |
-| 29     | `go test -count=1 ./...` full suite                                                                                          | 25     |
+| ~~29~~     | ~~`go test -count=1 ./...` full suite~~ — done same-train; standing green (latest: CI run 42500447327 `go test -race` green, 2026-11-08)                          | 25     |
 | 30     | `tsc -p . --noEmit` + island `node --test`                                                                                   | 20     |
 | 31     | `nix build --no-link .#checks.x86_64-linux.{island-js,island-lint,island-typecheck,treefmt,contracts-fresh}`                 | 30     |
 | ~~32~~ | ~~`buildflow` (full, `BUILDFLOW_NO_RESULT_CACHE=1`)~~ done — routine gate run — recorded in buildflow history for this train | ~~60~~ |

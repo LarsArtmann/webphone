@@ -166,7 +166,7 @@ buildflow's race step — details in §d.
     nothing; stale_runs=3 — the AGENTS.md ritual).
 12. Investigate `nix-build-verify` 86% failure rate (cache/OOM class —
     `nix flake check` builds the same attribute green).
-13. Investigate `nix-hash-fix` 90% failure rate (same file).
+13. ~~Investigate `nix-hash-fix` 90% failure rate (same file).~~ done — the investigation concluded 2026-10-15 with the UNSKIPPED ruling: nix-hash-fix trips only post-bump, so a red step IS the stale-pin signal (the rationale lives in .buildflow.yml and the AGENTS BuildFlow paragraph); no further failure-rate chase is owed.
 14. `buildflow timings --regressions` review (9 steps slower; machine
     load vs real regressions).
 15. lychee excludes for `docs/{architecture-understanding,research}/archived`

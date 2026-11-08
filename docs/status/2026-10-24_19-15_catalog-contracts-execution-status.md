@@ -188,7 +188,7 @@ lanes: `internal/server`, `internal/server/api`, `internal/server/hooks`,
 11. M2/F6: headless render check of the HTML report.
 12. M2/F7: re-run the report's verify commands with the addendum note.
 13. M11/F48: freshness script (regen + `git diff --exit-code`).
-14. M11/F49: flake check leg — resolve treefmt-vs-generated-YAML first.
+14. ~~M11/F49: flake check leg — resolve treefmt-vs-generated-YAML first.~~ done — the generated-bytes-vs-formatter class resolved 2026-11-08: the openapi golden test now pins the document bytes and tolerates dprint's single EOF newline (CHANGELOG [Unreleased] Fixed), and the CI format leg has been green since.
 15. M12/F50–51: HARVEST (f)-list into TODO_LIST (docs-health mode).
 16. M13/F52–56: metaengine v4.20.0 delta read + bump-train note.
 17. ~~M14/F57–58: docs/research/README.md index (8 reports).~~ done — landed — docs/research/README.md exists and indexes the reports

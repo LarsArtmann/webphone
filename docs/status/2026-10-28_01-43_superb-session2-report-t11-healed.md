@@ -102,7 +102,7 @@ download-path anomaly.
 8. Verify the daemon's 8 unpushed commits' contents; CI on them; push-bar if >60min.
 9. T12: readmodels `call_reviews` slot (data-model first: state enum, draft dims,
    summary/points/score as optional-empty pending T15, upsert-keep, backup docs).
-10. T13: History render (pending/failed/present) under the transcript.
+10. ~~T13: History render (pending/failed/present) under the transcript.~~ done — LANDED with the automatic review artifact (issue #8 train): History renders present (draft + confidence)/pending/failed under the transcript plus the `wp-review-unconfigured` chip when the seam is off (AGENTS § Post-call agent chain, issue-#8 bullet).
 11. T14: "review not configured" chip + i18n ×2.
 12. T15: model-routing decision doc (textagent seam vs dedicated client, local default).
 13. T16: #7 cooldown read-model (opt-in gate, (Owner, remote) window, dial-path check).
@@ -135,7 +135,7 @@ download-path anomaly.
 38. Island UX: the drafts-changed SSE should flip the queued button on the ended card — wire if
     not covered (T13-adjacent).
 39. Settings-probe latency (2s worst case per render) — measure; cache briefly if visible.
-40. Smoke script: add the review route if it enumerates surfaces.
+40. ~~Smoke script: add the review route if it enumerates surfaces.~~ adjudicated NOT-needed — the condition's premise fails: the review route is owner-scoped (another owner's call id is the same 404), idempotent via the shared CallsIdem key, and enumerates nothing (the GET reads one slot; absent = empty body), so there is no enumeration surface for the smoke to fence.
 41. T12 backup/restore drill coverage for `call_reviews` (call_notes precedent).
 42. Confirm `TestServedPageHoldsTheDomContract` after T3/T7/T11 markup (new ids or their
     documented absence).

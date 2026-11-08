@@ -320,8 +320,8 @@ missing CRM shot pass unnoticed).
 status doc today; a 20-line script would make it a gate).
 
 **UI completeness**
-13. Voicemail `vmCaller`: split name vs number, then link the name.
-14. Drafts panel `contactLabel`: link it.
+13. ~~Voicemail `vmCaller`: split name vs number, then link the name.~~ done — LANDED: the row renders the LINKED CRM name through `crmNameLink` when `vmCRMName` resolves (voicemail.templ:93) and the vmCaller ladder (name + number split) otherwise.
+14. ~~Drafts panel `contactLabel`: link it.~~ done — LANDED: `crmDraftContact` renders the CRM-served name LINKED through `crmNameLink` with the dialable number beside it (crm.templ), the contactLabel ladder otherwise; zero CRM config stays byte-identical.
 15. "Add to CRM" affordance for misses (link into the CRM create form; still
 no browser→CRM traffic).
 16. Show the CRM link on the History transcript SUMMARY or explicitly document

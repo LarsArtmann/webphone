@@ -195,7 +195,7 @@ obligation scoping is done; the run itself rides the relock).
 still parked).
 
 **Repo hygiene inherited from this run:**
-32. Add a gate-report line to AGENTS (name what ran, not just green).
+32. ~~Add a gate-report line to AGENTS (name what ran, not just green).~~ done-in-practice — the standing convention landed: status reports carry run ids + the snapshot-rot header (AGENTS § Conventions), gate evidence lines name the runs (TODO_LIST's UX-fix-train rows: "train-start buildflow 74/74 run 20261107-032044..."), and AGENTS § Release runbook owns "verify end states with git ls-remote + the CI verdict".
 33. Add "check-ignore before sibling-repo edits" to the concurrent/
 sibling-repo guidance.
 34. Consider `.gitignore`-aware linting of docs edits (a tiny script
