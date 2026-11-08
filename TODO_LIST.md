@@ -258,9 +258,10 @@ Deferred engineering findings (each verified at HEAD 2026-11-05; none urgent):
    contacts import, snippets, flags are unlimited — only the `/api/*` lanes are
    bucketed. Decide: bucket them or document the session gate as the bound.
 5. **`server.Deps` grows a field per read model** (seven read-model fields, each with
-   a nil-means-503 convention riding every test composition) — an accessor-style
-   collapse (`readmodels.Engine`-shaped) is the refactor candidate for the next read
-   model, not a today change.
+   a nil-means-503 convention riding every test composition) — DESIGNED 2026-11-08:
+   docs/planning/2026-11-08_server-deps-accessor-collapse-design.md owns the shape,
+   the migration order, and the test-composition impact. EXECUTE only when the
+   eighth read model lands (the note's trigger).
 
 ### Fleet-libs closeout residue (2026-11-04, the SUPERB closeout train)
 
