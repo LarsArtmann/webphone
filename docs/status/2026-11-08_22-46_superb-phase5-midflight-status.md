@@ -314,7 +314,7 @@ instruction was "STATUS THEN WAIT" — this report, then the session waits.
     capabilities) into docs/research.
 43. Consider smoke scenarios for the notes/reviews/transcript HTTP
     surfaces (P4's deferred "history surfaces" line).
-44. Regenerate `docs/status/INDEX.md` (this report makes 63) + a
+44. Regenerate `docs/status/INDEX.md` (done: 60 reports) + a
     docs-gates cadence run.
 45. File/track the metrics-count decision (see §g-2) wherever it lands.
 46. Audit scripts/ for other `WEBPHONE_*` override leaks (the release.sh
