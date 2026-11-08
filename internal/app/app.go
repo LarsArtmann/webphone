@@ -285,7 +285,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			bootCtx, cancel := context.WithTimeout(context.Background(), userauthBootTimeout)
 			defer cancel()
 			return userauth.New(bootCtx, PasskeyRuntime(cfg.Auth.Passkey), cfg.DataDir,
-				do.MustInvokeNamed[*readmodels.Engine](i, "metaengine").EnrollTokens(), log)
+				do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).EnrollSvc(), log)
 		})
 	}
 

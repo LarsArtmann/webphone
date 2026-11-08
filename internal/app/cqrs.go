@@ -60,6 +60,8 @@ type CqrsService struct {
 	dials        *cqrsdomain.DialWindows
 	snippetsOnce sync.Once
 	snippets     *cqrsdomain.Snippets
+	enrollOnce   sync.Once
+	enroll       *cqrsdomain.EnrollTokens
 }
 
 // NewCqrs builds the system composition root over <dataDir>/system.db:
@@ -73,6 +75,7 @@ func NewCqrs(cfg config.Config, log *slog.Logger) (*CqrsService, error) {
 	return newCqrs(cfg, log, cqrsdomain.Domain(
 		cqrsdomain.DialDomainDecl(),
 		cqrsdomain.SnippetsDomainDecl(),
+		cqrsdomain.EnrollDomainDecl(),
 	))
 }
 
@@ -88,6 +91,13 @@ func (s *CqrsService) Dials() *cqrsdomain.DialWindows {
 func (s *CqrsService) SnippetsSvc() *cqrsdomain.Snippets {
 	s.snippetsOnce.Do(func() { s.snippets = cqrsdomain.NewSnippets(s.Sys) })
 	return s.snippets
+}
+
+// EnrollSvc builds (once) the dispatch-backed enrollment-token store
+// — the seam the userauth door consumes (SUPERB Phase 3, A22).
+func (s *CqrsService) EnrollSvc() *cqrsdomain.EnrollTokens {
+	s.enrollOnce.Do(func() { s.enroll = cqrsdomain.NewEnrollTokens(s.Sys) })
+	return s.enroll
 }
 
 // newCqrs is the construction seam tests (and, from Phase 2 on, the

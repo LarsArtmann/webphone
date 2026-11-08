@@ -44,6 +44,17 @@ var enrollTokensQuery = metaengine.Query[enrollInput, EnrollTokenView](enrollTok
 	metaengine.Volume(humanScaleVolume),
 )
 
+// EnrollGate is the enrollment-token seam as the userauth door sees
+// it. The engine-backed store below and the journal-backed service
+// (internal/cqrs, SUPERB Phase 3) are interchangeable behind it.
+type EnrollGate interface {
+	Mint(ctx context.Context, tokenHash, email, userID string, expiresAt time.Time) error
+	Lookup(ctx context.Context, tokenHash string) (email, userID string, expiresAt time.Time, found bool, err error)
+	Burn(ctx context.Context, tokenHash string) error
+}
+
+var _ EnrollGate = (*EnrollTokens)(nil)
+
 // EnrollTokens is the engine-backed enrollment-token store: the same
 // contract the SQL table held (hash-keyed mint/lookup/burn, expired
 // rows swept opportunistically on every mint). Token classification
