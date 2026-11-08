@@ -37,6 +37,35 @@ each verified still-open at harvest time (the plan doc keeps its detail):
       posture call (raise the cap vs keep the 46 per-finding accepts) stays
       with sitting pack §D10 — untouched by this closure.
 
+### 2026-11-09 cross-repo session residue (harvested from the 00-49 report)
+
+New open items from the legs session, not homed elsewhere yet.
+
+- [ ] **Clone the transport-isolation fix into pbx, asr, matrix,
+      paperless** — the crm client's Clone() repair (2026-11-08) killed
+      the parallel-test flake class at ONE seam; the same bare
+      http.Client-literal rides the process-global transport at the
+      other four (pbx/client.go two sites, asr.go + google.go,
+      matrix/client.go). Production-neutral; the class bites only
+      under parallel httptest suites.
+- [ ] **Hub runner durable fix** — ExecStartPre provisioning (or a
+      static uid / group-write) for the build-state roots, so the next
+      DynamicUser renumber cannot red every hub build (the 2026-11-08
+      chown was in-place; the durable half lives in the hub's TODO).
+- [ ] **Hub ALERT_WEBHOOK_URL decision** — the failure log says
+      channel decision pending (ntfy / email / Forgejo webhook); pick
+      the channel and set the secret so hub failures alert.
+- [ ] **Verify catalog.home.lan serves run #240's publish** (the
+      hourly sync half) and the site freshness WARN cleared.
+- [ ] **Ringhook operator docs + typed mirror**: the stack's deploy
+      docs gain the enable recipe (config keys, secret slot, expected
+      dialplan arms); consider a typed ringhook front in webphone's own
+      NixOS module for non-stack hosts; a ringhook health leg joining
+      telephony-health; the operator command sheet recipe.
+- [ ] **Confirm crm's own gates on the vendorHash repair** (`37a1957`):
+      the hub build proves the build; crm's treefmt/buildflow verdicts
+      were not read this session.
+
 ### 2026-11-08 SUPERB Phase-5 mid-flight residue (harvested from the 22:46 report)
 
 Open items the freshness gate flagged unharvested; owned by the sibling
