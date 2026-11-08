@@ -14,6 +14,24 @@ front matter does not carry their history (one home per fact, per the rule above
 
 ## Open tasks
 
+### BuildFlow tool-disposition residue (harvested 2026-11-08 from the 2026-10-11 findings-zeroing plan — one home now)
+
+Six tool dispositions the 2026-10-11 plan owned but TODO_LIST never carried;
+each verified still-open at harvest time (the plan doc keeps its detail):
+
+- [ ] go-auto-upgrade: add the `warnings_budget` marker + rationale comment to
+      `.buildflow.yml` (lo/jsonv1 declined per doctrine; plan T6 µ20).
+- [ ] jscpd: attribute the 6 island-test clone rows in docs/dedup-registry.md
+      (test-fixture class; plan T6 µ22).
+- [ ] lychee: rerun `-v` and reconcile the 5-vs-0 delta; the standing
+      authenticate-vs-exclude policy waits on sitting pack §F9.
+- [ ] nix: add `meta.description` to the vulnix app (nix/apps.nix; plan T6 µ23).
+- [ ] File the drafted BuildFlow bandit-provider issue
+      (docs/drafts/2026-10-11_buildflow-bandit-stdout-findings.md; owner banner
+      still unchecked).
+- [ ] file-size-check: the configurable-cap upstream ask rides P4-7 of the
+      portfolio plan (sitting pack §D10 owns the posture call).
+
 ### 2026-11-07 Frontend UX fix-train (one home: the SUPERB plan)
 
 The 2026-11-07 design review
@@ -36,6 +54,23 @@ Residue harvested 2026-11-07 (the execution train's open items):
 - [x] Gate evidence closed 2026-11-07: train-start buildflow 74/74 (run
       20261107-032044), train-end 74/74 (run 20261107-084827), `nix flake
   check` all-checks-passed; run ids filed in the status report.
+
+Residue harvested 2026-11-08 (the §f rows audit-all flagged; each verified
+against the tree at harvest time):
+
+- [ ] Drafts-poll skip-if-dirty guard (F11): no dirty check exists in
+      shell.js's drafts poll — verify-skip when a draft textarea is
+      mid-edit (grep-verified absent).
+- [ ] Localize island-built aria-labels (F9): 8 `aria-label` literals in
+      island/app JS render English in the de locale (grep-verified count).
+- [ ] Chip-X 24px hit area (F14): `.wp-chip-x` is 18px (app.css:998-997),
+      WCAG 2.5.8 asks 24 — grow the hit area without growing the glyph.
+- [ ] History empty state rewording (F15): the filter-aware copy predates
+      the review; reword per F15 if the reviewer's phrasing still reads
+      better.
+- [ ] Radius/spacing token adoption (F17): tokens exist
+      (`--radius-sm/--radius/--radius-lg` app.css:38-40) but hardcoded
+      radii remain across panels — sweep the stragglers.
 
 ### 2026-11-07 Datastar deep-dive residue (one home: the report)
 

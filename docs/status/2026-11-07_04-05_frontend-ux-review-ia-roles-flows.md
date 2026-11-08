@@ -147,7 +147,7 @@ one the owner caught:
 9. Gate "Prefill from AI draft" on the seam prop (F6).
 10. Unify English wall-clock on Kitchen format (F5).
 11. Remove `role="img"` from the four row surfaces (F10).
-12. Drafts-poll skip-if-dirty guard (F11).
+12. ~~Drafts-poll skip-if-dirty guard (F11).~~ done — harvested: TODO_LIST § 2026-11-07 Frontend UX fix-train (residue 2026-11-08), grep-verified absent from shell.js at harvest time
 13. Palette combobox ARIA (F12).
 14. Palette coarse-pointer entry button (F12).
 15. Segment counter UTF-16 units (F13).
@@ -155,17 +155,17 @@ one the owner caught:
 17. Incoming-call caller-name resolution (F7).
 18. `role="status"` on `#dial-error` (F9).
 19. Drop the live region from `#reg-status` (F9).
-20. Localize island-built aria-labels (F9).
+20. ~~Localize island-built aria-labels (F9).~~ done — harvested: TODO_LIST § 2026-11-07 Frontend UX fix-train (residue 2026-11-08), 8 English aria-label literals grep-verified in island/app
 21. Fix the malformed incoming-call announce (F9).
 22. Icon-action labels/confirm pattern for thread head + History rows (F3).
-23. Chip-X 24px hit area (F14).
-24. History empty state rewording (F15).
+23. ~~Chip-X 24px hit area (F14).~~ done — harvested: TODO_LIST § 2026-11-07 Frontend UX fix-train (residue 2026-11-08), .wp-chip-x measured 18px at harvest time
+24. ~~History empty state rewording (F15).~~ done — harvested: TODO_LIST § 2026-11-07 Frontend UX fix-train (residue 2026-11-08), reword-vs-keep left to the row
 25. Type-scale consolidation tokens (F16).
-26. Radius/spacing token adoption (F17).
+26. ~~Radius/spacing token adoption (F17).~~ done — harvested: TODO_LIST § 2026-11-07 Frontend UX fix-train (residue 2026-11-08), tokens exist but hardcoded radii remain (grep-verified)
 27. Uppercase-voice zoning + reconnect-pill copy (F18).
 28. Admin tab: `q` filter + `hx-push-url` + a read-only badge.
 29. Brand as the page's `h1`.
-30. `tabindex="-1"` on panel-head `h2`.
+30. ~~`tabindex="-1"` on panel-head `h2`.~~ done — landed: panelHead renders `<h2 tabindex="-1">` (layout.templ panelHead, grep-verified 2026-11-08)
 31. List semantics for rail + row collections.
 32. `maxlength` hints aligned with server caps.
 33. `htmx-indicator` on submits beyond fax.
