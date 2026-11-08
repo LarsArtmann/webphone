@@ -42,7 +42,7 @@ func TestOpenapiGoldenFixture(t *testing.T) {
 		if err := os.MkdirAll(filepath.Dir(goldenPath), 0o755); err != nil {
 			t.Fatal(err)
 		}
-		if err := os.WriteFile(goldenPath, body, 0o644); err != nil {
+		if err := os.WriteFile(goldenPath, append(bytes.TrimSuffix(body, []byte("\n")), '\n'), 0o644); err != nil {
 			t.Fatal(err)
 		}
 		t.Logf("golden rewritten (%d bytes) — read the diff before committing", len(body))
@@ -53,6 +53,10 @@ func TestOpenapiGoldenFixture(t *testing.T) {
 	if err != nil {
 		t.Fatalf("golden fixture missing (run with -update to seed it): %v", err)
 	}
+	// dprint owns the file's formatting and requires exactly one trailing
+	// newline; the served render carries none — compare the document bytes,
+	// tolerating that single EOF newline on the golden side.
+	want = bytes.TrimSuffix(want, []byte("\n"))
 	if !bytes.Equal(body, want) {
 		t.Fatalf(`the served OpenAPI contract drifted from the committed golden (%d vs %d bytes); regenerate with: go test ./internal/server -run TestOpenapiGoldenFixture -update — and READ the diff, it is the wire-contract change`,
 			len(body), len(want))
