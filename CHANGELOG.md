@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The reply-snippet list answers from the event-sourced journal (SUPERB
+  Phase 3 / A21): save/list/delete ride per-owner snippet streams, the
+  replace-keeps-creation-time semantics and the 100-per-owner cap for
+  new ids now live in the DECISION, and the ErrSnippetListFull contract
+  survives verbatim. The server's snippet seam is the
+  `readmodels.SnippetGate` interface (engine-backed store kept as
+  import source and rollback lane); a one-time importer ports legacy
+  rows with the same crash-safe marker discipline as the dial import.
+  Found + recorded: journal CBOR time encoding quantizes `time.Time`
+  payloads by ~200 ns (float64 epoch) — bounded, invisible here, and a
+  recorded constraint for Phase 5's ordering fidelity.
 - The dial gate answers from the event-sourced journal (SUPERB Phase 2,
   2026-11-08): the cooldown decision (allow / deny-in-window / spend the
   one-shot override) is a DECIDER on a per-owner stream in system.db —

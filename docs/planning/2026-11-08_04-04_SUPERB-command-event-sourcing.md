@@ -490,8 +490,9 @@ Focused hours exclude train gates, releases, and CI waits. Eight release trains 
 
 - **CBOR time quantization:** fact payloads carrying `time.Time`
   round-trip the journal with ~200 ns drift (float64 epoch encoding).
-  Invisible at snippet granularity, but Phase 5's timestamp-fidelity
-  bar must not rely on sub-µs fact stamps for ordering — thread and
+  Invisible at snippet granularity (the parity pin tolerates
+  milliseconds), but Phase 5's timestamp-fidelity bar must not rely on
+  sub-µs fact stamps for ordering — thread and
   message ordering needs the stream's event sequence as the tiebreak
   (or integer-epoch payload fields).
 - **A21 replace-keeps-stamp:** the semantics moved INTO the decision
