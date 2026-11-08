@@ -235,5 +235,5 @@ func (s *Contacts) Delete(ctx context.Context, owner domain.Extension, id domain
 // ExportAll reads every contact row (the journal importer's source;
 // contacts never sweep, so the export is the whole truth).
 func (s *Contacts) ExportAll(ctx context.Context) ([]ContactView, error) {
-return exportAllViews(ctx, s.reader, "readmodels.contact_list", "export contacts")
+	return exportAllViews(ctx, s.reader, "readmodels.contact_list", "export contacts")
 }
