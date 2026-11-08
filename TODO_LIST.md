@@ -320,7 +320,11 @@ deployment that believes it archives learns otherwise only from the
 journal. Suggested shape + the other three seams' clean verdicts:
 `docs/planning/2026-10-30_14-05_capability-seam-audit.md`. Owner call
 on the shape (Settings row alone vs per-fax archive marker); recorded,
-not built.
+not built. **The shape now has a decision brief** (2026-11-08,
+recommending the Settings row, with the per-fax marker's cost and the
+correlation machinery it would need):
+[docs/planning/2026-11-08_decision-briefs.md](docs/planning/2026-11-08_decision-briefs.md)
+§ Brief 1 — answer in the sitting pack.
 
 ### CRM data-mesh train (2026-10-29) — deferred tail
 
@@ -865,9 +869,11 @@ Deferred/scheduled message sending was cut from T18 (M21.6): the gateway seam ha
 
 ### OWNER-calls batch session
 
-**Status:** 🟡 `PLANNED` (briefing ready, sitting owed) · **Priority:** High · **Effort:** S
+**Status:** 🟡 `PLANNED` (sitting pack ready, sitting owed) · **Priority:** High · **Effort:** S
 
-FRESH PACKET FIRST (2026-10-29, one sitting unlocks 10 planned tasks): `docs/planning/2026-10-29_15-53_SUPERB-owner-decision-packet.md` — six rulings with evidence one-pagers (group-rooms A1, E2EE P2 + store home, pma#348 ownership, tw-freshness posture, config typo strictness, branching-flow triage pull-forward). Answer inline at the top of the packet.
+**THE ONE ANSWER SURFACE (2026-11-08): [docs/planning/2026-11-07_21-30_owner-sitting-pack.md](docs/planning/2026-11-07_21-30_owner-sitting-pack.md)** — 58 rulings (A product/UX, B privacy/data, C infra, D tooling, E cross-repo) + the F bulk table that folds the briefing's 38 rows, each with a recommendation, the other branch's cost, and a payoff map. Every surface below (the 2026-10-29 packet, the briefing, the ROADMAP open questions) is consolidated INTO it; answer THERE and this row closes.
+
+Superseded surfaces kept for evidence only: the 2026-10-29 packet (six cards, folded into pack rows B1/B2/B3/C1/C2/D17), the briefing (38 rows, folded into pack §F), the ROADMAP §Open questions (prune in the same sitting per the pack's already-resolved section).
 
 OWNER-calls batch session (decisions, one sitting — briefing at `docs/planning/2026-09-22_13-50_owner-calls-briefing.md`): the original ~15 + CRM policy trio + self-send train-C semantics + templ-components history-blemish + tail items g1 force-push ratification / release.sh load-gate default / g2 KVM-timeout / art-dupl `-t 3` baseline (FIFTH surfacing) + registry ratification (`docs/dedup-registry.md` as THE home) + `settingsRow` build-or-retire (FOURTH surfacing) + suppression-bucket doc + dedup suppression-SCOPE ruling (shown-only vs periodic suppressed-set audit; 12:59 report g3, unrouted until v6) + webhook 400 body-text dependents + `msg/`→`message/` idem-key rename + helper micro-test bar + missed-call REJECT semantics + search `?q=` URL semantics + store `Must*` panic-on-corrupt policy. NEW since 2026-10-06 (briefing rows 36–38): the `auth:`-prefix × daemon-sweep interface (manual `auth:` commit before the sweep window vs accept a daemon `chore:` commit when the pinned session-behavior suite provably ran — 23:22 g2) · devShells.default tool additions (dprint/prettier/ruff/lychee, silences 4 buildflow warnings) + lychee authenticate-vs-exclude policy (22:08 f13/f14) · docs-only express-push ratification (23:22 g3). NEW since 2026-10-05 (briefing rows 29–32, addendum in the briefing doc): mixin/dupe detector-policy home (registry sweep-log only vs AGENTS promotion) · `config.CRM`/`Paperless` URL+Token twin standing ruling (resurfaced by TWO detectors) · `vcard.Card`/`SharedContact`/`apiSharedContact` triad boundary-layer rejection ratification · `errorfamily.Join` gap (add upstream constructor vs keep 4 nolint aggregate sites). NEW since 2026-10-02 (docs-health v6 sweep): ratify "routed-as-resolved → archive" for the four live owner-gated plans (error-excellence, 20-year-durability, 04-29 pareto, 13-33 stack-adoption — v4's g1); ratify train-level `v` verdict markers as the standing annotation hash bar (v3's g3, six sweeps running); the check-rows marker-cell baseline for the 37 pre-2026-09-18 archived files (restyle or accept). NEW since 2026-09-26: push-lag threshold policy (when is a silent daemon push stall BROKEN — 10 min? 1 h) + session push ratification (phase-boundary hand-pushes) · is the next webphone release 2.8.0 (making the bridge's ">= 2.8" claims true) or reword them · `gateway.attachment_limit` knob vs bridge-422-teaches design as final · sniff-fallback lifespan (keep forever vs delete-after-deploy-confirmed) · tier-2 family-adoption intent (dep swept-but-unused?) · report erraudit `tree` same-name-dedupe upstream? (owner's own tool) · AGENTS restructure permission · existing-prod-data chmod/re-backup for the UMask tightening · destDir nesting legality · stack verification now-vs-train-close
 
