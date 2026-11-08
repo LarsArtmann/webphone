@@ -522,6 +522,10 @@ fixes, the shutdown release-count log, push draft wrap-code pins, errors.AsType,
    prod, confirm the reason card + offline toast + reconnect pill title render on
    the live deployment (browser E2E owed only if served markup changed — it did
    not: all surfaces are island-JS-created).
+5. **Flush-announce island spec (harvested 2026-11-08 from the 10-27 error-surface
+   report §f-15)**: the announce paths landed (`transcribeLag`/`transcribeUnavailable`
+   in transcribe.js) but no island spec covers them — pin the laggy-streak
+   announce-once behavior with a node:test spec.
 
 ### Language stance: island type gate SHIPPED, Go→JS + full KMP rejected (2026-10-27 plan)
 

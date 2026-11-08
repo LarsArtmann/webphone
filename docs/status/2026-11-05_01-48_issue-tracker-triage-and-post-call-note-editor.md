@@ -87,7 +87,7 @@ Ordered roughly by what this session made adjacent. Items 1-8 are direct descend
 8. #9: stack-side work (dnsblockd CA into PBX pki trust, CRM bearer token provisioning).
 9. Resolve the current tip red: art-dupl re-failed on `905d836f` (docs trains' lane); watcher issue #232 tracks the earlier build red.
 10. #232: owner verdict on the drafted red-main ledger row.
-11. Run a full `buildflow` (and `nix flake check`) at the next train start.
+11. ~~Run a full `buildflow` (and `nix flake check`) at the next train start.~~ done-as-doctrine — the train-start full-buildflow rule is codified in AGENTS § Buildflow health warning ("run a full buildflow at TRAIN START, not only at train end") and executed every train since (latest documented: 74/74, 2026-11-07).
 12. Re-adjudicate the pre-rework whitespace drifts #13/#14/#15 named (one `scripts/whitespace-drift.sh --ref` pass over that era).
 13. Add an island test pinning "a new call replaces the settled ended card" (the #11 acceptance closed on trust).
 14. Add a browser-level pass over the ended card (note editor + disposition chips together), either a ui-capture surface or a stack E2E step.
