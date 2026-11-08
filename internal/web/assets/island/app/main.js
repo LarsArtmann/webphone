@@ -320,7 +320,12 @@ els.logout.addEventListener("click", async () => {
 els.dialForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   els.dialError.hidden = true;
-  const dialed = await placeCall(els.dest.value.trim());
+  // t0 of the dial_to_audio latency interval (the measure-first design):
+  // the submit IS the dial activation — the click or Enter that starts
+  // everything, gate consult included.
+  const dialed = await placeCall(els.dest.value.trim(), {
+    latencyT0: Date.now(),
+  });
   // Clear only on a real INVITE: a validation error keeps the typed
   // text for editing, and a stale value must never append onto the
   // next dial (the E2E concatenated two extensions exactly once too

@@ -13,8 +13,9 @@
 // self-hosted providers do not share.
 
 import { authedFetch } from "./auth.js";
-import { asrEnabled } from "./config.js";
+import { asrEnabled, metricsBeacon } from "./config.js";
 import { t } from "./i18n.js";
+import { sendLatencyBeacon } from "./latency.js";
 import { announce, errorMessage, log } from "./ui.js";
 
 export const transcribeEnabled = asrEnabled;
@@ -315,10 +316,18 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
       return;
     }
     try {
+      // ASR round-trip legs (the measure-first latency design): t0 was
+      // the capture stamp above; the POST-issued stamp closes the
+      // island's flush leg. The provider's two legs split from the
+      // fetch's Resource Timing entry when the browser keeps one (the
+      // stubbed specs do not — those legs are simply omitted and the
+      // server folds only what arrived).
+      const postIssuedAt = Date.now();
       const text = await transcribeBlob(event.data, {
         filename: "live.webm",
         language,
       });
+      const textAt = Date.now();
       // A success is proof the seam recovered: clear the streak, the
       // backoff, and the once-per-streak toast flag together.
       liveFailures = 0;
@@ -353,6 +362,34 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
         // tab for the rest of the shift.
         onText(text, capturedAt);
         recordSegment(id, text);
+        if (metricsBeacon) {
+          const insertAt = Date.now();
+          const legs = /** @type {Record<string, number>} */ ({
+            capture_to_post: Math.max(0, postIssuedAt - capturedAt),
+            parse_to_insert: Math.max(0, insertAt - textAt),
+          });
+          const entries = performance.getEntriesByType("resource");
+          let entry = null;
+          for (const candidate of entries) {
+            if (
+              candidate instanceof PerformanceResourceTiming &&
+              candidate.name.includes("/api/transcribe")
+            ) {
+              entry = candidate;
+            }
+          }
+          if (entry && entry.startTime + performance.timeOrigin >= postIssuedAt - 50) {
+            legs.post_to_first_byte = Math.max(
+              0,
+              Math.round(entry.responseStart - entry.requestStart),
+            );
+            legs.first_byte_to_complete = Math.max(
+              0,
+              Math.round(entry.responseEnd - entry.responseStart),
+            );
+          }
+          sendLatencyBeacon("asr_round_trip", legs, event.data.size);
+        }
       }
     } catch (err) {
       if (/\b429\b/.test(errorMessage(err))) {

@@ -12,6 +12,7 @@ import {
   ringbackStart,
   ringbackStop,
   ringToneStop,
+  watchRemoteAudio,
 } from "./audio.js";
 import {
   asrEnabled,
@@ -19,6 +20,7 @@ import {
   agentEnabled,
   callerDisplay,
   crmEnabled,
+  metricsBeacon,
   sipDomain,
 } from "./config.js";
 import { authedFetch } from "./auth.js";
@@ -30,6 +32,7 @@ import {
   refreshDialSlots,
 } from "./dialgate.js";
 import { getLang, t } from "./i18n.js";
+import { sendLatencyBeacon } from "./latency.js";
 import { releaseWarmMic, warmMic } from "./mic.js";
 import {
   recordCrmCall,
@@ -185,6 +188,7 @@ export function teardownSession(id) {
   if (!entry) return;
   stopLiveTranscription(id);
   if (entry.captionUnsub) entry.captionUnsub();
+  if (entry.audioWatch) entry.audioWatch();
   closeCallSegments(id);
   // The call's undelivered transcript segments get one last flush
   // attempt before the entry goes away (the queue drains in the
@@ -1331,7 +1335,33 @@ async function attendedTransfer(id) {
 window.__pcs = window.__pcs || new Map();
 
 /** @param {SipSession} newSession @param {string} target */
-export function bindSession(newSession, target) {
+/**
+ * The dial_to_audio beacon fires once, when all four legs have stamped.
+ * @param {IslandCallEntry} entry
+ * @returns {void}
+ */
+function sendDialLatency(entry) {
+  const l = entry.latency;
+  if (!l || l.beaconSent) return;
+  if (!l.invitedAt || !l.establishedAt || !l.playingAt || !l.firstAudioAt) return;
+  l.beaconSent = true;
+  sendLatencyBeacon("dial_to_audio", {
+    island_overhead: Math.max(0, l.invitedAt - l.t0),
+    signaling: Math.max(0, l.establishedAt - l.invitedAt),
+    media_attach: Math.max(0, l.playingAt - l.establishedAt),
+    audio_gap: Math.max(0, l.firstAudioAt - l.playingAt),
+  });
+}
+
+/**
+ * Registers one session in the table and wires its lifecycle listeners.
+ * @param {SipSession} newSession
+ * @param {string} target
+ * @param {{ latencyT0?: number }} [options] latencyT0 stamps the
+ *   dial_to_audio interval's t0 (outbound dials only)
+ * @returns {void}
+ */
+export function bindSession(newSession, target, options = {}) {
   newSession.stateChange.addListener((sessionState) => {
     if (sessionState === SIP.SessionState.Established) {
       const pc =
@@ -1354,6 +1384,19 @@ export function bindSession(newSession, target) {
     timer: null,
     dom: addCallCard(id, target),
   };
+  // The outbound dial path carries the dial-press t0 (the measure-first
+  // latency design); inbound calls get no interval — ring routing forks
+  // the inbound shape and is out of the note's scope.
+  if (typeof options.latencyT0 === "number") {
+    entry.latency = {
+      t0: options.latencyT0,
+      invitedAt: 0,
+      establishedAt: 0,
+      playingAt: 0,
+      firstAudioAt: 0,
+      beaconSent: false,
+    };
+  }
   sessions.set(id, entry);
   state.focusedId = state.focusedId || id;
   if (newSession instanceof SIP.Inviter) ringbackStart();
@@ -1402,8 +1445,40 @@ export function bindSession(newSession, target) {
     if (sessionState === SIP.SessionState.Established) {
       live.established = true;
       live.startedAt = Date.now();
+      if (live.latency) {
+        live.latency.establishedAt = Date.now();
+        // Media-attach leg: the first remote frame the shared element
+        // actually schedules for playback (established alone means the
+        // signaling succeeded, not that anything was heard).
+        els.remoteAudio.addEventListener(
+          "playing",
+          () => {
+            const current = sessions.get(id);
+            if (!current || !current.latency || current.latency.playingAt) return;
+            current.latency.playingAt = Date.now();
+            sendDialLatency(current);
+          },
+          { once: true },
+        );
+      }
       if (!live.timer) live.timer = setInterval(renderCalls, 1000);
       focusSession(id);
+      if (live.latency && metricsBeacon) {
+        // Audio-gap leg: the first non-silent remote sample, watched on
+        // the shared graph (audio.js). The stream object is captured by
+        // reference, so a later focus steal does not retarget the watch.
+        const stream = /** @type {MediaStream | null} */ (
+          els.remoteAudio.srcObject
+        );
+        if (stream) {
+          live.audioWatch = watchRemoteAudio(stream, () => {
+            const current = sessions.get(id);
+            if (!current || !current.latency || current.latency.firstAudioAt) return;
+            current.latency.firstAudioAt = Date.now();
+            sendDialLatency(current);
+          });
+        }
+      }
       // Auto-start (owner decision 2026-10-07): with the ASR seam on,
       // transcription begins with the call's media — the transcribe
       // button stays as the manual stop/restart override.
@@ -1632,7 +1707,7 @@ function showDialCooldown(target, verdict) {
     const allowed = await overrideDialGate(target);
     if (allowed) {
       hideDialCooldown();
-      placeCall(target, { force: true });
+      placeCall(target, { force: true, latencyT0: Date.now() });
     } else {
       announce(t("cooldownOverrideFailed"), "warn");
       anyway.disabled = false;
@@ -1646,8 +1721,8 @@ function showDialCooldown(target, verdict) {
 // form can clear itself ONLY then (a validation error keeps the typed
 // text for editing). force skips the dial gate (the spent-override
 // re-run).
-/** @param {string} raw @param {{ force?: boolean }} [options] @returns {Promise<boolean>} */
-export async function placeCall(raw, { force = false } = {}) {
+/** @param {string} raw @param {{ force?: boolean, latencyT0?: number }} [options] @returns {Promise<boolean>} */
+export async function placeCall(raw, { force = false, latencyT0 } = {}) {
   // The dial click is a user gesture: unlock the shared AudioContext so
   // the ringback is audible (audio.js).
   resumeAudio().catch(() => {});
@@ -1699,7 +1774,7 @@ export async function placeCall(raw, { force = false } = {}) {
       constraints: { audio: true, video: false },
     },
   });
-  bindSession(inviter, target);
+  bindSession(inviter, target, latencyT0 === undefined ? {} : { latencyT0 });
   try {
     // A SIP rejection never rejects invite(): sip.js resolves once the
     // INVITE is sent, the verdict arrives through the requestDelegate.
@@ -1716,6 +1791,13 @@ export async function placeCall(raw, { force = false } = {}) {
         },
       },
     });
+    // The INVITE is on the wire: the island-overhead leg closes here
+    // (everything before this line — gate consult, URI assembly — is
+    // overhead the dial-press paid).
+    const sent = sessions.get(inviter.id);
+    if (sent && sent.latency && !sent.latency.invitedAt) {
+      sent.latency.invitedAt = Date.now();
+    }
     return true;
   } catch (err) {
     log(`invite failed: ${errorMessage(err)}`, "error");

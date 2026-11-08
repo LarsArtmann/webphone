@@ -99,6 +99,25 @@ interface IslandCallEntry {
   transcriptSaved?: number;
   transcriptSaveWarned?: boolean;
   transcriptSavedAnnounced?: boolean;
+  /**
+   * Measure-first latency stamps, OUTBOUND dial path only (t0 rides
+   * placeCall's options; inbound calls carry none — the interval is the
+   * dial-press → first-audio leg set).
+   */
+  latency?: IslandLatencyStamps;
+  /** The remote-audio RMS watcher's disposer (audio.js), torn down with the call. */
+  audioWatch?: () => void;
+}
+
+/** The dial_to_audio beacon's leg stamps (all Date.now() epoch ms). */
+interface IslandLatencyStamps {
+  t0: number;
+  invitedAt: number;
+  establishedAt: number;
+  playingAt: number;
+  firstAudioAt: number;
+  /** The beacon is sent exactly once per completed interval. */
+  beaconSent: boolean;
 }
 
 /** One persisted live-call transcript segment (POST /api/transcripts). */

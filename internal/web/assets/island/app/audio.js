@@ -160,6 +160,7 @@ export function ringToneStop() {
  */
 export function watchRemoteAudio(stream, onFirstAudio) {
   let stopped = false;
+  /** @type {ReturnType<typeof setInterval> | null} */
   let timer = null;
   /** @type {AnalyserNode | null} */
   let analyser = null;
