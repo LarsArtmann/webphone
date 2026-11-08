@@ -6,7 +6,6 @@ import (
 	"slices"
 	"strings"
 	"sync"
-	"time"
 )
 
 // islandLatencyLegs is the CLOSED leg vocabulary of the island's
@@ -143,7 +142,7 @@ func (m *islandLatency) RecordBeacon(interval string, legsMS map[string]int64, s
 			bucket = newIslandBucket(latencyBuckets[:])
 			m.series[key] = bucket
 		}
-		bucket.observe(time.Duration(ms).Seconds())
+		bucket.observe(float64(ms) / 1000)
 	}
 	if segmentBytes != nil && *segmentBytes >= 0 {
 		if m.asrBytes == nil {

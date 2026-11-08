@@ -32,6 +32,11 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		secs := int(h.deps.Config.Dial.Cooldown.Seconds())
 		cooldownSeconds = &secs
 	}
+	var metricsBeacon *bool
+	if h.deps.Config.Metrics.IslandBeacon {
+		on := true
+		metricsBeacon = &on
+	}
 	pbxConfig := struct {
 		SIPDomain     string             `json:"sipDomain"`
 		WebsocketPath string             `json:"websocketPath"`
@@ -50,6 +55,15 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		// NUMBERS: the opt-in-off contract needs the key ABSENT, not
 		// zero.
 		DialCooldownSeconds *int `json:"dialCooldownSeconds,omitempty"`
+		// Metrics tells the island the latency-beacon intake is on: the
+		// island may POST /api/metrics/latency (the measure-first
+		// latency design). Absent = off — the island never beacons and
+		// the product stays byte-identical. A POINTER following the
+		// DialCooldownSeconds discipline: the opt-in-off contract needs
+		// the key ABSENT, never a zero value of uncertain omitempty
+		// semantics.
+		Metrics *bool `json:"metrics,omitempty"`
+		// ASRLocality is the config-honest trust label ("local"|"remote"):
 		// the caption-strip footer chip names where caller audio goes.
 		ASRLocality string `json:"asrLocality,omitempty"`
 		// SIPCredential tells the island the login ORDER changes: the
@@ -66,6 +80,7 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		ASR:                 h.asrOn(),
 		Agent:               h.deps.TextAgent != nil,
 		DialCooldownSeconds: cooldownSeconds,
+		Metrics:             metricsBeacon,
 		ASRLocality:         h.deps.ASRLocality,
 		SIPCredential:       h.deps.Config.SIP.DerivedCredentials(),
 		Contacts:            h.deps.Shared,
