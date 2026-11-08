@@ -25,12 +25,12 @@ and stamps once.
 **The interval splits into named legs** (the whole point of measuring:
 a total without legs cannot be improved):
 
-| Leg | From → to | Observed at |
-| --- | --------- | ----------- |
-| island-overhead | t0 → `invite()` issued | calls.js, one timestamp |
-| signaling | `invite()` → 200 OK / established | SIP.js session state events |
-| media attach | established → first remote RTP decoded | `ontrack` → first frame |
-| audio gap | first decoded sample → first non-silent sample | the RMS watcher |
+| Leg             | From → to                                      | Observed at                 |
+| --------------- | ---------------------------------------------- | --------------------------- |
+| island-overhead | t0 → `invite()` issued                         | calls.js, one timestamp     |
+| signaling       | `invite()` → 200 OK / established              | SIP.js session state events |
+| media attach    | established → first remote RTP decoded         | `ontrack` → first frame     |
+| audio gap       | first decoded sample → first non-silent sample | the RMS watcher             |
 
 Leg 4 is the honest one: ringback vs instant-audio deployments differ
 exactly here, and without it leg 3 silently absorbs the PBX's ringback
@@ -77,15 +77,15 @@ same opt-in shape as `serverTiming.enable`.
 
 ## Instrumentation cost estimate
 
-| Piece | Cost |
-| ----- | ---- |
-| `audio.js`: one AnalyserNode + RMS threshold watcher on the shared graph | ~40 LOC, one island spec with a scripted GraphStub |
-| `calls.js`: t0 stamp + beacon call | ~15 LOC |
-| transcript path: t0/t1 stamps + beacon | ~15 LOC |
-| server: beacon route (session-gated, cap, 204) | ~60 LOC + the apidocs entry + registry codes (`metrics.beacon` family) |
-| histograms + leg labels | ~30 LOC in the `httputil.Metrics` consumer |
-| island type-gate + oxlint + specs | included above |
-| **Total** | **~160 LOC, one session tranche (≈90 min with gates)** |
+| Piece                                                                    | Cost                                                                   |
+| ------------------------------------------------------------------------ | ---------------------------------------------------------------------- |
+| `audio.js`: one AnalyserNode + RMS threshold watcher on the shared graph | ~40 LOC, one island spec with a scripted GraphStub                     |
+| `calls.js`: t0 stamp + beacon call                                       | ~15 LOC                                                                |
+| transcript path: t0/t1 stamps + beacon                                   | ~15 LOC                                                                |
+| server: beacon route (session-gated, cap, 204)                           | ~60 LOC + the apidocs entry + registry codes (`metrics.beacon` family) |
+| histograms + leg labels                                                  | ~30 LOC in the `httputil.Metrics` consumer                             |
+| island type-gate + oxlint + specs                                        | included above                                                         |
+| **Total**                                                                | **~160 LOC, one session tranche (≈90 min with gates)**                 |
 
 ## What this note deliberately does NOT do
 

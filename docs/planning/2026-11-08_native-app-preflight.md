@@ -40,6 +40,7 @@ From the README honesty markers + TODO §Native-app train (webphone side
 closed; both remaining legs live OUTSIDE this repo):
 
 **Shell leg (webphone-android):**
+
 1. SIP UA vs the LIVE WSS gateway (Caddy-fronted `/sip`): REGISTER, INVITE,
    BYE, DTMF (`application/dtmf-relay`, EQUALS form), hold re-INVITE — all
    implemented, all UNTESTED against FreeSWITCH.
@@ -53,8 +54,8 @@ closed; both remaining legs live OUTSIDE this repo):
 
 **Stack leg (nix-international-telephony):**
 6. The FS dialplan must POST `webphone:/hooks/ring` (Bearer webhook secret;
-   `{owner, from, call_id, state: ring|end}`) on inbound ring + ring-end —
-   until it lands, the push seam is inert (fire-and-forget 202).
+`{owner, from, call_id, state: ring|end}`) on inbound ring + ring-end —
+until it lands, the push seam is inert (fire-and-forget 202).
 7. Expose `services.telephony.webphone.push.*` in the stack deploy docs.
 
 **Sequencing note:** the stack leg (6) is the cheaper of the two and unlocks
