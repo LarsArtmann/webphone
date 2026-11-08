@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The go-cqrs-lite system composition root rides the container (SUPERB
+  Phase 1, 2026-11-08): `system/v4 v4.17.0` (with `metaengine v4.22.0`)
+  lands as ONE named eager service (`"cqrs"`) inside the samber/do
+  injector — its own `system.db` journal (source-of-truth + projections
+  instances on one sqlite engine, WAL), started with the app's boot,
+  drained by the container cascade (`GracefulClose` under a 10s bound).
+  The projection host carries a persistent dead-letter store (poison
+  events dead-letter after 3 failures instead of wedging the worker;
+  test-pinned), and `/healthz` gains an optional non-critical `cqrs`
+  leg that names a failed or lagging projection worker. Zero routes
+  change; the only new observable is the `system.db` file and the
+  health leg. The backup oneshot, drill, VM assertions, module check
+  and README restore path all carry `system.db` from this train on.
+- The CRM new-contact template key (`crm.create_url`) and the
+  "New contact in the CRM" affordance are documented and translated
+  (2026-11-08), completing the CRM create-link train's dictionary and
+  operator-doc halves.
+
+### Fixed
+
+- A red-main loop between the openapi golden test and dprint
+  (2026-11-08): the wire render carries no trailing newline but dprint
+  requires one, so the two gates could never both pass — the test now
+  pins the document bytes and tolerates exactly that one EOF newline,
+  and `-update` seeds the golden dprint-canonically.
+
+### Added
+
 - The thread search is shareable (2026-11-08, pack A5): the debounced
   search fetch pushes `/messages?q=…`, so a typed query survives a
   share or refresh (the server's full-page render already filtered on

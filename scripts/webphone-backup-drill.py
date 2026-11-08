@@ -156,6 +156,11 @@ def main():
         assert os.path.exists(os.path.join(src, "files", att_path)), (  # nosec B101 - drill script: the assert IS the check
             "blob missing on disk"
         )
+        # The system journal database must exist from the very first boot
+        # (SUPERB Phase 1) — the backup set carries it from now on.
+        assert os.path.exists(os.path.join(src, "system.db")), (  # nosec B101 - drill script: the assert IS the check
+            "system.db missing after boot: the journal must ride the backup set"
+        )
         print(f"[1] source loaded: attachment {att_id} at {att_path}")
     finally:
         proc.terminate()
@@ -185,7 +190,7 @@ def main():
         # tarfile's "data" filter keeps file modes but forces the
         # execute bit onto directories, so 0755 is the honest bound
         # (never group/world-writable either way).
-        for name in ("webphone.db", "readmodels.db", "files"):
+        for name in ("webphone.db", "readmodels.db", "system.db", "files"):
             mode = stat_module.S_IMODE(os.lstat(os.path.join(dst, name)).st_mode)
             limit = 0o755 if name == "files" else 0o640
             assert mode <= limit, (  # nosec B101 - drill script: the assert IS the check
