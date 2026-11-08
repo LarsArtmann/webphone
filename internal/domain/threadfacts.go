@@ -9,6 +9,36 @@ import "time"
 // folds need and the gates re-parse through the Must* doors (the journal
 // is trusted: only parsed domain values are ever appended).
 
+// Row-key types: the projection collections' key shapes, carried by the
+// facts whose folds are keyed removes (the ContactKey pattern — type
+// matching resolves the key unambiguously).
+type ThreadRowKey struct{ ThreadID string }
+
+type MessageRowKey struct{ MessageID string }
+
+type AttachmentRowKey struct{ ID string }
+
+// ThreadSummaryImage is the thread row's full image as the list renders
+// it. The DECISION computes it (it owns the aggregate state) and the
+// facts carry it whole, so every threads-collection fold is a full-image
+// insert — no prev-aware update, no partial-patch ambiguity, replay
+// exact.
+type ThreadSummaryImage struct {
+	ThreadID       string
+	Owner          string
+	Network        string
+	Remote         string
+	LastActivity   int64 // unix nanos
+	Unread         int
+	Pinned         bool
+	Archived       bool
+	Muted          bool
+	LastBody       string
+	LastDirection  string
+	LastChannel    string
+	LastAttachment bool
+}
+
 // AttachmentFact is one MMS attachment inside a MessageAppended fact.
 type AttachmentFact struct {
 	ID        string
@@ -25,6 +55,8 @@ type AttachmentFact struct {
 // advances the thread. Attachments ride inside — one event, three
 // projection folds.
 type MessageAppended struct {
+	Key           ThreadRowKey
+	Summary       ThreadSummaryImage
 	MessageID     string
 	ThreadID      string
 	Owner         string
@@ -45,6 +77,7 @@ type MessageAppended struct {
 // outbound message (legality was deliveryMoves' call at the decision; the
 // fact carries the advanced slice so replay never re-judges it).
 type OutboundAdvanced struct {
+	Key          MessageRowKey
 	MessageID     string
 	Status        string
 	ProviderRef   string
@@ -55,6 +88,8 @@ type OutboundAdvanced struct {
 // ThreadFlagSet sets or clears one organization axis (pinned |
 // archived | muted) to the DESIRED state.
 type ThreadFlagSet struct {
+	Key      ThreadRowKey
+	Summary  ThreadSummaryImage
 	Owner    string
 	ThreadID string
 	Flag     string
@@ -63,6 +98,8 @@ type ThreadFlagSet struct {
 
 // ThreadUnreadCleared zeroes the unread counter.
 type ThreadUnreadCleared struct {
+	Key      ThreadRowKey
+	Summary  ThreadSummaryImage
 	Owner    string
 	ThreadID string
 }
@@ -71,6 +108,7 @@ type ThreadUnreadCleared struct {
 // every id the stream ever carried, so each projection fold is a pure
 // keyed Remove and replay is exact. Reason is "retention" or "owner".
 type ThreadDeleted struct {
+	Key           ThreadRowKey
 	Owner         string
 	ThreadID      string
 	Network       string
@@ -130,6 +168,7 @@ func (s DeliveryStep) Event() DeliveryEvent {
 // (the delete batch's per-message fact — a fold Remove is keyed, so a
 // thread-wide clear is a batch of these, journal-replayable).
 type MessageRemoved struct {
+	Key       MessageRowKey
 	MessageID string
 }
 
@@ -148,5 +187,6 @@ type AttachmentStored struct {
 
 // AttachmentRemoved is the attachment projection's keyed removal twin.
 type AttachmentRemoved struct {
-	ID string
+	Key AttachmentRowKey
+	ID  string
 }

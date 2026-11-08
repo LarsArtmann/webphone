@@ -34,37 +34,24 @@ const (
 	attachmentsColName   = "message_attachments"
 )
 
-// threadsKeyInput is the threads projection's key shape.
-type threadsKeyInput struct {
-	ThreadID string
-}
-
-// threadSummaryOf renders the summary view the append leaves behind: the
-// legacy row computed by domain.AppendToThread plus this message's
-// preview when it is the newest (journal order is creation order for the
-// live lane and the sorted importer alike — the A37 battery pins it).
-func threadSummaryOf(prev readmodels.ThreadSummaryView, f domain.MessageAppended) readmodels.ThreadSummaryView {
-	view := prev
-	view.ThreadID = f.ThreadID
-	view.Owner = f.Owner
-	view.Network = f.Network
-	view.Remote = f.Remote
-	view.Unread = prev.Unread
-	view.Archived = prev.Archived
-	if f.Direction == string(domain.DirectionInbound) {
-		view.Unread++
-		view.Archived = false
+// summaryViewOf converts the fact's row image into the read view
+// (field-for-field; the decision computed it through the ONE homes).
+func summaryViewOf(img domain.ThreadSummaryImage) readmodels.ThreadSummaryView {
+	return readmodels.ThreadSummaryView{
+		ThreadID:       img.ThreadID,
+		Owner:          img.Owner,
+		Network:        img.Network,
+		Remote:         img.Remote,
+		LastActivity:   img.LastActivity,
+		Unread:         img.Unread,
+		Pinned:         img.Pinned,
+		Archived:       img.Archived,
+		Muted:          img.Muted,
+		LastBody:       img.LastBody,
+		LastDirection:  img.LastDirection,
+		LastChannel:    img.LastChannel,
+		LastAttachment: img.LastAttachment,
 	}
-	if prev.ThreadID == "" || f.CreatedAt.UnixNano() >= prev.LastActivity {
-		view.LastActivity = f.CreatedAt.UnixNano()
-		view.LastBody = f.Body
-		view.LastDirection = f.Direction
-		view.LastChannel = f.Channel
-		view.LastAttachment = len(f.Attachments) > 0
-	} else {
-		view.LastActivity = prev.LastActivity
-	}
-	return view
 }
 
 // messageViewOf renders one transcript row.
@@ -86,52 +73,36 @@ func messageViewOf(f domain.MessageAppended) readmodels.MessageView {
 	}
 }
 
-// messagesKey and attachmentsKey are the keyed collections' key shapes
-// (field-name-matched by the remove/update key inference — every fact
-// that folds them carries the matching field).
-type messagesKey struct {
-	MessageID string
-}
-
-type attachmentsKey struct {
-	ID string
-}
+// The collections' key shapes are the domain row-key types (type-matched
+// by the remove/update key inference — every keyed fold's fact carries
+// its Key field).
 
 // threadProjections declares the three collections. Update folds (the
 // prev-aware shape) carry only their delta — the row's other fields
 // survive through prev, exactly as the SQL UPDATE touched one column;
 // removes are keyed by the fact's id field.
 func threadProjections() []system.ProjectionDeclaration {
-	threads := metaengine.Query[threadsKeyInput, readmodels.ThreadSummaryView](threadsCollection,
+	threads := metaengine.Query[domain.ThreadRowKey, readmodels.ThreadSummaryView](threadsCollection,
 		metaengine.OnRecord(domain.MessageAppended{},
-			func(_ record.Record, e domain.MessageAppended, prev readmodels.ThreadSummaryView) readmodels.ThreadSummaryView {
-				return threadSummaryOf(prev, e)
+			func(_ record.Record, e domain.MessageAppended) (domain.ThreadRowKey, readmodels.ThreadSummaryView) {
+				return domain.ThreadRowKey{ThreadID: e.ThreadID}, summaryViewOf(e.Summary)
 			}),
 		metaengine.OnRecord(domain.ThreadFlagSet{},
-			func(_ record.Record, e domain.ThreadFlagSet, prev readmodels.ThreadSummaryView) readmodels.ThreadSummaryView {
-				switch e.Flag {
-				case "pinned":
-					prev.Pinned = e.On
-				case "archived":
-					prev.Archived = e.On
-				case "muted":
-					prev.Muted = e.On
-				}
-				return prev
+			func(_ record.Record, e domain.ThreadFlagSet) (domain.ThreadRowKey, readmodels.ThreadSummaryView) {
+				return e.Key, summaryViewOf(e.Summary)
 			}),
 		metaengine.OnRecord(domain.ThreadUnreadCleared{},
-			func(_ record.Record, _ domain.ThreadUnreadCleared, prev readmodels.ThreadSummaryView) readmodels.ThreadSummaryView {
-				prev.Unread = 0
-				return prev
+			func(_ record.Record, e domain.ThreadUnreadCleared) (domain.ThreadRowKey, readmodels.ThreadSummaryView) {
+				return e.Key, summaryViewOf(e.Summary)
 			}),
 		metaengine.OnRecord(domain.ThreadDeleted{}, metaengine.Remove[readmodels.ThreadSummaryView]()),
 		metaengine.FilterOnField[readmodels.ThreadSummaryView]("owner", metaengine.FilterEq),
 	)
 
-	messages := metaengine.Query[messagesKey, readmodels.MessageView](messagesCollection,
+	messages := metaengine.Query[domain.MessageRowKey, readmodels.MessageView](messagesCollection,
 		metaengine.OnRecord(domain.MessageAppended{},
-			func(_ record.Record, e domain.MessageAppended) (string, readmodels.MessageView) {
-				return e.MessageID, messageViewOf(e)
+			func(_ record.Record, e domain.MessageAppended) (domain.MessageRowKey, readmodels.MessageView) {
+				return domain.MessageRowKey{MessageID: e.MessageID}, messageViewOf(e)
 			}),
 		metaengine.OnRecord(domain.OutboundAdvanced{},
 			func(_ record.Record, e domain.OutboundAdvanced, prev readmodels.MessageView) readmodels.MessageView {
@@ -148,10 +119,10 @@ func threadProjections() []system.ProjectionDeclaration {
 		metaengine.SortOnField[readmodels.MessageView]("created_at", true),
 	)
 
-	attachments := metaengine.Query[attachmentsKey, readmodels.AttachmentView](attachmentsColName,
+	attachments := metaengine.Query[domain.AttachmentRowKey, readmodels.AttachmentView](attachmentsColName,
 		metaengine.OnRecord(domain.AttachmentStored{},
-			func(_ record.Record, e domain.AttachmentStored) (string, readmodels.AttachmentView) {
-				return e.ID, readmodels.AttachmentView{
+			func(_ record.Record, e domain.AttachmentStored) (domain.AttachmentRowKey, readmodels.AttachmentView) {
+				return domain.AttachmentRowKey{ID: e.ID}, readmodels.AttachmentView{
 					ID:        e.ID,
 					MessageID: e.MessageID,
 					Owner:     e.Owner,
@@ -186,6 +157,7 @@ func ThreadsDomainDecl() system.DomainConfig {
 		Projections: threadProjections(),
 		Events: []event.Type{
 			event.Type(metaengine.EventTypeName(domain.MessageAppended{})),
+			event.Type(metaengine.EventTypeName(domain.AttachmentStored{})),
 			event.Type(metaengine.EventTypeName(domain.OutboundAdvanced{})),
 			event.Type(metaengine.EventTypeName(domain.ThreadFlagSet{})),
 			event.Type(metaengine.EventTypeName(domain.ThreadUnreadCleared{})),

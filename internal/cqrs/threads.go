@@ -109,9 +109,32 @@ type threadState struct {
 	Pinned    bool
 	Archived  bool
 	Muted     bool
-	Messages  []string // every appended message id, journal order
-	Outbound  map[string]domain.Delivery
-	AttachIDs []string // every attachment id, journal order
+	MastBody   string // last-by-created-at preview body
+	MastDir    string
+	MastChan   string
+	MastAttach bool
+	Messages   []string // every appended message id, journal order
+	Outbound   map[string]domain.Delivery
+	AttachIDs  []string // every attachment id, journal order
+}
+
+// summaryImage renders the row image the facts carry whole.
+func (s threadState) summaryImage() domain.ThreadSummaryImage {
+	return domain.ThreadSummaryImage{
+		ThreadID:       s.ThreadID,
+		Owner:          s.Owner,
+		Network:        s.Network,
+		Remote:         s.Remote,
+		LastActivity:   s.LastAct,
+		Unread:         s.Unread,
+		Pinned:         s.Pinned,
+		Archived:       s.Archived,
+		Muted:          s.Muted,
+		LastBody:       s.MastBody,
+		LastDirection:  s.MastDir,
+		LastChannel:    s.MastChan,
+		LastAttachment: s.MastAttach,
+	}
 }
 
 func (threadState) initial() threadState {
@@ -203,14 +226,12 @@ func applyThreadState(s threadState, evt event.Event) (threadState, error) {
 		if err != nil {
 			return s, errorfamily.WrapCorruptionf(err, "cqrs.thread_fold", "decode MessageAppended")
 		}
-		// The decider's apply IS domain.AppendToThread: the legacy row's
-		// every invariant (creation adoption, last-activity stamp, inbound
-		// unread+unarchive) computed by the ONE home, never a parallel copy.
+		// The decision computed the row image through domain.AppendToThread
+		// (the ONE home); the apply adopts it and tracks the ids the later
+		// decisions need. appendToState (the decision twin) and this branch
+		// are one rule — the battery's replay tests pin the equality.
 		msg := messageDomain(fact)
-		thread := domain.AppendToThread(s.threadDomain(), msg)
-		s.ThreadID, s.Owner, s.Network, s.Remote = thread.ID.String(), thread.Owner.String(),
-			string(thread.Remote.Network()), thread.Remote.String()
-		s.LastAct, s.Unread, s.Archived = thread.LastActivityAt.UnixNano(), thread.Unread, thread.Archived
+		adoptSummaryImage(&s, fact.Summary)
 		s.Messages = append(s.Messages, msg.ID.String())
 		if msg.Direction == domain.DirectionOutbound {
 			s.Outbound[msg.ID.String()] = msg.DeliveryOf()
@@ -238,20 +259,46 @@ func applyThreadState(s threadState, evt event.Event) (threadState, error) {
 		if err != nil {
 			return s, errorfamily.WrapCorruptionf(err, "cqrs.thread_fold", "decode ThreadFlagSet")
 		}
-		switch fact.Flag {
-		case "pinned":
-			s.Pinned = fact.On
-		case "archived":
-			s.Archived = fact.On
-		case "muted":
-			s.Muted = fact.On
-		}
+		adoptSummaryImage(&s, fact.Summary)
 	case event.Type(metaengine.EventTypeName(domain.ThreadUnreadCleared{})):
-		s.Unread = 0
+		fact, err := event.DecodePayloadAuto[domain.ThreadUnreadCleared](evt)
+		if err != nil {
+			return s, errorfamily.WrapCorruptionf(err, "cqrs.thread_fold", "decode ThreadUnreadCleared")
+		}
+		adoptSummaryImage(&s, fact.Summary)
 	case event.Type(metaengine.EventTypeName(domain.ThreadDeleted{})):
 		s = threadState{}.initial()
 	}
 	return s, nil
+}
+
+// appendToState is applyThreadState's MessageAppended transition as a
+// pure function over the state (the image the fact carries must equal
+// what the apply will fold — one rule, two sights, pinned by the
+// battery's replay tests).
+func appendToState(s threadState, msg domain.Message) threadState {
+	thread := domain.AppendToThread(s.threadDomain(), msg)
+	s.ThreadID, s.Owner, s.Network, s.Remote = thread.ID.String(), thread.Owner.String(),
+		string(thread.Remote.Network()), thread.Remote.String()
+	s.LastAct, s.Unread, s.Archived = thread.LastActivityAt.UnixNano(), thread.Unread, thread.Archived
+	// Journal order is creation order for both the live lane (CreatedAt =
+	// now, monotonic) and the sorted importer, so the appended message is
+	// the newest — the legacy list's ORDER BY created_at DESC twin.
+	s.MastBody, s.MastDir, s.MastChan, s.MastAttach = msg.Body,
+		string(msg.Direction), string(msg.Channel), len(msg.Attachments) > 0
+	s.Messages = append(s.Messages, msg.ID.String())
+	if msg.Direction == domain.DirectionOutbound {
+		s.Outbound[msg.ID.String()] = msg.DeliveryOf()
+	}
+	return s
+}
+
+// adoptSummaryImage writes a fact's row image into the state.
+func adoptSummaryImage(s *threadState, img domain.ThreadSummaryImage) {
+	s.ThreadID, s.Owner, s.Network, s.Remote = img.ThreadID, img.Owner, img.Network, img.Remote
+	s.LastAct, s.Unread = img.LastActivity, img.Unread
+	s.Pinned, s.Archived, s.Muted = img.Pinned, img.Archived, img.Muted
+	s.MastBody, s.MastDir, s.MastChan, s.MastAttach = img.LastBody, img.LastDirection, img.LastChannel, img.LastAttachment
 }
 
 func decideAppendMessage(s threadState, ver event.Version, cmd AppendMessage) ([]event.Event, error) {
@@ -268,7 +315,11 @@ func decideAppendMessage(s threadState, ver event.Version, cmd AppendMessage) ([
 		return nil, errorfamily.NewRejection("cqrs.thread_identity",
 			fmt.Sprintf("message %s targets thread %s, stream holds %s", msgID, cmd.Msg.ThreadID, s.ThreadID))
 	}
+	state := s
+	state = appendToState(state, cmd.Msg)
 	fact := factMessage(cmd.Msg)
+	fact.Key = domain.ThreadRowKey{ThreadID: fact.ThreadID}
+	fact.Summary = state.summaryImage()
 	evts := make([]event.Event, 0, 1+len(cmd.Msg.Attachments))
 	appendEvt, err := event.New(event.Type(metaengine.EventTypeName(domain.MessageAppended{})),
 		cmd.StreamID(), ThreadsStreamType, ver+1, fact)
@@ -326,8 +377,19 @@ func decideSetThreadFlag(s threadState, ver event.Version, cmd SetThreadFlag) ([
 	if !threadFlagLegal(cmd.Flag) {
 		return nil, errorfamily.NewRejection("cqrs.thread_flag", "unknown thread flag "+cmd.Flag)
 	}
+	next := s
+	switch cmd.Flag {
+	case "pinned":
+		next.Pinned = cmd.On
+	case "archived":
+		next.Archived = cmd.On
+	case "muted":
+		next.Muted = cmd.On
+	}
 	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.ThreadFlagSet{})),
 		cmd.StreamID(), ThreadsStreamType, ver+1, domain.ThreadFlagSet{
+			Key:      domain.ThreadRowKey{ThreadID: s.ThreadID},
+			Summary:  next.summaryImage(),
 			Owner:    cmd.Owner.String(),
 			ThreadID: s.ThreadID,
 			Flag:     cmd.Flag,
@@ -343,8 +405,12 @@ func decideMarkThreadRead(s threadState, ver event.Version, cmd MarkThreadRead) 
 	if s.Unread == 0 {
 		return nil, nil
 	}
+	next := s
+	next.Unread = 0
 	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.ThreadUnreadCleared{})),
 		cmd.StreamID(), ThreadsStreamType, ver+1, domain.ThreadUnreadCleared{
+			Key:      domain.ThreadRowKey{ThreadID: s.ThreadID},
+			Summary:  next.summaryImage(),
 			Owner:    cmd.Owner.String(),
 			ThreadID: s.ThreadID,
 		})
@@ -359,6 +425,7 @@ func decideDeleteThread(s threadState, ver event.Version, cmd DeleteThread) ([]e
 		return nil, nil // idempotent: a vanished thread needs no tombstone
 	}
 	deleted := domain.ThreadDeleted{
+		Key:           domain.ThreadRowKey{ThreadID: s.ThreadID},
 		Owner:         s.Owner,
 		ThreadID:      s.ThreadID,
 		Network:       s.Network,
@@ -377,7 +444,10 @@ func decideDeleteThread(s threadState, ver event.Version, cmd DeleteThread) ([]e
 	evts = append(evts, tombstone)
 	for _, msgID := range s.Messages {
 		rem, remErr := event.New(event.Type(metaengine.EventTypeName(domain.MessageRemoved{})),
-			cmd.StreamID(), ThreadsStreamType, next(), domain.MessageRemoved{MessageID: msgID})
+			cmd.StreamID(), ThreadsStreamType, next(), domain.MessageRemoved{
+				Key:       domain.MessageRowKey{MessageID: msgID},
+				MessageID: msgID,
+			})
 		if remErr != nil {
 			return nil, errorfamily.WrapInfrastructuref(remErr, "cqrs.thread_delete", "build MessageRemoved")
 		}
@@ -385,7 +455,10 @@ func decideDeleteThread(s threadState, ver event.Version, cmd DeleteThread) ([]e
 	}
 	for _, attID := range s.AttachIDs {
 		rem, remErr := event.New(event.Type(metaengine.EventTypeName(domain.AttachmentRemoved{})),
-			cmd.StreamID(), ThreadsStreamType, next(), domain.AttachmentRemoved{ID: attID})
+			cmd.StreamID(), ThreadsStreamType, next(), domain.AttachmentRemoved{
+				Key: domain.AttachmentRowKey{ID: attID},
+				ID:  attID,
+			})
 		if remErr != nil {
 			return nil, errorfamily.WrapInfrastructuref(remErr, "cqrs.thread_delete", "build AttachmentRemoved")
 		}
