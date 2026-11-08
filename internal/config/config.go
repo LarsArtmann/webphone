@@ -379,11 +379,16 @@ type CRM struct {
 // faxes. Both fields must be set together, exactly like the CRM seam —
 // half a configuration would mint a client that cannot authenticate (or
 // one with nowhere to go), and config validation fails closed on that.
+// TokenFile is the systemd-credential form of Token (at-most-one-of:
+// Load resolves it before validation, the same way the CRM seam's
+// credential form works), so the bearer never has to sit in the
+// world-readable config JSON.
 // branching-flow DUPLICATE_TYPE (baselined): independent seam twin of
 // CRM by owner ruling 2026-10-11 (see CRM).
 type Paperless struct {
-	URL   string `json:"url" koanf:"url"`
-	Token string `json:"token" koanf:"token"`
+	URL       string `json:"url" koanf:"url"`
+	Token     string `json:"token" koanf:"token"`
+	TokenFile string `json:"token_file,omitempty" koanf:"token_file"`
 }
 
 // Enabled is the both-or-neither rule as a fact the UI can state: the
@@ -599,6 +604,13 @@ var errSIPSecretBothSources error = errorfamily.NewRejection("config.sip.credent
 // the deployment's config before the service can start.
 var errCRMTokenBothSources error = errorfamily.NewRejection("config.crm.token_sources", "crm: set at most one of token / token_file")
 
+// errPaperlessTokenBothSources: exactly-one-of paperless.token /
+// paperless.token_file — the same one-fact-one-source drift argument as
+// the gateway, SIP and CRM pairs.
+// Classified Rejection: the operator must fix
+// the deployment's config before the service can start.
+var errPaperlessTokenBothSources error = errorfamily.NewRejection("config.paperless.token_sources", "paperless: set at most one of token / token_file")
+
 // TURNREST switches TURN authentication from static config passwords to
 // coturn's REST API (draft-uberti-behave-turn-rest): while the secret is
 // empty, ice_servers entries ship verbatim; once set, /config.js derives a
@@ -757,6 +769,28 @@ func Load() (Config, error) {
 			return Config{}, errorfamily.Newf(errorfamily.Rejection, "config.crm.token_file", "crm.token_file %s is empty", cfg.CRM.TokenFile)
 		}
 		cfg.CRM.Token = token
+	}
+
+	// paperless.token / paperless.token_file: the same at-most-one-of +
+	// resolve-before-validate pairing as the CRM block above. Without
+	// this read, a token_file-only deployment would fail the later
+	// both-or-neither validation with a misleading "token is set
+	// without" message and the credential form would be unusable.
+	if cfg.Paperless.TokenFile != "" && cfg.Paperless.Token != "" {
+		// Shape check BEFORE the file read: both sources set is a config
+		// drift bug regardless of whether the file is readable.
+		return Config{}, &ConfigInvalidError{err: errPaperlessTokenBothSources}
+	}
+	if cfg.Paperless.TokenFile != "" {
+		data, err := os.ReadFile(cfg.Paperless.TokenFile)
+		if err != nil {
+			return Config{}, errorfamily.WrapRejectionf(err, "config.paperless.token_file", "paperless.token_file %s", cfg.Paperless.TokenFile)
+		}
+		token := strings.TrimSpace(string(data))
+		if token == "" {
+			return Config{}, errorfamily.Newf(errorfamily.Rejection, "config.paperless.token_file", "paperless.token_file %s is empty", cfg.Paperless.TokenFile)
+		}
+		cfg.Paperless.Token = token
 	}
 
 	auth, err := resolvedAuth(cfg.Auth)
