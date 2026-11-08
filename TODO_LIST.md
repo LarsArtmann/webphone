@@ -29,8 +29,13 @@ each verified still-open at harvest time (the plan doc keeps its detail):
 - [ ] File the drafted BuildFlow bandit-provider issue
       (docs/drafts/2026-10-11_buildflow-bandit-stdout-findings.md; owner banner
       still unchecked).
-- [ ] file-size-check: the configurable-cap upstream ask rides P4-7 of the
-      portfolio plan (sitting pack §D10 owns the posture call).
+- [x] **DONE 2026-11-08 (P4-7): file-size-check configurable cap** — ALREADY
+      SHIPPED upstream: buildflow #91 (closed COMPLETED 2026-11-06) fixed the
+      inert `max_file_size` override at the root (the CLI clobbered the
+      materialized value; now flag-Changed-gated) with a regression test;
+      #66/#75 were the same defect family. No filing owed. The webphone-side
+      posture call (raise the cap vs keep the 46 per-finding accepts) stays
+      with sitting pack §D10 — untouched by this closure.
 
 ### 2026-11-08 SUPERB Phase-5 mid-flight residue (harvested from the 22:46 report)
 
@@ -309,8 +314,11 @@ swap, fax badge, 2 empty states) lives in CHANGELOG + the per-library reports �
    red-ed CI (run 42407471289) when a -race scheduling stall outlasted the scaled shortTTL —
    the second Record legitimately re-claims the expired window and the wall-sleep assertion
    reads it as an extension. Webphone's band-aid is TimingScale 5 (stall budget 60 → 100 ms);
-   the durable fix is upstream: an injectable clock instead of wall sleeps. File it through the
-   verify-before-filing + github-voice ritual; evidence: docs/ci-flake-ledger.md row 42407471289.
+   the durable fix is upstream: an injectable clock instead of wall sleeps. **2026-11-08
+   (P4-7): the filing draft is committed** — docs/drafts/2026-11-08_go-idempotency_contract-clock-race.md
+   (all five verify-before-filing gates run at go-idempotency HEAD 9a82577; check-draft 0 FAIL).
+   Filing awaits the owner's review tick (the pack's D-slot is unanswered, so the unsolicited
+   banner stands and posting is not the agent's call). Evidence: docs/ci-flake-ledger.md row 42407471289.
 
 ### Fleet-libs reopen-trigger registry (2026-11-04, T25 — the ONE table)
 
