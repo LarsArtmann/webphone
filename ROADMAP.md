@@ -325,12 +325,15 @@ the stack browser E2E passed on the bumped tree. What remains:
   or a task. (03:01 §g3)
 - Missed-call semantics: does a deliberately REJECTED incoming call
   count as missed (current: no — REJECT never dispatches
-  `wp:call-missed`), and should the badge also clear when the
-  island's _Recent calls_ panel opens (current: History tab click
-  only)? (21:43 §g2)
-- Search `?q=` URL semantics: should a typed query push `?q=` into
-  browser history (deep-linkable, back-button unwinds filters) or
-  stay ephemeral as implemented? (21:43 §g1)
+  `wp:call-missed`)? HALF-ANSWERED 2026-11-08 (pack A4b): the badge now
+  clears when the _Recent calls_ panel itself lands, whatever the door
+  (shell.js §2d afterSwap arm) — the REJECT-ratify half stays with the
+  owner sitting pack. (21:43 §g2)
+- Search `?q=` URL semantics: ANSWERED 2026-11-08 (pack A5, pushed):
+  the debounced fetch pushes `/messages?q=…`, so a typed search is
+  shareable and back unwinds the query stepwise (shell.js §3b-4; the
+  server's panel route already rendered `q` on full pages, so the rail
+  and the deep-link path agree). (21:43 §g1)
 - Store `Must*` panic policy: store scans call
   `MustParsePhone`/`MustContactID`/`MustParseExtension` on raw DB
   strings — a corrupted/hand-edited row panics the server at query

@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The thread search is shareable (2026-11-08, pack A5): the debounced
+  search fetch pushes `/messages?q=…`, so a typed query survives a
+  share or refresh (the server's full-page render already filtered on
+  `q`) and the back button unwinds the query stepwise; a failed fetch
+  pushes nothing, and the popstate restore re-fetches without
+  creating the entry it just unwound.
 - The missed-calls badge clears when the Recent calls panel lands
   (2026-11-08, pack A4b): the History panel's arrival now clears the badge
   whatever the door was (nav link, palette entry, language re-fetch) —

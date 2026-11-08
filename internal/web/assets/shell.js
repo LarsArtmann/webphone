@@ -1272,11 +1272,7 @@
     var restoringSearch = false;
     document.addEventListener("htmx:afterRequest", function (event) {
       var elt = eventElement(event);
-      if (
-        !elt ||
-        !elt.classList ||
-        !elt.classList.contains("wp-thread-search")
-      )
+      if (!elt || !elt.classList || !elt.classList.contains("wp-thread-search"))
         return;
       if (!(eventDetail(event) && eventDetail(event).successful)) return;
       if (restoringSearch) {

@@ -443,7 +443,16 @@ test("search deep-links the URL and unwinds on back", () => {
   const triggered = [];
   const realHistory = globalThis.window.history;
   const realHtmx = globalThis.window.htmx;
-  globalThis.window.history = { pushState: (_s, _t, url) => pushed.push(url) };
+  // The stub mirrors browser truth: pushState changes the URL (and thus
+  // window.location.search), or the shell's already-there guard would
+  // never fire again.
+  globalThis.window.history = {
+    pushState: (_s, _t, url) => {
+      pushed.push(url);
+      globalThis.window.location.pathname = url.split("?")[0];
+      globalThis.window.location.search = url.includes("?") ? url.slice(url.indexOf("?")) : "";
+    },
+  };
   globalThis.window.htmx = {
     trigger: (_target, eventName) => triggered.push(eventName),
   };
@@ -453,7 +462,12 @@ test("search deep-links the URL and unwinds on back", () => {
   const input = doc.getElementById("wp-thread-search-input");
   const form = {
     classList: { contains: (c) => c === "wp-thread-search" },
+    matches: () => false,
+    hasAttribute: () => false,
   };
+  const realQuerySelector = doc.querySelector.bind(doc);
+  doc.querySelector = (selector) =>
+    selector === "form.wp-thread-search" ? form : realQuerySelector(selector);
 
   input.value = "kilt";
   doc.dispatch("htmx:afterRequest", {
@@ -471,7 +485,8 @@ test("search deep-links the URL and unwinds on back", () => {
 
   input.value = "strава";
   globalThis.window.location.search = "?q=%D1%81%D1%82%D1%80%D0%B0%D0%B2%D0%B0";
-  doc.dispatch("popstate", {});
+  // The window stub collects listeners: fire the shell's popstate arm.
+  for (const fn of globalThis.window.listeners.popstate ?? []) fn();
   assert.equal(input.value, "страва", "popstate decodes the restored query");
   assert.deepEqual(triggered, ["submit"], "popstate re-fetches via submit");
 
@@ -490,6 +505,7 @@ test("search deep-links the URL and unwinds on back", () => {
   globalThis.window.history = realHistory;
   globalThis.window.htmx = realHtmx;
   globalThis.window.location.search = "";
+  doc.querySelector = realQuerySelector;
 });
 
 test("live threads pushes are cancelled while a search query is active", () => {
