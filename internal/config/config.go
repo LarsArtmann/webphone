@@ -365,6 +365,16 @@ type CRM struct {
 	// the UI behind the reverse proxy), so deriving one from the other
 	// would mint links nobody can open.
 	ContactURL string `json:"contact_url,omitempty" koanf:"contact_url"`
+	// CreateURL is the OPTIONAL deep-link template into the CRM's
+	// NEW-CONTACT form, with {phone} standing for the caller's dialable
+	// number (e.g. "https://crm.example/contacts/new?phone={phone}").
+	// Empty means unknown callers render no affordance, which is the
+	// zero-config product. It needs a configured CRM and must carry
+	// {phone} — the same fail-closed shape as contact_url, one placeholder
+	// over. The link is a CONVENIENCE into the CRM's own form: the phone
+	// still stores nothing in the CRM and the browser talks to the CRM UI
+	// only by the operator's own navigation (the data-mesh doctrine).
+	CreateURL string `json:"create_url,omitempty" koanf:"create_url"`
 	// CAFile is the OPTIONAL PEM bundle that vouches for the CRM vhost's
 	// TLS chain. It exists because a private-CA CRM (the normal
 	// deployment: a *.cloud vhost the PBX host does not trust) would
@@ -966,6 +976,9 @@ func validate(cfg Config) error {
 	if err := validateCRMContactURL(cfg.CRM); err != nil {
 		return err
 	}
+	if err := validateCRMCreateURL(cfg.CRM); err != nil {
+		return err
+	}
 	if err := validateCRMCAFile(cfg.CRM); err != nil {
 		return err
 	}
@@ -976,6 +989,31 @@ func validate(cfg Config) error {
 		return err
 	}
 	return validatePush(cfg.Push)
+}
+
+// validateCRMCreateURL checks the optional new-contact form template: the
+// contact_url rules, one placeholder over — {phone} instead of {id}. A
+// template without {phone} would create a form pre-filled with nobody,
+// which is worse than no affordance at all.
+func validateCRMCreateURL(cfgCRM CRM) error {
+	if cfgCRM.CreateURL == "" {
+		return nil
+	}
+
+	if cfgCRM.URL == "" {
+		return errorfamily.NewRejection("config.crm.create_url", "crm.create_url is set without crm.url: a form for a CRM this deployment cannot query is a dead affordance")
+	}
+
+	if !strings.Contains(cfgCRM.CreateURL, "{phone}") {
+		return errorfamily.NewRejection("config.crm.create_url", "crm.create_url must contain the {phone} placeholder (e.g. https://crm.example/contacts/new?phone={phone}); without it every caller opens the same empty form")
+	}
+
+	u, err := url.Parse(strings.Replace(cfgCRM.CreateURL, "{phone}", "+4915112345678", 1))
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return errorfamily.Newf(errorfamily.Rejection, "config.crm.create_url", "crm.create_url %q is not an absolute http(s) URL template (e.g. https://crm.example/contacts/new?phone={phone})", cfgCRM.CreateURL)
+	}
+
+	return nil
 }
 
 // validateCRMContactURL checks the optional deep-link template: it needs a
