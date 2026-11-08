@@ -336,7 +336,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	do.Provide(injector, func(i do.Injector) (*server.Notifier, error) {
 		return server.NewNotifier(
 			do.MustInvoke[*server.ExtensionHubs](i),
-			do.MustInvoke[*store.Messages](i),
+			do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).ThreadsSvc(),
 			do.MustInvokeNamed[*readmodels.Engine](i, "metaengine").Faxes(),
 			do.MustInvoke[*crm.Resolver](i),
 			cfg.ASR.Enabled(),
@@ -351,7 +351,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	})
 	do.Provide(injector, func(i do.Injector) (*messaging.Service, error) {
 		return messaging.New(
-			do.MustInvoke[*store.Messages](i),
+			do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).ThreadsSvc(),
 			do.MustInvokeNamed[*blob.Store](i, "blob-dir"),
 			do.MustInvoke[gateway.MessageGateway](i),
 			do.MustInvoke[*server.Notifier](i).Project,
@@ -431,7 +431,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		return server.New(server.Deps{
 			Config:   cfg,
 			Sessions: do.MustInvoke[*session.SQLiteStore](i),
-			Messages: do.MustInvoke[*store.Messages](i),
+			Messages: do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).ThreadsSvc(),
 			Faxes:    engine.Faxes(),
 			// The four Phase-4 seams answer from the journal's decisions
 			// (SUPERB): the engine-backed stores stay as the import sources

@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"bytes"
 	"encoding/json/v2"
 	"fmt"
@@ -27,7 +28,8 @@ import (
 	"github.com/larsartmann/webphone/internal/store"
 	"github.com/larsartmann/webphone/internal/web/assets"
 	"github.com/larsartmann/webphone/internal/web/views"
-)
+
+	cqrs "github.com/larsartmann/webphone/internal/cqrs")
 
 // domContractIDs loads the island DOM-contract id list from
 // docs/dom-contract.md — the file is the single source of truth
@@ -69,7 +71,7 @@ type testServer struct {
 	*httptest.Server
 	handler     http.Handler
 	hubs        *ExtensionHubs
-	messages    *store.Messages
+	messages    readmodels.ThreadGate
 	faxes       *readmodels.Faxes
 	transcripts *readmodels.Transcripts
 	phoneAPI    *pbx.Client
@@ -141,11 +143,16 @@ func newTestServerWithConfig(
 	// The notifier reads the capability from the SAME config the panels
 	// do (mirroring app.go): a test that declares a fax lane off must get
 	// SSE payloads that agree with the full render.
-	notifier := NewNotifier(hubs, store.NewMessages(db), engine.Faxes(), nil, false, views.FaxCapability{
+	notifier := NewNotifier(hubs, threadGateForTest(t), engine.Faxes(), nil, false, views.FaxCapability{
 		Send:    cfg.Fax.SendEnabled(),
 		Receive: cfg.Fax.ReceiveEnabled(),
 	})
-	messages := store.NewMessages(db)
+	threadSys, err := cqrs.NewThreadsSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = threadSys.Close() })
+	messages := cqrs.NewThreads(threadSys)
 	faxes := engine.Faxes()
 	transcripts := engine.Transcripts()
 	// SQLite session store (not the mem store): the /metrics aggregates
@@ -708,4 +715,16 @@ func TestMetricsServesAggregatesOnly(t *testing.T) {
 	if strings.Contains(page, "webphone_crm_lookups_total") {
 		t.Errorf("metrics publishes CRM lookups with the integration off:\n%s", page)
 	}
+}
+
+// threadGateForTest boots the journal-backed thread store (the notifier's
+// messages seam since SUPERB A34).
+func threadGateForTest(t testing.TB) readmodels.ThreadGate {
+	t.Helper()
+	sys, err := cqrs.NewThreadsSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = sys.Close() })
+	return cqrs.NewThreads(sys)
 }

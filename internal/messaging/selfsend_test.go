@@ -16,8 +16,10 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/gateway"
 	"github.com/larsartmann/webphone/internal/messaging"
-	"github.com/larsartmann/webphone/internal/store"
-)
+
+	"path/filepath"
+
+	cqrs "github.com/larsartmann/webphone/internal/cqrs")
 
 // countingGateway proves the guard short-circuits before the provider.
 type countingGateway struct{ calls int }
@@ -29,17 +31,17 @@ func (g *countingGateway) SendMessage(_ context.Context, _ gateway.OutboundMessa
 
 func newSelfSendService(t *testing.T, identities map[string]string) (*messaging.Service, *countingGateway) {
 	t.Helper()
-	db, err := store.Open(":memory:")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = db.Close() })
 	blobs, err := blob.New(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
 	gw := &countingGateway{}
-	return messaging.New(store.NewMessages(db), blobs, gw, nil, identities), gw
+	sys, err := cqrs.NewThreadsSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = sys.Close() })
+	return messaging.New(cqrs.NewThreads(sys), blobs, gw, nil, identities), gw
 }
 
 func TestSendToOwnNumberIsRefusedLocally(t *testing.T) {

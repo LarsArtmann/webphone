@@ -29,7 +29,11 @@ import (
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/store"
 	"github.com/larsartmann/webphone/internal/web/views"
-)
+
+	"path/filepath"
+
+	cqrs "github.com/larsartmann/webphone/internal/cqrs"
+	"context")
 
 // webphone is the subject under test: one running instance on a random
 // port, plus the cookie-carrying browser client that talks to it.
@@ -55,7 +59,10 @@ func start(t GinkgoTInterface, phoneAPIURL string, mutate ...func(*config.Config
 	engine, err := readmodels.Open(t.TempDir())
 	Expect(err).NotTo(HaveOccurred())
 	t.Cleanup(func() { _ = engine.Shutdown() })
-	notifier := server.NewNotifier(hubs, store.NewMessages(db), engine.Faxes(), nil, false, views.FaxCapability{Send: true, Receive: true})
+	threadSys, err := cqrs.NewThreadsSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
+	Expect(err).NotTo(HaveOccurred())
+	t.Cleanup(func() { _ = threadSys.Close() })
+	notifier := server.NewNotifier(hubs, cqrs.NewThreads(threadSys), engine.Faxes(), nil, false, views.FaxCapability{Send: true, Receive: true})
 	cfg := config.Config{
 		Addr: ":0", DataDir: t.TempDir(), WebsocketPath: "/sip",
 		SessionTTL: time.Hour,
@@ -64,7 +71,12 @@ func start(t GinkgoTInterface, phoneAPIURL string, mutate ...func(*config.Config
 	for _, m := range mutate {
 		m(&cfg)
 	}
-	messages := store.NewMessages(db)
+	threadSys, sysErr := cqrs.NewThreadsSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
+	if sysErr != nil {
+		t.Fatal(sysErr)
+	}
+	t.Cleanup(func() { _ = threadSys.Close() })
+	messages := cqrs.NewThreads(threadSys)
 	faxes := engine.Faxes()
 	handler := server.New(server.Deps{
 		Config:    cfg,

@@ -27,7 +27,7 @@ func TestProjectNotificationPolicy(t *testing.T) {
 	t.Cleanup(func() { _ = db.Close() })
 	hubs := NewHubs()
 	owner := domain.MustParseExtension("100")
-	notifier := NewNotifier(hubs, store.NewMessages(db), newTestEngine(t).Faxes(), nil, false, views.FaxCapability{Send: true, Receive: true})
+	notifier := NewNotifier(hubs, threadGateForTest(t), newTestEngine(t).Faxes(), nil, false, views.FaxCapability{Send: true, Receive: true})
 
 	events := hubs.get(owner).Hub().Subscribe()
 	t.Cleanup(func() { hubs.get(owner).Hub().Unsubscribe(events) })
@@ -94,7 +94,7 @@ func TestFaxPushCarriesTheCapability(t *testing.T) {
 	t.Cleanup(func() { _ = db.Close() })
 	hubs := NewHubs()
 	owner := domain.MustParseExtension("100")
-	notifier := NewNotifier(hubs, store.NewMessages(db), newTestEngine(t).Faxes(), nil, false, views.FaxCapability{})
+	notifier := NewNotifier(hubs, threadGateForTest(t), newTestEngine(t).Faxes(), nil, false, views.FaxCapability{})
 
 	events := hubs.get(owner).Hub().Subscribe()
 	t.Cleanup(func() { hubs.get(owner).Hub().Unsubscribe(events) })

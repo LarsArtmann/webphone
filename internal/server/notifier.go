@@ -25,7 +25,7 @@ import (
 // sits in a composer outside the swapped region.
 type Notifier struct {
 	hubs     *ExtensionHubs
-	messages *store.Messages
+	messages readmodels.ThreadGate
 	faxes    *readmodels.Faxes
 	crm      *crm.Resolver
 	asr      bool
@@ -39,7 +39,7 @@ type Notifier struct {
 // boot-time flag, not a per-request read). faxLane does the same job for
 // the fax fragment's empty state: an SSE payload must not promise a send
 // affordance its deployment lacks (the panel keeps the same flags).
-func NewNotifier(hubs *ExtensionHubs, messages *store.Messages, faxes *readmodels.Faxes, crmResolver *crm.Resolver, asrOn bool, faxLane views.FaxCapability) *Notifier {
+func NewNotifier(hubs *ExtensionHubs, messages readmodels.ThreadGate, faxes *readmodels.Faxes, crmResolver *crm.Resolver, asrOn bool, faxLane views.FaxCapability) *Notifier {
 	return &Notifier{hubs: hubs, messages: messages, faxes: faxes, crm: crmResolver, asr: asrOn, faxLane: faxLane}
 }
 
@@ -102,7 +102,8 @@ func notifierProject(n *Notifier) func(context.Context, domain.Event) {
 // change catches up.
 func (n *Notifier) messagesChanged(ctx context.Context, owner domain.Extension, threadID domain.ThreadID) {
 	lang := n.hubs.Lang(owner)
-	if threads, err := n.messages.ListThreads(ctx, owner); err == nil {
+	if threadViews, err := n.messages.ListThreads(ctx, owner); err == nil {
+		threads := readmodels.SummariesOfView(threadViews)
 		numbers := crmNumbers(threads, func(summary store.ThreadSummary) string { return crmNumberFor(summary.Thread.Remote) })
 		n.publish(ctx, owner, sseEventThreads, views.ThreadsList(threads, crmContacts(n.crm.People(ctx, numbers), n.crm), lang))
 	} else {

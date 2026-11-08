@@ -40,7 +40,6 @@ import (
 	"github.com/larsartmann/webphone/internal/server/api"
 	"github.com/larsartmann/webphone/internal/server/hooks"
 	"github.com/larsartmann/webphone/internal/session"
-	"github.com/larsartmann/webphone/internal/store"
 	"github.com/larsartmann/webphone/internal/textagent"
 	"github.com/larsartmann/webphone/internal/userauth"
 )
@@ -182,7 +181,7 @@ func remoteHostKey(r *http.Request) string {
 type Deps struct {
 	Config   config.Config
 	Sessions session.Store
-	Messages *store.Messages
+	Messages readmodels.ThreadGate
 	Faxes    *readmodels.Faxes
 	// Contacts is the personal-contacts seam (the readmodels.ContactGate
 	// interface — engine-backed legacy/rollback lane, journal-backed

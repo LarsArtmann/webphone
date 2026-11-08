@@ -20,6 +20,7 @@ import (
 	"github.com/larsartmann/go-cqrs-lite/event/v4"
 	"github.com/larsartmann/go-cqrs-lite/id/v4"
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
+	"github.com/larsartmann/go-cqrs-lite/projectionhost/v4"
 	"github.com/larsartmann/go-cqrs-lite/snapshot/v4"
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	"github.com/larsartmann/go-error-family"
@@ -562,4 +563,30 @@ func dispatchThreadCommand[C command.Command](ctx context.Context, sys *system.S
 		return errorfamily.WrapInfrastructuref(err, "cqrs.command_build", "build %s", name)
 	}
 	return sys.CommandDispatcher().Dispatch(ctx, build(base))
+}
+
+// NewThreadsSystem boots a minimal system over the thread aggregate at
+// dsn — the batteries' boot and the seam tests' composition helper
+// (production composes through internal/app's named provider).
+func NewThreadsSystem(ctx context.Context, dsn string) (*system.System, error) {
+	decl := ThreadsDomainDecl()
+	decl.ProjectionHostOptions = append(decl.ProjectionHostOptions,
+		projectionhost.WithBackoff(time.Millisecond, 5*time.Millisecond))
+	sys, err := system.New(ctx, decl, system.DeploymentConfig{
+		Engines: map[string]system.EngineConfig{
+			"db": {Driver: "sqlite", DSN: dsn, Pragmas: []string{"wal"}},
+		},
+		Instances: []system.InstanceConfig{
+			{Role: system.RoleSourceOfTruth, Engine: "db", Durability: system.DurabilityNormal},
+			{Role: system.RoleProjections, Engine: "db", Durability: system.DurabilityNormal},
+		},
+	})
+	if err != nil {
+		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.threads_boot", "boot thread system at %s", dsn)
+	}
+	if err := sys.Start(ctx); err != nil {
+		_ = sys.Close()
+		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.threads_boot", "start thread system at %s", dsn)
+	}
+	return sys, nil
 }

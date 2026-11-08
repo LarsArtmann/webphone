@@ -66,6 +66,8 @@ type CqrsService struct {
 	audit           *cqrsdomain.AgentAudit
 	pushOnce        sync.Once
 	pushDevices     *cqrsdomain.PushDevices
+	threadsOnce     sync.Once
+	threads         *cqrsdomain.Threads
 	contactsOnce    sync.Once
 	contacts        *cqrsdomain.Contacts
 	transcriptsOnce sync.Once
@@ -90,6 +92,7 @@ func NewCqrs(cfg config.Config, log *slog.Logger) (*CqrsService, error) {
 		cqrsdomain.EnrollDomainDecl(),
 		cqrsdomain.AgentAuditDomainDecl(),
 		cqrsdomain.PushDevicesDomainDecl(),
+		cqrsdomain.ThreadsDomainDecl(),
 		cqrsdomain.ContactsDomainDecl(),
 		cqrsdomain.TranscriptsDomainDecl(),
 		cqrsdomain.NotesDomainDecl(),
@@ -131,6 +134,14 @@ func (s *CqrsService) AgentAuditSvc() *cqrsdomain.AgentAudit {
 func (s *CqrsService) PushDevicesSvc() *cqrsdomain.PushDevices {
 	s.pushOnce.Do(func() { s.pushDevices = cqrsdomain.NewPushDevices(s.Sys) })
 	return s.pushDevices
+}
+
+// ThreadsSvc builds (once) the dispatch-backed thread store (the core
+// streams, SUPERB Phase 5): the same contract the SQL store served,
+// answered by the journal.
+func (s *CqrsService) ThreadsSvc() *cqrsdomain.Threads {
+	s.threadsOnce.Do(func() { s.threads = cqrsdomain.NewThreads(s.Sys) })
+	return s.threads
 }
 
 // ContactsSvc builds (once) the dispatch-backed personal-contacts

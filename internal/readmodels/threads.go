@@ -74,7 +74,7 @@ const (
 // until the ladder retires). ErrNotFound keeps its store meaning.
 type ThreadGate interface {
 	AppendMessage(ctx context.Context, msg domain.Message) error
-	UpdateOutboundStatus(ctx context.Context, id domain.MessageID, delivery domain.Delivery) error
+	AdvanceOutbound(ctx context.Context, id domain.MessageID, step domain.DeliveryStep) error
 	MessageByProviderRef(ctx context.Context, ref string) (domain.Message, error)
 	FindThread(ctx context.Context, owner domain.Extension, remote domain.Address, now time.Time) (domain.ThreadID, error)
 	GetThread(ctx context.Context, owner domain.Extension, id domain.ThreadID) (domain.Thread, error)
@@ -92,6 +92,9 @@ type ThreadGate interface {
 	GetThreadAny(ctx context.Context, id domain.ThreadID) (domain.Thread, error)
 	AttachmentByID(ctx context.Context, owner domain.Extension, id domain.AttachmentID) (domain.Attachment, error)
 	AttachmentByIDAny(ctx context.Context, id domain.AttachmentID) (domain.Attachment, error)
+	// CountMessages reports the total stored messages across all owners
+	// (the metrics surface's webphone_messages_total).
+	CountMessages(ctx context.Context) (int64, error)
 	// DeleteThread is the retention/owner removal seam: it dispatches the
 	// tombstone (folds Remove every row), awaits visibility, then erases
 	// the stream's journal bytes (sys.TrimStream) — the sweep's one call.

@@ -273,34 +273,6 @@ func (s *Threads) AdvanceOutbound(ctx context.Context, id domain.MessageID, step
 	return nil
 }
 
-// UpdateOutboundStatus is the store-era signature over the step seam: the
-// service already advanced the machine; the decider re-derives the move
-// from the delivered target (every caller's next state came from
-// DeliveryAdvance, so the derived step is the same move).
-func (s *Threads) UpdateOutboundStatus(ctx context.Context, id domain.MessageID, delivery domain.Delivery) error {
-	step := stepForTarget(delivery)
-	if step.Kind == "" {
-		return nil
-	}
-	return s.AdvanceOutbound(ctx, id, step)
-}
-
-// stepForTarget derives a DeliveryStep whose DeliveryAdvance lands on the
-// target slice (the store-era callers' next values are always machine
-// products, so the reverse mapping is exact).
-func stepForTarget(target domain.Delivery) domain.DeliveryStep {
-	switch target.Status {
-	case domain.StatusSent:
-		return domain.SendAccepted(target.ProviderRef).Step()
-	case domain.StatusFailed:
-		return domain.SendRefused(target.FailureKind, target.FailureDetail).Step()
-	case domain.StatusDelivered:
-		return domain.ProviderVerdict(domain.VerdictDelivered, "").Step()
-	default:
-		return domain.DeliveryStep{}
-	}
-}
-
 // MessageByProviderRef resolves an outbound message by its gateway
 // correlation id (the webhook lane's lookup). The provider_ref filter is
 // declared on the messages projection.
@@ -686,6 +658,16 @@ func (s *Threads) attachAttachments(ctx context.Context, msgs []domain.Message) 
 		msgs[i].Attachments = byMessage[msgs[i].ID.String()]
 	}
 	return nil
+}
+
+// CountMessages reports the total stored messages via the engine's
+// native COUNT.
+func (s *Threads) CountMessages(ctx context.Context) (int64, error) {
+	n, err := engineCount(ctx, s.sys, messagesCollection)
+	if err != nil {
+		return 0, errorfamily.WrapInfrastructuref(err, "cqrs.message_count", "count messages")
+	}
+	return n, nil
 }
 
 // ListAllThreads returns every owner's threads, most recently active

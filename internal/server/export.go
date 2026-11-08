@@ -9,7 +9,8 @@ import (
 	"time"
 
 	"github.com/larsartmann/webphone/internal/vcard"
-)
+
+	"github.com/larsartmann/webphone/internal/readmodels")
 
 // exportLimit bounds each store read behind the export: the per-extension
 // data set is small by product scale, but a bound keeps a pathological
@@ -79,11 +80,12 @@ func (h *handlers) exportData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	threads, err := h.deps.Messages.ListThreads(r.Context(), sess.Extension)
+	threadViews, err := h.deps.Messages.ListThreads(r.Context(), sess.Extension)
 	if err != nil {
 		http.Error(w, "could not list threads", http.StatusInternalServerError)
 		return
 	}
+	threads := readmodels.SummariesOfView(threadViews)
 	faxes, err := h.deps.Faxes.List(r.Context(), sess.Extension, exportLimit)
 	if err != nil {
 		http.Error(w, "could not list faxes", http.StatusInternalServerError)
