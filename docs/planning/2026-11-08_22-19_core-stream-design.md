@@ -28,14 +28,14 @@ unique-indexes (migration v5).
 - Facts on the stream (fact-name continuity: these tables were never in
   readmodels, so the names are NEW but follow the legacy vocabulary):
 
-| Fact                     | Payload (domain-typed)                     | Decided by            |
-| ------------------------ | ------------------------------------------ | --------------------- |
-| `ThreadStarted`          | first message (full `domain.Message`)      | `message.append`      |
-| `MessageAppended`        | full `domain.Message` (attachments inside) | `message.append`      |
-| `MessageDeliveryAdvanced`| messageID + `domain.Delivery`              | `message.advance`     |
-| `ThreadFlagChanged`      | flag + desired                             | `thread.set_flag`     |
-| `ThreadUnreadCleared`    | —                                          | `thread.mark_read`    |
-| `ThreadDeleted`          | reason (retention \| owner)                | `thread.delete`       |
+| Fact                      | Payload (domain-typed)                     | Decided by         |
+| ------------------------- | ------------------------------------------ | ------------------ |
+| `ThreadStarted`           | first message (full `domain.Message`)      | `message.append`   |
+| `MessageAppended`         | full `domain.Message` (attachments inside) | `message.append`   |
+| `MessageDeliveryAdvanced` | messageID + `domain.Delivery`              | `message.advance`  |
+| `ThreadFlagChanged`       | flag + desired                             | `thread.set_flag`  |
+| `ThreadUnreadCleared`     | —                                          | `thread.mark_read` |
+| `ThreadDeleted`           | reason (retention \| owner)                | `thread.delete`    |
 
 `ThreadStarted` and `MessageAppended` carry the same payload type; the
 distinction is structural (state was empty), so the projection folds both
@@ -85,11 +85,11 @@ type threadState struct {
 Three metaengine collections in system.db (views are new structs in
 `internal/cqrs`; the server keeps reading through gate interfaces):
 
-| Collection         | Key            | Shape                                    | Folds                                                                                       |
-| ------------------ | -------------- | ---------------------------------------- | ------------------------------------------------------------------------------------------- |
-| `threads`          | threadID       | `ThreadSummaryView` (all summary fields) | MessageAppended upsert (LastActivity/Unread/lastBody/lastDirection/lastChannel/lastAttachment flag from attachments>0), ThreadFlagChanged set, ThreadUnreadCleared zero, ThreadDeleted Remove |
-| `thread_messages`  | messageID      | `MessageView` (full message + owner+threadID + SortKey) | MessageAppended upsert, MessageDeliveryAdvanced status/providerRef/failure patch, ThreadDeleted Remove |
-| `message_attachments` | attachmentID | `AttachmentView` (messageID, owner, name, mime, size, path) | MessageAppended upsert per attachment, ThreadDeleted Remove-per-thread (fold queries by threadID? NO — Remove needs the key; see note) |
+| Collection            | Key          | Shape                                                       | Folds                                                                                                                                                                                         |
+| --------------------- | ------------ | ----------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `threads`             | threadID     | `ThreadSummaryView` (all summary fields)                    | MessageAppended upsert (LastActivity/Unread/lastBody/lastDirection/lastChannel/lastAttachment flag from attachments>0), ThreadFlagChanged set, ThreadUnreadCleared zero, ThreadDeleted Remove |
+| `thread_messages`     | messageID    | `MessageView` (full message + owner+threadID + SortKey)     | MessageAppended upsert, MessageDeliveryAdvanced status/providerRef/failure patch, ThreadDeleted Remove                                                                                        |
+| `message_attachments` | attachmentID | `AttachmentView` (messageID, owner, name, mime, size, path) | MessageAppended upsert per attachment, ThreadDeleted Remove-per-thread (fold queries by threadID? NO — Remove needs the key; see note)                                                        |
 
 Attachment removal on ThreadDeleted: the projection Remove is keyed by
 the collection key, so `ThreadDeleted`'s folds for `thread_messages` and
