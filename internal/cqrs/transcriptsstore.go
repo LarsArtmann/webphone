@@ -8,6 +8,7 @@ package cqrs
 
 import (
 	"context"
+	"log/slog"
 	"strings"
 	"sync"
 	"time"
@@ -94,8 +95,24 @@ func (s *Transcripts) Append(ctx context.Context, seg domain.CallTranscriptSegme
 		}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.transcript_append", "dispatch transcript.append")
 	}
-	if _, err := s.sys.MetaEngine().EnforceCaps(ctx); err != nil {
-		return errorfamily.WrapInfrastructuref(err, "cqrs.transcript_cap", "enforce per-owner transcript caps")
+	// Enforce the per-owner cap only once the projection worker has
+	// folded this append: the EnforceCaps write path and the worker's
+	// fold path take the store's fold lock and the engine's connection
+	// pool in OPPOSITE orders, so running them concurrently can
+	// deadlock (pinned by the Phase-4 battery as an order-dependent
+	// hang). After the await the worker is idle past our event; the
+	// enforcement itself is best-effort under a bounded context — the
+	// cap is the durability story, never an invariant, and the next
+	// append retries (the file header's convergence posture).
+	if tail, err := committedTail(ctx, s.sys, TranscriptsStreamType, key, s.vers); err != nil {
+		warnVisibilityTailFailed(err, "transcripts", key)
+	} else if len(tail) > 0 {
+		awaitVisibility(ctx, s.sys, transcriptsCollection, tail[len(tail)-1].ID().String())
+	}
+	enforceCtx, cancel := context.WithTimeout(ctx, 5*time.Second)
+	defer cancel()
+	if _, err := s.sys.MetaEngine().EnforceCaps(enforceCtx); err != nil {
+		slog.Warn("transcript per-owner cap enforcement skipped (converges at the next append)", "err", err)
 	}
 	return nil
 }

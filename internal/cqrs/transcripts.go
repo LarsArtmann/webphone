@@ -167,7 +167,7 @@ func decideAppendTranscript(s transcriptState, ver event.Version, cmd AppendTran
 		}
 		return 0
 	})
-	events := make([]event.Event, 0, len(kept)-transcriptFloorPerCall+1)
+	events := make([]event.Event, 0, max(len(kept)-transcriptFloorPerCall, 0)+1)
 	evt, err := transcriptEvent(fact, cmd.StreamID(), ver+1)
 	if err != nil {
 		return nil, err
