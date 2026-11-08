@@ -248,15 +248,25 @@ func (s *Notes) Get(ctx context.Context, owner domain.Extension, callID string) 
 	return &view, nil
 }
 
+// Exported because the arch registry scan resolves the code-position
+// identifier from the file's own const block (block form is what the
+// scanner's declaration regex can see).
+const (
+	// NoteDispatchCode codes the dispatch transport failure shared by
+	// the two write doors (the failing operation is THE DISPATCH, not a
+	// door's save; the door stays greppable through the message's op).
+	NoteDispatchCode = "cqrs.note_dispatch"
+)
+
 // noteDispatchError keeps the decision's coded cap verdict (the 409
 // Conflict contract passes through verbatim) and codes every other
-// dispatch failure as the seam's own Infrastructure wrap — both write
+// dispatch failure as the seam's Infrastructure wrap — both write
 // doors share it.
-func noteDispatchError(err error, code, op string) error {
+func noteDispatchError(err error, op string) error {
 	if errors.Is(err, readmodels.ErrNoteListFull) {
 		return err
 	}
-	return errorfamily.WrapInfrastructuref(err, code, "dispatch %s", op)
+	return errorfamily.WrapInfrastructuref(err, NoteDispatchCode, "dispatch %s", op)
 }
 
 // Set upserts the owner's note for one call; the decision keeps an
@@ -270,7 +280,7 @@ func (s *Notes) Set(ctx context.Context, owner domain.Extension, callID, body st
 		func(base *command.BasicCommand) *SaveCallNote {
 			return &SaveCallNote{BasicCommand: base, Owner: owner.String(), CallID: callID, Body: body}
 		}); err != nil {
-		return noteDispatchError(err, "cqrs.note_save", "note.save")
+		return noteDispatchError(err, "note.save")
 	}
 	return nil
 }
@@ -285,7 +295,7 @@ func (s *Notes) SetDisposition(ctx context.Context, owner domain.Extension, call
 		func(base *command.BasicCommand) *SaveCallDisposition {
 			return &SaveCallDisposition{BasicCommand: base, Owner: owner.String(), CallID: callID, Disposition: disposition}
 		}); err != nil {
-		return noteDispatchError(err, "cqrs.disposition_save", "note.disposition_save")
+		return noteDispatchError(err, "note.disposition_save")
 	}
 	return nil
 }

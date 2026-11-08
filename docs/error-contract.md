@@ -385,6 +385,7 @@ a deliberate code change, regenerate:
 | cqrs.enroll_register                         | Infrastructure            | internal/cqrs/enroll.go            |
 | cqrs.enroll_sweep                            | Infrastructure            | internal/cqrs/enroll.go            |
 | cqrs.journal_import                          | Infrastructure, Rejection | internal/app/importutil.go         |
+| cqrs.note_dispatch                           | Infrastructure            | internal/cqrs/callnotes.go         |
 | cqrs.note_fold                               | Corruption                | internal/cqrs/callnotes.go         |
 | cqrs.note_get                                | Infrastructure            | internal/cqrs/callnotes.go         |
 | cqrs.note_list_full                          | Conflict                  | internal/cqrs/callnotes.go         |
