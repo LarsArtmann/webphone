@@ -343,8 +343,11 @@ Ordered by (impact ÷ risk), not by area.
     one 400-line column.
 24. **Fax**: the send form and the job list compete for the eye; consider the
     same split (form aside, list main).
-25. Empty-vs-filtered-vs-error: audit every panel for the same lie P3 fixed
-    (contacts, fax).
+25. ~~Empty-vs-filtered-vs-error: audit every panel for the same lie P3 fixed
+    (contacts, fax).~~ done — the fleet-libs train's templ-components ruling
+    (2026-11-04, AGENTS § Fleet-libs) IS this audit: 2 true empty states
+    swapped (push, snippets) and 9 of 11 wp-empty sites ruled out with
+    per-site evidence (subtitles, code-embedded notices, id-pinned hooks).
 26. A `views`-level ladder helper if a third panel needs the same
     disabled/unavailable/empty/content branching (then `DataState` or a local
     one-home helper becomes justified — not before).
