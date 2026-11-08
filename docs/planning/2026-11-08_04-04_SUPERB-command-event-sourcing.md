@@ -1,399 +1,444 @@
 # SUPERB plan: 100% Command & Event-Sourcing via go-cqrs-lite — webphone
 
-> **Date:** 2026-11-08 04:04 CET · **Status:** PLAN — owner-gated GO (Phase 0 spikes must pass the A08 gate first)
+> **Date:** 2026-11-08 04:04 CET · **Revision 2** (same day, post-self-review: adds the retention/GDPR guarantee, the read-your-writes consistency spike, the terminal storage topology, OCC retry patterns, snapshots, DLQ, perf budgets, abort criteria — v1's §5 R2 claim "the read is never older than today's" was WRONG under async projectionhost and is retracted; see §5 and Errata)
+> **Status:** PLAN — owner-gated GO (Phase 0 spikes must pass the A09 gate first)
 > **Owner decision (2026-11-08):** "I WANT 100% SUPERB Command & Event-Sourcing via go-cqrs-lite."
 > This decision FIRES the ROADMAP revisit trigger ("revisit ONLY when webphone grows event-sourced state", wontfix closure 2026-09-30) and SUPERSEDES the fleet-libs no-ES row (`docs/review/libs/go-cqrs-lite.md`: "no event sourcing in this product").
-> It does NOT supersede the N5/N6 two-file doctrine (engine-owned DDL never meets the hand ladder) — the system gets its OWN database file, exactly like `readmodels.db` today.
+> It does NOT supersede the N5/N6 two-file doctrine in spirit — but the terminal topology changes it honestly: the engine world CONSOLIDATES to ONE `system.db` (journal + projections + dedup + caps + checkpoints + snapshots + DLQ); the hand ladder `webphone.db` keeps its own file until ladder retirement. Two files, one per world, as today — never mixed DDL.
 > Supersedes N2 of the 2026-10-14 metaengine-dogfooding plan (`store/messages.go` STAYS) — but only via the parity-first importer path, Phase 5, behind green gates.
 
 ---
 
-## 1. READ / UNDERSTAND (what exists today — verified this session, 2026-11-08 03:56 audit)
+## 1. READ / UNDERSTAND (what exists today — verified 2026-11-08 03:56 audit + this session)
 
-| Surface                      | Today                                                                                                                                    | Evidence                                                                 |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
-| Write model (core)           | Hand-written SQL CRUD, machine-table-guarded in-place transitions (`deliveryMoves`, `faxMoves`, `AppendToThread`)                        | `internal/store/messages.go`, `internal/domain/{delivery,fax,thread}.go` |
-| Read models (11 collections) | metaengine facts via `Store.Apply(EventTypeName(…), payload)` + `OnRecord` folds → keyed views (`INSERT OR REPLACE` storage, no history) | `internal/readmodels/*`, sqliteengine `planned.go:170`                   |
-| Commands                     | Procedural: HTTP handler → service method → store write. No dispatcher, no command journal                                               | `internal/server/**`, `internal/messaging/service.go`                    |
-| Events (SSE)                 | Closed 5-type nudge set, post-commit, ephemeral; `Notifier.Project` re-reads state                                                       | `internal/domain/events.go`, `internal/server/notifier.go`               |
-| Event sourcing               | ONE island: usermgmt identity layer (`NewSQLEventStore` + projections + `/healthz` readiness), library-owned                             | `internal/userauth/userauth.go:96,121-133`                               |
-| Doctrine                     | no-ES ratified; `system` module NOT in the module graph (all ES modules `// indirect`)                                                   | go.mod, ROADMAP:136-143                                                  |
+| Surface                      | Today                                                                                                                                                       | Evidence                                                                 |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| Write model (core)           | Hand-written SQL CRUD, machine-table-guarded in-place transitions (`deliveryMoves`, `faxMoves`, `AppendToThread`)                                           | `internal/store/messages.go`, `internal/domain/{delivery,fax,thread}.go` |
+| Read models (11 collections) | metaengine facts via `Store.Apply(EventTypeName(…), payload)` + `OnRecord` folds → keyed views (`INSERT OR REPLACE` storage, no history)                    | `internal/readmodels/*`, sqliteengine `planned.go:170`                   |
+| Commands                     | Procedural: HTTP handler → service method → store write. No dispatcher, no command journal                                                                  | `internal/server/**`, `internal/messaging/service.go`                    |
+| Events (SSE)                 | Closed 5-type nudge set, post-commit, ephemeral; `Notifier.Project` re-reads state                                                                          | `internal/domain/events.go`, `internal/server/notifier.go`               |
+| Retention                    | `retention_days` config (0 = keep forever, N = delete older) drives hard DELETEs of messages/threads in `store/sweep.go`; contacts deliberately never swept | `internal/config/config.go:118,842`, `internal/store/sweep.go:53-83`     |
+| Event sourcing               | ONE island: usermgmt identity layer (`NewSQLEventStore` + projections + `/healthz` readiness), library-owned                                                | `internal/userauth/userauth.go:96,121-133`                               |
+| Doctrine                     | no-ES ratified; `system` module NOT in the module graph (all ES modules `// indirect`)                                                                      | go.mod, ROADMAP:136-143                                                  |
 
 ## 2. GOAL — what "100%" means, precisely
 
-**In scope (webphone's OWN domain state becomes command-sourced + event-sourced):**
-threads, messages, attachments, fax jobs, contacts, snippets, call transcripts, call notes, call reviews, dial windows + overrides, enroll tokens, push devices, agent audit — every one carried by a **decider** (command → events), an **append-only event journal** (source of truth), and **projections** (the exact read views the server renders today).
+**In scope (webphone's OWN domain state becomes command-sourced + event-sourced):** threads, messages, attachments, fax jobs, contacts, snippets, call transcripts, call notes, call reviews, dial windows + overrides, enroll tokens, push devices, agent audit — every one carried by a **decider** (command → events), an **append-only event journal** (source of truth), and **projections** (the exact read views the server renders today).
 
-**Out of scope (with rationale — each is a deliberate boundary, not an omission):**
+**Terminal storage topology (the end state this plan builds toward):**
 
-- **usermgmt identity layer** — ALREADY event-sourced, library-owned (cqrs-htmx). We align health wiring, nothing else.
-- **Blobs** (attachments/fax PDFs) — filesystem bytes via go-atomic-write; the journal carries paths/metadata, never bytes.
-- **CDR/History** — the PBX is the external source of truth; webphone only renders. No migration possible or wanted.
-- **The sip.js island + SSE wire** — browser contract untouched. `ExtensionHubs`/go-sse STAY (upstream ruling: `transport/http.SSEBroker` is DEPRECATED per ADR-0127; journal-backed SSE is explicitly NOT adopted).
-- **Sessions + app_flags** — DECISION POINT D2 (see §7): sessions are infrastructure leases, not domain aggregates. Recommendation: migrate to system-owned records/kv late (Phase 7), or document a cqrs-lint baseline. Owner rules at A08.
+| File            | After this plan                             | Contents                                                                                                                                                                           |
+| --------------- | ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `system.db`     | NEW, engine-owned (DDL never in the ladder) | event journal (per-aggregate streams), projections (all 11 former readmodels collections + the core views), dedup windows (`sys.Dedup()`), caps, checkpoints, snapshots, DLQ       |
+| `readmodels.db` | DIES, collection by collection              | each aggregate phase deletes its collections from the engine plan; the final phase removes the engine registration + file (backup/restore paths updated per phase, not at the end) |
+| `webphone.db`   | Shrinks                                     | threads/messages/attachments/faxes tables leave at their phase; sessions + `app_flags` remain until the D2 ruling executes (Phase 7)                                               |
+| blob store      | UNCHANGED                                   | filesystem bytes via go-atomic-write; the journal carries paths/metadata, never bytes                                                                                              |
+
+**Out of scope (each a deliberate boundary, not an omission):** the **usermgmt identity layer** (already event-sourced, library-owned — we align health wiring only); **blobs**; **CDR/History** (the PBX is the external truth); the **sip.js island + SSE wire** (`ExtensionHubs`/go-sse STAY — upstream ruled `transport/http.SSEBroker` deprecated, ADR-0127; journal-backed SSE is explicitly NOT adopted); **sessions + app_flags** (DECISION POINT D2).
 
 ## 3. TARGET ARCHITECTURE
 
 ```mermaid
 flowchart TD
     subgraph TODAY["today"]
-        H1[HTTP handler] --> S1[service method] --> ST[(webphone.db CRUD)] 
+        H1[HTTP handler] --> S1[service method] --> ST[(webphone.db CRUD)]
         S1 -.post-commit.-> N1[Notifier SSE]
         RM[(readmodels.db keyed REPLACE)]
     end
     subgraph TARGET["target (phased in per aggregate)"]
         H2[HTTP handler] --> SVC[service seam] --> DISP[system CommandDispatcher]
         DISP --> DEC[Decider<br/>machine tables = decision source]
-        DEC --> J[(system.db<br/>append-only event journal)]
-        J --> PH[projectionhost workers]
+        DEC --> J[(system.db<br/>append-only journal)]
+        J --> PH[projectionhost workers<br/>DLQ + checkpoints]
         PH --> V[projections = TODAY'S views<br/>same shapes, same ids]
+        SVC -- read-your-writes<br/>A06 spike decides how --> V
         H2 --> Q[typed queries read V]
         SVC -.post-append ChangeFunc.-> N2[Notifier SSE — UNCHANGED]
     end
 ```
 
 - **Composition:** `system.New(ctx, DomainConfig, DeploymentConfig)` runs INSIDE the samber/do container as ONE named eager service (`"cqrs"`) — it does NOT replace `internal/app`; `App.Start` calls `sys.Start`, shutdown calls `sys.Close` after the `ExtensionHubs` pre-drain.
-- **One database:** `system.db` (engine-owned DDL, sqlite/modernc — sqliteengine v4.7.0 depends on `modernc.org/sqlite` v1.61.1, the same driver family webphone already uses; CGO-free, nix-safe).
-- **Machine tables stay the ONE legality home:** `deliveryMoves`/`faxMoves`/`AppendToThread` are CONSUMED BY DECIDERS (the decide() function consults the table) instead of the store's append transaction. The AGENTS.md rule "new transitions go into the tables, never branch-by-branch" SURVIVES unchanged.
-- **SSE byte-parity:** command handlers keep emitting `domain.ChangeFunc` post-append; `Notifier` is untouched; payloads stay bare fragments; the 5-type event set stays.
+- **One engine world:** `system.db` is the ONLY engine-owned file; as each aggregate lands, its readmodels collections move into the system's store (same view structs) and the old engine plan shrinks.
+- **Machine tables stay the ONE legality home:** `deliveryMoves`/`faxMoves`/`AppendToThread` are CONSUMED BY DECIDERS (decide() consults the table) instead of the store's append transaction. The AGENTS.md rule "new transitions go into the tables, never branch-by-branch" SURVIVES unchanged.
+- **SSE byte-parity:** command handlers keep emitting `domain.ChangeFunc` post-append; `Notifier` is untouched; the 5-type event set stays.
 - **Fact-name continuity:** today's metaengine fact types (`ContactSaved`, `TranscriptAppended`, `FaxStatusAdvanced`, …) BECOME the stream event payload types under the SAME names — one home per fact, no split-brain vocabulary.
+- **Read-your-writes:** whether the post-command read (handler answer + Notifier re-read) sees the command's own effect is an OPEN consistency question (v1 wrongly assumed yes); spike A06 decides the mechanism BEFORE any aggregate lands.
 
 ## 4. VERSCHLIMMBESSERN CONTRACT (hard invariants — every phase proves them)
 
-1. **Behavior parity first:** wire bytes (SSE fragments, `/openapi.json`, `/config.js`, rendered HTML), DOM contract ids, i18n, and error codes are IDENTICAL per phase. Rule: "port logic verbatim first, refactor in a second, separately-verified change."
-2. **Every phase is a full train:** gates green (`go test -count=1 ./...`, buildflow tiers 1+2, `nix flake check`, smoke scenarios, island tests) BEFORE the next phase starts; release per runbook; the consuming stack re-pins only at release boundaries.
-3. **No data loss:** every cutover carries a one-time crash-safe importer with an `app_flags` marker (the proven legacy-import shape: flag only after full success; re-run retries); a dual-run verification harness diffs old-store reads vs new-projection reads row-by-row BEFORE the old path is deleted.
-4. **Rollback:** each phase = one narrative commit set on `main`; rollback = `git revert` + restore `system.db`/`readmodels.db`/`webphone.db` from the backup snapshot; phases never straddle a release.
-5. **Caps and scoping survive:** per-owner caps (500 contacts, 5000 transcripts, 500 dial windows, 100 snippets, 8 devices, 2000 reviews) and owner-scoping are enforced DECIDER-SIDE (aggregate state) — never weaker than today; `*Any`/`ListAll` admin seams stay the ONLY cross-owner reads.
-6. **Auth-regression convention:** any phase touching session/CSRF/webhook-secret/passkey surfaces carries an `auth:` commit prefix + the session-behavior suite.
-7. **Dependency bumps do NOT ride the daemon** (owner decision 2026-10-11): `go get` trains are manual, with `go mod tidy` + vendorHash re-pin + CI-watch.
+1. **Behavior parity first:** wire bytes (SSE fragments, `/openapi.json`, `/config.js`, rendered HTML), DOM contract ids, i18n, and error codes are IDENTICAL per phase. "Port logic verbatim first, refactor in a second, separately-verified change."
+2. **Retention is a FEATURE, not a casualty:** `retention_days` must keep deleting old content. Journal-side retention = tombstone events + trim/compaction per the A05 policy; a green gate proves "delete actually deletes" (journal + projection + view) BEFORE any core cutover. A keep-forever journal for swept content is a PLAN VIOLATION, not a config choice.
+3. **Every phase is a full train:** FULL `buildflow` at TRAIN START and at end (`BUILDFLOW_NO_RESULT_CACHE=1`), tiers 1+2 enforced, `go test -count=1 ./...`, `nix flake check`, smoke scenarios, island tests — green BEFORE the next phase; release per runbook.
+4. **No data loss:** every cutover carries a one-time crash-safe importer with an `app_flags` marker (flag only after full success; re-run retries), a pre-cutover backup snapshot, and a dual-run harness diffing old-store reads vs new-projection reads row-by-row. **Importer timestamp fidelity:** list ordering folds read payload timestamps (`created_at`, `last_activity_at`), never journal append order — imported history must list in its original order.
+5. **Rollback:** each phase = one narrative commit set on `main`; rollback = `git revert` + restore the dbs from the snapshot; phases never straddle a release.
+6. **Caps and scoping survive:** per-owner caps (500 contacts, 5000 transcripts, 500 dial windows, 100 snippets, 8 devices, 2000 reviews) and owner-scoping are enforced DECIDER-SIDE (aggregate state) — never weaker than today; `*Any`/`ListAll` admin seams stay the ONLY cross-owner reads.
+7. **Auth-regression convention:** any phase touching session/CSRF/webhook-secret/passkey surfaces carries an `auth:` commit prefix + the session-behavior suite (`go test ./internal/server/ -run TestServer`).
+8. **Dependency bumps do NOT ride the daemon:** `go get` trains are manual — `go mod tidy` + vendorHash re-pin + push + CI-watch.
+9. **ABORT CRITERIA (pre-committed exits, not failures):** P2 aborts if the dial parity battery or the perf budget (§11) cannot be met — then the doctrine records partial-ES and Phase 3+ never start. P5 aborts if byte-parity or the retention gate cannot be held after two full remediation attempts — the core stays CRUD, already-migrated aggregates keep their streams, and the doctrine records the boundary honestly. An abort is a DOCUMENTED outcome with a plan errata entry, never a silent half-migration.
 
-## 5. RISK REGISTER (top 10)
+## 5. RISK REGISTER (top 13 — renumbered from v1; R2 corrected, R7 strengthened, R11–R13 new)
 
-| #   | Risk                                                                                      | Mitigation                                                                                                                                                                                                                                         |
-| --- | ----------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| R1  | Journals grow unboundedly where tables were capped/trimmed (transcripts, dial windows)    | Retention design spike A05 BEFORE any aggregate lands: per-class policy — projection-side trims STAY (view caps unchanged), journal-side retention/snapshot per stream class; unbounded audit classes are explicit owner calls (agent audit, auth) |
-| R2  | Projection lag changes UX (stale list after send)                                         | Notifier keeps re-reading AFTER command completion; dispatch is synchronous (decider commits before handler answers) — the read is never older than today's                                                                                        |
-| R3  | Importer bugs corrupt history                                                             | Importer is idempotent, marker-flagged, dual-run diffed against the old store; backup snapshot taken immediately before every cutover                                                                                                              |
-| R4  | cqrs-lint flags the remaining hand-ladder seams as satellite SQL (E023) once system lands | A04 inventory BEFORE Phase 1; findings triaged per seam (migrate / baseline with rationale / retirement date)                                                                                                                                      |
-| R5  | system.New lifecycle fights the do container (double-shutdown, hollow-root WARN)          | A03 composition contract spike; hollow-root is acceptable ONLY during Phase 1 (explicitly logged), forbidden after the first aggregate lands                                                                                                       |
-| R6  | Wire contract drift (`/openapi.json` pinned, asyncapi generated)                          | A40 runs the regen + byte-diff; drift is either zero or an INTENTIONAL documented change with pin updates in the same commit                                                                                                                       |
-| R7  | EventCatalog/AsyncAPI exporter expects system registry shapes                             | Verified in A40 against the catalog module's `WithPlainRefIDs` governance export; the hand-built apidocs registry stays the wire truth until v5 forces the move                                                                                    |
-| R8  | Decider OCC (Conflict family) vs today's unconditional updates                            | Optimistic-concurrency is a FEATURE (conflict = genuine concurrent writer); handlers map `Conflict` to the existing 409 shape where one exists (notes), else serialize per-owner (single-tenant, single-process by doctrine)                       |
-| R9  | Codec surprise: event.DefaultCodec is CBOR                                                | Journal bytes are internal; SSE stays server-rendered text. DECISION POINT D1 at A08: keep CBOR (compact) or pin JSON (debuggable). Recommendation: CBOR default, revisit only if journal forensics ever demand shell-inspectable bytes            |
-| R10 | Scope creep into usermgmt/browser                                                         | Out-of-scope list §2 is contractual; island and identity phases DO NOT EXIST in this plan                                                                                                                                                          |
+| #   | Risk                                                                                  | Mitigation                                                                                                                                                                                                                                                |
+| --- | ------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| R1  | Journals grow unboundedly where tables were capped/trimmed                            | A05 retention policy per stream class: projection-side view caps STAY; journal-side trim/snapshot per class; unbounded keep-forever ONLY for owner-ruled audit classes                                                                                    |
+| R2  | **Projection lag breaks read-your-writes** (v1 wrongly claimed synchronous reads)     | A06 consistency spike decides: in-process synchronous apply for the sqlite single-instance deployment, post-command catch-up await, or journal-derived reads for the answer path — BEFORE any aggregate lands; the chosen mechanism becomes a parity gate |
+| R3  | Importer bugs corrupt history                                                         | Idempotent importer, marker-flagged, dual-run row-by-row diff, pre-cutover snapshot (§4.4)                                                                                                                                                                |
+| R4  | cqrs-lint flags remaining hand-ladder seams as satellite SQL (E023) once system lands | A04 inventory BEFORE Phase 1; per-seam triage: migrate / baseline with rationale / retirement date                                                                                                                                                        |
+| R5  | system.New lifecycle fights the do container (double-shutdown, hollow-root WARN)      | A03 composition contract; hollow-root acceptable ONLY during Phase 1 (explicitly logged), forbidden after the first aggregate                                                                                                                             |
+| R6  | Wire contract drift (`/openapi.json` pinned, asyncapi generated)                      | A42 byte-diff; drift is zero or INTENTIONAL with pin updates in the same commit                                                                                                                                                                           |
+| R7  | Concurrent commands on one stream conflict (two sends to the same thread)             | Repository-level bounded retry on Conflict (expected-version re-read; `middleware.Retry` exists upstream); single-tenant human-scale contention is rare; retry ceiling keeps the old UX (a send that would have succeeded today succeeds tomorrow)        |
+| R8  | Codec surprise: `event.DefaultCodec` is CBOR                                          | D1 ruling at the gate; recommendation CBOR (journal bytes are internal; SSE stays server-rendered text)                                                                                                                                                   |
+| R9  | Scope creep into usermgmt/browser                                                     | §2 out-of-scope list is contractual; no such phases exist                                                                                                                                                                                                 |
+| R10 | Retention/GDPR: journal defeats `retention_days` deletes                              | §4.2 is the invariant; A05 designs tombstone+trim; P5 gate proves deletion end-to-end (journal + view); contacts' never-sweep doctrine preserved explicitly                                                                                               |
+| R11 | Poison event wedges a projection worker                                               | projectionhost DLQ (`WithDeadLetterStore`) wired in Phase 1; `/healthz` names the worker (existing cqrs-htmx pattern); DLQ surface readable for ops                                                                                                       |
+| R12 | Long-lived streams slow decider loads (threads grow for years)                        | Snapshot policy from A05; snapshot wiring task in P5; `NewCachedEventStore` available if load profiles demand                                                                                                                                             |
+| R13 | EventCatalog/AsyncAPI exporters expect system registry shapes                         | A42 verifies against the catalog module's governance export; the hand-built apidocs registry stays the wire truth until v5 forces the move                                                                                                                |
 
 ## 6. PARETO BREAKDOWN
 
 ### 1% → 51% (the proof)
 
-Phase 0 spikes (de-risk every unknown) + Phase 1 plumbing (system boots inside `internal/app`, zero behavior change) + **ONE real aggregate end-to-end: dial windows** — command dispatch, journal append, projection into today's view shape, importer, health, parity tests. After A19, the loop is PROVEN in production shape; every later aggregate is repetition, not invention.
+Phase 0 spikes (de-risk EVERY unknown: API, driver/nix, composition, lint, retention, consistency, backup, migration) + Phase 1 plumbing (system boots inside `internal/app` with DLQ + health, zero behavior change) + **ONE real aggregate end-to-end: dial windows** — command dispatch, journal append, projection into today's view shape, importer, perf budget, parity tests. After the P2 release the loop is PROVEN in production shape; every later aggregate is repetition, not invention.
 
 ### 4% → 64% (+ small aggregates)
 
-Snippets, enroll tokens, agent audit (the audit journal IS the ES showcase — actor/causality enrichers land here), push devices. All bounded, all test-pinned, all importer-simple.
+Snippets, enroll tokens, agent audit (the audit journal IS the ES showcase — actor/causality enrichers land here), push devices. Bounded, test-pinned, importer-simple.
 
 ### 20% → 80% (+ medium aggregates)
 
-Contacts (cap becomes decider state), transcripts (natural stream), call notes, call reviews. This is where the DURABLE audit value becomes real for daily use.
+Contacts (cap becomes decider state), transcripts (natural stream), call notes, call reviews. Durable audit value becomes real for daily use.
 
 ### The rest → 100%
 
-The core (threads/messages/attachments — the mountain), fax lifecycle, command-lane unification on ALL write handlers, contracts/catalog alignment, sessions ruling, ladder freeze, doctrine rewrite, final battery + release.
+The core (threads/messages/attachments — the mountain, with retention port + snapshots), fax lifecycle, command-lane unification, contracts, sessions ruling, dedup migration, ladder freeze, readmodels.db death certificate, doctrine rewrite, final battery + release.
 
-## 7. DECISION POINTS (owner rules at gate A08)
+## 7. DECISION POINTS (owner rules at gate A09)
 
-| #  | Decision                                                                  | Recommendation                                                                                                                                                               |
-| -- | ------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| D1 | Journal codec: CBOR (library default) vs JSON (shell-inspectable)         | Keep CBOR; document                                                                                                                                                          |
-| D2 | Sessions + app_flags under the all-I/O-through-metaengine rule (ADR-0142) | Migrate sessions to system records in Phase 7; app_flags migration markers stay in webphone.db until ladder retirement; otherwise baseline cqrs-lint findings with rationale |
-| D3 | Journal retention: keep-forever vs per-class trim/snapshot                | Per-class: bounded domains trim WITH their views; audit classes keep-forever; transcripts trim to the projection cap                                                         |
-| D4 | Cutover trains: one release per phase vs batched phases                   | One release per phase (P1, P2, P3, P4, P5, P6, P7) — rollback story stays trivial                                                                                            |
-| D5 | Go +1 minor (deciders use generics heavily) — pin floor                   | No change; `system` targets go 1.27 like the rest of the fleet                                                                                                               |
+| #  | Decision                                                                   | Recommendation                                                                                                                                                                                       |
+| -- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| D1 | Journal codec: CBOR (default) vs JSON (shell-inspectable)                  | Keep CBOR; document                                                                                                                                                                                  |
+| D2 | Sessions + app_flags under the all-I/O-through-metaengine rule (ADR-0142)  | Migrate sessions to system records in Phase 7; app_flags markers stay in webphone.db until ladder retirement; else baseline cqrs-lint with rationale                                                 |
+| D3 | Journal retention classes (feeds §4.2)                                     | Bounded domains trim WITH their views; swept content (messages/threads under `retention_days`) gets tombstone+trim; audit classes (agent audit) keep-forever; transcripts trim to the projection cap |
+| D4 | Cutover trains: one release per phase vs batched                           | One release per phase — trivial rollback                                                                                                                                                             |
+| D5 | Toolchain floor                                                            | No change; system targets go 1.27 like the fleet                                                                                                                                                     |
+| D6 | Terminal topology confirmation (§2 table)                                  | Confirm one `system.db`, readmodels.db dies collection-by-collection                                                                                                                                 |
+| D7 | Read-your-writes mechanism (if A06 finds a choice, not one obvious answer) | Prefer the mechanism with zero added latency on the answer path                                                                                                                                      |
+| D8 | Snapshot thresholds for long-lived threads                                 | Start conservative (snapshot every N events); tune from P5 perf data                                                                                                                                 |
 
 ---
 
 ## 8. TABLE A — COMPREHENSIVE PLAN (30–100 min tasks, ALL of them, sorted by rank within phase; phases are the dependency spine)
 
-| Rank | ID  | Phase | Task                                                                                                                                                                                                                                                        | Effort | Impact | Value                   |
-| ---- | --- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ----------------------- |
-| 1    | A01 | P0    | `system/v4` adoption spike: resolve the version to ride, deep-read `constructor.go`/`config_types.go`/`register.go`/`system_lifecycle.go`/`lifecycle.go`, write the API notes + verdict into `docs/research/`                                               | 90m    | H      | De-risks everything     |
-| 2    | A02 | P0    | sqlite driver + nix proof: verify sqliteengine's modernc registration path, build a hello-system binary in the devshell AND under `nix build`, record vendorHash deltas                                                                                     | 60m    | H      | Nix/CGO kill-switch     |
-| 3    | A03 | P0    | Composition contract: design system-in-do (named `"cqrs"`, eager, lifecycle order: HTTP drain → hubs pre-drain → `sys.Close` → do.Shutdown; Deps threading; Probe placement); write the contract doc                                                        | 90m    | H      | No lifecycle fights     |
-| 4    | A04 | P0    | cqrs-lint/buildflow inventory: stub-import system on a throwaway branch, run `-s cqrs-lint`, triage E023 satellite-sql class against every hand-ladder seam, write findings                                                                                 | 60m    | H      | No surprise reds        |
-| 5    | A05 | P0    | Retention/compaction design: read the retention surface (system `engine_config.go`, event types), write the per-class journal policy (bounded domains, audit classes, transcripts) — feeds D3                                                               | 60m    | H      | Unbounded-growth guard  |
-| 6    | A06 | P0    | Backup/restore integration spec: `system.db` into the backup oneshot + drill + README restore path; list the drill changes                                                                                                                                  | 60m    | H      | No data-loss story gaps |
-| 7    | A07 | P0    | Migration strategy design: the importer pattern per aggregate (reuse `legacy_import` shape), `app_flags` markers, dual-run diff harness design                                                                                                              | 90m    | H      | Data-safety backbone    |
-| 8    | A08 | P0    | OWNER GO GATE: present spike verdicts + D1–D5 decision points; record rulings in this plan's errata                                                                                                                                                         | 30m    | H      | The re-openable gate    |
-| 9    | A09 | P1    | Land dependencies: `go get system/v4` + transitive pins, `go mod tidy`, vendorHash re-pin (manual train: build → read `got:` → apply), CI-watch green                                                                                                       | 90m    | H      | Foundation              |
-| 10   | A10 | P1    | `internal/app/cqrs.go`: the composition adapter — `NewCqrs` provider (named `"cqrs"`), DomainConfig skeleton, DeploymentConfig sqlite over `<dataDir>/system.db`, eager invoke + lifecycle assertion in `app.go`                                            | 90m    | H      | The root                |
-| 11   | A11 | P1    | Shutdown ordering: place `sys.Close` after the `ExtensionHubs` pre-drain, before `do.Shutdown`; idempotence test                                                                                                                                            | 60m    | H      | Clean restarts          |
-| 12   | A12 | P1    | `/healthz` cqrs leg: readiness from `sys.HealthCheck` + `WorkerStatus` (fail ⇒ 503 naming the worker), `/startupz` join; nil-fallback for test compositions                                                                                                 | 60m    | H      | Honest readiness        |
-| 13   | A13 | P1    | Empty-boot prove: served-page byte-diff (no route changed), full smoke, `nix flake check`, buildflow — the zero-behavior-change proof                                                                                                                       | 60m    | H      | Parity guaranteed       |
-| 14   | A14 | P2    | Dial-window decider: `AttemptDial`/`SaveOverride` commands; ONE Decide = check+record (deny records NOTHING; override spent BY the allowed dial); events reuse `DialAttempted`/`DialOverrideSaved` names; 500/owner in aggregate state                      | 90m    | H      | The 1% proof            |
-| 15   | A15 | P2    | Registration + projection: `RegisterDecider`/`RegisterCommand` wiring; `dial_windows`/`dial_overrides` views via projection folds — SAME shapes the server reads today                                                                                      | 90m    | H      | Same views              |
-| 16   | A16 | P2    | Dial-gate port swap: `dial.Service` backend dispatches commands; `server.Deps.DialGate` contract unchanged; `/api/dials` handler untouched                                                                                                                  | 90m    | H      | Invisible swap          |
-| 17   | A17 | P2    | Dial importer: readmodels `dial_windows`/`dial_overrides` rows → synthetic events; `app_flags` marker; crash-safe re-run; dual-run diff                                                                                                                     | 90m    | H      | Data safety             |
-| 18   | A18 | P2    | Dial parity + scenario: `TestDialGate*` green on the new backend; `systemscenario` BDD spec (allow/deny/override-spend/unreachable-off-latch)                                                                                                               | 90m    | H      | Proof by test           |
-| 19   | A19 | P2    | P2 gates + release train: smoke `dialgate` scenario, full gates, CHANGELOG, release per runbook                                                                                                                                                             | 60m    | H      | Ship it                 |
-| 20   | A20 | P3    | Snippets aggregate: `SnippetSaved`/`SnippetDeleted` events, cap 100 decider-side, reply-composer projection parity                                                                                                                                          | 90m    | M      | Daily value             |
-| 21   | A21 | P3    | Enroll tokens aggregate: `EnrollTokenMinted`/`EnrollTokenBurned`; 15-min TTL expiry classification stays at the userauth door; importer EXEMPT (in-flight links re-mint — existing doctrine)                                                                | 60m    | M      | Auth lane               |
-| 22   | A22 | P3    | Agent-audit aggregate: append-only stream (the journal IS the product); actor + causality enrichers adopted (`NewUserActor`, `CommandCausality`); Settings' newest-20 read rides the projection; auth-convention suite                                      | 90m    | M      | Real audit trail        |
-| 23   | A23 | P3    | Push-devices aggregate: `PushDeviceRegistered`/`PushDeviceRemoved`; 8/owner cap decider-side; token stays write-only                                                                                                                                        | 60m    | M      | Ring lane               |
-| 24   | A24 | P3    | P3 gates + release train (all four aggregates one release)                                                                                                                                                                                                  | 60m    | M      | Ship                    |
-| 25   | A25 | P4    | Contacts aggregate: owner-list aggregate state in the decider (count + newest index); cap 500 deterministic; rename keeps id/createdAt from aggregate state; `ErrListFull` Rejection mapping preserved                                                      | 90m    | M      | Flagship parity         |
-| 26   | A26 | P4    | Transcripts aggregate: append stream per (owner, call); 5000/owner projection trim STAYS; per-CALL floor keeps the loop (nested-cap gap unchanged — reopen trigger untouched)                                                                               | 90m    | M      | History value           |
-| 27   | A27 | P4    | Call notes + reviews aggregates: one slot per (owner, call); notes 409 `note_list_full` = Conflict; reviews 2000/owner Rejection cap; "system-written, no owner PUT" doctrine carried into command shapes                                                   | 90m    | M      | Post-call value         |
-| 28   | A28 | P4    | P4 importers: contacts, transcripts, notes, reviews rows → events + markers + dual-run diffs                                                                                                                                                                | 90m    | M      | Data safety             |
-| 29   | A29 | P4    | P4 parity + gates + release train                                                                                                                                                                                                                           | 90m    | M      | Ship                    |
-| 30   | A30 | P5    | Core stream design doc: per-thread streams keyed (owner, network, remote); `AppendToThread` as the decider's apply (thread+message invariants in ONE Decide); attachment rows as projection folds; explicit no-schema-change statement                      | 90m    | H      | The mountain's map      |
-| 31   | A31 | P5    | Delivery machine integration: `DeliveryAdvance` verdicts become decider decisions consuming `deliveryMoves`; self-send rejection = command Rejection AFTER persist (422 arm preserved); out-of-order verdicts legal from every state                        | 90m    | H      | Product core            |
-| 32   | A32 | P5    | Message projections: threads-list view + transcript view + attachments — same shapes, stable `thread-<id>` ids, byte-identical fragments (`wp-bubble`, `wp-thread-row` greppable classes)                                                                   | 90m    | H      | SSE parity              |
-| 33   | A33 | P5    | `messaging.Service` swap: Receive/Send dispatch commands; `ChangeFunc` emission post-append preserved (list-only nudge rules intact); snippet/flag toggles dispatch                                                                                         | 90m    | H      | Invisible core swap     |
-| 34   | A34 | P5    | THE importer: webphone.db threads/messages/attachments → streams; full-success flag; crash-safe; dual-run row-by-row diff harness; backup snapshot pre-cutover                                                                                              | 100m   | H      | The risky moment        |
-| 35   | A35 | P5    | Core parity battery: `owner_scoping_test`, `admin_reads_test`, `threadsdual_test`, `threads_flags_test`, message byte-pins, `TestProviderFormPartHeaderBlockGolden` all green                                                                               | 90m    | H      | No regressions          |
-| 36   | A36 | P5    | P5 gates + release train: full smoke (all scenarios), stack browser E2E budget 445s, docs sweep                                                                                                                                                             | 90m    | H      | Ship the core           |
-| 37   | A37 | P6    | Fax aggregate: `faxMoves` consumed by the decider; `FaxReceipted`/`FaxStatusAdvanced` events; `ApplyIdempotent` provider_ref dedup → command idempotency middleware (durable, fixing the process-local nuance found in the audit); paperless seam untouched | 90m    | M      | Fax lane                |
-| 38   | A38 | P6    | Fax importer + parity + P6 release train                                                                                                                                                                                                                    | 90m    | M      | Ship                    |
-| 39   | A39 | P7    | Handler unification sweep: every remaining write surface dispatches through the system dispatcher; the arch-test service boundary rules updated for the new import directions                                                                               | 90m    | M      | One command lane        |
-| 40   | A40 | P7    | Contracts/catalog: `/openapi.json` byte check, asyncapi regen diff, EventCatalog export diff (`catalog.home.lan` recipe); intentional drift documented + pins updated same-commit                                                                           | 90m    | M      | Wire truth              |
-| 41   | A41 | P7    | Sessions + app_flags ruling execution (per D2): system-records migration OR the documented cqrs-lint baseline; `auth:` prefix + session-behavior suite                                                                                                      | 90m    | M      | Doctrine completion     |
-| 42   | A42 | P7    | Ladder freeze: `store/db.go` accepts no new steps; retirement plan doc naming which tables die at which release                                                                                                                                             | 60m    | M      | The end of CRUD         |
-| 43   | A43 | P7    | Doctrine docs: AGENTS.md rewrite (no-ES bullet → ES doctrine; machine-tables bullet: "tables feed deciders"), fleet-libs `go-cqrs-lite.md` re-score, ROADMAP annotation, FEATURES, TODO_LIST harvest, CHANGELOG                                             | 90m    | M      | Memory updated          |
-| 44   | A44 | P7    | Final battery + release: buildflow full, `nix flake check`, VM tests (module check + backup drill WITH system.db), vulnix, full smoke, stack browser E2E, version bump + push + CI-watch + stack re-pin coordination                                        | 100m   | H      | 100% shipped            |
+| Rank | ID  | Phase | Task                                                                                                                                                                                                                                                                    | Effort | Impact | Value                               |
+| ---- | --- | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ----------------------------------- |
+| 1    | A01 | P0    | `system/v4` adoption spike: resolve the version to ride, deep-read `constructor.go`/`config_types.go`/`register.go`/`system_lifecycle.go`/`lifecycle.go`, write API notes + verdict into `docs/research/`                                                               | 90m    | H      | De-risks everything                 |
+| 2    | A02 | P0    | sqlite driver + nix proof: verify sqliteengine's modernc registration path, build a hello-system binary in the devshell AND under `nix build`, record vendorHash deltas                                                                                                 | 60m    | H      | Nix/CGO kill-switch                 |
+| 3    | A03 | P0    | Composition contract: design system-in-do (named `"cqrs"`, eager; lifecycle order: HTTP drain → hubs pre-drain → `sys.Close` → do.Shutdown; Deps threading; Probe placement); write the contract doc                                                                    | 90m    | H      | No lifecycle fights                 |
+| 4    | A04 | P0    | cqrs-lint/buildflow inventory: stub-import system on a throwaway branch, run `-s cqrs-lint`, triage E023 satellite-sql against every hand-ladder seam, write findings                                                                                                   | 60m    | H      | No surprise reds                    |
+| 5    | A05 | P0    | Retention + GDPR design: journal retention per class (D3) incl. tombstone+trim mechanics for `retention_days` content, snapshot thresholds (D8), sweep-port design for `store/sweep.go` semantics                                                                       | 90m    | H      | The data-deletion invariant         |
+| 6    | A06 | P0    | Read-your-writes consistency spike: determine how system applies projections for the sqlite single-instance deployment (sync in-process vs async host); choose + document the post-command read mechanism (D7); minimal proof that a read after Dispatch sees the write | 90m    | H      | Kills the R2 class before it exists |
+| 7    | A07 | P0    | Backup/restore integration spec: `system.db` into the backup oneshot + drill + README restore path; per-phase deletion of readmodels collections updates the drill                                                                                                      | 60m    | H      | No data-loss story gaps             |
+| 8    | A08 | P0    | Migration strategy design: importer pattern per aggregate (reuse `legacy_import` shape), `app_flags` markers, dual-run diff harness design, timestamp-fidelity rule                                                                                                     | 90m    | H      | Data-safety backbone                |
+| 9    | A09 | P0    | OWNER GO GATE: present spike verdicts + D1–D8; record rulings in the errata                                                                                                                                                                                             | 30m    | H      | The re-openable gate                |
+| 10   | A10 | P1    | Land dependencies: `go get system/v4` + transitive pins, `go mod tidy`, vendorHash re-pin (manual train), CI-watch green                                                                                                                                                | 90m    | H      | Foundation                          |
+| 11   | A11 | P1    | `internal/app/cqrs.go`: composition adapter — `NewCqrs` provider (named `"cqrs"`), DomainConfig skeleton, DeploymentConfig sqlite over `<dataDir>/system.db`, eager invoke + lifecycle assertion                                                                        | 90m    | H      | The root                            |
+| 12   | A12 | P1    | Shutdown ordering + DLQ: `sys.Close` after the hubs pre-drain, idempotence test; projectionhost `WithDeadLetterStore` wired + `/healthz` surfaces a wedged worker                                                                                                       | 90m    | H      | Clean restarts, poison immunity     |
+| 13   | A13 | P1    | `/healthz` cqrs leg: readiness from `sys.HealthCheck` + `WorkerStatus` (fail ⇒ 503 naming the worker), `/startupz` join; nil-fallback for test compositions                                                                                                             | 60m    | H      | Honest readiness                    |
+| 14   | A14 | P1    | Empty-boot prove: served-page byte-diff (no route changed), full smoke, `nix flake check`, train-start + train-end FULL buildflow                                                                                                                                       | 60m    | H      | Parity guaranteed                   |
+| 15   | A15 | P2    | Dial-window decider: `AttemptDial`/`SaveOverride` commands; ONE Decide = check+record (deny records NOTHING; override spent BY the allowed dial); events reuse `DialAttempted`/`DialOverrideSaved`; 500/owner in aggregate state                                        | 90m    | H      | The 1% proof                        |
+| 16   | A16 | P2    | Registration + projection: `RegisterDecider`/`RegisterCommand`; `dial_windows`/`dial_overrides` views via folds — SAME shapes the server reads today; dial collections removed from the readmodels engine plan (first readmodels.db shrink)                             | 90m    | H      | Same views                          |
+| 17   | A17 | P2    | Dial-gate port swap: `dial.Service` backend dispatches commands; `server.Deps.DialGate` contract unchanged; `/api/dials` handler untouched; `/config.js` pointer semantics preserved                                                                                    | 90m    | H      | Invisible swap                      |
+| 18   | A18 | P2    | Dial importer: readmodels rows → synthetic events; `app_flags` marker; crash-safe re-run; dual-run diff; timestamp fidelity proven (windows list order unchanged)                                                                                                       | 90m    | H      | Data safety                         |
+| 19   | A19 | P2    | Dial parity + scenario + PERF BUDGET: `TestDialGate*` green; `systemscenario` BDD (allow/deny/override-spend/off-latch); command round-trip p95 benchmark vs the old SQL path recorded in the plan errata; `/metrics` surfaces unchanged                                | 90m    | H      | Proof by test + numbers             |
+| 20   | A20 | P2    | P2 gates + release train: smoke `dialgate`, full gates, CHANGELOG, release per runbook                                                                                                                                                                                  | 60m    | H      | Ship the proof                      |
+| 21   | A21 | P3    | Snippets aggregate: `SnippetSaved`/`SnippetDeleted` events, cap 100 decider-side, composer projection parity, readmodels collection retired                                                                                                                             | 90m    | M      | Daily value                         |
+| 22   | A22 | P3    | Enroll tokens aggregate: `EnrollTokenMinted`/`EnrollTokenBurned`; TTL expiry classification stays at the userauth door; importer EXEMPT (re-mint doctrine); collection retired                                                                                          | 60m    | M      | Auth lane                           |
+| 23   | A23 | P3    | Agent-audit aggregate: append-only stream; actor (`NewUserActor`) + command-causality enrichers; Settings newest-20 rides the projection; collection retired; `auth:` convention suite                                                                                  | 90m    | M      | Real audit trail                    |
+| 24   | A24 | P3    | Push-devices aggregate: `PushDeviceRegistered`/`PushDeviceRemoved`; 8/owner cap decider-side; token stays write-only; collection retired                                                                                                                                | 60m    | M      | Ring lane                           |
+| 25   | A25 | P3    | P3 gates + release train (four aggregates, one release)                                                                                                                                                                                                                 | 60m    | M      | Ship                                |
+| 26   | A26 | P4    | Contacts aggregate: owner-list aggregate state (entries + count + newest index); cap 500 deterministic; rename keeps id/createdAt from aggregate state; `ErrListFull` Rejection preserved; never-sweep doctrine carried into D3; collection retired                     | 90m    | M      | Flagship parity                     |
+| 27   | A27 | P4    | Transcripts aggregate: stream per (owner, call); 5000/owner projection trim STAYS; per-CALL floor keeps the loop (nested-cap gap untouched); collection retired                                                                                                         | 90m    | M      | History value                       |
+| 28   | A28 | P4    | Call notes + reviews aggregates: one slot per (owner, call); notes 409 `note_list_full` = Conflict; reviews 2000/owner Rejection; system-written doctrine carried into command shapes; collections retired                                                              | 90m    | M      | Post-call value                     |
+| 29   | A29 | P4    | P4 importers (contacts, transcripts, notes, reviews) + markers + dual-run diffs                                                                                                                                                                                         | 90m    | M      | Data safety                         |
+| 30   | A30 | P4    | P4 parity + gates + release train                                                                                                                                                                                                                                       | 90m    | M      | Ship                                |
+| 31   | A31 | P5    | Core stream design doc: per-thread streams keyed (owner, network, remote); `AppendToThread` as the decider's apply (thread+message invariants in ONE Decide); attachment rows as projection folds; Conflict-retry pattern (R7) specified                                | 90m    | H      | The mountain's map                  |
+| 32   | A32 | P5    | Delivery machine integration: `DeliveryAdvance` verdicts become decider decisions consuming `deliveryMoves`; self-send rejection = Rejection AFTER persist (422 arm preserved); out-of-order verdicts legal from every state                                            | 90m    | H      | Product core                        |
+| 33   | A33 | P5    | Message projections: threads-list + transcript + attachments — same shapes, stable `thread-<id>` ids, byte-identical fragments (`wp-bubble`, `wp-thread-row`); snapshot wiring per D8                                                                                   | 90m    | H      | SSE parity                          |
+| 34   | A34 | P5    | `messaging.Service` swap: Receive/Send/flag-toggles dispatch; `ChangeFunc` emission post-append preserved (list-only nudge rules intact)                                                                                                                                | 90m    | H      | Invisible core swap                 |
+| 35   | A35 | P5    | THE importer: webphone.db threads/messages/attachments → streams; full-success flag; crash-safe; dual-run row-by-row diff; timestamp fidelity (original list order); pre-cutover snapshot                                                                               | 100m   | H      | The risky moment                    |
+| 36   | A36 | P5    | Retention port: `store/sweep.go` semantics move journal-side (tombstone + trim per D3); GATE: a message older than `retention_days` is GONE from journal AND views after a sweep (test-pinned); `retention_days=0` keep-forever behavior preserved                      | 90m    | H      | The deletion invariant              |
+| 37   | A37 | P5    | Core parity battery: `owner_scoping_test`, `admin_reads_test`, `threadsdual_test`, `threads_flags_test`, message byte-pins, `TestProviderFormPartHeaderBlockGolden` green                                                                                               | 90m    | H      | No regressions                      |
+| 38   | A38 | P5    | P5 gates + release train: full smoke, stack browser E2E (445s budget), perf re-check vs the P2 baseline                                                                                                                                                                 | 90m    | H      | Ship the core                       |
+| 39   | A39 | P6    | Fax aggregate: `faxMoves` consumed by the decider; `FaxReceipted`/`FaxStatusAdvanced` events; provider_ref dedup → command idempotency middleware (durable — supersedes the process-local `ApplyIdempotent` nuance); paperless seam untouched; collection retired       | 90m    | M      | Fax lane                            |
+| 40   | A40 | P6    | Fax importer + retention (faxes sweep if configured) + parity + P6 release                                                                                                                                                                                              | 90m    | M      | Ship                                |
+| 41   | A41 | P7    | Handler unification sweep: every remaining write surface dispatches; arch-test boundary rules updated for new import directions                                                                                                                                         | 90m    | M      | One command lane                    |
+| 42   | A42 | P7    | Contracts/catalog: `/openapi.json` byte check, `webphone contracts` asyncapi diff, EventCatalog export diff; intentional drift documented + pins updated same-commit                                                                                                    | 90m    | M      | Wire truth                          |
+| 43   | A43 | P7    | Dedup migration: `hooksIdem`/`CallsIdem` windows move to `sys.Dedup()` (one dedup home); readmodels engine registration REMOVED — the readmodels.db death certificate (backup/restore paths updated)                                                                    | 90m    | M      | One engine world                    |
+| 44   | A44 | P7    | Sessions + app_flags ruling execution (per D2): system-records migration OR documented cqrs-lint baseline; `auth:` prefix + session-behavior suite                                                                                                                      | 90m    | M      | Doctrine completion                 |
+| 45   | A45 | P7    | Ladder freeze: `store/db.go` accepts no new steps; retirement plan doc naming which tables die at which release                                                                                                                                                         | 60m    | M      | The end of CRUD                     |
+| 46   | A46 | P7    | Doctrine docs: AGENTS.md rewrite (no-ES bullet → ES doctrine; machine-tables bullet → deciders; two-file doctrine wording), fleet-libs `go-cqrs-lite.md` re-score, ROADMAP annotation, FEATURES, TODO_LIST harvest, CHANGELOG                                           | 90m    | M      | Memory updated                      |
+| 47   | A47 | P7    | Final battery + release: FULL buildflow no-cache, `nix flake check`, VM tests (module check + backup drill WITH system.db, WITHOUT readmodels.db), vulnix, full smoke, stack browser E2E, version bump + push + CI-watch + stack re-pin coordination                    | 100m   | H      | 100% shipped                        |
 
-_(Deviation note: the pareto skill's default caps Table A at 27 tasks; the owner's instruction — "Include ALL TODOS" — wins, hence 44.)_
+_(Deviation note: the pareto skill's default caps Table A at 27 tasks; the owner's instruction — "Include ALL TODOS" — wins, hence 47.)_
 
 ## 9. TABLE B — MICRO BREAKDOWN (≤12 min each, ALL of them, same order)
 
-### Phase 0 — preflight (A01–A08)
+### Phase 0 — preflight (A01–A09)
 
-| #   | Task                                                                                          | From | Min |
-| --- | --------------------------------------------------------------------------------------------- | ---- | --- |
-| B01 | `git status` clean-check + record start state                                                 | A01  | 3   |
-| B02 | `go list -m -versions github.com/larsartmann/go-cqrs-lite/system/v4` — pick the train version | A01  | 5   |
-| B03 | Read `constructor.go` (New, options)                                                          | A01  | 12  |
-| B04 | Read `config_types.go` (DomainConfig/DeploymentConfig/InstanceConfig fields)                  | A01  | 12  |
-| B05 | Read `register.go` (RegisterDecider/RegisterCommand signatures + Op/Execute)                  | A01  | 12  |
-| B06 | Read `system_lifecycle.go` + `lifecycle.go` (Start/Close semantics, idempotence)              | A01  | 12  |
-| B07 | Read `projection_builder.go` (RawQuery/ProjectionDeclaration)                                 | A01  | 8   |
-| B08 | Read `dedup.go` + `checkpoint_engine.go` (DedupStore access, checkpoints)                     | A01  | 8   |
-| B09 | Write `docs/research/2026-11-08_system-v4-api-notes.md` verdict                               | A01  | 12  |
-| B10 | Read sqliteengine `engine.go` driver-registration path (modernc init)                         | A02  | 12  |
-| B11 | hello-system binary: build + run in devshell against a temp DSN                               | A02  | 12  |
-| B12 | Same binary under `nix build` (sandbox) — record result + vendorHash delta                    | A02  | 12  |
-| B13 | Write the A02 verdict into the research doc                                                   | A02  | 8   |
-| B14 | Draft the system-in-do lifecycle order diagram (drain → hubs → sys.Close → do.Shutdown)       | A03  | 12  |
-| B15 | Map every today-lifecycle touchpoint in `app.go`/`cmd/webphone` that must move                | A03  | 12  |
-| B16 | Write the composition contract doc                                                            | A03  | 12  |
-| B17 | Throwaway branch + stub `system.New` import                                                   | A04  | 12  |
-| B18 | Run `buildflow -s cqrs-lint`; capture findings                                                | A04  | 12  |
-| B19 | Triage each finding: migrate / baseline / retirement-date                                     | A04  | 12  |
-| B20 | Write findings doc; delete throwaway branch                                                   | A04  | 8   |
-| B21 | Read the retention surface (`engine_config.go`, event retention types)                        | A05  | 12  |
-| B22 | Classify every aggregate: bounded-trim / keep-forever / snapshot                              | A05  | 12  |
-| B23 | Write the per-class journal retention policy (feeds D3)                                       | A05  | 12  |
-| B24 | Read the backup oneshot + drill scripts; list system.db integration points                    | A06  | 12  |
-| B25 | Write the backup/restore spec deltas                                                          | A06  | 12  |
-| B26 | Re-read `store/legacy_import_test.go` + readmodels boot import; extract the pattern           | A07  | 12  |
-| B27 | Write the importer pattern spec (markers, idempotency, dual-run diff)                         | A07  | 12  |
-| B28 | Draft D1–D5 decision memos (one paragraph each)                                               | A08  | 12  |
-| B29 | Present verdicts to owner; record rulings in the errata                                       | A08  | 12  |
-| B30 | Gate check: all P0 verdicts GO before P1                                                      | A08  | 3   |
+| #   | Task                                                                            | From | Min |
+| --- | ------------------------------------------------------------------------------- | ---- | --- |
+| B01 | `git status` clean-check + record start state                                   | A01  | 3   |
+| B02 | `go list -m -versions system/v4` — pick the train version                       | A01  | 5   |
+| B03 | Read `constructor.go` (New, options)                                            | A01  | 12  |
+| B04 | Read `config_types.go` (DomainConfig/DeploymentConfig/InstanceConfig)           | A01  | 12  |
+| B05 | Read `register.go` (RegisterDecider/RegisterCommand, Op/Execute)                | A01  | 12  |
+| B06 | Read `system_lifecycle.go` + `lifecycle.go` (Start/Close semantics)             | A01  | 12  |
+| B07 | Read `projection_builder.go` (RawQuery/ProjectionDeclaration)                   | A01  | 8   |
+| B08 | Read `dedup.go` + `checkpoint_engine.go` (DedupStore, checkpoints)              | A01  | 8   |
+| B09 | Write `docs/research/2026-11-08_system-v4-api-notes.md`                         | A01  | 12  |
+| B10 | Read sqliteengine `engine.go` driver-registration (modernc init)                | A02  | 12  |
+| B11 | hello-system binary: build + run in devshell on a temp DSN                      | A02  | 12  |
+| B12 | Same binary under `nix build` — vendorHash delta recorded                       | A02  | 12  |
+| B13 | Write the A02 verdict into the research doc                                     | A02  | 8   |
+| B14 | Draft the system-in-do lifecycle order (drain → hubs → sys.Close → do.Shutdown) | A03  | 12  |
+| B15 | Map every today-lifecycle touchpoint in `app.go`/`cmd/webphone`                 | A03  | 12  |
+| B16 | Write the composition contract doc                                              | A03  | 12  |
+| B17 | Throwaway branch + stub `system.New` import                                     | A04  | 12  |
+| B18 | Run `buildflow -s cqrs-lint`; capture findings                                  | A04  | 12  |
+| B19 | Triage each finding: migrate / baseline / retirement-date                       | A04  | 12  |
+| B20 | Write findings doc; delete throwaway branch                                     | A04  | 8   |
+| B21 | Read the retention surface (`engine_config.go`, event trim types)               | A05  | 12  |
+| B22 | Re-read `store/sweep.go` + `retention_days` semantics; list every swept class   | A05  | 12  |
+| B23 | Design tombstone+trim mechanics per swept class; contacts never-sweep carried   | A05  | 12  |
+| B24 | Set snapshot thresholds (D8 draft) for long-lived streams                       | A05  | 12  |
+| B25 | Write the retention policy doc                                                  | A05  | 12  |
+| B26 | Read projectionhost apply model for sqlite single-instance (sync vs async)      | A06  | 12  |
+| B27 | Write the minimal dispatch-then-read proof; measure visibility latency          | A06  | 12  |
+| B28 | Choose + document the read-your-writes mechanism (D7 draft)                     | A06  | 12  |
+| B29 | Read backup oneshot + drill scripts; list system.db integration points          | A07  | 12  |
+| B30 | Write the backup/restore spec deltas (incl. per-phase readmodels shrink)        | A07  | 12  |
+| B31 | Re-read `legacy_import_test.go`; extract the pattern                            | A08  | 12  |
+| B32 | Write the importer spec (markers, idempotency, dual-run, timestamp fidelity)    | A08  | 12  |
+| B33 | Draft D1–D8 decision memos                                                      | A09  | 12  |
+| B34 | Present verdicts to owner; record rulings in the errata                         | A09  | 12  |
+| B35 | Gate check: all P0 verdicts GO before P1                                        | A09  | 3   |
 
-### Phase 1 — plumbing (A09–A13)
-
-| #   | Task                                                                                            | From | Min |
-| --- | ----------------------------------------------------------------------------------------------- | ---- | --- |
-| B31 | `go get system/v4@<pin>` (manual train, no daemon)                                              | A09  | 5   |
-| B32 | `go mod tidy`; review go.mod delta (expect ES modules → direct)                                 | A09  | 12  |
-| B33 | `nix build .#webphone.goModules --rebuild` → read `got:`                                        | A09  | 12  |
-| B34 | Apply vendorHash; full `nix build` green                                                        | A09  | 12  |
-| B35 | Push + CI-watch green (bump-train tail)                                                         | A09  | 12  |
-| B36 | Scaffold `internal/app/cqrs.go` (provider + names)                                              | A10  | 12  |
-| B37 | DomainConfig skeleton (no commands yet — hollow-root WARN expected, logged)                     | A10  | 8   |
-| B38 | DeploymentConfig: sqlite engine, combined RoleSourceOfTruth instance, DSN `<dataDir>/system.db` | A10  | 12  |
-| B39 | Wire into `internal/app` injector (named `"cqrs"`, eager)                                       | A10  | 12  |
-| B40 | Lifecycle assertion in `app.go` (adapter-side conformance)                                      | A10  | 8   |
-| B41 | Unit test: container resolves `"cqrs"`; Close is idempotent                                     | A10  | 12  |
-| B42 | Place `sys.Close` in the shutdown cascade after hubs pre-drain                                  | A11  | 12  |
-| B43 | Shutdown-order test (fake system records close sequence)                                        | A11  | 12  |
-| B44 | `/healthz` cqrs leg from `sys.HealthCheck` + `WorkerStatus`                                     | A12  | 12  |
-| B45 | 503-names-the-worker formatting + test                                                          | A12  | 12  |
-| B46 | `/startupz` join + nil-fallback for test compositions                                           | A12  | 12  |
-| B47 | Boot the smoke binary; diff every served page vs pre-change bytes                               | A13  | 12  |
-| B48 | Full smoke suite + `nix flake check` + buildflow tiers                                          | A13  | 12  |
-| B49 | CHANGELOG `[Unreleased]` plumbing line; commit narrative; push; CI-watch                        | A13  | 12  |
-
-### Phase 2 — dial windows (A14–A19)
-
-| #   | Task                                                                                                     | From | Min |
-| --- | -------------------------------------------------------------------------------------------------------- | ---- | --- |
-| B50 | Type the commands: `AttemptDial{Owner, Remote, Override}` / `SaveOverride{Owner, Remote, Window}`        | A14  | 12  |
-| B51 | Define aggregate state struct (windows map, overrides, counts)                                           | A14  | 12  |
-| B52 | Write the Decide function: allowed ⇒ record; denied ⇒ record NOTHING; override spent BY the allowed dial | A14  | 12  |
-| B53 | Emit `DialAttempted`/`DialOverrideSaved` events (SAME payload types as today's facts)                    | A14  | 12  |
-| B54 | Map rejection shapes: off ⇒ the off-latch (404 semantics preserved), store failure ⇒ 502 family          | A14  | 12  |
-| B55 | Register decider + commands in DomainConfig                                                              | A15  | 8   |
-| B56 | Declare `dial_windows` + `dial_overrides` projections via folds — byte-compare view structs vs today's   | A15  | 12  |
-| B57 | Start system in `App.Start`; projections run                                                             | A15  | 8   |
-| B58 | Swap `dial.Service` backend to dispatch; keep the port + `Deps.DialGate` contract                        | A16  | 12  |
-| B59 | Route `/api/dials` through the service (handler diff = nil)                                              | A16  | 8   |
-| B60 | Keep the `/config.js` `dialCooldownSeconds` pointer semantics (encoding/json v2 lesson)                  | A16  | 8   |
-| B61 | Write the dial importer (readmodels rows → synthetic events)                                             | A17  | 12  |
-| B62 | `app_flags` marker + crash-safe re-run test (kill mid-import, re-run, diff)                              | A17  | 12  |
-| B63 | Dual-run diff harness run: old readmodels reads vs new projections                                       | A17  | 12  |
-| B64 | Port `TestDialGate*` fakes to the new backend                                                            | A18  | 12  |
-| B65 | `systemscenario` spec: allow / deny / override-spend / off-latch                                         | A18  | 12  |
-| B66 | Wiring-parity check (`TestAppWiresEveryServerDep`) still green                                           | A18  | 8   |
-| B67 | Smoke `dialgate` scenario + full gates                                                                   | A19  | 12  |
-| B68 | CHANGELOG + narrative commit + push + CI-watch                                                           | A19  | 12  |
-
-### Phase 3 — small aggregates (A20–A24)
-
-| #   | Task                                                                      | From | Min |
-| --- | ------------------------------------------------------------------------- | ---- | --- |
-| B69 | Snippets commands + decider (cap 100 in state)                            | A20  | 12  |
-| B70 | Snippets projection (quick-chips + picker reads)                          | A20  | 12  |
-| B71 | Snippets port swap + importer + marker                                    | A20  | 12  |
-| B72 | Snippets parity tests (composer fill replaces textarea)                   | A20  | 12  |
-| B73 | Enroll tokens commands/decider (Minted/Burned)                            | A21  | 12  |
-| B74 | Expiry stays at the userauth door (Lookup exposes expiry — doctrine kept) | A21  | 12  |
-| B75 | Enroll projection + port swap (importer EXEMPT — documented)              | A21  | 12  |
-| B76 | Enroll parity tests (`passkey_api_test.go` pins)                          | A21  | 8   |
-| B77 | Agent-audit stream (Appended events; NO update folds — append-only)       | A22  | 12  |
-| B78 | Actor enricher (`NewUserActor`) + command causality on audit events       | A22  | 12  |
-| B79 | Settings newest-20 projection + port swap                                 | A22  | 12  |
-| B80 | `auth:` prefix + session-behavior suite green                             | A22  | 8   |
-| B81 | Push-devices commands/decider (8/owner cap)                               | A23  | 12  |
-| B82 | Token write-only projection (LIST never echoes token)                     | A23  | 12  |
-| B83 | Push port swap + `push.*` family tests green                              | A23  | 12  |
-| B84 | P4-aggregate smoke additions + full gates                                 | A24  | 12  |
-| B85 | CHANGELOG + commit + push + CI-watch                                      | A24  | 12  |
-
-### Phase 4 — medium aggregates (A25–A29)
+### Phase 1 — plumbing (A10–A14)
 
 | #   | Task                                                                               | From | Min |
 | --- | ---------------------------------------------------------------------------------- | ---- | --- |
-| B86 | Contacts aggregate state (owner list: entries + count + newest order)              | A25  | 12  |
-| B87 | Contacts Decide: save (rename keeps id/createdAt), delete tombstone, cap Rejection | A25  | 12  |
-| B88 | Contacts projection = today's `ContactView` shape byte-for-byte                    | A25  | 12  |
-| B89 | Contacts port swap + `readmodels/contacts.go` becomes the projection adapter       | A25  | 12  |
-| B90 | Transcripts streams per (owner, call) + expunge events                             | A26  | 12  |
-| B91 | Projection-side 5000/owner trim kept; floor loop unchanged                         | A26  | 12  |
-| B92 | Notes aggregate: one slot per (owner, call); 409 Conflict mapping                  | A27  | 12  |
-| B93 | Reviews aggregate: wholesale replace verdicts; 2000 Rejection cap                  | A27  | 12  |
-| B94 | `readmodels.note_list_full` classification test still green                        | A27  | 8   |
-| B95 | Contacts importer + marker + dual-run diff                                         | A28  | 12  |
-| B96 | Transcripts importer + marker + diff                                               | A28  | 12  |
-| B97 | Notes + reviews importers + markers                                                | A28  | 12  |
-| B98 | Parity: `admin_reads_test` + owner-scoping pins green on new backends              | A29  | 12  |
-| B99 | Full gates + smoke + CHANGELOG + commit + push + CI-watch                          | A29  | 12  |
+| B36 | `go get system/v4@<pin>` (manual train)                                            | A10  | 5   |
+| B37 | `go mod tidy`; review delta (ES modules → direct)                                  | A10  | 12  |
+| B38 | `nix build .#webphone.goModules --rebuild` → read `got:`                           | A10  | 12  |
+| B39 | Apply vendorHash; full `nix build` green                                           | A10  | 12  |
+| B40 | Push + CI-watch green                                                              | A10  | 12  |
+| B41 | Scaffold `internal/app/cqrs.go` (provider + names)                                 | A11  | 12  |
+| B42 | DomainConfig skeleton (hollow-root WARN expected, logged)                          | A11  | 8   |
+| B43 | DeploymentConfig: sqlite engine, combined RoleSourceOfTruth, `<dataDir>/system.db` | A11  | 12  |
+| B44 | Wire into the injector (named `"cqrs"`, eager)                                     | A11  | 12  |
+| B45 | Lifecycle assertion in `app.go`                                                    | A11  | 8   |
+| B46 | Unit test: resolves `"cqrs"`; Close idempotent                                     | A11  | 12  |
+| B47 | Place `sys.Close` after the hubs pre-drain                                         | A12  | 12  |
+| B48 | Shutdown-order test (fake system records sequence)                                 | A12  | 12  |
+| B49 | DLQ store wired into projectionhost config                                         | A12  | 12  |
+| B50 | DLQ surface readable + health test (poison event ⇒ worker named)                   | A12  | 12  |
+| B51 | `/healthz` cqrs leg from `sys.HealthCheck` + `WorkerStatus`                        | A13  | 12  |
+| B52 | 503-names-the-worker formatting + test                                             | A13  | 12  |
+| B53 | `/startupz` join + nil-fallback                                                    | A13  | 12  |
+| B54 | Boot smoke binary; diff every served page vs pre-change bytes                      | A14  | 12  |
+| B55 | Train-start FULL buildflow (no-cache) recorded                                     | A14  | 12  |
+| B56 | Full smoke + `nix flake check` + train-end buildflow                               | A14  | 12  |
+| B57 | CHANGELOG line; narrative commit; push; CI-watch                                   | A14  | 12  |
 
-### Phase 5 — the core (A30–A36)
+### Phase 2 — dial windows (A15–A20)
 
-| #    | Task                                                                       | From | Min |
-| ---- | -------------------------------------------------------------------------- | ---- | --- |
-| B100 | Core design doc: stream keys, event payloads, projection folds             | A30  | 12  |
-| B101 | `AppendToThread` becomes the decider apply (invariants in ONE Decide)      | A30  | 12  |
-| B102 | Design review vs `store/threads` tests (the invariants list)               | A30  | 12  |
-| B103 | Delivery decider consuming `deliveryMoves` (rows → decisions)              | A31  | 12  |
-| B104 | Self-send Rejection AFTER persist (422 arm preserved)                      | A31  | 8   |
-| B105 | Thread-list projection (stable `thread-<id>` wrappers, `wp-thread-row`)    | A32  | 12  |
-| B106 | Transcript projection (`wp-bubble`, asr flags, delivery chips byte-parity) | A32  | 12  |
-| B107 | Attachments folds + blob path rows unchanged                               | A32  | 8   |
-| B108 | `messaging.Service.Receive` → dispatch                                     | A33  | 12  |
-| B109 | `messaging.Service.Send` → dispatch (+ delivery advances)                  | A33  | 12  |
-| B110 | Flag toggles + compose-new address routing → dispatch                      | A33  | 12  |
-| B111 | `ChangeFunc` emission points preserved (post-append)                       | A33  | 8   |
-| B112 | Importer part 1: threads → stream heads                                    | A34  | 12  |
-| B113 | Importer part 2: messages + attachments → events                           | A34  | 12  |
-| B114 | Full-success marker + crash-retry test                                     | A34  | 8   |
-| B115 | Dual-run row-by-row diff harness (old store vs projections, all owners)    | A34  | 12  |
-| B116 | `owner_scoping_test` + `threadsdual_test` green                            | A35  | 12  |
-| B117 | `threads_flags_test` + message byte-pins green                             | A35  | 12  |
-| B118 | `TestProviderFormPartHeaderBlockGolden` + webhook lane pins green          | A35  | 8   |
-| B119 | Full smoke (all scenarios incl. faxcap)                                    | A36  | 12  |
-| B120 | Stack browser E2E (445s budget; re-run-once flake rule)                    | A36  | 12  |
-| B121 | CHANGELOG + commit + push + CI-watch                                       | A36  | 12  |
+| #   | Task                                                                                    | From | Min |
+| --- | --------------------------------------------------------------------------------------- | ---- | --- |
+| B58 | Type the commands (`AttemptDial`, `SaveOverride`)                                       | A15  | 12  |
+| B59 | Define aggregate state (windows, overrides, counts)                                     | A15  | 12  |
+| B60 | Decide function: allowed ⇒ record; denied ⇒ NOTHING; override spent by the allowed dial | A15  | 12  |
+| B61 | Emit `DialAttempted`/`DialOverrideSaved` (same payload types)                           | A15  | 12  |
+| B62 | Rejection shapes preserved (off latch 404, store failure 502)                           | A15  | 12  |
+| B63 | Register decider + commands in DomainConfig                                             | A16  | 8   |
+| B64 | Declare `dial_windows`/`dial_overrides` folds — byte-compare view structs               | A16  | 12  |
+| B65 | Remove dial collections from the readmodels engine plan (first shrink)                  | A16  | 12  |
+| B66 | Backup/restore drill updated for the shrink                                             | A16  | 8   |
+| B67 | Swap `dial.Service` backend to dispatch; port + `Deps.DialGate` unchanged               | A17  | 12  |
+| B68 | `/api/dials` handler diff = nil; `/config.js` pointer semantics kept                    | A17  | 8   |
+| B69 | Importer: readmodels rows → synthetic events                                            | A18  | 12  |
+| B70 | Marker + crash-retry test (kill mid-import, re-run, diff)                               | A18  | 12  |
+| B71 | Dual-run diff harness run                                                               | A18  | 12  |
+| B72 | Timestamp fidelity test (window order unchanged post-import)                            | A18  | 12  |
+| B73 | Port `TestDialGate*` fakes to the new backend                                           | A19  | 12  |
+| B74 | `systemscenario` spec: allow/deny/override-spend/off-latch                              | A19  | 12  |
+| B75 | Wiring-parity (`TestAppWiresEveryServerDep`) green                                      | A19  | 8   |
+| B76 | Command round-trip p95 benchmark vs old SQL path; record in errata                      | A19  | 12  |
+| B77 | `/metrics` surfaces unchanged check                                                     | A19  | 8   |
+| B78 | Smoke `dialgate` + full gates                                                           | A20  | 12  |
+| B79 | CHANGELOG + narrative commit + push + CI-watch                                          | A20  | 12  |
 
-### Phase 6 — faxes (A37–A38)
+### Phase 3 — small aggregates (A21–A25)
 
-| #    | Task                                                                                                        | From | Min |
-| ---- | ----------------------------------------------------------------------------------------------------------- | ---- | --- |
-| B122 | Fax decider consuming `faxMoves` (outbound vs inbound `received` fact split kept)                           | A37  | 12  |
-| B123 | Command idempotency middleware keyed on provider_ref (durable — supersedes process-local `ApplyIdempotent`) | A37  | 12  |
-| B124 | Fax projection parity (`wp-fax-row`, badge tones)                                                           | A37  | 12  |
-| B125 | Fax port swap + paperless seam untouched proof                                                              | A37  | 8   |
-| B126 | Fax importer + marker + diff                                                                                | A38  | 12  |
-| B127 | faxcap smoke scenario + gates + release                                                                     | A38  | 12  |
+| #   | Task                                                           | From | Min |
+| --- | -------------------------------------------------------------- | ---- | --- |
+| B80 | Snippets commands + decider (cap 100 in state)                 | A21  | 12  |
+| B81 | Snippets projection (quick-chips + picker reads)               | A21  | 12  |
+| B82 | Snippets port swap + importer + marker + collection retired    | A21  | 12  |
+| B83 | Snippets parity tests (fill replaces textarea)                 | A21  | 12  |
+| B84 | Enroll commands/decider (Minted/Burned)                        | A22  | 12  |
+| B85 | Expiry stays at the userauth door (Lookup exposes expiry)      | A22  | 12  |
+| B86 | Enroll projection + port swap (importer EXEMPT, documented)    | A22  | 12  |
+| B87 | Enroll parity (`passkey_api_test.go` pins)                     | A22  | 8   |
+| B88 | Agent-audit stream (Appended events, NO update folds)          | A23  | 12  |
+| B89 | Actor enricher + command causality on audit events             | A23  | 12  |
+| B90 | Settings newest-20 projection + port swap + collection retired | A23  | 12  |
+| B91 | `auth:` prefix + session-behavior suite green                  | A23  | 8   |
+| B92 | Push-devices commands/decider (8/owner cap)                    | A24  | 12  |
+| B93 | Token write-only projection (LIST never echoes token)          | A24  | 12  |
+| B94 | Push port swap + `push.*` family tests + collection retired    | A24  | 12  |
+| B95 | Smoke additions + full gates                                   | A25  | 12  |
+| B96 | CHANGELOG + commit + push + CI-watch                           | A25  | 12  |
 
-### Phase 7 — unification + closeout (A39–A44)
+### Phase 4 — medium aggregates (A26–A30)
 
-| #    | Task                                                                                            | From | Min |
-| ---- | ----------------------------------------------------------------------------------------------- | ---- | --- |
-| B128 | Sweep all remaining write handlers → dispatcher                                                 | A39  | 12  |
-| B129 | Update `internal/arch` rules for new import directions; all boundary tests green                | A39  | 12  |
-| B130 | `/openapi.json` byte-diff; intentional drift documented                                         | A40  | 12  |
-| B131 | `webphone contracts` regen + asyncapi diff                                                      | A40  | 8   |
-| B132 | `catalog -o` render diff + governance-lint tree check                                           | A40  | 12  |
-| B133 | Execute the D2 sessions ruling (migrate or baseline)                                            | A41  | 12  |
-| B134 | Session-behavior suite (`go test ./internal/server/ -run TestServer`) green                     | A41  | 8   |
-| B135 | Freeze the ladder: comment + no-new-steps guard note in `store/db.go`                           | A42  | 8   |
-| B136 | Retirement plan doc (tables → death releases)                                                   | A42  | 12  |
-| B137 | AGENTS.md rewrite: no-ES bullet → ES doctrine; machine-tables bullet → deciders                 | A43  | 12  |
-| B138 | fleet-libs `go-cqrs-lite.md` re-score + verdict update                                          | A43  | 12  |
-| B139 | ROADMAP annotation (trigger fired + executed) + TODO_LIST harvest + FEATURES                    | A43  | 12  |
-| B140 | CHANGELOG release section                                                                       | A43  | 8   |
-| B141 | buildflow full (`BUILDFLOW_NO_RESULT_CACHE=1`) green                                            | A44  | 12  |
-| B142 | `nix flake check` + VM tests (module check, backup drill WITH system.db)                        | A44  | 12  |
-| B143 | `nix run .#vulnix` + triage                                                                     | A44  | 8   |
-| B144 | Full smoke + stack browser E2E final pass                                                       | A44  | 12  |
-| B145 | `./update.sh`-independent version bump + release per runbook; push; CI-watch; stack re-pin note | A44  | 12  |
+| #    | Task                                                                               | From | Min |
+| ---- | ---------------------------------------------------------------------------------- | ---- | --- |
+| B97  | Contacts aggregate state (entries + count + newest order)                          | A26  | 12  |
+| B98  | Contacts Decide: save (rename keeps id/createdAt), delete tombstone, cap Rejection | A26  | 12  |
+| B99  | Contacts projection = `ContactView` byte-for-byte; collection retired              | A26  | 12  |
+| B100 | Contacts port swap; `readmodels/contacts.go` becomes the adapter                   | A26  | 12  |
+| B101 | Transcripts streams per (owner, call) + expunge events                             | A27  | 12  |
+| B102 | 5000/owner projection trim kept; floor loop unchanged; collection retired          | A27  | 12  |
+| B103 | Notes aggregate: one slot per (owner, call); 409 Conflict mapping                  | A28  | 12  |
+| B104 | Reviews aggregate: wholesale replace; 2000 Rejection cap                           | A28  | 12  |
+| B105 | `readmodels.note_list_full` classification test green                              | A28  | 8   |
+| B106 | Contacts importer + marker + diff                                                  | A29  | 12  |
+| B107 | Transcripts importer + marker + diff                                               | A29  | 12  |
+| B108 | Notes + reviews importers + markers                                                | A29  | 12  |
+| B109 | Parity: `admin_reads_test` + owner-scoping pins green                              | A30  | 12  |
+| B110 | Full gates + smoke + CHANGELOG + commit + push + CI-watch                          | A30  | 12  |
+
+### Phase 5 — the core (A31–A38)
+
+| #    | Task                                                                  | From | Min |
+| ---- | --------------------------------------------------------------------- | ---- | --- |
+| B111 | Core design doc: stream keys, event payloads, projection folds        | A31  | 12  |
+| B112 | `AppendToThread` becomes the decider apply (invariants in ONE Decide) | A31  | 12  |
+| B113 | Conflict-retry pattern spec (bounded, expected-version re-read)       | A31  | 12  |
+| B114 | Design review vs `store/threads` tests (invariants list)              | A31  | 12  |
+| B115 | Delivery decider consuming `deliveryMoves`                            | A32  | 12  |
+| B116 | Self-send Rejection AFTER persist (422 arm preserved)                 | A32  | 8   |
+| B117 | Thread-list projection (stable `thread-<id>`, `wp-thread-row`)        | A33  | 12  |
+| B118 | Transcript projection (`wp-bubble`, asr flags, delivery chips)        | A33  | 12  |
+| B119 | Attachments folds + blob path rows unchanged                          | A33  | 8   |
+| B120 | Snapshot wiring per D8; load-latency check                            | A33  | 12  |
+| B121 | `messaging.Service.Receive` → dispatch                                | A34  | 12  |
+| B122 | `messaging.Service.Send` → dispatch (+ delivery advances)             | A34  | 12  |
+| B123 | Flag toggles + compose-new routing → dispatch                         | A34  | 12  |
+| B124 | `ChangeFunc` emission points preserved (post-append)                  | A34  | 8   |
+| B125 | Importer part 1: threads → stream heads                               | A35  | 12  |
+| B126 | Importer part 2: messages + attachments → events                      | A35  | 12  |
+| B127 | Full-success marker + crash-retry test                                | A35  | 8   |
+| B128 | Dual-run row-by-row diff (all owners) + timestamp fidelity            | A35  | 12  |
+| B129 | Pre-cutover backup snapshot taken + recorded                          | A35  | 8   |
+| B130 | Sweep port: tombstone + trim mechanics per D3                         | A36  | 12  |
+| B131 | Deletion gate test: swept content GONE from journal AND views         | A36  | 12  |
+| B132 | `retention_days=0` keep-forever behavior preserved test               | A36  | 8   |
+| B133 | `owner_scoping_test` + `threadsdual_test` green                       | A37  | 12  |
+| B134 | `threads_flags_test` + message byte-pins green                        | A37  | 12  |
+| B135 | `TestProviderFormPartHeaderBlockGolden` + webhook pins green          | A37  | 8   |
+| B136 | Full smoke (all scenarios incl. faxcap)                               | A38  | 12  |
+| B137 | Stack browser E2E (445s budget; re-run-once flake rule)               | A38  | 12  |
+| B138 | Perf re-check vs P2 baseline; record                                  | A38  | 12  |
+| B139 | CHANGELOG + commit + push + CI-watch                                  | A38  | 12  |
+
+### Phase 6 — faxes (A39–A40)
+
+| #    | Task                                                                  | From | Min |
+| ---- | --------------------------------------------------------------------- | ---- | --- |
+| B140 | Fax decider consuming `faxMoves` (inbound `received` fact split kept) | A39  | 12  |
+| B141 | Command idempotency middleware keyed on provider_ref (durable)        | A39  | 12  |
+| B142 | Fax projection parity (`wp-fax-row`, badge tones); collection retired | A39  | 12  |
+| B143 | Fax port swap + paperless seam untouched proof                        | A39  | 8   |
+| B144 | Fax importer + fax retention (if configured) + marker + diff          | A40  | 12  |
+| B145 | `faxcap` smoke + gates + release                                      | A40  | 12  |
+
+### Phase 7 — unification + closeout (A41–A47)
+
+| #    | Task                                                                         | From | Min |
+| ---- | ---------------------------------------------------------------------------- | ---- | --- |
+| B146 | Sweep all remaining write handlers → dispatcher                              | A41  | 12  |
+| B147 | Update `internal/arch` rules for new import directions                       | A41  | 12  |
+| B148 | `/openapi.json` byte-diff; intentional drift documented                      | A42  | 12  |
+| B149 | `webphone contracts` regen + asyncapi diff                                   | A42  | 8   |
+| B150 | `catalog -o` render diff + governance-lint tree check                        | A42  | 12  |
+| B151 | `hooksIdem`/`CallsIdem` windows → `sys.Dedup()`                              | A43  | 12  |
+| B152 | readmodels engine registration removed; file retired; drill updated          | A43  | 12  |
+| B153 | Restore-path test WITHOUT readmodels.db                                      | A43  | 12  |
+| B154 | Execute the D2 sessions ruling (migrate or baseline)                         | A44  | 12  |
+| B155 | Session-behavior suite green                                                 | A44  | 8   |
+| B156 | Freeze the ladder (comment + no-new-steps note)                              | A45  | 8   |
+| B157 | Retirement plan doc (tables → death releases)                                | A45  | 12  |
+| B158 | AGENTS.md rewrite (ES doctrine; machine-tables → deciders; topology wording) | A46  | 12  |
+| B159 | fleet-libs `go-cqrs-lite.md` re-score + verdict update                       | A46  | 12  |
+| B160 | ROADMAP annotation + TODO_LIST harvest + FEATURES                            | A46  | 12  |
+| B161 | CHANGELOG release section                                                    | A46  | 8   |
+| B162 | FULL buildflow no-cache green                                                | A47  | 12  |
+| B163 | `nix flake check` + VM tests (backup drill WITH system.db)                   | A47  | 12  |
+| B164 | `nix run .#vulnix` + triage                                                  | A47  | 8   |
+| B165 | Full smoke + stack browser E2E final pass                                    | A47  | 12  |
+| B166 | Version bump + release per runbook; push; CI-watch; stack re-pin note        | A47  | 12  |
 
 ## 10. EXECUTION GRAPH
 
 ```mermaid
 flowchart TD
-    P0["Phase 0: spikes A01-A07<br/>API · driver · composition · lint · retention · backup · migration"] --> G1{"A08 OWNER GO GATE<br/>D1-D5 rulings"}
+    P0["Phase 0: spikes A01-A08<br/>API · driver · composition · lint · retention+GDPR ·<br/>read-your-writes · backup · migration"] --> G1{"A09 OWNER GO GATE<br/>D1-D8 rulings"}
     G1 -->|NO-GO| STOP["stop — doctrine stays as-is"]
-    G1 -->|GO| P1["Phase 1: plumbing A09-A13<br/>system boots inside internal/app<br/>zero behavior change"]
-    P1 --> G2{"A13 byte-parity prove"}
+    G1 -->|GO| P1["Phase 1: plumbing A10-A14<br/>system boots inside internal/app + DLQ<br/>zero behavior change"]
+    P1 --> G2{"A14 byte-parity prove"}
     G2 -->|drift| FIX["fix before anything else"]
     FIX --> G2
-    G2 -->|identical| P2["Phase 2: dial windows A14-A19<br/>THE 1% proof — full loop in prod shape"]
-    P2 --> G3{"A19 release train"}
-    P2 --> P3["Phase 3: small aggregates A20-A24<br/>snippets · enroll · agent audit · push"]
-    P3 --> P4["Phase 4: medium aggregates A25-A29<br/>contacts · transcripts · notes · reviews"]
-    P4 --> P5["Phase 5: THE CORE A30-A36<br/>threads · messages · attachments"]
-    P5 --> P6["Phase 6: faxes A37-A38<br/>faxMoves decider · durable idempotency"]
-    P6 --> P7["Phase 7: unification + closeout A39-A44<br/>handler sweep · contracts · sessions ruling<br/>ladder freeze · doctrine · final battery"]
-    P7 --> DONE["100% command- + event-sourced<br/>webphone's own domain"]
+    G2 -->|identical| P2["Phase 2: dial windows A15-A20<br/>THE 1% proof — full loop + perf budget"]
+    P2 --> G3{"A20 release +<br/>parity/perf/abort check"}
+    G3 -->|abort| ABORT1["record partial-ES doctrine; stop"]
+    G3 -->|go| P3["Phase 3: small aggregates A21-A25<br/>snippets · enroll · agent audit · push"]
+    P3 --> P4["Phase 4: medium aggregates A26-A30<br/>contacts · transcripts · notes · reviews"]
+    P4 --> P5["Phase 5: THE CORE A31-A38<br/>threads · messages · attachments<br/>retention port · snapshots"]
+    P5 --> G4{"A38 parity + retention gate"}
+    G4 -->|abort x2| ABORT2["core stays CRUD; document the boundary"]
+    G4 -->|go| P6["Phase 6: faxes A39-A40<br/>faxMoves decider · durable idempotency"]
+    P6 --> P7["Phase 7: unification + closeout A41-A47<br/>handler sweep · contracts · dedup migration ·<br/>readmodels.db death · sessions ruling ·<br/>ladder freeze · doctrine · final battery"]
+    P7 --> DONE["100% command- + event-sourced<br/>ONE system.db · doctrine rewritten"]
 ```
+
+_(P3 and P4 are order-independent trains; the linear spine shows the default. P5 must not start before both are green.)_
 
 ## 11. VERIFICATION MATRIX (per phase)
 
-| Phase | Go suites                                                     | Buildflow                | Nix                             | Smoke                 | Browser        |
-| ----- | ------------------------------------------------------------- | ------------------------ | ------------------------------- | --------------------- | -------------- |
-| P0    | research only                                                 | `-s cqrs-lint` on branch | hello-system build              | —                     | —              |
-| P1    | `./internal/app`, shutdown tests                              | tiers 1+2                | flake check + vendorHash        | full smoke, byte-diff | —              |
-| P2    | `TestDialGate*`, scenario, wiring-parity                      | tiers 1+2                | flake check                     | `dialgate`            | —              |
-| P3    | family tests per aggregate, auth suite                        | tiers 1+2                | flake check                     | push/enroll paths     | —              |
-| P4    | contacts/transcripts/notes/reviews pins, `admin_reads_test`   | tiers 1+2                | flake check                     | history surfaces      | —              |
-| P5    | owner-scoping, threadsdual, flags, byte-pins, webhook goldens | tiers 1+2 + erraudit     | flake check                     | ALL scenarios         | stack E2E 445s |
-| P6    | fax family pins, idempotency tests                            | tiers 1+2                | flake check                     | `faxcap`              | —              |
-| P7    | FULL `go test -count=1 ./...`, session suite                  | FULL no-cache            | flake check + VM tests + vulnix | full                  | stack E2E      |
+| Phase | Go suites                                                                    | Buildflow                 | Nix                             | Smoke                 | Browser        | Perf                                                             |
+| ----- | ---------------------------------------------------------------------------- | ------------------------- | ------------------------------- | --------------------- | -------------- | ---------------------------------------------------------------- |
+| P0    | research only                                                                | `-s cqrs-lint` on branch  | hello-system build              | —                     | —              | dispatch-read visibility measurement (A06)                       |
+| P1    | `./internal/app`, shutdown, DLQ, health tests                                | FULL at train start + end | flake check + vendorHash        | full smoke, byte-diff | —              | —                                                                |
+| P2    | `TestDialGate*`, scenario, wiring-parity                                     | FULL start + end          | flake check                     | `dialgate`            | —              | command p95 vs old SQL path (budget: no regression beyond noise) |
+| P3    | family tests per aggregate, auth suite                                       | FULL start + end          | flake check                     | push/enroll paths     | —              | —                                                                |
+| P4    | contacts/transcripts/notes/reviews pins, `admin_reads_test`                  | FULL start + end          | flake check                     | history surfaces      | —              | —                                                                |
+| P5    | owner-scoping, threadsdual, flags, byte-pins, webhook goldens, DELETION gate | FULL start + end          | flake check                     | ALL scenarios         | stack E2E 445s | p95 re-check vs P2 baseline                                      |
+| P6    | fax family pins, idempotency tests                                           | FULL start + end          | flake check                     | `faxcap`              | —              | —                                                                |
+| P7    | FULL `go test -count=1 ./...`, session suite                                 | FULL no-cache             | flake check + VM tests + vulnix | full                  | stack E2E      | final record                                                     |
 
 ## 12. RESEARCH APPENDIX — verified facts (sources)
 
 - `system.New(ctx, DomainConfig, DeploymentConfig, …Option)` — local checkout `system/constructor.go:26`; `System.Start` `system_lifecycle.go:47`; `Close` `lifecycle.go:78`.
-- `RegisterDecider[State]` register.go:44; `RegisterCommand[Cmd, State]` register.go:94; `RawQuery` projection_builder.go:60; roles incl. combined `RoleSourceOfTruth` roles.go:279; introspection: `HealthCheck`, `VerifyProjections`, `WorkerStatus`, `ShutdownOrder`, `Dedup()`, `NewManualClock` (tests).
+- `RegisterDecider[State]` register.go:44; `RegisterCommand[Cmd, State]` register.go:94; `RawQuery` projection_builder.go:60; combined `RoleSourceOfTruth` roles.go:279; introspection: `HealthCheck`, `VerifyProjections`, `WorkerStatus`, `ShutdownOrder`, `Dedup()`, `LagPerProjection`, `NewCachedEventStore`, `NewManualClock`.
 - sqliteengine v4.7.0 go.mod: `modernc.org/sqlite v1.61.1` — same driver family as webphone; CGO-free.
-- Doctrine: tombstone-over-delete, no `Delete` on Store (core.md §3.1, ADR-0114); CBOR default codec (§3.3); error families map 1:1 to webphone's existing errorfamily usage (§3.7); actor/causality/request-scope enrichers (§3.8); command idempotency middleware (§1 matrix); `systemscenario` BDD (§1, ADR-0153).
+- Doctrine: tombstone-over-delete, no `Delete` on Store (core.md §3.1, ADR-0114); CBOR default codec (§3.3); error families map 1:1 to webphone's errorfamily usage (§3.7); actor/causality/request-scope enrichers (§3.8); command idempotency middleware (§1); `systemscenario` BDD (ADR-0153); projectionhost DLQ `WithDeadLetterStore` (§ routing matrix); `middleware.Retry` for dispatch retry.
 - SSE ruling: `transport/http.SSEBroker` DEPRECATED (ADR-0127) — journal-backed SSE deliberately NOT adopted; `ExtensionHubs`/go-sse stay.
+- Retention: `config.RetentionDays` (`config.go:118`, validation `:842`, "0 = keep forever, N = delete content older than N days") drives hard DELETEs in `store/sweep.go:53-83`; contacts never swept (sweep.go:83 comment).
 - Prior-audit facts (2026-11-08 03:56 report): current-state storage `planned.go:170`; nudge-only `domain/events.go`; identity island `userauth.go:96`; no-ES doctrine rows.
-- OPEN (Phase 0 resolves): exact DomainConfig field surface on the pinned version; retention semantics detail; cqrs-lint finding inventory; systemscenario import path on the pinned version.
+- OPEN (Phase 0 resolves): exact DomainConfig field surface on the pinned version; retention/trim mechanics detail; cqrs-lint finding inventory; systemscenario import path on the pinned version; projectionhost apply model for the sqlite single-instance deployment.
 
 ## Errata
 
-_(owner rulings from gate A08 land here; nothing recorded yet)_
+- **Revision 2 (2026-11-08, post-self-review):** retracted v1's R2 claim ("dispatch is synchronous — the read is never older than today's") — wrong under async projectionhost; replaced by spike A06 + risks R2/R7/R11-R13. Added: retention/GDPR invariant (§4.2, A05, A36, R10), terminal storage topology (§2, A43, A16 collection retirement), OCC conflict retry (R7, B113), snapshots (R12, D8, B120), DLQ (R11, A12), perf budgets (A19, §11), abort criteria (§4.9), train-start full buildflow (§4.3, §11), timestamp-fidelity rule (§4.4, B72/B128), decision points D6-D8.
+- _(owner rulings from gate A09 land here)_
