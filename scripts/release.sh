@@ -130,7 +130,15 @@ echo "ok: clean main at $(git rev-parse --short HEAD), $TAG is free"
 flake_version="$(sed -n 's/.*webphoneVersion = "\([^"]*\)".*/\1/p' flake.nix | head -1)"
 tag_version="$(git describe --tags --abbrev=0 2>/dev/null || echo '')"
 tag_version="${tag_version#v}"
-if [ "${WEBPHONE_RELEASE_SKIP_VERSION_GUARD:-0}" != "1" ] && [ -n "$tag_version" ] && [ "$flake_version" != "$tag_version" ]; then
+# Unset the override BEFORE any child process runs: the app's env parser
+# maps every WEBPHONE_* variable onto a config key, so a leaking
+# RELEASE_SKIP_VERSION_GUARD becomes an unknown-config-key WARN that
+# fails TestLoadCleanConfigWarnsNothing inside the gates (observed
+# 2026-11-08, the 2.10.0 train).
+skip_version_guard="${WEBPHONE_RELEASE_SKIP_VERSION_GUARD:-0}"
+unset WEBPHONE_RELEASE_SKIP_VERSION_GUARD
+
+if [ "$skip_version_guard" != "1" ] && [ -n "$tag_version" ] && [ "$flake_version" != "$tag_version" ]; then
 	echo "flake.nix webphoneVersion='$flake_version' but the newest tag is 'v$tag_version': a flake bump was never tagged, or this is a bump-before-tag commit. Reconcile before releasing (override: WEBPHONE_RELEASE_SKIP_VERSION_GUARD=1)." >&2
 	exit 1
 fi
