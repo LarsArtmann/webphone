@@ -356,6 +356,10 @@ a deliberate code change, regenerate:
 | config.turn_rest.ttl                         | Rejection                 | internal/config/config.go          |
 | config.unmarshal                             | Rejection                 | internal/config/config.go          |
 | config.webhook_secret_file                   | Rejection                 | internal/config/config.go          |
+| cqrs.agent_audit_append                      | Infrastructure            | internal/cqrs/agentaudit.go        |
+| cqrs.agent_audit_fold                        | Corruption                | internal/cqrs/agentaudit.go        |
+| cqrs.agent_audit_recent                      | Infrastructure            | internal/cqrs/agentaudit.go        |
+| cqrs.agent_audit_register                    | Infrastructure            | internal/cqrs/agentaudit.go        |
 | cqrs.command_build                           | Infrastructure            | internal/cqrs/dialwindows.go       |
 | cqrs.dial_attempt                            | Infrastructure            | internal/cqrs/dialwindows.go       |
 | cqrs.dial_fold                               | Corruption                | internal/cqrs/dial.go              |

@@ -289,9 +289,9 @@ type Deps struct {
 	// disabled: the device API answers 404 and the ring hook
 	// acknowledges inertly.
 	Push *push.Fanout
-	// PushDevices is the registered-device store (readmodels-backed;
-	// present whenever the composition built the engine).
-	PushDevices *readmodels.PushDevices
+	// PushDevices is the registered-device store (journal-backed since
+	// SUPERB Phase 3; the engine store is the import source).
+	PushDevices readmodels.PushDeviceGate
 	// Admin is the admin surface's identity inventory (config-derived:
 	// the shared auth.users mapping + the identities feed). Nil (test
 	// compositions): every admin route answers the styled 404 and the

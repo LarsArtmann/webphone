@@ -346,3 +346,90 @@ func importAgentAudit(ctx context.Context, db *store.Database, audit *readmodels
 	}
 	log.Info("agent-audit rows imported into the journal", "imported", imported, "legacy_rows", len(views))
 }
+
+// flagPushDevicesJournalImported is the push-devices importer's app_flags marker.
+const flagPushDevicesJournalImported = "push_devices_journal_imported"
+
+// importPushDevices ports the legacy engine device rows into the
+// journal (same policy and idempotence story as importDialWindows).
+// Ring continuity is the whole point: without the port, every
+// installed app silently stops ringing after the upgrade. Rows keep
+// their tokens (the wake addresses) and registration stamps.
+func importPushDevices(ctx context.Context, db *store.Database, devices *readmodels.PushDevices, svc *CqrsService, log *slog.Logger) {
+	done, err := store.FlagPresent(ctx, db.SQL(), flagPushDevicesJournalImported)
+	if err != nil {
+		log.Error("push-device journal import: flag read failed; skipping (retries next boot)", "err", err)
+		return
+	}
+	if done {
+		return
+	}
+	views, err := devices.ExportAll(ctx)
+	if err != nil {
+		log.Error("push-device journal import: export failed; skipping (retries next boot)", "err", err)
+		return
+	}
+	perOwner := map[string][]readmodels.PushDeviceView{}
+	for _, v := range views {
+		if _, err := domain.ParseExtension(v.Owner); err != nil {
+			log.Warn("push-device journal import: unparseable owner row skipped", "owner", v.Owner)
+			continue
+		}
+		perOwner[v.Owner] = append(perOwner[v.Owner], v)
+	}
+	imported := 0
+	for _, owner := range slices.Sorted(maps.Keys(perOwner)) {
+		rows := perOwner[owner]
+		slices.SortStableFunc(rows, func(a, b readmodels.PushDeviceView) int {
+			switch {
+			case a.UpdatedAt < b.UpdatedAt:
+				return -1
+			case a.UpdatedAt > b.UpdatedAt:
+				return 1
+			}
+			return strings.Compare(a.DeviceID, b.DeviceID)
+		})
+		streamID, err := id.ParseStreamID(owner)
+		if err != nil {
+			log.Error("push-device journal import: bad owner stream; skipping (retries next boot)", "err", err, "owner", owner)
+			return
+		}
+		ref := id.NewStreamRef(cqrs.PushDevicesStreamType, streamID)
+		existing, err := svc.Sys.EventStore().Load(ctx, ref)
+		if err != nil {
+			log.Error("push-device journal import: load tail failed; skipping (retries next boot)", "err", err, "owner", owner)
+			return
+		}
+		ver := event.Version(len(existing))
+		actor, _ := id.ParseActorID("system:importer")
+		events := make([]event.Event, 0, len(rows))
+		for _, v := range rows {
+			ver++
+			evt, err := event.New(event.Type(metaengine.EventTypeName(domain.PushDeviceRegistered{})), streamID, cqrs.PushDevicesStreamType, ver,
+				domain.PushDeviceRegistered{
+					Key:       domain.PushDeviceKey{Owner: owner, DeviceID: v.DeviceID},
+					Transport: v.Transport,
+					Token:     v.Token,
+					UpdatedAt: time.Unix(0, v.UpdatedAt),
+				}, event.WithActor(actor))
+			if err != nil {
+				log.Error("push-device journal import: build fact failed; skipping (retries next boot)", "err", err)
+				return
+			}
+			events = append(events, evt)
+		}
+		if len(events) == 0 {
+			continue
+		}
+		if err := svc.Sys.EventStore().AppendBatch(ctx, ref, events); err != nil {
+			log.Error("push-device journal import: append failed; skipping (retries next boot)", "err", err, "owner", owner)
+			return
+		}
+		imported += len(events)
+	}
+	if err := store.SetFlag(ctx, db.SQL(), flagPushDevicesJournalImported, time.Now().UTC().Format(time.RFC3339)); err != nil {
+		log.Error("push-device journal import: flag write failed (imports re-run idempotently next boot)", "err", err, "imported", imported)
+		return
+	}
+	log.Info("push devices imported into the journal", "imported", imported, "legacy_rows", len(views))
+}

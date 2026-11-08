@@ -91,9 +91,9 @@ type Deps struct {
 	// Nil or disabled: the routes answer 404 (a native shell reads
 	// that as "this server does not ring closed apps").
 	Push *push.Fanout
-	// Devices is the registered-device store (readmodels-backed;
-	// present whenever the composition built the engine).
-	Devices *readmodels.PushDevices
+	// Devices is the registered-device store (journal-backed since
+	// SUPERB Phase 3; the engine store is the import source).
+	Devices readmodels.PushDeviceGate
 	// Dials is the dial-cooldown seam as the handlers see it (the
 	// readmodels.DialGate interface — engine-backed or journal-backed,
 	// interchangeable). Nil: test compositions only — the gate answers

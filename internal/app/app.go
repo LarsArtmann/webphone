@@ -465,7 +465,10 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			Trace:       traceSeam(trace),
 			Dedup:       engineDedupWindow{store: engine.DedupStore()},
 			Push:        pushFanout,
-			PushDevices: engine.PushDevices(),
+			// The device registry answers from the journal since the SUPERB
+			// Phase 3 swap (the engine-backed store stays as the import
+			// source behind the PushDeviceGate seam).
+			PushDevices: do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).PushDevicesSvc(),
 			Admin:       adminService,
 		}), nil
 	})
@@ -505,6 +508,8 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time snippet import
 	importAgentAudit(context.Background(), sqlite, engine.AgentAudit(),
 		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time agent-audit import
+	importPushDevices(context.Background(), sqlite, engine.PushDevices(),
+		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time push-device import
 	if cfg.Auth.Passkey.Enabled() {
 		if _, err := do.InvokeNamed[*userauth.Service](injector, "userauth"); err != nil {
 			return nil, wrapf("open passkey auth: %w", err)

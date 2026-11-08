@@ -50,8 +50,9 @@ type Deps struct {
 	// depend on push health).
 	Push *push.Fanout
 	// Devices is the registered-device store the ring hook fans out
-	// to (nil with a disabled seam).
-	Devices *readmodels.PushDevices
+	// to (nil with a disabled seam). Journal-backed since SUPERB
+	// Phase 3 (the engine store is the import source).
+	Devices readmodels.PushDeviceGate
 }
 
 // UnreadCache is the narrow nav-badge seam the message hook
@@ -69,7 +70,7 @@ type Handlers struct {
 	unread    UnreadCache
 	idem      Gate
 	push      *push.Fanout
-	devices   *readmodels.PushDevices
+	devices   readmodels.PushDeviceGate
 }
 
 // New builds the webhook ingest handlers, including their idempotency

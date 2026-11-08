@@ -59,6 +59,18 @@ var pushDevicesQuery = metaengine.Query[pushDevicesInput, PushDeviceView](pushDe
 	metaengine.Volume(humanScaleVolume),
 )
 
+// PushDeviceGate is the registered-device seam as the push surfaces
+// see it (register/rotate, fan-out list, deregister). The
+// engine-backed store below and the journal-backed service
+// (internal/cqrs, SUPERB Phase 3) are interchangeable behind it.
+type PushDeviceGate interface {
+	Upsert(ctx context.Context, owner domain.Extension, deviceID, transport, token string) error
+	List(ctx context.Context, owner domain.Extension) ([]PushDeviceView, error)
+	Remove(ctx context.Context, owner domain.Extension, deviceID string) error
+}
+
+var _ PushDeviceGate = (*PushDevices)(nil)
+
 // PushDevices is the engine-backed registered-device store behind the
 // push seam: owner-scoped upsert (re-registration replaces the token),
 // owner-scoped list (the ring lane's fan-out source), owner-scoped
@@ -165,6 +177,16 @@ func (s *PushDevices) ownerViews(ctx context.Context, owner domain.Extension) ([
 	)
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.push_list", "list push devices for %s", owner.String())
+	}
+	return views, nil
+}
+
+// ExportAll reads every registered device (the journal importer's
+// source; ring continuity is the whole point of the import).
+func (s *PushDevices) ExportAll(ctx context.Context) ([]PushDeviceView, error) {
+	views, err := s.reader.Scan(ctx, metaengine.WithLimit(1_000_000))
+	if err != nil {
+		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.push_list", "export push devices")
 	}
 	return views, nil
 }

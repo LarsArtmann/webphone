@@ -64,6 +64,8 @@ type CqrsService struct {
 	enroll       *cqrsdomain.EnrollTokens
 	auditOnce    sync.Once
 	audit        *cqrsdomain.AgentAudit
+	pushOnce     sync.Once
+	pushDevices  *cqrsdomain.PushDevices
 }
 
 // NewCqrs builds the system composition root over <dataDir>/system.db:
@@ -79,6 +81,7 @@ func NewCqrs(cfg config.Config, log *slog.Logger) (*CqrsService, error) {
 		cqrsdomain.SnippetsDomainDecl(),
 		cqrsdomain.EnrollDomainDecl(),
 		cqrsdomain.AgentAuditDomainDecl(),
+		cqrsdomain.PushDevicesDomainDecl(),
 	))
 }
 
@@ -109,6 +112,13 @@ func (s *CqrsService) EnrollSvc() *cqrsdomain.EnrollTokens {
 func (s *CqrsService) AgentAuditSvc() *cqrsdomain.AgentAudit {
 	s.auditOnce.Do(func() { s.audit = cqrsdomain.NewAgentAudit(s.Sys) })
 	return s.audit
+}
+
+// PushDevicesSvc builds (once) the dispatch-backed registered-device
+// store — the ring lane's fan-out source (SUPERB Phase 3, A24).
+func (s *CqrsService) PushDevicesSvc() *cqrsdomain.PushDevices {
+	s.pushOnce.Do(func() { s.pushDevices = cqrsdomain.NewPushDevices(s.Sys) })
+	return s.pushDevices
 }
 
 // newCqrs is the construction seam tests (and, from Phase 2 on, the
