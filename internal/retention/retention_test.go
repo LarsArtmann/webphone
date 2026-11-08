@@ -155,7 +155,7 @@ func TestSweepOnceExpiresOldTenantsAndUnlinksTheirBlobs(t *testing.T) {
 		}
 	}
 
-	sum := sweepOnce(ctx, db, blobs, engine, nil, cutoff)
+	sum := sweepOnce(ctx, db, blobs, engine, nil, nil, cutoff)
 
 	if sum.messages != 1 || sum.threads != 1 || sum.faxes != 1 || sum.transcripts != 0 || sum.blobs != 2 {
 		t.Fatalf("sweep summary wrong: %+v", sum)
@@ -198,7 +198,7 @@ func TestSweepOnceSkipsCorruptBlobPath(t *testing.T) {
 	appendMessage(t, messages, owner, "+441632960961", old, "/abs/escape")
 	appendMessage(t, messages, owner, "+441632960963", old, validBlob)
 
-	sum := sweepOnce(ctx, db, blobs, engine, nil, cutoff)
+	sum := sweepOnce(ctx, db, blobs, engine, nil, nil, cutoff)
 
 	if sum.messages != 2 || sum.blobs != 1 {
 		t.Fatalf("corrupt path must skip itself, not the sweep: %+v", sum)
@@ -219,7 +219,7 @@ func TestStartDisabledWindowKeepsEverything(t *testing.T) {
 			ancient := time.Now().Add(-365 * 24 * time.Hour)
 			thread := appendMessage(t, messages, owner, "+441632960965", ancient, "")
 
-			Start(ctx, db, blobs, engine, nil, window)
+			Start(ctx, db, blobs, engine, nil, nil, window)
 			time.Sleep(50 * time.Millisecond)
 
 			msgs, err := messages.ListMessages(ctx, owner, thread, 10)
@@ -242,7 +242,7 @@ func TestStartSweepsImmediatelyThenHonorsContext(t *testing.T) {
 	ancient := time.Now().Add(-365 * 24 * time.Hour)
 	thread := appendMessage(t, messages, owner, "+441632960967", ancient, "")
 
-	Start(ctx, db, blobs, engine, nil, 24*time.Hour)
+	Start(ctx, db, blobs, engine, nil, nil, 24*time.Hour)
 
 	deadline := time.Now().Add(2 * time.Second)
 	for {

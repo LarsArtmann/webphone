@@ -60,10 +60,10 @@ func start(t GinkgoTInterface, phoneAPIURL string, mutate ...func(*config.Config
 	engine, err := readmodels.Open(t.TempDir())
 	Expect(err).NotTo(HaveOccurred())
 	t.Cleanup(func() { _ = engine.Shutdown() })
-	threadSys, err := cqrs.NewThreadsSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
+	coreSys, err := cqrs.NewCoreSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
 	Expect(err).NotTo(HaveOccurred())
-	t.Cleanup(func() { _ = threadSys.Close() })
-	notifier := server.NewNotifier(hubs, cqrs.NewThreads(threadSys), engine.Faxes(), nil, false, views.FaxCapability{Send: true, Receive: true})
+	t.Cleanup(func() { _ = coreSys.Close() })
+	notifier := server.NewNotifier(hubs, cqrs.NewThreads(coreSys), cqrs.NewFaxes(coreSys), nil, false, views.FaxCapability{Send: true, Receive: true})
 	cfg := config.Config{
 		Addr: ":0", DataDir: t.TempDir(), WebsocketPath: "/sip",
 		SessionTTL: time.Hour,
@@ -72,13 +72,13 @@ func start(t GinkgoTInterface, phoneAPIURL string, mutate ...func(*config.Config
 	for _, m := range mutate {
 		m(&cfg)
 	}
-	threadSys, sysErr := cqrs.NewThreadsSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
+	coreSys, sysErr := cqrs.NewCoreSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
 	if sysErr != nil {
 		t.Fatal(sysErr)
 	}
-	t.Cleanup(func() { _ = threadSys.Close() })
-	messages := cqrs.NewThreads(threadSys)
-	faxes := engine.Faxes()
+	t.Cleanup(func() { _ = coreSys.Close() })
+	messages := cqrs.NewThreads(coreSys)
+	faxes := cqrs.NewFaxes(coreSys)
 	handler := server.New(server.Deps{
 		Config:    cfg,
 		Messages:  messages,

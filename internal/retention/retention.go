@@ -24,16 +24,22 @@ import (
 type sweepSummary struct {
 	messages       int64
 	faxes          int64
+	journalFaxes   int64
 	threads        int64
 	journalThreads int64
 	transcripts    int64
 	blobs          int64
 }
 
-// ThreadSweeper is the journal leg's seam: the threads backend's
-// SweepBefore (the Faxes.SweepBefore shape — paths out for unlinking,
-// rows and journal bytes gone before they return).
+// ThreadSweeper is the threads journal leg's seam: the backend's
+// SweepBefore (paths out for unlinking, rows and journal bytes gone
+// before they return).
 type ThreadSweeper interface {
+	SweepBefore(ctx context.Context, cutoff time.Time) ([]string, int64, error)
+}
+
+// FaxSweeper is the faxes journal leg's seam (the same shape).
+type FaxSweeper interface {
 	SweepBefore(ctx context.Context, cutoff time.Time) ([]string, int64, error)
 }
 
@@ -48,7 +54,7 @@ type ThreadSweeper interface {
 // journal-backed core leg (A36): expired threads tombstone out of the
 // views AND the journal itself, so the GDPR arm deletes bytes, not
 // just rows.
-func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readmodels.Engine, threads ThreadSweeper, window time.Duration) {
+func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readmodels.Engine, threads ThreadSweeper, faxes FaxSweeper, window time.Duration) {
 	if window <= 0 {
 		return
 	}
@@ -60,7 +66,7 @@ func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readmodel
 				slog.Error("retention: sweep PANIC recovered; tick skipped, sweeper survives", "panic", rec)
 			}
 		}()
-		sweepOnce(ctx, db, blobs, engine, threads, time.Now().Add(-window))
+		sweepOnce(ctx, db, blobs, engine, threads, faxes, time.Now().Add(-window))
 	}
 	go func() {
 		run()
@@ -85,7 +91,7 @@ func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readmodel
 // zero timing dependence. A store failure skips the pass entirely
 // (the next tick retries); fax and transcript failures degrade to a
 // logged zero, never a dropped store sweep.
-func sweepOnce(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readmodels.Engine, threads ThreadSweeper, cutoff time.Time) sweepSummary {
+func sweepOnce(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readmodels.Engine, threads ThreadSweeper, faxes FaxSweeper, cutoff time.Time) sweepSummary {
 	var sum sweepSummary
 	res, err := store.Sweep(ctx, db, cutoff)
 	if err != nil {
@@ -109,11 +115,25 @@ func sweepOnce(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readm
 		}
 	}
 
-	faxPaths, faxesRemoved, err := engine.Faxes().SweepBefore(ctx, cutoff)
+	// The faxes journal leg (Phase 6): expired jobs leave the views AND
+	// the journal; the ENGINE leg below sweeps the frozen import lane's
+	// rows to empty per the ladder doctrine (both contribute paths).
+	faxPaths := []string{}
+	if faxes != nil {
+		paths, journalFaxes, err := faxes.SweepBefore(ctx, cutoff)
+		if err != nil {
+			slog.Error("retention: fax journal sweep failed", "error", err)
+		} else {
+			sum.journalFaxes = journalFaxes
+			faxPaths = paths
+		}
+	}
+	enginePaths, engineFaxes, err := engine.Faxes().SweepBefore(ctx, cutoff)
 	if err != nil {
 		slog.Error("retention: fax sweep failed", "error", err)
 	}
-	sum.faxes = faxesRemoved
+	sum.faxes = engineFaxes
+	faxPaths = append(faxPaths, enginePaths...)
 
 	transcriptsRemoved, err := engine.Transcripts().SweepBefore(ctx, cutoff)
 	if err != nil {
@@ -140,6 +160,7 @@ func sweepOnce(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readm
 		"cutoff", cutoff.Format(time.RFC3339),
 		"messages", sum.messages,
 		"faxes", sum.faxes,
+		"journal_faxes", sum.journalFaxes,
 		"threads", sum.threads,
 		"journal_threads", sum.journalThreads,
 		"transcripts", sum.transcripts,

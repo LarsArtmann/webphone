@@ -26,7 +26,7 @@ import (
 type Notifier struct {
 	hubs     *ExtensionHubs
 	messages readmodels.ThreadGate
-	faxes    *readmodels.Faxes
+	faxes    readmodels.FaxGate
 	crm      *crm.Resolver
 	asr      bool
 	faxLane  views.FaxCapability
@@ -39,7 +39,7 @@ type Notifier struct {
 // boot-time flag, not a per-request read). faxLane does the same job for
 // the fax fragment's empty state: an SSE payload must not promise a send
 // affordance its deployment lacks (the panel keeps the same flags).
-func NewNotifier(hubs *ExtensionHubs, messages readmodels.ThreadGate, faxes *readmodels.Faxes, crmResolver *crm.Resolver, asrOn bool, faxLane views.FaxCapability) *Notifier {
+func NewNotifier(hubs *ExtensionHubs, messages readmodels.ThreadGate, faxes readmodels.FaxGate, crmResolver *crm.Resolver, asrOn bool, faxLane views.FaxCapability) *Notifier {
 	return &Notifier{hubs: hubs, messages: messages, faxes: faxes, crm: crmResolver, asr: asrOn, faxLane: faxLane}
 }
 

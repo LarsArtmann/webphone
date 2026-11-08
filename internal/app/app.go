@@ -337,7 +337,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		return server.NewNotifier(
 			do.MustInvoke[*server.ExtensionHubs](i),
 			do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).ThreadsSvc(),
-			do.MustInvokeNamed[*readmodels.Engine](i, "metaengine").Faxes(),
+			do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).FaxesSvc(), //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service's fax backend (SUPERB Phase 6)
 			do.MustInvoke[*crm.Resolver](i),
 			cfg.ASR.Enabled(),
 			views.FaxCapability{Send: cfg.Fax.SendEnabled(), Receive: cfg.Fax.ReceiveEnabled()},
@@ -360,7 +360,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	})
 	do.Provide(injector, func(i do.Injector) (*fax.Service, error) {
 		return fax.New(
-			do.MustInvokeNamed[*readmodels.Engine](i, "metaengine").Faxes(),
+			do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).FaxesSvc(), //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service's fax backend (SUPERB Phase 6)
 			do.MustInvokeNamed[*blob.Store](i, "blob-dir"),
 			do.MustInvoke[gateway.FaxGateway](i),
 			do.MustInvoke[*server.Notifier](i).Project,
@@ -432,7 +432,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			Config:   cfg,
 			Sessions: do.MustInvoke[*session.SQLiteStore](i),
 			Messages: do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).ThreadsSvc(),
-			Faxes:    engine.Faxes(),
+			Faxes:    do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).FaxesSvc(), //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service's fax backend (SUPERB Phase 6)
 			// The four Phase-4 seams answer from the journal's decisions
 			// (SUPERB): the engine-backed stores stay as the import sources
 			// and rollback lanes behind their gate interfaces.
@@ -527,6 +527,8 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	// metrics surface reads the same marker this importer stamps).
 	importThreadsIntoJournal(context.Background(), sqlite,
 		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time core import
+	importFaxesIntoJournal(context.Background(), sqlite, engine.Faxes(),
+		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time fax import
 	if cfg.Auth.Passkey.Enabled() {
 		if _, err := do.InvokeNamed[*userauth.Service](injector, "userauth"); err != nil {
 			return nil, wrapf("open passkey auth: %w", err)
@@ -723,7 +725,7 @@ func (a *App) Start(ctx context.Context) error {
 	if err := cqrs.Start(ctx); err != nil {
 		return wrapf("start cqrs system: %w", err)
 	}
-	retention.Start(ctx, db.SQL(), blobs, engine, cqrs.ThreadsSvc(), time.Duration(a.cfg.RetentionDays)*24*time.Hour)
+	retention.Start(ctx, db.SQL(), blobs, engine, cqrs.ThreadsSvc(), cqrs.FaxesSvc(), time.Duration(a.cfg.RetentionDays)*24*time.Hour)
 	startDedupSweeper(ctx, a.log, engineDedupWindow{store: engine.DedupStore()})
 	// The chat-network lanes wire here (config-gated; absent config wires
 	// nothing) and run under the same ctx bound: a lane exiting while the

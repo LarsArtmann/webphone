@@ -372,6 +372,7 @@ a deliberate code change, regenerate:
 | cqrs.contact_missing                         | Rejection                 | internal/cqrs/contacts.go          |
 | cqrs.contact_register                        | Infrastructure            | internal/cqrs/contacts.go          |
 | cqrs.contact_save                            | Infrastructure            | internal/cqrs/contacts.go          |
+| cqrs.core_boot                               | Infrastructure            | internal/cqrs/threadsregister.go   |
 | cqrs.dial_attempt                            | Infrastructure            | internal/cqrs/dialwindows.go       |
 | cqrs.dial_fold                               | Corruption                | internal/cqrs/dial.go              |
 | cqrs.dial_override                           | Infrastructure            | internal/cqrs/dialwindows.go       |
@@ -387,6 +388,23 @@ a deliberate code change, regenerate:
 | cqrs.enroll_mint                             | Infrastructure            | internal/cqrs/enroll.go            |
 | cqrs.enroll_register                         | Infrastructure            | internal/cqrs/enroll.go            |
 | cqrs.enroll_sweep                            | Infrastructure            | internal/cqrs/enroll.go            |
+| cqrs.fax_advance                             | Infrastructure            | internal/cqrs/faxes.go             |
+| cqrs.fax_boot                                | Infrastructure            | internal/cqrs/faxesstore.go        |
+| cqrs.fax_by_ref                              | Infrastructure            | internal/cqrs/faxesstore.go        |
+| cqrs.fax_count                               | Infrastructure            | internal/cqrs/faxesstore.go        |
+| cqrs.fax_duplicate                           | Rejection                 | internal/cqrs/faxes.go             |
+| cqrs.fax_expunge                             | Infrastructure            | internal/cqrs/faxes.go             |
+| cqrs.fax_fold                                | Corruption                | internal/cqrs/faxes.go             |
+| cqrs.fax_get                                 | Infrastructure            | internal/cqrs/faxesstore.go        |
+| cqrs.fax_idem                                | Infrastructure            | internal/cqrs/faxesstore.go        |
+| cqrs.fax_list                                | Infrastructure            | internal/cqrs/faxesstore.go        |
+| cqrs.fax_list_all                            | Infrastructure            | internal/cqrs/faxesstore.go        |
+| cqrs.fax_missing                             | Rejection                 | internal/cqrs/faxes.go             |
+| cqrs.fax_record                              | Infrastructure            | internal/cqrs/faxes.go             |
+| cqrs.fax_register                            | Infrastructure            | internal/cqrs/faxes.go             |
+| cqrs.fax_stream                              | Rejection                 | internal/cqrs/faxesstore.go        |
+| cqrs.fax_sweep_scan                          | Infrastructure            | internal/cqrs/faxesstore.go        |
+| cqrs.fax_trim                                | Infrastructure            | internal/cqrs/faxesstore.go        |
 | cqrs.journal_import                          | Infrastructure, Rejection | internal/app/importutil.go         |
 | cqrs.message_by_ref                          | Infrastructure            | internal/cqrs/threadsstore.go      |
 | cqrs.message_count                           | Infrastructure            | internal/cqrs/threadsreads.go      |

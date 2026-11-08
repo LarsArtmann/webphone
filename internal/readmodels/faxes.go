@@ -6,8 +6,7 @@ import (
 	"time"
 
 	metaengine "github.com/larsartmann/go-cqrs-lite/metaengine/v4"
-	"github.com/larsartmann/go-cqrs-lite/record/v4"
-	"github.com/larsartmann/go-error-family"
+	errorfamily "github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
@@ -45,41 +44,7 @@ type faxInput struct{ ID string }
 // keep-when-empty rule lives in ONE place), and removed by retention's
 // FaxExpunged facts. Filtered by owner, provider ref (the webhook's
 // lookup path), and created-at (retention), sorted newest-first.
-var faxesQuery = metaengine.Query[faxInput, FaxView](faxesCollection,
-	metaengine.OnRecord(domain.FaxReceipted{},
-		func(_ record.Record, e domain.FaxReceipted) (domain.FaxKey, FaxView) {
-			return e.Key, FaxView{
-				ID:           e.Key.ID,
-				Owner:        e.Owner,
-				Remote:       e.Remote,
-				Direction:    e.Direction,
-				Status:       e.Status,
-				Pages:        e.Pages,
-				DocumentPath: e.DocumentPath,
-				ProviderRef:  e.ProviderRef,
-				Error:        e.Error,
-				CreatedAt:    e.CreatedAt.UnixNano(),
-				UpdatedAt:    e.UpdatedAt.UnixNano(),
-			}
-		}),
-	metaengine.OnRecord(domain.FaxStatusAdvanced{},
-		func(_ record.Record, e domain.FaxStatusAdvanced, prev FaxView) FaxView {
-			prev.Status = e.Status
-			if e.ProviderRef != "" {
-				prev.ProviderRef = e.ProviderRef
-			}
-			prev.Error = e.Error
-			prev.Pages = e.Pages
-			prev.UpdatedAt = e.AdvancedAt.UnixNano()
-			return prev
-		}),
-	metaengine.OnRecord(domain.FaxExpunged{}, metaengine.Remove[FaxView]()),
-	metaengine.FilterOnField[FaxView]("owner", metaengine.FilterEq),
-	metaengine.FilterOnField[FaxView]("provider_ref", metaengine.FilterEq),
-	metaengine.FilterOnField[FaxView]("created_at", metaengine.FilterLt),
-	metaengine.SortOnField[FaxView]("created_at", true),
-	metaengine.Volume(humanScaleVolume),
-)
+var faxesQuery = FaxesProjection(faxesCollection)
 
 // Faxes is the engine-backed fax store: the same contract the SQL
 // store held (Create inserts; UpdateStatus advances with the
@@ -278,21 +243,7 @@ func (s *Faxes) ByProviderRef(ctx context.Context, ref string) (domain.FaxJob, e
 	return views[0].toJob(), nil
 }
 
-func (v FaxView) toJob() domain.FaxJob {
-	return domain.FaxJob{
-		ID:           domain.MustFaxID(v.ID),
-		Owner:        domain.MustParseExtension(v.Owner),
-		Remote:       domain.MustParsePhone(v.Remote),
-		Direction:    v.Direction,
-		Status:       v.Status,
-		Pages:        v.Pages,
-		DocumentPath: v.DocumentPath,
-		ProviderRef:  v.ProviderRef,
-		Error:        v.Error,
-		CreatedAt:    time.Unix(0, v.CreatedAt),
-		UpdatedAt:    time.Unix(0, v.UpdatedAt),
-	}
-}
+func (v FaxView) toJob() domain.FaxJob { return FaxJobOfView(v) }
 
 // Count reports the total stored fax jobs across all owners (the
 // metrics surface's webphone_faxes_total). Served by the engine's

@@ -182,7 +182,7 @@ type Deps struct {
 	Config   config.Config
 	Sessions session.Store
 	Messages readmodels.ThreadGate
-	Faxes    *readmodels.Faxes
+	Faxes    readmodels.FaxGate
 	// Contacts is the personal-contacts seam (the readmodels.ContactGate
 	// interface — engine-backed legacy/rollback lane, journal-backed
 	// since SUPERB Phase 4). Nil (test compositions): the surfaces
