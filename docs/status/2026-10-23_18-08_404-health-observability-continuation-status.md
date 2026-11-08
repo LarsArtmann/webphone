@@ -211,28 +211,28 @@ Test totals added this run: **13 functions** across 4 files.
 
 **Blocking / correctness**
 
-| # | Task                                                                                   |
-| - | -------------------------------------------------------------------------------------- |
-| 1 | Fix or attribute `internal/matrix/matrix_test.go` (foreign, reds `go test ./...`)      |
-| 2 | `nix fmt` (explicit paths only — a concurrent session is live)                         |
-| ~~3~~ | ~~`buildflow` full run~~ — done repeatedly since (the standing train-start + train-end buildflow discipline; latest documented: 74/74 green 2026-11-07, evidence in TODO_LIST's UX-fix-train residue rows)                        |
-| 4 | `nix flake check` (package + tests + treefmt + island-lint + island-js + module check) |
-| 5 | `nix run .#vulnix` (a real scan, not the 0 ms cache hit)                               |
-| 6 | `python3 scripts/webphone-smoke.py --bin <fresh build>`                                |
-| 7 | Run `scripts/ui-capture.py` and eyeball the new 20th shot                              |
-| 8 | Commit the whole train with a narrative message before the daemon does                 |
-| ~~9~~ | ~~Push and watch CI to green (`gh run list`)~~ — done by every subsequent train (the standing "check CI after EVERY push" rule; latest green docs pushes: runs 42492544577/42493268358, 2026-11-08)                                             |
+| #     | Task                                                                                                                                                                                                       |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1     | Fix or attribute `internal/matrix/matrix_test.go` (foreign, reds `go test ./...`)                                                                                                                          |
+| 2     | `nix fmt` (explicit paths only — a concurrent session is live)                                                                                                                                             |
+| ~~3~~ | ~~`buildflow` full run~~ — done repeatedly since (the standing train-start + train-end buildflow discipline; latest documented: 74/74 green 2026-11-07, evidence in TODO_LIST's UX-fix-train residue rows) |
+| 4     | `nix flake check` (package + tests + treefmt + island-lint + island-js + module check)                                                                                                                     |
+| 5     | `nix run .#vulnix` (a real scan, not the 0 ms cache hit)                                                                                                                                                   |
+| 6     | `python3 scripts/webphone-smoke.py --bin <fresh build>`                                                                                                                                                    |
+| 7     | Run `scripts/ui-capture.py` and eyeball the new 20th shot                                                                                                                                                  |
+| 8     | Commit the whole train with a narrative message before the daemon does                                                                                                                                     |
+| ~~9~~ | ~~Push and watch CI to green (`gh run list`)~~ — done by every subsequent train (the standing "check CI after EVERY push" rule; latest green docs pushes: runs 42492544577/42493268358, 2026-11-08)        |
 
 **Deploy (owner/SSH gated)**
 
-| #  | Task                                                                           |
-| -- | ------------------------------------------------------------------------------ |
-| ~~10~~ | ~~`nixos-rebuild switch --flake …#pbx` on the host~~ — done at the v2.9.0 release (deploy fired and verified; the release-2.9.0 hold-and-watch report's rows, archived 2026-11-08); subsequent host deploys ride the release trains per docs/release-runbook.md                               |
-| 11 | Logged-out `curl -sI https://pbx.artmann.tech/health` → 302 to the SSO sign-in |
-| 12 | Signed-in `/health` renders cards; `/health/sse` streams                       |
-| 13 | `/health/livez` returns `"status":"pass"` through the vhost                    |
-| 14 | Confirm `/healthz`, `/livez`, `/startupz` still 200                            |
-| 15 | Decide whether the stack's uncommitted `flake.lock` bump is intended           |
+| #      | Task                                                                                                                                                                                                                                                            |
+| ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~10~~ | ~~`nixos-rebuild switch --flake …#pbx` on the host~~ — done at the v2.9.0 release (deploy fired and verified; the release-2.9.0 hold-and-watch report's rows, archived 2026-11-08); subsequent host deploys ride the release trains per docs/release-runbook.md |
+| 11     | Logged-out `curl -sI https://pbx.artmann.tech/health` → 302 to the SSO sign-in                                                                                                                                                                                  |
+| 12     | Signed-in `/health` renders cards; `/health/sse` streams                                                                                                                                                                                                        |
+| 13     | `/health/livez` returns `"status":"pass"` through the vhost                                                                                                                                                                                                     |
+| 14     | Confirm `/healthz`, `/livez`, `/startupz` still 200                                                                                                                                                                                                             |
+| 15     | Decide whether the stack's uncommitted `flake.lock` bump is intended                                                                                                                                                                                            |
 
 **C4 — stack VM test**
 
@@ -259,35 +259,35 @@ Test totals added this run: **13 functions** across 4 files.
 
 **Docs / plan hygiene**
 
-| #  | Task                                                                                                                                                  |
-| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 29 | Amend the plan's C6 wording to match the shape rule (not "styled panel" for htmx)                                                                     |
-| 30 | Amend the plan's C9 wording to the env-var reality                                                                                                    |
-| ~~31~~ | ~~Mark C4/C13/C14 status in the plan file~~ — SUPERSEDED by the ONE home: the standing stack legs (C4 = the dashboard-on VM test) now live in TODO_LIST § the stack-E2E/handover section with the 2026-11-08 cross-repo handover pack; the old plan file is closed history, its checkboxes do not get retro-active marks                                              |
-| 32 | FEATURES.md: latency metrics + flight recorder rows                                                                                                   |
-| 33 | ROADMAP.md: observability depth entry                                                                                                                 |
-| 34 | `docs/lessons.md`: the daemon-commit attribution lesson                                                                                               |
-| 35 | `docs/lessons.md`: the "plan says X, code pins Y" lesson                                                                                              |
-| 36 | TODO_LIST: harvest from this report (§d + §f)                                                                                                         |
-| 37 | Reconcile the go-appkit report against the now-direct `go-flightrecorder` dep                                                                         |
-| 38 | Note the flight recorder in the module's option docs (it is env-only, so the NixOS module needs a `settings`/env surface if it should be declarative) |
+| #      | Task                                                                                                                                                                                                                                                                                                                     |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 29     | Amend the plan's C6 wording to match the shape rule (not "styled panel" for htmx)                                                                                                                                                                                                                                        |
+| 30     | Amend the plan's C9 wording to the env-var reality                                                                                                                                                                                                                                                                       |
+| ~~31~~ | ~~Mark C4/C13/C14 status in the plan file~~ — SUPERSEDED by the ONE home: the standing stack legs (C4 = the dashboard-on VM test) now live in TODO_LIST § the stack-E2E/handover section with the 2026-11-08 cross-repo handover pack; the old plan file is closed history, its checkboxes do not get retro-active marks |
+| 32     | FEATURES.md: latency metrics + flight recorder rows                                                                                                                                                                                                                                                                      |
+| 33     | ROADMAP.md: observability depth entry                                                                                                                                                                                                                                                                                    |
+| 34     | `docs/lessons.md`: the daemon-commit attribution lesson                                                                                                                                                                                                                                                                  |
+| 35     | `docs/lessons.md`: the "plan says X, code pins Y" lesson                                                                                                                                                                                                                                                                 |
+| 36     | TODO_LIST: harvest from this report (§d + §f)                                                                                                                                                                                                                                                                            |
+| 37     | Reconcile the go-appkit report against the now-direct `go-flightrecorder` dep                                                                                                                                                                                                                                            |
+| 38     | Note the flight recorder in the module's option docs (it is env-only, so the NixOS module needs a `settings`/env surface if it should be declarative)                                                                                                                                                                    |
 
 **Hardening ideas (owner-gated)**
 
-| #  | Task                                                                                                                |
-| -- | ------------------------------------------------------------------------------------------------------------------- |
-| 39 | Add a rate limit to `/internal/flightrecorder` (loopback-only today, but a runaway script could fill the directory) |
-| 40 | Emit a metric for snapshots taken (count + bytes) instead of only logging                                           |
-| 41 | Add a startup log line when the recorder is on (operators forget)                                                   |
-| 42 | Guard `maxBytes` by available disk instead of the fixed default                                                     |
-| 43 | Consider `Ptrace`/`perf`-free alternatives before growing this further                                              |
-| 44 | Pin the histogram bucket set with a test so a refactor cannot silently re-bucket                                    |
-| 45 | Add a `/metrics` self-test to the smoke suite (shape only)                                                          |
-| ~~46~~ | ~~Add the 404 shape rule to the stack's browser E2E expectations~~ — OPEN, harvested: lives in TODO_LIST § the standing stack legs (the 2026-10-23 404-health stack residues row, added 2026-11-08; grep-verified absent in the stack's tests/browser-e2e.py)                                                      |
-| 47 | Consider an arch test that `h.notFound` is the only HTML-router 404 writer                                          |
-| 48 | Re-check the art-dupl baseline now that the concurrent session's code landed                                        |
-| 49 | Quarterly-style audit: enumerate the 24 remaining `http.NotFound` sites and re-rule them                            |
-| 50 | Re-measure the errorfamily tiers (tier 2 must stay 0) after these changes                                           |
+| #      | Task                                                                                                                                                                                                                                                          |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 39     | Add a rate limit to `/internal/flightrecorder` (loopback-only today, but a runaway script could fill the directory)                                                                                                                                           |
+| 40     | Emit a metric for snapshots taken (count + bytes) instead of only logging                                                                                                                                                                                     |
+| 41     | Add a startup log line when the recorder is on (operators forget)                                                                                                                                                                                             |
+| 42     | Guard `maxBytes` by available disk instead of the fixed default                                                                                                                                                                                               |
+| 43     | Consider `Ptrace`/`perf`-free alternatives before growing this further                                                                                                                                                                                        |
+| 44     | Pin the histogram bucket set with a test so a refactor cannot silently re-bucket                                                                                                                                                                              |
+| 45     | Add a `/metrics` self-test to the smoke suite (shape only)                                                                                                                                                                                                    |
+| ~~46~~ | ~~Add the 404 shape rule to the stack's browser E2E expectations~~ — OPEN, harvested: lives in TODO_LIST § the standing stack legs (the 2026-10-23 404-health stack residues row, added 2026-11-08; grep-verified absent in the stack's tests/browser-e2e.py) |
+| 47     | Consider an arch test that `h.notFound` is the only HTML-router 404 writer                                                                                                                                                                                    |
+| 48     | Re-check the art-dupl baseline now that the concurrent session's code landed                                                                                                                                                                                  |
+| 49     | Quarterly-style audit: enumerate the 24 remaining `http.NotFound` sites and re-rule them                                                                                                                                                                      |
+| 50     | Re-measure the errorfamily tiers (tier 2 must stay 0) after these changes                                                                                                                                                                                     |
 
 ---
 

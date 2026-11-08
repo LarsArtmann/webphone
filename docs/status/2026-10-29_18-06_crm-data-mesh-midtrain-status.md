@@ -131,10 +131,10 @@ bricks stacked beside it.
 
 **Tier 0 — stop the bleeding (do first, ~25 min total)**
 
-| # | Task                                                                                    | Min |
-| - | --------------------------------------------------------------------------------------- | --- |
+| #     | Task                                                                                                                                                                                                                                                                                          | Min |
+| ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
 | ~~1~~ | ~~Fix `panels_test.go:562` → assert through `props.CRM` instead of `TranscriptGroup.Name`~~ — done in the same train: the test asserts through the panel's ONE directory map (panels_test.go:557, "CRM name arrives through the panel's ONE directory map (props.CRM), never" the group name) | 5   |
-| ~~2~~ | ~~`go vet ./...` + `go test ./...` to green~~ — done same-train and standing green since (full suite green 2026-11-08, this session's pre-push battery) | 20  |
+| ~~2~~ | ~~`go vet ./...` + `go test ./...` to green~~ — done same-train and standing green since (full suite green 2026-11-08, this session's pre-push battery)                                                                                                                                       | 20  |
 
 **Tier 1 — make the claims true (~4 h)**
 
@@ -178,21 +178,21 @@ bricks stacked beside it.
 
 **Tier 4 — gates and history (~3 h)**
 
-| #      | Task                                                                                                                         | Min    |
-| ------ | ---------------------------------------------------------------------------------------------------------------------------- | ------ |
-| 28     | `templ generate` final + `nix fmt`                                                                                           | 10     |
-| ~~29~~     | ~~`go test -count=1 ./...` full suite~~ — done same-train; standing green (latest: CI run 42500447327 `go test -race` green, 2026-11-08)                          | 25     |
-| 30     | `tsc -p . --noEmit` + island `node --test`                                                                                   | 20     |
-| 31     | `nix build --no-link .#checks.x86_64-linux.{island-js,island-lint,island-typecheck,treefmt,contracts-fresh}`                 | 30     |
-| ~~32~~ | ~~`buildflow` (full, `BUILDFLOW_NO_RESULT_CACHE=1`)~~ done — routine gate run — recorded in buildflow history for this train | ~~60~~ |
-| 33     | `scripts/webphone-smoke.py --bin <fresh>`                                                                                    | 20     |
-| 34     | `art-dupl -t 1` (CI-pinned v0.7.2) + adjudicate any new group                                                                | 20     |
-| 35     | Narrative commits per phase (auth/config/docs prefixes as the convention demands)                                            | 30     |
-| 36     | CHANGELOG `[Unreleased]` (3 Added, 1 Changed)                                                                                | 15     |
-| 37     | AGENTS invariant: "the CRM owns the contact; the phone owns the conversation"                                                | 20     |
-| 38     | `docs/dom-contract.md`: `wp-crm-context`, `wp-crm-link` (optional, not required)                                             | 15     |
-| 39     | Update the consumer contract table in the planning doc with the shipped wire shape                                           | 15     |
-| 40     | Verify CI green after push (`gh run list`)                                                                                   | 15     |
+| #      | Task                                                                                                                                     | Min    |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ------ |
+| 28     | `templ generate` final + `nix fmt`                                                                                                       | 10     |
+| ~~29~~ | ~~`go test -count=1 ./...` full suite~~ — done same-train; standing green (latest: CI run 42500447327 `go test -race` green, 2026-11-08) | 25     |
+| 30     | `tsc -p . --noEmit` + island `node --test`                                                                                               | 20     |
+| 31     | `nix build --no-link .#checks.x86_64-linux.{island-js,island-lint,island-typecheck,treefmt,contracts-fresh}`                             | 30     |
+| ~~32~~ | ~~`buildflow` (full, `BUILDFLOW_NO_RESULT_CACHE=1`)~~ done — routine gate run — recorded in buildflow history for this train             | ~~60~~ |
+| 33     | `scripts/webphone-smoke.py --bin <fresh>`                                                                                                | 20     |
+| 34     | `art-dupl -t 1` (CI-pinned v0.7.2) + adjudicate any new group                                                                            | 20     |
+| 35     | Narrative commits per phase (auth/config/docs prefixes as the convention demands)                                                        | 30     |
+| 36     | CHANGELOG `[Unreleased]` (3 Added, 1 Changed)                                                                                            | 15     |
+| 37     | AGENTS invariant: "the CRM owns the contact; the phone owns the conversation"                                                            | 20     |
+| 38     | `docs/dom-contract.md`: `wp-crm-context`, `wp-crm-link` (optional, not required)                                                         | 15     |
+| 39     | Update the consumer contract table in the planning doc with the shipped wire shape                                                       | 15     |
+| 40     | Verify CI green after push (`gh run list`)                                                                                               | 15     |
 
 **Tier 5 — the mesh's second half (not this train; needs the owner)**
 
