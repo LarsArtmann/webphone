@@ -830,12 +830,16 @@ CQRS write model), the `catalog` CLI subcommand, export tests, and
 `.eventcatalog-hub.json` (the 2026-10-19 inventory-only record is superseded).
 `46cc6db` is on origin/main. **The cross-repo leg EXECUTED 2026-11-08 (P4-10):**
 the hub rides `branch: main` (no sha pin to bump — the "re-pin" is the mirror
-+ build), the Forgejo webphone mirror was force-synced to the GitHub tip
-(`mirror-sync-sources.sh webphone` → ✓ at tip), and the hub build was
-dispatched after repairing the CI host's runner state ownership (a NixOS
-switch had renumbered the runner's DynamicUser; the durable-fix row lives in
-the hub's TODO_LIST). The hub build's green verdict + the site freshness are
-the hub-side acceptance; the hourly sync pulls it to catalog.home.lan.
+
+- build), the Forgejo webphone mirror was force-synced to the GitHub tip
+  (`mirror-sync-sources.sh webphone` → ✓ at tip), and hub run #240 is **GREEN
+  end-to-end** (export, merge, governance lint, site build, publish) — reached
+  through three real repairs: the CI host's runner state-root ownership (a
+  NixOS switch renumbered the DynamicUser; chown + a durable-fix row in the
+  hub's TODO), the crm source's stale go-modules vendorHash (re-pinned at the
+  66f37f3 tip in the crm repo, `37a1957`), and a hub workflow step-scoping bug
+  (`current_contract` derived in the build step but read in the verify step —
+  `7551d4a`). The site published; the hourly sync pulls it to catalog.home.lan.
 
 ### Wire contracts (2026-10-24 — SHIPPED; three open rows)
 
@@ -1003,7 +1007,7 @@ history (the 2026-10-12 + 2026-10-17 entries).
 
 ### Cross-repo obligations (stack / pbx-artmann)
 
-**Status:** MOSTLY EXECUTED (2026-11-08 legs train) · **Priority:** Medium — THE ONE HOME for the standing stack-E2E obligation. The four standing legs have a verified step-by-step runbook: [docs/planning/2026-11-08_cross-repo-handover-pack.md](docs/planning/2026-11-08_cross-repo-handover-pack.md) (stack `crm.caFile` pass-through · `/hooks/ring` dialplan leg · `mod_enum` CI-ceiling repair · the #9 owner sequence). **Per-leg verdicts (2026-11-08):** Leg 1 `crm.caFile` — RESOLVED (already landed in the stack: options + threading + eval render pin); Leg 2 `/hooks/ring` — SHIPPED as-built (loopback shim `ringhook.py` + `services.telephony.ringhook.*` unit + conditional dialplan arms, off = byte-identical; `ringhookCheck` eval arm + 7-spec unittest; the RING-GROUP path uncovered — owner question §g-1); Leg 3 `mod_enum` — EXCLUDED with the ruling comment (zero call sites grep-verified), telephony-eval green, pbx toplevel builds; the twice-consecutive-green CI acceptance rides the pushed runs; Leg 4 — owner-gated (unchanged). Remaining open: Leg 3's CI acceptance, the ring-group boundary ruling, and the residues below.
+**Status:** MOSTLY EXECUTED (2026-11-08 legs train) · **Priority:** Medium — THE ONE HOME for the standing stack-E2E obligation. The four standing legs have a verified step-by-step runbook: [docs/planning/2026-11-08_cross-repo-handover-pack.md](docs/planning/2026-11-08_cross-repo-handover-pack.md) (stack `crm.caFile` pass-through · `/hooks/ring` dialplan leg · `mod_enum` CI-ceiling repair · the #9 owner sequence). **Per-leg verdicts (2026-11-08):** Leg 1 `crm.caFile` — RESOLVED (already landed in the stack: options + threading + eval render pin); Leg 2 `/hooks/ring` — SHIPPED as-built (loopback shim `ringhook.py` + `services.telephony.ringhook.*` unit + conditional dialplan arms, off = byte-identical; `ringhookCheck` eval arm + 7-spec unittest; the RING-GROUP path uncovered — owner question §g-1); Leg 3 `mod_enum` — EXCLUDED with the ruling comment (zero call sites grep-verified), telephony-eval green, pbx toplevel builds; run 42529951959 finished the flake leg in 46m40s (under the old ceiling) with every suite green EXCEPT the sibling session-2's own named-open `telephony-voicemail` quota red — the twice-green acceptance is blocked on THAT train, not on these legs; Leg 4 — owner-gated (unchanged). Remaining open: the voicemail quota red (sibling's), the ring-group boundary ruling, and the residues below.
 
 Owner/stack legs that block or derive from webphone work: repair the stack
 FreeSWITCH `mod_enum` build (it produces the stack CI 1h ceiling that cancels every

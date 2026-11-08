@@ -112,8 +112,14 @@ hook timing (ring + end both posted) is asserted in the VM test.
 > set — grep-verified ZERO enum call sites across the stack's dialplan
 > XML, `dialplan_sim.py` and `pbx.nix` first, with the ruling comment at
 > the exclusion site. `telephony-eval` green; the pbx toplevel builds
-> locally. ACCEPTANCE (twice-consecutive-green CI under the ceiling) is
-> pending the pushed runs — run ids recorded here as they conclude.
+> locally. RUN 42529951959 (2026-11-08 23:22 UTC): aarch64 VM test ✓,
+> stdlib python suites ✓, the nix-flake-check leg ran 46m40s under the
+> old ceiling — under it on TIME, red on ONE suite:
+> `telephony-voicemail`'s quota-exceeded log assertion — the sibling
+> session-2's OWN named open red (their report title carries it: "quota
+> model correction red"), not the legs' work (ringhook rides a
+> default-off byte-identical dialplan there). ACCEPTANCE (twice-green)
+> is blocked on that named red, owned by the sibling's MWI/quota train.
 
 **State:** the stack's mirrored module set includes `applications.enum`
 (`modules/telephony/freeswitch-modules.nix:29`); its build produces the
