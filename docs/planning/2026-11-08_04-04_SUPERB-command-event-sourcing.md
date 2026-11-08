@@ -657,3 +657,43 @@ Focused hours exclude train gates, releases, and CI waits. Eight release trains 
   its own history is not a ship-visible boundary). P6 (faxes) and
   P7 (unification + closeout) each cut their own release per the
   original D4.
+
+### Phase-6 + Phase-7 as-built (2026-11-09, A39–A47)
+
+- **A39/A40 (faxes):** per-job streams, no snapshot strategy (streams
+  are tiny and terminal); `FaxMayMoveTo` added to domain as the
+  decider's (from → to) sight over the same faxMoves table; the
+  webhook replay guard is DURABLE (`sys.Dedup`, system.db — a crash
+  between dispatch and record re-dispatches and converges by the
+  same-status doctrine). The importer ports each job as ONE
+  `FaxReceipted` fact carrying the settled row (dual-run parity at
+  honest microsecond stamps — the CBOR ~200 ns quantization is a
+  recorded constraint, every render second-granular).
+- **A41 (sweep):** found and fixed the Phase-4 retention gap — the
+  transcripts leg still swept the ENGINE lane while the seam wrote the
+  journal (expired journal segments never deleted with
+  `retention_days` set). The retention pass now takes a
+  `JournalSweepers` bundle (threads, faxes, transcripts) over ONE
+  system.
+- **A43 (dedup + engine death):** `engineDedupWindow` wraps the SAME
+  capability interface — the swap is where the store resolves from
+  (engine → `sys.Dedup()`). The composition root's named `"metaengine"`
+  provider, its eager invoke, ALL eleven one-time importers and their
+  tests deleted; `readmodels.Engine` remains a TEST implementer. The
+  backup script/drill/vm-tests/README dropped readmodels.db (the drill
+  IS the restore-without-readmodels proof — B153).
+- **A44 (D2 executed):** sessions stay SQL — the ruling and its
+  reasoning live in the retirement doc §2 (ephemeral substrate, no
+  domain invariants, cqrs-lint clean).
+- **A45 (freeze):** store/db.go carries the freeze header; the death
+  map names each table's release. The final DROP migration is authored
+  but NOT scheduled (operator confirms empty tables first).
+- **A42 (contracts):** asyncapi regen = zero diff; openapi/dom pins
+  green; catalog renders. No wire drift across the whole program.
+- **A46/A47:** AGENTS.md's readmodels bullet became the ONE-journal
+  doctrine; TODO_LIST rows harvested; CHANGELOG sections written. The
+  2.12.0 train is the final battery.
+
+**SUPERB is COMPLETE: 100% command + event sourcing, one system.db,
+47/47 tasks executed.** The abort criteria never armed; every phase's
+gates held on the first or second remediation.
