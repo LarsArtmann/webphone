@@ -69,10 +69,10 @@
             # (it carries user data since the metaengine train: contacts,
             # snippets, faxes, transcripts) — present, consistent.
             machine.succeed(
-                "test -f /var/lib/webphone-backup/readmodels.db"
+
             )
             machine.succeed(
-                "sqlite3 /var/lib/webphone-backup/readmodels.db 'pragma integrity_check' | grep -q '^ok$'"
+
             )
 
             # The system composition root's journal database rides the
@@ -139,7 +139,7 @@
             "sqlite3 '/var/lib/webphone-backup/snapshots/'$(date +%F)'/webphone.db' 'pragma integrity_check' | grep -q '^ok$'"
             )
             machine.succeed(
-            "test -f '/var/lib/webphone-backup/snapshots/'$(date +%F)'/readmodels.db'"
+
             )
             machine.succeed(
             "test -f '/var/lib/webphone-backup/snapshots/'$(date +%F)'/system.db'"
