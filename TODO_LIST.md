@@ -865,7 +865,7 @@ Outbound SMS bridge failure on prod: `POST /messages/send` answered 422 (gateway
 
 Deferred/scheduled message sending was cut from T18 (M21.6): the gateway seam has NO deferred-send concept (loopback sends immediately; the webhook bridge is fire-and-forget to the provider), so a scheduled-send UI would show a state the transport cannot honor — violating the island-honesty contract. Revisit only if the provider/stack grows a deferred-send lane; the snippets seam (M21) already covers the "reply faster" problem it was meant to solve.
 
-**Evidence:** design note `docs/planning/2026-10-02_10-02_T18-m21-m22-seam-design.md` (M21.6 cut); owner ratification pending (2026-10-02 §g).
+**Evidence:** design note `docs/planning/2026-10-02_10-02_T18-m21-m22-seam-design.md` (M21.6 cut); owner ratification pending (2026-10-02 §g) — answer surface: the sitting pack §F-side wording. **Audited 2026-11-08** (nothing lost; the NO-GO premise re-verified at HEAD: [docs/planning/2026-11-08_parked-decisions-audit.md](docs/planning/2026-11-08_parked-decisions-audit.md)).
 
 ### OWNER-calls batch session
 
@@ -923,7 +923,7 @@ history (the 2026-10-12 + 2026-10-17 entries).
 
 ### Cross-repo obligations (stack / pbx-artmann)
 
-**Status:** PLANNED · **Priority:** Medium · **Effort:** S-M — THE ONE HOME for the standing stack-E2E obligation.
+**Status:** PLANNED · **Priority:** Medium · **Effort:** S-M — THE ONE HOME for the standing stack-E2E obligation. The four standing legs now have a verified step-by-step runbook: [docs/planning/2026-11-08_cross-repo-handover-pack.md](docs/planning/2026-11-08_cross-repo-handover-pack.md) (stack `crm.caFile` pass-through · `/hooks/ring` dialplan leg · `mod_enum` CI-ceiling repair · the #9 owner sequence — every stack-side path read-verified 2026-11-08, sequencing by blast radius per effort).
 
 Owner/stack legs that block or derive from webphone work: repair the stack
 FreeSWITCH `mod_enum` build (it produces the stack CI 1h ceiling that cancels every
@@ -952,7 +952,7 @@ ceiling) + markdownlint posture execution (post-sitting row-18 verdict). Plan:
 
 ### Native-app train: ring-while-closed legs (2026-10-23 ship, webphone side closed)
 
-**Status:** 🟡 `P2 SHIPPED server-side; P1 shell scaffolded (webphone-android v0.1, BUILD GREEN + 16KB-aligned); the two remaining legs live OUTSIDE this repo` · **Priority:** High · **Effort:** M (each leg)
+**Status:** 🟡 `P2 SHIPPED server-side; P1 shell scaffolded (webphone-android v0.1, BUILD GREEN + 16KB-aligned); the two remaining legs live OUTSIDE this repo` · **Priority:** High · **Effort:** M (each leg) · **Preflight 2026-11-08:** the android repo is QUIET (clean tree, last commit 11-05, 2 commits/7d — half the KMP gate met, so the spike STAYS deferred; the go/no-go note + the first-device-train checklist: [docs/planning/2026-11-08_native-app-preflight.md](docs/planning/2026-11-08_native-app-preflight.md))
 
 - **Stack leg (nix-international-telephony):** the FS dialplan must POST `webphone:/hooks/ring` (Bearer webhook secret; `{owner, from, call_id, state: ring|end}`) on inbound-call ring + ring-end — the same bridge pattern as the Telnyx webhooks. Until this lands, the seam is inert (fire-and-forget 202, no devices rung). Config to expose: `services.telephony.webphone.push.*` (freeform `settings` already carries it; document in the stack's deploy docs).
 - **Shell leg (webphone-android):** first device train — exercise the SIP UA against the live WSS gateway (REGISTER/INVITE/BYE/DTMF/hold + incoming INVITE + REFER/NOTIFY are implemented but UNTESTED against FreeSWITCH), compose the real CallStyle notification (v0.1 posts the FSI heads-up), the origin-picker settings UI (App.origin is a constant today), and the `/api/session` field-name check against the served sessionIdentity shape.

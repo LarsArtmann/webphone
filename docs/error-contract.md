@@ -200,6 +200,37 @@ changes rendered strings (P4); codes are stable (P5). The seven
 principles and the per-seam table live in the error-excellence plan
 appendix (`docs/planning/archived/2026-09-22_01-20_SUPERB-error-excellence.md`).
 
+## Detection — how anyone KNOWS it happened (the quiet classes, 2026-11-08)
+
+The table above answers "what does the USER see". Several real failure
+classes are QUIET for the user BY DESIGN (degraded answers are empty
+bodies, fire-and-forget lanes never block a request) — for those, the
+operator-side detection answer is the contract, and it lives here so a
+session debugging "is X working?" does not re-derive it. Every row names
+the FIRST place to look, not every place the signal lands.
+
+| Quiet class                                               | How anyone knows                                                                                                                                                                                                                                         | First place to look                                                                    |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| CRM seam down (names, context strips absent)              | `/healthz` answers 503 with `"crm":{"status":"fail"}` (the strict leg is DELIBERATE — it is the only alarm for a revoked token when the dashboard is off); a boot-time config problem WARNs naming the fence                                             | `/healthz` JSON, then the journal `crm.*` codes (`crm.http` splits 4xx/5xx at runtime) |
+| CRM context fetch failing per-contact (seam healthy)      | NO strip renders — absence is a state, not an error; the resolver logs one DEBUG line per failure class (no-context, unauthorized, transport) and does NOT cache transport failures (next open retries)                                                  | journal at DEBUG: `crm: context unauthorized/failed; no strip`                         |
+| Paperless archiver failing (inbound faxes still deliver)  | The fax tab and user surfaces show NOTHING (fire-and-forget after persist); the journal carries the `paperless.*` archive-error line per failure. The Settings row that would declare the seam is the T31 gap (decision brief: Settings row recommended) | journal grep `paperless`                                                               |
+| Push transports down (ntfy/FCM)                           | `/hooks/ring` still answers 202 (the dialplan must never depend on push health); the journal carries `push.ntfy_send`/`push.fcm_send`/`push.transport`; a device the transport reports unregistered is PRUNED on the spot (the journal names the prune)  | journal grep `push.`                                                                   |
+| Matrix/signal receiver loop down                          | Boot fails LOUD on wrong config (bad token); an unreachable peer only WARNs at boot, then the loop retries on the chatloop jitter ladder — a REJECTION (revoked token, refusing daemon) stops the loop with a loud `chatloop.Backoff` Error              | journal `chatloop` at Error; boot WARN lines                                           |
+| SSE stream dropped mid-tab                                | The green dot `#wp-sse-live` disappears and ONE polite announce fires (only after the 3-failure threshold, only after an ANNOUNCED drop); recovery announces once                                                                                        | the island's announce + the journal's `/events` request log                            |
+| Dial-gate store failing                                   | Dials proceed anyway (the gate ADVISES); the API answers 502 naming `dialgate`, and the journal carries the store error                                                                                                                                  | journal grep `dialgate`                                                                |
+| Blob store degraded (readiness probe)                     | `/healthz` answers 503 naming the failing check (`blob-dir`/`sqlite`); `/livez` stays fetch-free green — readiness degrades, liveness does not                                                                                                           | `/healthz` JSON                                                                        |
+| `/hooks/*` without a configured secret                    | Fail CLOSED (503) to the caller; the journal carries the fail-closed line — a dialplan depending on the hooks would see 202-less answers immediately                                                                                                     | journal + the caller's 503                                                             |
+| ASR provider failing                                      | The island's transcribe paths render the honest failure state (voicemail/MMS chips show the failed arm; live transcription surfaces the error); the server journal carries `asr.*` codes per failure class                                               | island state + journal grep `asr.`                                                     |
+| Flight-recorder seam off                                  | Plain 404 on `/internal/flightrecorder` (machine-facing, loopback-only when on) — a disabled debug seam answers like a missing path; NO journal noise (silence is the off state)                                                                         | the 404 itself                                                                         |
+| Passkey prompt dismissed/timed out                        | Quiet for the user (the form remains); `#log` keeps the class line — a dismissal is a choice, not a failure                                                                                                                                              | the island `#log`                                                                      |
+| Voicemail/MMS transcription skipped (already transcribed) | NOTHING renders (the once-per src+target cache is a feature); `#log` keeps the skip line                                                                                                                                                                 | the island `#log`                                                                      |
+
+Detection ABSENCE is also ruled: the latency classes (dial-press → first
+audio, ASR round trip) have NO detection today because nothing measures
+them — the measure-first design
+(`docs/planning/2026-11-08_latency-measure-first-design.md`) is the owed
+instrument, not a gap in this table.
+
 `Error()` renders `[family:code] message` and the handler logs add
 `error=`/`family=` fields, so these names are an operator- and
 cross-repo-visible vocabulary (the stack runbook § "Webphone error
