@@ -8,14 +8,14 @@
 
 ## 2. Exact integration points
 
-| Site                                    | Change                                                                                                    | When        |
-| --------------------------------------- | --------------------------------------------------------------------------------------------------------- | ----------- |
-| `package/backup-script.nix`             | after the readmodels block: `if [ -f "${cfg.dataDir}/system.db" ]; then sqlite3 ... ".backup '${dest}/system.db'"; fi` — in BOTH the top-level and the dated-history branch | Phase 1 (file exists, empty of user data) — one commit, never touched again |
-| `nix/vm-tests.nix` (backup drill)       | assert `system.db` present + `pragma integrity_check` ok, top-level AND snapshots branches                 | Phase 1     |
-| `nix/module-check-backup.nix`           | extend the script-content assertions to include the system.db guard line                                  | Phase 1     |
-| `README.md` § Backups and restore       | add `system.db` to the file list + restore steps                                                          | Phase 1     |
-| `scripts/webphone-backup-drill.py`      | round-trip `system.db`; once Phase 2 lands, assert a restored boot REBUILDS the dial-window view from the journal (the A06 replay proof, in the drill) | Phase 1 guard / Phase 2 assertion |
-| `docs/release-runbook.md`               | the per-train backup note names system.db from Phase 2 on                                                 | Phase 2     |
+| Site                               | Change                                                                                                                                                                      | When                                                                        |
+| ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------- |
+| `package/backup-script.nix`        | after the readmodels block: `if [ -f "${cfg.dataDir}/system.db" ]; then sqlite3 ... ".backup '${dest}/system.db'"; fi` — in BOTH the top-level and the dated-history branch | Phase 1 (file exists, empty of user data) — one commit, never touched again |
+| `nix/vm-tests.nix` (backup drill)  | assert `system.db` present + `pragma integrity_check` ok, top-level AND snapshots branches                                                                                  | Phase 1                                                                     |
+| `nix/module-check-backup.nix`      | extend the script-content assertions to include the system.db guard line                                                                                                    | Phase 1                                                                     |
+| `README.md` § Backups and restore  | add `system.db` to the file list + restore steps                                                                                                                            | Phase 1                                                                     |
+| `scripts/webphone-backup-drill.py` | round-trip `system.db`; once Phase 2 lands, assert a restored boot REBUILDS the dial-window view from the journal (the A06 replay proof, in the drill)                      | Phase 1 guard / Phase 2 assertion                                           |
+| `docs/release-runbook.md`          | the per-train backup note names system.db from Phase 2 on                                                                                                                   | Phase 2                                                                     |
 
 ## 3. Per-phase readmodels shrink rule
 

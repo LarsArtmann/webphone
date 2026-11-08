@@ -16,14 +16,14 @@ Faxes have NO sweep today (B144's "fax retention (if configured)" is a future op
 
 ## 2. Retention classes under event sourcing
 
-| Class                          | Content                                             | Journal posture (D3 draft)                                    | Mechanism                                                             |
-| ------------------------------ | --------------------------------------------------- | ------------------------------------------------------------- | --------------------------------------------------------------------- |
-| GDPR-delete                    | messages, threads, attachments (the swept set)      | `retention_days` deletes from JOURNAL + PROJECTION + BLOB      | tombstone event → Remove fold (projection row gone, exists today) → **stream trim** (bytes gone, upstream gap §3) → blob delete (exists) |
-| GDPR-delete (user action)      | a deleted contact; an expunged transcript set       | same as above, event-initiated instead of tick-initiated       | same chain; contact deletion already carries a Remove fold           |
-| Cap-trim                       | dial windows, transcripts                           | trim WITH the view (transcripts posture: expunge oldest)       | projection caps already trim views (`WithCapPerGroup`); journal-side ride the SAME §3 trim pass by age |
-| Reject-capped                  | contacts 500, snippets 100, reviews 2000, devices 8  | keep-forever journal (bounded by decider-side rejects)         | no trim; the cap IS the bound                                          |
-| Audit                          | agent audit                                         | keep-forever BY DESIGN (owner ruling D3)                      | none                                                                    |
-| Never-sweep                    | contacts (tick sweeps)                              | unchanged doctrine                                            | tick pass never touches contact streams                                 |
+| Class                     | Content                                             | Journal posture (D3 draft)                                | Mechanism                                                                                                                                |
+| ------------------------- | --------------------------------------------------- | --------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| GDPR-delete               | messages, threads, attachments (the swept set)      | `retention_days` deletes from JOURNAL + PROJECTION + BLOB | tombstone event → Remove fold (projection row gone, exists today) → **stream trim** (bytes gone, upstream gap §3) → blob delete (exists) |
+| GDPR-delete (user action) | a deleted contact; an expunged transcript set       | same as above, event-initiated instead of tick-initiated  | same chain; contact deletion already carries a Remove fold                                                                               |
+| Cap-trim                  | dial windows, transcripts                           | trim WITH the view (transcripts posture: expunge oldest)  | projection caps already trim views (`WithCapPerGroup`); journal-side ride the SAME §3 trim pass by age                                   |
+| Reject-capped             | contacts 500, snippets 100, reviews 2000, devices 8 | keep-forever journal (bounded by decider-side rejects)    | no trim; the cap IS the bound                                                                                                            |
+| Audit                     | agent audit                                         | keep-forever BY DESIGN (owner ruling D3)                  | none                                                                                                                                     |
+| Never-sweep               | contacts (tick sweeps)                              | unchanged doctrine                                        | tick pass never touches contact streams                                                                                                  |
 
 ## 3. THE FINDING: journal trim does not exist upstream (the hard prerequisite)
 

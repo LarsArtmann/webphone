@@ -61,12 +61,12 @@ All paths relative to `$(go env GOMODCACHE)/github.com/larsartmann/go-cqrs-lite/
 
 Spike: `/tmp/hello-system` (dial-window-shaped domain: DialAttempted fact → dial_windows collection fold — mirrors `internal/readmodels/dialwindows.go` verbatim). Measurements on this host:
 
-| Measurement                                             | Result            |
-| ------------------------------------------------------- | ----------------- |
-| Command dispatch (decider + journal append + publish)   | 0.9–1.1 ms        |
-| Projection visibility AFTER dispatch returned           | 1.1–2.0 ms        |
-| Replay rebuild (wipe projection → host replay)          | 1.6 ms            |
-| Close idempotency                                       | nil, nil          |
+| Measurement                                           | Result     |
+| ----------------------------------------------------- | ---------- |
+| Command dispatch (decider + journal append + publish) | 0.9–1.1 ms |
+| Projection visibility AFTER dispatch returned         | 1.1–2.0 ms |
+| Replay rebuild (wipe projection → host replay)        | 1.6 ms     |
+| Close idempotency                                     | nil, nil   |
 
 Findings:
 
@@ -99,10 +99,10 @@ Method: `git worktree` off main → `go get system/v4@v4.17.0` + stub import in 
 
 **E023 (satellite SQL beside go-cqrs-lite) — exactly 3 sites, all info:**
 
-| Site                              | Why flagged                                                        | Disposition                                                     |
-| --------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------- |
-| `internal/app/chat.go:5`          | package app will import system (cqrs.go) while chat.go passes `db.SQL()` around | MIGRATES — the sql import dies with the store ladder (Phase 5/7) |
-| `internal/readmodels/readmodels.go:19` | sqliteengine + `database/sql` (legacy row import) in one package  | MIGRATES — dies with readmodels.db (Phase 7)                    |
-| `internal/server/server.go:11`    | metaengine (Deps.DedupWindow) + `database/sql` in one package       | MIGRATES — dies with the ladder (Phase 7)                       |
+| Site                                   | Why flagged                                                                     | Disposition                                                      |
+| -------------------------------------- | ------------------------------------------------------------------------------- | ---------------------------------------------------------------- |
+| `internal/app/chat.go:5`               | package app will import system (cqrs.go) while chat.go passes `db.SQL()` around | MIGRATES — the sql import dies with the store ladder (Phase 5/7) |
+| `internal/readmodels/readmodels.go:19` | sqliteengine + `database/sql` (legacy row import) in one package                | MIGRATES — dies with readmodels.db (Phase 7)                     |
+| `internal/server/server.go:11`         | metaengine (Deps.DedupWindow) + `database/sql` in one package                   | MIGRATES — dies with the ladder (Phase 7)                        |
 
 No baselines needed: nothing gates. E023's per-site retirement map IS the record; Phase 7's B147 (`internal/arch` rule updates) re-runs this inventory and expects zero E023.

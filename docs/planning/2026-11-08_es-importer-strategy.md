@@ -49,18 +49,18 @@ The harness lives as a `go test` per aggregate phase (dual-run test) plus a one-
 
 ## 5. Per-aggregate notes
 
-| Aggregate       | Old source                       | Exemptions / notes                                                            |
-| --------------- | -------------------------------- | ----------------------------------------------------------------------------- |
-| Dial windows    | `readmodels.db` collections      | first importer (A18); overrides consumed-state replays as `Consumed:true` events |
-| Snippets        | `readmodels.db`                  | cap 100 enforced by decider on NEW writes; import may exceed → converging trim on next save (posture: trim, documented) |
-| Enroll tokens   | —                                | **EXEMPT** (15-min TTL, in-flight links re-mint — the 2026-10-15 precedent)   |
-| Agent audit     | —                                | **EXEMPT** (starts empty; journal IS the audit from Phase 3 on; the readmodels dual-write row stays until P7) |
-| Push devices    | `readmodels.db`                  | token stays write-only (importer reads it once server-side; LIST never echoes) |
-| Contacts        | `readmodels.db`                  | rename-keeps-id semantics fold from `ContactSaved` events with ORIGINAL ids   |
-| Transcripts     | `readmodels.db`                  | per-(owner, call) streams; floor loop unchanged                              |
-| Notes/reviews   | `readmodels.db`                  | one-slot-per-call folds                                                       |
-| Threads/messages/attachments | `webphone.db` hand ladder | TWO-part importer (B125/B126): threads → stream heads, then messages+attachments → events in (created_at, rowid) order; attachments events carry blob paths (bytes never move) |
-| Faxes           | `webphone.db`                    | `received` inbound facts replay as facts; lifecycle statuses as `faxMoves`-legal events |
+| Aggregate                    | Old source                  | Exemptions / notes                                                                                                                                                             |
+| ---------------------------- | --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Dial windows                 | `readmodels.db` collections | first importer (A18); overrides consumed-state replays as `Consumed:true` events                                                                                               |
+| Snippets                     | `readmodels.db`             | cap 100 enforced by decider on NEW writes; import may exceed → converging trim on next save (posture: trim, documented)                                                        |
+| Enroll tokens                | —                           | **EXEMPT** (15-min TTL, in-flight links re-mint — the 2026-10-15 precedent)                                                                                                    |
+| Agent audit                  | —                           | **EXEMPT** (starts empty; journal IS the audit from Phase 3 on; the readmodels dual-write row stays until P7)                                                                  |
+| Push devices                 | `readmodels.db`             | token stays write-only (importer reads it once server-side; LIST never echoes)                                                                                                 |
+| Contacts                     | `readmodels.db`             | rename-keeps-id semantics fold from `ContactSaved` events with ORIGINAL ids                                                                                                    |
+| Transcripts                  | `readmodels.db`             | per-(owner, call) streams; floor loop unchanged                                                                                                                                |
+| Notes/reviews                | `readmodels.db`             | one-slot-per-call folds                                                                                                                                                        |
+| Threads/messages/attachments | `webphone.db` hand ladder   | TWO-part importer (B125/B126): threads → stream heads, then messages+attachments → events in (created_at, rowid) order; attachments events carry blob paths (bytes never move) |
+| Faxes                        | `webphone.db`               | `received` inbound facts replay as facts; lifecycle statuses as `faxMoves`-legal events                                                                                        |
 
 ## 6. Invariants
 
