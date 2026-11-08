@@ -48,7 +48,7 @@
 
 - **Plan + residue:** `docs/planning/2026-11-04_18-41_SUPERB-fleet-libs-closeout.md` (tasks, guards, graph); `TODO_LIST.md` § "Fleet-libs closeout residue" (the open remainder with triggers).
 - **Rulings (each with its evidence block):** `docs/review/libs/go-atomic-write.md` (ordering errata), `httputil.md` (95/100, row 9), `go-health.md` (100/100) + `go-health-dashboard.md` (tag note), `go-sse.md` (BLOCKED errata), `go-cqrs-lite.md` (EnforceCap NO-GO errata), `templ-components.md` (four-row verdict set), `go-error-family.md` (Conflict row), `go-etag.md` (adopted), `index.html` (finding cards all updated).
-- **Session status:** `docs/status/2026-11-04_18-31_fleet-libs-audit-status.md` (errata: the three named gaps closed).
+- **Session status:** `docs/status/archived/2026-11-04_18-31_fleet-libs-audit-status.md` (errata: the three named gaps closed).
 - **Commits this session (narrative, in order):** `40f044f4` blob durability · `6994df74` MaxBodySize mounts · `13c47cf5` go-health wave · `0f4b7299` go-sse BLOCKED · `5284f977` EnforceCap NO-GO · `9eded56b` fax badge · `3bec171c` empty states · `e2d15455` Conflict family · `7e2ef2df` entitytag swap · `166e9212` Alert/panelHead rulings · `f6708bff` status errata · `bce0a243` HARVEST · `f2f2e375` conditional GET (partial unit). Interleaved daemon chore commits are §d's subject.
 - **Upstream:** tag `v0.13.0` on LarsArtmann/go-health-dashboard `1e0fc25` (pushed, proxy-verified).
 

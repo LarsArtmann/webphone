@@ -1,7 +1,7 @@
 # SUPERB plan — fleet-libs audit closeout (Pareto-ranked)
 
 **Created:** 2026-11-04 18:41 CET · **Provenance:** the 2026-11-04 fleet-libs utilization audit
-(19 reports in `docs/review/libs/`, status snapshot `docs/status/2026-11-04_18-31_fleet-libs-audit-status.md`).
+(19 reports in `docs/review/libs/`, status snapshot `docs/status/archived/2026-11-04_18-31_fleet-libs-audit-status.md`).
 **Scope:** the audit's 50 open items ONLY. TODO_LIST.md was checked for overlaps first
 (grep for maxbody / atomic-write / EnforceCap / StatusBadge / the three bumps / etag / retry /
 Conflict: zero hits) — nothing here re-dispatches shipped or already-tracked work. The living

@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-08 (docs-health drain): gates clean (check-rows --strict + bare-rows green), citations repointed, supersedes nothing — its rulings live in the AGENTS fleet-libs bullet and docs/review/libs/.
+
 # Fleet-libs utilization audit — session status report
 
 **Snapshot:** 2026-11-04 18:31 CET — claims verified as of this minute; push/CI statements rot fastest.
