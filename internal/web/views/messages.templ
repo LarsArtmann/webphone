@@ -471,6 +471,10 @@ type ThreadViewProps struct {
 	// CRM carries the optional CRM integration's answers for the numbers
 	// this panel renders (name + deep link); an absent number renders raw.
 	CRM CRMContacts
+	// ASR gates the audio-attachment transcribe buttons on the
+	// speech-to-text seam: with no provider configured the affordance
+	// must not exist.
+	ASR bool
 	// CRMCreateURL is the optional new-contact form template (config
 	// crm.create_url): an unknown caller's head renders the add-to-CRM
 	// affordance from it; empty renders nothing, which is the zero-config

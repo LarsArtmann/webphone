@@ -10,16 +10,24 @@ package views
 // inside the list's row link would be invalid HTML and a nested hit target.
 // The link opens in a NEW TAB on purpose, so the SIP island (registration,
 // a live call) is never unloaded by a navigation.
+// crmAnchor is the ONE home of the CRM's external anchor: the profile
+// link and the create affordance are the same shape (new tab, noopener,
+// a title and a "<who>, <title>" label), and two hand-kept copies would
+// drift the day one gains an attribute.
+templ crmAnchor(href, class, text, who, title string) {
+	<a
+		class={ class }
+		href={ href }
+		target="_blank"
+		rel="noopener noreferrer"
+		title={ title }
+		aria-label={ who + ", " + title }
+	>{ text }</a>
+}
+
 templ crmNameLink(number string, contacts CRMContacts, lang Lang) {
 	if url := crmProfileURL(number, contacts); url != "" {
-		<a
-			class="wp-crm-link"
-			href={ url }
-			target="_blank"
-			rel="noopener noreferrer"
-			title={ T(lang, "crm.open") }
-			aria-label={ displayName(number, contacts) + ", " + T(lang, "crm.open") }
-		>{ displayName(number, contacts) }</a>
+		@crmAnchor(url, "wp-crm-link", displayName(number, contacts), displayName(number, contacts), T(lang, "crm.open"))
 	} else {
 		{ displayName(number, contacts) }
 	}
@@ -34,14 +42,7 @@ templ crmNameLink(number string, contacts CRMContacts, lang Lang) {
 // browser→CRM surface at exactly the operator's own navigation.
 templ crmCreateLink(number string, createURL string, contacts CRMContacts, lang Lang) {
 	if createURL != "" && crmProfileURL(number, contacts) == "" {
-		<a
-			class="wp-crm-create"
-			href={ crmCreateURLFor(number, createURL) }
-			target="_blank"
-			rel="noopener noreferrer"
-			title={ T(lang, "crm.create") }
-			aria-label={ displayName(number, contacts) + ", " + T(lang, "crm.create") }
-		>{ T(lang, "crm.create") }</a>
+		@crmAnchor(crmCreateURLFor(number, createURL), "wp-crm-create", T(lang, "crm.create"), displayName(number, contacts), T(lang, "crm.create"))
 	}
 }
 

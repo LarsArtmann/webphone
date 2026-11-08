@@ -29,6 +29,13 @@ sqlite3 "/var/lib/webphone/webphone.db" ".backup '/var/lib/webphone-backup/webph
 if [ -f "/var/lib/webphone/readmodels.db" ]; then
   sqlite3 "/var/lib/webphone/readmodels.db" ".backup '/var/lib/webphone-backup/readmodels.db'"
 fi
+# The system composition root's journal database (command/event
+# streams, projections, checkpoints, DLQ) carries user data from the
+# SUPERB phases on — guarded the same way for data dirs that have
+# not booted a webphone new enough to create it yet.
+if [ -f "/var/lib/webphone/system.db" ]; then
+  sqlite3 "/var/lib/webphone/system.db" ".backup '/var/lib/webphone-backup/system.db'"
+fi
 rsync -a --delete "/var/lib/webphone/files/" "/var/lib/webphone-backup/files/"
 # Dated history: snapshot today's state under snapshots/,
 # hardlinking unchanged blobs against the newest previous
@@ -44,6 +51,9 @@ mkdir -p "$snap"
 sqlite3 "/var/lib/webphone/webphone.db" ".backup '$snap/webphone.db'"
 if [ -f "/var/lib/webphone/readmodels.db" ]; then
   sqlite3 "/var/lib/webphone/readmodels.db" ".backup '$snap/readmodels.db'"
+fi
+if [ -f "/var/lib/webphone/system.db" ]; then
+  sqlite3 "/var/lib/webphone/system.db" ".backup '$snap/system.db'"
 fi
 if [ -n "$basis" ]; then
   rsync -a --delete --link-dest="$basis" "/var/lib/webphone/files/" "$snap/files/"
