@@ -45,15 +45,14 @@ in
       if
         lib.length planted == 1
         && lib.hasInfix "gateway.webhook_secret" (lib.head planted).message
-        && lib.hasInfix "inline secret values" (lib.head planted).message
+        && lib.hasInfix "world-readable config JSON" (lib.head planted).message
         && fileLane == [ ]
         && pathLane == [ ]
         && passthrough == [ ]
       then
         "planted literal secret refused by name; file/path/passthrough lanes stay clean"
       else
-        throw
-          "webphone-module check: inline-secret guard mis-fires (planted=${toString (lib.length planted)}, file=${toString (lib.length fileLane)}, path=${toString (lib.length pathLane)}, passthrough=${toString (lib.length passthrough)})"
+        throw "webphone-module check: inline-secret guard mis-fires (planted=${toString (lib.length planted)}, file=${toString (lib.length fileLane)}, path=${toString (lib.length pathLane)}, passthrough=${toString (lib.length passthrough)})"
     );
   }
 ]

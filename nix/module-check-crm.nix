@@ -162,7 +162,18 @@ in
         unit = ev.config.systemd.services.webphone.serviceConfig;
       in
       if
-        c.settings.crm == raw && !(unit ? LoadCredential) && failedAssertions { settings.crm = raw; } == [ ]
+        c.settings.crm == raw
+        && !(unit ? LoadCredential)
+        # The inline-secret guard fires on the planted literal (the raw
+        # lane is pass-through, not exempt — the token would render into
+        # the world-readable config JSON): exactly one finding naming
+        # the key, and the pass-through itself stays untouched.
+        && (
+          let
+            rawFailures = failedAssertions { settings.crm = raw; };
+          in
+          lib.length rawFailures == 1 && lib.hasInfix "crm.token" (lib.head rawFailures).message
+        )
       then
         "raw settings.crm passes through untouched when the typed lane is off"
       else

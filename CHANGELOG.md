@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Freeform literal-secret guard in the NixOS module (2026-11-08): a
+  secret-shaped `settings` key (`*secret*`/`*token*`/`*password*`/…) carrying
+  an inline value now fails the deployment's eval, naming the key — inline
+  secrets used to render straight into the world-readable config JSON. The
+  sanctioned lanes (`*_file` keys, `/run/…` values, `environmentFile`) stay
+  clean; pinned by the `literal-secret-guard` module check.
 - CSP violation reporting (2026-11-08): the strict CSP now carries `report-uri
   /csp-report` + `report-to csp-endpoint` (with the matching
   `Reporting-Endpoints` header on every response), and `POST /csp-report`
