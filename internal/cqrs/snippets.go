@@ -16,7 +16,6 @@ import (
 	"github.com/larsartmann/go-cqrs-lite/command/v4"
 	"github.com/larsartmann/go-cqrs-lite/decider/v4"
 	"github.com/larsartmann/go-cqrs-lite/event/v4"
-	"github.com/larsartmann/go-cqrs-lite/id/v4"
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
 	"github.com/larsartmann/go-cqrs-lite/record/v4"
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
@@ -210,15 +209,11 @@ func (s *Snippets) Save(ctx context.Context, snippet domain.Snippet) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	streamID, err := id.ParseStreamID(snippet.Owner.String())
+	err := dispatchOwnerCommand(ctx, s.sys, "snippet.save", snippet.Owner.String(),
+		func(base *command.BasicCommand) *SaveSnippet {
+			return &SaveSnippet{BasicCommand: base, Snippet: snippet}
+		})
 	if err != nil {
-		return errorfamily.WrapRejectionf(err, "cqrs.snippet_stream", "parse owner stream id")
-	}
-	base, err := command.New("snippet.save", streamID)
-	if err != nil {
-		return errorfamily.WrapInfrastructuref(err, "cqrs.snippet_command", "build snippet.save")
-	}
-	if err := s.sys.CommandDispatcher().Dispatch(ctx, &SaveSnippet{BasicCommand: base, Snippet: snippet}); err != nil {
 		if errors.Is(err, readmodels.ErrSnippetListFull) {
 			return err
 		}
@@ -258,15 +253,10 @@ func (s *Snippets) Delete(ctx context.Context, owner domain.Extension, snippetID
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	streamID, err := id.ParseStreamID(owner.String())
-	if err != nil {
-		return errorfamily.WrapRejectionf(err, "cqrs.snippet_stream", "parse owner stream id")
-	}
-	base, err := command.New("snippet.delete", streamID)
-	if err != nil {
-		return errorfamily.WrapInfrastructuref(err, "cqrs.snippet_command", "build snippet.delete")
-	}
-	if err := s.sys.CommandDispatcher().Dispatch(ctx, &DeleteSnippet{BasicCommand: base, SnippetID: snippetID}); err != nil {
+	if err := dispatchOwnerCommand(ctx, s.sys, "snippet.delete", owner.String(),
+		func(base *command.BasicCommand) *DeleteSnippet {
+			return &DeleteSnippet{BasicCommand: base, SnippetID: snippetID}
+		}); err != nil {
 		return err
 	}
 	return nil

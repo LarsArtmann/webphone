@@ -55,16 +55,11 @@ func (s *DialWindows) Attempt(ctx context.Context, owner domain.Extension, remot
 	defer s.mu.Unlock()
 
 	now := timeNow()
-	streamID, err := id.ParseStreamID(owner.String())
+	err := dispatchOwnerCommand(ctx, s.sys, "dial.attempt", owner.String(),
+		func(base *command.BasicCommand) *AttemptDial {
+			return &AttemptDial{BasicCommand: base, Owner: owner.String(), Remote: remote, Cooldown: cooldown, Now: now}
+		})
 	if err != nil {
-		return false, now, errorfamily.WrapRejectionf(err, "cqrs.dial_stream", "parse owner stream id")
-	}
-	base, err := command.New("dial.attempt", streamID)
-	if err != nil {
-		return false, now, errorfamily.WrapInfrastructuref(err, "cqrs.dial_command", "build dial.attempt")
-	}
-	cmd := &AttemptDial{BasicCommand: base, Owner: owner.String(), Remote: remote, Cooldown: cooldown, Now: now}
-	if err := s.sys.CommandDispatcher().Dispatch(ctx, cmd); err != nil {
 		if denied, ok := errors.AsType[*DialDeniedError](err); ok {
 			return false, denied.LastAt, nil
 		}
@@ -78,16 +73,10 @@ func (s *DialWindows) ArmOverride(ctx context.Context, owner domain.Extension, r
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	streamID, err := id.ParseStreamID(owner.String())
-	if err != nil {
-		return errorfamily.WrapRejectionf(err, "cqrs.dial_stream", "parse owner stream id")
-	}
-	base, err := command.New("dial.override", streamID)
-	if err != nil {
-		return errorfamily.WrapInfrastructuref(err, "cqrs.dial_command", "build dial.override")
-	}
-	cmd := &SaveOverride{BasicCommand: base, Owner: owner.String(), Remote: remote, Now: timeNow()}
-	if err := s.sys.CommandDispatcher().Dispatch(ctx, cmd); err != nil {
+	if err := dispatchOwnerCommand(ctx, s.sys, "dial.override", owner.String(),
+		func(base *command.BasicCommand) *SaveOverride {
+			return &SaveOverride{BasicCommand: base, Owner: owner.String(), Remote: remote, Now: timeNow()}
+		}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.dial_override", "dispatch dial.override")
 	}
 	return nil
@@ -127,4 +116,21 @@ func (s *DialWindows) Active(ctx context.Context, owner domain.Extension, cooldo
 		slots = append(slots, readmodels.ActiveSlot{Remote: v.Remote, LastAt: v.At, Window: windowSecs})
 	}
 	return slots, nil
+}
+
+// dispatchOwnerCommand builds and dispatches a command on an owner's
+// stream — the shared prologue of every aggregate backend (the branded
+// stream id parse, the command build, the dispatch).
+func dispatchOwnerCommand[C command.Command](ctx context.Context, sys *system.System, name, owner string,
+	build func(*command.BasicCommand) C,
+) error {
+	streamID, err := id.ParseStreamID(owner)
+	if err != nil {
+		return errorfamily.WrapRejectionf(err, "cqrs.owner_stream", "parse owner stream id")
+	}
+	base, err := command.New(command.Type(name), streamID)
+	if err != nil {
+		return errorfamily.WrapInfrastructuref(err, "cqrs.command_build", "build %s", name)
+	}
+	return sys.CommandDispatcher().Dispatch(ctx, build(base))
 }

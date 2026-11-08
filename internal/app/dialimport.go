@@ -19,7 +19,9 @@ package app
 import (
 	"context"
 	"log/slog"
-	"sort"
+	"maps"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/larsartmann/go-cqrs-lite/event/v4"
@@ -78,23 +80,21 @@ func importDialWindows(ctx context.Context, db *store.Database, dials *readmodel
 	// Deterministic owner order: a crash mid-import leaves a prefix of
 	// streams imported; the retry's tail sync continues each stream from
 	// its own Load, so ordering only affects the log, never correctness.
-	owners := make([]string, 0, len(perOwner))
-	for owner := range perOwner {
-		owners = append(owners, owner)
-	}
-	sort.Strings(owners)
+	owners := slices.Sorted(maps.Keys(perOwner))
 
 	for _, owner := range owners {
 		facts := perOwner[owner]
 		// Same-stamp ordering inside a stream: windows before overrides,
 		// then remote name — a stable, explainable order.
-		sort.SliceStable(facts, func(i, j int) bool {
-			ti, ri := importFactStamp(facts[i]), importFactRemote(facts[i])
-			tj, rj := importFactStamp(facts[j]), importFactRemote(facts[j])
-			if !ti.Equal(tj) {
-				return ti.Before(tj)
+		slices.SortStableFunc(facts, func(a, b any) int {
+			ta, tb := importFactStamp(a), importFactStamp(b)
+			if !ta.Equal(tb) {
+				if ta.Before(tb) {
+					return -1
+				}
+				return 1
 			}
-			return ri < rj
+			return strings.Compare(importFactRemote(a), importFactRemote(b))
 		})
 		if err := appendDialFacts(ctx, svc.Sys, owner, facts); err != nil {
 			log.Error("dial journal import: append failed; skipping rest (retries next boot)",
@@ -252,10 +252,5 @@ func importSnippets(ctx context.Context, db *store.Database, snippets *readmodel
 }
 
 func sortedOwners(perOwner map[string][]domain.Snippet) []string {
-	owners := make([]string, 0, len(perOwner))
-	for owner := range perOwner {
-		owners = append(owners, owner)
-	}
-	sort.Strings(owners)
-	return owners
+	return slices.Sorted(maps.Keys(perOwner))
 }
