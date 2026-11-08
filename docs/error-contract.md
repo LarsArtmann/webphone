@@ -421,6 +421,7 @@ a deliberate code change, regenerate:
 | cqrs.stream_tail                             | Infrastructure            | internal/cqrs/visibility.go        |
 | cqrs.thread_advance                          | Infrastructure            | internal/cqrs/threads.go           |
 | cqrs.thread_append                           | Infrastructure            | internal/cqrs/threads.go           |
+| cqrs.thread_count                            | Infrastructure            | internal/cqrs/threadsstore.go      |
 | cqrs.thread_delete                           | Infrastructure            | internal/cqrs/threads.go           |
 | cqrs.thread_duplicate_message                | Rejection                 | internal/cqrs/threads.go           |
 | cqrs.thread_find                             | Infrastructure            | internal/cqrs/threadsstore.go      |
