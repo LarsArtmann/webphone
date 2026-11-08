@@ -22,7 +22,7 @@ turns "generic", and a row judged harvested re-answers UNHARVESTED — on a
 report nobody touched.
 
 Observed on one repo over two days, all on the SAME row
-(`2026-10-15_01-39_metaengine-dogfooding-train-p0-pilot.md` row 2, work landed
+(`docs/status/archived/2026-10-15_01-39_metaengine-dogfooding-train-p0-pilot.md` row 2, work landed
 2026-10-15):
 
 - 2026-11-07: audit_max ratchet moved 71 → 72 when living lines passed
