@@ -362,6 +362,7 @@ a deliberate code change, regenerate:
 | cqrs.agent_audit_register                    | Infrastructure            | internal/cqrs/agentaudit.go        |
 | cqrs.attachment_get                          | Infrastructure            | internal/cqrs/threadsstore.go      |
 | cqrs.attachments_list                        | Infrastructure            | internal/cqrs/threadsstore.go      |
+| cqrs.attachments_sweep                       | Infrastructure            | internal/cqrs/threadsstore.go      |
 | cqrs.command_build                           | Infrastructure            | internal/cqrs/dialwindows.go       |
 | cqrs.contact_count                           | Infrastructure            | internal/cqrs/contacts.go          |
 | cqrs.contact_delete                          | Infrastructure            | internal/cqrs/contacts.go          |
@@ -441,6 +442,7 @@ a deliberate code change, regenerate:
 | cqrs.thread_trim                             | Infrastructure            | internal/cqrs/threadsstore.go      |
 | cqrs.threads_boot                            | Infrastructure            | internal/cqrs/threads.go           |
 | cqrs.threads_list_all                        | Infrastructure            | internal/cqrs/threadsstore.go      |
+| cqrs.threads_sweep_scan                      | Infrastructure            | internal/cqrs/threadsstore.go      |
 | cqrs.transcript_append                       | Infrastructure            | internal/cqrs/transcriptsstore.go  |
 | cqrs.transcript_call                         | Infrastructure            | internal/cqrs/transcriptsstore.go  |
 | cqrs.transcript_count                        | Infrastructure            | internal/cqrs/transcriptsstore.go  |

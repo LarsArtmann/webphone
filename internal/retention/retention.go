@@ -22,11 +22,19 @@ import (
 // files were unlinked. It is the sweep log line's data and the
 // package tests' assertion surface.
 type sweepSummary struct {
-	messages    int64
-	faxes       int64
-	threads     int64
-	transcripts int64
-	blobs       int64
+	messages       int64
+	faxes          int64
+	threads        int64
+	journalThreads int64
+	transcripts    int64
+	blobs          int64
+}
+
+// ThreadSweeper is the journal leg's seam: the threads backend's
+// SweepBefore (the Faxes.SweepBefore shape — paths out for unlinking,
+// rows and journal bytes gone before they return).
+type ThreadSweeper interface {
+	SweepBefore(ctx context.Context, cutoff time.Time) ([]string, int64, error)
 }
 
 // Start runs one sweep immediately and then once a day until ctx ends.
@@ -36,8 +44,11 @@ type sweepSummary struct {
 // the next mint). engine is the read-model container: fax jobs and
 // call transcripts live in readmodels.db since the T11/T13 swaps, so
 // their retention legs ride the engine sweeps (fax documents come
-// back for unlinking; transcripts carry no blobs).
-func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readmodels.Engine, window time.Duration) {
+// back for unlinking; transcripts carry no blobs). threads is the
+// journal-backed core leg (A36): expired threads tombstone out of the
+// views AND the journal itself, so the GDPR arm deletes bytes, not
+// just rows.
+func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readmodels.Engine, threads ThreadSweeper, window time.Duration) {
 	if window <= 0 {
 		return
 	}
@@ -49,7 +60,7 @@ func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readmodel
 				slog.Error("retention: sweep PANIC recovered; tick skipped, sweeper survives", "panic", rec)
 			}
 		}()
-		sweepOnce(ctx, db, blobs, engine, time.Now().Add(-window))
+		sweepOnce(ctx, db, blobs, engine, threads, time.Now().Add(-window))
 	}
 	go func() {
 		run()
@@ -74,7 +85,7 @@ func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readmodel
 // zero timing dependence. A store failure skips the pass entirely
 // (the next tick retries); fax and transcript failures degrade to a
 // logged zero, never a dropped store sweep.
-func sweepOnce(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readmodels.Engine, cutoff time.Time) sweepSummary {
+func sweepOnce(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readmodels.Engine, threads ThreadSweeper, cutoff time.Time) sweepSummary {
 	var sum sweepSummary
 	res, err := store.Sweep(ctx, db, cutoff)
 	if err != nil {
@@ -82,6 +93,21 @@ func sweepOnce(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readm
 		return sum
 	}
 	sum.messages, sum.threads = res.Messages, res.Threads
+
+	// The journal leg (A36): expired threads leave the views AND the
+	// journal (bytes gone); their blob paths join the faxes' in the one
+	// unlink loop. A nil seam skips the leg (pre-A36 test compositions)
+	// — never silently: the composition root always wires the real one.
+	threadPaths := []string{}
+	if threads != nil {
+		paths, journalRemoved, err := threads.SweepBefore(ctx, cutoff)
+		if err != nil {
+			slog.Error("retention: thread journal sweep failed", "error", err)
+		} else {
+			sum.journalThreads = journalRemoved
+			threadPaths = paths
+		}
+	}
 
 	faxPaths, faxesRemoved, err := engine.Faxes().SweepBefore(ctx, cutoff)
 	if err != nil {
@@ -95,7 +121,7 @@ func sweepOnce(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readm
 	}
 	sum.transcripts = transcriptsRemoved
 
-	for _, path := range append(res.BlobPaths, faxPaths...) {
+	for _, path := range append(append(res.BlobPaths, threadPaths...), faxPaths...) {
 		// A corrupt stored path skips its unlink (logged) instead of
 		// killing the sweep: retention is daily background hygiene, and
 		// one bad row must not protect every other blob from expiry.
@@ -115,6 +141,7 @@ func sweepOnce(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readm
 		"messages", sum.messages,
 		"faxes", sum.faxes,
 		"threads", sum.threads,
+		"journal_threads", sum.journalThreads,
 		"transcripts", sum.transcripts,
 		"blobs_removed", sum.blobs,
 	)

@@ -723,7 +723,7 @@ func (a *App) Start(ctx context.Context) error {
 	if err := cqrs.Start(ctx); err != nil {
 		return wrapf("start cqrs system: %w", err)
 	}
-	retention.Start(ctx, db.SQL(), blobs, engine, time.Duration(a.cfg.RetentionDays)*24*time.Hour)
+	retention.Start(ctx, db.SQL(), blobs, engine, cqrs.ThreadsSvc(), time.Duration(a.cfg.RetentionDays)*24*time.Hour)
 	startDedupSweeper(ctx, a.log, engineDedupWindow{store: engine.DedupStore()})
 	// The chat-network lanes wire here (config-gated; absent config wires
 	// nothing) and run under the same ctx bound: a lane exiting while the

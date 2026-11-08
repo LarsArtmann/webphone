@@ -418,6 +418,69 @@ func (s *Threads) DeleteThread(ctx context.Context, owner domain.Extension, id d
 	return nil
 }
 
+// SweepBefore is the retention leg (A36): every thread whose last
+// activity precedes the cutoff is tombstoned, folded out of the views,
+// and journal-trimmed (the legacy sweep's "empty thread" twin — a
+// last-activity-older thread has no message that survives the cutoff,
+// so the two semantics coincide). Attachment blob paths are gathered
+// BEFORE the rows fold away and returned for the CALLER to unlink (the
+// store layer only ever owned rows; the retention pass owns files).
+// The Faxes.SweepBefore shape, one seam for both legs.
+func (s *Threads) SweepBefore(ctx context.Context, cutoff time.Time) ([]string, int64, error) {
+	views, err := s.threads.Scan(ctx, metaengine.WithLimit(0))
+	if err != nil {
+		return nil, 0, errorfamily.WrapInfrastructuref(err, "cqrs.threads_sweep_scan", "sweep scan threads")
+	}
+	cutoffNanos := cutoff.UnixNano()
+	var paths []string
+	var removed int64
+	for _, v := range views {
+		if v.LastActivity >= cutoffNanos {
+			continue
+		}
+		owner := domain.MustParseExtension(v.Owner)
+		threadID := domain.MustThreadID(v.ThreadID)
+		msgs, err := s.threadMessages(ctx, owner, threadID)
+		if err != nil {
+			return paths, removed, err
+		}
+		if err := s.attachmentsPaths(ctx, msgs, &paths); err != nil {
+			return paths, removed, err
+		}
+		if err := s.DeleteThread(ctx, owner, threadID, "retention"); err != nil {
+			return paths, removed, err
+		}
+		removed++
+	}
+	return paths, removed, nil
+}
+
+// attachmentsPaths folds the owners' attachment rows onto the path
+// list for the given messages ONLY (paths gathered before the tombstone
+// folds the rows away; a sibling thread's blobs are not this sweep's).
+func (s *Threads) attachmentsPaths(ctx context.Context, msgs []readmodels.MessageView, paths *[]string) error {
+	ofThread := make(map[string]struct{}, len(msgs))
+	byOwner := make(map[string]struct{}, len(msgs))
+	for _, m := range msgs {
+		ofThread[m.MessageID] = struct{}{}
+		byOwner[m.Owner] = struct{}{}
+	}
+	for owner := range byOwner {
+		views, err := s.attachs.Scan(ctx,
+			metaengine.WithFilter("owner", metaengine.FilterEq, owner),
+			metaengine.WithLimit(0))
+		if err != nil {
+			return errorfamily.WrapInfrastructuref(err, "cqrs.attachments_sweep", "list attachments of %s", owner)
+		}
+		for _, v := range views {
+			if _, ok := ofThread[v.MessageID]; ok {
+				*paths = append(*paths, v.Path)
+			}
+		}
+	}
+	return nil
+}
+
 // messageDomain rehydrates the domain.Message from a view row.
 func (s *Threads) messageDomain(v readmodels.MessageView) domain.Message {
 	return domain.Message{
