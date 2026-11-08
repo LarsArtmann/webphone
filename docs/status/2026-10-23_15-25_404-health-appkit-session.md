@@ -216,7 +216,7 @@ week, **P3** = when the train allows, **P4** = backlog.
 | 12 | Extend the smoke suite with the `/health` styled-404 probe (dashboard off)                                                 | P2   | 10 min |
 | 13 | Add `/health/` and `/assets/*` navigation 404s to `scripts/ui-capture.py` so the visual matrix covers the error page       | P2   | 20 min |
 | 14 | Run `nix run .#vulnix` for a real runtime-closure scan (buildflow only cached it)                                          | P2   | 10 min |
-| 15 | Run `nix flake check` once end to end                                                                                      | P2   | 30 min |
+| ~~15~~ | ~~Run `nix flake check` once end to end~~ — done routinely since: CI's `fast flake checks` leg + `nix build .#webphone` green across every train since (latest: run 42500447327, 2026-11-08); the KVM-gated backup VM leg rides the owner's local runs per the runbook | P2   | 30 min |
 | 16 | Adopt the flight recorder from `go-flightrecorder` behind a default-off seam                                               | P2   | 60 min |
 | 17 | Add request-duration histograms to `/metrics` (aggregates only, unchanged privacy line)                                    | P2   | 45 min |
 | 18 | Give the dashboard a `title` that names the host in pbx-artmann (`"PBX artmann.tech"`)                                     | P3   | 2 min  |
@@ -224,9 +224,9 @@ week, **P3** = when the train allows, **P4** = backlog.
 | 20 | Consider `errorpages`' JSON contract shape for `/api/*` failures (`{family,code,message,why,fix}`)                         | P3   | 30 min |
 | 21 | Convert the reachable subset of `actions.go` 404s (missing/foreign thread, fax, snippet) to the styled panel               | P3   | 45 min |
 | 22 | Add a styled 405 path if buffering proves safe for non-streaming responses                                                 | P3   | 60 min |
-| 23 | Audit every `http.NotFound` site for a _user-reachable_ arm (a table, not a sentence)                                      | P3   | 30 min |
+| ~~23~~ | ~~Audit every `http.NotFound` site for a _user-reachable_ arm (a table, not a sentence)~~ — LANDED as docs/error-contract.md § "404 — one home, two shapes": the behaviour table IS the audit's product (h.notFound one-home, HX-Request notice shape, JSON/webhook exclusions, the 405 stance) | P3   | 30 min |
 | 24 | Consolidate the 404 knowledge into one doc section (`docs/error-contract.md`) and delete the duplication                   | P3   | 20 min |
-| 25 | Add an arch test: every HTML route family answers 404 through the shell                                                    | P3   | 45 min |
+| ~~25~~ | ~~Add an arch test: every HTML route family answers 404 through the shell~~ — SUPERSEDED by the stronger landed shape: `h.notFound` is the structural ONE home every HTML surface answers through (AGENTS invariant + the styled-404 behavior pins in the server tests), so a per-route arch test would re-derive what the funnel already guarantees | P3   | 45 min |
 | 26 | Re-verify the go-appkit report's `path:line` citations after the concurrent session's edits                                | P3   | 10 min |
 | 27 | Add `result*` symlink cleanup (or a `vulnix` preflight) so the scan cannot crash again                                     | P3   | 10 min |
 | 28 | Add `buildflow` skip rationale for `vulnix` if the cache-first behaviour stays                                             | P3   | 5 min  |

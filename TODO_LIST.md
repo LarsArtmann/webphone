@@ -983,7 +983,11 @@ the WebTransport-not-adopted verdict doc; telephony `deploy.md` secret PATH colu
 ops-runbook demo-call recipe (`originate user/1000 &playback(local_stream://moh)` +
 the `/var/lib/telephony-secrets/` password path); MOH audibility + `/recordings/` +
 CDR check; the gateway stack-side bits (`ftypqt`→`video/quicktime` sniff, E2E
-MMS-outbound, pbx-artmann FEATURES:87 stale text). No assistant ssh — verified
+MMS-outbound, pbx-artmann FEATURES:87 stale text); the 2026-10-23 404-health
+stack residues (a dashboard-on VM test leg — boots the stack with
+`webphone.dashboard.enable = true` and asserts the page renders through the
+vhost fence — and the app's styled-404 shape rule in `tests/browser-e2e.py`,
+grep-verified absent 2026-11-08). No assistant ssh — verified
 handovers only. Evidence: owner command sheet
 `docs/planning/2026-09-24_19-25_owner-terminal-command-sheet.md`.
 
