@@ -438,6 +438,22 @@ _(P3 and P4 are order-independent trains; the linear spine shows the default. P5
 - Prior-audit facts (2026-11-08 03:56 report): current-state storage `planned.go:170`; nudge-only `domain/events.go`; identity island `userauth.go:96`; no-ES doctrine rows.
 - OPEN (Phase 0 resolves): exact DomainConfig field surface on the pinned version; retention/trim mechanics detail; cqrs-lint finding inventory; systemscenario import path on the pinned version; projectionhost apply model for the sqlite single-instance deployment.
 
+## 13. EFFORT ROLL-UP (what "100%" costs)
+
+| Slice                  | Tasks                    | Focused hours |
+| ---------------------- | ------------------------ | ------------- |
+| P0 preflight + gate    | A01–A09                  | ~10.5h        |
+| P1 plumbing            | A10–A14                  | ~6.5h         |
+| P2 dial proof          | A15–A20                  | ~8.5h         |
+| P3 small aggregates    | A21–A25                  | ~6.5h         |
+| P4 medium aggregates   | A26–A30                  | ~7.5h         |
+| P5 the core            | A31–A38                  | ~13h          |
+| P6 faxes               | A39–A40                  | ~3h           |
+| P7 unification + close | A41–A47                  | ~11.5h        |
+| **Total**              | **47 tasks / 166 micro** | **~67h**      |
+
+Focused hours exclude train gates, releases, and CI waits. Eight release trains at the repo's cadence ≈ 3–5 calendar weeks with everything else paused, longer realistically alongside live traffic. The abort criteria (§4.9) bound each train's exposure; the A09 owner gate bounds the program.
+
 ## Errata
 
 - **Revision 2 (2026-11-08, post-self-review):** retracted v1's R2 claim ("dispatch is synchronous — the read is never older than today's") — wrong under async projectionhost; replaced by spike A06 + risks R2/R7/R11-R13. Added: retention/GDPR invariant (§4.2, A05, A36, R10), terminal storage topology (§2, A43, A16 collection retirement), OCC conflict retry (R7, B113), snapshots (R12, D8, B120), DLQ (R11, A12), perf budgets (A19, §11), abort criteria (§4.9), train-start full buildflow (§4.3, §11), timestamp-fidelity rule (§4.4, B72/B128), decision points D6-D8.
