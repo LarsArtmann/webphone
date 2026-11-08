@@ -4,25 +4,30 @@ import (
 	"context"
 	"testing"
 	"time"
-
 )
 
-func TestDiagProjectionCatchup(t *testing.T) {
-	dials := bootDialSystem(t, t.TempDir())
+func TestDiagCapExpunge(t *testing.T) {
+	_ = t.TempDir()
+	dials := bootDialSystem(t, "/tmp/diagdb")
 	ctx := context.Background()
 	owner := mustExt(t, "1001")
-	allowed, at, err := dials.Attempt(ctx, owner, "+15550001111", time.Hour)
-	t.Logf("attempt: allowed=%v at=%v err=%v", allowed, at, err)
+
+	backdated := time.Now().Add(-time.Hour)
+	timeNow = func() time.Time { return backdated }
+	if _, _, err := dials.Attempt(ctx, owner, "+15550001", time.Hour); err != nil {
+		t.Fatalf("oldest attempt: %v", err)
+	}
+	timeNow = time.Now
+	awaitLast(t, dials, owner, "+15550001", backdated)
+	for i := 0; i < dialWindowMaxPerOwner; i++ {
+		if _, _, err := dials.Attempt(ctx, owner, remoteOf(i), time.Hour); err != nil {
+			t.Fatalf("attempt %d: %v", i, err)
+		}
+	}
+	time.Sleep(300 * time.Millisecond)
+	_, found, _ := dials.Last(ctx, owner, "+15550001")
+	t.Logf("oldest found after cap: %v", found)
 	for _, w := range dials.sys.WorkerStatus() {
 		t.Logf("worker: %+v", w)
 	}
-	t.Logf("lag: %+v", dials.sys.LagPerProjection())
-	time.Sleep(200 * time.Millisecond)
-	for _, w := range dials.sys.WorkerStatus() {
-		t.Logf("worker after: %+v", w)
-	}
-	last, found, err := dials.Last(ctx, owner, "+15550001111")
-	t.Logf("last: found=%v last=%v err=%v", found, last, err)
-	slots, err := dials.Active(ctx, owner, time.Hour)
-	t.Logf("active: %+v err=%v", slots, err)
 }

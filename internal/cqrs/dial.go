@@ -53,6 +53,10 @@ const dialWindowMaxPerOwner = dialWindowsMaxSlots
 // params (the aggregate owns the facts, not the policy of the day).
 type AttemptDial struct {
 	*command.BasicCommand
+	// Owner is the extension string — carried explicitly because the
+	// stream id's String() renders a branded prefix ("StreamMarker:…")
+	// the facts must NOT carry (they key the owner-scoped rows).
+	Owner    string
 	Remote   string
 	Cooldown time.Duration
 	Now      time.Time
@@ -62,8 +66,10 @@ type AttemptDial struct {
 // AttemptDial spends it (even mid-window) and dials.
 type SaveOverride struct {
 	*command.BasicCommand
-	Remote string
-	Now    time.Time
+	// Owner as on AttemptDial (branded stream ids never reach facts).
+	Owner   string
+	Remote  string
+	Now     time.Time
 }
 
 // DialDeniedError is the decider's DENY verdict: a typed rejection
@@ -134,7 +140,7 @@ func applyDialState(s dialState, evt event.Event) (dialState, error) {
 // expunge events for the oldest slots beyond the bound.
 func decideDialAttempt(s dialState, ver event.Version, cmd AttemptDial) ([]event.Event, error) {
 	streamID := cmd.StreamID()
-	owner := streamID.String()
+	owner := cmd.Owner
 	now := cmd.Now
 
 	if slot, ok := s.Overrides[cmd.Remote]; ok && !slot.Consumed {
@@ -164,7 +170,7 @@ func decideDialAttempt(s dialState, ver event.Version, cmd AttemptDial) ([]event
 // caused (oldest slots beyond the per-owner bound).
 func dialAttemptEvents(s dialState, cmd AttemptDial, ver event.Version) ([]event.Event, error) {
 	streamID := cmd.StreamID()
-	owner := streamID.String()
+	owner := cmd.Owner
 
 	attempt, err := dialEvent(domain.DialAttempted{
 		Key: domain.DialWindowKey{Owner: owner, Remote: cmd.Remote},
@@ -225,7 +231,7 @@ func dialExpungeEvents(slots map[string]int64, owner string, streamID id.StreamI
 // trims on the override slots.
 func decideSaveOverride(s dialState, ver event.Version, cmd SaveOverride) ([]event.Event, error) {
 	streamID := cmd.StreamID()
-	owner := streamID.String()
+	owner := cmd.Owner
 
 	arm, err := dialEvent(domain.DialOverrideSaved{
 		Key: domain.DialWindowKey{Owner: owner, Remote: cmd.Remote},
@@ -426,7 +432,7 @@ func (s *DialWindows) Attempt(ctx context.Context, owner domain.Extension, remot
 	if err != nil {
 		return false, now, errorfamily.WrapInfrastructuref(err, "cqrs.dial_command", "build dial.attempt")
 	}
-	cmd := &AttemptDial{BasicCommand: base, Remote: remote, Cooldown: cooldown, Now: now}
+	cmd := &AttemptDial{BasicCommand: base, Owner: owner.String(), Remote: remote, Cooldown: cooldown, Now: now}
 	if err := s.sys.CommandDispatcher().Dispatch(ctx, cmd); err != nil {
 		var denied *DialDeniedError
 		if errors.As(err, &denied) {
@@ -450,7 +456,7 @@ func (s *DialWindows) ArmOverride(ctx context.Context, owner domain.Extension, r
 	if err != nil {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.dial_command", "build dial.override")
 	}
-	cmd := &SaveOverride{BasicCommand: base, Remote: remote, Now: timeNow()}
+	cmd := &SaveOverride{BasicCommand: base, Owner: owner.String(), Remote: remote, Now: timeNow()}
 	if err := s.sys.CommandDispatcher().Dispatch(ctx, cmd); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.dial_override", "dispatch dial.override")
 	}
