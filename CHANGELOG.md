@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.11.0] - 2026-11-09
+
+### Changed
+
+- **Fax jobs are event-sourced** (SUPERB Phase 6 / A39-A40): one
+  journal stream per fax job answers the whole lane — sends, receipts,
+  status verdicts and the admin reads. `faxMoves` stays the ONE
+  legality home (the decider judges every lifecycle move; the inbound
+  "received" fact is terminal; same-status verdicts legally refresh
+  with richer payloads), duplicate job ids are decision Rejections,
+  and the webhook replay guard became DURABLE: `sys.Dedup()` in
+  system.db supersedes the engine's readmodels.db-scoped
+  ApplyIdempotent (a crash between dispatch and record re-dispatches
+  and converges by the same-status doctrine). The server's seam is
+  `readmodels.FaxGate` (the engine-backed store kept as import source
+  and rollback lane); a one-time marker-gated importer ports every job
+  as ONE `FaxReceipted` fact carrying its settled row image, pinned by
+  a dual-run parity diff at honest microsecond stamps (the journal's
+  CBOR epoch quantizes time by ~200 ns — the recorded constraint).
+  Retention gained the faxes journal leg (tombstone, TrimStream,
+  document paths back for unlinking — only the swept job's own). The
+  paperless archive seam, the fax capability declaration and every
+  panel/SSE pin are untouched; the faxcap smoke scenario passes
+  unchanged.
+
 ## [2.10.0] - 2026-11-08
 
 One catch-up release carrying SUPERB Phases 2-5 (dial windows, small
@@ -2948,7 +2973,9 @@ island-tests/` (a sibling of the served tree, never embedded) and run
   toast styling — same DOM contract as before (see AGENTS.md).
 - `package/update.sh` for repinning the bundled sip.js tarball.
 
-[Unreleased]: https://github.com/LarsArtmann/webphone/compare/v2.9.0...HEAD
+[Unreleased]: https://github.com/LarsArtmann/webphone/compare/v2.11.0...HEAD
+[2.11.0]: https://github.com/LarsArtmann/webphone/compare/v2.10.0...v2.11.0
+[2.10.0]: https://github.com/LarsArtmann/webphone/compare/v2.9.0...v2.10.0
 [2.9.0]: https://github.com/LarsArtmann/webphone/compare/v2.8.0...v2.9.0
 [2.8.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.8.0
 [2.7.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.8.0

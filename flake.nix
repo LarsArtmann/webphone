@@ -34,7 +34,7 @@
       # ldflags injection in one place. release.sh seds THIS binding
       # (grep "webphoneVersion = " flake.nix), so keep it in this file,
       # in this exact shape, in lockstep with the git tag at release.
-      webphoneVersion = "2.10.0";
+      webphoneVersion = "2.11.0";
     in
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [
