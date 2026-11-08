@@ -37,7 +37,7 @@ Claims verified as of 18:31 (snapshot-rot: push/CI statements rot fastest).
    watch green on the tip through 05:49Z; also confirmed the 16:25Z red
    window (7738ffb8) healed by the next commit.
 4. **Both closures annotated** in
-   docs/status/2026-11-05_06-47_admin-visibility-surface.md with inline
+   docs/status/archived/2026-11-05_06-47_admin-visibility-surface.md with inline
    evidence and timestamps.
 5. **AGENTS.md lesson recorded** — "a background run whose streamed log
    dies is NOT a lost verdict; `buildflow history` is the authority".

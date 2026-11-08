@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-08 (docs-health drain): gates clean (check-rows --strict + bare-rows green), citations repointed, supersedes nothing — the admin surface contract lives in AGENTS § Admin surface.
+
 # Status: Admin visibility surface (read-only, all lines) — 2026-11-05
 
 Claims verified as of 06:47 (push/CI statements rot fastest; the CI
