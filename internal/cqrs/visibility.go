@@ -69,12 +69,19 @@ func committedTail(ctx context.Context, sys *system.System, streamType id.Stream
 	return tail, nil
 }
 
-// awaitVisibility blocks until the named projection's live checkpoint
+// visibilityWorkerName is the System's projection worker name (the
+// default wiring registers exactly one worker, "projections", that
+// folds every declared projection — system/projection_wiring.go). The
+// await targets it by name; its live checkpoint names the last folded
+// event across the whole host.
+const visibilityWorkerName = "projections"
+
+// awaitVisibility blocks until the projection worker's live checkpoint
 // has processed at or past afterID (event IDs are monotonic ULIDs:
 // lexical order IS processing order), bounded by visibilityBudget.
 // Expiry WARNs and returns — the write IS committed; a lagging fold is
-// staleness, not loss. A missing projection name keeps waiting (a
-// stopped worker's checkpoint never advances; the budget resolves it).
+// staleness, not loss. A missing worker keeps waiting (a stopped
+// worker's checkpoint never advances; the budget resolves it).
 func awaitVisibility(ctx context.Context, sys *system.System, projection, afterID string) {
 	if afterID == "" {
 		return
@@ -87,7 +94,7 @@ func awaitVisibility(ctx context.Context, sys *system.System, projection, afterI
 	delay := visibilityPollStart
 	for {
 		for _, state := range host.Status() {
-			if state.Name == projection && strings.Compare(state.Checkpoint, afterID) >= 0 {
+			if state.Name == visibilityWorkerName && strings.Compare(state.Checkpoint, afterID) >= 0 {
 				return
 			}
 		}
@@ -103,4 +110,10 @@ func awaitVisibility(ctx context.Context, sys *system.System, projection, afterI
 		}
 		delay = min(delay*2, visibilityPollMax)
 	}
+}
+
+// warnVisibilityTailFailed is the shared best-effort tail-read WARN:
+// the write IS committed, only the await's tail read failed.
+func warnVisibilityTailFailed(err error, aggregate, owner string) {
+	slog.Warn("write committed but the visibility tail read failed", "err", err, "aggregate", aggregate, "owner", owner)
 }

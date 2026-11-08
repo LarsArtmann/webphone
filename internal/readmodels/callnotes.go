@@ -77,6 +77,18 @@ var notesQuery = metaengine.Query[callNoteInput, CallNoteView](notesCollection,
 	metaengine.Volume(humanScaleVolume),
 )
 
+// NotesGate is the post-call-note seam as the server surfaces see it
+// (slot read, note upsert, disposition upsert). The engine-backed
+// store below and the journal-backed service (internal/cqrs, SUPERB
+// Phase 4) are interchangeable behind it.
+type NotesGate interface {
+	Get(ctx context.Context, owner domain.Extension, callID string) (*CallNoteView, error)
+	Set(ctx context.Context, owner domain.Extension, callID, body string) error
+	SetDisposition(ctx context.Context, owner domain.Extension, callID string, disposition domain.Disposition) error
+}
+
+var _ NotesGate = (*Notes)(nil)
+
 // Notes is the engine-backed post-call-note store: one freeform body
 // per (owner, call id), owner-scoped Get/Set, per-owner cap for NEW
 // calls (re-saving an existing call's note never hits the cap).
@@ -197,4 +209,9 @@ func (s *Notes) claimSlot(ctx context.Context, owner domain.Extension, callID st
 		return nil, false, nil
 	}
 	return &view, true, nil
+}
+
+// ExportAll reads every note slot (the journal importer's source).
+func (s *Notes) ExportAll(ctx context.Context) ([]CallNoteView, error) {
+	return exportAllViews(ctx, s.reader, "readmodels.note_list", "export call notes")
 }

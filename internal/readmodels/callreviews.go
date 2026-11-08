@@ -75,6 +75,17 @@ var reviewsQuery = metaengine.Query[callReviewInput, CallReviewView](reviewsColl
 	metaengine.Volume(humanScaleVolume),
 )
 
+// ReviewsGate is the post-call-review seam as the server surfaces see
+// it (slot read, wholesale-replace upsert). The engine-backed store
+// below and the journal-backed service (internal/cqrs, SUPERB Phase
+// 4) are interchangeable behind it.
+type ReviewsGate interface {
+	Get(ctx context.Context, owner domain.Extension, callID string) (*CallReviewView, error)
+	Set(ctx context.Context, owner domain.Extension, callID string, state domain.ReviewState, draftID, text, language string, confidence int) error
+}
+
+var _ ReviewsGate = (*Reviews)(nil)
+
 // Reviews is the engine-backed post-call-review store: the durable
 // record of what the AI made of one finished call, one slot per
 // (owner, call id). The automatic job and the manual summarize path
@@ -163,4 +174,9 @@ func (s *Reviews) claimSlot(ctx context.Context, owner domain.Extension, callID 
 			"%s at %d reviewed calls", owner.String(), ReviewsMaxPerExtension)
 	}
 	return nil
+}
+
+// ExportAll reads every review slot (the journal importer's source).
+func (s *Reviews) ExportAll(ctx context.Context) ([]CallReviewView, error) {
+	return exportAllViews(ctx, s.reader, "readmodels.review_list", "export call reviews")
 }

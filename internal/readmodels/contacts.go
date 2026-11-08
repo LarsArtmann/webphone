@@ -75,6 +75,19 @@ var contactsQuery = metaengine.Query[contactsInput, ContactView](contactsCollect
 	metaengine.Volume(humanScaleVolume),
 )
 
+// ContactGate is the personal-contacts seam as the server surfaces see
+// it (upsert, newest-first list, count, delete). The engine-backed
+// store below and the journal-backed service (internal/cqrs, SUPERB
+// Phase 4) are interchangeable behind it.
+type ContactGate interface {
+	Save(ctx context.Context, contact domain.Contact) error
+	List(ctx context.Context, owner domain.Extension) ([]domain.Contact, error)
+	Count(ctx context.Context) (int64, error)
+	Delete(ctx context.Context, owner domain.Extension, id domain.ContactID) error
+}
+
+var _ ContactGate = (*Contacts)(nil)
+
 // Contacts is the engine-backed personal-contacts store: the same
 // contract the SQL store held (Save upsert by (owner, phone) keeping
 // the old id and creation time on rename; owner-scoped newest-first
@@ -217,4 +230,10 @@ func (s *Contacts) Delete(ctx context.Context, owner domain.Extension, id domain
 		return nil
 	}
 	return notFound(errorfamily.Newf(errorfamily.Rejection, "readmodels.contact_missing", "contact %s", id.String()))
+}
+
+// ExportAll reads every contact row (the journal importer's source;
+// contacts never sweep, so the export is the whole truth).
+func (s *Contacts) ExportAll(ctx context.Context) ([]ContactView, error) {
+return exportAllViews(ctx, s.reader, "readmodels.contact_list", "export contacts")
 }

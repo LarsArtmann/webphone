@@ -95,6 +95,25 @@ var transcriptsQuery = metaengine.Query[transcriptInput, TranscriptSegmentView](
 	metaengine.Volume(humanScaleVolume),
 )
 
+// TranscriptGate is the transcript seam as the server surfaces see it
+// (append with both retention bounds, the reassembly reads, the
+// end-user delete, the metrics count, the retention sweep). The
+// engine-backed store below and the journal-backed service
+// (internal/cqrs, SUPERB Phase 4) are interchangeable behind it.
+type TranscriptGate interface {
+	Append(ctx context.Context, seg domain.CallTranscriptSegment) error
+	Recent(ctx context.Context, owner domain.Extension, maxCalls int) ([]domain.CallTranscript, error)
+	Search(ctx context.Context, owner domain.Extension, needle string, maxCalls int) ([]domain.CallTranscript, error)
+	RecentAll(ctx context.Context, maxCalls int) ([]domain.CallTranscript, error)
+	Export(ctx context.Context, owner domain.Extension, maxCalls int) ([]domain.CallTranscript, error)
+	Call(ctx context.Context, owner domain.Extension, callID string) (*domain.CallTranscript, error)
+	DeleteCall(ctx context.Context, owner domain.Extension, callID string) (int64, error)
+	Count(ctx context.Context) (int64, error)
+	SweepBefore(ctx context.Context, cutoff time.Time) (int64, error)
+}
+
+var _ TranscriptGate = (*Transcripts)(nil)
+
 // Transcripts is the engine-backed transcript store: the same contract
 // the SQL store held (Append with both scalar-bounded trims, Recent /
 // Search / Export reassembly, DeleteCall, plus the engine-count and
@@ -382,6 +401,13 @@ func (s *Transcripts) SweepBefore(ctx context.Context, cutoff time.Time) (int64,
 			removed++
 		}
 	}
+}
+
+// ExportAll reads every transcript segment (the journal importer's
+// source; rows export in seq order per the fetch window's sort — the
+// importer re-sorts per call stream anyway).
+func (s *Transcripts) ExportAll(ctx context.Context) ([]TranscriptSegmentView, error) {
+	return exportAllViews(ctx, s.reader, "readmodels.transcript_list", "export transcripts")
 }
 
 // reassembleTranscripts groups newest-first segments into whole calls:
