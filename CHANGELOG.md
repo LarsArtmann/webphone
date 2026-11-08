@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Metrics fencing in the NixOS module (2026-11-08): a non-loopback
+  `settings.addr` with the generated Caddy vhost disabled now emits an
+  eval-time warning naming the exposed monitoring surfaces
+  (`/metrics`, `/version`, `/openapi.json`, the health probes) and the two
+  closes — `caddy.enable` or a loopback bind. Loopback defaults and caddied
+  shapes stay silent; pinned by the `metrics-fencing` module check.
 - Freeform literal-secret guard in the NixOS module (2026-11-08): a
   secret-shaped `settings` key (`*secret*`/`*token*`/`*password*`/…) carrying
   an inline value now fails the deployment's eval, naming the key — inline
