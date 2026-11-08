@@ -1343,7 +1343,8 @@ window.__pcs = window.__pcs || new Map();
 function sendDialLatency(entry) {
   const l = entry.latency;
   if (!l || l.beaconSent) return;
-  if (!l.invitedAt || !l.establishedAt || !l.playingAt || !l.firstAudioAt) return;
+  if (!l.invitedAt || !l.establishedAt || !l.playingAt || !l.firstAudioAt)
+    return;
   l.beaconSent = true;
   sendLatencyBeacon("dial_to_audio", {
     island_overhead: Math.max(0, l.invitedAt - l.t0),
@@ -1454,7 +1455,8 @@ export function bindSession(newSession, target, options = {}) {
           "playing",
           () => {
             const current = sessions.get(id);
-            if (!current || !current.latency || current.latency.playingAt) return;
+            if (!current || !current.latency || current.latency.playingAt)
+              return;
             current.latency.playingAt = Date.now();
             sendDialLatency(current);
           },
@@ -1473,7 +1475,8 @@ export function bindSession(newSession, target, options = {}) {
         if (stream) {
           live.audioWatch = watchRemoteAudio(stream, () => {
             const current = sessions.get(id);
-            if (!current || !current.latency || current.latency.firstAudioAt) return;
+            if (!current || !current.latency || current.latency.firstAudioAt)
+              return;
             current.latency.firstAudioAt = Date.now();
             sendDialLatency(current);
           });

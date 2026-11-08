@@ -400,22 +400,22 @@ func New(deps Deps) http.Handler {
 	// implements the narrow Server seam (session gate + contacts nudge)
 	// so the 401 wording and the SSE push keep their one home here.
 	apiHandlers := api.New(api.Deps{
-		Server:       h,
-		Contacts:     deps.Contacts,
-		Shared:       deps.Shared,
-		CRM:          deps.CRM,
-		CallsIdem:    hooks.NewGate(deps.Dedup, hooks.CallIdempotencyTTL),
-		ASR:          deps.ASR,
-		Transcripts:  deps.Transcripts,
-		Reviews:      deps.Reviews,
-		Dials:        deps.Dials,
-		DialCooldown: deps.Config.Dial.Cooldown,
+		Server:        h,
+		Contacts:      deps.Contacts,
+		Shared:        deps.Shared,
+		CRM:           deps.CRM,
+		CallsIdem:     hooks.NewGate(deps.Dedup, hooks.CallIdempotencyTTL),
+		ASR:           deps.ASR,
+		Transcripts:   deps.Transcripts,
+		Reviews:       deps.Reviews,
+		Dials:         deps.Dials,
+		DialCooldown:  deps.Config.Dial.Cooldown,
 		IslandLatency: islandMetrics,
-		Notes:        deps.Notes,
-		TextAgent:    deps.TextAgent,
-		Push:         deps.Push,
-		Devices:      deps.PushDevices,
-		Notify:       notifierProject(deps.Notifier),
+		Notes:         deps.Notes,
+		TextAgent:     deps.TextAgent,
+		Push:          deps.Push,
+		Devices:       deps.PushDevices,
+		Notify:        notifierProject(deps.Notifier),
 	})
 
 	csrf := httputil.CSRFMiddleware(csrfCfg)

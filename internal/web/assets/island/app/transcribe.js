@@ -378,7 +378,10 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
               entry = candidate;
             }
           }
-          if (entry && entry.startTime + performance.timeOrigin >= postIssuedAt - 50) {
+          if (
+            entry &&
+            entry.startTime + performance.timeOrigin >= postIssuedAt - 50
+          ) {
             legs.post_to_first_byte = Math.max(
               0,
               Math.round(entry.responseStart - entry.requestStart),
