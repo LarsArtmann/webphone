@@ -358,6 +358,7 @@ func decideAdvanceDelivery(s threadState, ver event.Version, cmd AdvanceDelivery
 	}
 	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.OutboundAdvanced{})),
 		cmd.StreamID(), ThreadsStreamType, ver+1, domain.OutboundAdvanced{
+			Key:           domain.MessageRowKey{MessageID: cmd.MessageID.String()},
 			MessageID:     cmd.MessageID.String(),
 			Status:        string(next.Status),
 			ProviderRef:   next.ProviderRef,

@@ -260,12 +260,16 @@ func TestThreadAttachmentsRideAndHydrate(t *testing.T) {
 		t.Fatalf("summary preview = %+v", threads[0])
 	}
 
-	att, err := backend.AttachmentByID(ctx, owner, msg.Attachments[0].ID)
+	aID := msg.Attachments[0].ID
+	if msg.Attachments[0].Name == "b.png" {
+		aID = msg.Attachments[1].ID
+	}
+	att, err := backend.AttachmentByID(ctx, owner, aID)
 	if err != nil || att.Path != "blob/a" {
 		t.Fatalf("AttachmentByID = (%+v, %v)", att, err)
 	}
 	other := mustExt(t, "200")
-	if _, err := backend.AttachmentByID(ctx, other, msg.Attachments[0].ID); err != store.ErrNotFound {
+	if _, err := backend.AttachmentByID(ctx, other, aID); err != store.ErrNotFound {
 		t.Fatalf("cross-owner attachment read: err=%v, want ErrNotFound", err)
 	}
 }
