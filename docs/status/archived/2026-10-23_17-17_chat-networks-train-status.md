@@ -10,7 +10,7 @@
 Scope: this session only — the research, the network-axis foundation, the Matrix and
 Signal lanes, the Session verdict, and everything the gates surfaced along the way.
 Standing context: AGENTS.md; plan doc
-[docs/planning/2026-10-23_15-40_SUPERB-chat-networks-pareto-plan.html](../planning/2026-10-23_15-40_SUPERB-chat-networks-pareto-plan.html).
+[docs/planning/2026-10-23_15-40_SUPERB-chat-networks-pareto-plan.html](../../planning/2026-10-23_15-40_SUPERB-chat-networks-pareto-plan.html).
 
 ## a) FULLY DONE
 

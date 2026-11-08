@@ -211,8 +211,11 @@ else
 	fi
 fi
 
-step "6/9 link check (after push so the new tag link resolves)"
-run nix run nixpkgs#lychee -- .
+step "6/9 link check (after push so the new tag links resolve)"
+# The owner's PRIVATE repos 404 for an unauthenticated checker — those
+# links are verified by `gh` credentials elsewhere; exclude them rather
+# than teaching every release about each one.
+run nix run nixpkgs#lychee -- --exclude '^https://github\\.com/LarsArtmann/(projects-management-automation|nix-international-telephony|pbx-artmann)/' .
 
 step "7/9 stack: relock, gates, push ($STACK)"
 [ -d "$STACK" ] || {

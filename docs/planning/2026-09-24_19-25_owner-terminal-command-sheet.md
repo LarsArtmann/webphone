@@ -52,7 +52,7 @@ v2.9.0.** `GET https://pbx.artmann.tech/version` answers
 "goVersion":"go1.27.3"}`. The commands below are the v2.8.0-era shape, kept
 because the ritual they encode (test → smoke → switch) is still the one the
 release runbook prescribes; the CURRENT step list is
-[docs/release-runbook.md](../../release-runbook.md).
+[docs/release-runbook.md](../release-runbook.md).
 
 UPDATE 2026-09-30: **v2.8.0 is CUT and the stack is relocked** (webphone
 signed tag pushed, stack `3afcf57` carries the lock bump + caddy guard

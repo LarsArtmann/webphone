@@ -7,7 +7,7 @@
 > Live remainder: nothing exclusive to this file.
 
 **2026-10-08 09:10** · scope: THIS SESSION ONLY — the execution of
-[`docs/planning/2026-10-08_07-36_SUPERB-asr-provider-rollout.md`](../planning/2026-10-08_07-36_SUPERB-asr-provider-rollout.md)
+[`docs/planning/2026-10-08_07-36_SUPERB-asr-provider-rollout.md`](../../planning/2026-10-08_07-36_SUPERB-asr-provider-rollout.md)
 (M1–M25 / F1–F69), started ~08:00 from clean `f9f8d5e`, interrupted for
 this report ~70 minutes in. Not a project-wide audit.
 

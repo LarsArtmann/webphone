@@ -2,7 +2,7 @@
 
 # Metaengine dogfooding train — session status (P0 + pilot in flight)
 
-**Date:** 2026-10-15 01:39 CEST · **Session scope:** execution of [docs/planning/2026-10-14_23-05_SUPERB-metaengine-dogfooding.md](../planning/2026-10-14_23-05_SUPERB-metaengine-dogfooding.md) (T02 onward) · **Head:** 93df804 (unpushed daemon commit carrying T05/T06 files) · **CI:** green through 9b5c572 (run 38654410392)
+**Date:** 2026-10-15 01:39 CEST · **Session scope:** execution of [docs/planning/2026-10-14_23-05_SUPERB-metaengine-dogfooding.md](../../planning/2026-10-14_23-05_SUPERB-metaengine-dogfooding.md) (T02 onward) · **Head:** 93df804 (unpushed daemon commit carrying T05/T06 files) · **CI:** green through 9b5c572 (run 38654410392)
 
 This report covers THIS SESSION's run only, per instruction.
 
