@@ -10,6 +10,12 @@ the four legs the execution plan named.
 
 ## Leg 1 — Stack: `crm.caFile` pass-through (the private-CA lane)
 
+> **RESOLVED 2026-11-08 (before this pack's steps ran):** the stack side
+> was ALREADY LANDED when the legs train arrived — `options.nix` declares
+> `crm.caFile`, `web.nix` threads it into the webphone settings, and the
+> eval arm pins the rendered `ca_file` host path. Nothing was owed here;
+> the pack's steps below are kept as the original plan record.
+
 **Webphone side: SHIPPED.** The app reads `crm.ca_file` (host path, plain
 file — a CA bundle is public material, never a credential), and webphone's
 own NixOS module carries `services.webphone.crm.caFile`, pinned by
@@ -48,6 +54,24 @@ own CA-lane test (`internal/config/config_test.go` +
 
 ## Leg 2 — Stack: the `/hooks/ring` dialplan leg (ring-while-closed)
 
+> **RESOLVED 2026-11-08 (as-built, superseding the steps below):** the
+> lane shipped as a LOOPBACK SHIM, not a dialplan-side secret: the
+> dialplan (store-rendered, world-readable by construction) carries NO
+> secret — mod_curl posts compact JSON (quotes percent-encoded for the
+> one-token grammar, source-verified against mod_curl.c) to
+> `ringhook.py`, which holds `webphone_secret` via LoadCredential and
+> Bearer-signs the forward to `/hooks/ring`. Wired as
+> `services.telephony.ringhook.{enable,port,webphoneUrl,webhookSecretFile}`
+> (`modules/telephony/ring.nix`: hardened systemd unit, secret defaults
+> to the messaging bridge's gatewaySecretFile), dialplan arms in
+> `freeswitch.nix` render ONLY when enabled (off = byte-identical).
+> Verified: `ringhookCheck` eval arm (unit + credential derivation +
+> rendered curl arms + off-dialplan carries none) and
+> `tests/test_ringhook.py` (7 specs; 351-test discovery green).
+> Boundary: the arms ride each extension's default-context entry — the
+> RING-GROUP path is UNCOVERED (same question the legs report §g-1
+> asks the owner).
+
 **Webphone side: SHIPPED.** `POST /hooks/ring` shares the webhook secret,
 payload `{owner, from, call_id, state: ring|end}`, answers 202 fire-and-
 forget (the dialplan must never depend on push health), prunes pruned
@@ -82,6 +106,14 @@ device registered rings the device while the browser is CLOSED; the ring
 hook timing (ring + end both posted) is asserted in the VM test.
 
 ## Leg 3 — Stack: the FreeSWITCH `mod_enum` build repair (the CI 1h ceiling)
+
+> **STEP 2 EXECUTED 2026-11-08 (exclusion, the honest arm):**
+> `applications.enum` is DELIBERATELY EXCLUDED from the mirrored module
+> set — grep-verified ZERO enum call sites across the stack's dialplan
+> XML, `dialplan_sim.py` and `pbx.nix` first, with the ruling comment at
+> the exclusion site. `telephony-eval` green; the pbx toplevel builds
+> locally. ACCEPTANCE (twice-consecutive-green CI under the ceiling) is
+> pending the pushed runs — run ids recorded here as they conclude.
 
 **State:** the stack's mirrored module set includes `applications.enum`
 (`modules/telephony/freeswitch-modules.nix:29`); its build produces the
@@ -127,6 +159,10 @@ generate.sh). The issue #9 comment corrected the option name (nixpkgs has no
      pins the readiness shape — the strict half is deliberate, pack row B8).
 
 ## Sequencing + the standing rules
+
+> **2026-11-08:** Legs 1–3 executed (Leg 1 pre-landed, Leg 2 as-built
+> above, Leg 3 excluded + acceptance pending CI); Leg 4 stays owner-
+> gated. The order below is kept as written at handover time.
 
 - Order by blast radius per unit of effort: Leg 3 (unblocks every relock) →
   Leg 2 (unlocks ring-while-closed E2E) → Leg 1 (private-CA option, small)
