@@ -255,6 +255,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The note-dispatch error code is registry-visible again (2026-11-08):
+  the shared dispatch-error helper passed its `<seam>.<op>` code as a
+  function parameter, which the arch registry scan cannot resolve, so
+  `TestErrorCodeRegistryIsFresh` went red. The two write doors now share
+  one scanner-resolved const (`cqrs.note_dispatch`) — the failing
+  operation is the dispatch, not a door's save — and the decision
+  verdicts and per-door codes on the build path are unchanged.
 - A red-main loop between the openapi golden test and dprint
   (2026-11-08): the wire render carries no trailing newline but dprint
   requires one, so the two gates could never both pass — the test now
