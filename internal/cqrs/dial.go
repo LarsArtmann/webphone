@@ -406,6 +406,10 @@ func NewDialWindows(sys *system.System) *DialWindows {
 	}
 }
 
+// timeNow is the dial seam's clock, overridable for deterministic
+// tests (window expiry, cap-expunge ordering).
+var timeNow = time.Now
+
 // Attempt is the gate's check+record transaction (see AttemptDial).
 // The verdict and stamp come from the decision itself; a deny carries
 // the slot's last-at via *DialDeniedError.
@@ -413,7 +417,7 @@ func (s *DialWindows) Attempt(ctx context.Context, owner domain.Extension, remot
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	now := time.Now()
+	now := timeNow()
 	streamID, err := id.ParseStreamID(owner.String())
 	if err != nil {
 		return false, now, errorfamily.WrapRejectionf(err, "cqrs.dial_stream", "parse owner stream id")
@@ -446,7 +450,7 @@ func (s *DialWindows) ArmOverride(ctx context.Context, owner domain.Extension, r
 	if err != nil {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.dial_command", "build dial.override")
 	}
-	cmd := &SaveOverride{BasicCommand: base, Remote: remote, Now: time.Now()}
+	cmd := &SaveOverride{BasicCommand: base, Remote: remote, Now: timeNow()}
 	if err := s.sys.CommandDispatcher().Dispatch(ctx, cmd); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.dial_override", "dispatch dial.override")
 	}
