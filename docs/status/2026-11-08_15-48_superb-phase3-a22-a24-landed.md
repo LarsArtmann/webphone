@@ -106,7 +106,7 @@ The status request arrived while A25's final full buildflow run was still owed.
   battery, P5 gates + stack browser E2E.
 - **Phase 6 (A39–A40):** fax aggregate (`faxMoves` in the decider,
   provider_ref dedup → durable command idempotency), fax importer + retention
-  + release.
+  - release.
 - **Phase 7 (A41–A47):** handler unification sweep, contracts/catalog diffs,
   dedup migration to `sys.Dedup()` + readmodels.db death certificate,
   sessions/app_flags ruling execution (D2), ladder freeze, doctrine rewrite
@@ -147,33 +147,33 @@ The status request arrived while A25's final full buildflow run was still owed.
 
 ## f) NEXT — the queue (ranked, ~47 plan items remain)
 
-| # | Item | Size | Note |
-|---|------|------|------|
-| 1 | A25 finish: full no-cache buildflow green + narrative commit + push + CI-watch | S | the sliver left |
-| 2 | A26 contacts aggregate (flagship parity: cap 500, rename-keeps-id+createdAt, never-sweep) | M | P4 |
-| 3 | A27 transcripts aggregate (5000/owner trim stays; per-CALL floor keeps loop) | M | P4 |
-| 4 | A28 call notes + reviews aggregates (409 Conflict vs 2000 Rejection) | M | P4 |
-| 5 | A29 P4 importers ×4 + markers + dual-run diffs | M | P4 |
-| 6 | A30 P4 gates + release train (one release per phase, D4) | M | P4 |
-| 7 | A31 core stream design doc (per-thread streams; AppendToThread as ONE Decide; R7 retry) | H | P5 map |
-| 8 | A32 delivery machine integration (DeliveryAdvance → decisions; self-send 422 arm preserved) | H | P5 |
-| 9 | A33 message projections (byte-identical fragments, `wp-bubble`/`wp-thread-row` pins) | H | P5 |
-| 10 | A34 messaging.Service swap (Receive/Send/flags dispatch; nudge rules intact) | H | P5 |
-| 11 | A35 THE importer (webphone.db → streams; pre-cutover snapshot; dual-run diff) | H | the risky moment |
-| 12 | A36 retention port — **BLOCKED on upstream go-cqrs-lite#118** (trim/Tombstone) | H | needs upstream ship + bump |
-| 13 | A37 core parity battery (owner_scoping, admin_reads, threads_flags, byte-pins) | H | P5 |
-| 14 | A38 P5 gates + release + stack browser E2E (445s budget) | H | P5 ship |
-| 15 | A39 fax aggregate (faxMoves decider; provider_ref dedup → durable idempotency) | M | P6 |
-| 16 | A40 fax importer + retention + P6 release | M | P6 |
-| 17 | A41 handler unification sweep (every write surface dispatches) | M | P7 |
-| 18 | A42 contracts/catalog diff pins (openapi byte check, asyncapi, EventCatalog) | M | P7 |
-| 19 | A43 dedup migration to sys.Dedup() + readmodels.db death certificate | M | P7 |
-| 20 | A44 sessions + app_flags ruling per D2 (`auth:` + session suite) | M | P7 |
-| 21 | A45 ladder freeze (no new store/db.go steps; retirement plan doc) | S | P7 |
-| 22 | A46 doctrine rewrite (AGENTS.md no-ES → ES; machine-tables → deciders; fleet-libs re-score) | M | P7 |
-| 23 | A47 final battery + release (full flake check, VM tests WITHOUT readmodels.db, vulnix, version bump, stack re-pin) | H | 100% shipped |
-| 24 | Regenerate `docs/status/INDEX.md` after this report (done in this commit) | S | hygiene |
-| 25 | Monitor upstream go-cqrs-lite#118 (the A36 unblocker); file/ping if idle | S | unblock A36 |
+| #  | Item                                                                                                               | Size | Note                       |
+| -- | ------------------------------------------------------------------------------------------------------------------ | ---- | -------------------------- |
+| 1  | A25 finish: full no-cache buildflow green + narrative commit + push + CI-watch                                     | S    | the sliver left            |
+| 2  | A26 contacts aggregate (flagship parity: cap 500, rename-keeps-id+createdAt, never-sweep)                          | M    | P4                         |
+| 3  | A27 transcripts aggregate (5000/owner trim stays; per-CALL floor keeps loop)                                       | M    | P4                         |
+| 4  | A28 call notes + reviews aggregates (409 Conflict vs 2000 Rejection)                                               | M    | P4                         |
+| 5  | A29 P4 importers ×4 + markers + dual-run diffs                                                                     | M    | P4                         |
+| 6  | A30 P4 gates + release train (one release per phase, D4)                                                           | M    | P4                         |
+| 7  | A31 core stream design doc (per-thread streams; AppendToThread as ONE Decide; R7 retry)                            | H    | P5 map                     |
+| 8  | A32 delivery machine integration (DeliveryAdvance → decisions; self-send 422 arm preserved)                        | H    | P5                         |
+| 9  | A33 message projections (byte-identical fragments, `wp-bubble`/`wp-thread-row` pins)                               | H    | P5                         |
+| 10 | A34 messaging.Service swap (Receive/Send/flags dispatch; nudge rules intact)                                       | H    | P5                         |
+| 11 | A35 THE importer (webphone.db → streams; pre-cutover snapshot; dual-run diff)                                      | H    | the risky moment           |
+| 12 | A36 retention port — **BLOCKED on upstream go-cqrs-lite#118** (trim/Tombstone)                                     | H    | needs upstream ship + bump |
+| 13 | A37 core parity battery (owner_scoping, admin_reads, threads_flags, byte-pins)                                     | H    | P5                         |
+| 14 | A38 P5 gates + release + stack browser E2E (445s budget)                                                           | H    | P5 ship                    |
+| 15 | A39 fax aggregate (faxMoves decider; provider_ref dedup → durable idempotency)                                     | M    | P6                         |
+| 16 | A40 fax importer + retention + P6 release                                                                          | M    | P6                         |
+| 17 | A41 handler unification sweep (every write surface dispatches)                                                     | M    | P7                         |
+| 18 | A42 contracts/catalog diff pins (openapi byte check, asyncapi, EventCatalog)                                       | M    | P7                         |
+| 19 | A43 dedup migration to sys.Dedup() + readmodels.db death certificate                                               | M    | P7                         |
+| 20 | A44 sessions + app_flags ruling per D2 (`auth:` + session suite)                                                   | M    | P7                         |
+| 21 | A45 ladder freeze (no new store/db.go steps; retirement plan doc)                                                  | S    | P7                         |
+| 22 | A46 doctrine rewrite (AGENTS.md no-ES → ES; machine-tables → deciders; fleet-libs re-score)                        | M    | P7                         |
+| 23 | A47 final battery + release (full flake check, VM tests WITHOUT readmodels.db, vulnix, version bump, stack re-pin) | H    | 100% shipped               |
+| 24 | Regenerate `docs/status/INDEX.md` after this report (done in this commit)                                          | S    | hygiene                    |
+| 25 | Monitor upstream go-cqrs-lite#118 (the A36 unblocker); file/ping if idle                                           | S    | unblock A36                |
 
 (Items beyond 25 are the per-task micro-steps already enumerated in the plan's
 Table B — not duplicated here.)
