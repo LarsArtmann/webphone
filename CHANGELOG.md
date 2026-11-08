@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Templ form-POST rate buckets (2026-11-08): every write lane outside
+  `/api/*` now rides a keyed bucket by cost class — compose (messages/fax
+  send, resend, AI draft, draft approve) at 20/min, contacts forms at the
+  import grade, state toggles (flags, snippets, read, voicemail delete,
+  draft mode/discard) at the hook grade. The 429 carries
+  `Retry-After` and a `.wp-error` element, so htmx swaps the honest copy
+  into the tab instead of discarding it.
 - Metrics fencing in the NixOS module (2026-11-08): a non-loopback
   `settings.addr` with the generated Caddy vhost disabled now emits an
   eval-time warning naming the exposed monitoring surfaces

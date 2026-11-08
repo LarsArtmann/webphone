@@ -48,9 +48,9 @@ type handlers struct {
 	// tight), the contacts-grade forms, and the cheap state toggles.
 	// Rejections carry the .wp-error element htmx's responseHandling
 	// selects, so a flooded lane is honest inside the tab.
-	composeLimiter        *httputil.KeyedRateLimiter
-	contactsTemplLimiter  *httputil.KeyedRateLimiter
-	stateTemplLimiter     *httputil.KeyedRateLimiter
+	composeLimiter       *httputil.KeyedRateLimiter
+	contactsTemplLimiter *httputil.KeyedRateLimiter
+	stateTemplLimiter    *httputil.KeyedRateLimiter
 	// loginPageHandler is the library-owned passkey login page
 	// (cqrs-htmx/loginpage), built ONLY when the identity layer is wired;
 	// nil keeps /login on the styled 404 (mode off, or the page build
