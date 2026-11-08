@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.10.0] - 2026-11-08
+
+One catch-up release carrying SUPERB Phases 2-4 (dial windows, small
+aggregates, medium aggregates) plus the island latency beacon — per-phase
+releases resume with Phase 5 per D4.
+
+### Changed
+
+- The go-cqrs-lite pins ride the journal-trim + cap-lock-order upstream
+- wave (metaengine v4.22.0 → v4.23.0, metaengine/sqliteengine v4.7.0 →
+- v4.8.0, system v4.17.0 → v4.18.0): the EnforceCap fold-lock/connection
+- deadlock that Phase 4's batteries surfaced is fixed upstream (the trim
+- now takes the engine transaction before the query's fold lock; the
+- backends' await-first posture stays as defense in depth), and the
+- journal byte-erasure primitives webphone's Phase-5 retention gate
+- needs (`System.TrimStream` for GDPR erasure, `TrimJournalBefore` for
+- age sweeps, with snapshot co-trim in the same transaction) are
+- released and pinned.
+
 ### Added
 
 - Contacts, call transcripts, call notes and call reviews answer from
