@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- CSP violation reporting (2026-11-08): the strict CSP now carries `report-uri
+  /csp-report` + `report-to csp-endpoint` (with the matching
+  `Reporting-Endpoints` header on every response), and `POST /csp-report`
+  journals one greppable `csp_report` line per accepted report — a live
+  XSS-class event becomes observable instead of silent. Session-free by
+  design (the browser delivers without credentials); the fences are a tight
+  per-host bucket (30/min, burst 10), a 4 KiB body cap (honest 413), and
+  best-effort 204 for malformed reports.
 - `paperless.token_file` (2026-11-07): the inbound-fax archive's bearer can now
   come from a runtime file via the same systemd `LoadCredential` lane as
   `crm.token_file`, so the token never has to sit in the config JSON. The field
