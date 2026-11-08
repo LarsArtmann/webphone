@@ -1303,7 +1303,7 @@
       var decoded = raw;
       try {
         decoded = decodeURIComponent(raw.replace(/\+/g, " "));
-      } catch (_e) {
+      } catch {
         decoded = raw;
       }
       if (input.value === decoded) return;
