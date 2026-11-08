@@ -184,9 +184,11 @@ type Deps struct {
 	Sessions session.Store
 	Messages *store.Messages
 	Faxes    *readmodels.Faxes
-	// Contacts is the metaengine-backed personal-contacts read model
-	// (readmodels.db) — same method contract the SQL store held.
-	Contacts *readmodels.Contacts
+	// Contacts is the personal-contacts seam (the readmodels.ContactGate
+	// interface — engine-backed legacy/rollback lane, journal-backed
+	// since SUPERB Phase 4). Nil (test compositions): the surfaces
+	// degrade. Keep it a TRUE nil.
+	Contacts readmodels.ContactGate
 	// Snippets is the metaengine-backed reply-snippet read model
 	// (readmodels.db) — same method contract the SQL store held.
 	// Snippets is the reply-snippet seam (the readmodels.SnippetGate
@@ -195,14 +197,18 @@ type Deps struct {
 	// degrade. Keep it a TRUE nil.
 	Snippets readmodels.SnippetGate
 	// Transcripts persists live-call transcript segments (owner-scoped,
-	// rendered in the History tab). Nil (test compositions): the save
+	// rendered in the History tab) — the readmodels.TranscriptGate
+	// interface, journal-backed since SUPERB Phase 4 (the engine store
+	// is the import source). Nil (test compositions): the save
 	// endpoint answers 503 and the History section stays empty.
-	Transcripts *readmodels.Transcripts
+	Transcripts readmodels.TranscriptGate
 	// Reviews is the post-call-review store (owner-scoped, the
-	// automatic review's durable artifact slot, issue #8). Nil (test
+	// automatic review's durable artifact slot, issue #8) — the
+	// readmodels.ReviewsGate interface, journal-backed since SUPERB
+	// Phase 4 (the engine store is the import source). Nil (test
 	// compositions): the endpoints answer 503 and the job skips its
 	// writes.
-	Reviews *readmodels.Reviews
+	Reviews readmodels.ReviewsGate
 	// Dials is the dial-cooldown seam (issue #7): check+record attempt,
 	// arm the one-shot override, read active slots (the
 	// readmodels.DialGate interface — implemented by the engine-backed
@@ -212,9 +218,11 @@ type Deps struct {
 	// implementer.
 	Dials readmodels.DialGate
 	// Notes is the post-call-note store (owner-scoped, the History
-	// tab's note affordance). Nil (test compositions): the endpoints
+	// tab's note affordance) — the readmodels.NotesGate interface,
+	// journal-backed since SUPERB Phase 4 (the engine store is the
+	// import source). Nil (test compositions): the endpoints
 	// answer 503.
-	Notes *readmodels.Notes
+	Notes readmodels.NotesGate
 	// AgentAudit is the durable agent-action audit read model (D5):
 	// the journal line stays the grep surface, this store answers
 	// "who approved what, when" in Settings. Nil (test compositions):

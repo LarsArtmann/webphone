@@ -66,6 +66,14 @@ type CqrsService struct {
 	audit        *cqrsdomain.AgentAudit
 	pushOnce     sync.Once
 	pushDevices  *cqrsdomain.PushDevices
+	contactsOnce    sync.Once
+	contacts        *cqrsdomain.Contacts
+	transcriptsOnce sync.Once
+	transcripts     *cqrsdomain.Transcripts
+	notesOnce       sync.Once
+	notes           *cqrsdomain.Notes
+	reviewsOnce     sync.Once
+	reviews         *cqrsdomain.Reviews
 }
 
 // NewCqrs builds the system composition root over <dataDir>/system.db:
@@ -82,6 +90,10 @@ func NewCqrs(cfg config.Config, log *slog.Logger) (*CqrsService, error) {
 		cqrsdomain.EnrollDomainDecl(),
 		cqrsdomain.AgentAuditDomainDecl(),
 		cqrsdomain.PushDevicesDomainDecl(),
+		cqrsdomain.ContactsDomainDecl(),
+		cqrsdomain.TranscriptsDomainDecl(),
+		cqrsdomain.NotesDomainDecl(),
+		cqrsdomain.ReviewsDomainDecl(),
 	))
 }
 
@@ -119,6 +131,34 @@ func (s *CqrsService) AgentAuditSvc() *cqrsdomain.AgentAudit {
 func (s *CqrsService) PushDevicesSvc() *cqrsdomain.PushDevices {
 	s.pushOnce.Do(func() { s.pushDevices = cqrsdomain.NewPushDevices(s.Sys) })
 	return s.pushDevices
+}
+
+// ContactsSvc builds (once) the dispatch-backed personal-contacts
+// store (SUPERB Phase 4, A26).
+func (s *CqrsService) ContactsSvc() *cqrsdomain.Contacts {
+	s.contactsOnce.Do(func() { s.contacts = cqrsdomain.NewContacts(s.Sys) })
+	return s.contacts
+}
+
+// TranscriptsSvc builds (once) the dispatch-backed transcript store
+// (SUPERB Phase 4, A27).
+func (s *CqrsService) TranscriptsSvc() *cqrsdomain.Transcripts {
+	s.transcriptsOnce.Do(func() { s.transcripts = cqrsdomain.NewTranscripts(s.Sys) })
+	return s.transcripts
+}
+
+// NotesSvc builds (once) the dispatch-backed post-call-note store
+// (SUPERB Phase 4, A28).
+func (s *CqrsService) NotesSvc() *cqrsdomain.Notes {
+	s.notesOnce.Do(func() { s.notes = cqrsdomain.NewNotes(s.Sys) })
+	return s.notes
+}
+
+// ReviewsSvc builds (once) the dispatch-backed post-call-review
+// store (SUPERB Phase 4, A28).
+func (s *CqrsService) ReviewsSvc() *cqrsdomain.Reviews {
+	s.reviewsOnce.Do(func() { s.reviews = cqrsdomain.NewReviews(s.Sys) })
+	return s.reviews
 }
 
 // newCqrs is the construction seam tests (and, from Phase 2 on, the

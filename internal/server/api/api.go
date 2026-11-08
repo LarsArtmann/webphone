@@ -67,22 +67,22 @@ type Server interface {
 // server's Deps docs for each seam.
 type Deps struct {
 	Server      Server
-	Contacts    *readmodels.Contacts
+	Contacts    readmodels.ContactGate
 	Shared      []domain.SharedContact
 	CRM         *crm.Resolver
 	CallsIdem   hooks.Gate
 	ASR         asr.Provider
-	Transcripts *readmodels.Transcripts
-	// Notes is the post-call-note store (readmodels-backed; present
-	// whenever the composition built the engine). Nil: test
+	Transcripts readmodels.TranscriptGate
+	// Notes is the post-call-note store (the readmodels.NotesGate
+	// seam, journal-backed since SUPERB Phase 4). Nil: test
 	// compositions only — the handlers answer 503 like the transcript
 	// surface does.
-	Notes *readmodels.Notes
-	// Reviews is the post-call-review store (readmodels-backed; the
-	// automatic review's durable artifact slot, issue #8). Nil: test
-	// compositions only — the artifact endpoints answer 503 and the
-	// job skips the writes.
-	Reviews *readmodels.Reviews
+	Notes readmodels.NotesGate
+	// Reviews is the post-call-review store (the readmodels.ReviewsGate
+	// seam, journal-backed since SUPERB Phase 4; the automatic review's
+	// durable artifact slot, issue #8). Nil: test compositions only —
+	// the artifact endpoints answer 503 and the job skips the writes.
+	Reviews readmodels.ReviewsGate
 	// TextAgent is the OPTIONAL supervised text-agent seam (the stack's
 	// review API). Nil: the summarize endpoint answers 404 — a client
 	// reads that as "this server does not draft".

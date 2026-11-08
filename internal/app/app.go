@@ -433,11 +433,14 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			Sessions:    do.MustInvoke[*session.SQLiteStore](i),
 			Messages:    do.MustInvoke[*store.Messages](i),
 			Faxes:       engine.Faxes(),
-			Contacts:    engine.Contacts(),
+			// The four Phase-4 seams answer from the journal's decisions
+			// (SUPERB): the engine-backed stores stay as the import sources
+			// and rollback lanes behind their gate interfaces.
+			Contacts:    do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).ContactsSvc(),
 			Snippets:    do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).SnippetsSvc(), //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service's snippet backend (SUPERB Phase 3)
-			Transcripts: engine.Transcripts(),
-			Notes:       engine.Notes(),
-			Reviews:     engine.Reviews(),
+			Transcripts: do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).TranscriptsSvc(),
+			Notes:       do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).NotesSvc(),
+			Reviews:     do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).ReviewsSvc(),
 			// The dial gate answers from the journal's decisions since the
 			// SUPERB Phase 2 swap (the engine-backed store stays as the
 			// import source and rollback lane behind the DialGate seam).
