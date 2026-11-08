@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-08 (docs-health drain): gates clean (check-rows --strict + bare-rows green), live facts carried in AGENTS/TODO_LIST — cadence headroom for the SUPERB phase-closeout reports.
+
 # Status: hygiene train — retention pins, TODO truth sweep, status index (assistant session)
 
 **Snapshot-rot header: claims verified as of 2026-11-05 19:30 CET.** Push/CI/doc-state

@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-08 (docs-health drain): gates clean (check-rows --strict + bare-rows green), live facts carried in AGENTS/TODO_LIST — cadence headroom for the SUPERB phase-closeout reports.
+
 # Dedup sweep + tw-freshness repair — 2026-11-06 22:4x (red-main run 42209008464)
 
 > Claims verified as of 22:45 local. CI statements rot fastest; the run

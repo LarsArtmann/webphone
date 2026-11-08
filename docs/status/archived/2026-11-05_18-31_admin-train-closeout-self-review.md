@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-08 (docs-health drain): gates clean (check-rows --strict + bare-rows green), live facts carried in AGENTS/TODO_LIST — cadence headroom for the SUPERB phase-closeout reports.
+
 # Admin-train closeout — gates closed, red-main attributed (self-review)
 
 Session: 2026-11-05 06:52–18:31 CET. Scope: close the admin-visibility

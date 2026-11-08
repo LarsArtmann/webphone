@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-08 (docs-health drain): gates clean (check-rows --strict + bare-rows green), live facts carried in AGENTS/TODO_LIST — cadence headroom for the SUPERB phase-closeout reports.
+
 # Status — docs-health v8: the full session, honest self-review, and what it left behind (2026-11-06 21:28)
 
 **Snapshot-rot header: claims verified as of 2026-11-06 21:30 CET at HEAD

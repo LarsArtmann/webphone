@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-08 (docs-health drain): gates clean (check-rows --strict + bare-rows green), live facts carried in AGENTS/TODO_LIST — cadence headroom for the SUPERB phase-closeout reports.
+
 # Status: Fleet-Libs Closeout Tail (T16–T26) — resumed session, night of 2026-11-04 → morning 2026-11-05
 
 **Claims verified as of 07:21 CET 2026-11-05.** Push/CI statements rot fastest; timestamped, not timeless.
