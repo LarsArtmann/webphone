@@ -97,8 +97,8 @@ func TestDialAttemptAllowsThenDeniesInsideWindow(t *testing.T) {
 	if err != nil || allowed {
 		t.Fatalf("second attempt inside the window must be denied: allowed=%v err=%v", allowed, err)
 	}
-	if !stamp.Equal(firstAt) {
-		t.Fatalf("deny stamp must carry the slot's last-at: got %v want %v", stamp, firstAt)
+	if stamp.Unix() != firstAt.Unix() {
+		t.Fatalf("deny stamp must carry the slot's last-at (second granularity, like the stored window): got %v want %v", stamp, firstAt)
 	}
 	// Nothing was recorded by the deny: the slot still holds firstAt.
 	awaitLast(t, dials, owner, "+15550001111", firstAt)
@@ -259,7 +259,8 @@ func TestDialActiveListsUnexpiredWindows(t *testing.T) {
 }
 
 func remoteOf(i int) string {
-	return fmt.Sprintf("+1555%04d", i)
+	// The 06xx block never collides with the tests' hand-written +1555… remotes.
+	return fmt.Sprintf("+1606%04d", i)
 }
 
 func mustExt(t *testing.T, raw string) domain.Extension {

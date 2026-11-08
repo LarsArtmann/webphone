@@ -23,6 +23,7 @@ import (
 	_ "modernc.org/sqlite" // registers the "sqlite" driver for the DLQ handle
 
 	"github.com/larsartmann/webphone/internal/config"
+	cqrsdomain "github.com/larsartmann/webphone/internal/cqrs"
 )
 
 // cqrsGracefulCloseBound caps GracefulClose's drain at shutdown: the
@@ -55,17 +56,27 @@ type CqrsService struct {
 	started   bool
 	shutdown  bool
 	shutdownM sync.Mutex
+	dialsOnce sync.Once
+	dials     *cqrsdomain.DialWindows
 }
 
 // NewCqrs builds the system composition root over <dataDir>/system.db:
 // ONE sqlite engine, TWO instances on it (source-of-truth + projections
 // — journal, projections, dedup, checkpoints, snapshots and DLQ all in
 // the one file, the spike-proven topology), WAL pragmas matching
-// webphone's sqlite posture. The DomainConfig is the Phase-1 skeleton:
-// no commands, no projections — the hollow-root WARN is expected until
-// the first aggregate lands in Phase 2 (risk R5's gate flips it off).
+// webphone's sqlite posture. The domain carries the dial aggregate
+// since Phase 2 (SUPERB): commands, decider, and the journal
+// projections the gate reads.
 func NewCqrs(cfg config.Config, log *slog.Logger) (*CqrsService, error) {
-	return newCqrs(cfg, log, system.DomainConfig{})
+	return newCqrs(cfg, log, cqrsdomain.DialDomainDecl())
+}
+
+// Dials builds (once) the dispatch-backed dial-gate service — the SAME
+// surface the engine-backed store exposed, now answering from the
+// journal's decisions.
+func (s *CqrsService) Dials() *cqrsdomain.DialWindows {
+	s.dialsOnce.Do(func() { s.dials = cqrsdomain.NewDialWindows(s.Sys) })
+	return s.dials
 }
 
 // newCqrs is the construction seam tests (and, from Phase 2 on, the

@@ -99,6 +99,20 @@ var dialOverridesQuery = metaengine.Query[dialWindowInput, DialOverrideView](dia
 	metaengine.Volume(humanScaleVolume),
 )
 
+// DialGate is the dial-cooldown seam (issue #7) as the server's
+// handlers see it: the gate's check+record transaction, the one-shot
+// override arm, and the typeahead's active-slot read. The
+// engine-backed store below and the journal-backed service
+// (internal/cqrs, SUPERB Phase 2) are interchangeable behind it.
+type DialGate interface {
+	Attempt(ctx context.Context, owner domain.Extension, remote string, cooldown time.Duration) (allowed bool, stamp time.Time, err error)
+	ArmOverride(ctx context.Context, owner domain.Extension, remote string) error
+	Last(ctx context.Context, owner domain.Extension, remote string) (time.Time, bool, error)
+	Active(ctx context.Context, owner domain.Extension, cooldown time.Duration) ([]ActiveSlot, error)
+}
+
+var _ DialGate = (*DialWindows)(nil)
+
 // DialWindows is the engine-backed dial-cooldown store (issue #7):
 // per-(owner, remote) last-attempt windows plus one-shot overrides.
 // The gate decision and the record ride ONE mutex section — the
@@ -226,6 +240,22 @@ func (s *DialWindows) Active(ctx context.Context, owner domain.Extension, cooldo
 		slots = append(slots, ActiveSlot{Remote: v.Remote, LastAt: v.At, Window: windowSecs})
 	}
 	return slots, nil
+}
+
+// ExportAll reads every legacy window and override row — the dial
+// journal importer's ONE-TIME source (SUPERB Phase 2). The limit is
+// the declared collection ceiling, so the export can never silently
+// truncate below the cap the engine itself enforces.
+func (s *DialWindows) ExportAll(ctx context.Context) ([]DialWindowView, []DialOverrideView, error) {
+	wins, err := s.windows.Scan(ctx, metaengine.WithLimit(dialWindowsGlobalCeiling))
+	if err != nil {
+		return nil, nil, errorfamily.WrapInfrastructuref(err, "readmodels.dial_window_load", "export windows")
+	}
+	overs, err := s.overrides.Scan(ctx, metaengine.WithLimit(dialWindowsGlobalCeiling))
+	if err != nil {
+		return nil, nil, errorfamily.WrapInfrastructuref(err, "readmodels.dial_override_load", "export overrides")
+	}
+	return wins, overs, nil
 }
 
 func (s *DialWindows) recordAttempt(ctx context.Context, owner domain.Extension, remote string, at time.Time) error {

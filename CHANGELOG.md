@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The dial gate answers from the event-sourced journal (SUPERB Phase 2,
+  2026-11-08): the cooldown decision (allow / deny-in-window / spend the
+  one-shot override) is a DECIDER on a per-owner stream in system.db —
+  the 500-slot per-owner cap enforced by the decision (expunge facts,
+  no post-write sweep), denied attempts still record nothing, and the
+  verdict answers from the decision itself (no read-your-write wait).
+  The server's dial seam is now an interface (`readmodels.DialGate`)
+  with the engine-backed store kept as the import source and rollback
+  lane; `/api/dials`, `/config.js` semantics and every TestDialGate pin
+  are unchanged. A one-time importer ports legacy engine rows into the
+  journal with original timestamps (crash-safe per-stream tail sync,
+  app_flags marker, second boot appends nothing). Measured on this
+  host: attempt dispatch ~0.8 ms/op vs the engine path's ~0.45 ms,
+  deny (decision-only) ~0.03 ms, projection read ~0.08 ms.
 - The go-cqrs-lite system composition root rides the container (SUPERB
   Phase 1, 2026-11-08): `system/v4 v4.17.0` (with `metaengine v4.22.0`)
   lands as ONE named eager service (`"cqrs"`) inside the samber/do

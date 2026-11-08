@@ -7,9 +7,7 @@ package cqrs
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"sync"
 	"time"
 
 	"github.com/larsartmann/go-cqrs-lite/command/v4"
@@ -17,7 +15,6 @@ import (
 	"github.com/larsartmann/go-cqrs-lite/event/v4"
 	"github.com/larsartmann/go-cqrs-lite/id/v4"
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
-	"github.com/larsartmann/go-cqrs-lite/record/v4"
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	"github.com/larsartmann/go-error-family"
 
@@ -67,9 +64,9 @@ type AttemptDial struct {
 type SaveOverride struct {
 	*command.BasicCommand
 	// Owner as on AttemptDial (branded stream ids never reach facts).
-	Owner   string
-	Remote  string
-	Now     time.Time
+	Owner  string
+	Remote string
+	Now    time.Time
 }
 
 // DialDeniedError is the decider's DENY verdict: a typed rejection
@@ -145,7 +142,7 @@ func decideDialAttempt(s dialState, ver event.Version, cmd AttemptDial) ([]event
 
 	if slot, ok := s.Overrides[cmd.Remote]; ok && !slot.Consumed {
 		consume, err := dialEvent(domain.DialOverrideSaved{
-			Key: domain.DialWindowKey{Owner: owner, Remote: cmd.Remote},
+			Key:   domain.DialWindowKey{Owner: owner, Remote: cmd.Remote},
 			Owner: owner, Remote: cmd.Remote, Consumed: true, At: now,
 		}, streamID, ver)
 		if err != nil {
@@ -173,7 +170,7 @@ func dialAttemptEvents(s dialState, cmd AttemptDial, ver event.Version) ([]event
 	owner := cmd.Owner
 
 	attempt, err := dialEvent(domain.DialAttempted{
-		Key: domain.DialWindowKey{Owner: owner, Remote: cmd.Remote},
+		Key:   domain.DialWindowKey{Owner: owner, Remote: cmd.Remote},
 		Owner: owner, Remote: cmd.Remote, At: cmd.Now,
 	}, streamID, ver)
 	if err != nil {
@@ -234,7 +231,7 @@ func decideSaveOverride(s dialState, ver event.Version, cmd SaveOverride) ([]eve
 	owner := cmd.Owner
 
 	arm, err := dialEvent(domain.DialOverrideSaved{
-		Key: domain.DialWindowKey{Owner: owner, Remote: cmd.Remote},
+		Key:   domain.DialWindowKey{Owner: owner, Remote: cmd.Remote},
 		Owner: owner, Remote: cmd.Remote, Consumed: false, At: cmd.Now,
 	}, streamID, ver)
 	if err != nil {
@@ -281,53 +278,6 @@ func dialEvent(fact any, streamID id.StreamID, ver event.Version) (event.Event, 
 }
 
 // ─── registration + projections ────────────────────────────────────
-
-// dialWindowsCollection / dialOverridesCollection mirror the readmodels
-// engine's collection names so operators grepping either store see one
-// vocabulary.
-const (
-	dialWindowsCollection   = "dial_windows"
-	dialOverridesCollection = "dial_overrides"
-
-	// dialWindowsGlobalCeiling mirrors the readmodels declaration's
-	// collection-global safety net.
-	dialWindowsGlobalCeiling = 100_000
-)
-
-// dialWindowKeyInput is the key-extraction input for the journal
-// projections (same shape the readmodels engine declares).
-type dialWindowKeyInput struct{ Key domain.DialWindowKey }
-
-// dialWindowsProjection folds DialAttempted facts into the SAME view
-// shape the server reads today (readmodels.DialWindowView).
-func dialWindowsProjection() metaengine.QueryDecl[dialWindowKeyInput, readmodels.DialWindowView] {
-	return metaengine.Query[dialWindowKeyInput, readmodels.DialWindowView](dialWindowsCollection,
-		metaengine.OnRecord(domain.DialAttempted{},
-			func(_ record.Record, e domain.DialAttempted) (domain.DialWindowKey, readmodels.DialWindowView) {
-				return e.Key, readmodels.DialWindowView{Key: e.Key, Owner: e.Owner, Remote: e.Remote, At: e.At.Unix()}
-			}),
-		metaengine.OnRecord(domain.DialWindowExpunged{}, metaengine.Remove[readmodels.DialWindowView]()),
-		metaengine.FilterOnField[readmodels.DialWindowView]("owner", metaengine.FilterEq),
-		metaengine.SortOnField[readmodels.DialWindowView]("at", false),
-		metaengine.WithCap(dialWindowsGlobalCeiling, "at"),
-		metaengine.WithCapPerGroup("owner", dialWindowsMaxSlots),
-	)
-}
-
-// dialOverridesProjection folds the one-shot bypass slots.
-func dialOverridesProjection() metaengine.QueryDecl[dialWindowKeyInput, readmodels.DialOverrideView] {
-	return metaengine.Query[dialWindowKeyInput, readmodels.DialOverrideView](dialOverridesCollection,
-		metaengine.OnRecord(domain.DialOverrideSaved{},
-			func(_ record.Record, e domain.DialOverrideSaved) (domain.DialWindowKey, readmodels.DialOverrideView) {
-				return e.Key, readmodels.DialOverrideView{Key: e.Key, Owner: e.Owner, Remote: e.Remote, Consumed: e.Consumed, At: e.At.Unix()}
-			}),
-		metaengine.OnRecord(domain.DialOverrideExpunged{}, metaengine.Remove[readmodels.DialOverrideView]()),
-		metaengine.FilterOnField[readmodels.DialOverrideView]("owner", metaengine.FilterEq),
-		metaengine.SortOnField[readmodels.DialOverrideView]("at", false),
-		metaengine.WithCap(dialWindowsGlobalCeiling, "at"),
-		metaengine.WithCapPerGroup("owner", dialOverridesMaxSlots),
-	)
-}
 
 // RegisterDial wires the dial aggregate into a System: the decider,
 // both commands, and both projections. Called from the composition
@@ -383,118 +333,4 @@ func DialDomainDecl() system.DomainConfig {
 			event.Type(metaengine.EventTypeName(domain.DialOverrideExpunged{})),
 		},
 	}
-}
-
-// ─── the backend the server keeps calling ──────────────────────────
-
-// DialWindows is the dispatch-backed dial-cooldown service: the SAME
-// surface readmodels.DialWindows exposes (the server's DialGate
-// interface), answering gate verdicts from the DECISION (read-your-
-// writes without re-reading the projection) and reading slot state
-// through the system's projection store. One process-wide mutex keeps
-// double-click dispatches serialized per owner — the repository's
-// optimistic per-stream concurrency already rejects a lost race, but
-// the parity port keeps the seam's serialization local and loud.
-type DialWindows struct {
-	sys       *system.System
-	windows   *metaengine.TypedReader[readmodels.DialWindowView]
-	overrides *metaengine.TypedReader[readmodels.DialOverrideView]
-	mu        sync.Mutex
-}
-
-// NewDialWindows builds the backend over a started-or-startable
-// System.
-func NewDialWindows(sys *system.System) *DialWindows {
-	return &DialWindows{
-		sys:       sys,
-		windows:   metaengine.NewReader[readmodels.DialWindowView](sys.MetaEngine(), dialWindowsCollection),
-		overrides: metaengine.NewReader[readmodels.DialOverrideView](sys.MetaEngine(), dialOverridesCollection),
-	}
-}
-
-// timeNow is the dial seam's clock, overridable for deterministic
-// tests (window expiry, cap-expunge ordering).
-var timeNow = time.Now
-
-// Attempt is the gate's check+record transaction (see AttemptDial).
-// The verdict and stamp come from the decision itself; a deny carries
-// the slot's last-at via *DialDeniedError.
-func (s *DialWindows) Attempt(ctx context.Context, owner domain.Extension, remote string, cooldown time.Duration) (bool, time.Time, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	now := timeNow()
-	streamID, err := id.ParseStreamID(owner.String())
-	if err != nil {
-		return false, now, errorfamily.WrapRejectionf(err, "cqrs.dial_stream", "parse owner stream id")
-	}
-	base, err := command.New("dial.attempt", streamID)
-	if err != nil {
-		return false, now, errorfamily.WrapInfrastructuref(err, "cqrs.dial_command", "build dial.attempt")
-	}
-	cmd := &AttemptDial{BasicCommand: base, Owner: owner.String(), Remote: remote, Cooldown: cooldown, Now: now}
-	if err := s.sys.CommandDispatcher().Dispatch(ctx, cmd); err != nil {
-		var denied *DialDeniedError
-		if errors.As(err, &denied) {
-			return false, denied.LastAt, nil
-		}
-		return false, now, errorfamily.WrapInfrastructuref(err, "cqrs.dial_attempt", "dispatch dial.attempt")
-	}
-	return true, now, nil
-}
-
-// ArmOverride arms the one-shot bypass for (owner, remote).
-func (s *DialWindows) ArmOverride(ctx context.Context, owner domain.Extension, remote string) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	streamID, err := id.ParseStreamID(owner.String())
-	if err != nil {
-		return errorfamily.WrapRejectionf(err, "cqrs.dial_stream", "parse owner stream id")
-	}
-	base, err := command.New("dial.override", streamID)
-	if err != nil {
-		return errorfamily.WrapInfrastructuref(err, "cqrs.dial_command", "build dial.override")
-	}
-	cmd := &SaveOverride{BasicCommand: base, Owner: owner.String(), Remote: remote, Now: timeNow()}
-	if err := s.sys.CommandDispatcher().Dispatch(ctx, cmd); err != nil {
-		return errorfamily.WrapInfrastructuref(err, "cqrs.dial_override", "dispatch dial.override")
-	}
-	return nil
-}
-
-// Last returns the slot's last allowed dial (found=false when none).
-func (s *DialWindows) Last(ctx context.Context, owner domain.Extension, remote string) (time.Time, bool, error) {
-	win, found, err := s.windows.Get(ctx, domain.DialWindowKey{Owner: owner.String(), Remote: remote})
-	if err != nil {
-		return time.Time{}, false, errorfamily.WrapInfrastructuref(err, "cqrs.dial_window_load", "load window slot")
-	}
-	if !found {
-		return time.Time{}, false, nil
-	}
-	return time.Unix(win.At, 0), true, nil
-}
-
-// Active returns the owner's cooldown windows still inside their
-// window (newest first) — the typeahead's row decoration.
-func (s *DialWindows) Active(ctx context.Context, owner domain.Extension, cooldown time.Duration) ([]readmodels.ActiveSlot, error) {
-	wins, err := s.windows.Scan(ctx,
-		metaengine.WithFilter("owner", metaengine.FilterEq, owner.String()),
-		metaengine.WithSort("at", true),
-		metaengine.WithLimit(readmodels.DialSlotsMaxPerResponse),
-	)
-	if err != nil {
-		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.dial_window_load", "scan active windows")
-	}
-	now := time.Now()
-	slots := make([]readmodels.ActiveSlot, 0, len(wins))
-	windowSecs := int64(cooldown / time.Second)
-	for _, v := range wins {
-		last := time.Unix(v.At, 0)
-		if now.Sub(last) >= cooldown {
-			continue
-		}
-		slots = append(slots, readmodels.ActiveSlot{Remote: v.Remote, LastAt: v.At, Window: windowSecs})
-	}
-	return slots, nil
 }

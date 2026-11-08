@@ -356,6 +356,14 @@ a deliberate code change, regenerate:
 | config.turn_rest.ttl                         | Rejection                 | internal/config/config.go          |
 | config.unmarshal                             | Rejection                 | internal/config/config.go          |
 | config.webhook_secret_file                   | Rejection                 | internal/config/config.go          |
+| cqrs.dial_attempt                            | Infrastructure            | internal/cqrs/dialwindows.go       |
+| cqrs.dial_command                            | Infrastructure            | internal/cqrs/dialwindows.go       |
+| cqrs.dial_fold                               | Corruption                | internal/cqrs/dial.go              |
+| cqrs.dial_import                             | Infrastructure, Rejection | internal/app/dialimport.go         |
+| cqrs.dial_override                           | Infrastructure            | internal/cqrs/dialwindows.go       |
+| cqrs.dial_register                           | Infrastructure            | internal/cqrs/dial.go              |
+| cqrs.dial_stream                             | Rejection                 | internal/cqrs/dialwindows.go       |
+| cqrs.dial_window_load                        | Infrastructure            | internal/cqrs/dialwindows.go       |
 | cqrs.dlq                                     | Infrastructure            | internal/app/cqrs.go               |
 | cqrs.engine                                  | Infrastructure            | internal/app/cqrs.go               |
 | cqrs.open                                    | Infrastructure            | internal/app/cqrs.go               |

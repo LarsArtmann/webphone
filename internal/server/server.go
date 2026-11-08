@@ -199,9 +199,14 @@ type Deps struct {
 	// compositions): the endpoints answer 503 and the job skips its
 	// writes.
 	Reviews *readmodels.Reviews
-	// Dials is the dial-cooldown window store (issue #7). Nil (test
-	// compositions): the gate answers 503.
-	Dials *readmodels.DialWindows
+	// Dials is the dial-cooldown seam (issue #7): check+record attempt,
+	// arm the one-shot override, read active slots (the
+	// readmodels.DialGate interface — implemented by the engine-backed
+	// store, the legacy/rollback lane, and the dispatch-backed journal
+	// service, SUPERB Phase 2). Nil (test compositions): the gate
+	// answers 503. Keep this a TRUE nil: only ever assign a non-nil
+	// implementer.
+	Dials readmodels.DialGate
 	// Notes is the post-call-note store (owner-scoped, the History
 	// tab's note affordance). Nil (test compositions): the endpoints
 	// answer 503.

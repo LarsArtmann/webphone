@@ -438,7 +438,10 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			Transcripts: engine.Transcripts(),
 			Notes:       engine.Notes(),
 			Reviews:     engine.Reviews(),
-			Dials:       engine.DialWindows(),
+			// The dial gate answers from the journal's decisions since the
+			// SUPERB Phase 2 swap (the engine-backed store stays as the
+			// import source and rollback lane behind the DialGate seam).
+			Dials:       do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).Dials(),
 			AgentAudit:  engine.AgentAudit(),
 			Messaging:   do.MustInvoke[*messaging.Service](i),
 			Fax:         do.MustInvoke[*fax.Service](i),
@@ -489,6 +492,12 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	importLegacySnippets(context.Background(), sqlite, engine, log)
 	importLegacyTranscripts(context.Background(), sqlite, engine, log)
 	importLegacyFaxes(context.Background(), sqlite, engine, log)
+	// The dial journal import runs BEFORE any dispatch can race it (the
+	// handler below is not yet built; App.Start has not run): the
+	// synthetic facts land, the projection worker drains them at Start,
+	// and the gate opens against the full history.
+	importDialWindows(context.Background(), sqlite, engine.DialWindows(),
+		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time dial import
 	if cfg.Auth.Passkey.Enabled() {
 		if _, err := do.InvokeNamed[*userauth.Service](injector, "userauth"); err != nil {
 			return nil, wrapf("open passkey auth: %w", err)
