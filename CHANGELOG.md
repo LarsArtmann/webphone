@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The island's latency is now MEASURABLE (the measure-first latency
+  design, docs/planning/2026-11-08_latency-measure-first-design.md):
+  with `metrics.island_beacon` on, the island posts one fire-and-forget
+  beacon per completed interval — dial-press → first remote audio split
+  into island_overhead/signaling/media_attach/audio_gap (the audio-gap
+  leg comes from an AnalyserNode RMS watcher, so ringback vs
+  instant-audio deployments separate honestly), and a spoken ASR
+  segment → text on screen split into capture_to_post,
+  post_to_first_byte, first_byte_to_complete, parse_to_insert with the
+  segment size on its own histogram. `POST /api/metrics/latency`
+  (session-gated, 2 KiB cap, hook-grade budget) folds the fixed leg
+  vocabulary into `webphone_island_latency_seconds{interval,leg}` and
+  `webphone_island_asr_segment_bytes` on /metrics; a failed or
+  malformed beacon is a silent 204 by design (instrumentation never
+  alerts on itself), and the flag-off product stays byte-identical
+  (no route family, no config.js key, no island POSTs). Pinned by the
+  island latency specs (5) and the smoke `metrics` scenario.
 - Enroll tokens, agent-audit rows and registered push devices answer
   from the event-sourced journal (SUPERB Phase 3 / A22–A24): per-stream
   commands and decisions own the semantics — consume-once burns decide

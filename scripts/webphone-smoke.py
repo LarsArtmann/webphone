@@ -773,6 +773,146 @@ def dialgate_scenario(binary: str, workdir: str) -> int:
     return 1 if c.failures else 0
 
 
+def metrics_scenario(binary: str, workdir: str) -> int:
+    """The island latency-beacon intake (measure-first design), end-to-end.
+
+    Two boots prove the opt-in contract: with
+    WEBPHONE_METRICS__ISLAND_BEACON the session-gated route folds a valid
+    beacon into the /metrics histograms (204, then labeled buckets), a
+    garbage body is a silent 204 (instrumentation never alerts), an
+    unauthenticated POST is a 401, and /config.js advertises "metrics";
+    with zero config the route answers 404, /config.js stays silent, and
+    /metrics carries no island family (byte-identical off).
+    """
+    c = Check()
+
+    def boot(env_extra: dict[str, str], datadir: str) -> tuple[subprocess.Popen, str]:
+        port = free_port()
+        env = dict(os.environ)
+        env.update(
+            {
+                "WEBPHONE_ADDR": f"127.0.0.1:{port}",
+                "WEBPHONE_DATA_DIR": f"{workdir}/{datadir}",
+                "WEBPHONE_GATEWAY__WEBHOOK_SECRET": "test-secret",  # nosec B105 - fixture secret for the self-booted smoke server
+            }
+        )
+        env.update(env_extra)
+        srv = subprocess.Popen(  # nosec B603 - argv-list (no shell) launch of the local binary under test
+            [binary], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+        base = f"http://127.0.0.1:{port}"
+        deadline = time.monotonic() + TIMEOUT
+        while time.monotonic() < deadline:
+            try:
+                urllib.request.urlopen(base + "/healthz", timeout=1).read()  # nosec B310 - readiness probe of the local server under test
+                return srv, base
+            except OSError:
+                time.sleep(0.1)
+        srv.kill()
+        raise RuntimeError("metrics scenario: server did not become ready")
+
+    def stop_server(srv: subprocess.Popen) -> None:
+        srv.terminate()
+        try:
+            srv.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            srv.kill()
+
+    def login_csrf(base: str) -> Smoke:
+        s = Smoke(base)
+        _, page, _ = s.request("GET", "/")
+        m = re.search(
+            r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
+        )
+        if m:
+            s.csrf = m.group(1)
+        c.ok("metrics: login accepted", s.login(), "POST /api/session != 201")
+        return s
+
+    beacon = (
+        b'{"interval":"dial_to_audio",'
+        b'"legs_ms":{"island_overhead":12,"signaling":1500,'
+        b'"media_attach":80,"audio_gap":240}}'
+    )
+
+    # OFF boot: 404 route, silent config.js, no island family on /metrics.
+    srv, base = boot({}, "data-metrics-off")
+    try:
+        s = login_csrf(base)
+        status, _, _ = s.request("POST", "/api/metrics/latency", beacon, "application/json")
+        c.ok("metrics: off answers 404", status == 404, f"status {status}")
+        _, body, _ = s.request("GET", "/config.js")
+        c.ok(
+            "metrics: config.js silent when off",
+            b'"metrics"' not in body,
+            body[:160].decode("utf-8", "replace"),
+        )
+        _, metrics, _ = s.request("GET", "/metrics")
+        c.ok(
+            "metrics: no island family when off",
+            b"webphone_island_latency_seconds" not in metrics,
+            "island family present on a disabled deploy",
+        )
+    finally:
+        stop_server(srv)
+
+    # ON boot: advertise, fold a valid beacon, stay silent on garbage,
+    # fence the anonymous, and expose the labeled buckets.
+    srv, base = boot({"WEBPHONE_METRICS__ISLAND_BEACON": "true"}, "data-metrics-on")
+    try:
+        s = login_csrf(base)
+        _, body, _ = s.request("GET", "/config.js")
+        c.ok(
+            "metrics: config.js advertises the intake",
+            b'"metrics":true' in body,
+            body[:160].decode("utf-8", "replace"),
+        )
+        status, _, _ = s.request("POST", "/api/metrics/latency", beacon, "application/json")
+        c.ok("metrics: valid beacon answers 204", status == 204, f"status {status}")
+        status, _, _ = s.request(
+            "POST", "/api/metrics/latency", b"{not json at all", "application/json"
+        )
+        c.ok(
+            "metrics: garbage body is a silent 204",
+            status == 204,
+            f"status {status}",
+        )
+        _, metrics, _ = s.request("GET", "/metrics")
+        c.ok(
+            "metrics: histogram bucket appears with the leg label",
+            b'webphone_island_latency_seconds_bucket{interval="dial_to_audio",leg="signaling"'
+            in metrics,
+            metrics[:400].decode("utf-8", "replace"),
+        )
+        c.ok(
+            "metrics: count line folds the beacon",
+            b'webphone_island_latency_seconds_count{interval="dial_to_audio",leg="signaling"} 1'
+            in metrics,
+            "count != 1 after one valid beacon",
+        )
+        status, _, _ = s.request("POST", "/api/metrics/latency", beacon, "application/json")
+        anon_status = urllib.request.Request(
+            base + "/api/metrics/latency", data=beacon, method="POST"
+        )
+        try:
+            urllib.request.urlopen(anon_status, timeout=2)  # nosec B310 - probe of the local server under test
+            anon_code = 0
+        except urllib.error.HTTPError as err:
+            anon_code = err.code
+        c.ok(
+            "metrics: anonymous POST is fenced",
+            anon_code == 401,
+            f"anon status {anon_code}",
+        )
+    finally:
+        stop_server(srv)
+
+    print(f"metrics scenario: {c.passed} passed, {len(c.failures)} failed")
+    for failure in c.failures:
+        print(f"  FAILED: {failure}")
+    return 1 if c.failures else 0
+
+
 def faxcap_scenario(binary: str, workdir: str) -> int:
     """The fax capability declaration, end-to-end on a self-booted server.
 
@@ -1495,6 +1635,7 @@ def main() -> int:
         rc = max(rc, asr_scenario(binary, workdir))
         rc = max(rc, dialgate_scenario(binary, workdir))
         rc = max(rc, faxcap_scenario(binary, workdir))
+        rc = max(rc, metrics_scenario(binary, workdir))
         return rc
     finally:
         server.terminate()
