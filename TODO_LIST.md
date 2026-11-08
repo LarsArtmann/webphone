@@ -32,6 +32,22 @@ each verified still-open at harvest time (the plan doc keeps its detail):
 - [ ] file-size-check: the configurable-cap upstream ask rides P4-7 of the
       portfolio plan (sitting pack §D10 owns the posture call).
 
+### 2026-11-08 SUPERB Phase-5 mid-flight residue (harvested from the 22:46 report)
+
+Open items the freshness gate flagged unharvested; owned by the sibling
+session's Phase-5/6/7 trains.
+
+- [ ] **A38 phase-gate: stack browser E2E** (445 s budget, re-run-once flake
+      rule) once the journal-backed thread-seam swap ships — owed whenever
+      served markup or behavior changes (report §f item 18).
+- [ ] **A43 dedup unification: hooksIdem/CallsIdem → sys.Dedup()** — one dedup
+      home once the system composition root owns idempotency; readmodels
+      engine registration removed, drill re-run (report §f item 32).
+- [ ] **Track the metrics-count decision** (report §g-2): `webphone_messages_total`
+      (+ threads count) must move to system.db counts during the seam window —
+      re-point now (undercounts until A35) vs sum legacy + gate counts (two
+      homes) vs frozen (dishonest, rejected). Owner ruling pending.
+
 ### 2026-11-07 Frontend UX fix-train (one home: the SUPERB plan)
 
 The 2026-11-07 design review

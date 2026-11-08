@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "threshold": 1,
-  "recordedAt": "2026-11-08T16:20:17.157215004Z",
+  "recordedAt": "2026-11-08T21:57:46.371890927Z",
   "entries": [
     {
       "hash": "0074763f10c77d08",
@@ -287,6 +287,14 @@
       "tokens": 2
     },
     {
+      "hash": "3afa582b25eebecd",
+      "files": [
+        "internal/cqrs/threadsstore.go",
+        "internal/cqrs/threadsstore.go"
+      ],
+      "tokens": 6
+    },
+    {
       "hash": "3b6f94d565914976",
       "files": [
         "internal/store/db.go",
@@ -442,6 +450,14 @@
       "tokens": 4
     },
     {
+      "hash": "6a8d1adf5d97b1b9",
+      "files": [
+        "internal/cqrs/threads.go",
+        "internal/cqrs/threads.go"
+      ],
+      "tokens": 4
+    },
+    {
       "hash": "6ef656f2e2759c97",
       "files": [
         "internal/web/views/voicemail.templ",
@@ -458,12 +474,28 @@
       "tokens": 6
     },
     {
+      "hash": "735bde082352a35a",
+      "files": [
+        "internal/cqrs/threads.go",
+        "internal/cqrs/dialwindows.go"
+      ],
+      "tokens": 10
+    },
+    {
       "hash": "73e5373797b9e94a",
       "files": [
         "internal/cqrs/callreviews.go",
         "internal/readmodels/callreviews.go"
       ],
       "tokens": 12
+    },
+    {
+      "hash": "74971bedaa27e5d1",
+      "files": [
+        "internal/cqrs/transcripts.go",
+        "internal/cqrs/threads.go"
+      ],
+      "tokens": 4
     },
     {
       "hash": "749a9e67d752a6bb",
@@ -573,8 +605,8 @@
     {
       "hash": "823f339c330cd4d0",
       "files": [
-        "internal/cqrs/callnotes.go",
-        "internal/readmodels/callnotes.go"
+        "internal/readmodels/callnotes.go",
+        "internal/cqrs/callnotes.go"
       ],
       "tokens": 6
     },
@@ -847,6 +879,14 @@
       "tokens": 6
     },
     {
+      "hash": "c370d2c71553bb9b",
+      "files": [
+        "internal/cqrs/threadsstore.go",
+        "internal/store/messages.go"
+      ],
+      "tokens": 2
+    },
+    {
       "hash": "c37c03cd1fcaabb3",
       "files": [
         "internal/textagent/client.go",
@@ -995,6 +1035,14 @@
         "internal/web/views/admin.templ"
       ],
       "tokens": 4
+    },
+    {
+      "hash": "dc91609a5b436dc3",
+      "files": [
+        "internal/readmodels/threads.go",
+        "internal/store/messages.go"
+      ],
+      "tokens": 8
     },
     {
       "hash": "dcaab50199dd515e",
