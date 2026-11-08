@@ -18,7 +18,8 @@ import (
 
 	"path/filepath"
 
-	cqrs "github.com/larsartmann/webphone/internal/cqrs")
+	cqrs "github.com/larsartmann/webphone/internal/cqrs"
+)
 
 // chatGateway records the outbound message it was handed.
 type chatGateway struct {

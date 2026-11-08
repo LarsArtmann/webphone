@@ -29,9 +29,9 @@ import (
 
 // The three projection collections (query names in system.db).
 const (
-	threadsCollection    = "threads"
-	messagesCollection   = "thread_messages"
-	attachmentsColName   = "message_attachments"
+	threadsCollection  = "threads"
+	messagesCollection = "thread_messages"
+	attachmentsColName = "message_attachments"
 )
 
 // summaryViewOf converts the fact's row image into the read view

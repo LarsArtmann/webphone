@@ -77,7 +77,7 @@ type MessageAppended struct {
 // outbound message (legality was deliveryMoves' call at the decision; the
 // fact carries the advanced slice so replay never re-judges it).
 type OutboundAdvanced struct {
-	Key          MessageRowKey
+	Key           MessageRowKey
 	MessageID     string
 	Status        string
 	ProviderRef   string

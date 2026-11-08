@@ -318,6 +318,14 @@ releases resume with Phase 5 per D4.
   one scanner-resolved const (`cqrs.note_dispatch`) — the failing
   operation is the dispatch, not a door's save — and the decision
   verdicts and per-door codes on the build path are unchanged.
+- A flaky CRM transport under parallel tests (2026-11-08): the
+  no-CA client rode the process-global `http.DefaultTransport`, and
+  every `httptest.Server.Close` in the test binary closes idle
+  connections on exactly that global transport, so one test's cleanup
+  could break another test's in-flight round trip
+  (`TestContactContextFailureClassesStayDistinct`). The client now
+  clones the default transport (the CA path already did), giving the
+  seam its own connection pool; production behavior is unchanged.
 - A red-main loop between the openapi golden test and dprint
   (2026-11-08): the wire render carries no trailing newline but dprint
   requires one, so the two gates could never both pass — the test now

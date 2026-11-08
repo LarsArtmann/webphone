@@ -65,11 +65,11 @@ type AdvanceDelivery struct {
 // SetThreadFlag sets or clears one organization axis to the desired state.
 type SetThreadFlag struct {
 	*command.BasicCommand
-	Owner    domain.Extension
-	Network  domain.Network
-	Remote   domain.Address
-	Flag     string // "pinned" | "archived" | "muted"
-	On       bool
+	Owner   domain.Extension
+	Network domain.Network
+	Remote  domain.Address
+	Flag    string // "pinned" | "archived" | "muted"
+	On      bool
 }
 
 // MarkThreadRead zeroes the unread counter (already-zero is a legal
@@ -101,15 +101,15 @@ func threadFlagLegal(flag string) bool {
 // threadState is the full aggregate: the legacy thread row plus the id
 // bookkeeping the deletes and delivery advances need.
 type threadState struct {
-	ThreadID  string
-	Owner     string
-	Network   string
-	Remote    string
-	LastAct   int64 // unix nanos
-	Unread    int
-	Pinned    bool
-	Archived  bool
-	Muted     bool
+	ThreadID   string
+	Owner      string
+	Network    string
+	Remote     string
+	LastAct    int64 // unix nanos
+	Unread     int
+	Pinned     bool
+	Archived   bool
+	Muted      bool
 	MastBody   string // last-by-created-at preview body
 	MastDir    string
 	MastChan   string

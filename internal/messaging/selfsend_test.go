@@ -19,7 +19,8 @@ import (
 
 	"path/filepath"
 
-	cqrs "github.com/larsartmann/webphone/internal/cqrs")
+	cqrs "github.com/larsartmann/webphone/internal/cqrs"
+)
 
 // countingGateway proves the guard short-circuits before the provider.
 type countingGateway struct{ calls int }

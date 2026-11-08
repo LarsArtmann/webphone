@@ -32,8 +32,9 @@ import (
 
 	"path/filepath"
 
+	"context"
 	cqrs "github.com/larsartmann/webphone/internal/cqrs"
-	"context")
+)
 
 // webphone is the subject under test: one running instance on a random
 // port, plus the cookie-carrying browser client that talks to it.

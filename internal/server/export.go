@@ -10,7 +10,8 @@ import (
 
 	"github.com/larsartmann/webphone/internal/vcard"
 
-	"github.com/larsartmann/webphone/internal/readmodels")
+	"github.com/larsartmann/webphone/internal/readmodels"
+)
 
 // exportLimit bounds each store read behind the export: the per-extension
 // data set is small by product scale, but a bound keeps a pathological

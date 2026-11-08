@@ -1,8 +1,8 @@
 package server
 
 import (
-	"context"
 	"bytes"
+	"context"
 	"encoding/json/v2"
 	"fmt"
 	"mime/multipart"
@@ -29,7 +29,8 @@ import (
 	"github.com/larsartmann/webphone/internal/web/assets"
 	"github.com/larsartmann/webphone/internal/web/views"
 
-	cqrs "github.com/larsartmann/webphone/internal/cqrs")
+	cqrs "github.com/larsartmann/webphone/internal/cqrs"
+)
 
 // domContractIDs loads the island DOM-contract id list from
 // docs/dom-contract.md — the file is the single source of truth
