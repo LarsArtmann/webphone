@@ -51,7 +51,7 @@ func TestSettingsPanelReadsInThreeAudiences(t *testing.T) {
 	if prefs < 0 || data < 0 || server < 0 {
 		t.Fatalf("all three audience headings must render (prefs=%d data=%d server=%d)", prefs, data, server)
 	}
-	if !(prefs < data && data < server) {
+	if prefs >= data || data >= server {
 		t.Errorf("audience order broken: prefs=%d < data=%d < server=%d expected", prefs, data, server)
 	}
 
@@ -61,7 +61,7 @@ func TestSettingsPanelReadsInThreeAudiences(t *testing.T) {
 	details := strings.Index(html, `<details class="wp-settings-server"`)
 	if details < 0 {
 		t.Error("the server/operator group must render inside a <details> (collapsed reference)")
-	} else if !(data < details && details < server) {
+	} else if data >= details || details >= server {
 		t.Errorf("the collapsed operator block must sit between the data group and the shortcuts (details=%d, data=%d, server=%d)", details, data, server)
 	}
 	if details >= 0 {
@@ -99,7 +99,7 @@ func TestPaletteButtonIsADisclosure(t *testing.T) {
 	html := renderComponent(t, ShellBody(ShellProps{Lang: LangEN}))
 
 	button := ""
-	for _, line := range strings.Split(html, "<button") {
+	for line := range strings.SplitSeq(html, "<button") {
 		if strings.Contains(line, `id="wp-palette-open"`) {
 			button = line
 			break
