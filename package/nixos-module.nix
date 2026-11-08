@@ -87,6 +87,24 @@ let
     in
     walk [ ] cfg.settings;
   inlineSecretLeaks = findInlineSecretLeaks;
+
+  # Metrics fencing: without the generated vhost the app self-serves on
+  # settings.addr, and a non-loopback bind puts the monitoring surfaces
+  # (/metrics, /version, /openapi.json, the health probes) on every
+  # interface it binds — the silent-exposure class. A WARNING, not a
+  # refusal: hand-rolled fronts (nginx, a tailscale funnel, ...) are a
+  # legal shape this module must not fight; the operator gets the named
+  # surfaces and the two closes (caddy.enable, loopback bind).
+  listenHost = lib.replaceStrings [ "[" "]" ] [ "" "" ] (
+    lib.head (lib.splitString ":" cfg.settings.addr)
+  );
+  loopbackHosts = [
+    ""
+    "127.0.0.1"
+    "localhost"
+    "::1"
+  ];
+  metricsExposed = !cfg.caddy.enable && !lib.elem listenHost loopbackHosts;
 in
 {
   imports = [
