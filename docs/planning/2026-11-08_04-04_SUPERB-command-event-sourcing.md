@@ -498,3 +498,17 @@ Focused hours exclude train gates, releases, and CI waits. Eight release trains 
 - **A21 replace-keeps-stamp:** the semantics moved INTO the decision
   (the decider knows the slot's stamp; the old store pre-read under a
   mutex) with microsecond fidelity per the note above.
+- **Owner rulings ①② (2026-11-08, second gate):** ① templ: "use
+  LATEST" — latest IS v0.3.1100 (proxy `@latest` and the GitHub tag
+  list agree; the feared v0.3.1114 CLI exists as no tag anywhere), and
+  the tree is already consistent on it: go.mod pin = CLI pin = all 15
+  `*_templ.go` codegen markers. No bump; the pin rule stands. ② CBOR:
+  **event-sequence tiebreaks ONLY** — no integer-epoch payload fields.
+  Root cause confirmed in `go-codec` (README: "CBOR codecs use
+  `TimeUnixDynamic` — float64 epoch with sub-second precision (9
+  bytes)", a deliberate upstream design choice); forking each
+  timestamp into a parallel integer field would split-brain one fact
+  into two representations to win fidelity no phone surface renders
+  (display granularity is milliseconds). If µs+ fidelity ever matters,
+  the fix home is a `TimeUnixNano` mode upstream in go-codec, never
+  webphone payloads.
