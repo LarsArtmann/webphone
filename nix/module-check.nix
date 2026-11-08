@@ -194,15 +194,17 @@
           name = "metrics-fencing";
           path = pkgs.writeText "metrics-fencing" (
             let
-              exposed = (lib.evalModules (moduleSet {
-                caddy.enable = false;
-                settings.addr = "0.0.0.0:8080";
-              })).config.warnings;
+              exposed =
+                (lib.evalModules (moduleSet {
+                  caddy.enable = false;
+                  settings.addr = "0.0.0.0:8080";
+                })).config.warnings;
               loopbackSilent = (lib.evalModules (moduleSet { })).config.warnings;
-              caddiedSilent = (lib.evalModules (moduleSet {
-                caddy.enable = true;
-                settings.addr = "0.0.0.0:8080";
-              })).config.warnings;
+              caddiedSilent =
+                (lib.evalModules (moduleSet {
+                  caddy.enable = true;
+                  settings.addr = "0.0.0.0:8080";
+                })).config.warnings;
             in
             if
               lib.length exposed == 1
@@ -212,8 +214,7 @@
             then
               "non-loopback listen warns; loopback default and caddied shapes stay silent"
             else
-              throw
-                "webphone-module check: metrics fencing mis-fires (exposed=${toString (lib.length exposed)}, loopback=${toString (lib.length loopbackSilent)}, caddied=${toString (lib.length caddiedSilent)})"
+              throw "webphone-module check: metrics fencing mis-fires (exposed=${toString (lib.length exposed)}, loopback=${toString (lib.length loopbackSilent)}, caddied=${toString (lib.length caddiedSilent)})"
           );
         }
         {
