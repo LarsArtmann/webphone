@@ -80,8 +80,8 @@ func TestGoPackageDirectoriesAreNotGitIgnored(t *testing.T) {
 			t.Errorf("package directory %q is GIT-IGNORED — a name-based .gitignore rule would drop it from history; anchor the rule to the repo root", rel)
 			continue
 		}
-		var exitErr *exec.ExitError
-		if !errors.As(checkErr, &exitErr) || exitErr.ExitCode() != 1 {
+		exitErr, ok := errors.AsType[*exec.ExitError](checkErr)
+		if !ok || exitErr.ExitCode() != 1 {
 			t.Fatalf("git check-ignore %q: %v", rel, checkErr)
 		}
 	}

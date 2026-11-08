@@ -2,8 +2,9 @@ package views
 
 import (
 	"fmt"
-	"strings"
 	"time"
+
+	"github.com/dustin/go-humanize"
 )
 
 // CRMContact is the optional CRM integration's answer for one phone
@@ -81,43 +82,10 @@ func dealValue(deal CRMDeal) string {
 
 	major := deal.ValueCents / 100
 	if deal.ValueCents%100 != 0 {
-		return fmt.Sprintf("%s %s.%02d", currency, formatThousands(major), deal.ValueCents%100)
+		return fmt.Sprintf("%s %s.%02d", currency, humanize.Comma(major), deal.ValueCents%100)
 	}
 
-	return currency + " " + formatThousands(major)
-}
-
-// formatThousands groups an integer with no locale dependency (no i18n money
-// library in this build, and a wrong symbol is worse than a plain code). The
-// sign is stripped FIRST: grouping the sign as a digit produced "-,999".
-func formatThousands(n int64) string {
-	digits := fmt.Sprintf("%d", n)
-
-	sign := ""
-	if strings.HasPrefix(digits, "-") {
-		sign, digits = "-", digits[1:]
-	}
-
-	if len(digits) <= 3 {
-		return sign + digits
-	}
-
-	var b strings.Builder
-
-	head := len(digits) % 3
-	if head > 0 {
-		b.WriteString(digits[:head])
-	}
-
-	for i := head; i < len(digits); i += 3 {
-		if b.Len() > 0 {
-			b.WriteString(",")
-		}
-
-		b.WriteString(digits[i : i+3])
-	}
-
-	return sign + b.String()
+	return currency + " " + humanize.Comma(major)
 }
 
 // crmTaskDue is the strip's due phrase: "overdue" or "due 2 Nov". A plain

@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/dustin/go-humanize"
 	"github.com/larsartmann/webphone/internal/pbx"
 )
 
@@ -247,8 +248,8 @@ func TestFormatThousands(t *testing.T) {
 	}
 
 	for in, want := range cases {
-		if got := formatThousands(in); got != want {
-			t.Errorf("formatThousands(%d) = %q, want %q", in, got, want)
+		if got := humanize.Comma(in); got != want {
+			t.Errorf("humanize.Comma(%d) = %q, want %q", in, got, want)
 		}
 	}
 }

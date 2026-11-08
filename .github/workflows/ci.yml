@@ -6,6 +6,11 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Fleet policy (cue-policy #CIWorkflow): CI workflows never publish, so
+# contents stays read; any additional scope must be declared explicitly.
+permissions:
+  contents: read
+
 jobs:
   # The forward-pin enabler: proves vendorHash + build of the exact rev.
   # Consumers relock this repo's main on trust; without this job "green
