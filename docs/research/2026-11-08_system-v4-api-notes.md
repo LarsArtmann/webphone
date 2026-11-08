@@ -90,3 +90,19 @@ Findings:
 # spike sources: /tmp/hello-system/{go.mod,main.go} (dial-window-shaped, plan-mirroring)
 nix develop -c sh -c 'cd /tmp/hello-system && go mod tidy && CGO_ENABLED=0 go build . && ./hello-system /tmp/hello-system/system.db fresh && ./hello-system /tmp/hello-system/system.db reopen'
 ```
+
+## A04 — cqrs-lint inventory (throwaway worktree `spike/cqrs-lint-inventory`, deleted after)
+
+Method: `git worktree` off main → `go get system/v4@v4.17.0` + stub import in internal/app → `buildflow -s cqrs-lint --format finding`. The dependency also upgrades metaengine v4.21.0 → **v4.22.0** (system v4.17.0's floor — the A10 train carries that bump too).
+
+**Verdict: NO surprise reds.** 56 findings total, **every one info-severity** — the findings gate (error+) cannot trip. Rule histogram: C044 18, D014 9, C023 9, B007 5 (handler-registration style, pre-existing), singles/doubles otherwise.
+
+**E023 (satellite SQL beside go-cqrs-lite) — exactly 3 sites, all info:**
+
+| Site                              | Why flagged                                                        | Disposition                                                     |
+| --------------------------------- | ------------------------------------------------------------------ | --------------------------------------------------------------- |
+| `internal/app/chat.go:5`          | package app will import system (cqrs.go) while chat.go passes `db.SQL()` around | MIGRATES — the sql import dies with the store ladder (Phase 5/7) |
+| `internal/readmodels/readmodels.go:19` | sqliteengine + `database/sql` (legacy row import) in one package  | MIGRATES — dies with readmodels.db (Phase 7)                    |
+| `internal/server/server.go:11`    | metaengine (Deps.DedupWindow) + `database/sql` in one package       | MIGRATES — dies with the ladder (Phase 7)                       |
+
+No baselines needed: nothing gates. E023's per-site retirement map IS the record; Phase 7's B147 (`internal/arch` rule updates) re-runs this inventory and expects zero E023.
