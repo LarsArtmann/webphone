@@ -10,6 +10,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -195,12 +196,29 @@ func SnippetsDomainDecl() system.DomainConfig {
 type Snippets struct {
 	sys    *system.System
 	reader *metaengine.TypedReader[readmodels.SnippetView]
+	vers   streamVersions
 	mu     sync.Mutex
 }
 
 // NewSnippets builds the backend over a System.
 func NewSnippets(sys *system.System) *Snippets {
-	return &Snippets{sys: sys, reader: metaengine.NewReader[readmodels.SnippetView](sys.MetaEngine(), "snippets")}
+	return &Snippets{sys: sys, reader: metaengine.NewReader[readmodels.SnippetView](sys.MetaEngine(), "snippets"), vers: streamVersions{}}
+}
+
+// awaitOwnWrite waits until the snippet projection has folded the
+// just-dispatched batch (D7): the Settings partial re-renders from the
+// projection in the SAME request. Best-effort — a tail-read failure
+// WARNs (the write committed) and never fails the request.
+func (s *Snippets) awaitOwnWrite(ctx context.Context, owner string) {
+	tail, err := committedTail(ctx, s.sys, SnippetsStreamType, owner, s.vers)
+	if err != nil {
+		slog.Warn("snippet write committed but the visibility tail read failed", "err", err, "owner", owner)
+		return
+	}
+	if len(tail) == 0 {
+		return
+	}
+	awaitVisibility(ctx, s.sys, "snippets", tail[len(tail)-1].ID().String())
 }
 
 // Save upserts a snippet by id (the decision preserves the slot's
@@ -219,6 +237,7 @@ func (s *Snippets) Save(ctx context.Context, snippet domain.Snippet) error {
 		}
 		return errorfamily.WrapInfrastructuref(err, "cqrs.snippet_save", "dispatch snippet.save")
 	}
+	s.awaitOwnWrite(ctx, snippet.Owner.String())
 	return nil
 }
 
@@ -259,5 +278,6 @@ func (s *Snippets) Delete(ctx context.Context, owner domain.Extension, snippetID
 		}); err != nil {
 		return err
 	}
+	s.awaitOwnWrite(ctx, owner.String())
 	return nil
 }

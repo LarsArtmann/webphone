@@ -221,3 +221,37 @@ func TestSnippetStateSurvivesRestart(t *testing.T) {
 		time.Sleep(5 * time.Millisecond)
 	}
 }
+
+// TestSnippetSaveIsImmediatelyVisible pins the D7 await: when Save (or
+// Delete) returns, the projection has ALREADY folded the write — the
+// Settings partial re-renders from the projection in the same request
+// and must never race its own write (no polling loop here: a miss IS
+// the failure).
+func TestSnippetSaveIsImmediatelyVisible(t *testing.T) {
+	s := bootSnippetsSystem(t, t.TempDir())
+	ctx := context.Background()
+	owner := mustExt(t, "1001")
+
+	snip := snippetFor(t, "1001", "visible at once", false)
+	if err := s.Save(ctx, snip); err != nil {
+		t.Fatalf("save: %v", err)
+	}
+	list, err := s.List(ctx, owner)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+	if len(list) != 1 || list[0].ID != snip.ID || list[0].Body != "visible at once" {
+		t.Fatalf("the just-saved snippet must be visible the moment Save returns: %+v", list)
+	}
+
+	if err := s.Delete(ctx, owner, snip.ID); err != nil {
+		t.Fatalf("delete: %v", err)
+	}
+	list, err = s.List(ctx, owner)
+	if err != nil {
+		t.Fatalf("list after delete: %v", err)
+	}
+	if len(list) != 0 {
+		t.Fatalf("the just-deleted snippet must be gone the moment Delete returns: %+v", list)
+	}
+}
