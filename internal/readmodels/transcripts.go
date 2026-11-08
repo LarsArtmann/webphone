@@ -215,7 +215,7 @@ func (s *Transcripts) Recent(ctx context.Context, owner domain.Extension, maxCal
 	if err != nil {
 		return nil, err
 	}
-	return reassembleTranscripts(rows, maxCalls), nil
+	return ReassembleTranscripts(rows, maxCalls), nil
 }
 
 // Search finds the owner's transcript segments whose text contains the
@@ -240,7 +240,7 @@ func (s *Transcripts) Search(ctx context.Context, owner domain.Extension, needle
 			matches = append(matches, seg)
 		}
 	}
-	return reassembleTranscripts(matches, maxCalls), nil
+	return ReassembleTranscripts(matches, maxCalls), nil
 }
 
 // RecentAll reassembles the newest transcribed calls across EVERY
@@ -255,7 +255,7 @@ func (s *Transcripts) RecentAll(ctx context.Context, maxCalls int) ([]domain.Cal
 	if err != nil {
 		return nil, err
 	}
-	return reassembleTranscripts(rows, maxCalls), nil
+	return ReassembleTranscripts(rows, maxCalls), nil
 }
 
 // Export reassembles the owner's WHOLE transcript history for the
@@ -271,7 +271,7 @@ func (s *Transcripts) Export(ctx context.Context, owner domain.Extension, maxCal
 	if err != nil {
 		return nil, err
 	}
-	return reassembleTranscripts(rows, maxCalls), nil
+	return ReassembleTranscripts(rows, maxCalls), nil
 }
 
 // fetchSegments reads segments newest-first behind the given scan
@@ -327,7 +327,7 @@ func (s *Transcripts) Call(ctx context.Context, owner domain.Extension, callID s
 			Text:      v.Text,
 		})
 	}
-	groups := reassembleTranscripts(rows, 1)
+	groups := ReassembleTranscripts(rows, 1)
 	if len(groups) == 0 {
 		return nil, nil
 	}
@@ -410,7 +410,7 @@ func (s *Transcripts) ExportAll(ctx context.Context) ([]TranscriptSegmentView, e
 	return exportAllViews(ctx, s.reader, "readmodels.transcript_list", "export transcripts")
 }
 
-// reassembleTranscripts groups newest-first segments into whole calls:
+// ReassembleTranscripts groups newest-first segments into whole calls:
 // newest call first, each call's lines in spoken order, the group list
 // capped at maxCalls. Segments of already-included calls keep landing
 // (the oldest included call must reassemble whole); only NEW groups are
@@ -419,7 +419,7 @@ func (s *Transcripts) ExportAll(ctx context.Context) ([]TranscriptSegmentView, e
 // prepend-per-segment was O(n²) on long calls (a 1500-segment marathon
 // rebuilt its line slice for every segment). Ported verbatim from the
 // retired SQL store with the metaengine swap.
-func reassembleTranscripts(rows []domain.CallTranscriptSegment, maxCalls int) []domain.CallTranscript {
+func ReassembleTranscripts(rows []domain.CallTranscriptSegment, maxCalls int) []domain.CallTranscript {
 	groups := make([]domain.CallTranscript, 0, maxCalls)
 	byCall := make(map[string]int, maxCalls)
 	for _, seg := range rows {

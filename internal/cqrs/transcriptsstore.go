@@ -227,7 +227,7 @@ func (s *Transcripts) DeleteCall(ctx context.Context, owner domain.Extension, ca
 
 	expungeType := event.Type(metaengine.EventTypeName(domain.TranscriptExpunged{}))
 	count, err := s.dispatchCounting(ctx, "transcript.delete_call", TranscriptStreamKey(owner.String(), callID),
-		func(base *command.BasicCommand) *DeleteCallTranscript {
+		func(base *command.BasicCommand) command.Command {
 			return &DeleteCallTranscript{BasicCommand: base, Owner: owner.String(), CallID: callID}
 		},
 		func(evt event.Event) bool { return evt.Type() == expungeType },
@@ -275,7 +275,7 @@ func (s *Transcripts) SweepBefore(ctx context.Context, cutoff time.Time) (int64,
 		}
 		for key, ids := range perStream {
 			count, err := s.dispatchCounting(ctx, "transcript.expunge", key,
-				func(base *command.BasicCommand) *ExpungeTranscriptSegments {
+				func(base *command.BasicCommand) command.Command {
 					return &ExpungeTranscriptSegments{BasicCommand: base, IDs: ids}
 				},
 				func(evt event.Event) bool { return evt.Type() == expungeType },

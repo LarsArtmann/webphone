@@ -63,6 +63,49 @@ func TestCRMNameLinkIsTheOneLinkHome(t *testing.T) {
 	}
 }
 
+// TestCRMCreateLinkArms pins the create affordance's three arms: an
+// absent template renders NOTHING (the byte-identical zero-config
+// product), a MISS (a number the CRM does not know) renders the anchor
+// with the {phone} placeholder substituted query-escaped (the leading
+// "+" is a query-param hazard), and a MATCHED number renders NOTHING —
+// its profile link is the affordance there, and two links to the same
+// CRM surface in one heading would be noise.
+func TestCRMCreateLinkArms(t *testing.T) {
+	t.Parallel()
+
+	const tmpl = "https://crm.example/contacts/new?phone={phone}"
+	linked := CRMContacts{"+493012345678": {
+		Name: "Ada Lovelace",
+		URL:  "https://crm.example/contacts/01M",
+	}}
+
+	absent := renderComponent(t, crmCreateLink("+44999999", "", linked, LangEN))
+	if absent != "" {
+		t.Errorf("empty template must render nothing, got:\n%s", absent)
+	}
+
+	miss := renderComponent(t, crmCreateLink("+44999999", tmpl, linked, LangEN))
+	for _, want := range []string{
+		`<a class="wp-crm-create"`,
+		`href="https://crm.example/contacts/new?phone=%2B44999999"`,
+		`target="_blank"`,
+		`rel="noopener noreferrer"`,
+		"New contact in the CRM",
+	} {
+		if !strings.Contains(miss, want) {
+			t.Errorf("create-link miss missing %q; got:\n%s", want, miss)
+		}
+	}
+	if strings.Contains(miss, "{phone}") {
+		t.Errorf("the placeholder must never survive into markup:\n%s", miss)
+	}
+
+	matched := renderComponent(t, crmCreateLink("+493012345678", tmpl, linked, LangEN))
+	if matched != "" {
+		t.Errorf("a CRM-matched number must render no create link (its profile link is the affordance), got:\n%s", matched)
+	}
+}
+
 // TestCRMContextStripRendersNothingWithoutContext is the degradation
 // contract: absence means NO markup at all, never an empty shell. A bordered
 // band with no facts would be worse than no band.
