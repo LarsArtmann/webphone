@@ -9,6 +9,7 @@ package server
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -81,6 +82,14 @@ const (
 	// per violation; a hostile flood must not own the journal).
 	cspLimit = 30
 	cspBurst = 10
+	// Templ form-POST buckets (2026-11-08): every write lane outside
+	// /api/* rides a keyed bucket now. Three classes by cost: the
+	// compose class (provider/paid surfaces) is tight, contacts and
+	// state toggles ride the contacts/hook grades. The rejection body
+	// carries a .wp-error element so htmx's responseHandling swaps the
+	// honest 429 into #wp-tab-error (shell copy stays English, D3).
+	composeLimit = 20
+	composeBurst = 10
 )
 
 // securityHeadersConfig is the single source for the security-header
@@ -122,6 +131,31 @@ func newKeyedRateLimiter(limit, burst uint) *httputil.KeyedRateLimiter {
 		Window:       time.Minute,
 		Burst:        burst,
 		KeyExtractor: remoteHostKey,
+	})
+}
+
+// templRateLimitedMsg is the honest 429 copy for the templ form-POST
+// lanes. Shell copy stays English (D3); the element class is the htmx
+// responseHandling wire (the [45].. arm selects .wp-error into
+// #wp-tab-error), so a plain-text body would swap nothing.
+const templRateLimitedMsg = "Too many requests — wait a moment and try again."
+
+// newTemplRateLimiter is the templ form-POST bucket: the same keyed
+// shape as every flood budget, but the rejection body carries the
+// .wp-error element htmx selects, so a flooded lane says so inside the
+// tab instead of dying silently.
+func newTemplRateLimiter(limit, burst uint) *httputil.KeyedRateLimiter {
+	return httputil.NewKeyedRateLimiter(httputil.KeyedRateLimiterConfig{
+		Limit:        limit,
+		Window:       time.Minute,
+		Burst:        burst,
+		KeyExtractor: remoteHostKey,
+		RejectionHandler: func(w http.ResponseWriter, _ *http.Request, retryAfter string) {
+			w.Header().Set("Retry-After", retryAfter)
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.WriteHeader(http.StatusTooManyRequests)
+			fmt.Fprintf(w, `<div class="wp-error" role="alert">%s</div>`, templRateLimitedMsg)
+		},
 	})
 }
 
@@ -308,8 +342,11 @@ func New(deps Deps) http.Handler {
 		eventsLimiter:     newKeyedRateLimiter(hookLimit, hookBurst),
 		csrfLimiter:       newKeyedRateLimiter(hookLimit, hookBurst),
 		contactsLimiter:   newKeyedRateLimiter(contactsLimit, contactsBurst),
-		switchLimiter:     newKeyedRateLimiter(switchLimit, switchBurst),
+	switchLimiter:     newKeyedRateLimiter(switchLimit, switchBurst),
 		cspLimiter:        newKeyedRateLimiter(cspLimit, cspBurst),
+		composeLimiter:    newTemplRateLimiter(composeLimit, composeBurst),
+		contactsTemplLimiter: newTemplRateLimiter(contactsLimit, contactsBurst),
+		stateTemplLimiter:    newTemplRateLimiter(hookLimit, hookBurst),
 		transcribeLimiter: newKeyedRateLimiter(hookLimit, hookBurst),
 		passkeyLimiter:    newKeyedRateLimiter(hookLimit, hookBurst),
 		loginPageHandler:  loginPage,
@@ -379,27 +416,27 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("GET /partials/contacts", h.partialContacts)
 	protected.HandleFunc("GET /partials/settings", h.partialSettings)
 	protected.HandleFunc("GET /partials/nav", h.partialNav)
-	protected.HandleFunc("POST /messages/{id}/read", h.markThreadRead)
+	protected.Handle("POST /messages/{id}/read", h.stateTemplLimiter.Middleware()(http.HandlerFunc(h.markThreadRead)))
 	// M22: one pattern route covers pin|archive|mute — the handler's
 	// action map rejects anything else with 404, and the literal "read"
 	// pattern above still wins for that exact segment.
-	protected.HandleFunc("POST /messages/{id}/{flag}", h.setThreadFlag)
-	protected.HandleFunc("POST /snippets/save", h.saveSnippet)
-	protected.HandleFunc("POST /snippets/delete", h.deleteSnippet)
-	protected.HandleFunc("POST /messages/send", h.sendMessage)
+	protected.Handle("POST /messages/{id}/{flag}", h.stateTemplLimiter.Middleware()(http.HandlerFunc(h.setThreadFlag)))
+	protected.Handle("POST /snippets/save", h.stateTemplLimiter.Middleware()(http.HandlerFunc(h.saveSnippet)))
+	protected.Handle("POST /snippets/delete", h.stateTemplLimiter.Middleware()(http.HandlerFunc(h.deleteSnippet)))
+	protected.Handle("POST /messages/send", h.composeLimiter.Middleware()(http.HandlerFunc(h.sendMessage)))
 	protected.HandleFunc("GET /partials/messages/drafts", h.partialDrafts)
-	protected.HandleFunc("POST /messages/drafts/mode", h.setDraftMode)
-	protected.HandleFunc("POST /messages/drafts/{id}/approve", h.approveDraft)
-	protected.HandleFunc("POST /messages/drafts/{id}/discard", h.discardDraft)
-	protected.HandleFunc("POST /messages/ai-draft", h.aiDraft)
-	protected.HandleFunc("POST /fax/send", h.sendFax)
-	protected.HandleFunc("POST /fax/{id}/resend", h.resendFax)
+	protected.Handle("POST /messages/drafts/mode", h.stateTemplLimiter.Middleware()(http.HandlerFunc(h.setDraftMode)))
+	protected.Handle("POST /messages/drafts/{id}/approve", h.composeLimiter.Middleware()(http.HandlerFunc(h.approveDraft)))
+	protected.Handle("POST /messages/drafts/{id}/discard", h.stateTemplLimiter.Middleware()(http.HandlerFunc(h.discardDraft)))
+	protected.Handle("POST /messages/ai-draft", h.composeLimiter.Middleware()(http.HandlerFunc(h.aiDraft)))
+	protected.Handle("POST /fax/send", h.composeLimiter.Middleware()(http.HandlerFunc(h.sendFax)))
+	protected.Handle("POST /fax/{id}/resend", h.composeLimiter.Middleware()(http.HandlerFunc(h.resendFax)))
 	protected.HandleFunc("GET /fax/{id}/document", h.faxDocument)
 	protected.HandleFunc("GET /attachments/{id}", h.attachment)
-	protected.HandleFunc("POST /voicemail/delete", h.deleteVoicemail)
-	protected.HandleFunc("POST /contacts/save", h.saveContact)
-	protected.HandleFunc("POST /contacts/delete", h.deleteContact)
-	protected.HandleFunc("POST /contacts/import", h.importContacts)
+	protected.Handle("POST /voicemail/delete", h.stateTemplLimiter.Middleware()(http.HandlerFunc(h.deleteVoicemail)))
+	protected.Handle("POST /contacts/save", h.contactsTemplLimiter.Middleware()(http.HandlerFunc(h.saveContact)))
+	protected.Handle("POST /contacts/delete", h.contactsTemplLimiter.Middleware()(http.HandlerFunc(h.deleteContact)))
+	protected.Handle("POST /contacts/import", h.contactsTemplLimiter.Middleware()(http.HandlerFunc(h.importContacts)))
 	protected.HandleFunc("GET /contacts/export", h.exportContacts)
 	protected.Handle("POST /api/session",
 		h.loginLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(h.createSession))))
