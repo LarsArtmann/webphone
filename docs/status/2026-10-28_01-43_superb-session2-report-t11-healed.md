@@ -135,7 +135,7 @@ download-path anomaly.
 38. Island UX: the drafts-changed SSE should flip the queued button on the ended card — wire if
     not covered (T13-adjacent).
 39. Settings-probe latency (2s worst case per render) — measure; cache briefly if visible.
-40. ~~Smoke script: add the review route if it enumerates surfaces.~~ adjudicated NOT-needed — the condition's premise fails: the review route is owner-scoped (another owner's call id is the same 404), idempotent via the shared CallsIdem key, and enumerates nothing (the GET reads one slot; absent = empty body), so there is no enumeration surface for the smoke to fence.
+40. ~~Smoke script: add the review route if it enumerates surfaces.~~ done — adjudicated NOT-needed: the condition's premise fails: the review route is owner-scoped (another owner's call id is the same 404), idempotent via the shared CallsIdem key, and enumerates nothing (the GET reads one slot; absent = empty body), so there is no enumeration surface for the smoke to fence.
 41. T12 backup/restore drill coverage for `call_reviews` (call_notes precedent).
 42. Confirm `TestServedPageHoldsTheDomContract` after T3/T7/T11 markup (new ids or their
     documented absence).

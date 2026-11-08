@@ -369,7 +369,7 @@ Ordered by (impact ÷ risk), not by area.
     the jump-to-latest chip under stress (long transcripts, `position:
     sticky` + `contain: layout` interactions).
 33. ~~Check the split at the _boundary_ widths (43rem / 44rem / 45rem) for a
-    one-pixel oscillation.~~ adjudicated structurally-impossible — the feedback loop the check
+    one-pixel oscillation.~~ done — adjudicated structurally impossible: the feedback loop the check
     feared cannot exist: `.wp-main-col` (the `tabcol` container) is sized by SHELL geometry
     (viewport − island − gap − padding) and the rail/detail grid lives INSIDE it, so engaging
     the split at 44rem changes the inner columns but never the container width the query

@@ -36,7 +36,7 @@ reordering/whitespace. Added a full-text golden:
 - `nix/module-output.nix` renders the Caddy vhost `extraConfig`, the
   `retentionDays = 7` backup script, and the settings JSON in one document.
 - `nix/module-output.golden` is the committed fixture (1865 B).
-- `nix/module-check.nix` gained a `module-output-golden` case that `diff`s
+- `nix/module-check.nix` gained a `module-output-golden` case that diffs
   the rendered text against the fixture and fails on drift.
   Verified: `nix build .#checks.x86_64-linux.webphone-module` green (the
   linkFarm now carries **16** entries incl. `module-output-golden`, which

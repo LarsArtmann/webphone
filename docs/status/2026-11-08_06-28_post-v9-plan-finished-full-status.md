@@ -139,7 +139,7 @@ erraudit 0 violations.
 9. Missed-badge clearing on the island panel opening (pack A4b, ~10 min)
    once A4 is answered.
 10. ~~Search `?q=` deep-linking (pack A5, one `pushState`) once A5 is
-    answered.~~ OWNED — the portfolio plan's P3-2 row is the ONE home (docs/planning/2026-11-08_06-35_SUPERB-portfolio-pareto-plan.md, gated on the owner's pack-A5 answer; the sitting pack itself is the ruling surface).
+    answered.~~ done — OWNED: the portfolio plan's P3-2 row is the ONE home (docs/planning/2026-11-08_06-35_SUPERB-portfolio-pareto-plan.md, gated on the owner's pack-A5 answer; the sitting pack itself is the ruling surface).
 11. Stack leg: `crm.caFile` pass-through (handover pack Leg 1) — small,
     unblocks private-CA CRM deployments.
 12. Stack leg: `/hooks/ring` dialplan POST + VM-test scenario (Leg 2) —

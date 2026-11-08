@@ -170,7 +170,7 @@ P3-6 view layer — see §d for that collaboration's near-miss).
 34. P4-2 prod 422 bridge triage (owner journal leg).
 35. P4-3 passkey live proof + fail-closed drill (owner).
 36. P4-4 mic pre-warm ritual (owner).
-37. ~~P4-5 `/health` host rebuild + browser check (owner).~~ OWNED — the portfolio plan's P4-5 row is the ONE home (OWNER-classed, TODO §/health pointer, steps 29.1–29.2 in the plan's execution table).
+37. ~~P4-5 `/health` host rebuild + browser check (owner).~~ done — OWNED: the portfolio plan's P4-5 row is the ONE home (OWNER-classed, TODO §/health pointer, steps 29.1–29.2 in the plan's execution table).
 38. P4-6 PR #234 merge + catalog v4.10 ride decision (owner).
 39. P4-8 the native-app first device train (needs #7).
 40. P4-11 release announcements (owner picks channels).

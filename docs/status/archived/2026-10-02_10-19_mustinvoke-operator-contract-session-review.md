@@ -49,7 +49,7 @@
 ~~1. **Skills verdict** — mechanism-level compliance established (solid); presentation-level grading started only after the operator pushback and is ~60% mapped: two surfaces scored (panic 1/5, designed errors 2/5), remediation shape sketched in chat only.~~ done — the presentation layer shipped the same morning (the 11:15 harvest; TODO boot row)
 ~~2. **Boot-error-contract design** — the 5-line render for the panic case exists as chat prose; no design doc, no code, no tests.~~ done — the boot-error contract shipped 2026-10-02 (bootreport.go + pins; TODO boot row)
 ~~3. **Memory upkeep** — durable discoveries identified as record-worthy (AGENTS.md composition-root rationale, operator ruling gap) but not yet written anywhere (see d-2).~~ done — AGENTS carries the composition-root doctrine; error-contract the operator ruling
-~~4. **`App.Start` improvement** — identified during THIS report's drafting: all three `MustInvokeNamed` calls there sit in a method that already `return`s error, so `InvokeNamed` + `wrapf` removes them at zero cost. Analysis done; change not made.~~ done — App.Start de-panicked (InvokeNamed + wrapf, 2026-10-02)
+~~4. **`App.Start` improvement** — identified during THIS report's drafting: all three `MustInvokeNamed` calls there sit in a method that already returns an error, so `InvokeNamed` + `wrapf` removes them at zero cost. Analysis done; change not made.~~ done — App.Start de-panicked (InvokeNamed + wrapf, 2026-10-02)
 
 ## c) NOT STARTED
 
