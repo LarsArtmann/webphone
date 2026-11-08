@@ -23,7 +23,15 @@ import (
 // chains.
 func newHTTPClient(caFile string) (*http.Client, error) {
 	if caFile == "" {
-		return &http.Client{Timeout: requestTimeout}, nil
+		// Clone (not share) DefaultTransport: a client with its own pool
+		// never rides connections that another test's httptest.Server.Close
+		// may retire mid-roundtrip (httptest "helpfully" closes idle
+		// connections on the global transport; a shared pool made the
+		// failure-classes suite flaky under parallel tests).
+		return &http.Client{
+			Timeout:   requestTimeout,
+			Transport: http.DefaultTransport.(*http.Transport).Clone(),
+		}, nil
 	}
 
 	bundle, err := os.ReadFile(caFile)
