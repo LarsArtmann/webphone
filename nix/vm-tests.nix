@@ -75,6 +75,16 @@
                 "sqlite3 /var/lib/webphone-backup/readmodels.db 'pragma integrity_check' | grep -q '^ok$'"
             )
 
+            # The system composition root's journal database rides the
+            # same snapshot (command/event streams, projections,
+            # checkpoints, DLQ — user data from the SUPERB phases on).
+            machine.succeed(
+                "test -f /var/lib/webphone-backup/system.db"
+            )
+            machine.succeed(
+                "sqlite3 /var/lib/webphone-backup/system.db 'pragma integrity_check' | grep -q '^ok$'"
+            )
+
             # Private-data hardening (2026-09-29 train, pinned 2026-09-30):
             # the oneshot succeeded, the state dir is group-readable at
             # most, and backup artifacts are owner-only (UMask=0077 ->
@@ -130,6 +140,9 @@
             )
             machine.succeed(
             "test -f '/var/lib/webphone-backup/snapshots/'$(date +%F)'/readmodels.db'"
+            )
+            machine.succeed(
+            "test -f '/var/lib/webphone-backup/snapshots/'$(date +%F)'/system.db'"
             )
           '';
         };

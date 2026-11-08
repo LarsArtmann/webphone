@@ -674,9 +674,11 @@ request_body {
 
 The state directory (`data_dir`, default `/var/lib/webphone`) holds
 everything: `webphone.db` (SQLite), `readmodels.db` (the engine-side
-read models: contacts, snippets, faxes, call transcripts), and `files/`
-(the content-addressed blob tree for attachments and fax documents).
-Back up all of them together.
+read models: contacts, snippets, faxes, call transcripts), `system.db`
+(the command/event journal: event streams, projections, checkpoints,
+the projection dead-letter store), and `files/` (the content-addressed
+blob tree for attachments and fax documents). Back up all of them
+together.
 
 Online, per snapshot (no downtime — what `services.webphone.backup.*`
 in the NixOS module wires as a daily timer):
@@ -684,6 +686,7 @@ in the NixOS module wires as a daily timer):
 ```console
 sqlite3 /var/lib/webphone/webphone.db ".backup '/var/lib/webphone-backup/webphone.db'"
 sqlite3 /var/lib/webphone/readmodels.db ".backup '/var/lib/webphone-backup/readmodels.db'"
+sqlite3 /var/lib/webphone/system.db ".backup '/var/lib/webphone-backup/system.db'"
 rsync -a --delete /var/lib/webphone/files/ /var/lib/webphone-backup/files/
 ```
 
@@ -698,11 +701,12 @@ python3 scripts/webphone-backup-drill.py   # end-to-end restore drill (boots a t
 ```
 
 1. stop the service,
-2. copy `webphone.db`, `readmodels.db` and `files/` back into the data
-   directory,
+2. copy `webphone.db`, `readmodels.db`, `system.db` and `files/` back
+   into the data directory,
 3. start the service — tab sessions live in the SQLite database, so the
    restored session rows keep working (signed-in browsers stay signed
-   in); everything else renders straight from the restored store.
+   in); the journal replays its projections on boot; everything else
+   renders straight from the restored store.
 
 Dated history (point-in-time restore): set
 `services.webphone.backup.retentionDays` (default `null` = single
@@ -712,8 +716,8 @@ tree, unchanged blobs hardlinked against the previous snapshot, so a
 month of history typically costs little more than one snapshot) and
 deletes snapshot directories older than the given days. Restore from a
 specific day: stop the service, copy `snapshots/<date>/webphone.db`,
-`snapshots/<date>/readmodels.db` and `snapshots/<date>/files/` back into
-the data directory, start it.
+`snapshots/<date>/readmodels.db`, `snapshots/<date>/system.db` and
+`snapshots/<date>/files/` back into the data directory, start it.
 
 Keep a copy OFF the machine: the snapshot directory (`destDir`) lives on
 the same host as the service, so it is not a backup yet — a disk loss

@@ -17,6 +17,13 @@ in
   if [ -f "${cfg.dataDir}/readmodels.db" ]; then
     sqlite3 "${cfg.dataDir}/readmodels.db" ".backup '${dest}/readmodels.db'"
   fi
+  # The system composition root's journal database (command/event
+  # streams, projections, checkpoints, DLQ) carries user data from the
+  # SUPERB phases on — guarded the same way for data dirs that have
+  # not booted a webphone new enough to create it yet.
+  if [ -f "${cfg.dataDir}/system.db" ]; then
+    sqlite3 "${cfg.dataDir}/system.db" ".backup '${dest}/system.db'"
+  fi
   rsync -a --delete "${cfg.dataDir}/files/" "${dest}/files/"
 ''
 + (lib.optionalString history ''
@@ -34,6 +41,9 @@ in
   sqlite3 "${cfg.dataDir}/webphone.db" ".backup '$snap/webphone.db'"
   if [ -f "${cfg.dataDir}/readmodels.db" ]; then
     sqlite3 "${cfg.dataDir}/readmodels.db" ".backup '$snap/readmodels.db'"
+  fi
+  if [ -f "${cfg.dataDir}/system.db" ]; then
+    sqlite3 "${cfg.dataDir}/system.db" ".backup '$snap/system.db'"
   fi
   if [ -n "$basis" ]; then
     rsync -a --delete --link-dest="$basis" "${cfg.dataDir}/files/" "$snap/files/"
