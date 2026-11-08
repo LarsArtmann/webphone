@@ -429,10 +429,10 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			return nil, err
 		}
 		return server.New(server.Deps{
-			Config:      cfg,
-			Sessions:    do.MustInvoke[*session.SQLiteStore](i),
-			Messages:    do.MustInvoke[*store.Messages](i),
-			Faxes:       engine.Faxes(),
+			Config:   cfg,
+			Sessions: do.MustInvoke[*session.SQLiteStore](i),
+			Messages: do.MustInvoke[*store.Messages](i),
+			Faxes:    engine.Faxes(),
 			// The four Phase-4 seams answer from the journal's decisions
 			// (SUPERB): the engine-backed stores stay as the import sources
 			// and rollback lanes behind their gate interfaces.

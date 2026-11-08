@@ -361,6 +361,7 @@ a deliberate code change, regenerate:
 | cqrs.agent_audit_recent                      | Infrastructure            | internal/cqrs/agentaudit.go        |
 | cqrs.agent_audit_register                    | Infrastructure            | internal/cqrs/agentaudit.go        |
 | cqrs.command_build                           | Infrastructure            | internal/cqrs/dialwindows.go       |
+| cqrs.contact_count                           | Infrastructure            | internal/cqrs/contacts.go          |
 | cqrs.contact_delete                          | Infrastructure            | internal/cqrs/contacts.go          |
 | cqrs.contact_fold                            | Corruption                | internal/cqrs/contacts.go          |
 | cqrs.contact_list                            | Infrastructure            | internal/cqrs/contacts.go          |
@@ -376,6 +377,7 @@ a deliberate code change, regenerate:
 | cqrs.disposition_save                        | Infrastructure            | internal/cqrs/callnotes.go         |
 | cqrs.dlq                                     | Infrastructure            | internal/app/cqrs.go               |
 | cqrs.engine                                  | Infrastructure            | internal/app/cqrs.go               |
+| cqrs.engine_count                            | Infrastructure            | internal/cqrs/engineaggregate.go   |
 | cqrs.enroll_burn                             | Infrastructure            | internal/cqrs/enroll.go            |
 | cqrs.enroll_fold                             | Corruption                | internal/cqrs/enroll.go            |
 | cqrs.enroll_lookup                           | Infrastructure            | internal/cqrs/enroll.go            |
@@ -413,6 +415,7 @@ a deliberate code change, regenerate:
 | cqrs.stream_tail                             | Infrastructure            | internal/cqrs/visibility.go        |
 | cqrs.transcript_append                       | Infrastructure            | internal/cqrs/transcriptsstore.go  |
 | cqrs.transcript_call                         | Infrastructure            | internal/cqrs/transcriptsstore.go  |
+| cqrs.transcript_count                        | Infrastructure            | internal/cqrs/transcriptsstore.go  |
 | cqrs.transcript_delete                       | Infrastructure            | internal/cqrs/transcriptsstore.go  |
 | cqrs.transcript_event                        | Infrastructure            | internal/cqrs/transcripts.go       |
 | cqrs.transcript_fold                         | Corruption                | internal/cqrs/transcripts.go       |

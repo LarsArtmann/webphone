@@ -258,7 +258,11 @@ func (s *Transcripts) DeleteCall(ctx context.Context, owner domain.Extension, ca
 // Count reports the total stored transcript segments across all owners
 // (webphone_transcripts_total) via the engine's native COUNT.
 func (s *Transcripts) Count(ctx context.Context) (int64, error) {
-	return engineCount(ctx, s.sys, "cqrs.transcript_count", transcriptsCollection)
+	n, err := engineCount(ctx, s.sys, transcriptsCollection)
+	if err != nil {
+		return 0, errorfamily.WrapInfrastructuref(err, "cqrs.transcript_count", "count transcripts")
+	}
+	return n, nil
 }
 
 // SweepBefore deletes segments appended before the cutoff (the

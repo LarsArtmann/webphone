@@ -52,20 +52,20 @@ type CqrsService struct {
 	dlqDB *sql.DB
 	log   *slog.Logger
 
-	startMu      sync.Mutex
-	started      bool
-	shutdown     bool
-	shutdownM    sync.Mutex
-	dialsOnce    sync.Once
-	dials        *cqrsdomain.DialWindows
-	snippetsOnce sync.Once
-	snippets     *cqrsdomain.Snippets
-	enrollOnce   sync.Once
-	enroll       *cqrsdomain.EnrollTokens
-	auditOnce    sync.Once
-	audit        *cqrsdomain.AgentAudit
-	pushOnce     sync.Once
-	pushDevices  *cqrsdomain.PushDevices
+	startMu         sync.Mutex
+	started         bool
+	shutdown        bool
+	shutdownM       sync.Mutex
+	dialsOnce       sync.Once
+	dials           *cqrsdomain.DialWindows
+	snippetsOnce    sync.Once
+	snippets        *cqrsdomain.Snippets
+	enrollOnce      sync.Once
+	enroll          *cqrsdomain.EnrollTokens
+	auditOnce       sync.Once
+	audit           *cqrsdomain.AgentAudit
+	pushOnce        sync.Once
+	pushDevices     *cqrsdomain.PushDevices
 	contactsOnce    sync.Once
 	contacts        *cqrsdomain.Contacts
 	transcriptsOnce sync.Once

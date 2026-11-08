@@ -289,7 +289,11 @@ func (s *Contacts) List(ctx context.Context, owner domain.Extension) ([]domain.C
 // metrics surface's webphone_contacts_total) via the engine's native
 // COUNT aggregate.
 func (s *Contacts) Count(ctx context.Context) (int64, error) {
-	return engineCount(ctx, s.sys, "cqrs.contact_count", contactsCollection)
+	n, err := engineCount(ctx, s.sys, contactsCollection)
+	if err != nil {
+		return 0, errorfamily.WrapInfrastructuref(err, "cqrs.contact_count", "count contacts")
+	}
+	return n, nil
 }
 
 // Delete removes one contact scoped to its owner; an unknown id
