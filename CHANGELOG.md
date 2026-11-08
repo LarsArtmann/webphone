@@ -26,17 +26,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "New contact in the CRM" affordance are documented and translated
   (2026-11-08), completing the CRM create-link train's dictionary and
   operator-doc halves.
-
-### Fixed
-
-- A red-main loop between the openapi golden test and dprint
-  (2026-11-08): the wire render carries no trailing newline but dprint
-  requires one, so the two gates could never both pass — the test now
-  pins the document bytes and tolerates exactly that one EOF newline,
-  and `-update` seeds the golden dprint-canonically.
-
-### Added
-
 - The thread search is shareable (2026-11-08, pack A5): the debounced
   search fetch pushes `/messages?q=…`, so a typed query survives a
   share or refresh (the server's full-page render already filtered on
@@ -224,6 +213,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- A red-main loop between the openapi golden test and dprint
+  (2026-11-08): the wire render carries no trailing newline but dprint
+  requires one, so the two gates could never both pass — the test now
+  pins the document bytes and tolerates exactly that one EOF newline,
+  and `-update` seeds the golden dprint-canonically.
 - The docs-health battery's CI leg red-ed twice on its first day
   (2026-11-07), both times only off this workstation: the wrapper
   fail-closes on a missing dprint that the devShell borrowed from the
