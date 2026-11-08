@@ -513,6 +513,14 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time agent-audit import
 	importPushDevices(context.Background(), sqlite, engine.PushDevices(),
 		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time push-device import
+	importContactsIntoJournal(context.Background(), sqlite, engine.Contacts(),
+		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time contacts import
+	importTranscriptsIntoJournal(context.Background(), sqlite, engine.Transcripts(),
+		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time transcript import
+	importCallNotesIntoJournal(context.Background(), sqlite, engine.Notes(),
+		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time call-notes import
+	importCallReviewsIntoJournal(context.Background(), sqlite, engine.Reviews(),
+		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time call-reviews import
 	if cfg.Auth.Passkey.Enabled() {
 		if _, err := do.InvokeNamed[*userauth.Service](injector, "userauth"); err != nil {
 			return nil, wrapf("open passkey auth: %w", err)

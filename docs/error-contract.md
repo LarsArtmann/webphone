@@ -361,12 +361,19 @@ a deliberate code change, regenerate:
 | cqrs.agent_audit_recent                      | Infrastructure            | internal/cqrs/agentaudit.go        |
 | cqrs.agent_audit_register                    | Infrastructure            | internal/cqrs/agentaudit.go        |
 | cqrs.command_build                           | Infrastructure            | internal/cqrs/dialwindows.go       |
+| cqrs.contact_delete                          | Infrastructure            | internal/cqrs/contacts.go          |
+| cqrs.contact_fold                            | Corruption                | internal/cqrs/contacts.go          |
+| cqrs.contact_list                            | Infrastructure            | internal/cqrs/contacts.go          |
+| cqrs.contact_list_full                       | Rejection                 | internal/cqrs/contacts.go          |
+| cqrs.contact_missing                         | Rejection                 | internal/cqrs/contacts.go          |
+| cqrs.contact_register                        | Infrastructure            | internal/cqrs/contacts.go          |
+| cqrs.contact_save                            | Infrastructure            | internal/cqrs/contacts.go          |
 | cqrs.dial_attempt                            | Infrastructure            | internal/cqrs/dialwindows.go       |
 | cqrs.dial_fold                               | Corruption                | internal/cqrs/dial.go              |
-| cqrs.dial_import                             | Infrastructure, Rejection | internal/app/dialimport.go         |
 | cqrs.dial_override                           | Infrastructure            | internal/cqrs/dialwindows.go       |
 | cqrs.dial_register                           | Infrastructure            | internal/cqrs/dial.go              |
 | cqrs.dial_window_load                        | Infrastructure            | internal/cqrs/dialwindows.go       |
+| cqrs.disposition_save                        | Infrastructure            | internal/cqrs/callnotes.go         |
 | cqrs.dlq                                     | Infrastructure            | internal/app/cqrs.go               |
 | cqrs.engine                                  | Infrastructure            | internal/app/cqrs.go               |
 | cqrs.enroll_burn                             | Infrastructure            | internal/cqrs/enroll.go            |
@@ -375,6 +382,12 @@ a deliberate code change, regenerate:
 | cqrs.enroll_mint                             | Infrastructure            | internal/cqrs/enroll.go            |
 | cqrs.enroll_register                         | Infrastructure            | internal/cqrs/enroll.go            |
 | cqrs.enroll_sweep                            | Infrastructure            | internal/cqrs/enroll.go            |
+| cqrs.journal_import                          | Infrastructure, Rejection | internal/app/importutil.go         |
+| cqrs.note_fold                               | Corruption                | internal/cqrs/callnotes.go         |
+| cqrs.note_get                                | Infrastructure            | internal/cqrs/callnotes.go         |
+| cqrs.note_list_full                          | Conflict                  | internal/cqrs/callnotes.go         |
+| cqrs.note_register                           | Infrastructure            | internal/cqrs/callnotes.go         |
+| cqrs.note_save                               | Infrastructure            | internal/cqrs/callnotes.go         |
 | cqrs.open                                    | Infrastructure            | internal/app/cqrs.go               |
 | cqrs.owner_stream                            | Rejection                 | internal/cqrs/dialwindows.go       |
 | cqrs.push_device_fold                        | Corruption                | internal/cqrs/pushdevices.go       |
@@ -383,6 +396,11 @@ a deliberate code change, regenerate:
 | cqrs.push_device_register                    | Infrastructure            | internal/cqrs/pushdevices.go       |
 | cqrs.push_device_remove                      | Infrastructure            | internal/cqrs/pushdevices.go       |
 | cqrs.push_device_save                        | Infrastructure            | internal/cqrs/pushdevices.go       |
+| cqrs.review_fold                             | Corruption                | internal/cqrs/callreviews.go       |
+| cqrs.review_get                              | Infrastructure            | internal/cqrs/callreviews.go       |
+| cqrs.review_list_full                        | Rejection                 | internal/cqrs/callreviews.go       |
+| cqrs.review_register                         | Infrastructure            | internal/cqrs/callreviews.go       |
+| cqrs.review_save                             | Infrastructure            | internal/cqrs/callreviews.go       |
 | cqrs.snippet_delete                          | Infrastructure            | internal/cqrs/snippets.go          |
 | cqrs.snippet_fold                            | Corruption                | internal/cqrs/snippets.go          |
 | cqrs.snippet_list                            | Infrastructure            | internal/cqrs/snippets.go          |
@@ -391,6 +409,17 @@ a deliberate code change, regenerate:
 | cqrs.snippet_register                        | Infrastructure            | internal/cqrs/snippets.go          |
 | cqrs.snippet_save                            | Infrastructure            | internal/cqrs/snippets.go          |
 | cqrs.start                                   | Infrastructure            | internal/app/cqrs.go               |
+| cqrs.stream_ref                              | Rejection                 | internal/cqrs/visibility.go        |
+| cqrs.stream_tail                             | Infrastructure            | internal/cqrs/visibility.go        |
+| cqrs.transcript_append                       | Infrastructure            | internal/cqrs/transcriptsstore.go  |
+| cqrs.transcript_call                         | Infrastructure            | internal/cqrs/transcriptsstore.go  |
+| cqrs.transcript_delete                       | Infrastructure            | internal/cqrs/transcriptsstore.go  |
+| cqrs.transcript_event                        | Infrastructure            | internal/cqrs/transcripts.go       |
+| cqrs.transcript_fold                         | Corruption                | internal/cqrs/transcripts.go       |
+| cqrs.transcript_register                     | Infrastructure            | internal/cqrs/transcripts.go       |
+| cqrs.transcript_scan                         | Infrastructure            | internal/cqrs/transcriptsstore.go  |
+| cqrs.transcript_sweep                        | Infrastructure            | internal/cqrs/transcriptsstore.go  |
+| cqrs.transcript_tail                         | Infrastructure            | internal/cqrs/transcriptsstore.go  |
 | cqrs.worker_failed                           | Infrastructure            | internal/app/cqrs.go               |
 | cqrs.worker_lag                              | Infrastructure            | internal/app/cqrs.go               |
 | crm.ca_file                                  | Rejection                 | internal/crm/transport.go          |
