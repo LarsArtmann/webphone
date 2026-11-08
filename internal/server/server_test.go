@@ -73,7 +73,7 @@ type testServer struct {
 	handler     http.Handler
 	hubs        *ExtensionHubs
 	messages    readmodels.ThreadGate
-	faxes       *readmodels.Faxes
+	faxes       *cqrs.Faxes
 	transcripts *readmodels.Transcripts
 	phoneAPI    *pbx.Client
 }
@@ -144,20 +144,20 @@ func newTestServerWithConfig(
 	// ONE journal system per composition: the notifier and the messaging
 	// service must share the same gate — a second system would split-brain
 	// the SSE pushes away from the writes (the seam's read path).
-	threadSys, err := cqrs.NewThreadsSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
+	coreSys, err := cqrs.NewCoreSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = threadSys.Close() })
-	messages := cqrs.NewThreads(threadSys)
+	t.Cleanup(func() { _ = coreSys.Close() })
+	messages := cqrs.NewThreads(coreSys)
 	// The notifier reads the capability from the SAME config the panels
 	// do (mirroring app.go): a test that declares a fax lane off must get
 	// SSE payloads that agree with the full render.
-	notifier := NewNotifier(hubs, messages, engine.Faxes(), nil, false, views.FaxCapability{
+	notifier := NewNotifier(hubs, messages, cqrs.NewFaxes(coreSys), nil, false, views.FaxCapability{
 		Send:    cfg.Fax.SendEnabled(),
 		Receive: cfg.Fax.ReceiveEnabled(),
 	})
-	faxes := engine.Faxes()
+	faxes := cqrs.NewFaxes(coreSys)
 	transcripts := engine.Transcripts()
 	// SQLite session store (not the mem store): the /metrics aggregates
 	// count the sessions TABLE, which only the SQLite store's schema
@@ -731,4 +731,16 @@ func threadGateForTest(t testing.TB) readmodels.ThreadGate {
 	}
 	t.Cleanup(func() { _ = sys.Close() })
 	return cqrs.NewThreads(sys)
+}
+
+// faxGateForTest boots the journal-backed fax store (the notifier's
+// fax seam since SUPERB Phase 6).
+func faxGateForTest(t testing.TB) readmodels.FaxGate {
+	t.Helper()
+	sys, err := cqrs.NewFaxesSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = sys.Close() })
+	return cqrs.NewFaxes(sys)
 }

@@ -68,6 +68,8 @@ type CqrsService struct {
 	pushDevices     *cqrsdomain.PushDevices
 	threadsOnce     sync.Once
 	threads         *cqrsdomain.Threads
+	faxesOnce       sync.Once
+	faxes           *cqrsdomain.Faxes
 	contactsOnce    sync.Once
 	contacts        *cqrsdomain.Contacts
 	transcriptsOnce sync.Once
@@ -93,6 +95,7 @@ func NewCqrs(cfg config.Config, log *slog.Logger) (*CqrsService, error) {
 		cqrsdomain.AgentAuditDomainDecl(),
 		cqrsdomain.PushDevicesDomainDecl(),
 		cqrsdomain.ThreadsDomainDecl(),
+		cqrsdomain.FaxesDomainDecl(),
 		cqrsdomain.ContactsDomainDecl(),
 		cqrsdomain.TranscriptsDomainDecl(),
 		cqrsdomain.NotesDomainDecl(),
@@ -142,6 +145,14 @@ func (s *CqrsService) PushDevicesSvc() *cqrsdomain.PushDevices {
 func (s *CqrsService) ThreadsSvc() *cqrsdomain.Threads {
 	s.threadsOnce.Do(func() { s.threads = cqrsdomain.NewThreads(s.Sys) })
 	return s.threads
+}
+
+// FaxesSvc builds (once) the dispatch-backed fax store — the SAME
+// surface the engine-backed store exposed, now answering from the
+// journal's decisions (SUPERB Phase 6, A39).
+func (s *CqrsService) FaxesSvc() *cqrsdomain.Faxes {
+	s.faxesOnce.Do(func() { s.faxes = cqrsdomain.NewFaxes(s.Sys) })
+	return s.faxes
 }
 
 // ContactsSvc builds (once) the dispatch-backed personal-contacts

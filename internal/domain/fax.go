@@ -296,3 +296,18 @@ type FaxStatusAdvanced struct {
 type FaxExpunged struct {
 	Key FaxKey
 }
+
+// FaxMayMoveTo reports whether ANY legal faxMoves trigger carries a
+// row from `from` to `to` — the decider's (from → to) legality sight
+// over the same ONE table (the service drives event-shaped triggers;
+// the store seam persists target statuses; both judge by faxMoves).
+// Journal time encoding quantizes time.Time payloads by ~200 ns (the
+// recorded CBOR constraint); status moves never read clock subticks.
+func FaxMayMoveTo(from, to FaxStatus) bool {
+	for move := range faxMoves {
+		if move.from == from && move.to == to {
+			return true
+		}
+	}
+	return false
+}

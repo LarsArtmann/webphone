@@ -153,3 +153,30 @@ func NewThreadsSystem(ctx context.Context, dsn string) (*system.System, error) {
 	}
 	return sys, nil
 }
+
+// NewCoreSystem boots one system over the conversation core (threads +
+// faxes) — the server-side test compositions' helper: ONE journal per
+// composition, both gates over it (a second system would split-brain
+// pushes away from writes).
+func NewCoreSystem(ctx context.Context, dsn string) (*system.System, error) {
+	decl := Domain(ThreadsDomainDecl(), FaxesDomainDecl())
+	decl.ProjectionHostOptions = append(decl.ProjectionHostOptions,
+		projectionhost.WithBackoff(time.Millisecond, 5*time.Millisecond))
+	sys, err := system.New(ctx, decl, system.DeploymentConfig{
+		Engines: map[string]system.EngineConfig{
+			"db": {Driver: "sqlite", DSN: dsn, Pragmas: []string{"wal"}},
+		},
+		Instances: []system.InstanceConfig{
+			{Role: system.RoleSourceOfTruth, Engine: "db", Durability: system.DurabilityNormal},
+			{Role: system.RoleProjections, Engine: "db", Durability: system.DurabilityNormal},
+		},
+	})
+	if err != nil {
+		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.core_boot", "boot core system at %s", dsn)
+	}
+	if err := sys.Start(ctx); err != nil {
+		_ = sys.Close()
+		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.core_boot", "start core system at %s", dsn)
+	}
+	return sys, nil
+}
