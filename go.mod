@@ -1,6 +1,6 @@
 module github.com/larsartmann/webphone
 
-go 1.27.2
+go 1.27.3
 
 require (
 	github.com/a-h/templ v0.3.1100
@@ -11,14 +11,18 @@ require (
 	github.com/knadh/koanf/providers/env v1.1.0
 	github.com/knadh/koanf/providers/file v1.2.1
 	github.com/knadh/koanf/v2 v2.4.1
-	github.com/larsartmann/cqrs-htmx/identity-model/v4 v4.15.0
-	github.com/larsartmann/cqrs-htmx/loginpage/v4 v4.16.0
-	github.com/larsartmann/cqrs-htmx/usermgmt/v4 v4.19.0
+	github.com/larsartmann/cqrs-htmx/identity-model/v4 v4.17.0
+	github.com/larsartmann/cqrs-htmx/loginpage/v4 v4.17.0
+	github.com/larsartmann/cqrs-htmx/usermgmt/v4 v4.20.0
 	github.com/larsartmann/cqrs-htmx/usermgmt/webauthn/v4 v4.13.0
-	github.com/larsartmann/cqrs-htmx/v4 v4.16.0
+	github.com/larsartmann/cqrs-htmx/v4 v4.18.1
 	github.com/larsartmann/go-atomic-write v0.6.2
 	github.com/larsartmann/go-branded-id v0.7.1
-	github.com/larsartmann/go-cqrs-lite/catalog/v4 v4.13.0
+	github.com/larsartmann/go-cqrs-lite/catalog/v4 v4.14.0
+	github.com/larsartmann/go-cqrs-lite/command/v4 v4.14.1
+	github.com/larsartmann/go-cqrs-lite/decider/v4 v4.8.0
+	github.com/larsartmann/go-cqrs-lite/event/v4 v4.15.2
+	github.com/larsartmann/go-cqrs-lite/id/v4 v4.7.5
 	github.com/larsartmann/go-cqrs-lite/metaengine/sqliteengine/v4 v4.7.0
 	github.com/larsartmann/go-cqrs-lite/metaengine/v4 v4.22.0
 	github.com/larsartmann/go-cqrs-lite/projectionhost/v4 v4.7.1
@@ -83,15 +87,11 @@ require (
 	github.com/knadh/koanf/parsers/yaml v1.1.1 // indirect
 	github.com/larsartmann/go-codec v0.3.3 // indirect
 	github.com/larsartmann/go-cqrs-lite/claiming/v4 v4.0.2 // indirect
-	github.com/larsartmann/go-cqrs-lite/command/v4 v4.14.1 // indirect
 	github.com/larsartmann/go-cqrs-lite/commandlifecycle/projections/v4 v4.2.3 // indirect
 	github.com/larsartmann/go-cqrs-lite/commandlifecycle/v4 v4.3.1 // indirect
-	github.com/larsartmann/go-cqrs-lite/decider/v4 v4.8.0 // indirect
 	github.com/larsartmann/go-cqrs-lite/dedup/v4 v4.3.0 // indirect
 	github.com/larsartmann/go-cqrs-lite/dispatcher/v4 v4.5.2 // indirect
-	github.com/larsartmann/go-cqrs-lite/event/v4 v4.15.2 // indirect
-	github.com/larsartmann/go-cqrs-lite/id/v4 v4.7.4 // indirect
-	github.com/larsartmann/go-cqrs-lite/kv/v4 v4.3.5 // indirect
+	github.com/larsartmann/go-cqrs-lite/kv/v4 v4.4.0 // indirect
 	github.com/larsartmann/go-cqrs-lite/listing/v4 v4.4.4 // indirect
 	github.com/larsartmann/go-cqrs-lite/metadata/v4 v4.7.3 // indirect
 	github.com/larsartmann/go-cqrs-lite/metaengine/projectionadapter/v4 v4.6.2 // indirect
