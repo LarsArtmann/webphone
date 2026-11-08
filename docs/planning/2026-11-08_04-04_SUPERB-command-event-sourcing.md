@@ -545,3 +545,44 @@ Focused hours exclude train gates, releases, and CI waits. Eight release trains 
 - **The readmodels collections stay declared** (agent_audit,
   push_devices) per the A16 deferral — import source + rollback lane
   until P7's retirement; only enroll_tokens has no importer (EXEMPT).
+
+### Phase 4 as-built notes (2026-11-08)
+
+- **Per-OWNER streams for notes and reviews** (supersedes the §f
+  wording of the phase-4 status report, which said per-(owner,call)):
+  the 2000-note and 2000-review caps must REJECT from the DECISION, and
+  a per-call stream cannot see the owner's slot count. Same ruling class
+  as contacts: reject-caps need owner-wide aggregate state, so the
+  stream key is the owner. The note cap surfaces as 409 Conflict
+  (`WrapConflictf(readmodels.ErrNoteListFull, "cqrs.note_list_full")`);
+  the review cap stays a 422 Rejection (nobody serializes against it).
+- **The A27 panic (fixed by the battery):** transcripts' first append
+  built its event slice with `make([]event.Event, 0,
+  len(kept)-floor+1)` — NEGATIVE capacity on a stream below the floor.
+  The aggregate battery caught it immediately; A27 had shipped
+  "written" without ever running. Institutionalized: **a new aggregate
+  is code-complete only when its battery (booting the REAL system over
+  t.TempDir) is green** — the Errata rule for every later phase.
+- **The EnforceCaps deadlock (upstream, go-cqrs-lite #123):** calling
+  `sys.MetaEngine().EnforceCaps` synchronously from a backend method
+  deadlocks order-dependently (60–600 s hangs) against the async
+  projection worker: `EnforceCap` held the query's fold lock while
+  waiting for a pooled connection; the worker held the only connection
+  inside `RunInTx` wanting the same fold lock. Fixed upstream (de39a43a9:
+  the trim now runs inside the engine transaction, fold lock INSIDE —
+  the fold path's own order; regression test pre-fix FAIL/timeout,
+  post-fix green ×3). Until webphone bumps the pin, the backends'
+  posture is await-visibility-FIRST, then a 5 s-bounded
+  `EnforceCaps` that WARNs and skips on expiry — the cap is the
+  durability story, never an invariant (the next append retries).
+- **Migration twins:** the phase exports three readmodels internals for
+  the cqrs importers (`ReassembleTranscripts` joins the twins) —
+  collected on the dedup-registry row; the engine-backed stores stay as
+  import sources + rollback lanes per A16.
+- **cqrs.engine_count:** `engineCount` owns ONE capability code;
+  callers wrap with surface codes — the arch registry scan cannot see
+  codes riding parameters (errorfamily doctrine, re-learned).
+- **Decision-level cap tests for large caps** (2000/1500): full
+  dispatch loops are too slow at those sizes; the battery asserts the
+  cap at the decision via `errorfamilytest.AssertFamily`, while small
+  caps (100/500) exercise the real dispatch path.

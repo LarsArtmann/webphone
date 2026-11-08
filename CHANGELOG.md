@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Contacts, call transcripts, call notes and call reviews answer from
+  the event-sourced journal (SUPERB Phase 4 / A26–A28): the 500-contact
+  and 2000-note caps now REJECT from the DECISION on per-owner streams
+  (the readmodels ErrListFull / ErrNoteListFull contracts survive
+  verbatim, the note cap surfacing as the same 409 Conflict), transcript
+  segments reassemble newest-call-first with the 1500-per-call floor and
+  the 5000-per-owner trim enforced journal-side, and notes/reviews carry
+  their merge semantics (a disposition save keeps the body and vice
+  versa) and wholesale-replace review semantics in the decisions. The
+  `readmodels.ContactGate`/`TranscriptGate`/`NotesGate`/`ReviewsGate`
+  interfaces are the seams (engine-backed stores kept as import sources
+  and rollback lanes); all four legacy row families import once at boot
+  with the crash-safe marker discipline. Fixed on the way (found by the
+  new aggregate batteries, which are now the definition of
+  code-complete): a negative-capacity panic on a transcript stream's
+  first append, and an upstream metaengine lock-order inversion where
+  `EnforceCap` could deadlock permanently against a concurrent
+  projection fold batch on a bounded pool (go-cqrs-lite #123, fix
+  de39a43a9 — webphone's backends await projection visibility FIRST and
+  bound the trim call with a 5 s budget until the bump rides it).
 - The island's latency is now MEASURABLE (the measure-first latency
   design, docs/planning/2026-11-08_latency-measure-first-design.md):
   with `metrics.island_beacon` on, the island posts one fire-and-forget
