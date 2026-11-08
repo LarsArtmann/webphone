@@ -367,6 +367,15 @@ a deliberate code change, regenerate:
 | cqrs.dlq                                     | Infrastructure            | internal/app/cqrs.go               |
 | cqrs.engine                                  | Infrastructure            | internal/app/cqrs.go               |
 | cqrs.open                                    | Infrastructure            | internal/app/cqrs.go               |
+| cqrs.snippet_command                         | Infrastructure            | internal/cqrs/snippets.go          |
+| cqrs.snippet_delete                          | Infrastructure            | internal/cqrs/snippets.go          |
+| cqrs.snippet_fold                            | Corruption                | internal/cqrs/snippets.go          |
+| cqrs.snippet_list                            | Infrastructure            | internal/cqrs/snippets.go          |
+| cqrs.snippet_list_full                       | Rejection                 | internal/cqrs/snippets.go          |
+| cqrs.snippet_missing                         | Rejection                 | internal/cqrs/snippets.go          |
+| cqrs.snippet_register                        | Infrastructure            | internal/cqrs/snippets.go          |
+| cqrs.snippet_save                            | Infrastructure            | internal/cqrs/snippets.go          |
+| cqrs.snippet_stream                          | Rejection                 | internal/cqrs/snippets.go          |
 | cqrs.start                                   | Infrastructure            | internal/app/cqrs.go               |
 | cqrs.worker_failed                           | Infrastructure            | internal/app/cqrs.go               |
 | cqrs.worker_lag                              | Infrastructure            | internal/app/cqrs.go               |

@@ -168,3 +168,94 @@ func importFactRemote(fact any) string {
 	}
 	return ""
 }
+
+// flagSnippetsJournalImported is the snippets importer's app_flags marker.
+const flagSnippetsJournalImported = "snippets_journal_imported"
+
+// importSnippets ports the legacy engine snippet rows into the journal
+// (same policy and idempotence story as importDialWindows).
+func importSnippets(ctx context.Context, db *store.Database, snippets *readmodels.Snippets, svc *CqrsService, log *slog.Logger) {
+	done, err := store.FlagPresent(ctx, db.SQL(), flagSnippetsJournalImported)
+	if err != nil {
+		log.Error("snippet journal import: flag read failed; skipping (retries next boot)", "err", err)
+		return
+	}
+	if done {
+		return
+	}
+	views, err := snippets.ExportAll(ctx)
+	if err != nil {
+		log.Error("snippet journal import: export failed; skipping (retries next boot)", "err", err)
+		return
+	}
+	perOwner := map[string][]domain.Snippet{}
+	for _, v := range views {
+		owner, err := domain.ParseExtension(v.Owner)
+		if err != nil {
+			log.Warn("snippet journal import: unparseable owner row skipped", "owner", v.Owner)
+			continue
+		}
+		perOwner[v.Owner] = append(perOwner[v.Owner], domain.Snippet{
+			ID:        domain.MustSnippetID(v.ID),
+			Owner:     owner,
+			Body:      v.Body,
+			Quick:     v.Quick,
+			CreatedAt: time.Unix(0, v.CreatedAt),
+		})
+	}
+	imported := 0
+	for _, owner := range sortedOwners(perOwner) {
+		streamID, err := id.ParseStreamID(owner)
+		if err != nil {
+			log.Error("snippet journal import: bad owner stream; skipping (retries next boot)", "err", err, "owner", owner)
+			return
+		}
+		ref := id.NewStreamRef(cqrs.SnippetsStreamType, streamID)
+		existing, err := svc.Sys.EventStore().Load(ctx, ref)
+		if err != nil {
+			log.Error("snippet journal import: load tail failed; skipping (retries next boot)", "err", err, "owner", owner)
+			return
+		}
+		ver := event.Version(len(existing))
+		actor, _ := id.ParseActorID("system:importer")
+		events := make([]event.Event, 0, len(perOwner[owner]))
+		for _, snip := range perOwner[owner] {
+			ver++
+			evt, err := event.New(event.Type(metaengine.EventTypeName(domain.SnippetSaved{})), streamID, cqrs.SnippetsStreamType, ver,
+				domain.SnippetSaved{
+					Key:       domain.SnippetKey{ID: snip.ID.String()},
+					Owner:     owner,
+					Body:      snip.Body,
+					Quick:     snip.Quick,
+					CreatedAt: snip.CreatedAt,
+				}, event.WithActor(actor))
+			if err != nil {
+				log.Error("snippet journal import: build fact failed; skipping (retries next boot)", "err", err)
+				return
+			}
+			events = append(events, evt)
+		}
+		if len(events) == 0 {
+			continue
+		}
+		if err := svc.Sys.EventStore().AppendBatch(ctx, ref, events); err != nil {
+			log.Error("snippet journal import: append failed; skipping (retries next boot)", "err", err, "owner", owner)
+			return
+		}
+		imported += len(events)
+	}
+	if err := store.SetFlag(ctx, db.SQL(), flagSnippetsJournalImported, time.Now().UTC().Format(time.RFC3339)); err != nil {
+		log.Error("snippet journal import: flag write failed (imports re-run idempotently next boot)", "err", err, "imported", imported)
+		return
+	}
+	log.Info("snippets imported into the journal", "imported", imported, "legacy_rows", len(views))
+}
+
+func sortedOwners(perOwner map[string][]domain.Snippet) []string {
+	owners := make([]string, 0, len(perOwner))
+	for owner := range perOwner {
+		owners = append(owners, owner)
+	}
+	sort.Strings(owners)
+	return owners
+}

@@ -52,12 +52,14 @@ type CqrsService struct {
 	dlqDB *sql.DB
 	log   *slog.Logger
 
-	startMu   sync.Mutex
-	started   bool
-	shutdown  bool
-	shutdownM sync.Mutex
-	dialsOnce sync.Once
-	dials     *cqrsdomain.DialWindows
+	startMu      sync.Mutex
+	started      bool
+	shutdown     bool
+	shutdownM    sync.Mutex
+	dialsOnce    sync.Once
+	dials        *cqrsdomain.DialWindows
+	snippetsOnce sync.Once
+	snippets     *cqrsdomain.Snippets
 }
 
 // NewCqrs builds the system composition root over <dataDir>/system.db:
@@ -68,7 +70,10 @@ type CqrsService struct {
 // since Phase 2 (SUPERB): commands, decider, and the journal
 // projections the gate reads.
 func NewCqrs(cfg config.Config, log *slog.Logger) (*CqrsService, error) {
-	return newCqrs(cfg, log, cqrsdomain.DialDomainDecl())
+	return newCqrs(cfg, log, cqrsdomain.Domain(
+		cqrsdomain.DialDomainDecl(),
+		cqrsdomain.SnippetsDomainDecl(),
+	))
 }
 
 // Dials builds (once) the dispatch-backed dial-gate service — the SAME
@@ -77,6 +82,12 @@ func NewCqrs(cfg config.Config, log *slog.Logger) (*CqrsService, error) {
 func (s *CqrsService) Dials() *cqrsdomain.DialWindows {
 	s.dialsOnce.Do(func() { s.dials = cqrsdomain.NewDialWindows(s.Sys) })
 	return s.dials
+}
+
+// SnippetsSvc builds (once) the dispatch-backed snippet service.
+func (s *CqrsService) SnippetsSvc() *cqrsdomain.Snippets {
+	s.snippetsOnce.Do(func() { s.snippets = cqrsdomain.NewSnippets(s.Sys) })
+	return s.snippets
 }
 
 // newCqrs is the construction seam tests (and, from Phase 2 on, the

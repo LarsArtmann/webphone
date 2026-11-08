@@ -75,6 +75,17 @@ var snippetsQuery = metaengine.Query[snippetInput, SnippetView](snippetsCollecti
 	metaengine.Volume(humanScaleVolume),
 )
 
+// SnippetGate is the reply-snippet seam as the server's handlers see
+// it. The engine-backed store below and the journal-backed service
+// (internal/cqrs, SUPERB Phase 3) are interchangeable behind it.
+type SnippetGate interface {
+	Save(ctx context.Context, snippet domain.Snippet) error
+	List(ctx context.Context, owner domain.Extension) ([]domain.Snippet, error)
+	Delete(ctx context.Context, owner domain.Extension, id domain.SnippetID) error
+}
+
+var _ SnippetGate = (*Snippets)(nil)
+
 // Snippets is the engine-backed reply-snippet store: the same contract
 // the SQL store held (Save upsert by id keeping the creation time on
 // replace; owner-scoped oldest-first List; owner-scoped Delete by id;
@@ -174,6 +185,16 @@ func (s *Snippets) ownerViews(ctx context.Context, owner domain.Extension) ([]Sn
 	)
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.snippet_list", "list snippets for %s", owner.String())
+	}
+	return views, nil
+}
+
+// ExportAll reads every legacy snippet row — the journal importer's
+// ONE-TIME source (SUPERB Phase 3).
+func (s *Snippets) ExportAll(ctx context.Context) ([]SnippetView, error) {
+	views, err := s.reader.Scan(ctx, metaengine.WithLimit(1_000_000))
+	if err != nil {
+		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.snippet_list", "export snippets")
 	}
 	return views, nil
 }

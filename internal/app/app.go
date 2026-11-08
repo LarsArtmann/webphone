@@ -434,7 +434,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			Messages:    do.MustInvoke[*store.Messages](i),
 			Faxes:       engine.Faxes(),
 			Contacts:    engine.Contacts(),
-			Snippets:    engine.Snippets(),
+			Snippets:    do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).SnippetsSvc(), //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service's snippet backend (SUPERB Phase 3)
 			Transcripts: engine.Transcripts(),
 			Notes:       engine.Notes(),
 			Reviews:     engine.Reviews(),
@@ -498,6 +498,8 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	// and the gate opens against the full history.
 	importDialWindows(context.Background(), sqlite, engine.DialWindows(),
 		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time dial import
+	importSnippets(context.Background(), sqlite, engine.Snippets(),
+		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time snippet import
 	if cfg.Auth.Passkey.Enabled() {
 		if _, err := do.InvokeNamed[*userauth.Service](injector, "userauth"); err != nil {
 			return nil, wrapf("open passkey auth: %w", err)

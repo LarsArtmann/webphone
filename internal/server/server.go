@@ -189,7 +189,11 @@ type Deps struct {
 	Contacts *readmodels.Contacts
 	// Snippets is the metaengine-backed reply-snippet read model
 	// (readmodels.db) — same method contract the SQL store held.
-	Snippets *readmodels.Snippets
+	// Snippets is the reply-snippet seam (the readmodels.SnippetGate
+	// interface — engine-backed legacy/rollback lane, journal-backed
+	// since SUPERB Phase 3). Nil (test compositions): the surfaces
+	// degrade. Keep it a TRUE nil.
+	Snippets readmodels.SnippetGate
 	// Transcripts persists live-call transcript segments (owner-scoped,
 	// rendered in the History tab). Nil (test compositions): the save
 	// endpoint answers 503 and the History section stays empty.

@@ -173,7 +173,7 @@ func TestArchiveFlowViaActions(t *testing.T) {
 // flag), the 422s for empty and oversized bodies and the cap, delete
 // with its 404, and the settings partial re-render both answers carry.
 func TestSnippetActions(t *testing.T) {
-	var snippets *readmodels.Snippets
+	var snippets readmodels.SnippetGate
 	server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { snippets = d.Snippets })
 	c := signIn(t, server)
 
