@@ -124,8 +124,9 @@ func (h *handlers) threadPanelPrefilled(r *http.Request, sess session.Session, i
 	return views.ThreadView(views.ThreadViewProps{
 		Thread: thread, Messages: msgs, Page: page, HasMore: hasMore, Snippets: snippets, Rail: rail,
 		Identity: h.identityFor(sess.Extension), CRM: contacts, Lang: h.lang(r),
-		CRMContext: h.crmContextFor(r.Context(), thread.Remote),
-		ASR:        h.asrOn(), TextAgent: h.textAgentOn(), PrefillDraft: prefillDraft,
+		CRMCreateURL: h.deps.Config.CRM.CreateURL,
+		CRMContext:   h.crmContextFor(r.Context(), thread.Remote),
+		ASR:          h.asrOn(), TextAgent: h.textAgentOn(), PrefillDraft: prefillDraft,
 	}), nil
 }
 
