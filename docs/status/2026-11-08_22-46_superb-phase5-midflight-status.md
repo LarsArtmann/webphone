@@ -81,15 +81,15 @@ instruction was "STATUS THEN WAIT" — this report, then the session waits.
      the apply** (one home consumed verbatim); deliveryMoves legality at
      the decision via `DeliveryAdvance`; duplicate-message-id rejection
      (importer-retry + webhook-replay guard); delete emits the tombstone
-     + per-row removal batch; D8 snapshot strategy;
-     `NewThreadsSystem` boot helper.
+     - per-row removal batch; D8 snapshot strategy;
+       `NewThreadsSystem` boot helper.
    - `internal/readmodels/threads.go`: `ThreadGate` (20-method surface =
      every store.Messages method the server/service call, plus
      `AdvanceOutbound(step)`, `CountMessages`, `DeleteThread(reason)`).
    - `internal/cqrs/threadsstore.go`: 3 projections (full-image inserts
-     + keyed removes — the contacts typed-Key pattern) + the `Threads`
-     backend (owner-scoped lists/search/pages, admin seams,
-     provider-ref lookup, delete = tombstone + await + **TrimStream**).
+     - keyed removes — the contacts typed-Key pattern) + the `Threads`
+       backend (owner-scoped lists/search/pages, admin seams,
+       provider-ref lookup, delete = tombstone + await + **TrimStream**).
    - `internal/cqrs/threads_test.go`: append/advance, duplicate
      rejection, the delivery machine (out-of-order verdicts, inert
      moves), flags/read/search/archive/auto-unarchive, attachments
@@ -252,14 +252,14 @@ instruction was "STATUS THEN WAIT" — this report, then the session waits.
    all in place; the tag + stack relock + aarch64 + gh release ride it).
 5. CI-watch 2.10.0 to green; record the tag in the plan Errata.
 6. A35: the importer (`internal/app/coreimports.go`) — threads ordered
-  by (created_at, rowid) per thread, carrying legacy ThreadIDs +
-  CreatedAt; marker `threads_journal_imported`; duplicate-id rejection
-  makes retries safe.
+   by (created_at, rowid) per thread, carrying legacy ThreadIDs +
+   CreatedAt; marker `threads_journal_imported`; duplicate-id rejection
+   makes retries safe.
 7. A35: the dual-run row-by-row diff harness (test-only) — legacy reads
-  vs projection reads, every owner/thread/message/attachment.
+   vs projection reads, every owner/thread/message/attachment.
 8. A35: pre-cutover backup snapshot record (runbook note + commit msg).
 9. A36: port the sweep (`retention` package over the gate: cutoff scan,
-  DeleteThread per swept thread, blob deletes, keep-forever gate).
+   DeleteThread per swept thread, blob deletes, keep-forever gate).
 10. A36: the deletion-gate test (journal empty, all three projections
     empty, blob gone, reset+replay rebuilds WITHOUT the content).
 11. A36: `retention_days=0` keep-forever pin.
