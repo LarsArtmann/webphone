@@ -166,7 +166,14 @@ func (s *CqrsService) HealthCheck(ctx context.Context) error {
 	if err := s.Sys.HealthCheck(ctx); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.engine", "system engine health")
 	}
-	for _, w := range s.Sys.WorkerStatus() {
+	return cqrsWorkerTriage(s.Sys.WorkerStatus())
+}
+
+// cqrsWorkerTriage fails on a dead or too-far-behind projection worker,
+// naming the worker in the message — the operator's way from a 503 body
+// to the exact wedged component.
+func cqrsWorkerTriage(workers []projectionhost.WorkerState) error {
+	for _, w := range workers {
 		if w.Status == projectionhost.WorkerFailed {
 			return errorfamily.Newf(errorfamily.Infrastructure, "cqrs.worker_failed",
 				"projection worker %q failed (last error: %s)", w.Name, w.LastError)
@@ -177,6 +184,14 @@ func (s *CqrsService) HealthCheck(ctx context.Context) error {
 		}
 	}
 	return nil
+}
+
+// isShutdown reports whether the shutdown latch has fired (test
+// observability into the cascade's reach).
+func (s *CqrsService) isShutdown() bool {
+	s.shutdownM.Lock()
+	defer s.shutdownM.Unlock()
+	return s.shutdown
 }
 
 // cqrsProviderName is the injector name the probe discovers health by
