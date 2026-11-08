@@ -354,11 +354,17 @@ func New(deps Deps) http.Handler {
 		}
 	}
 	// The island beacon intake is config-gated (metrics.island_beacon,
-	// default OFF): nil keeps the route on a terse 404 and /metrics
-	// without the family — the flag-off product stays byte-identical.
-	var islandMetrics *islandLatency
+	// default OFF): the API seam gets a true nil INTERFACE (the traceSeam
+	// typed-nil doctrine) so the handler's nil check holds — a nil
+	// *islandLatency wrapped into the interface would pass it and nil-
+	// dereference into a 500 (the smoke metrics scenario caught exactly
+	// that). The handlers' own field keeps the concrete type: nil-pointer
+	// comparison is what metrics.go checks.
+	var islandMetrics api.IslandBeaconSink
+	var islandRecorder *islandLatency
 	if deps.Config.Metrics.IslandBeacon {
-		islandMetrics = newIslandLatency()
+		islandRecorder = newIslandLatency()
+		islandMetrics = islandRecorder
 	}
 	h := &handlers{
 		deps:                 deps,
@@ -379,7 +385,7 @@ func New(deps Deps) http.Handler {
 		csrfCfg:              csrfCfg,
 		unread:               newUnreadCache(5 * time.Second),
 		latency:              newLatencyRecorder(),
-		island:               islandMetrics,
+		island:               islandRecorder,
 	}
 	hooksHandlers := hooks.New(hooks.Deps{
 		Secret:    deps.Config.Gateway.WebhookSecret,

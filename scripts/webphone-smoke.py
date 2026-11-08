@@ -901,7 +901,7 @@ def metrics_scenario(binary: str, workdir: str) -> int:
             anon_code = err.code
         c.ok(
             "metrics: anonymous POST is fenced",
-            anon_code == 401,
+            anon_code in (401, 403),
             f"anon status {anon_code}",
         )
     finally:

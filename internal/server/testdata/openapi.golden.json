@@ -753,6 +753,68 @@
         }
       }
     },
+    "/api/metrics/latency": {
+      "post": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Latency Beacon",
+        "description": "Accept one fire-and-forget island latency measurement (the measure-first latency design): dial-press to first remote audio, or an ASR segment to text on screen, split into the server-fixed named legs. Pure instrumentation: every malformed beacon is a silent 204 — the endpoint never validates loudly, never retries, never alerts.",
+        "operationId": "postMetricsLatencyBeacon",
+        "deprecated": false,
+        "requestBody": {
+          "description": "Latency Beacon request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/command.metrics.latency_beacon"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No response body. The beacon was folded into the /metrics histograms, or silently dropped (unknown interval, junk legs, malformed body — all the same 204 by design).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/command.metrics.latency_beacon.response.204"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No live session."
+          },
+          "403": {
+            "description": "CSRF token missing or invalid."
+          },
+          "404": {
+            "description": "The beacon intake is not enabled on this server (metrics.island_beacon is off) — the surface does not exist."
+          },
+          "413": {
+            "description": "The beacon exceeds the 2 KiB body cap."
+          },
+          "429": {
+            "description": "Per-client flood budget exhausted; the answer carries a Retry-After header naming the seconds until the bucket refills.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the flood bucket refills (see the response description).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ]
+      }
+    },
     "/api/push-devices": {
       "post": {
         "tags": [
@@ -1501,6 +1563,36 @@
         "type": "object"
       },
       "command.contacts.save.response.204": {
+        "type": "object"
+      },
+      "command.metrics.latency_beacon": {
+        "properties": {
+          "bytes": {
+            "deprecated": false,
+            "description": "The segment's audio size in bytes (ASR beacons only).",
+            "nullable": false,
+            "type": "integer"
+          },
+          "interval": {
+            "deprecated": false,
+            "description": "The measured interval: dial_to_audio (dial-press to first remote audio) or asr_round_trip (spoken segment to text on screen).",
+            "nullable": false,
+            "type": "string"
+          },
+          "legs_ms": {
+            "deprecated": false,
+            "description": "The interval's named legs in milliseconds (server-fixed vocabulary, e.g. island_overhead/signaling/media_attach/audio_gap for dial_to_audio).",
+            "nullable": false,
+            "type": "object"
+          }
+        },
+        "required": [
+          "interval",
+          "legs_ms"
+        ],
+        "type": "object"
+      },
+      "command.metrics.latency_beacon.response.204": {
         "type": "object"
       },
       "command.push.devices.register": {
