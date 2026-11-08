@@ -114,13 +114,13 @@ def boot(data_dir):
 
 def attachment_row(data_dir):
     # The seam lives in the journal since Phase 5 (A34): threads,
-    # messages and attachments are system.db projection rows
-    # (meta_map), not webphone.db tables — the drill asserts where the
+    # messages and attachments are system.db projection rows (the
+    # engine materializes each collection into its meta_planned_*
+    # table), not webphone.db tables — the drill asserts where the
     # product actually writes, or it proves nothing about the backup.
     db = sqlite3.connect(os.path.join(data_dir, "system.db"))
     row = db.execute(
-        "select json_extract(value, '$.id'), json_extract(value, '$.path') from meta_map "
-        "where collection = 'message_attachments' limit 1"
+        "select id, json_extract(value, '$.path') from meta_planned_message_attachments limit 1"
     ).fetchone()
     db.close()
     return row
