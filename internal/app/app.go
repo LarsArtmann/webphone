@@ -442,7 +442,10 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			// SUPERB Phase 2 swap (the engine-backed store stays as the
 			// import source and rollback lane behind the DialGate seam).
 			Dials:       do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).Dials(),
-			AgentAudit:  engine.AgentAudit(),
+			// The agent-audit store answers from the journal since the
+			// SUPERB Phase 3 swap (the engine-backed store stays as the
+			// import source behind the AgentAuditGate seam).
+			AgentAudit:  do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).AgentAuditSvc(),
 			Messaging:   do.MustInvoke[*messaging.Service](i),
 			Fax:         do.MustInvoke[*fax.Service](i),
 			PhoneAPI:    do.MustInvoke[*pbx.Client](i),
@@ -500,6 +503,8 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time dial import
 	importSnippets(context.Background(), sqlite, engine.Snippets(),
 		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time snippet import
+	importAgentAudit(context.Background(), sqlite, engine.AgentAudit(),
+		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time agent-audit import
 	if cfg.Auth.Passkey.Enabled() {
 		if _, err := do.InvokeNamed[*userauth.Service](injector, "userauth"); err != nil {
 			return nil, wrapf("open passkey auth: %w", err)

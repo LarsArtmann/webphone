@@ -365,6 +365,12 @@ a deliberate code change, regenerate:
 | cqrs.dial_window_load                        | Infrastructure            | internal/cqrs/dialwindows.go       |
 | cqrs.dlq                                     | Infrastructure            | internal/app/cqrs.go               |
 | cqrs.engine                                  | Infrastructure            | internal/app/cqrs.go               |
+| cqrs.enroll_burn                             | Infrastructure            | internal/cqrs/enroll.go            |
+| cqrs.enroll_fold                             | Corruption                | internal/cqrs/enroll.go            |
+| cqrs.enroll_lookup                           | Infrastructure            | internal/cqrs/enroll.go            |
+| cqrs.enroll_mint                             | Infrastructure            | internal/cqrs/enroll.go            |
+| cqrs.enroll_register                         | Infrastructure            | internal/cqrs/enroll.go            |
+| cqrs.enroll_sweep                            | Infrastructure            | internal/cqrs/enroll.go            |
 | cqrs.open                                    | Infrastructure            | internal/app/cqrs.go               |
 | cqrs.owner_stream                            | Rejection                 | internal/cqrs/dialwindows.go       |
 | cqrs.snippet_delete                          | Infrastructure            | internal/cqrs/snippets.go          |

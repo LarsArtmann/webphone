@@ -62,6 +62,8 @@ type CqrsService struct {
 	snippets     *cqrsdomain.Snippets
 	enrollOnce   sync.Once
 	enroll       *cqrsdomain.EnrollTokens
+	auditOnce    sync.Once
+	audit        *cqrsdomain.AgentAudit
 }
 
 // NewCqrs builds the system composition root over <dataDir>/system.db:
@@ -76,6 +78,7 @@ func NewCqrs(cfg config.Config, log *slog.Logger) (*CqrsService, error) {
 		cqrsdomain.DialDomainDecl(),
 		cqrsdomain.SnippetsDomainDecl(),
 		cqrsdomain.EnrollDomainDecl(),
+		cqrsdomain.AgentAuditDomainDecl(),
 	))
 }
 
@@ -98,6 +101,14 @@ func (s *CqrsService) SnippetsSvc() *cqrsdomain.Snippets {
 func (s *CqrsService) EnrollSvc() *cqrsdomain.EnrollTokens {
 	s.enrollOnce.Do(func() { s.enroll = cqrsdomain.NewEnrollTokens(s.Sys) })
 	return s.enroll
+}
+
+// AgentAuditSvc builds (once) the dispatch-backed agent-audit store
+// — the dual-write target of the agentAudit journal line (SUPERB
+// Phase 3, A23).
+func (s *CqrsService) AgentAuditSvc() *cqrsdomain.AgentAudit {
+	s.auditOnce.Do(func() { s.audit = cqrsdomain.NewAgentAudit(s.Sys) })
+	return s.audit
 }
 
 // newCqrs is the construction seam tests (and, from Phase 2 on, the

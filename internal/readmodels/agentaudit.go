@@ -61,6 +61,18 @@ var agentAuditQuery = metaengine.Query[agentAuditInput, AgentAuditView](agentAud
 	metaengine.Volume(humanScaleVolume),
 )
 
+// AgentAuditGate is the agent-action audit seam as the server sees
+// it (the dual-write target of the agentAudit journal line and
+// Settings' newest-20 read). The engine-backed store below and the
+// journal-backed service (internal/cqrs, SUPERB Phase 3) are
+// interchangeable behind it.
+type AgentAuditGate interface {
+	Append(ctx context.Context, owner domain.Extension, actor, event, subject, outcome string) error
+	Recent(ctx context.Context, owner domain.Extension, limit int) ([]AgentAuditView, error)
+}
+
+var _ AgentAuditGate = (*AgentAudit)(nil)
+
 // AgentAudit is the engine-backed agent-action audit store (D5): the
 // durable read model behind the greppable journal line. The line stays
 // the operator-grep surface; this store answers "who approved what,
@@ -144,6 +156,16 @@ func (s *AgentAudit) Recent(ctx context.Context, owner domain.Extension, limit i
 	}
 	if len(views) == 0 {
 		return nil, nil
+	}
+	return views, nil
+}
+
+// ExportAll reads every audit row (the journal importer's source;
+// WithLimit rides because the planner's default ceiling is 100).
+func (s *AgentAudit) ExportAll(ctx context.Context) ([]AgentAuditView, error) {
+	views, err := s.reader.Scan(ctx, metaengine.WithLimit(1_000_000))
+	if err != nil {
+		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.agent_audit_recent", "export audit rows")
 	}
 	return views, nil
 }

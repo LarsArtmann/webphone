@@ -2,6 +2,7 @@ package cqrs
 
 import (
 	"context"
+	"fmt"
 	"path/filepath"
 	"testing"
 	"time"
@@ -39,14 +40,13 @@ func bootEnrollSystem(t *testing.T, dir string) *EnrollTokens {
 }
 
 // hashFor builds a distinct token hash per test call (the stream key
-// only needs to be a stable string — the real seam hashes; here any
-// unique UTF-8 id does).
+// only needs to be a stable unique string — the real seam hashes).
 var enrollSeq int
 
 func hashFor(t *testing.T) string {
 	t.Helper()
 	enrollSeq++
-	return "hash-" + time.Now().Format("150405.000000000") + "-" + string(rune('a'+enrollSeq%26)) + string(rune('a'+enrollSeq/26))
+	return fmt.Sprintf("testhash%04d", enrollSeq)
 }
 
 // awaitLookupFound polls the projection until the hash resolves.

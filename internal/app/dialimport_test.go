@@ -133,6 +133,90 @@ func TestDialImportPortsLegacyRows(t *testing.T) {
 	}
 }
 
+// TestAgentAuditImportPortsLegacyRows pins the A23 continuity: legacy
+// engine audit rows survive the journal swap with their ids, actors
+// and seq stamps (Settings' newest-20 window is unchanged), the
+// marker latches, and a second boot imports nothing new.
+func TestAgentAuditImportPortsLegacyRows(t *testing.T) {
+	cfg := testConfig(t, false)
+
+	legacyEngine, err := readmodels.Open(cfg.DataDir)
+	if err != nil {
+		t.Fatalf("open legacy engine: %v", err)
+	}
+	ctx := context.Background()
+	owner := mustExtension(t, "1001")
+	if err := legacyEngine.AgentAudit().Append(ctx, owner, "ops@example.com", "approve", "draft-1", "sent"); err != nil {
+		t.Fatalf("seed legacy audit row 1: %v", err)
+	}
+	time.Sleep(2 * time.Millisecond)
+	if err := legacyEngine.AgentAudit().Append(ctx, owner, "ops@example.com", "discard", "draft-2", "dropped"); err != nil {
+		t.Fatalf("seed legacy audit row 2: %v", err)
+	}
+	if err := legacyEngine.Shutdown(); err != nil {
+		t.Fatalf("close legacy engine: %v", err)
+	}
+
+	application, err := New(cfg, discardLogger())
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if err := application.Start(ctx); err != nil {
+		t.Fatalf("Start: %v", err)
+	}
+	svc := mustResolveCqrs(t, application)
+
+	deadline := time.Now().Add(10 * time.Second)
+	for {
+		rows, err := svc.AgentAuditSvc().Recent(ctx, owner, 20)
+		if err != nil {
+			t.Fatalf("Recent: %v", err)
+		}
+		if len(rows) == 2 {
+			if rows[0].Subject != "draft-2" || rows[0].Actor != "ops@example.com" || rows[1].Subject != "draft-1" {
+				t.Fatalf("ported audit rows drifted: %+v", rows)
+			}
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("audit rows never reached the journal projection: got %d", len(rows))
+		}
+		time.Sleep(10 * time.Millisecond)
+	}
+
+	done, err := store.FlagPresent(ctx, mustSQL(t, application), flagAgentAuditJournalImported)
+	if err != nil || !done {
+		t.Fatalf("import marker must latch after a full import: done=%v err=%v", done, err)
+	}
+	streamID, err := id.ParseStreamID(owner.String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	ref := id.NewStreamRef("agent_audit", streamID)
+	before, err := svc.Sys.EventStore().Load(ctx, ref)
+	if err != nil {
+		t.Fatalf("load stream: %v", err)
+	}
+	if err := application.Shutdown(); err != nil {
+		t.Fatalf("Shutdown: %v", err)
+	}
+	second, err := New(cfg, discardLogger())
+	if err != nil {
+		t.Fatalf("second New: %v", err)
+	}
+	svc2 := mustResolveCqrs(t, second)
+	after, err := svc2.Sys.EventStore().Load(ctx, ref)
+	if err != nil {
+		t.Fatalf("load stream after second boot: %v", err)
+	}
+	if len(after) != len(before) {
+		t.Fatalf("second boot must not append import facts: before=%d after=%d", len(before), len(after))
+	}
+	if err := second.Shutdown(); err != nil {
+		t.Fatalf("second Shutdown: %v", err)
+	}
+}
+
 func mustExtension(t *testing.T, raw string) domain.Extension {
 	t.Helper()
 	ext, err := domain.ParseExtension(raw)

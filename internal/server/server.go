@@ -218,8 +218,9 @@ type Deps struct {
 	// AgentAudit is the durable agent-action audit read model (D5):
 	// the journal line stays the grep surface, this store answers
 	// "who approved what, when" in Settings. Nil (test compositions):
-	// the dual-write degrades to the line alone.
-	AgentAudit *readmodels.AgentAudit
+	// the dual-write degrades to the line alone. Journal-backed since
+	// SUPERB Phase 3 (the engine store is the import source).
+	AgentAudit readmodels.AgentAuditGate
 	Messaging  *messaging.Service
 	Fax        *fax.Service
 	PhoneAPI   *pbx.Client

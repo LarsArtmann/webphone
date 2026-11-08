@@ -254,3 +254,95 @@ func importSnippets(ctx context.Context, db *store.Database, snippets *readmodel
 func sortedOwners(perOwner map[string][]domain.Snippet) []string {
 	return slices.Sorted(maps.Keys(perOwner))
 }
+
+// flagAgentAuditJournalImported is the agent-audit importer's app_flags marker.
+const flagAgentAuditJournalImported = "agent_audit_journal_imported"
+
+// importAgentAudit ports the legacy engine audit rows into the journal
+// (same policy and idempotence story as importDialWindows; rows keep
+// their ids, actors and seq stamps so Settings' newest-20 window
+// survives the upgrade). Rows import in seq order per owner — the
+// stream order then agrees with the happening order the window sorts
+// by.
+func importAgentAudit(ctx context.Context, db *store.Database, audit *readmodels.AgentAudit, svc *CqrsService, log *slog.Logger) {
+	done, err := store.FlagPresent(ctx, db.SQL(), flagAgentAuditJournalImported)
+	if err != nil {
+		log.Error("agent-audit journal import: flag read failed; skipping (retries next boot)", "err", err)
+		return
+	}
+	if done {
+		return
+	}
+	views, err := audit.ExportAll(ctx)
+	if err != nil {
+		log.Error("agent-audit journal import: export failed; skipping (retries next boot)", "err", err)
+		return
+	}
+	perOwner := map[string][]readmodels.AgentAuditView{}
+	for _, v := range views {
+		if _, err := domain.ParseExtension(v.Owner); err != nil {
+			log.Warn("agent-audit journal import: unparseable owner row skipped", "owner", v.Owner)
+			continue
+		}
+		perOwner[v.Owner] = append(perOwner[v.Owner], v)
+	}
+	imported := 0
+	for _, owner := range slices.Sorted(maps.Keys(perOwner)) {
+		rows := perOwner[owner]
+		slices.SortStableFunc(rows, func(a, b readmodels.AgentAuditView) int {
+			switch {
+			case a.Seq < b.Seq:
+				return -1
+			case a.Seq > b.Seq:
+				return 1
+			}
+			return strings.Compare(a.ID, b.ID)
+		})
+		streamID, err := id.ParseStreamID(owner)
+		if err != nil {
+			log.Error("agent-audit journal import: bad owner stream; skipping (retries next boot)", "err", err, "owner", owner)
+			return
+		}
+		ref := id.NewStreamRef(cqrs.AgentAuditStreamType, streamID)
+		existing, err := svc.Sys.EventStore().Load(ctx, ref)
+		if err != nil {
+			log.Error("agent-audit journal import: load tail failed; skipping (retries next boot)", "err", err, "owner", owner)
+			return
+		}
+		ver := event.Version(len(existing))
+		actor, _ := id.ParseActorID("system:importer")
+		events := make([]event.Event, 0, len(rows))
+		for _, v := range rows {
+			ver++
+			evt, err := event.New(event.Type(metaengine.EventTypeName(domain.AgentAuditAppended{})), streamID, cqrs.AgentAuditStreamType, ver,
+				domain.AgentAuditAppended{
+					Key:     domain.AgentAuditKey{ID: v.ID},
+					Owner:   owner,
+					Actor:   v.Actor,
+					Event:   v.Event,
+					Subject: v.Subject,
+					Outcome: v.Outcome,
+					At:      time.Unix(v.At, 0).UTC(),
+					Seq:     v.Seq,
+				}, event.WithActor(actor))
+			if err != nil {
+				log.Error("agent-audit journal import: build fact failed; skipping (retries next boot)", "err", err)
+				return
+			}
+			events = append(events, evt)
+		}
+		if len(events) == 0 {
+			continue
+		}
+		if err := svc.Sys.EventStore().AppendBatch(ctx, ref, events); err != nil {
+			log.Error("agent-audit journal import: append failed; skipping (retries next boot)", "err", err, "owner", owner)
+			return
+		}
+		imported += len(events)
+	}
+	if err := store.SetFlag(ctx, db.SQL(), flagAgentAuditJournalImported, time.Now().UTC().Format(time.RFC3339)); err != nil {
+		log.Error("agent-audit journal import: flag write failed (imports re-run idempotently next boot)", "err", err, "imported", imported)
+		return
+	}
+	log.Info("agent-audit rows imported into the journal", "imported", imported, "legacy_rows", len(views))
+}
