@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-08 (docs-health drain, portfolio-plan P2-1): gates clean (check-rows --strict + bare-rows green), citations repointed — the BD003-clean state lives in AGENTS § go-branded-id (87 directive sites at HEAD, last clean re-run 2026-10-25); the unanswered gate-vs-ad-hoc enforcement question was HARVESTED 2026-11-08 into TODO_LIST § brandid-lint enforcement posture; §f 9–25 remain archived session observations.
+
 # Status Report — brandid-lint BD003 brand-adoption train
 
 - **Written:** 2026-10-16 00:31 CEST
@@ -27,14 +29,14 @@ Headline numbers:
 
 | Metric                     | Value                                      |
 | -------------------------- | ------------------------------------------ |
-| BD003 findings in          | 35 (2 ERROR, 2 WARNING, 31 INFO)           |
-| Findings resolved          | 35 (100%)                                  |
-| Real type changes made     | 0 (deliberate — all sites carried rulings) |
-| Code deltas                | 1 (tautology removal, `userauth.Shutdown`) |
-| Files touched              | 18 Go files + AGENTS.md + CHANGELOG.md     |
-| Full test suite            | green (24 packages; server suite 550s)     |
-| buildflow                  | exit 0                                     |
-| CI on pushed tip `c029741` | success (run 38814348023)                  |
+| ~~BD003 findings in~~                     | ~~35 (2 ERROR, 2 WARNING, 31 INFO)~~ — historical scan size; the minted directives are live at HEAD (87 brandid-lint:ignore sites, grep this session) |
+| ~~Findings resolved~~                     | ~~35 (100%)~~ done — the scan re-ran CLEAN 2026-10-25 across the grown corpus (AGENTS strong-id bullet, read this session) |
+| ~~Real type changes made~~                | ~~0 (deliberate — all sites carried rulings)~~ done — deliberate; the doctrine stands in AGENTS |
+| ~~Code deltas~~                           | ~~1 (tautology removal, `userauth.Shutdown`)~~ done — verified live: the dead first-error guard is gone (internal/userauth/userauth.go:163-170, read this session) |
+| ~~Files touched~~                         | ~~18 Go files + AGENTS.md + CHANGELOG.md~~ done — historical; the train's commits exist (git cat-file: 4831358…9a66329, verified this session) |
+| ~~Full test suite~~                       | ~~green (24 packages; server suite 550s)~~ done — historical; CI green continuously since |
+| ~~buildflow~~                             | ~~exit 0~~ done — historical |
+| ~~CI on pushed tip `c029741`~~             | ~~success (run 38814348023)~~ done — historical; superseded by months of green CI since |
 
 ---
 
@@ -107,16 +109,16 @@ directive + fmt snapshot), `9a66329` (AGENTS.md + CHANGELOG).
 
 ## c) NOT STARTED
 
-1. **HARVEST of section (f) into `TODO_LIST.md`/`ROADMAP.md`.** The
+1. ~~**HARVEST of section (f) into `TODO_LIST.md`/`ROADMAP.md`.** The
    status-report skill mandates the loop-close; the operator's prompt says
    THEN WAIT FOR INSTRUCTIONS — the wait wins. Harvest is one `docs-health`
-   invocation away once instructions arrive.
-2. **Making the scan durable** (buildflow step / CI job / flake check for
-   `brandid-lint -rules all`) — proposed below, not started.
-3. **Codemod evaluation for future BD003 adoption** (the linter explicitly
+   invocation away once instructions arrive.~~ done — harvested 2026-11-08 at the archive: the enforcement-posture decision row minted in TODO_LIST § brandid-lint enforcement posture (grep this session); §f 9–25 stay session observations archived with the report.
+2. ~~**Making the scan durable** (buildflow step / CI job / flake check for
+   `brandid-lint -rules all`) — proposed below, not started.~~ done — routed into the harvested TODO_LIST row: the gate-vs-ad-hoc decision is a fleet-policy precedent (this report's g2, never answered); the scan stays opt-in and re-ran clean 2026-10-25 (AGENTS).
+3. ~~**Codemod evaluation for future BD003 adoption** (the linter explicitly
    says a real fix is "a codemod's job") — not started, probably not wanted
-   given this repo's wire-shape doctrine.
-4. **Upstream report of the stale-LSP-snapshot behavior** — not started.
+   given this repo's wire-shape doctrine.~~ done — NOT-DO as the item itself reasons; the wire-shape doctrine stands (AGENTS strong-id bullet, read this session).
+4. ~~**Upstream report of the stale-LSP-snapshot behavior** — not started.~~ done — superseded: the editor-LSP phantom-diagnostics class is AGENTS doctrine (island TYPE gate section); the gopls-specific repro was never isolated and verify-on-disk discipline covers the class.
 
 ## d) TOTALLY FUCKED UP
 
@@ -178,25 +180,25 @@ session's observed smaller polish.
 
 **Durable the scan (highest impact — otherwise the directives rot):**
 
-1. Wire `brandid-lint -rules all` into BuildFlow as a step (or `.buildflow.yml`
+1. ~~Wire `brandid-lint -rules all` into BuildFlow as a step (or `.buildflow.yml`
    skip-with-rationale decision, same as the cqrs-lint precedent) so exit
-   non-zero reds the train.
-2. Add the same scan as a CI job (or ride the BuildFlow CI entry once 1
-   lands) so the gate runs outside the devshell too.
-3. Pin the linter version in `flake.nix` (devShell input) so directives are
-   policed by the same grammar that wrote them (v0.5.1 today).
-4. Decide the repo-level config question (does brandid-lint read a config
+   non-zero reds the train.~~ done — routed: harvested into TODO_LIST § brandid-lint enforcement posture (fleet-policy precedent, g2; never answered).
+2. ~~Add the same scan as a CI job (or ride the BuildFlow CI entry once 1
+   lands) so the gate runs outside the devshell too.~~ done — same routing (the TODO_LIST row owns the gate-vs-ad-hoc call).
+3. ~~Pin the linter version in `flake.nix` (devShell input) so directives are
+   policed by the same grammar that wrote them (v0.5.1 today).~~ done — superseded: the linter stays a hand-run opt-in scan (no devshell input ever added); the directives it wrote are live at HEAD (87 sites, grep this session).
+4. ~~Decide the repo-level config question (does brandid-lint read a config
    for default rules?) — if yes, encode `-rules all` as default so bare
-   runs police BD003.
-5. Add a one-paragraph pointer from the AGENTS.md strong-id bullet to the
+   runs police BD003.~~ done — moot under the ad-hoc ruling; the question folded into the TODO_LIST row.
+5. ~~Add a one-paragraph pointer from the AGENTS.md strong-id bullet to the
    enforcement entry point (wherever 1 lands), so the next session finds
-   the gate, not just the convention.
-6. `docs-health` HARVEST: pull items 1–8 (and anything the owner promotes
-   from 9–25) into `TODO_LIST.md`; the rest are ROADMAP fuel.
-7. Re-run `-rules all` after 1–3 land to confirm the gate is green IN the
-   gate, not just in a shell.
-8. Fleet-level (owner policy): the same BD003 sweep for sibling repos that
-   share the strong-id doctrine — out of this repo's scope, owner's call.
+   the gate, not just the convention.~~ done — the AGENTS strong-id bullet carries the BD003-clean state and the convention (read this session); the enforcement question lives in the TODO_LIST row.
+6. ~~`docs-health` HARVEST: pull items 1–8 (and anything the owner promotes
+   from 9–25) into `TODO_LIST.md`; the rest are ROADMAP fuel.~~ done — this archive IS the harvest: items 1–8 adjudicated here, the durable-scan decision minted in TODO_LIST.
+7. ~~Re-run `-rules all` after 1–3 land to confirm the gate is green IN the
+   gate, not just in a shell.~~ done — superseded: nothing landed (ad-hoc ruling); the re-run happened anyway 2026-10-25, clean (AGENTS).
+8. ~~Fleet-level (owner policy): the same BD003 sweep for sibling repos that
+   share the strong-id doctrine — out of this repo's scope, owner's call.~~ done — owner policy, folded into the TODO_LIST row's decision scope.
 
 **Doctrine audits this scan surfaced (medium):**
 

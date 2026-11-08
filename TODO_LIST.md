@@ -857,6 +857,12 @@ ROADMAP cross-linked); g3 sequencing (lean: own fresh session).
 
 **Evidence:** registry 2026-10-11 entries + ratified-rulings section; status docs `2026-10-11_02-19` (triage) + `2026-10-11_02-48` (session report); AGENTS.md dedup/nolint/dep-lane/INTERIM edits
 
+### brandid-lint enforcement posture (2026-10-16 scan train — unanswered policy call, harvested at the 2026-11-08 archive)
+
+**Status:** 🟡 `OPEN DECISION` (owner call: fleet-policy precedent) · **Priority:** Low · **Effort:** S (decide) / M (a BuildFlow step)
+
+The BD003 directives (87 sites at HEAD, grep 2026-11-08) are policed only when someone hand-runs `brandid-lint -rules all` — last clean run 2026-10-25 (AGENTS strong-id bullet). The 2026-10-16 train's proposal (BuildFlow step / CI job / flake version pin) was never answered; the report's g2 asked exactly this and waits. Decide: gate it (every train keeps it green) or ratify ad-hoc (directives rot only if an edit touches a directive site without a re-run; AGENTS's strong-id bullet is the convention home).
+
 ### ASR/SUPERB train follow-ups (2026-10-08 harvest: 16-54/18-15 §f + plan remainder)
 
 **Status:** 🟡 `PARTIALLY DONE — hardening + polish + test debt CLOSED 2026-10-18; #13 affordance + #21 whisper.cpp variant SHIPPED 2026-10-25; remains: #48 privacy call, owner gates` · **Priority:** Medium · **Effort:** S-M
