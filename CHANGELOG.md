@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The missed-calls badge clears when the Recent calls panel lands
+  (2026-11-08, pack A4b): the History panel's arrival now clears the badge
+  whatever the door was (nav link, palette entry, language re-fetch) —
+  the panel opening IS the review happening. The M38 honesty arm keeps
+  its home: a failed History load clears nothing.
 - Templ form-POST rate buckets (2026-11-08): every write lane outside
   `/api/*` now rides a keyed bucket by cost class — compose (messages/fax
   send, resend, AI draft, draft approve) at 20/min, contacts forms at the

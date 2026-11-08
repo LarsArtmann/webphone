@@ -391,6 +391,46 @@ test("missed calls badge in the header and clear when History opens", () => {
   doc.querySelector = realQuerySelector;
 });
 
+// A4b: the badge also clears when the Recent calls PANEL lands, whatever
+// the door was — a swap whose target is #history-panel means the reads
+// are on screen. A failed load never reaches afterSwap, and a different
+// panel's swap must not clear anything.
+test("the missed badge clears when the history panel lands (any door)", () => {
+  const actions = doc.createElement();
+  actions.className = "wp-header-actions";
+  const realQuerySelector = doc.querySelector.bind(doc);
+  doc.querySelector = (selector) =>
+    selector === ".wp-header-actions" ? actions : realQuerySelector(selector);
+
+  doc.dispatch("wp:call-missed", {});
+  doc.dispatch("wp:call-missed", {});
+  assert.equal(
+    actions.children.some((el) => el.id === "missed-badge"),
+    true,
+    "two misses arm the badge",
+  );
+
+  doc.dispatch("htmx:afterSwap", {
+    detail: { target: { id: "messages-panel" } },
+  });
+  assert.equal(
+    actions.children.some((el) => el.id === "missed-badge"),
+    true,
+    "a different panel's swap keeps the badge",
+  );
+
+  doc.dispatch("htmx:afterSwap", {
+    detail: { target: { id: "history-panel" } },
+  });
+  assert.equal(
+    actions.children.some((el) => el.id === "missed-badge"),
+    false,
+    "the history panel landing clears the badge",
+  );
+
+  doc.querySelector = realQuerySelector;
+});
+
 // 3b-3. Thread-search guard: a live threads push must not stomp an
 // active search; it goes through once the box is empty again. The next
 // keystroke's debounced fetch re-renders the list, so nothing is lost.

@@ -721,6 +721,21 @@
       }
       pendingHistoryClear = null;
     });
+    // A4b (2026-11-08): the badge clears when the Recent calls PANEL
+    // lands, not only when the nav link was the door. The panel opening
+    // IS the review happening — a future palette entry or language
+    // re-fetch that swaps the same panel must not leave the badge
+    // claiming misses the operator is looking at. afterSwap fires on
+    // successful swaps only, so a failed load clears nothing (the M38
+    // honesty arm keeps its home above).
+    document.addEventListener("htmx:afterSwap", function (event) {
+      if (missedCount === 0) return;
+      var target = (eventDetail(event) && eventDetail(event).target) || null;
+      if (target && target.id === "history-panel") {
+        missedCount = 0;
+        renderMissedBadge();
+      }
+    });
 
     // M26: the tab-error slot renders above the panel, and a SUCCESSFUL
     // response clears it — a stale error banner must not outlive the
