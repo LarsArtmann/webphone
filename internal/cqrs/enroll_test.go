@@ -202,3 +202,35 @@ func TestEnrollStateSurvivesRestart(t *testing.T) {
 		t.Fatalf("burn after restart: %v", err)
 	}
 }
+
+// The operator-CLI flow (cmd/webphone -enroll-passkey): the SERVER is
+// already running when a SECOND, short-lived system process mints into
+// the same journal and exits. The mint's await folds the token into
+// the shared system.db projection before the CLI process closes, so
+// the server's Lookup answers without replay — the cross-process
+// split the stack's enroll-verify VM check caught as a fresh-token
+// 503 while the CLI still minted into readmodels.db (P7 residue).
+func TestEnrollCrossProcessMintVisibleToRunningServer(t *testing.T) {
+	dir := t.TempDir()
+	ctx := context.Background()
+	hash := hashFor(t)
+
+	server := bootEnrollSystem(t, dir) // the long-lived process, idling
+
+	cli, err := NewEnrollSystem(ctx, filepath.Join(dir, "system.db"))
+	if err != nil {
+		t.Fatalf("boot CLI system: %v", err)
+	}
+	cliTokens := NewEnrollTokens(cli)
+	if err := cliTokens.Mint(ctx, hash, "ops@example.com", "user-1", time.Now().Add(time.Hour)); err != nil {
+		t.Fatalf("cli mint: %v", err)
+	}
+	if err := cli.GracefulClose(ctx); err != nil {
+		t.Fatalf("cli close: %v", err)
+	}
+
+	_, _, _, found, err := server.Lookup(ctx, hash)
+	if err != nil || !found {
+		t.Fatalf("running server must see the CLI-minted token: found=%v err=%v", found, err)
+	}
+}

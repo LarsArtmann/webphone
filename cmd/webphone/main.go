@@ -17,8 +17,8 @@ import (
 	"github.com/larsartmann/httputil"
 
 	"github.com/larsartmann/webphone/internal/app"
-	"github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/config"
+	"github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/userauth"
 )
 
