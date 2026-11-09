@@ -197,3 +197,24 @@ it byte-for-byte. Two mitigations now exist; use both:
   READS it. Before claiming any new config lane is live, grep the
   deployed `/fax` (or the lane's surface) for the markup only the new
   binary renders — the eval alone is exactly the lie this trap is.
+
+### The worktree-release-interleave pattern (2026-11-09, the P6/2.11 trains)
+
+A release train holds the checkout for 1–2 h (gates + tag + stack legs).
+Develop the NEXT phase in a `git worktree` (`git worktree add -b <train>
+/tmp/wp-<n> HEAD`) — the auto-commit daemon does not sweep worktrees, so
+the isolation is also protection against mid-train sweeps of in-flight
+edits. Two cautions from the field: docs-gates needs the main checkout's
+`.git` (it fails under /tmp worktrees — run doc batteries in the main
+tree), and the worktree + branch must be cleaned up once the merge is
+CI-verified (`git worktree remove` + `git branch -d`), or the residue
+collects (2026-11-09: three stale worktrees pruned).
+
+### Verdicts ride rc files, never pipe tails (2026-11-09, two sessions' scar)
+
+`nix flake check | tail && echo` swallows the check's exit code — BOTH
+release trains of 2026-11-08/09 "passed" stack gates this way while
+flake check was red on stale VM tests. Capture each leg's rc explicitly
+(`{ cmd > log 2>&1; echo $? > rc; }`) and read the rc files; the tails
+lie. The same class killed CI verdicts: every push owes its `gh run
+watch`, not a glance at the last lines.
