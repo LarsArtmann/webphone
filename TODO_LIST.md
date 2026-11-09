@@ -41,13 +41,47 @@ each verified still-open at harvest time (the plan doc keeps its detail):
 
 New open items from the legs session, not homed elsewhere yet.
 
-- [ ] **Re-record the art-dupl baseline for the Phase-6 fax-journal
+- [x] **Re-record the art-dupl baseline for the Phase-6 fax-journal
       groups** (adjudicate-before-write, pinned v0.7.2 detector — the
       same repair shape as the 2026-11-08 threads-aggregate gate fix);
       run 42538856915 red on it after the A39–A40 landing. Then read
       run 42539029787's failing legs (the second red was unnamed at
       snapshot time). Their train may own both — the 03-38 report's
       §g-3 asks the owner.
+      DONE 2026-11-09 (SUPERB closeout train): the baseline re-record
+      rides that commit (131 → 137, all six groups adjudicated in
+      docs/dedup-registry.md — the readmodels fax twins, the
+      ProjectionHostOptions registration idiom, the sweep trivia);
+      run 42539029787's unnamed second leg was TWO: dprint format rc=20
+      (the honest report's wrap points, reworded) and strike-safety on
+      a 6-cell FEATURES row (healed by 4788bc52). The owner's execute
+      mandate gave the train to the SUPERB session.
+- [ ] **Finish the v2.12.0 release train (legs 6–9)** — the train died
+      at 6/9 on release.sh's mis-quoted lychee `--exclude` (a
+      double-backslash inside single quotes reaches lychee as a
+      literal backslash and matches nothing); fix the quoting and
+      verify by running exactly that script line, then the lychee link
+      check → stack relock to v2.12.0 (plus its CHANGELOG lock-move
+      record, browser E2E, telephony-VM check, flake check, push with
+      exit codes captured — no pipe-swallowing) → aarch64 cross-build
+      + ELF b700 guard → `gh release create v2.12.0`. Every push owes
+      the `gh run watch` to green.
+- [ ] **Delete the prod-dead readmodels faxes store** — the
+      engine-backed `Faxes` in internal/readmodels/faxes.go lost its
+      prod wiring at P7 (app.go wires only `cqrs.NewFaxes`); it
+      survives as the fax service's test double
+      (internal/fax/teststore_test.go, archiver_test.go). Move those
+      tests to the cqrs backend, keep `FaxesProjection`/
+      `FaxJobOfView`/`FaxGate` (faxesgate.go, the shared fold builder
+      both DBs ride), then delete the store — dissolves 3 of the 6
+      clone groups baselined 2026-11-09 (the registry's post-P7 fax
+      twins row).
+- [ ] **fleet-libs `go-cqrs-lite.md` re-score (B159) + ROADMAP ES
+      annotation (B160)** — the A46 leftovers: SUPERB made webphone the
+      library's deepest consumer (threads/faxes aggregates, system
+      composition, snapshots, DedupStore); the 83/100 score predates
+      the whole train. ROADMAP gains the event-sourcing doctrine
+      paragraph (ONE journal world; sessions stay SQL per D2).
 - [ ] **Clone the transport-isolation fix into pbx, asr, matrix,
       paperless** — the crm client's Clone() repair (2026-11-08) killed
       the parallel-test flake class at ONE seam; the same bare

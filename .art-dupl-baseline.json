@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "threshold": 1,
-  "recordedAt": "2026-11-08T21:57:46.371890927Z",
+  "recordedAt": "2026-11-09T02:56:22.354369123Z",
   "entries": [
     {
       "hash": "0074763f10c77d08",
@@ -161,6 +161,14 @@
       "tokens": 8
     },
     {
+      "hash": "2379e831fb7a1e63",
+      "files": [
+        "internal/readmodels/faxes.go",
+        "internal/cqrs/faxesstore.go"
+      ],
+      "tokens": 6
+    },
+    {
       "hash": "23d679627738d59a",
       "files": [
         "internal/web/views/fax.templ",
@@ -220,14 +228,6 @@
       "tokens": 2
     },
     {
-      "hash": "2e46f56e08bc80cb",
-      "files": [
-        "internal/app/legacy.go",
-        "internal/app/legacy.go"
-      ],
-      "tokens": 2
-    },
-    {
       "hash": "2e733fbcd9e166e8",
       "files": [
         "internal/web/views/layout.templ",
@@ -242,6 +242,15 @@
         "internal/web/views/settings.templ"
       ],
       "tokens": 4
+    },
+    {
+      "hash": "31917f0ef6a0ac3a",
+      "files": [
+        "internal/cqrs/threadsregister.go",
+        "internal/cqrs/faxesstore.go",
+        "internal/cqrs/threadsregister.go"
+      ],
+      "tokens": 15
     },
     {
       "hash": "321a212269a2273e",
@@ -289,8 +298,8 @@
     {
       "hash": "3afa582b25eebecd",
       "files": [
-        "internal/cqrs/threadsstore.go",
-        "internal/cqrs/threadsstore.go"
+        "internal/cqrs/threadsreads.go",
+        "internal/cqrs/threadsreads.go"
       ],
       "tokens": 6
     },
@@ -382,6 +391,14 @@
       "tokens": 6
     },
     {
+      "hash": "5949191fb0191d56",
+      "files": [
+        "internal/cqrs/faxesstore.go",
+        "internal/cqrs/threadssweep.go"
+      ],
+      "tokens": 8
+    },
+    {
       "hash": "5b5f9a5073da6834",
       "files": [
         "internal/web/views/admin.templ",
@@ -452,8 +469,8 @@
     {
       "hash": "6a8d1adf5d97b1b9",
       "files": [
-        "internal/cqrs/threads.go",
-        "internal/cqrs/threads.go"
+        "internal/cqrs/threadsstate.go",
+        "internal/cqrs/threadsstate.go"
       ],
       "tokens": 4
     },
@@ -476,7 +493,7 @@
     {
       "hash": "735bde082352a35a",
       "files": [
-        "internal/cqrs/threads.go",
+        "internal/cqrs/threadsregister.go",
         "internal/cqrs/dialwindows.go"
       ],
       "tokens": 10
@@ -488,6 +505,14 @@
         "internal/readmodels/callreviews.go"
       ],
       "tokens": 12
+    },
+    {
+      "hash": "74042611aa2ea53e",
+      "files": [
+        "internal/cqrs/threadssweep.go",
+        "internal/cqrs/faxesstore.go"
+      ],
+      "tokens": 4
     },
     {
       "hash": "74971bedaa27e5d1",
@@ -696,6 +721,14 @@
       "tokens": 2
     },
     {
+      "hash": "96bd35998e100a78",
+      "files": [
+        "internal/cqrs/faxesstore.go",
+        "internal/readmodels/faxes.go"
+      ],
+      "tokens": 6
+    },
+    {
       "hash": "975b0be8892b1ffd",
       "files": [
         "internal/web/views/phone.templ",
@@ -881,7 +914,7 @@
     {
       "hash": "c370d2c71553bb9b",
       "files": [
-        "internal/cqrs/threadsstore.go",
+        "internal/cqrs/threadsreads.go",
         "internal/store/messages.go"
       ],
       "tokens": 2
@@ -1016,19 +1049,6 @@
       "tokens": 10
     },
     {
-      "hash": "dad4515d2f188a1a",
-      "files": [
-        "internal/app/mediumimports.go",
-        "internal/app/mediumimports.go",
-        "internal/app/mediumimports.go",
-        "internal/app/journalimports.go",
-        "internal/app/journalimports.go",
-        "internal/app/mediumimports.go",
-        "internal/app/journalimports.go"
-      ],
-      "tokens": 7
-    },
-    {
       "hash": "dba893dacfe90981",
       "files": [
         "internal/web/views/history.templ",
@@ -1119,6 +1139,14 @@
         "internal/web/views/reports.templ"
       ],
       "tokens": 17
+    },
+    {
+      "hash": "efff352ba59569e9",
+      "files": [
+        "internal/readmodels/faxes.go",
+        "internal/cqrs/faxesstore.go"
+      ],
+      "tokens": 6
     },
     {
       "hash": "f284a893cb53f85c",
