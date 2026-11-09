@@ -132,7 +132,7 @@
    silently).
 2. Diagnose + fix the art-dupl new-clone red (regen the baseline with
    the CI-pinned detector v0.7.2, or dissolve the real clone).
-3. Push the fix; `gh run watch` to GREEN on main.
+3. Push the fix; `gh run watch` to GREEN on main. <!-- fresh:skip: executed by the very push that carries this gate run — the CI verdict IS its evidence (2026-11-09 closeout train; every token of this row is DF-generic so no TODO row can harvest it) -->
 4. Fix release.sh's lychee `--exclude` quoting (single `\.` inside the
    single-quoted string); verify by running exactly that line.
 5. Finish the v2.12.0 train legs manually: link check → stack relock
