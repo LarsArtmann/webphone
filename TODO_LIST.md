@@ -100,6 +100,33 @@ New open items from the legs session, not homed elsewhere yet.
       suggestions collide with the JSON-wire raw-string ruling), file
       the noise classes upstream, or baseline with rationale once the
       error_rules-bearing BuildFlow release lands.
+- [ ] **CI-verdict instrument fixes (the 2026-11-09 misread-green
+      class)**: (a) `scripts/ci-verdict.sh <sha>` printing the
+      CI-WORKFLOW conclusion for a sha — the watch workflow's
+      scheduled runs masquerade as CI verdicts in a name-less `gh run
+      list`, and one session re-pointed a tag and published a release
+      on that misread; (b) give the watch workflow a distinct
+      displayTitle prefix for the same reason; (c) AGENTS.md gains the
+      workflowName-verified-verdict rule beside the 2026-10-05
+      check-CI-after-every-push rule.
+- [ ] **Mechanical ride-along probes for code trains** — the
+      errorfamily-registry freshness (`TestErrorCodeRegistryIsFresh`,
+      regen + diff in the SAME commit as any new code) and the
+      art-dupl check (any line-moving refactor re-keys ruled twins)
+      are now THREE-time lesson repeaters caught only by CI. A
+      pre-push battery step or buildflow lane makes them mechanical.
+- [ ] **Smoke scenario for `-enroll-passkey`** — mint via the CLI
+      one-shot, verify 200 through the live server, burned token 503.
+      Webphone's own CI would have caught the 2026-11-09 CLI/server
+      split-brain (readmodels.db vs system.db) before any release
+      shipped it; today only the stack's enroll-verify VM check
+      catches the class.
+- [ ] **Doctrine-doc sweep after the enroll CLI journal swap**: AGENTS
+      + the userauth one-home paragraphs still describe the one-shot
+      as opening the readmodels engine; also check whether
+      `readmodels.EnrollTokens` is now prod-dead (only the fax-style
+      test doubles may hold it) — if dead, its deletion rides the
+      readmodels faxes-store deletion row's pattern.
 - [ ] **Clone the transport-isolation fix into pbx, asr, matrix,
       paperless** — the crm client's Clone() repair (2026-11-08) killed
       the parallel-test flake class at ONE seam; the same bare
