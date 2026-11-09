@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.12.0] - 2026-11-09
+
+### Changed
+
+- **ONE journal world — the SUPERB unification lands** (Phase 7 /
+  A41-A45): the read-model engine left the composition root, the backup
+  set and the drill. `readmodels.db` stopped opening at boot (an inert
+  orphan on upgraded deployments — safe to delete by hand); every seam
+  it served answers from `system.db`, and the dedup windows
+  (`hooksIdem`/`CallsIdem`, riding the same CAS capability as the fax
+  replay guard) resolve from the system now — one dedup home. The
+  retention pass re-pointed its transcripts leg journal-side (the
+  Phase-4 gap: the engine leg had kept sweeping the frozen lane while
+  the journal grew — expired journal segments delete again, pinned by
+  the retention suite). The storage ladder is FROZEN (store/db.go
+  header): sessions stay SQL per the D2 ruling (ephemeral auth
+  substrate, no domain invariants — the ruling + the table death map:
+  docs/planning/2026-11-09_storage-ladder-retirement.md). Upgrade
+  chain: v2.12.0 requires passing through v2.10.0/v2.11.0 first on
+  deployments with pre-SUPERB data (the one-time importers lived in
+  those releases); fresh installs need nothing. Wire contracts, the
+  OpenAPI surface and the EventCatalog export verified drift-free in
+  the same train.
+
 ## [2.11.0] - 2026-11-09
 
 ### Changed
@@ -2973,7 +2997,8 @@ island-tests/` (a sibling of the served tree, never embedded) and run
   toast styling — same DOM contract as before (see AGENTS.md).
 - `package/update.sh` for repinning the bundled sip.js tarball.
 
-[Unreleased]: https://github.com/LarsArtmann/webphone/compare/v2.11.0...HEAD
+[Unreleased]: https://github.com/LarsArtmann/webphone/compare/v2.12.0...HEAD
+[2.12.0]: https://github.com/LarsArtmann/webphone/compare/v2.11.0...v2.12.0
 [2.11.0]: https://github.com/LarsArtmann/webphone/compare/v2.10.0...v2.11.0
 [2.10.0]: https://github.com/LarsArtmann/webphone/compare/v2.9.0...v2.10.0
 [2.9.0]: https://github.com/LarsArtmann/webphone/compare/v2.8.0...v2.9.0

@@ -68,19 +68,22 @@ New open items from the legs session, not homed elsewhere yet.
 
 ### 2026-11-08 SUPERB Phase-5 mid-flight residue (harvested from the 22:46 report)
 
-Open items the freshness gate flagged unharvested; owned by the sibling
-session's Phase-5/6/7 trains.
+All three rows CLOSED by the 2026-11-09 execution session (A38-A47
+complete; the plan doc's Phase-5/6/7 as-built errata carry the
+evidence):
 
-- [ ] **A38 phase-gate: stack browser E2E** (445 s budget, re-run-once flake
-      rule) once the journal-backed thread-seam swap ships — owed whenever
-      served markup or behavior changes (report §f item 18).
-- [ ] **A43 dedup unification: hooksIdem/CallsIdem → sys.Dedup()** — one dedup
-      home once the system composition root owns idempotency; readmodels
-      engine registration removed, drill re-run (report §f item 32).
-- [ ] **Track the metrics-count decision** (report §g-2): `webphone_messages_total`
-      (+ threads count) must move to system.db counts during the seam window —
-      re-point now (undercounts until A35) vs sum legacy + gate counts (two
-      homes) vs frozen (dishonest, rejected). Owner ruling pending.
+- [x] **A38 phase-gate: stack browser E2E** — ran green against the
+      v2.10.0 pin in the stack leg (319 s, under the 445 s budget);
+      telephony-webphone VM check green in the same train.
+- [x] **A43 dedup unification: hooksIdem/CallsIdem → sys.Dedup()** —
+      done: the dedup window resolves from the system (ONE CAS home in
+      system.db), the readmodels engine left the composition root, the
+      backup set, and the drill; readmodels.db is an inert orphan.
+- [x] **The metrics-count decision** — executed as the SUM posture
+      during the import window (`legacy + gate`, marker-gated by
+      `threads_journal_imported`; the importer flips the legacy
+      contribution to zero — no double count, no undercount), then the
+      journal is the one count.
 
 ### 2026-11-07 Frontend UX fix-train (one home: the SUPERB plan)
 

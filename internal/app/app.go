@@ -49,7 +49,6 @@ import (
 	"github.com/larsartmann/webphone/internal/paperless"
 	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/push"
-	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/retention"
 	"github.com/larsartmann/webphone/internal/server"
 	"github.com/larsartmann/webphone/internal/session"
@@ -68,12 +67,10 @@ var (
 	_ do.HealthcheckerWithContext = (*store.Database)(nil)
 	_ do.HealthcheckerWithContext = (*blob.Store)(nil)
 	_ do.HealthcheckerWithContext = (*userauth.Service)(nil)
-	_ do.HealthcheckerWithContext = (*readmodels.Engine)(nil)
 	_ do.HealthcheckerWithContext = (*crm.Resolver)(nil)
 	_ do.HealthcheckerWithContext = (*CqrsService)(nil)
 	_ do.ShutdownerWithError      = (*store.Database)(nil)
 	_ do.ShutdownerWithError      = (*userauth.Service)(nil)
-	_ do.ShutdownerWithError      = (*readmodels.Engine)(nil)
 	_ do.ShutdownerWithError      = (*CqrsService)(nil)
 	_ do.Shutdowner               = (*dashboard.Dashboard)(nil)
 	_ do.Shutdowner               = (*server.ExtensionHubs)(nil)
@@ -170,17 +167,6 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	//samber-linter:allow hw-4 eagerly resolved via MustInvokeNamed in New
 	do.ProvideNamed(injector, "blob-dir", func(i do.Injector) (*blob.Store, error) {
 		return blob.New(filepath.Join(cfg.DataDir, "files"))
-	})
-	// The metaengine storage (read models + dedup windows) lives in its
-	// OWN database file so the engine-owned DDL and webphone's hand-
-	// written migration ladder never touch (plan N5/N6). Named like the
-	// critical pair because the probe discovers health by name; NOT in
-	// WithCriticalServices — the seams it serves today fail open
-	// (dedup forgets → one harmless re-apply), unlike sqlite/blob whose
-	// loss takes the product down.
-	//samber-linter:allow hw-4 eagerly resolved via MustInvokeNamed in New
-	do.ProvideNamed(injector, "metaengine", func(i do.Injector) (*readmodels.Engine, error) {
-		return readmodels.Open(cfg.DataDir)
 	})
 	// The system composition root (SUPERB plan): the command/event
 	// journal rides its OWN system.db beside the read-model engine —
@@ -401,8 +387,6 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	do.Provide(injector, func(i do.Injector) (http.Handler, error) {
 		db := do.MustInvokeNamed[*store.Database](i, "sqlite")
 		blobs := do.MustInvokeNamed[*blob.Store](i, "blob-dir")
-		engine := do.MustInvokeNamed[*readmodels.Engine](i, "metaengine")
-
 		var auth *userauth.Service
 		if cfg.Auth.Passkey.Enabled() {
 			auth = do.MustInvokeNamed[*userauth.Service](i, "userauth")
@@ -466,8 +450,11 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			UserAuth:    auth,
 			SSO:         ssoClient,
 			Trace:       traceSeam(trace),
-			Dedup:       engineDedupWindow{store: engine.DedupStore()},
-			Push:        pushFanout,
+			// The dedup window lives in system.db since A43 (sys.Dedup, the
+			// same CAS capability the fax replay guard rides): readmodels.db's
+			// window retired with the engine.
+			Dedup: engineDedupWindow{store: systemDedup(i)},
+			Push:  pushFanout,
 			// The device registry answers from the journal since the SUPERB
 			// Phase 3 swap (the engine-backed store stays as the import
 			// source behind the PushDeviceGate seam).
@@ -487,48 +474,14 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	if _, err := do.InvokeNamed[*blob.Store](injector, "blob-dir"); err != nil {
 		return nil, wrapf("open blob store: %w", err)
 	}
-	if _, err := do.InvokeNamed[*readmodels.Engine](injector, "metaengine"); err != nil {
-		return nil, wrapf("open read-model engine: %w", err)
-	}
 	if _, err := do.InvokeNamed[*CqrsService](injector, cqrsProviderName); err != nil {
 		return nil, wrapf("open cqrs system: %w", err)
 	}
-	// The four legacy imports share one (sqlite, engine) resolution —
-	// named once, eagerly, per the composition-root doctrine (AGENTS.md).
-	sqlite := do.MustInvokeNamed[*store.Database](injector, "sqlite")        //nolint:branching-flow // composition-root resolution (AGENTS.md): the eager named pair, resolved once for the legacy imports
-	engine := do.MustInvokeNamed[*readmodels.Engine](injector, "metaengine") //nolint:branching-flow // composition-root resolution (AGENTS.md): the eager named pair, resolved once for the legacy imports
-	importLegacyContacts(context.Background(), sqlite, engine, log)
-	importLegacySnippets(context.Background(), sqlite, engine, log)
-	importLegacyTranscripts(context.Background(), sqlite, engine, log)
-	importLegacyFaxes(context.Background(), sqlite, engine, log)
-	// The dial journal import runs BEFORE any dispatch can race it (the
-	// handler below is not yet built; App.Start has not run): the
-	// synthetic facts land, the projection worker drains them at Start,
-	// and the gate opens against the full history.
-	importDialWindows(context.Background(), sqlite, engine.DialWindows(),
-		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time dial import
-	importSnippets(context.Background(), sqlite, engine.Snippets(),
-		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time snippet import
-	importAgentAudit(context.Background(), sqlite, engine.AgentAudit(),
-		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time agent-audit import
-	importPushDevices(context.Background(), sqlite, engine.PushDevices(),
-		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time push-device import
-	importContactsIntoJournal(context.Background(), sqlite, engine.Contacts(),
-		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time contacts import
-	importTranscriptsIntoJournal(context.Background(), sqlite, engine.Transcripts(),
-		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time transcript import
-	importCallNotesIntoJournal(context.Background(), sqlite, engine.Notes(),
-		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time call-notes import
-	importCallReviewsIntoJournal(context.Background(), sqlite, engine.Reviews(),
-		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time call-reviews import
-	// The core import runs last and BEFORE any dispatch can race it: the
-	// synthetic thread facts land, the projection worker drains them at
-	// Start, and the messages gate opens against the full history (the
-	// metrics surface reads the same marker this importer stamps).
-	importThreadsIntoJournal(context.Background(), sqlite,
-		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time core import
-	importFaxesIntoJournal(context.Background(), sqlite, engine.Faxes(),
-		do.MustInvokeNamed[*CqrsService](injector, cqrsProviderName), log) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service, resolved once for the one-time fax import
+	// The read-model engine and its one-time importers are GONE (A43):
+	// every seam answers from system.db, and readmodels.db stopped opening
+	// at boot. Upgrades ride the v2.10.0/v2.11.0 import trains first (the
+	// retirement plan doc names the boundary).
+
 	if cfg.Auth.Passkey.Enabled() {
 		if _, err := do.InvokeNamed[*userauth.Service](injector, "userauth"); err != nil {
 			return nil, wrapf("open passkey auth: %w", err)
@@ -709,12 +662,6 @@ func (a *App) Start(ctx context.Context) error {
 	if err != nil {
 		return wrapf("resolve blob store: %w", err)
 	}
-	// The dedup sweeper rides the same ctx bound as every background
-	// loop; a missing engine here is impossible (eager invoke in New).
-	engine, err := do.InvokeNamed[*readmodels.Engine](a.injector, "metaengine") //nolint:branching-flow // composition-root resolution (AGENTS.md): the named metaengine service
-	if err != nil {
-		return wrapf("resolve read-model engine: %w", err)
-	}
 	// The system's projection workers and timers start BEFORE the HTTP
 	// listener accepts traffic (contract §3), so the initial journal
 	// drain never races a request that expects a caught-up view.
@@ -725,8 +672,10 @@ func (a *App) Start(ctx context.Context) error {
 	if err := cqrs.Start(ctx); err != nil {
 		return wrapf("start cqrs system: %w", err)
 	}
-	retention.Start(ctx, db.SQL(), blobs, engine, cqrs.ThreadsSvc(), cqrs.FaxesSvc(), time.Duration(a.cfg.RetentionDays)*24*time.Hour)
-	startDedupSweeper(ctx, a.log, engineDedupWindow{store: engine.DedupStore()})
+	retention.Start(ctx, db.SQL(), blobs, retention.JournalSweepers{
+		Threads: cqrs.ThreadsSvc(), Faxes: cqrs.FaxesSvc(), Transcripts: cqrs.TranscriptsSvc(),
+	}, time.Duration(a.cfg.RetentionDays)*24*time.Hour)
+	startDedupSweeper(ctx, a.log, engineDedupWindow{store: systemDedup(a.injector)})
 	// The chat-network lanes wire here (config-gated; absent config wires
 	// nothing) and run under the same ctx bound: a lane exiting while the
 	// app lives is a loud Error, not silent intake death.

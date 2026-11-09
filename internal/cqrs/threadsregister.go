@@ -154,12 +154,12 @@ func NewThreadsSystem(ctx context.Context, dsn string) (*system.System, error) {
 	return sys, nil
 }
 
-// NewCoreSystem boots one system over the conversation core (threads +
-// faxes) — the server-side test compositions' helper: ONE journal per
-// composition, both gates over it (a second system would split-brain
-// pushes away from writes).
+// NewCoreSystem boots one system over the retention-swept core
+// (threads, faxes, transcripts) — the test compositions' helper: ONE
+// journal per composition, every gate over it (a second system would
+// split-brain pushes away from writes).
 func NewCoreSystem(ctx context.Context, dsn string) (*system.System, error) {
-	decl := Domain(ThreadsDomainDecl(), FaxesDomainDecl())
+	decl := Domain(ThreadsDomainDecl(), FaxesDomainDecl(), TranscriptsDomainDecl())
 	decl.ProjectionHostOptions = append(decl.ProjectionHostOptions,
 		projectionhost.WithBackoff(time.Millisecond, 5*time.Millisecond))
 	sys, err := system.New(ctx, decl, system.DeploymentConfig{

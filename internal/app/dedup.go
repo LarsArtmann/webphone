@@ -2,10 +2,13 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"time"
 
 	metaengine "github.com/larsartmann/go-cqrs-lite/metaengine/v4"
+
+	"github.com/samber/do/v2"
 
 	"github.com/larsartmann/webphone/internal/server/hooks"
 )
@@ -76,4 +79,17 @@ func sweepOnce(ctx context.Context, log *slog.Logger, window hooks.DedupWindow, 
 	if removed > 0 {
 		log.Info("dedup sweep", "collection", hooks.DedupCollection, "expired_removed", removed)
 	}
+}
+
+// systemDedup resolves the SYSTEM's dedup capability (system.db's CAS
+// window — the one dedup home since A43; readmodels.db's window
+// retired with the engine). A missing capability is a boot-time
+// miswire and panics loudly, mirroring the backend capability asserts.
+func systemDedup(i do.Injector) metaengine.DedupStore {
+	svc := do.MustInvokeNamed[*CqrsService](i, cqrsProviderName)
+	dedup, err := svc.Sys.Dedup()
+	if err != nil {
+		panic(fmt.Sprintf("app: system dedup capability: %v", err))
+	}
+	return dedup
 }
