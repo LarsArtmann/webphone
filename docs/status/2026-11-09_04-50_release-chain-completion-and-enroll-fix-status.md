@@ -5,7 +5,12 @@
 > execute mandate ("READ, UNDERSTAND… Execute and Verify… Keep going
 > until everything works").
 > **Snapshot rot:** claims verified as of writing; CI verdicts carry
-> run ids. MAIN GREEN at `efb0ff1a` (runs 42557290942 + 42557489529).
+> run ids. MAIN GREEN through the docs commits — with one honest
+> correction landed in the same session: the enroll-fix commits
+> (`85ba79d2`/`efb0ff1a`) carried TWO red CI legs I initially misread
+> as green (watch-workflow rows in a workflowName-less `gh run list`):
+> the unregistered `cqrs.enroll_boot` code + the re-keyed enroll clone
+> twin — both healed in the follow-up train (see d-5).
 
 ## a) FULLY DONE (verified this session)
 
@@ -114,6 +119,16 @@ the D-slots stay sitting items).
    re-fetch after rotation). Four rounds to green — each caught by
    the VM check itself, which is the system working, but the lane
    confusion cost two.
+5. **I shipped the enroll fix WITHOUT its registry line and misread
+   CI green twice**: `cqrs.enroll_boot` landed unregistered (the
+   exact 2026-10-24 lesson — new codes ride the SAME commit with the
+   `-update` regen), the fix's line moves re-keyed the ruled enroll
+   clone twin past the baseline, and I declared both commits green by
+   reading `gh run list` rows that were the WATCH workflow's runs —
+   without `workflowName` in the jq, the scheduled runs masquerade as
+   CI verdicts. Standing correction: every CI verdict claim names
+   `workflowName == CI`; the fixes (registry regen + baseline re-key,
+   set-diff +1/−1 same pair) landed in the follow-up train.
 
 ## e) WHAT WE SHOULD IMPROVE
 

@@ -382,6 +382,7 @@ a deliberate code change, regenerate:
 | cqrs.dlq                                     | Infrastructure            | internal/app/cqrs.go               |
 | cqrs.engine                                  | Infrastructure            | internal/app/cqrs.go               |
 | cqrs.engine_count                            | Infrastructure            | internal/cqrs/engineaggregate.go   |
+| cqrs.enroll_boot                             | Infrastructure            | internal/cqrs/enroll.go            |
 | cqrs.enroll_burn                             | Infrastructure            | internal/cqrs/enroll.go            |
 | cqrs.enroll_fold                             | Corruption                | internal/cqrs/enroll.go            |
 | cqrs.enroll_lookup                           | Infrastructure            | internal/cqrs/enroll.go            |

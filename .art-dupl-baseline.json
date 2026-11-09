@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "threshold": 1,
-  "recordedAt": "2026-11-09T02:56:22.354369123Z",
+  "recordedAt": "2026-11-09T04:37:37.813205898Z",
   "entries": [
     {
       "hash": "0074763f10c77d08",
@@ -548,14 +548,6 @@
       "tokens": 3
     },
     {
-      "hash": "774e9ccb6fcea31d",
-      "files": [
-        "internal/readmodels/enroll.go",
-        "internal/cqrs/enroll.go"
-      ],
-      "tokens": 16
-    },
-    {
       "hash": "78a39dd0dc172759",
       "files": [
         "internal/web/views/fax.templ",
@@ -926,6 +918,14 @@
         "internal/textagent/client.go"
       ],
       "tokens": 4
+    },
+    {
+      "hash": "c438b89f63b55106",
+      "files": [
+        "internal/cqrs/enroll.go",
+        "internal/readmodels/enroll.go"
+      ],
+      "tokens": 14
     },
     {
       "hash": "c63ffa0e985337dc",
