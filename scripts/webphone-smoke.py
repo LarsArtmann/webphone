@@ -839,7 +839,9 @@ def metrics_scenario(binary: str, workdir: str) -> int:
     srv, base = boot({}, "data-metrics-off")
     try:
         s = login_csrf(base)
-        status, _, _ = s.request("POST", "/api/metrics/latency", beacon, "application/json")
+        status, _, _ = s.request(
+            "POST", "/api/metrics/latency", beacon, "application/json"
+        )
         c.ok("metrics: off answers 404", status == 404, f"status {status}")
         _, body, _ = s.request("GET", "/config.js")
         c.ok(
@@ -867,7 +869,9 @@ def metrics_scenario(binary: str, workdir: str) -> int:
             b'"metrics":true' in body,
             body[:160].decode("utf-8", "replace"),
         )
-        status, _, _ = s.request("POST", "/api/metrics/latency", beacon, "application/json")
+        status, _, _ = s.request(
+            "POST", "/api/metrics/latency", beacon, "application/json"
+        )
         c.ok("metrics: valid beacon answers 204", status == 204, f"status {status}")
         status, _, _ = s.request(
             "POST", "/api/metrics/latency", b"{not json at all", "application/json"
@@ -890,7 +894,9 @@ def metrics_scenario(binary: str, workdir: str) -> int:
             in metrics,
             "count != 1 after one valid beacon",
         )
-        status, _, _ = s.request("POST", "/api/metrics/latency", beacon, "application/json")
+        status, _, _ = s.request(
+            "POST", "/api/metrics/latency", beacon, "application/json"
+        )
         anon_status = urllib.request.Request(
             base + "/api/metrics/latency", data=beacon, method="POST"
         )

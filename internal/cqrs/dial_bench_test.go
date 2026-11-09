@@ -53,7 +53,7 @@ func BenchmarkDialWindowRead(b *testing.B) {
 	dials := bootDialSystem(t, b.TempDir())
 	ctx := context.Background()
 	owner := mustExt(t, "1001")
-	for i := 0; i < 50; i++ {
+	for i := range 50 {
 		remote := fmt.Sprintf("+1607%05d", i)
 		if _, _, err := dials.Attempt(ctx, owner, remote, time.Hour); err != nil {
 			b.Fatal(err)

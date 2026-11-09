@@ -18,12 +18,8 @@ globalThis.fetch = async (path, options) => {
   return { ok: true, status: 204 };
 };
 
-const { sendLatencyBeacon } = await import(
-  `../island/app/latency.js?case=metrics-off`
-);
-const { watchRemoteAudio } = await import(
-  `../island/app/audio.js?case=metrics-off`
-);
+const { sendLatencyBeacon } = await import(`../island/app/latency.js?case=metrics-off`);
+const { watchRemoteAudio } = await import(`../island/app/audio.js?case=metrics-off`);
 
 const flush = () => new Promise((resolve) => setImmediate(resolve));
 

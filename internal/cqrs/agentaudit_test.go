@@ -100,7 +100,7 @@ func TestAgentAuditCapTrimsOldest(t *testing.T) {
 	ctx := context.Background()
 	owner := mustExt(t, "1001")
 
-	for i := 0; i < 4; i++ {
+	for i := range 4 {
 		if err := s.Append(ctx, owner, "ops@example.com", "mode_pin", "run-"+string(rune('0'+i)), "pinned"); err != nil {
 			t.Fatalf("append %d: %v", i, err)
 		}

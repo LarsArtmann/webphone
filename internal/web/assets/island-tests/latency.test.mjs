@@ -65,12 +65,8 @@ globalThis.AudioContext = class {
   }
 };
 
-const { sendLatencyBeacon } = await import(
-  `../island/app/latency.js?case=metrics-on`
-);
-const { watchRemoteAudio } = await import(
-  `../island/app/audio.js?case=metrics-on`
-);
+const { sendLatencyBeacon } = await import(`../island/app/latency.js?case=metrics-on`);
+const { watchRemoteAudio } = await import(`../island/app/audio.js?case=metrics-on`);
 
 const flush = () => new Promise((resolve) => setImmediate(resolve));
 

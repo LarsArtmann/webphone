@@ -12,6 +12,7 @@ package cqrs
 import (
 	"encoding/hex"
 	"fmt"
+	"slices"
 
 	"github.com/larsartmann/go-cqrs-lite/command/v4"
 	"github.com/larsartmann/go-cqrs-lite/event/v4"
@@ -93,11 +94,9 @@ func threadFlagLegal(flag string) bool {
 
 func decideAppendMessage(s threadState, ver event.Version, cmd AppendMessage) ([]event.Event, error) {
 	msgID := cmd.Msg.ID.String()
-	for _, prev := range s.Messages {
-		if prev == msgID {
-			return nil, errorfamily.NewRejection("cqrs.thread_duplicate_message",
-				fmt.Sprintf("message %s already on thread %s", msgID, cmd.Msg.ThreadID))
-		}
+	if slices.Contains(s.Messages, msgID) {
+		return nil, errorfamily.NewRejection("cqrs.thread_duplicate_message",
+			fmt.Sprintf("message %s already on thread %s", msgID, cmd.Msg.ThreadID))
 	}
 	// Creation legality: an empty stream adopts the message's thread
 	// identity (AppendToThread); a live thread must agree with the message.

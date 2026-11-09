@@ -123,7 +123,7 @@ func TestContactCapRejectsNewNumbers(t *testing.T) {
 	ctx := context.Background()
 	owner := mustExt(t, "1001")
 
-	for i := 0; i < contactsMaxPerOwner; i++ {
+	for i := range contactsMaxPerOwner {
 		if err := s.Save(ctx, contactFor(t, "1001", fmt.Sprintf("+1555%05d", i), "cap")); err != nil {
 			t.Fatalf("save %d: %v", i, err)
 		}

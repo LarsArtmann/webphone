@@ -123,7 +123,7 @@ func TestNoteOwnerScopingKeepsSlotsApart(t *testing.T) {
 // open, and both write doors share the cap.
 func TestNoteCapIsConflictAtTheDecision(t *testing.T) {
 	full := notesState{Slots: make(map[string]noteSlot, notesMaxPerOwner)}
-	for i := 0; i < notesMaxPerOwner; i++ {
+	for i := range notesMaxPerOwner {
 		full.Slots[fmt.Sprintf("call-%05d", i)] = noteSlot{Body: "note"}
 	}
 

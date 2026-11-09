@@ -179,7 +179,7 @@ func TestDialCapExpungesOldest(t *testing.T) {
 	}
 	timeNow = time.Now
 	awaitLast(t, dials, owner, first, backdated)
-	for i := 0; i < dialWindowMaxPerOwner; i++ {
+	for i := range dialWindowMaxPerOwner {
 		if _, _, err := dials.Attempt(ctx, owner, remoteOf(i), time.Hour); err != nil {
 			t.Fatalf("attempt %d: %v", i, err)
 		}

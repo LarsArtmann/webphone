@@ -168,7 +168,7 @@ func TestSnippetCapRejectsNewIDs(t *testing.T) {
 	ctx := context.Background()
 	owner := mustExt(t, "1001")
 
-	for i := 0; i < snippetsMaxSlots; i++ {
+	for i := range snippetsMaxSlots {
 		if err := s.Save(ctx, snippetFor(t, "1001", "body", false)); err != nil {
 			t.Fatalf("save %d: %v", i, err)
 		}

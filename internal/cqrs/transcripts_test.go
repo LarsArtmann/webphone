@@ -141,7 +141,7 @@ func TestTranscriptSearchFindsLines(t *testing.T) {
 // append emits exactly one event.
 func TestTranscriptPerCallFloorEvictsOldest(t *testing.T) {
 	full := transcriptState{Segs: make([]transcriptSeg, 0, transcriptFloorPerCall)}
-	for i := 0; i < transcriptFloorPerCall; i++ {
+	for i := range transcriptFloorPerCall {
 		full.Segs = append(full.Segs, transcriptSeg{ID: fmt.Sprintf("seg-%04d", i), Seq: int64(i + 1)})
 	}
 	cmd := AppendTranscriptSegment{BasicCommand: basicCommand(t, "transcript.append", "1001|call-a"), Owner: "1001", CallID: "call-a", SegID: "seg-new", Seq: int64(transcriptFloorPerCall + 1)}
@@ -225,7 +225,7 @@ func TestTranscriptSweepBeforeConverges(t *testing.T) {
 	ctx := context.Background()
 	owner := mustExt(t, "1001")
 
-	for i := 0; i < 4; i++ {
+	for range 4 {
 		if err := s.Append(ctx, transcriptSegmentFor(t, "1001", "call-a", "line")); err != nil {
 			t.Fatalf("append: %v", err)
 		}

@@ -86,7 +86,7 @@ func TestReviewReplaceSemantics(t *testing.T) {
 // at the cap stays open.
 func TestReviewCapIsRejectionAtTheDecision(t *testing.T) {
 	full := reviewsState{Slots: make(map[string]reviewSlot, reviewsMaxPerOwner)}
-	for i := 0; i < reviewsMaxPerOwner; i++ {
+	for i := range reviewsMaxPerOwner {
 		full.Slots[fmt.Sprintf("call-%05d", i)] = reviewSlot{State: domain.ReviewPresent}
 	}
 

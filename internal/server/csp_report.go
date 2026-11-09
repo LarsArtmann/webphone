@@ -1,7 +1,7 @@
 package server
 
 import (
-	"encoding/json"
+	"encoding/json/v2"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -50,7 +50,7 @@ func (h *handlers) cspReport(w http.ResponseWriter, r *http.Request) {
 	}
 	body := http.MaxBytesReader(w, r.Body, cspReportMaxBody)
 	var payload cspReportPayload
-	if err := json.NewDecoder(body).Decode(&payload); err != nil {
+	if err := json.UnmarshalRead(body, &payload); err != nil {
 		// Oversize dies inside Decode with MaxBytesError and gets the
 		// honest 413; malformed JSON stays best-effort 204 — a broken
 		// report must not turn the journal into a 400-log.

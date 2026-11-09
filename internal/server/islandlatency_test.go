@@ -50,7 +50,7 @@ func TestIslandLatencyDropsMalformedBeaconsSilently(t *testing.T) {
 
 func TestIslandLatencyNegativeBytesDropButLegSurvives(t *testing.T) {
 	m := newIslandLatency()
-	m.RecordBeacon("dial_to_audio", map[string]int64{"signaling": 10}, ptrInt64(-3))
+	m.RecordBeacon("dial_to_audio", map[string]int64{"signaling": 10}, new(int64(-3)))
 	var b strings.Builder
 	m.writePrometheus(&b)
 	out := b.String()
@@ -86,4 +86,5 @@ func TestIslandLatencyASRBytesHistogram(t *testing.T) {
 	}
 }
 
-func ptrInt64(v int64) *int64 { return &v }
+//go:fix inline
+func ptrInt64(v int64) *int64 { return new(v) }

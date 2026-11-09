@@ -133,7 +133,7 @@ func TestPushDevicesCapRejectsNewDevice(t *testing.T) {
 	ctx := context.Background()
 	owner := mustExt(t, "1001")
 
-	for i := 0; i < readmodels.PushDevicesMaxPerExtension; i++ {
+	for i := range readmodels.PushDevicesMaxPerExtension {
 		if err := s.Upsert(ctx, owner, string(rune('a'+i)), "ntfy", "topic"); err != nil {
 			t.Fatalf("register %d: %v", i, err)
 		}

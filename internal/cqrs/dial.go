@@ -8,6 +8,7 @@ package cqrs
 import (
 	"context"
 	"fmt"
+	"maps"
 	"time"
 
 	"github.com/larsartmann/go-cqrs-lite/command/v4"
@@ -179,9 +180,7 @@ func dialAttemptEvents(s dialState, cmd AttemptDial, ver event.Version) ([]event
 	events := []event.Event{attempt}
 
 	windows := make(map[string]int64, len(s.Windows)+1)
-	for remote, at := range s.Windows {
-		windows[remote] = at
-	}
+	maps.Copy(windows, s.Windows)
 	windows[cmd.Remote] = cmd.Now.Unix()
 	events = append(events, dialExpungeEvents(windows, owner, streamID, event.Type(metaengine.EventTypeName(domain.DialWindowExpunged{})), ver+1)...)
 
