@@ -60,7 +60,7 @@ Yes with one action item: **retire the hand-rolled `MaxBytesReader` sites for `h
 All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
 
 ```console
-rg -l "MaxBytesReader" --type go -g '!*_test.go' internal/ | wc -l   # expect 2 (the two ruled one-home funnels; test pins instantiate their own)
+rg -l "MaxBytesReader" --type go -g '!*_test.go' internal/ | wc -l   # expect 3 (the two ruled one-home funnels + csp_report.go's own mount, added 2026-11-08; test pins instantiate their own)
 rg -n "httputil.MaxBodySize" --type go internal/ | wc -l  # expect >= 14 (adopted 2026-11-04)
 rg -n "httputil.NewServer" cmd/webphone/main.go           # lifecycle
 go test ./internal/server/ -run TestHttpspec -v           # conformance pin
