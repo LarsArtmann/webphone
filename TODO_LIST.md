@@ -76,12 +76,24 @@ New open items from the legs session, not homed elsewhere yet.
       both DBs ride), then delete the store — dissolves 3 of the 6
       clone groups baselined 2026-11-09 (the registry's post-P7 fax
       twins row).
-- [ ] **fleet-libs `go-cqrs-lite.md` re-score (B159) + ROADMAP ES
+- [x] **fleet-libs `go-cqrs-lite.md` re-score (B159) + ROADMAP ES
       annotation (B160)** — the A46 leftovers: SUPERB made webphone the
       library's deepest consumer (threads/faxes aggregates, system
       composition, snapshots, DedupStore); the 83/100 score predates
       the whole train. ROADMAP gains the event-sourcing doctrine
       paragraph (ONE journal world; sessions stay SQL per D2).
+      DONE 2026-11-09 (closeout train): re-scored 96/100 on a 14-row
+      frame (11 direct modules; EnforceCap NO-GO superseded by
+      WithCapPerGroup; audit-verify 8/8), the ROADMAP carries the
+      doctrine paragraph, index.html + AGENTS updated (mean 80).
+- [ ] **cqrs-lint advisory triage over internal/cqrs** — 185
+      warnings (C044 ×50, C006 ×20, D014 ×17, C023 ×14, C009 ×16 …;
+      C007 time-in-decider is only ×3 — the closeout report's "180
+      C007" miscount corrected), ALL severity-warning and non-gating
+      under the SDK cap. Adjudicate the real ones (A032 branded-id
+      suggestions collide with the JSON-wire raw-string ruling), file
+      the noise classes upstream, or baseline with rationale once the
+      error_rules-bearing BuildFlow release lands.
 - [ ] **Clone the transport-isolation fix into pbx, asr, matrix,
       paperless** — the crm client's Clone() repair (2026-11-08) killed
       the parallel-test flake class at ONE seam; the same bare
