@@ -47,8 +47,10 @@
    (D7) before exit. Pinned by
    `TestEnrollCrossProcessMintVisibleToRunningServer` (server idling,
    CLI mints + closes, server sees it) and proven end-to-end locally:
-   fresh verify **200**, burned **503**, no readmodels.db anywhere.
-   CI green at `85ba79d2`/`efb0ff1a`.
+   fresh verify **200**, burned **503**, no readmodels.db anywhere —
+   and by the stack's enroll-verify VM check on the relocked pin (see
+   a-5). The commits' own CI runs carried the registry/baseline reds
+   of d-5, healed in the follow-up train (`4bbe6f48`).
 5. **v2.12.0 COMPLETED** — tag RE-POINTED onto `efb0ff1a` (see g-1),
    lychee green (573 OK / 2 excluded, twice), stack relocked
    `3da66985 → f5062592 → efb0ff1a` (both moves recorded in its
