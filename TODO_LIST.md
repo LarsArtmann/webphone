@@ -56,7 +56,7 @@ New open items from the legs session, not homed elsewhere yet.
       (the honest report's wrap points, reworded) and strike-safety on
       a 6-cell FEATURES row (healed by 4788bc52). The owner's execute
       mandate gave the train to the SUPERB session.
-- [ ] **Finish the v2.12.0 release train (legs 6–9)** — the train died
+- [x] **Finish the v2.12.0 release train (legs 6–9)** — the train died
       at 6/9 on release.sh's mis-quoted lychee `--exclude` (a
       double-backslash inside single quotes reaches lychee as a
       literal backslash and matches nothing); fix the quoting and
@@ -66,6 +66,12 @@ New open items from the legs session, not homed elsewhere yet.
       exit codes captured — no pipe-swallowing) → aarch64 cross-build
       + ELF b700 guard → `gh release create v2.12.0`. Every push owes
       the `gh run watch` to green.
+      DONE 2026-11-09 (closeout train, report 04-50): quoting fixed +
+      fixture-verified; the relock surfaced the ENROLL CLI SPLIT-BRAIN
+      (fixed at efb0ff1a, E2E-proven 200/503) and two stale stack VM
+      tests (fax-feed + messaging, modernized to the journal world);
+      tag re-pointed onto the green fix commit; aarch64 b700 PASS; gh
+      release published 04:20Z as Latest.
 - [ ] **Delete the prod-dead readmodels faxes store** — the
       engine-backed `Faxes` in internal/readmodels/faxes.go lost its
       prod wiring at P7 (app.go wires only `cqrs.NewFaxes`); it
