@@ -214,8 +214,11 @@ fi
 step "6/9 link check (after push so the new tag links resolve)"
 # The owner's PRIVATE repos 404 for an unauthenticated checker — those
 # links are verified by `gh` credentials elsewhere; exclude them rather
-# than teaching every release about each one.
-run nix run nixpkgs#lychee -- --exclude '^https://github\\.com/LarsArtmann/(projects-management-automation|nix-international-telephony|pbx-artmann)/' .
+# than teaching every release about each one. NOTE quoting: this string
+# is single-quoted, so it must carry exactly ONE backslash before the
+# dot — `\\.` reaches lychee as an escaped BACKSLASH (matches nothing)
+# and the private repos 404 the train (killed 2.10.0 AND 2.12.0).
+run nix run nixpkgs#lychee -- --exclude '^https://github\.com/LarsArtmann/(projects-management-automation|nix-international-telephony|pbx-artmann)/' .
 
 step "7/9 stack: relock, gates, push ($STACK)"
 [ -d "$STACK" ] || {
