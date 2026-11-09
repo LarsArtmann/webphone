@@ -34,11 +34,11 @@
    0.11–0.14 ms vs legacy SQL 0.18–0.20 ms — the projection BEATS the
    query it replaced.
 5. **v2.10.0 shipped**: full train (gates → tag → links → stack relock
-   + browser E2E 319 s + VM check → aarch64 ELF-verified → gh release).
-   Two train-blocking surprises fixed on the way: nine drifted doc
-   links (file moves by the docs-health archives) and the lychee
-   404-on-private-repo class (now excluded, verified via `gh`); the
-   stack's own lock-move guard demanded its CHANGELOG record — added.
+   - browser E2E 319 s + VM check → aarch64 ELF-verified → gh release).
+     Two train-blocking surprises fixed on the way: nine drifted doc
+     links (file moves by the docs-health archives) and the lychee
+     404-on-private-repo class (now excluded, verified via `gh`); the
+     stack's own lock-move guard demanded its CHANGELOG record — added.
 6. **P6 faxes (A39–A40, v2.11.0)**: per-job streams, `faxMoves` at the
    decision (a new `(from → to)` sight `FaxMayMoveTo`), inbound
    received terminal, DURABLE replay guard (`sys.Dedup` in system.db —

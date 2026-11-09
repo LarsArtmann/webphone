@@ -41,6 +41,13 @@ each verified still-open at harvest time (the plan doc keeps its detail):
 
 New open items from the legs session, not homed elsewhere yet.
 
+- [ ] **Re-record the art-dupl baseline for the Phase-6 fax-journal
+      groups** (adjudicate-before-write, pinned v0.7.2 detector — the
+      same repair shape as the 2026-11-08 threads-aggregate gate fix);
+      run 42538856915 red on it after the A39–A40 landing. Then read
+      run 42539029787's failing legs (the second red was unnamed at
+      snapshot time). Their train may own both — the 03-38 report's
+      §g-3 asks the owner.
 - [ ] **Clone the transport-isolation fix into pbx, asr, matrix,
       paperless** — the crm client's Clone() repair (2026-11-08) killed
       the parallel-test flake class at ONE seam; the same bare
