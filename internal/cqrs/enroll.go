@@ -177,6 +177,33 @@ func EnrollDomainDecl() system.DomainConfig {
 
 // ─── the backend the userauth door keeps calling ───────────────────
 
+// NewEnrollSystem boots the minimal enroll-only system over dsn — the
+// operator CLI's one-shot companion (cmd/webphone -enroll-passkey).
+// The CLI is a SEPARATE process from the server: it must append to the
+// SAME journal (<dataDir>/system.db) the server verifies from, with
+// its own projection host running so the mint is folded into the
+// shared planned table before the process exits (the cross-process
+// read-your-writes contract the stack's enroll-verify VM check pins).
+func NewEnrollSystem(ctx context.Context, dsn string) (*system.System, error) {
+	sys, err := system.New(ctx, Domain(EnrollDomainDecl()), system.DeploymentConfig{
+		Engines: map[string]system.EngineConfig{
+			"db": {Driver: "sqlite", DSN: dsn, Pragmas: []string{"wal"}},
+		},
+		Instances: []system.InstanceConfig{
+			{Role: system.RoleSourceOfTruth, Engine: "db", Durability: system.DurabilityNormal},
+			{Role: system.RoleProjections, Engine: "db", Durability: system.DurabilityNormal},
+		},
+	})
+	if err != nil {
+		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.enroll_boot", "boot enroll system at %s", dsn)
+	}
+	if err := sys.Start(ctx); err != nil {
+		_ = sys.Close()
+		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.enroll_boot", "start enroll system at %s", dsn)
+	}
+	return sys, nil
+}
+
 // EnrollTokens is the dispatch-backed enrollment-token store: the
 // same contract the engine-backed store exposed (hash-keyed
 // mint/lookup/burn, expired rows swept opportunistically on every
@@ -186,6 +213,7 @@ func EnrollDomainDecl() system.DomainConfig {
 type EnrollTokens struct {
 	sys    *system.System
 	reader *metaengine.TypedReader[readmodels.EnrollTokenView]
+	vers   streamVersions
 	mu     sync.Mutex
 }
 
@@ -193,7 +221,7 @@ var _ readmodels.EnrollGate = (*EnrollTokens)(nil)
 
 // NewEnrollTokens builds the backend over a System.
 func NewEnrollTokens(sys *system.System) *EnrollTokens {
-	return &EnrollTokens{sys: sys, reader: metaengine.NewReader[readmodels.EnrollTokenView](sys.MetaEngine(), enrollCollection)}
+	return &EnrollTokens{sys: sys, reader: metaengine.NewReader[readmodels.EnrollTokenView](sys.MetaEngine(), enrollCollection), vers: streamVersions{}}
 }
 
 // Mint stores one hashed token with its expiry and opportunistically
@@ -214,6 +242,12 @@ func (s *EnrollTokens) Mint(ctx context.Context, tokenHash, email, userID string
 		}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.enroll_mint", "dispatch enroll.mint")
 	}
+	// The mint's read-back is CROSS-PROCESS: the operator CLI mints
+	// while the server verifies. The await folds the token into the
+	// shared system.db projection before the CLI exits, so the
+	// server's Lookup sees it without racing the server's own
+	// projection cadence (D7 mechanism; best-effort, bounded 250 ms).
+	awaitOwnWrite(ctx, s.sys, EnrollStreamType, tokenHash, enrollCollection, s.vers)
 	return nil
 }
 
