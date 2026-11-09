@@ -173,8 +173,8 @@
     clone-class worth a row).
 22. Confirm the concurrent session's stack/android work isn't blocked
     by our stack relock (coordination note).
-23. Backfill a `git worktree` cleanup (`git worktree remove /tmp/wp-p6`
-    + branch delete after merge is verified in CI).
+23. Backfill a worktree cleanup: `git worktree remove /tmp/wp-p6`,
+    then delete the branch once the merge is verified in CI.
 24. The plan doc's §4.9 abort-criteria were never armed — record the
     final "no aborts" line in the portfolio pareto doc for the audit
     trail.
@@ -188,7 +188,7 @@
 28. Watch the auto-commit daemon for a re-introduction of
     `.docs-gates.json` pin drift (it edits configs mid-train).
 29. Post-green: one full `nix flake check --all-systems` (aarch64
-     checks were skipped by the default invocation all session).
+    checks were skipped by the default invocation all session).
 30. Session-close memory: AGENTS.md already updated; add the
     worktree-release-interleave pattern (develop in worktree during a
     running train) to the release-runbook lessons.
