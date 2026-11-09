@@ -3,6 +3,22 @@
 Long-term direction and raw ideas not yet refined into actionable tasks.
 Actionable work lives in TODO_LIST.md; shipped work in FEATURES.md.
 
+## Event-sourcing doctrine (SUPERB, landed 2026-11-09)
+
+The product runs on ONE journal world: every domain aggregate (threads,
+faxes, dials, enroll, contacts, snippets, transcripts, call notes and
+reviews, agent audit, push devices) is command/event-sourced through
+go-cqrs-lite's system composition root into `system.db`; projections
+rebuild the read views and retention trims the journal bytes. The
+storage ladder is FROZEN (the death map and D-rulings live in
+[docs/planning/2026-11-09_storage-ladder-retirement.md](docs/planning/2026-11-09_storage-ladder-retirement.md)):
+sessions stay SQL (D2 — an ephemeral substrate with no domain
+invariants), the legacy tables stay as read-only import sources until
+the operator-gated DROP migration. New state grows as aggregates plus
+declarative projections, never as new SQL tables; releases cut at
+ship-visible boundaries (D4-amendment — a core swap ships its importer
+and retention or not at all).
+
 ## Open ideas
 
 - Union test coverage (`-coverpkg=./...`) in the buildflow test-coverage

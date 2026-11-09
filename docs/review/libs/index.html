@@ -954,7 +954,7 @@
             every scored family is now at its upstream latest; scores are rubric-bound and unchanged.
             Re-score 2026-11-09 (SUPERB closeout): <strong>go-cqrs-lite 96/100</strong> — ONE journal
             world on the system composition root (11 decider aggregates, snapshots, TrimStream
-            retention, WithCapPerGroup caps) — lifting the scored mean to <strong>80</strong>.>
+            retention, WithCapPerGroup caps) — lifting the scored mean to <strong>80</strong>.
           </p>
           <div class="callout callout-amber">
             <strong>The bottom line</strong>
@@ -1008,7 +1008,7 @@
                 <tr><th scope="row"><a href="go-health-dashboard.md">go-health-dashboard</a></th><td>direct</td><td>v0.13.2 / v0.13.2</td><td class="yes">88</td><td>Deep wiring; the auth seam (<code>WithMiddleware</code>) is the one open decision; v0.13.0 tagged by the closeout train (upstream tag was missing), v0.13.2 landed 2026-11-05 with the templ-wave</td></tr>
                 <tr><th scope="row"><a href="httputil.md">httputil</a></th><td>direct</td><td>v1.8.0 / v1.8.0</td><td class="yes">95</td><td>Configured, not defaulted; MaxBodySize adopted 2026-11-04 (14 route mounts; two ruled one-home funnels)</td></tr>
                 <tr><th scope="row"><a href="go-health.md">go-health</a></th><td>direct</td><td>v0.10.0 / v0.10.0</td><td class="yes">100</td><td>Injector-discovered probe, one readiness truth; <code>CoerceValidUTF8</code> wave landed 2026-11-04, v0.10.0 (tooling/docs delta) 2026-11-05</td></tr>
-                <tr><th scope="row"><a href="go-cqrs-lite.md">go-cqrs-lite</a></th><td>direct ×4</td><td>v4.20.0 / v4.20.0</td><td class="yes">83</td><td>metaengine IS the read-model substrate; <code>EnforceCap</code> RULED NO-GO (engine cap is collection-GLOBAL, webphone's are per-OWNER — one owner's flood would evict another's rows); hand loops stay</td></tr>
+                <tr><th scope="row"><a href="go-cqrs-lite.md">go-cqrs-lite</a></th><td>direct ×11</td><td>v4.23.0 / system v4.18.0</td><td class="yes">96</td><td><strong>SUPERB re-score 2026-11-09:</strong> ONE journal world — 11+ decider aggregates on the system composition root, snapshots (D8), <code>TrimStream</code> retention, <code>WithCapPerGroup</code> declarative caps (the #114 ask, LANDED); the per-CALL nested cap is the one open ask</td></tr>
                 <tr><th scope="row"><a href="go-sse.md">go-sse</a></th><td>direct</td><td>v0.7.0 / v0.7.0</td><td>67</td><td>Thin by composition (cqrs-htmx wraps it); ssetest pins the wire contract; the BLOCKED v0.7.0 bump LANDED 2026-11-05 once the cqrs-htmx templ-wave published (score stays rubric-bound — replay remains a deliberate MISS)</td></tr>
                 <tr><th scope="row"><a href="httputil-server-timing.md">httputil/server_timing</a></th><td>direct</td><td>v1.0.3 / v1.0.3</td><td>67</td><td>Env-gated edge middleware exactly as designed; named spans unused (do not pre-instrument)</td></tr>
                 <tr><th scope="row"><a href="go-error-family.md">go-error-family</a></th><td>direct</td><td>v0.12.0 / v0.12.0</td><td>64</td><td>The error culture&rsquo;s backbone; Conflict family and retry-policy consumption unused</td></tr>
@@ -1135,8 +1135,10 @@
               The T07 verification falsified the finding: EnforceCap trims a whole
               <em>collection</em> (no per-key grouping), while these caps are per-owner
               (5000/500) and per-call. A global cap would let one owner&rsquo;s flood evict
-              another owner&rsquo;s rows. The hand loops are the correct semantics; reopen
-              when metaengine grows a per-group cap (go-cqrs-lite.md &sect; errata).
+              another owner&rsquo;s rows. The hand loops were the correct semantics; the reopen
+              trigger (a per-group cap) <strong>FIRED and LANDED 2026-11-06</strong> — metaengine shipped
+              <code>WithCapPerGroup</code> (ADR-0164, ask #114) and the per-OWNER caps are declarative
+              now; only the per-CALL floor stays a loop (the re-scored report &sect; errata).
             </p>
           </div>
 
