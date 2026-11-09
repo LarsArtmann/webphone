@@ -31,6 +31,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   OpenAPI surface and the EventCatalog export verified drift-free in
   the same train.
 
+### Fixed
+
+- **`-enroll-passkey` minted into the wrong database** (P7 residue,
+  caught by the consuming stack's enroll-verify VM check as a
+  fresh-token 503): the operator CLI kept writing through the retired
+  readmodels engine while the server verifies from `system.db` — a
+  cross-process split-brain. The CLI now boots the minimal enroll-only
+  journal system over the same `system.db`, and the mint awaits its
+  own projection fold before the process exits, so a freshly minted
+  token verifies immediately (local end-to-end proof: fresh 200,
+  burned 503). Affected every 2.1x deployment using passkey enrollment
+  via the CLI since the engine's retirement.
+
 ## [2.11.0] - 2026-11-09
 
 ### Changed
