@@ -945,13 +945,16 @@
             indirect-only at audit time</strong> (idempotency, retry, codec, etag — each with a
             written reason in its own report; retry and etag were ADOPTED the same day), and <strong>six are absent by decision</strong>
             (atomic-write, filewatcher, daemon, output, credentials-store, appkit). The scored
-            families average <strong>76/100</strong> at audit time (79 after the closeout adoptions landed the same day); the audit found <strong>one genuine
+            families averaged <strong>76/100</strong> at audit time (79 after the closeout adoptions landed the same day); the audit found <strong>one genuine
             correctness gap</strong> (blob durability, LANDED 2026-11-04), <strong>one standing finding from the
             2026-09-24 audit</strong> (MaxBodySize, LANDED 2026-11-04), and a handful of cheap wins.
             Currency refresh 2026-11-05: the templ-wave train landed the day after the audit
             (templ v0.3.1100, go-sse v0.7.0, templ-components v1.27.0, loginpage v4.16.0,
             cqrs-htmx v4.16.0, usermgmt v4.19.0, go-health v0.10.0, go-health-dashboard v0.13.2) —
             every scored family is now at its upstream latest; scores are rubric-bound and unchanged.
+            Re-score 2026-11-09 (SUPERB closeout): <strong>go-cqrs-lite 96/100</strong> — ONE journal
+            world on the system composition root (11 decider aggregates, snapshots, TrimStream
+            retention, WithCapPerGroup caps) — lifting the scored mean to <strong>80</strong>.>
           </p>
           <div class="callout callout-amber">
             <strong>The bottom line</strong>
