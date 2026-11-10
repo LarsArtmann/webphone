@@ -1263,15 +1263,11 @@ test("a dead recording keeps one toast — the fallback stays silent", async () 
   const realCtor = window.AudioContext;
   globalThis.fetch = () => Promise.reject(new TypeError("Failed to fetch"));
   window.AudioContext = function FakeAudioContext() {};
-  const toastCount = () =>
-    toasts()
-      .children.map((toast) => toast.textContent)
-      .filter(
-        (text) =>
-          text.includes("playback failed") ||
-          text.includes("built-in player controls"),
-      ).length;
-  const before = toastCount();
+  // Fresh host: earlier specs leave toasts behind and shellToast's
+  // identical-consecutive dedup would swallow this spec's honest toast
+  // after u9's look-alike — counting an EMPTY host makes the assertion
+  // absolute (exactly one toast, no fallback noise) instead of a delta.
+  toasts().children.length = 0;
   try {
     doc.dispatch("click", { target: play });
     audio.listeners.error[0]();
@@ -1287,7 +1283,7 @@ test("a dead recording keeps one toast — the fallback stays silent", async () 
     "native controls still engage for a broken row",
   );
   assert.equal(
-    toastCount() - before,
+    toasts().children.length,
     1,
     "exactly one honest toast — no waveform-fallback noise",
   );
