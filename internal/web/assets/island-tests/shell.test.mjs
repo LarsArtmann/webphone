@@ -1229,10 +1229,7 @@ test("a failed recording surfaces one honest toast, deduped", async () => {
     1,
     "the element error and the play() rejection dedup into one toast",
   );
-  assert.match(
-    toasts().children.at(-1).textContent,
-    /could not be loaded/,
-  );
+  assert.match(toasts().children.at(-1).textContent, /could not be loaded/);
 });
 
 test("an interrupted play attempt stays silent (AbortError is benign)", async () => {
@@ -1245,11 +1242,7 @@ test("an interrupted play attempt stays silent (AbortError is benign)", async ()
   audio.play = () => Promise.reject({ name: "AbortError" });
   doc.dispatch("click", { target: play });
   await new Promise((resolve) => setTimeout(resolve, 0));
-  assert.equal(
-    failedCount() - before,
-    0,
-    "an interruption is not a product failure",
-  );
+  assert.equal(failedCount() - before, 0, "an interruption is not a product failure");
 });
 
 // One honest toast per failure: an unreachable recording used to speak
@@ -1277,11 +1270,7 @@ test("a dead recording keeps one toast — the fallback stays silent", async () 
     if (realCtor === undefined) delete window.AudioContext;
     else window.AudioContext = realCtor;
   }
-  assert.equal(
-    audio.controls,
-    true,
-    "native controls still engage for a broken row",
-  );
+  assert.equal(audio.controls, true, "native controls still engage for a broken row");
   assert.equal(
     toasts().children.length,
     1,

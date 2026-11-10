@@ -623,7 +623,9 @@ section h2{font-size:15px;margin:0 0 8px}
 def build_gallery(
     run_dir: str, base: str, version: str | None, label: str | None
 ) -> None:
-    parts = [f"<h1>{html.escape(base)}</h1><p>run {html.escape(os.path.basename(run_dir))}"]
+    parts = [
+        f"<h1>{html.escape(base)}</h1><p>run {html.escape(os.path.basename(run_dir))}"
+    ]
     if version:
         parts.append(f" · {html.escape(version)}")
     if label:
@@ -806,7 +808,9 @@ def _parse_viewport(text: str) -> tuple[int, int]:
 
 
 def _sanitize_dirname(base: str) -> str:
-    return re.sub(r"[^A-Za-z0-9._-]+", "_", urllib.parse.urlsplit(base).netloc or "local")
+    return re.sub(
+        r"[^A-Za-z0-9._-]+", "_", urllib.parse.urlsplit(base).netloc or "local"
+    )
 
 
 def capture(
@@ -942,8 +946,10 @@ def capture(
                         # itself (the passkey link when the mode is on, the
                         # classic form otherwise) instead of a fixed sleep.
                         WebDriverWait(driver, 8).until(
-                            lambda d: d.find_elements("css selector", "#passkey-login")
-                            or d.find_elements("css selector", "#login-form")
+                            lambda d: (
+                                d.find_elements("css selector", "#passkey-login")
+                                or d.find_elements("css selector", "#login-form")
+                            )
                         )
                     time.sleep(0.4)  # settle: theme script, fonts
                     if lenient and name != "not-found" and _is_styled_404():
