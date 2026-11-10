@@ -143,6 +143,16 @@ exclude:
 #   (placeholder hash → `nix build` → read `got:` → apply) stays in
 #   AGENTS.md. The real gate still exists: `nix flake check` builds in
 #   the sandbox.
+#   CONTRADICTION DECODED (2026-11-10, run of 16:09): a "failed" status
+#   beside "All 4 flake target(s) built successfully, 0 hashes changed"
+#   is the step's own lock-drift WARNING surfacing a GREEN build — its
+#   detector flagged "go.mod was modified after the hash was last set"
+#   while git proves the OPPOSITE order (go.mod 64c1c637 2026-11-08 <
+#   nix/packages.nix vendorHash 5c00b153 2026-11-10) and the FOD built
+#   green. The warning-as-finding is detector noise (upstream ordering
+#   bug), NOT tree drift: verify with the FOD recipe before believing
+#   the finding, and read the step's own diagnose lines ("build green
+#   but N lock-drift warning(s)") as the explanation.
 # - gomod-check: UNSKIPPED 2026-10-15 (owner decision). The 2026-10-04
 #   triage's 99 vendor-consistency false positives ("marked as explicit
 #   in vendor/modules.txt, but not explicitly required in go.mod" — Go's

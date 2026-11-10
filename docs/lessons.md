@@ -1036,3 +1036,38 @@ failure episode are a split brain even when both are individually honest;
 the capability/failure class split must be decided at the detection site,
 not reconstructed at the display site. Pinned in shell.test.mjs ("a dead
 recording keeps one toast") and docs/error-contract.md.
+
+### The tracking-train process lessons (2026-11-10, prod UI-tracking continuation)
+
+- **Re-run a foreign red at CURRENT HEAD before diagnosing it.** The
+  plan's T01 ("fix the island-js toast red") dissolved on arrival: the
+  spec that failed at 13:50Z was another session's IN-FLIGHT voicemail
+  work, and their follow-up commits had already finished the intent —
+  328/328 green hours later, sandbox check included. Hours spent
+  reverse-engineering a half-landed change can be wasted by one
+  `node --test` at HEAD. Corollary: a reproduction probe must carry its
+  own hard timeout (`setTimeout(() => process.exit(1), N)`) — the prior
+  session's scratch probe hung and was killed, proving nothing; a probe
+  that cannot fail fast is not evidence, it is a second incident.
+- **The daemon commit race eats narrative messages, not content.** Two
+  planned narrative commits landed as `chore: auto-commit N changed
+  file(s)` because split add/commit calls lost the race (2026-10-17
+  lesson, re-proven twice on 2026-11-10). Stage + commit in ONE tool
+  call, and verify the WORK by reading the diff/tree, never by trusting
+  the message; the message is recoverable, silent content loss is not.
+- **A capture browser is a real SIP endpoint.** Every remote run takes
+  a genuine SIP registration over the deployment's bridged wss (the
+  shots are honest, the registration dies with the run) — so a tracked
+  capture of a live deployment is telephony activity, not a read-only
+  crawl: it can collide with the operator's own registration line and
+  it answers nothing but still REGISTERs. The release-runbook's E2E
+  obligations apply to remote runs the same way they apply to the stack
+  browser suite. (Cross-ref: docs/release-runbook.md; the harness
+  docstring § Remote/prod tracking extension.)
+- **Mixed-tree ritual: re-run foreign specs before pushing a shared
+  main.** This session pushed onto a main where another train had
+  landed commits minutes earlier; the safe sequence is `git log
+  origin/main..HEAD` → island/server suites at the merge state → then
+  push, and `gh run list` after (the 13:50Z red belonged to the other
+  train and self-healed — the verdict that matters is the run for YOUR
+  push sha).
