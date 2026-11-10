@@ -172,6 +172,15 @@ exclude:
 #   untracked; do NOT hand-edit vendor markers. The real gate still
 #   exists: `nix flake check` builds in the sandbox — a go.mod lie fails
 #   the build.
+# - go-version-auto-configure: DELIBERATE NON-FIX (2026-11-10, verified).
+#   Its "go directive must be major.minor only" rule is UNSATISFIABLE in
+#   this graph: the cqrs-htmx family trains (loginpage v4.17.0 et al,
+#   deps sweep 2026-11-08) declare go 1.27.3 floors, and Go's own
+#   tooling enforces the directive at the graph maximum — with `go 1.27`
+#   hand-written, `go build` demands "updates to go.mod needed" and any
+#   `go mod tidy` (this session's or a concurrent one's) writes 1.27.3
+#   back. The finding is warning-severity and never gates. Revisit ONLY
+#   when the cqrs-htmx floors drop below the next patch release.
 # LOAD-BEARING POLICY (2026-10-08 incident): the single remaining skip
 # below is a reasoned suppression — a daemon commit once truncated 69
 # lines here and the missing skips re-failed the gate silently for
