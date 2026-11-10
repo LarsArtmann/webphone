@@ -167,10 +167,15 @@
    positive path, in T05's session.
 8. **[OG-3]** — the shot-storage/retention ruling; `--prune` awaits it.
 9. **T25** — night-run stability pair on the next overnight session.
-10. **Harvest the plan ledger** into TODO_LIST rows so the next session
-    starts from the dispatch queue, not the plan doc.
-11. **lessons.md**: add the fake-CRM dead-server lesson (it lives only
-    in the plan ledger today).
+10. ~~**Harvest the plan ledger** into TODO_LIST rows so the next
+    session starts from the dispatch queue, not the plan doc.~~ STRUCK
+    2026-11-10 19:5x: the residue section is complete — the T05-blocked
+    chain, the ring-guard positive path, and the landed T28 pins are
+    TODO_LIST rows now (night-run + `--open` were already harvested).
+11. ~~**lessons.md**: add the fake-CRM dead-server lesson (it lives
+    only in the plan ledger today).~~ STRUCK 2026-11-10 19:5x: LANDED
+    as the fifth entry of § tracking-train process lessons ("A helper
+    server configured by a dying process dies with it").
 12. **Upstream finding** — buildflow's nix-hash-fix lock-drift warning
     fires on a green build with a backwards premise; an issue on
     LarsArtmann/buildflow when the owner wants it.
@@ -179,9 +184,15 @@
     credential lane; that is a product fact, not a bug).
 14. **T16 on real prod** — the CRM-strip surface joins only when prod's
     real Kith publishes context; verify in T05's run.
-15. **T28's second half** — partial-run tolerance is self-test-pinned;
+15. ~~**T28's second half** — partial-run tolerance is self-test-pinned;
     pin the EMPTY-run discard guard with a self-test case too (it has
-    a live observation but no automated pin).
+    a live observation but no automated pin).~~ STRUCK 2026-11-10
+    19:5x: LANDED — `discard_empty_run` pinned (empty crashed dir
+    removed, shots-bearing run kept) and the `--open` decision
+    extracted as pure `open_target` + pinned; `--self-test` now 35
+    checks, green in both envs (see also item 3: the real-display
+    `--open` pass and the ring guard's live positive path stay with
+    T05's session).
 16. **`--emulate-feature`** — the one-line opt-in a11y axis if T06's
     fixes surface motion/contrast uglies.
 17. **T20 polish** — `ui-track` passes no `--out-dir`; prod runs land
