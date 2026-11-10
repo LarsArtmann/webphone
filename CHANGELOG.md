@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Prod screenshot tracking in the visual harness (`scripts/ui-capture.py`):
+  `--base-url <deployment>` points the existing 24-shot matrix at a LIVE
+  instance (session minted over the session API from env credentials, live
+  thread deep links resolved off the real list, markers degraded to
+  warnings instead of aborts) and `--track` keeps timestamped history runs
+  under `ui-shots/<host>/` with a per-run gallery + summary and a
+  `compare.html` that pixel-diffs the newest run against the previous one.
+  Shots are full-page by default (CDP captureBeyondViewport), extra
+  `--viewport WxH` passes cover the mobile layout, and `--anonymous`
+  shoots the deployment's login surfaces without credentials.
+
 ### Fixed
 
 - Voicemail play failures are no longer silent: a recording that fails to
