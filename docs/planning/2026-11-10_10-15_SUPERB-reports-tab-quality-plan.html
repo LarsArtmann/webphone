@@ -1,0 +1,1255 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Reports Tab Quality PlanReport Title</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS LIGHT — Editorial template
+         Design language: form follows function. Primary colors on warm paper.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Light) --- */
+        --color-paper: #f4f4f0;
+        --color-paper-2: #ffffff;
+        --color-paper-3: #e8e8e2;
+        --color-ink: #111111;
+        --color-red: #e63946;
+        --color-blue: #1d3557;
+        --color-yellow: #f4d35e;
+        --color-hairline: rgba(17, 17, 17, 0.14);
+        --color-hairline-strong: rgba(17, 17, 17, 0.3);
+
+        /* --- Semantic layer (shared vocabulary with dark template) --- */
+        --surface: var(--color-paper);
+        --surface-raised: var(--color-paper-2);
+        --surface-sunken: var(--color-paper-3);
+        --text: var(--color-ink);
+        --text-muted: rgba(17, 17, 17, 0.72);
+        --text-faint: rgba(17, 17, 17, 0.5);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-red);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber: var(--warning);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 22%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 12%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 12%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px;
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .sidebar a {
+        font-size: 0.86rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-left: 4px solid transparent;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      h1 {
+        font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+        line-height: 1.05;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px solid var(--text);
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--text);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin-bottom: 0.9rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0 0 1rem;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.6rem;
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+      }
+      .tag.amber {
+        background: var(--warning);
+        border-color: var(--warning);
+        color: var(--text);
+      }
+      .tag.teal {
+        background: var(--solution);
+        border-color: var(--solution);
+        color: var(--surface);
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 90px;
+        margin-bottom: 1.2rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        right: 180px;
+        width: 64px;
+        height: 64px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 26px;
+        right: 90px;
+        width: 56px;
+        height: 56px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-left: 32px solid transparent;
+        border-right: 32px solid transparent;
+        border-bottom: 56px solid var(--warning);
+      }
+      .hero-shapes .bar {
+        position: absolute;
+        bottom: 0;
+        right: 230px;
+        width: 100px;
+        height: 14px;
+        background: var(--text);
+      }
+
+      /* --- Scorecard / stat cards --- */
+      .scorecard,
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        margin: 1.5rem 0 2rem;
+        border: 3px solid var(--text);
+      }
+      .score-card,
+      .stat-card {
+        padding: 1.3rem 1rem;
+        text-align: center;
+        border-right: 3px solid var(--text);
+        background: var(--surface-raised);
+      }
+      .score-card:last-child,
+      .stat-card:last-child {
+        border-right: none;
+      }
+
+      .score,
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.6rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-card .label,
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 0.5rem;
+      }
+      /* Semantic state classes — no nth-child decoration, no !important */
+      .score-good,
+      .stat-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .score-warn,
+      .stat-warn {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .score-bad,
+      .stat-bad {
+        background: var(--problem);
+        color: var(--surface);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.6rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid var(--text);
+        color: var(--text);
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: var(--warning);
+      }
+      .badge-medium {
+        background: var(--surface-sunken);
+      }
+      .badge-low {
+        background: var(--surface-raised);
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      /* --- Callouts --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-sunken);
+        font-size: 0.92rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-teal,
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 10%,
+          var(--surface-raised)
+        );
+      }
+      .callout-amber,
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 18%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Strengths --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.3rem;
+        line-height: 1.3;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+        border: 2px solid var(--text);
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--text);
+        color: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border-strong);
+      }
+      th:last-child {
+        border-right: none;
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+      }
+      td:last-child {
+        border-right: none;
+      }
+      tr:nth-child(even) td {
+        background: var(--surface-sunken);
+      }
+      table.compare td.yes {
+        color: var(--solution);
+        font-weight: 700;
+      }
+      table.compare td.no {
+        color: var(--problem);
+        font-weight: 700;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--text);
+        color: var(--surface);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        border: 2px solid var(--text);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--warning);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: #95e1d3;
+      }
+      .tok-comment {
+        color: rgba(244, 244, 240, 0.45);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #6eb5ff;
+      }
+      .tok-number {
+        color: var(--warning);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #6eb5ff;
+      }
+      .tok-punct {
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .tok-attr {
+        color: var(--warning);
+      }
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 2px solid var(--text);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--surface-sunken);
+        border: 1px solid var(--text);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1.1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.94rem;
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 3px solid var(--text);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .scorecard,
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-right: none;
+        }
+        .score-card:nth-child(1),
+        .stat-card:nth-child(1),
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-bottom: 3px solid var(--text);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+        .hero-shapes {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
+    <div class="top-bar">
+      <span>REPORT TYPE</span>
+      <span>YYYY-MM-DD</span>
+      <span>WEBPHONE &middot; REPORTS TAB</span>
+    </div>
+
+    <div class="layout">
+      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Verdict</a>
+          <a href="#scorecard">Scorecard</a>
+          <a href="#strengths">Strengths</a>
+          <a href="#findings">Findings</a>
+          <a href="#plan">The plan</a>
+          <a href="#beyond">Beyond the 80%</a>
+          <a href="#appendix">Evidence</a>
+        </nav>
+      </aside>
+
+      <!-- Main content -->
+      <main class="main">
+        <header class="hero">
+          <div class="hero-shapes">
+            <div class="bar"></div>
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="eyebrow">EXECUTION PLAN &middot; PARETO &middot; 2026-11-10</div>
+          <h1>The Reports tab: making the numbers tell the truth</h1>
+          <p class="subtitle">
+            The live panel folds 73 calls into a page whose every temporal
+            answer reads as a fake zero, because the CDR date parser rejects
+            100% of the records. Five verified work items, about five and a
+            quarter hours, turn it into the report its subtitle promises.
+          </p>
+          <div class="meta">
+            <span class="tag amber">Scope: Reports tab (internal/reports, server, views)</span>
+            <span class="tag">webphone v2.12.0</span>
+            <span class="tag teal">Status: PLAN &mdash; awaiting GO</span>
+          </div>
+        </header>
+
+        <section id="scorecard" class="scorecard">
+          <div class="score-card score-bad">
+            <div class="score">73/73</div>
+            <div class="label">CDR rows rejected by the date parser</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">1</div>
+            <div class="label">const literal that restores every temporal answer</div>
+          </div>
+          <div class="score-card">
+            <div class="score">5</div>
+            <div class="label">work items in this plan</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">~5&frac14; h</div>
+            <div class="label">estimated total effort</div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">00</span>Verdict</h2>
+          <p>
+            The projection&rsquo;s arithmetic is sound and its honesty doctrine
+            is right: unparsable records are counted, never dropped. What makes
+            the current page trash is everything around that core. The ingest
+            contract is broken at the source (FreeSWITCH writes
+            <code>start_stamp</code> with seconds; the parser accepts none), so
+            <em>every</em> &ldquo;when&rdquo; answer dies &mdash; and the view
+            renders the death as <strong>&ldquo;This week &mdash; 0 calls&rdquo;</strong>,
+            an empty &ldquo;By day&rdquo; heading, and a footnote at the very
+            bottom that quietly explains both. On top of that, the &ldquo;who&rdquo;
+            ladder ranks raw CDR strings (<code>pifo42h1</code>) and 49 of 73
+            outgoing calls that never connected are invisible.
+          </p>
+          <div class="callout callout-amber">
+            <strong>The bottom line</strong>
+            C1 is one line &mdash; <code>startLayout</code> gains the seconds
+            it never had &mdash; plus a fixture with the real format. It alone
+            returns This-week, By-day and Hours. Everything else is honesty
+            (C2), the who (C3), the outcome (C4), and shipment quality (C5).
+            Sequence: 1% first, then 4%, then the 20%.
+          </div>
+        </section>
+
+        <section id="strengths">
+          <h2><span class="num">&#9670;</span>What is already excellent</h2>
+          <div class="strengths">
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Honest-degradation doctrine</strong>
+                <span><code>Report.Undated</code> counts unparsable rows instead
+                of dropping them &mdash; totals stayed complete at 73 calls even
+                in the degenerate state. The floor this plan builds on.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Pure projection</strong>
+                <span>The same records always fold to the same numbers; no
+                storage, no clock of its own. Reproducibility is the tab&rsquo;s
+                whole acceptance criterion and it holds.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The display budget already exists</strong>
+                <span><code>TopContactRows</code> caps name resolution to exactly
+                the rows a reader sees &mdash; the seam C3 extends was designed
+                for it.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>One vocabulary with History</strong>
+                <span>Answered/Missed/Inbound/Outbound mean the same thing in
+                both tabs, so they can never disagree about the same call.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="findings">
+          <h2><span class="num">01</span>Findings</h2>
+
+          <div class="issue issue-critical" id="f1">
+            <span class="severity severity-critical">Blocking &middot; root cause PROVEN at source</span>
+            <h3>F1 &mdash; The wire format carries seconds; the parser rejects them</h3>
+            <div class="where">internal/reports/reports.go:27 (startLayout) &middot; FreeSWITCH switch_channel.c:4596 &middot; stack telephony-operator/api.py:338</div>
+            <p>
+              The evidence chain, verified end to end: FreeSWITCH&rsquo;s core sets
+              <code>start_stamp</code> with format <code>%Y-%m-%d %T</code>
+              (&ldquo;2026-11-04 18:42:13&rdquo;, PBX-local time); the stack&rsquo;s
+              phone API passes it through verbatim; <code>parseStart</code> demands
+              exactly <code>&quot;2006-01-02 15:04&quot;</code> and fails on the
+              trailing seconds &mdash; 73/73 records land in <code>Undated</code>.
+              History survives only because its day bucket slices
+              <code>Start[:10]</code>, which is why the break stayed invisible
+              until this tab existed.
+            </p>
+            <pre><code><span class="tok-comment">// today: rejects every real FreeSWITCH row</span>
+<span class="tok-keyword">const</span> <span class="tok-type">startLayout</span> = <span class="tok-string">&quot;2006-01-02 15:04&quot;</span>   <span class="tok-comment">// &rarr; &quot;2006-01-02 15:04:05&quot;</span></code></pre>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Change the layout, fix the const&rsquo;s comment (a format change
+              must move both consumers &mdash; the note stays true), and pin the
+              real format with a fixture in <code>reports_test.go</code>.
+            </div>
+          </div>
+
+          <div class="issue issue-important" id="f2">
+            <span class="severity severity-important">Important &middot; trust</span>
+            <h3>F2 &mdash; &ldquo;Unknown&rdquo; renders as zero, and the caveat is a footnote</h3>
+            <div class="where">internal/web/views/reports.templ (reportsWeek, reportsDays, undated line)</div>
+            <p>
+              The This-week card reads &ldquo;&mdash; calls 0&rdquo; &mdash;
+              indistinguishable from a silent week, while the totals grid above
+              it says 73. <code>reportsDays</code> renders its heading
+              unconditionally (its siblings <code>reportsBusiestHours</code> and
+              <code>reportsTopContacts</code> guard; it does not), and the one
+              line that explains everything sits at the panel&rsquo;s very end.
+              A reader&rsquo;s first conclusion from this page is wrong.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              All-undated &rArr; skip week/days/hours and render an
+              <code>EmptyState</code> naming the cause; partial &rArr; keep the
+              sections and move the caveat directly under the temporal block;
+              guard <code>reportsDays</code>; new i18n keys in BOTH maps.
+            </div>
+          </div>
+
+          <div class="issue issue-important" id="f3">
+            <span class="severity severity-important">Important &middot; the &ldquo;who&rdquo;</span>
+            <h3>F3 &mdash; Most-talk-time ranks raw CDR strings</h3>
+            <div class="where">internal/server/reports.go:54 (CRM-only) &middot; panels.go:231 (crmDirectory)</div>
+            <p>
+              The top contact renders &ldquo;pifo42h1 &middot; 1 call &middot;
+              1h45m&rdquo; &mdash; a dialled destination nobody can identify.
+              Name resolution runs through the CRM seam only; the per-extension
+              contacts store &mdash; the owner&rsquo;s own address book &mdash;
+              is read by NO display surface (only the Contacts panel itself,
+              panels.go:435). Saved names never reach History, Fax or Reports.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Resolve the top-contact rows through the contacts store first, CRM
+              fallback, at the shared <code>crmDirectory</code> seam so History
+              and Fax inherit the fix; non-dialable remotes render muted mono so
+              garbage is visibly garbage.
+            </div>
+          </div>
+
+          <div class="issue issue-nice" id="f4">
+            <span class="severity severity-nice">Nice to have &middot; the outcome half</span>
+            <h3>F4 &mdash; 49 unanswered outgoing calls are invisible</h3>
+            <div class="where">internal/reports/reports.go (Totals) &middot; views reportsTotals</div>
+            <p>
+              24 answered of 73 outgoing means 49 dials that never connected
+              &mdash; the panel&rsquo;s outcome promise covers only missed
+              <em>inbound</em>. The number is derivable from the totals
+              (Outbound &minus; Answered + Inbound &minus; Missed) but no surface
+              states it.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Named <code>Totals.NoAnswer</code> computed in <code>Aggregate</code>,
+              rendered as a seventh stat card only when &gt; 0 (alert tone, like
+              Missed); check the totals grid&rsquo;s columns for the extra card.
+            </div>
+          </div>
+        </section>
+
+        <section id="plan">
+          <h2><span class="num">02</span>The 20% plan</h2>
+          <p>Comprehensive tier &mdash; five tasks, 30&ndash;100 minutes each, ordered by Pareto impact.</p>
+          <table>
+            <thead><tr><th>#</th><th>Task</th><th>What it restores</th><th>Effort</th><th>Tier</th></tr></thead>
+            <tbody>
+              <tr><td><strong>C1</strong></td><td><code>startLayout</code> + seconds, real-format fixtures (F1)</td><td>This week &middot; By day &middot; Hours</td><td>30 min</td><td><span class="badge badge-critical">1% &rarr; 51%</span></td></tr>
+              <tr><td><strong>C2</strong></td><td>Honest unknown rendering; caveat adjacent (F2)</td><td>Trust &mdash; no fake zeros, no dead headings</td><td>90 min</td><td><span class="badge badge-high">4% &rarr; 64%</span></td></tr>
+              <tr><td><strong>C3</strong></td><td>Contact names via the store seam; flag garbage remotes (F3)</td><td>The &ldquo;who&rdquo;</td><td>90 min</td><td><span class="badge badge-medium">20% &rarr; 80%</span></td></tr>
+              <tr><td><strong>C4</strong></td><td><code>Totals.NoAnswer</code> + seventh stat card (F4)</td><td>The outcome half</td><td>45 min</td><td><span class="badge badge-medium">20% &rarr; 80%</span></td></tr>
+              <tr><td><strong>C5</strong></td><td>Pins + gates + live verification</td><td>Shipment quality</td><td>60 min</td><td><span class="badge badge-low">gate</span></td></tr>
+            </tbody>
+          </table>
+
+          <h3 style="margin-top:2rem">Fine tier &mdash; every step &le; 15 minutes</h3>
+          <table>
+            <thead><tr><th>Step</th><th>What</th><th>Min</th></tr></thead>
+            <tbody>
+              <tr><td>C1.&micro;1</td><td><code>startLayout</code> &rarr; <code>&quot;2006-01-02 15:04:05&quot;</code>; comment updated (both-consumers note stays accurate)</td><td>5</td></tr>
+              <tr><td>C1.&micro;2</td><td>reports_test fixtures carry the real format (every fixture with a <code>Start</code>)</td><td>10</td></tr>
+              <tr><td>C1.&micro;3</td><td><code>env -u GOEXPERIMENT go test ./internal/reports ./internal/web/views</code> &mdash; green</td><td>5</td></tr>
+              <tr><td>C2.&micro;1</td><td>i18n keys in BOTH maps: all-undated EmptyState title + detail</td><td>10</td></tr>
+              <tr><td>C2.&micro;2</td><td>Guard <code>reportsDays</code> with <code>len(Days) &gt; 0</code> (match the siblings)</td><td>5</td></tr>
+              <tr><td>C2.&micro;3</td><td><code>reportsWeek</code>: skip when nothing datable in the window</td><td>10</td></tr>
+              <tr><td>C2.&micro;4</td><td>ReportsPanel: all-undated branch renders the EmptyState in place of the temporal trio</td><td>15</td></tr>
+              <tr><td>C2.&micro;5</td><td>Move the undated caveat from the panel&rsquo;s end to under the last temporal section</td><td>5</td></tr>
+              <tr><td>C2.&micro;6</td><td><code>templ generate</code> + view tests for the three states (dated / partial / all-undated)</td><td>15</td></tr>
+              <tr><td>C3.&micro;1</td><td>Rule the precedence at <code>crmDirectory</code>: contacts store first, CRM fallback &mdash; record it in the doc comment</td><td>15</td></tr>
+              <tr><td>C3.&micro;2</td><td><code>crmDirectory</code> reads the store (<code>deps.Contacts.List(owner)</code> &rarr; map by phone; one in-process query)</td><td>15</td></tr>
+              <tr><td>C3.&micro;3</td><td>Verify every caller threads the owner (store is per-extension) &mdash; historyPanel, notifier, reportsPanel</td><td>15</td></tr>
+              <tr><td>C3.&micro;4</td><td><code>remoteLabel</code>: non-dialable remote renders muted mono, never as a contact chip</td><td>10</td></tr>
+              <tr><td>C3.&micro;5</td><td>Update byte-pinned view tests; add a store-name fixture</td><td>15</td></tr>
+              <tr><td>C3.&micro;6</td><td>Server + views suites green</td><td>5</td></tr>
+              <tr><td>C4.&micro;1</td><td><code>Totals.NoAnswer</code> field + <code>Aggregate</code> computation + disjointness comment</td><td>10</td></tr>
+              <tr><td>C4.&micro;2</td><td><code>reportsTotals</code>: seventh card only when &gt; 0, alert tone</td><td>5</td></tr>
+              <tr><td>C4.&micro;3</td><td>Check <code>.wp-reports-totals</code> columns for 7 cards (app.css) before trusting the render</td><td>15</td></tr>
+              <tr><td>C4.&micro;4</td><td>Projection pin for the NoAnswer arithmetic + view test</td><td>10</td></tr>
+              <tr><td>C5.&micro;1</td><td><code>env -u GOEXPERIMENT go test -count=1 ./...</code> &mdash; full suite</td><td>15</td></tr>
+              <tr><td>C5.&micro;2</td><td><code>nix fmt</code> (authority: <code>scripts/format-check.sh</code>); templ regen verified</td><td>15</td></tr>
+              <tr><td>C5.&micro;3</td><td>Full <code>buildflow</code> run (background; verdict via <code>buildflow history</code> if the stream dies)</td><td>15</td></tr>
+              <tr><td>C5.&micro;4</td><td>CHANGELOG <code>[Unreleased]</code> line; TODO_LIST rows checked off</td><td>10</td></tr>
+              <tr><td>C5.&micro;5</td><td>Live verify: boot smoke + owner-side prod check (<code>scripts/ui-capture.py --track</code> reports surface, or curl the phone API)</td><td>10</td></tr>
+            </tbody>
+          </table>
+
+          <h3 style="margin-top:2rem">Execution graph</h3>
+          <div style="max-width:100%;margin:0 auto"><?xml version="1.0" encoding="utf-8"?><svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" data-d2-version="v0.9.0" preserveAspectRatio="xMinYMin meet" viewBox="0 0 2315 371"><svg class="d2-3149777335 d2-svg"  viewBox="-101 -101 2315 371"><rect x="-101" y="-101" width="2315" height="371" rx="0" fill="#FFFFFF" class=" fill-N7" stroke-width="0" /><style type="text/css"><![CDATA[
+.d2-3149777335 .text-bold {
+	font-family: "d2-3149777335-font-bold";
+}
+@font-face {
+	font-family: d2-3149777335-font-bold;
+	src: url("data:application/font-woff;base64,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");
+}
+.d2-3149777335 .text-italic {
+	font-family: "d2-3149777335-font-italic";
+}
+@font-face {
+	font-family: d2-3149777335-font-italic;
+	src: url("data:application/font-woff;base64,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");
+}]]></style><style type="text/css"><![CDATA[.shape {
+  shape-rendering: geometricPrecision;
+  stroke-linejoin: round;
+}
+.connection {
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.blend {
+  mix-blend-mode: multiply;
+  opacity: 0.5;
+}
+
+		.d2-3149777335 .fill-N1{fill:#0A0F25;}
+		.d2-3149777335 .fill-N2{fill:#676C7E;}
+		.d2-3149777335 .fill-N7{fill:#FFFFFF;}
+		.d2-3149777335 .fill-B1{fill:#0D32B2;}
+		.d2-3149777335 .fill-B6{fill:#F7F8FE;}
+		.d2-3149777335 .fill-AA4{fill:#EDF0FD;}
+		.d2-3149777335 .stroke-B1{stroke:#0D32B2;}
+		.d2-3149777335 .stroke-B2{stroke:#0D32B2;}.appendix text.text{fill:#0A0F25}.md{--color-fg-default:#0A0F25;--color-fg-muted:#676C7E;--color-fg-subtle:#9499AB;--color-canvas-default:#FFFFFF;--color-canvas-subtle:#EEF1F8;--color-border-default:#0D32B2;--color-border-muted:#0D32B2;--color-neutral-muted:#EEF1F8;--color-accent-fg:#0D32B2;--color-accent-emphasis:#0D32B2;--color-attention-subtle:#676C7E;--color-danger-fg:red;}.light-code{display: block}.dark-code{display: none}]]></style><g class="VDE="><g class="shape" ><rect x="0" y="26" width="236" height="98" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="118" y="64.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="118" dy="0">C1</tspan><tspan x="118" dy="17.666667">Fix startLayout (+ seconds)</tspan><tspan x="118" dy="17.666667">30 min · 1% tier</tspan></text></g><g class="VDI="><g class="shape" ><rect x="604" y="71" width="239" height="98" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="723.5" y="109.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="723.5" dy="0">C2</tspan><tspan x="723.5" dy="17.666667">Honest unknown rendering</tspan><tspan x="723.5" dy="17.666667">90 min · 4% tier</tspan></text></g><g class="VDM="><g class="shape" ><rect x="1047" y="71" width="255" height="98" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="1174.5" y="109.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="1174.5" dy="0">C3</tspan><tspan x="1174.5" dy="17.666667">Contact names via store seam</tspan><tspan x="1174.5" dy="17.666667">90 min · 20% tier</tspan></text></g><g class="VDQ="><g class="shape" ><rect x="1506" y="71" width="188" height="98" stroke="#0D32B2" fill="#F7F8FE" class=" stroke-B1 fill-B6" style="stroke-width:2;" /></g><text x="1600" y="109.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="1600" dy="0">C4</tspan><tspan x="1600" dy="17.666667">No-answer stat card</tspan><tspan x="1600" dy="17.666667">45 min · 20% tier</tspan></text></g><g class="VDU="><g class="shape" ><path d="M 1898 24 C 1898 0 1995 0 2006 0 C 2016 0 2113 0 2113 24 V 126 C 2113 150 2016 150 2006 150 C 1995 150 1898 150 1898 126 V 24 Z" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-AA4" style="stroke-width:2;" /><path d="M 1898 24 C 1898 48 1995 48 2006 48 C 2016 48 2113 48 2113 24" stroke="#0D32B2" fill="#EDF0FD" class=" stroke-B1 fill-AA4" style="stroke-width:2;" /></g><text x="2005.5" y="76.5" fill="#0A0F25" class="text-bold fill-N1" style="text-anchor:middle;font-size:16px"><tspan x="2005.5" dy="0">C5</tspan><tspan x="2005.5" dy="17.666667">Pins + gates + live verify</tspan><tspan x="2005.5" dy="17.666667">60 min · quality gate</tspan></text></g><g class="KFQxIC0mZ3Q7IFQyKVswXQ=="><marker id="mk-d2-3149777335-3488378134" markerWidth="10" markerHeight="12" refX="7" refY="6" viewBox="0 0 10 12" orient="auto" markerUnits="userSpaceOnUse"> <polygon points="0,0 10,6 0,12" fill="#0D32B2" class="connection fill-B1" stroke-width="2" /> </marker><path d="M 237.978809 92.790369 C 383.200012 114.099998 456.799988 119.5 600 119.5" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-3149777335-3488378134)" mask="url(#d2-3149777335)" /><text x="419" y="122" fill="#676C7E" class="text-italic fill-N2" style="text-anchor:middle;font-size:16px">fixtures carry real format</text></g><g class="KFQyIC0mZ3Q7IFQzKVswXQ=="><path d="M 845 119.5 C 924.599976 119.5 965.400024 119.5 1043 119.5" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-3149777335-3488378134)" mask="url(#d2-3149777335)" /></g><g class="KFQxIC0mZ3Q7IFQ1KVswXQ=="><path d="M 237.978809 57.209631 C 383.200012 35.900002 480.700012 30.5 571.75 30.5 C 662.799988 30.5 767.799988 30.5 834.25 30.5 C 900.700012 30.5 990.900024 30.5 1059.75 30.5 C 1128.599976 30.5 1220.400024 30.5 1289.25 30.5 C 1358.099976 30.5 1443.199951 30.5 1502 30.5 C 1560.800049 30.5 1816.400024 34.799999 1894.086005 51.174991" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-3149777335-3488378134)" mask="url(#d2-3149777335)" /></g><g class="KFQzIC0mZ3Q7IFQ0KVswXQ=="><path d="M 1304 119.5 C 1383.599976 119.5 1424.400024 119.5 1502 119.5" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-3149777335-3488378134)" mask="url(#d2-3149777335)" /></g><g class="KFQ0IC0mZ3Q7IFQ1KVswXQ=="><path d="M 1696 119.5 C 1775.599976 119.5 1816.400024 115 1894.093905 97.861639" stroke="#0D32B2" fill="none" class="connection stroke-B1" style="stroke-width:2;" marker-end="url(#mk-d2-3149777335-3488378134)" mask="url(#d2-3149777335)" /></g><mask id="d2-3149777335" maskUnits="userSpaceOnUse" x="-101" y="-101" width="2315" height="371">
+<rect x="-101" y="-101" width="2315" height="371" fill="white"></rect>
+<rect x="335" y="106" width="168" height="21" fill="black"></rect>
+</mask></svg></svg></div>
+
+          <div class="callout callout-solution" style="margin-top:2rem">
+            <strong>Acceptance &mdash; what &ldquo;good&rdquo; means</strong>
+            Against the live window after C1&ndash;C5: This week shows real
+            calls; By day shows the ladder; Hours shows the shape of the working
+            day; every top contact renders a name or a visibly non-contact
+            string; the totals grid says where all 73 went, including the 49
+            unanswered; and a PBX returning garbage timestamps renders
+            &ldquo;time buckets unavailable&rdquo; instead of zeros.
+          </div>
+        </section>
+
+        <section id="beyond">
+          <h2><span class="num">03</span>Beyond the 80% &mdash; deliberately excluded</h2>
+          <table>
+            <thead><tr><th>Item</th><th>Why excluded</th><th>Reopen trigger</th></tr></thead>
+            <tbody>
+              <tr><td>Unify the two start parsers behind one shared helper (History&rsquo;s <code>Start[:10]</code> slice vs the full parse)</td><td>History works; two consumers, one line apart</td><td>A third CDR-start consumer appears</td></tr>
+              <tr><td>Smoke scenario with a fake phone API serving CDR fixtures</td><td>The smoke has no fake PBX today &mdash; building one is its own train</td><td>Reports regressions escape the Go suites twice</td></tr>
+              <tr><td>Timezone-skew guard (PBX zone vs webphone <code>time.Local</code>)</td><td>Same host in this deployment; nothing to guard yet</td><td>The PBX and webphone split hosts</td></tr>
+              <tr><td>Stack-side <code>start_epoch</code> emission</td><td>Cross-repo change; one layout literal suffices</td><td>The format changes again upstream</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="appendix">
+          <h2><span class="num">04</span>Evidence &amp; prior-plan check</h2>
+          <p>Every claim verified against source on 2026-11-10 &mdash; nothing guessed.</p>
+          <table>
+            <thead><tr><th>Claim</th><th>Source</th></tr></thead>
+            <tbody>
+              <tr><td><code>start_stamp</code> format <code>%Y-%m-%d %T</code>, PBX-local time</td><td>FreeSWITCH <code>src/switch_channel.c</code>:4596&ndash;4604 (fetched from signalwire/freeswitch master, 2026-11-10)</td></tr>
+              <tr><td>Stack passes <code>start</code> through verbatim</td><td><code>packages/telephony-operator/api.py</code>:338 (nix-international-telephony)</td></tr>
+              <tr><td>Strict layout <code>&quot;2006-01-02 15:04&quot;</code></td><td><code>internal/reports/reports.go:27</code>, <code>parseStart</code></td></tr>
+              <tr><td>History survives via <code>Start[:10]</code></td><td><code>internal/web/views/history_templ.go</code> (generated from history.templ&rsquo;s day bucket)</td></tr>
+              <tr><td>73/73 undated &middot; &ldquo;pifo42h1&rdquo; &middot; 49 unanswered &middot; 1h45m of 1h56m talk</td><td>Owner&rsquo;s live panel screenshot, 2026-11-10</td></tr>
+              <tr><td>Reports resolves CRM names only</td><td><code>internal/server/reports.go:54</code> + <code>panels.go:231</code></td></tr>
+              <tr><td>Contacts store read only by its own panel</td><td><code>internal/server/panels.go:435</code></td></tr>
+              <tr><td>Reports tab + <code>reportsStat</code> shipped by issue #12 (2026-11-06) &mdash; not re-dispatched here</td><td>CHANGELOG <code>[Unreleased]</code>; TODO_LIST line 238</td></tr>
+            </tbody>
+          </table>
+          <div class="callout callout-warning" style="margin-top:1.5rem">
+            <strong>Risks &amp; owner calls</strong>
+            Contact-name precedence (personal store vs CRM) is a product
+            decision &mdash; this plan recommends personal-first and can flip in
+            one line. New i18n keys must land in BOTH maps (parity + unused-key
+            tests enforce). The totals grid may assume six columns &mdash; C4
+            checks before rendering the seventh.
+          </div>
+        </section>
+
+        <footer class="footer">
+          <p>
+            Generated 2026-11-10 &middot; webphone v2.12.0 &middot; every code
+            claim verified against the working tree; the FreeSWITCH format claim
+            verified against upstream source the same day
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
