@@ -65,9 +65,17 @@ DONE 2026-11-10 (trains cabdeeb8 / abed8247 / 3d1c1ba2 / 12cee0b3): C1 is the on
 
 ### Prod screenshot-tracking train residue (2026-11-10 14:42 report, §f-24 — harvested by the cadence-sweep session)
 
-- [ ] **ui-capture `--open` flag**: launch the gallery/compare in a browser
-      after a run (local convenience only; the screenshot-tracking train's own
-      ask — a `--open` on `scripts/ui-capture.py` opening `compare.html`).
+- [x] **ui-capture `--open` flag**: launch the gallery/compare in a browser
+      after a run — LANDED 2026-11-10 (harness v2; opens compare.html on
+      a display, prints a headless note otherwise; not yet exercised live
+      — first authenticated prod session should pass it once).
+
+- [ ] **Night-run stability pair**: a quiet-window (overnight)
+      ui-capture run pair on real prod data to set the diff noise floor
+      (badge bar / threshold calibration values; the 0.5% default is
+      optimistic — identical-seed local runs peaked at 2.5% on relative
+      timestamps). Home: the tracking plan's T25; pair the runs ≥8h
+      apart so relative times settle.
 
 ### BuildFlow tool-disposition residue (harvested 2026-11-08 from the 2026-10-11 findings-zeroing plan — one home now)
 
