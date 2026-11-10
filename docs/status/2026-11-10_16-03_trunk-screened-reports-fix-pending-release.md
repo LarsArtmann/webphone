@@ -77,46 +77,46 @@ The owner pasted the live Reports panel (73 calls, "Records without a readable t
 
 ## f) Next things to get done (ranked; harvest ground for docs-health)
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | Restore ssh:22 dev-box→PBX reachability (identify the firewall change; NetBird or console fallback) | Critical | S-M | Bug |
-| 2 | Run the runbook's siptrace capture (on→probe→off→journal grep) once host is reachable | Critical | S | Bug/diagnosis |
-| 3 | Send the re-engage reply to Telnyx (owner act) with both failed-fix results + the siptrace capture | Critical | S | Owner/ticket |
-| 4 | Fill the reply draft's `<E164-RESULT>` slot with the recorded 00:19Z + 14:19Z still-403 results | High | S | Documentation |
-| 5 | Release webphone carrying the Reports fix (fold → bump v2.13.0 → buildflow/flake/test/smoke gates → release.sh) | Critical | L | Release |
-| 6 | Complete the release tail: stack re-pin + browser E2E (served-bytes obligation) + pbx relock + owner switch | Critical | L | Release |
-| 7 | Check inbound-call health (0 Incoming anomaly + Telnyx voice-IP feed phase-in window 11-01..15) | High | S | Diagnosis |
-| 8 | Re-run the Nov-10 IP-range sweep (`sip.telnyx.com/voice.json` vs `allowedCidrs` pins) — the runbook says ALWAYS pre-switch and the 00:14Z switch already happened | High | S | Ops |
-| 9 | Re-run the home-IP A/B discriminator post-both-fixes (freshness for the ticket evidence) | High | S | Diagnosis |
-| 10 | Run `scripts/trunk-debug-matrix.sh` (7 cells) for the deep sweep trunk-lift-watch names for oddities | Medium | S | Diagnosis |
-| 11 | Map SIP hangup causes to distinct island messages (retire the conflation in `callFailedUnknown`) | High | M | Feature |
-| 12 | Wire a stale-prod watcher arm (prod /version commit vs origin/main; file an issue past a threshold) | Medium | M | Tooling |
-| 13 | Schedule the wait-final probe (hourly timer; alert on exit 3 CHANGED) | Medium | S | Tooling |
-| 14 | Decide the api-dial stopgap: wire call-control as interim outbound dial or formally decline | High | L | Decision/feature |
-| 15 | Answer Telnyx's inbound-MMS re-ask (GV-side message ID pull from the sending seat) | Medium | S | Owner/ticket |
-| 16 | Verify CI green on today's webphone fix trains (`gh run list` against cabdeeb8..12cee0b3) | Medium | S | Hygiene |
-| 17 | Identify the 2 unpushed webphone auto-commits + the modified fixture files (orphaned vs live session) | Medium | S | Hygiene |
-| 18 | Verify the pbx-artmann doc edits landed (daemon commit/push + CI) per the push-verification convention | Medium | S | Hygiene |
-| 19 | Verify closure `2id2kbrn` deploy-status directly once the host is reachable (retire the indirect proof) | Low | S | Hygiene |
-| 20 | Pre-stage the lift-day drill checklist (probe exit 3 → real dial → CDR row → inbound-health green) | High | S | Prep |
-| 21 | Identify the `pifo42h1` top-contact (1 call, 1h45m) via CDR + the new contacts-store naming | Low | S | Data |
-| 22 | Confirm the 24 Answered calls are all-internal once dated Reports data lands (validates the panel story) | Medium | S | Verification |
-| 23 | Add a NoAnswer-by-cause bucket to Reports so the next screening is visible in the tab itself | Medium | M | Feature idea |
-| 24 | Pick `reports.weekly_talk_budget` now that dated weeks render (bar currently dead at zero budget) | Low | S | Config |
-| 25 | Durable evidence home for probe capture blocks (move /tmp-parked repro evidence into the repo) | Low | S | Cleanup |
-| 26 | Run the identity-train owner legs (provisioner restart, hikaru passkey enroll, Super Admin 3-surface check) | Medium | M | Owner/adjacent |
-| 27 | Dry-run the siptrace procedure's tooling assumptions (fs_cli present, journal grep pattern matches) | Low | S | Prep |
-| 28 | First REAL outbound fax to a fax machine (delivered verdict still unproven; 11-09 train dialed a voice line) | Medium | S | Feature validation |
-| 29 | Check the stack browser E2E status for the reports train (served bytes changed; release-blocking obligation) | High | M | Gate |
-| 30 | Fold CHANGELOG `[Unreleased]` + sync FEATURES/TODO_LIST as release step 1 | Medium | S | Release |
-| 31 | Run the vulnix gate as part of the release (release.sh requirement) | Medium | S | Release gate |
-| 32 | Post-deploy verification: prod /version carries the new tag + fresh prod ui-capture of the fixed Reports panel | Medium | S | Verification |
-| 33 | Add a lessons entry: "a fix on main is not a fix in prod until /version matches" (the stale-binary class) | Medium | S | Documentation |
-| 34 | Owner decision: a +41 inbound lane (Swiss DID needs a Swiss entity per the 10-27 research) | Low | — | Decision |
-| 35 | Name the `9100` and `2000`/`*98` report contacts properly through the contacts store (C3 verification on live data) | Low | S | Data |
-| 36 | Host-access canary: nightly `ssh -o ConnectTimeout=5 … true` health leg with an alarm | Medium | S | Tooling |
-| 37 | Write the trunk config-exhausted state into pbx-artmann AGENTS.md (session-context home, runbook is the detail) | Low | S | Documentation |
-| 38 | Consider a denial-reason surface for `pstn_denied` (today it hangs up silently by design; make future gate changes visible) | Low | S | Feature idea |
+| #  | Task                                                                                                                                                              | Impact   | Effort | Category           |
+| -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------------ |
+| 1  | Restore ssh:22 dev-box→PBX reachability (identify the firewall change; NetBird or console fallback)                                                               | Critical | S-M    | Bug                |
+| 2  | Run the runbook's siptrace capture (on→probe→off→journal grep) once host is reachable                                                                             | Critical | S      | Bug/diagnosis      |
+| 3  | Send the re-engage reply to Telnyx (owner act) with both failed-fix results + the siptrace capture                                                                | Critical | S      | Owner/ticket       |
+| 4  | Fill the reply draft's `<E164-RESULT>` slot with the recorded 00:19Z + 14:19Z still-403 results                                                                   | High     | S      | Documentation      |
+| 5  | Release webphone carrying the Reports fix (fold → bump v2.13.0 → buildflow/flake/test/smoke gates → release.sh)                                                   | Critical | L      | Release            |
+| 6  | Complete the release tail: stack re-pin + browser E2E (served-bytes obligation) + pbx relock + owner switch                                                       | Critical | L      | Release            |
+| 7  | Check inbound-call health (0 Incoming anomaly + Telnyx voice-IP feed phase-in window 11-01..15)                                                                   | High     | S      | Diagnosis          |
+| 8  | Re-run the Nov-10 IP-range sweep (`sip.telnyx.com/voice.json` vs `allowedCidrs` pins) — the runbook says ALWAYS pre-switch and the 00:14Z switch already happened | High     | S      | Ops                |
+| 9  | Re-run the home-IP A/B discriminator post-both-fixes (freshness for the ticket evidence)                                                                          | High     | S      | Diagnosis          |
+| 10 | Run `scripts/trunk-debug-matrix.sh` (7 cells) for the deep sweep trunk-lift-watch names for oddities                                                              | Medium   | S      | Diagnosis          |
+| 11 | Map SIP hangup causes to distinct island messages (retire the conflation in `callFailedUnknown`)                                                                  | High     | M      | Feature            |
+| 12 | Wire a stale-prod watcher arm (prod /version commit vs origin/main; file an issue past a threshold)                                                               | Medium   | M      | Tooling            |
+| 13 | Schedule the wait-final probe (hourly timer; alert on exit 3 CHANGED)                                                                                             | Medium   | S      | Tooling            |
+| 14 | Decide the api-dial stopgap: wire call-control as interim outbound dial or formally decline                                                                       | High     | L      | Decision/feature   |
+| 15 | Answer Telnyx's inbound-MMS re-ask (GV-side message ID pull from the sending seat)                                                                                | Medium   | S      | Owner/ticket       |
+| 16 | Verify CI green on today's webphone fix trains (`gh run list` against cabdeeb8..12cee0b3)                                                                         | Medium   | S      | Hygiene            |
+| 17 | Identify the 2 unpushed webphone auto-commits + the modified fixture files (orphaned vs live session)                                                             | Medium   | S      | Hygiene            |
+| 18 | Verify the pbx-artmann doc edits landed (daemon commit/push + CI) per the push-verification convention                                                            | Medium   | S      | Hygiene            |
+| 19 | Verify closure `2id2kbrn` deploy-status directly once the host is reachable (retire the indirect proof)                                                           | Low      | S      | Hygiene            |
+| 20 | Pre-stage the lift-day drill checklist (probe exit 3 → real dial → CDR row → inbound-health green)                                                                | High     | S      | Prep               |
+| 21 | Identify the `pifo42h1` top-contact (1 call, 1h45m) via CDR + the new contacts-store naming                                                                       | Low      | S      | Data               |
+| 22 | Confirm the 24 Answered calls are all-internal once dated Reports data lands (validates the panel story)                                                          | Medium   | S      | Verification       |
+| 23 | Add a NoAnswer-by-cause bucket to Reports so the next screening is visible in the tab itself                                                                      | Medium   | M      | Feature idea       |
+| 24 | Pick `reports.weekly_talk_budget` now that dated weeks render (bar currently dead at zero budget)                                                                 | Low      | S      | Config             |
+| 25 | Durable evidence home for probe capture blocks (move /tmp-parked repro evidence into the repo)                                                                    | Low      | S      | Cleanup            |
+| 26 | Run the identity-train owner legs (provisioner restart, hikaru passkey enroll, Super Admin 3-surface check)                                                       | Medium   | M      | Owner/adjacent     |
+| 27 | Dry-run the siptrace procedure's tooling assumptions (fs_cli present, journal grep pattern matches)                                                               | Low      | S      | Prep               |
+| 28 | First REAL outbound fax to a fax machine (delivered verdict still unproven; 11-09 train dialed a voice line)                                                      | Medium   | S      | Feature validation |
+| 29 | Check the stack browser E2E status for the reports train (served bytes changed; release-blocking obligation)                                                      | High     | M      | Gate               |
+| 30 | Fold CHANGELOG `[Unreleased]` + sync FEATURES/TODO_LIST as release step 1                                                                                         | Medium   | S      | Release            |
+| 31 | Run the vulnix gate as part of the release (release.sh requirement)                                                                                               | Medium   | S      | Release gate       |
+| 32 | Post-deploy verification: prod /version carries the new tag + fresh prod ui-capture of the fixed Reports panel                                                    | Medium   | S      | Verification       |
+| 33 | Add a lessons entry: "a fix on main is not a fix in prod until /version matches" (the stale-binary class)                                                         | Medium   | S      | Documentation      |
+| 34 | Owner decision: a +41 inbound lane (Swiss DID needs a Swiss entity per the 10-27 research)                                                                        | Low      | —      | Decision           |
+| 35 | Name the `9100` and `2000`/`*98` report contacts properly through the contacts store (C3 verification on live data)                                               | Low      | S      | Data               |
+| 36 | Host-access canary: nightly `ssh -o ConnectTimeout=5 … true` health leg with an alarm                                                                             | Medium   | S      | Tooling            |
+| 37 | Write the trunk config-exhausted state into pbx-artmann AGENTS.md (session-context home, runbook is the detail)                                                   | Low      | S      | Documentation      |
+| 38 | Consider a denial-reason surface for `pstn_denied` (today it hangs up silently by design; make future gate changes visible)                                       | Low      | S      | Feature idea       |
 
 HARVEST note: items 1–5, 7, 9, 11, 12, 14, 20 belong in TODO_LIST.md; the remainder are ROADMAP-fuel or one-command hygiene. Items 2–4 are already owned by the existing `siptrace-send-round` / `trunk-lift-watch` rows — no duplicates.
 
@@ -128,4 +128,4 @@ HARVEST note: items 1–5, 7, 9, 11, 12, 14, 20 belong in TODO_LIST.md; the rema
 
 ---
 
-*Report convention: snapshot-rot header per AGENTS.md; scope line per status-report skill. Verified claims cite the command/artifact; gaps are named, not implied.*
+_Report convention: snapshot-rot header per AGENTS.md; scope line per status-report skill. Verified claims cite the command/artifact; gaps are named, not implied._

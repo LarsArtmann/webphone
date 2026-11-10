@@ -31,29 +31,29 @@ session-field drift.
 
 ## a) FULLY DONE
 
-| Item | Evidence |
-| --- | --- |
-| Research: both repos' seams, DTOs, parsers, tests, freshness-gate wiring | session; plan §1 |
-| SUPERB plan doc with Pareto + coarse/fine tables + mermaid | docs/planning/2026-11-10_14-36_SUPERB-android-wire-contract-sync.md (daemon-committed ce9f77f2) |
-| Pure payload builders extracted (fcm×2, ntfy×2) — Send/SendDraft now marshal through them | internal/push/fcm.go, ntfy.go |
-| Fixture renderers + CLI fold (`webphone contracts` writes wire/) | internal/push/fixtures.go, internal/server/wirefixtures.go, cmd/webphone/contracts.go |
-| 9 committed fixtures, byte-deterministic (json.Deterministic — v2 map order is random) | docs/contracts/wire/ |
-| Pin test (both credential arms, event keys on both transports, register keys) | internal/server/wirefixtures_test.go |
-| Freshness gate extended (script + `contracts-fresh` nix check diff wire/) | scripts/contracts-fresh.sh, nix/checks.nix — `nix build .#checks…contracts-fresh` green |
-| Runbook android leg + contracts README fixture section + CHANGELOG + TODO_LIST row | docs/release-runbook.md, docs/contracts/README.md, CHANGELOG.md, TODO_LIST.md |
-| Local gates on webphone half: push+server+cmd tests, art-dupl v0.7.2 (0 new clones), format-check, docs battery | session log |
-| Train-start buildflow + docs battery repair (concurrent session's rc=20 markdown also healed) | buildflow history 74/74; battery PASS |
-| CI green on the final tree, pushed | run 42832784499 success |
-| Android: `WireFacts.kt` pure decoders (fromFcmData/fromNtfyFrame) written | app/src/main/…/push/WireFacts.kt (daemon-committed 79f17ea, UNPUSHED) |
+| Item                                                                                                            | Evidence                                                                                        |
+| --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| Research: both repos' seams, DTOs, parsers, tests, freshness-gate wiring                                        | session; plan §1                                                                                |
+| SUPERB plan doc with Pareto + coarse/fine tables + mermaid                                                      | docs/planning/2026-11-10_14-36_SUPERB-android-wire-contract-sync.md (daemon-committed ce9f77f2) |
+| Pure payload builders extracted (fcm×2, ntfy×2) — Send/SendDraft now marshal through them                       | internal/push/fcm.go, ntfy.go                                                                   |
+| Fixture renderers + CLI fold (`webphone contracts` writes wire/)                                                | internal/push/fixtures.go, internal/server/wirefixtures.go, cmd/webphone/contracts.go           |
+| 9 committed fixtures, byte-deterministic (json.Deterministic — v2 map order is random)                          | docs/contracts/wire/                                                                            |
+| Pin test (both credential arms, event keys on both transports, register keys)                                   | internal/server/wirefixtures_test.go                                                            |
+| Freshness gate extended (script + `contracts-fresh` nix check diff wire/)                                       | scripts/contracts-fresh.sh, nix/checks.nix — `nix build .#checks…contracts-fresh` green         |
+| Runbook android leg + contracts README fixture section + CHANGELOG + TODO_LIST row                              | docs/release-runbook.md, docs/contracts/README.md, CHANGELOG.md, TODO_LIST.md                   |
+| Local gates on webphone half: push+server+cmd tests, art-dupl v0.7.2 (0 new clones), format-check, docs battery | session log                                                                                     |
+| Train-start buildflow + docs battery repair (concurrent session's rc=20 markdown also healed)                   | buildflow history 74/74; battery PASS                                                           |
+| CI green on the final tree, pushed                                                                              | run 42832784499 success                                                                         |
+| Android: `WireFacts.kt` pure decoders (fromFcmData/fromNtfyFrame) written                                       | app/src/main/…/push/WireFacts.kt (daemon-committed 79f17ea, UNPUSHED)                           |
 
 ## b) PARTIALLY DONE
 
-| Item | State | Remaining |
-| --- | --- | --- |
-| A2 parsers extracted | WireFacts.kt exists | FcmReceiver + NtfySubscriptionService.routeMessage still parse inline — delegate to WireFacts |
-| SessionApi drift FIX | designed (parse `password`/`sip_credential`; fetch `/config.js` `sipDomain`/`websocketPath`; origin-derived ws fallback kept) | not written; extract pure `parseSessionIdentity` + `registerPayload` for testability |
-| Android ledger | none | CHANGELOG/TODO_LIST/AGENTS sync-ritual rows |
-| Detailed narrative commits | webphone fix commit `6936be2a` only; android + earlier webphone units rode `chore:` daemon commits | accept (history is pushed) — narrative the android commit |
+| Item                       | State                                                                                                                         | Remaining                                                                                     |
+| -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| A2 parsers extracted       | WireFacts.kt exists                                                                                                           | FcmReceiver + NtfySubscriptionService.routeMessage still parse inline — delegate to WireFacts |
+| SessionApi drift FIX       | designed (parse `password`/`sip_credential`; fetch `/config.js` `sipDomain`/`websocketPath`; origin-derived ws fallback kept) | not written; extract pure `parseSessionIdentity` + `registerPayload` for testability          |
+| Android ledger             | none                                                                                                                          | CHANGELOG/TODO_LIST/AGENTS sync-ritual rows                                                   |
+| Detailed narrative commits | webphone fix commit `6936be2a` only; android + earlier webphone units rode `chore:` daemon commits                            | accept (history is pushed) — narrative the android commit                                     |
 
 ## c) NOT STARTED
 
