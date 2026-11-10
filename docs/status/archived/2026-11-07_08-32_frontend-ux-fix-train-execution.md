@@ -5,9 +5,9 @@
 > Snapshot: claims verified as of 08:32, 2026-11-07. Covers the fix-train
 > execution session after the owner's "GET SHIT DONE — the WHOLE TODO
 > LIST": plan tasks T01–T18 against
-> [docs/planning/2026-11-07_04-09_SUPERB-frontend-ux-fix-train.md](../planning/2026-11-07_04-09_SUPERB-frontend-ux-fix-train.md)
+> [docs/planning/2026-11-07_04-09_SUPERB-frontend-ux-fix-train.md](../../planning/2026-11-07_04-09_SUPERB-frontend-ux-fix-train.md)
 > (the review it executes:
-> [docs/review/2026-11-07_01-51_frontend-design-ux-review.html](../review/2026-11-07_01-51_frontend-design-ux-review.html)).
+> [docs/review/2026-11-07_01-51_frontend-design-ux-review.html](../../review/2026-11-07_01-51_frontend-design-ux-review.html)).
 > Repo state at writing: tree CLEAN (the auto-commit daemon swept
 > everything), `origin/main..HEAD` = 0 commits — everything IS pushed —
 > but two island tests are RED (stale pins, see §b/d), and the tsc

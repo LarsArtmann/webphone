@@ -1,0 +1,7 @@
+# Link-check config (release.sh step 6). The private-repo class: lychee is
+# unauthenticated, so every link into the owner's private
+# projects-management-automation repo answers 404 while the targets exist
+# (verified via gh api 2026-11-10, issue #348) — excluded, not dead.
+exclude = [
+  "github.com/LarsArtmann/projects-management-automation",
+]

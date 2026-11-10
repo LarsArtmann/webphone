@@ -16,7 +16,7 @@ agents (views / island JS / shell), the visual harness run live (24
 screenshots, layout assertions PASS), modern-web-guidance consulted for the
 review criteria, and my own contrast math on the token pairs. Deliverable: a
 Bauhaus-kit HTML report at
-[docs/review/2026-11-07_01-51_frontend-design-ux-review.html](../review/2026-11-07_01-51_frontend-design-ux-review.html)
+[docs/review/2026-11-07_01-51_frontend-design-ux-review.html](../../review/2026-11-07_01-51_frontend-design-ux-review.html)
 — currently ~90% complete (all 18 finding cards, 12 strengths, fix queue
 written; appendix matrix outstanding).
 

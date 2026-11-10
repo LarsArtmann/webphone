@@ -5,9 +5,9 @@
 > (20 carded findings + agent matrix + 8 flow GAPs, all discovered 2026-11-07
 > against HEAD `a8d089ba` and fresh as of this plan — see the review's
 > VERIFY marks; status trail:
-> [docs/status/2026-11-07_02-09_frontend-design-ux-review-train.md](../status/2026-11-07_02-09_frontend-design-ux-review-train.md)
+> [docs/status/2026-11-07_02-09_frontend-design-ux-review-train.md](../status/archived/2026-11-07_02-09_frontend-design-ux-review-train.md)
 > and
-> [docs/status/2026-11-07_04-05_frontend-ux-review-ia-roles-flows.md](../status/2026-11-07_04-05_frontend-ux-review-ia-roles-flows.md)).
+> [docs/status/2026-11-07_04-05_frontend-ux-review-ia-roles-flows.md](../status/archived/2026-11-07_04-05_frontend-ux-review-ia-roles-flows.md)).
 
 > **CLOSED 2026-11-07 — ALL 24 TASKS SHIPPED.** T01–T17 by the first
 > session, T18–T24 by the resuming session; every micro-task landed with

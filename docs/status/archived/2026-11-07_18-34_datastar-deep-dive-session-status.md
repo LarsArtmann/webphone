@@ -20,7 +20,7 @@
 > all green — see §a).
 
 The deliverable:
-[docs/research/2026-11-07_datastar-deep-dive.html](../research/2026-11-07_datastar-deep-dive.html)
+[docs/research/2026-11-07_datastar-deep-dive.html](../../research/2026-11-07_datastar-deep-dive.html)
 (verdict NO-GO, posture 78/100) + its wiring. The verdict in one line: 36% of
 the 9,844 client-JS LOC is WebRTC/SIP-imperative code that Datastar's own
 vocabulary (`data-ignore`, web components) exists to fence OFF; the tabs are
