@@ -910,8 +910,10 @@ def capture(
                 lambda d: d.execute_script("return document.readyState") == "complete"
             )
             # The session cookie, injected (see seed()/login_remote()): the
-            # server-rendered tabs ride it directly.
-            driver.add_cookie({"name": "webphone_session", "value": session})
+            # server-rendered tabs ride it directly. Anonymous runs inject
+            # nothing (selenium rejects an empty cookie value).
+            if session:
+                driver.add_cookie({"name": "webphone_session", "value": session})
             for theme in ("light", "dark"):
                 # Theme pinned via the persisted key (theme-preload.js applies
                 # it pre-paint — no cycling the 3-state toggle from "auto").
@@ -958,7 +960,8 @@ def capture(
                     shoot(driver, target, full_page)
                     print(f"captured {target}")
                     shots += 1
-                driver.add_cookie({"name": "webphone_session", "value": session})
+                if session:
+                    driver.add_cookie({"name": "webphone_session", "value": session})
                 for name, path in surfaces:
                     if only is not None and name not in only:
                         continue
@@ -1246,6 +1249,12 @@ def main() -> int:
         help="capture just the window instead of the full page height",
     )
     parser.add_argument(
+        "--anonymous",
+        action="store_true",
+        help="remote mode: capture ONLY the anonymous surfaces (login card + "
+        "/login) — no credentials needed; the deployment's public face",
+    )
+    parser.add_argument(
         "--label",
         default=None,
         help="free-text note stored in summary.json and the galleries",
@@ -1278,29 +1287,35 @@ def main() -> int:
             os.remove(stale)
 
     if remote:
-        extension = os.environ.get("WEBPHONE_CAPTURE_EXTENSION")
-        password = os.environ.get("WEBPHONE_CAPTURE_PASSWORD")
-        if not extension or not password:
-            print(
-                "remote capture needs credentials in the environment:\n"
-                "  WEBPHONE_CAPTURE_EXTENSION  the extension to sign in as\n"
-                "  WEBPHONE_CAPTURE_PASSWORD   that extension's directory password\n"
-                "(they verify against the real PBX directory; neither is logged)",
-                file=sys.stderr,
-            )
-            return 2
-        try:
-            urllib.request.urlopen(base + "/livez", timeout=10)  # nosec B310 - readiness probe of the remote server under capture
-        except (OSError, http.client.HTTPException) as exc:
-            print(f"{base} is unreachable ({exc})", file=sys.stderr)
-            return 1
-        session = login_remote(base, extension, password)
-        if not session:
-            return 1
-        version = fetch_version(base)
-        if version:
-            print(f"deployment: {version}")
-        surfaces = resolve_remote_surfaces(base, session, args.threads)
+        if args.anonymous:
+            surfaces = []
+            session = ""
+            version = fetch_version(base)
+        else:
+            extension = os.environ.get("WEBPHONE_CAPTURE_EXTENSION")
+            password = os.environ.get("WEBPHONE_CAPTURE_PASSWORD")
+            if not extension or not password:
+                print(
+                    "remote capture needs credentials in the environment:\n"
+                    "  WEBPHONE_CAPTURE_EXTENSION  the extension to sign in as\n"
+                    "  WEBPHONE_CAPTURE_PASSWORD   that extension's directory password\n"
+                    "(they verify against the real PBX directory; neither is logged)\n"
+                    "or pass --anonymous to shoot only the login surfaces",
+                    file=sys.stderr,
+                )
+                return 2
+            try:
+                urllib.request.urlopen(base + "/livez", timeout=10)  # nosec B310 - readiness probe of the remote server under capture
+            except (OSError, http.client.HTTPException) as exc:
+                print(f"{base} is unreachable ({exc})", file=sys.stderr)
+                return 1
+            session = login_remote(base, extension, password)
+            if not session:
+                return 1
+            version = fetch_version(base)
+            if version:
+                print(f"deployment: {version}")
+            surfaces = resolve_remote_surfaces(base, session, args.threads)
         if only is not None:
             # A typo must fail loudly: a filtered run that matches nothing
             # would print "0 shots" and look like a clean pass.
