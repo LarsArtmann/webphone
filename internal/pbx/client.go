@@ -99,6 +99,10 @@ type CDR struct {
 	DestinationNumber string `json:"destination_number"`
 	Start             string `json:"start"`
 	Billsec           int    `json:"billsec"`
+	// HangupCause is FreeSWITCH's own verdict vocabulary (USER_BUSY,
+	// NO_ANSWER, …) — the Reports tab renders it verbatim. Empty on
+	// rows the API did not populate.
+	HangupCause string `json:"hangup_cause"`
 }
 
 // HistoryPage is the /history response shape.

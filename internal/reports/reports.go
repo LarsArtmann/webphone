@@ -51,6 +51,12 @@ type Report struct {
 	// day, hour or week bucket; the view says so instead of pretending
 	// the totals add up.
 	Undated int
+	// NoAnswerByCause counts the hangup causes behind the NoAnswer
+	// bucket (outbound calls that never connected), in FreeSWITCH's own
+	// vocabulary — translating it would invent a second truth about the
+	// same call. An empty-cause row counts as UNKNOWN. Nil when the
+	// window held no never-connected outbound call.
+	NoAnswerByCause map[string]int
 }
 
 // Totals is the window's headline arithmetic.
@@ -185,6 +191,14 @@ func Aggregate(in Input) Report {
 			report.Totals.Missed++
 		default:
 			report.Totals.NoAnswer++
+			cause := cdr.HangupCause
+			if cause == "" {
+				cause = "UNKNOWN"
+			}
+			if report.NoAnswerByCause == nil {
+				report.NoAnswerByCause = make(map[string]int, 4)
+			}
+			report.NoAnswerByCause[cause]++
 		}
 
 		remote := remoteOf(cdr)

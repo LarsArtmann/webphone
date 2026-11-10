@@ -1,7 +1,11 @@
 package views
 
 import (
+	"cmp"
+	"fmt"
+	"slices"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/larsartmann/templ-components/display"
@@ -147,6 +151,13 @@ templ reportsTotals(props ReportsPanelProps) {
 			@reportsStat(fmtInt(totals.NoAnswer), T(props.Lang, "reports.stat.noanswer"), false)
 		}
 	</section>
+	// The cause ranking under the NoAnswer card (E2): WHY the outbound
+	// calls never connected — the trunk's own vocabulary, not a
+	// translation. Renders whenever the fold saw a cause, which is
+	// exactly when the card above carries a count.
+	if len(props.Report.NoAnswerByCause) > 0 {
+		<p class="wp-muted wp-reports-causes">{ noAnswerCausesLine(props.Lang, props.Report.NoAnswerByCause) }</p>
+	}
 }
 
 // reportsStat is the totals grid's ONE home: a value over its localized
@@ -271,4 +282,29 @@ func secondsOf(d time.Duration) int {
 // hourSpan labels one hour bucket as the span it covers ("18–19").
 func hourSpan(hour int) string {
 	return pad2(hour) + "–" + pad2((hour+1)%24)
+}
+
+// noAnswerCausesLine renders the cause ranking behind the NoAnswer
+// card: the localized lead, then each FreeSWITCH cause with its count,
+// loudest first, ties by name (map order would make identical runs
+// differ). Raw vocabulary on purpose — the trunk's own words are the
+// truth the operator can grep.
+func noAnswerCausesLine(lang Lang, causes map[string]int) string {
+	type causeRow struct {
+		name  string
+		count int
+	}
+	rows := make([]causeRow, 0, len(causes))
+	for name, count := range causes {
+		rows = append(rows, causeRow{name: name, count: count})
+	}
+	slices.SortFunc(rows, func(a, b causeRow) int {
+		return cmp.Or(b.count-a.count, strings.Compare(a.name, b.name))
+	})
+	parts := make([]string, 0, len(rows)+1)
+	parts = append(parts, T(lang, "reports.noanswer.causes"))
+	for _, row := range rows {
+		parts = append(parts, fmt.Sprintf("%s %d", row.name, row.count))
+	}
+	return strings.Join(parts, " ")
 }
