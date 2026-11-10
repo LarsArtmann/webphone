@@ -135,6 +135,22 @@ func messageDomain(f domain.MessageAppended) domain.Message {
 	return msg
 }
 
+// threadStreamEventTypes is the aggregate's stream vocabulary: the
+// domain decl's Events entry AND the StrictApply guard list (an unknown
+// type on the stream fails replay loudly instead of silently skipping).
+// MessageRemoved and AttachmentRemoved are stream facts the fold
+// deliberately ignores — the tombstone already dropped their rows.
+var threadStreamEventTypes = []event.Type{
+	event.Type(metaengine.EventTypeName(domain.MessageAppended{})),
+	event.Type(metaengine.EventTypeName(domain.AttachmentStored{})),
+	event.Type(metaengine.EventTypeName(domain.OutboundAdvanced{})),
+	event.Type(metaengine.EventTypeName(domain.ThreadFlagSet{})),
+	event.Type(metaengine.EventTypeName(domain.ThreadUnreadCleared{})),
+	event.Type(metaengine.EventTypeName(domain.ThreadDeleted{})),
+	event.Type(metaengine.EventTypeName(domain.MessageRemoved{})),
+	event.Type(metaengine.EventTypeName(domain.AttachmentRemoved{})),
+}
+
 func applyThreadState(s threadState, evt event.Event) (threadState, error) {
 	switch evt.Type() {
 	case event.Type(metaengine.EventTypeName(domain.MessageAppended{})):

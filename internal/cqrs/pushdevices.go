@@ -69,6 +69,14 @@ func (pushDevicesState) initial() pushDevicesState {
 	return pushDevicesState{Devices: map[string]pushDeviceSlot{}}
 }
 
+// pushDeviceStreamEventTypes is the aggregate's stream vocabulary: the
+// domain decl's Events entry AND the StrictApply guard list (an unknown
+// type on the stream fails replay loudly instead of silently skipping).
+var pushDeviceStreamEventTypes = []event.Type{
+	event.Type(metaengine.EventTypeName(domain.PushDeviceRegistered{})),
+	event.Type(metaengine.EventTypeName(domain.PushDeviceRemoved{})),
+}
+
 func applyPushDevicesState(s pushDevicesState, evt event.Event) (pushDevicesState, error) {
 	switch evt.Type() {
 	case event.Type(metaengine.EventTypeName(domain.PushDeviceRegistered{})):
@@ -121,7 +129,7 @@ func decideRemovePushDevice(s pushDevicesState, ver event.Version, cmd RemovePus
 func RegisterPushDevices(sys *system.System) error {
 	if err := system.RegisterDecider[pushDevicesState](sys, PushDevicesStreamType, decider.Decider[pushDevicesState]{
 		Initial: pushDevicesState{}.initial(),
-		Apply:   applyPushDevicesState,
+		Apply:   decider.StrictApply(applyPushDevicesState, pushDeviceStreamEventTypes),
 	}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.push_device_register", "register push-devices decider")
 	}
@@ -189,10 +197,7 @@ func PushDevicesDomainDecl() system.DomainConfig {
 			}
 		},
 		Projections: []system.ProjectionDeclaration{system.RawQuery(pushDevicesProjection())},
-		Events: []event.Type{
-			event.Type(metaengine.EventTypeName(domain.PushDeviceRegistered{})),
-			event.Type(metaengine.EventTypeName(domain.PushDeviceRemoved{})),
-		},
+		Events: pushDeviceStreamEventTypes,
 	}
 }
 

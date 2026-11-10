@@ -7,7 +7,6 @@ package cqrs
 import (
 	"fmt"
 
-	"github.com/larsartmann/go-cqrs-lite/event/v4"
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
 	"github.com/larsartmann/go-cqrs-lite/record/v4"
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
@@ -144,15 +143,6 @@ func ThreadsDomainDecl() system.DomainConfig {
 			}
 		},
 		Projections: threadProjections(),
-		Events: []event.Type{
-			event.Type(metaengine.EventTypeName(domain.MessageAppended{})),
-			event.Type(metaengine.EventTypeName(domain.AttachmentStored{})),
-			event.Type(metaengine.EventTypeName(domain.OutboundAdvanced{})),
-			event.Type(metaengine.EventTypeName(domain.ThreadFlagSet{})),
-			event.Type(metaengine.EventTypeName(domain.ThreadUnreadCleared{})),
-			event.Type(metaengine.EventTypeName(domain.ThreadDeleted{})),
-			event.Type(metaengine.EventTypeName(domain.MessageRemoved{})),
-			event.Type(metaengine.EventTypeName(domain.AttachmentRemoved{})),
-		},
+		Events: threadStreamEventTypes,
 	}
 }

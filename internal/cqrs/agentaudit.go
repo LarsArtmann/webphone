@@ -70,6 +70,14 @@ func (agentAuditState) initial() agentAuditState {
 	return agentAuditState{Rows: map[string]agentAuditRow{}}
 }
 
+// agentAuditStreamEventTypes is the aggregate's stream vocabulary: the
+// domain decl's Events entry AND the StrictApply guard list (an unknown
+// type on the stream fails replay loudly instead of silently skipping).
+var agentAuditStreamEventTypes = []event.Type{
+	event.Type(metaengine.EventTypeName(domain.AgentAuditAppended{})),
+	event.Type(metaengine.EventTypeName(domain.AgentAuditExpunged{})),
+}
+
 func applyAgentAuditState(s agentAuditState, evt event.Event) (agentAuditState, error) {
 	switch evt.Type() {
 	case event.Type(metaengine.EventTypeName(domain.AgentAuditAppended{})):
@@ -152,7 +160,7 @@ func actorForAudit(actorEmail string) id.ActorID {
 func RegisterAgentAudit(sys *system.System) error {
 	if err := system.RegisterDecider[agentAuditState](sys, AgentAuditStreamType, decider.Decider[agentAuditState]{
 		Initial: agentAuditState{}.initial(),
-		Apply:   applyAgentAuditState,
+		Apply:   decider.StrictApply(applyAgentAuditState, agentAuditStreamEventTypes),
 	}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.agent_audit_register", "register agent-audit decider")
 	}
@@ -211,10 +219,7 @@ func AgentAuditDomainDecl() system.DomainConfig {
 			}
 		},
 		Projections: []system.ProjectionDeclaration{system.RawQuery(agentAuditProjection())},
-		Events: []event.Type{
-			event.Type(metaengine.EventTypeName(domain.AgentAuditAppended{})),
-			event.Type(metaengine.EventTypeName(domain.AgentAuditExpunged{})),
-		},
+		Events: agentAuditStreamEventTypes,
 	}
 }
 

@@ -66,6 +66,14 @@ type contactsState struct {
 
 func (contactsState) initial() contactsState { return contactsState{Slots: map[string]contactSlot{}} }
 
+// contactStreamEventTypes is the aggregate's stream vocabulary: the
+// domain decl's Events entry AND the StrictApply guard list (an unknown
+// type on the stream fails replay loudly instead of silently skipping).
+var contactStreamEventTypes = []event.Type{
+	event.Type(metaengine.EventTypeName(domain.ContactSaved{})),
+	event.Type(metaengine.EventTypeName(domain.ContactDeleted{})),
+}
+
 func applyContactsState(s contactsState, evt event.Event) (contactsState, error) {
 	switch evt.Type() {
 	case event.Type(metaengine.EventTypeName(domain.ContactSaved{})):
@@ -129,7 +137,7 @@ func decideDeleteContact(s contactsState, ver event.Version, cmd DeleteContact) 
 func RegisterContacts(sys *system.System) error {
 	if err := system.RegisterDecider[contactsState](sys, ContactsStreamType, decider.Decider[contactsState]{
 		Initial: contactsState{}.initial(),
-		Apply:   applyContactsState,
+		Apply:   decider.StrictApply(applyContactsState, contactStreamEventTypes),
 	}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.contact_register", "register contacts decider")
 	}
@@ -197,10 +205,7 @@ func ContactsDomainDecl() system.DomainConfig {
 			}
 		},
 		Projections: []system.ProjectionDeclaration{system.RawQuery(contactsProjection())},
-		Events: []event.Type{
-			event.Type(metaengine.EventTypeName(domain.ContactSaved{})),
-			event.Type(metaengine.EventTypeName(domain.ContactDeleted{})),
-		},
+		Events: contactStreamEventTypes,
 	}
 }
 

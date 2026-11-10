@@ -53,7 +53,7 @@ var threadSnapshotStrategy = func() snapshot.SnapshotStrategy {
 func RegisterThreads(sys *system.System) error {
 	if err := system.RegisterDecider[threadState](sys, ThreadsStreamType, decider.Decider[threadState]{
 		Initial: threadState{}.initial(),
-		Apply:   applyThreadState,
+		Apply:   decider.StrictApply(applyThreadState, threadStreamEventTypes),
 	}, system.WithSnapshotStrategy(threadSnapshotStrategy)); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.thread_register", "register thread decider")
 	}

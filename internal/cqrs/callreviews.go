@@ -67,6 +67,13 @@ type reviewsState struct {
 
 func (reviewsState) initial() reviewsState { return reviewsState{Slots: map[string]reviewSlot{}} }
 
+// reviewStreamEventTypes is the aggregate's stream vocabulary: the
+// domain decl's Events entry AND the StrictApply guard list (an unknown
+// type on the stream fails replay loudly instead of silently skipping).
+var reviewStreamEventTypes = []event.Type{
+	event.Type(metaengine.EventTypeName(domain.CallReviewSaved{})),
+}
+
 func applyReviewsState(s reviewsState, evt event.Event) (reviewsState, error) {
 	switch evt.Type() {
 	case event.Type(metaengine.EventTypeName(domain.CallReviewSaved{})):
@@ -112,7 +119,7 @@ func decideSaveReview(s reviewsState, ver event.Version, cmd SaveCallReview) ([]
 func RegisterReviews(sys *system.System) error {
 	if err := system.RegisterDecider[reviewsState](sys, ReviewsStreamType, decider.Decider[reviewsState]{
 		Initial: reviewsState{}.initial(),
-		Apply:   applyReviewsState,
+		Apply:   decider.StrictApply(applyReviewsState, reviewStreamEventTypes),
 	}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.review_register", "register reviews decider")
 	}
@@ -172,9 +179,7 @@ func ReviewsDomainDecl() system.DomainConfig {
 			}
 		},
 		Projections: []system.ProjectionDeclaration{system.RawQuery(reviewsProjection())},
-		Events: []event.Type{
-			event.Type(metaengine.EventTypeName(domain.CallReviewSaved{})),
-		},
+		Events: reviewStreamEventTypes,
 	}
 }
 

@@ -70,6 +70,15 @@ type faxState struct {
 
 func (faxState) initial() faxState { return faxState{} }
 
+// faxStreamEventTypes is the aggregate's stream vocabulary: the
+// domain decl's Events entry AND the StrictApply guard list (an unknown
+// type on the stream fails replay loudly instead of silently skipping).
+var faxStreamEventTypes = []event.Type{
+	event.Type(metaengine.EventTypeName(domain.FaxReceipted{})),
+	event.Type(metaengine.EventTypeName(domain.FaxStatusAdvanced{})),
+	event.Type(metaengine.EventTypeName(domain.FaxExpunged{})),
+}
+
 // applyFaxState folds the wire facts into the typed row. Journal-
 // trusted: only parsed domain values were ever appended.
 func applyFaxState(s faxState, evt event.Event) (faxState, error) {
@@ -181,7 +190,7 @@ func decideExpungeFax(s faxState, ver event.Version, cmd ExpungeFax) ([]event.Ev
 func RegisterFaxes(sys *system.System) error {
 	if err := system.RegisterDecider[faxState](sys, FaxesStreamType, decider.Decider[faxState]{
 		Initial: faxState{}.initial(),
-		Apply:   applyFaxState,
+		Apply:   decider.StrictApply(applyFaxState, faxStreamEventTypes),
 	}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.fax_register", "register fax decider")
 	}

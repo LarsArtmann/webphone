@@ -62,6 +62,14 @@ type enrollState struct {
 
 func (enrollState) initial() enrollState { return enrollState{} }
 
+// enrollStreamEventTypes is the aggregate's stream vocabulary: the
+// domain decl's Events entry AND the StrictApply guard list (an unknown
+// type on the stream fails replay loudly instead of silently skipping).
+var enrollStreamEventTypes = []event.Type{
+	event.Type(metaengine.EventTypeName(domain.EnrollTokenMinted{})),
+	event.Type(metaengine.EventTypeName(domain.EnrollTokenBurned{})),
+}
+
 func applyEnrollState(s enrollState, evt event.Event) (enrollState, error) {
 	switch evt.Type() {
 	case event.Type(metaengine.EventTypeName(domain.EnrollTokenMinted{})):
@@ -106,7 +114,7 @@ func decideBurnEnrollToken(s enrollState, ver event.Version, cmd BurnEnrollToken
 func RegisterEnroll(sys *system.System) error {
 	if err := system.RegisterDecider[enrollState](sys, EnrollStreamType, decider.Decider[enrollState]{
 		Initial: enrollState{}.initial(),
-		Apply:   applyEnrollState,
+		Apply:   decider.StrictApply(applyEnrollState, enrollStreamEventTypes),
 	}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.enroll_register", "register enroll decider")
 	}
@@ -168,10 +176,7 @@ func EnrollDomainDecl() system.DomainConfig {
 			}
 		},
 		Projections: []system.ProjectionDeclaration{system.RawQuery(enrollProjection())},
-		Events: []event.Type{
-			event.Type(metaengine.EventTypeName(domain.EnrollTokenMinted{})),
-			event.Type(metaengine.EventTypeName(domain.EnrollTokenBurned{})),
-		},
+		Events: enrollStreamEventTypes,
 	}
 }
 

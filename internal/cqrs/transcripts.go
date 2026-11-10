@@ -104,6 +104,14 @@ type transcriptState struct {
 
 func (transcriptState) initial() transcriptState { return transcriptState{} }
 
+// transcriptStreamEventTypes is the aggregate's stream vocabulary: the
+// domain decl's Events entry AND the StrictApply guard list (an unknown
+// type on the stream fails replay loudly instead of silently skipping).
+var transcriptStreamEventTypes = []event.Type{
+	event.Type(metaengine.EventTypeName(domain.TranscriptAppended{})),
+	event.Type(metaengine.EventTypeName(domain.TranscriptExpunged{})),
+}
+
 func applyTranscriptState(s transcriptState, evt event.Event) (transcriptState, error) {
 	switch evt.Type() {
 	case event.Type(metaengine.EventTypeName(domain.TranscriptAppended{})):
@@ -218,7 +226,7 @@ func decideDeleteCallTranscript(s transcriptState, ver event.Version, cmd Delete
 func RegisterTranscripts(sys *system.System) error {
 	if err := system.RegisterDecider[transcriptState](sys, TranscriptsStreamType, decider.Decider[transcriptState]{
 		Initial: transcriptState{}.initial(),
-		Apply:   applyTranscriptState,
+		Apply:   decider.StrictApply(applyTranscriptState, transcriptStreamEventTypes),
 	}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.transcript_register", "register transcripts decider")
 	}
@@ -309,9 +317,6 @@ func TranscriptsDomainDecl() system.DomainConfig {
 			}
 		},
 		Projections: []system.ProjectionDeclaration{system.RawQuery(transcriptsProjection())},
-		Events: []event.Type{
-			event.Type(metaengine.EventTypeName(domain.TranscriptAppended{})),
-			event.Type(metaengine.EventTypeName(domain.TranscriptExpunged{})),
-		},
+		Events: transcriptStreamEventTypes,
 	}
 }

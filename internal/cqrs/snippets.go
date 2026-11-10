@@ -62,6 +62,14 @@ type snippetState struct {
 
 func (snippetState) initial() snippetState { return snippetState{Slots: map[string]snippetSlot{}} }
 
+// snippetStreamEventTypes is the aggregate's stream vocabulary: the
+// domain decl's Events entry AND the StrictApply guard list (an unknown
+// type on the stream fails replay loudly instead of silently skipping).
+var snippetStreamEventTypes = []event.Type{
+	event.Type(metaengine.EventTypeName(domain.SnippetSaved{})),
+	event.Type(metaengine.EventTypeName(domain.SnippetDeleted{})),
+}
+
 func applySnippetState(s snippetState, evt event.Event) (snippetState, error) {
 	switch evt.Type() {
 	case event.Type(metaengine.EventTypeName(domain.SnippetSaved{})):
@@ -120,7 +128,7 @@ func decideDeleteSnippet(s snippetState, ver event.Version, cmd DeleteSnippet) (
 func RegisterSnippets(sys *system.System) error {
 	if err := system.RegisterDecider[snippetState](sys, SnippetsStreamType, decider.Decider[snippetState]{
 		Initial: snippetState{}.initial(),
-		Apply:   applySnippetState,
+		Apply:   decider.StrictApply(applySnippetState, snippetStreamEventTypes),
 	}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.snippet_register", "register snippets decider")
 	}
@@ -180,10 +188,7 @@ func SnippetsDomainDecl() system.DomainConfig {
 			}
 		},
 		Projections: []system.ProjectionDeclaration{system.RawQuery(snippetsProjection())},
-		Events: []event.Type{
-			event.Type(metaengine.EventTypeName(domain.SnippetSaved{})),
-			event.Type(metaengine.EventTypeName(domain.SnippetDeleted{})),
-		},
+		Events: snippetStreamEventTypes,
 	}
 }
 

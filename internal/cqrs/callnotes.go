@@ -76,6 +76,13 @@ type notesState struct {
 
 func (notesState) initial() notesState { return notesState{Slots: map[string]noteSlot{}} }
 
+// notesStreamEventTypes is the aggregate's stream vocabulary: the
+// domain decl's Events entry AND the StrictApply guard list (an unknown
+// type on the stream fails replay loudly instead of silently skipping).
+var notesStreamEventTypes = []event.Type{
+	event.Type(metaengine.EventTypeName(domain.CallNoteSaved{})),
+}
+
 func applyNotesState(s notesState, evt event.Event) (notesState, error) {
 	switch evt.Type() {
 	case event.Type(metaengine.EventTypeName(domain.CallNoteSaved{})):
@@ -148,7 +155,7 @@ func decideSaveDisposition(s notesState, ver event.Version, cmd SaveCallDisposit
 func RegisterNotes(sys *system.System) error {
 	if err := system.RegisterDecider[notesState](sys, NotesStreamType, decider.Decider[notesState]{
 		Initial: notesState{}.initial(),
-		Apply:   applyNotesState,
+		Apply:   decider.StrictApply(applyNotesState, notesStreamEventTypes),
 	}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.note_register", "register notes decider")
 	}
@@ -213,9 +220,7 @@ func NotesDomainDecl() system.DomainConfig {
 			}
 		},
 		Projections: []system.ProjectionDeclaration{system.RawQuery(notesProjection())},
-		Events: []event.Type{
-			event.Type(metaengine.EventTypeName(domain.CallNoteSaved{})),
-		},
+		Events: notesStreamEventTypes,
 	}
 }
 

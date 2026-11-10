@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/larsartmann/go-cqrs-lite/command/v4"
-	"github.com/larsartmann/go-cqrs-lite/event/v4"
 	"github.com/larsartmann/go-cqrs-lite/id/v4"
 	"github.com/larsartmann/go-cqrs-lite/metaengine/v4"
 	"github.com/larsartmann/go-cqrs-lite/projectionhost/v4"
@@ -282,11 +281,7 @@ func FaxesDomainDecl() system.DomainConfig {
 		Projections: []system.ProjectionDeclaration{
 			system.RawQuery(readmodels.FaxesProjection(systemFaxesCollection)),
 		},
-		Events: []event.Type{
-			event.Type(metaengine.EventTypeName(domain.FaxReceipted{})),
-			event.Type(metaengine.EventTypeName(domain.FaxStatusAdvanced{})),
-			event.Type(metaengine.EventTypeName(domain.FaxExpunged{})),
-		},
+		Events: faxStreamEventTypes,
 	}
 }
 

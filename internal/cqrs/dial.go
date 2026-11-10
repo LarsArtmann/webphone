@@ -101,6 +101,16 @@ func (dialState) initial() dialState {
 	return dialState{Windows: map[string]int64{}, Overrides: map[string]dialOverrideSlot{}}
 }
 
+// dialStreamEventTypes is the aggregate's stream vocabulary: the
+// domain decl's Events entry AND the StrictApply guard list (an unknown
+// type on the stream fails replay loudly instead of silently skipping).
+var dialStreamEventTypes = []event.Type{
+	event.Type(metaengine.EventTypeName(domain.DialAttempted{})),
+	event.Type(metaengine.EventTypeName(domain.DialOverrideSaved{})),
+	event.Type(metaengine.EventTypeName(domain.DialWindowExpunged{})),
+	event.Type(metaengine.EventTypeName(domain.DialOverrideExpunged{})),
+}
+
 func applyDialState(s dialState, evt event.Event) (dialState, error) {
 	switch evt.Type() {
 	case event.Type(metaengine.EventTypeName(domain.DialAttempted{})):
@@ -284,7 +294,7 @@ func dialEvent(fact any, streamID id.StreamID, ver event.Version) (event.Event, 
 func RegisterDial(sys *system.System) error {
 	if err := system.RegisterDecider[dialState](sys, DialStreamType, decider.Decider[dialState]{
 		Initial: dialState{}.initial(),
-		Apply:   applyDialState,
+		Apply:   decider.StrictApply(applyDialState, dialStreamEventTypes),
 	}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.dial_register", "register dial decider")
 	}
@@ -325,11 +335,6 @@ func DialDomainDecl() system.DomainConfig {
 			system.RawQuery(dialWindowsProjection()),
 			system.RawQuery(dialOverridesProjection()),
 		},
-		Events: []event.Type{
-			event.Type(metaengine.EventTypeName(domain.DialAttempted{})),
-			event.Type(metaengine.EventTypeName(domain.DialOverrideSaved{})),
-			event.Type(metaengine.EventTypeName(domain.DialWindowExpunged{})),
-			event.Type(metaengine.EventTypeName(domain.DialOverrideExpunged{})),
-		},
+		Events: dialStreamEventTypes,
 	}
 }
