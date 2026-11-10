@@ -1045,15 +1045,15 @@ def clip_box(
     size_a: tuple[int, int], size_b: tuple[int, int], clip: int | None
 ) -> tuple[int, int] | None:
     """The common region two shots can be diffed on, or None when
-    unclip-able: widths must match, equal heights need no clip, and a
-    height drift only diffs when --diff-clip gave a bar (top-N policy)."""
-    if size_a[0] != size_b[0]:
-        return None
-    if size_a[1] == size_b[1]:
+    unclip-able: equal sizes need no clip; any drift (height — full-page
+    content growth, or width — scrollbar/rounding drift) only diffs when
+    --diff-clip gave a bar, cropping BOTH shots to their common top-left
+    region (the clipped mark in the compare says so)."""
+    if size_a == size_b:
         return size_a
     if not clip or clip <= 0:
         return None
-    return (size_a[0], min(size_a[1], size_b[1], clip))
+    return (min(size_a[0], size_b[0]), min(size_a[1], size_b[1], clip))
 
 
 def has_admin_nav(page: str) -> bool:
@@ -1586,7 +1586,7 @@ def self_test() -> int:
     check("clip: equal sizes", clip_box((800, 900), (800, 900), None) == (800, 900))
     check("clip: no bar refuses drift", clip_box((800, 900), (800, 1400), None) is None)
     check("clip: bar bounds height", clip_box((800, 900), (800, 1400), 600) == (800, 600))
-    check("clip: width mismatch refused", clip_box((800, 900), (900, 900), 600) is None)
+    check("clip: width drift crops too", clip_box((800, 900), (815, 900), 600) == (800, 600))
 
     check("admin nav detected", has_admin_nav('<a href="/admin">Admin</a>'))
     check("admin nav exact", not has_admin_nav('<a href="/admin2">x</a>'))
