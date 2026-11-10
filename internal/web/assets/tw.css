@@ -1,4 +1,4 @@
-/*! tailwindcss v4.3.3 | MIT License | https://tailwindcss.com */
+/*! tailwindcss v4.3.4 | MIT License | https://tailwindcss.com */
 @layer properties;
 @layer theme, base, components, utilities;
 @layer theme {
@@ -463,9 +463,6 @@
   }
   .isolate {
     isolation: isolate;
-  }
-  .row-8 {
-    grid-row: 8;
   }
   .row-18 {
     grid-row: 18;
@@ -1853,7 +1850,7 @@
   }
 }
 @layer properties {
-  @supports ((-webkit-hyphens: none) and (not (margin-trim: inline))) or
+  @supports ((-webkit-hyphens: none) and (not (margin-trim: block))) or
     ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
     *,
     ::before,
