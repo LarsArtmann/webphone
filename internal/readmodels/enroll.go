@@ -22,7 +22,7 @@ type EnrollTokenView struct {
 }
 
 // enrollTokensCollection names the engine collection (query name).
-const enrollTokensCollection = "enroll_tokens" //cqrs-lint:ignore(S001) a storage-collection NAME, not a credential — trips only the "token" substring heuristic
+const enrollTokensCollection = "enroll_tokens"
 
 type enrollInput struct{ TokenHash string }
 

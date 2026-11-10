@@ -39,8 +39,10 @@ const uploadBodyLimit = uploadLimit + 1<<20
 // back to content sniffing when the declaration is missing or is the
 // generic octet-stream default (browsers send real types for file
 // inputs; curl and programmatic posts do not). The inline image
-// thumbnails key on image/*, so a mislabeled upload would silently
-// lose its preview.
+// thumbnails key on the image MIME family, so a mislabeled upload would
+// silently lose its preview. (No star-slash in comments: cqrs-lint's
+// suppression scanner miscounts a slash-star inside a line comment as a
+// block-comment opener and goes inert for the rest of the file.)
 func attachmentMimeType(fh *multipart.FileHeader, content []byte) string {
 	declared := fh.Header.Get("Content-Type")
 	if declared != "" && declared != "application/octet-stream" {
