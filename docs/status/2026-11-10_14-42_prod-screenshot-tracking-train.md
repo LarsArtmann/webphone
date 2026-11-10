@@ -63,23 +63,23 @@ The visual harness (`scripts/ui-capture.py`) now captures a LIVE deployment, kee
 
 ## f) NEXT (ranked, roughly Pareto-ordered)
 
-1. Resolve the `island-js` red: finish or revert the other session's fallback-silence change (`0d2e9ff8`) — owner call on ownership (see g2).
+1. ~~Resolve the `island-js` red: finish or revert the other session's fallback-silence change (`0d2e9ff8`) — owner call on ownership (see g2).~~ STRUCK 2026-11-10 18:40: the red was their in-flight spec, finished by their own follow-up commits — 328/328 at HEAD, sandbox green, CI 42832784499 success.
 2. Run the authenticated prod capture (needs g1) — the whole point of the train.
 3. Second prod run to birth the first real `compare.html` diff chain; eyeball it and judge the diff presentation.
 4. Mobile prod pass `--viewport 390x844` (and decide whether mobile belongs in every prod run by default).
-5. Explain `nix-hash-fix`'s failed-but-successful-output contradiction; fix the instrument or the tree.
-6. Push (bar satisfied) once island-js is green; then `gh run list` watch to green.
-7. Re-run full buildflow to 100 % green and record the 4-step failure set as closed.
-8. Add a `--self-test` to `ui-capture.py` pinning the pure helpers (shot_key, surface list building, lenient rules, compare math).
+5. ~~Explain `nix-hash-fix`'s failed-but-successful-output contradiction; fix the instrument or the tree.~~ STRUCK 2026-11-10 18:40: decoded — the step's lock-drift WARNING surfaces a green build on a backwards premise (go.mod 11-08 is OLDER than the vendorHash pin 11-10); mechanism recorded in .buildflow.yml § nix-hash-fix.
+6. ~~Push (bar satisfied) once island-js is green; then `gh run list` watch to green.~~ STRUCK 2026-11-10 18:55: pushed through 2e5c4097; CI verdicts watched per sha.
+7. ~~Re-run full buildflow to 100 % green and record the 4-step failure set as closed.~~ STRUCK 2026-11-10 18:49: full buildflow EXIT 0 (warnings are non-gating findings; the two former FAILING steps are green or decoded above).
+8. ~~Add a `--self-test` to `ui-capture.py` pinning the pure helpers (shot_key, surface list building, lenient rules, compare math).~~ STRUCK 2026-11-10: LANDED with 29 checks, green in both envs (pixel math inside the capture env).
 9. Consider a `--crawl` mode (true unlighthouse-style link discovery beyond the curated list) — only if the curated matrix proves too narrow for real ugliness.
-10. Add `admin` surface to the remote list when the session is an admin (`isAdminSession` probe), so the Admin tab gets tracked.
-11. Track the CRM `crm-context` strip on prod when the CRM seam is on (currently local-only via the fake CRM).
+10. ~~Add `admin` surface to the remote list when the session is an admin (`isAdminSession` probe), so the Admin tab gets tracked.~~ STRUCK 2026-11-10: detection LANDED + self-tested, then hit the product wall — `isAdminSession` needs `LoginEmail`, which the extension-password capture lane never carries (internal/server/admin.go); dormant-but-correct until an identity lane exists.
+11. ~~Track the CRM `crm-context` strip on prod when the CRM seam is on (currently local-only via the fake CRM).~~ STRUCK 2026-11-10: LANDED + verified live (fragment probe `#wp-crm-context` → surface joins; fake-Kith boot proof).
 12. Decide where tracking artifacts may live (laptop-only? synced store?) given real caller data.
 13. Retention/pruning policy for `ui-shots/<host>/` (runs are never wiped by design; disk will grow).
-14. `history-transcript` on prod: resolve a transcript-bearing thread search (`?q=`) instead of plain `/history` for a denser shot.
-15. Capture the `/enroll` page as a conditional anonymous surface (token-gated; currently absent from the matrix).
+14. ~~`history-transcript` on prod: resolve a transcript-bearing thread search (`?q=`) instead of plain `/history` for a denser shot.~~ STRUCK 2026-11-10: LANDED — the q= word is scraped from the first live transcript body.
+15. ~~Capture the `/enroll` page as a conditional anonymous surface (token-gated; currently absent from the matrix).~~ STRUCK 2026-11-10: LANDED — probed via GET /enroll rendering the form; joined the fixture matrix (26 shots).
 16. Add the PWA manifest + icon surfaces? (probably NOT — no visual value; record the ruling if skipped).
-17. Wire a `just`-free flake app (`nix run .#ui-track`) so the prod recipe is one command instead of a shell dance.
+17. ~~Wire a `just`-free flake app (`nix run .#ui-track`) so the prod recipe is one command instead of a shell dance.~~ STRUCK 2026-11-10: LANDED in nix/apps.nix (`nix run .#ui-track -- --help` green).
 18. Document the SIP-registration caveat in the release-runbook context (a capture browser registers the owner's line for the run's duration).
 19. Guard against inbound calls mid-run (detect the ringing card in the DOM and re-shoot that surface automatically).
 20. Add a `--min-height` sanity probe per shot (a blank/1px shot should warn — the styled-404 skip already covers one class, dead renders another).
