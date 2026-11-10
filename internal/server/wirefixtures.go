@@ -62,7 +62,11 @@ func RenderWireFixtureFiles() map[string][]byte {
 
 	rendered := make(map[string][]byte, len(payloads))
 	for name, payload := range payloads {
-		body, err := json.Marshal(payload)
+		// Deterministic: the FCM data field is a MAP, and encoding/json/v2
+		// iterates maps in random order by default — without this option
+		// every render would flap the freshness gate (the same lesson the
+		// catalog exporter encodes with json.Deterministic).
+		body, err := json.Marshal(payload, json.Deterministic(true))
 		if err != nil {
 			rendered[name] = []byte(`{"error":"unrenderable"}`)
 			continue
