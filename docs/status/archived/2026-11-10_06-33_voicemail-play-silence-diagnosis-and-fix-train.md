@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-10 (cadence sweep, this session): fully adjudicated (check-rows complete + bare-rows clean before the mv). The train it describes SHIPS in v2.13.0 — the tag is signed and pushed; the deploy verification rides the live B5 tail.
+
 # Voicemail play-silence diagnosis + fix train — status report
 
 **Claims verified as of 06:33 CET, 2026-11-10.** Push/CI statements rot fastest; CI verdicts were read from `gh run view` minutes ago, live-host probes ran ~35 minutes ago.
