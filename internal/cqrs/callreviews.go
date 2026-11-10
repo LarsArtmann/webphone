@@ -47,6 +47,7 @@ type SaveCallReview struct {
 	Text       string
 	Language   string
 	Confidence int
+	At         time.Time // stamped at the service seam; the decision stays deterministic
 }
 
 // reviewSlot is one call's review-slot state.
@@ -90,7 +91,7 @@ func decideSaveReview(s reviewsState, ver event.Version, cmd SaveCallReview) ([]
 		return nil, errorfamily.WrapRejectionf(readmodels.ErrReviewListFull, "cqrs.review_list_full",
 			"%s at %d reviewed calls", cmd.Owner, reviewsMaxPerOwner)
 	}
-	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.CallReviewSaved{})), cmd.StreamID(), ReviewsStreamType, ver+1, domain.CallReviewSaved{
+	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.CallReviewSaved{})), cmd.StreamID(), ReviewsStreamType, ver.Increment(), domain.CallReviewSaved{
 		Key:        domain.CallReviewKey{Owner: cmd.Owner, CallID: cmd.CallID},
 		Owner:      cmd.Owner,
 		CallID:     cmd.CallID,
@@ -99,8 +100,8 @@ func decideSaveReview(s reviewsState, ver event.Version, cmd SaveCallReview) ([]
 		Text:       cmd.Text,
 		Language:   cmd.Language,
 		Confidence: cmd.Confidence,
-		UpdatedAt:  time.Now(),
-	})
+		UpdatedAt:  cmd.At,
+	}, event.WithSchemaVersion(1))
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.review_save", "build CallReviewSaved")
 	}
@@ -226,6 +227,7 @@ func (s *Reviews) Set(ctx context.Context, owner domain.Extension, callID string
 				Text:         text,
 				Language:     language,
 				Confidence:   confidence,
+				At:           time.Now(),
 			}
 		}); err != nil {
 		if errors.Is(err, readmodels.ErrReviewListFull) {

@@ -77,12 +77,12 @@ func applyEnrollState(s enrollState, evt event.Event) (enrollState, error) {
 }
 
 func decideMintEnrollToken(_ enrollState, ver event.Version, cmd MintEnrollToken) ([]event.Event, error) {
-	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.EnrollTokenMinted{})), cmd.StreamID(), EnrollStreamType, ver+1, domain.EnrollTokenMinted{
+	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.EnrollTokenMinted{})), cmd.StreamID(), EnrollStreamType, ver.Increment(), domain.EnrollTokenMinted{
 		Key:       domain.EnrollTokenKey{TokenHash: cmd.TokenHash},
 		Email:     cmd.Email,
 		UserID:    cmd.UserID,
 		ExpiresAt: cmd.ExpiresAt,
-	})
+	}, event.WithSchemaVersion(1))
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.enroll_mint", "build EnrollTokenMinted")
 	}
@@ -93,9 +93,9 @@ func decideBurnEnrollToken(s enrollState, ver event.Version, cmd BurnEnrollToken
 	if !s.Minted {
 		return nil, nil
 	}
-	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.EnrollTokenBurned{})), cmd.StreamID(), EnrollStreamType, ver+1, domain.EnrollTokenBurned{
+	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.EnrollTokenBurned{})), cmd.StreamID(), EnrollStreamType, ver.Increment(), domain.EnrollTokenBurned{
 		Key: domain.EnrollTokenKey{TokenHash: cmd.TokenHash},
-	})
+	}, event.WithSchemaVersion(1))
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.enroll_burn", "build EnrollTokenBurned")
 	}

@@ -90,13 +90,13 @@ func decideSaveSnippet(s snippetState, ver event.Version, cmd SaveSnippet) ([]ev
 		return nil, errorfamily.WrapRejectionf(readmodels.ErrSnippetListFull, "cqrs.snippet_list_full",
 			"%s at %d snippets", owner, snippetsMaxSlots)
 	}
-	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.SnippetSaved{})), cmd.StreamID(), SnippetsStreamType, ver+1, domain.SnippetSaved{
+	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.SnippetSaved{})), cmd.StreamID(), SnippetsStreamType, ver.Increment(), domain.SnippetSaved{
 		Key:       domain.SnippetKey{ID: id},
 		Owner:     owner,
 		Body:      cmd.Snippet.Body,
 		Quick:     cmd.Snippet.Quick,
 		CreatedAt: createdAt,
-	})
+	}, event.WithSchemaVersion(1))
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.snippet_save", "build SnippetSaved")
 	}
@@ -107,9 +107,9 @@ func decideDeleteSnippet(s snippetState, ver event.Version, cmd DeleteSnippet) (
 	if _, ok := s.Slots[cmd.SnippetID.String()]; !ok {
 		return nil, errorfamily.NewRejection("cqrs.snippet_missing", fmt.Sprintf("snippet %s", cmd.SnippetID.String()))
 	}
-	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.SnippetDeleted{})), cmd.StreamID(), SnippetsStreamType, ver+1, domain.SnippetDeleted{
+	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.SnippetDeleted{})), cmd.StreamID(), SnippetsStreamType, ver.Increment(), domain.SnippetDeleted{
 		Key: domain.SnippetKey{ID: cmd.SnippetID.String()},
-	})
+	}, event.WithSchemaVersion(1))
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.snippet_delete", "build SnippetDeleted")
 	}

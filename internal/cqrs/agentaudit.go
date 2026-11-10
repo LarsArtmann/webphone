@@ -118,8 +118,8 @@ func decideAppendAgentAudit(s agentAuditState, ver event.Version, cmd AppendAgen
 	actor := actorForAudit(cmd.Actor)
 	events := make([]event.Event, 0, len(facts))
 	for _, fact := range facts {
-		ver++
-		opts := []event.Option{event.WithCausation(agentAuditCommand, cmd.ID())}
+		ver = ver.Increment()
+		opts := []event.Option{event.WithCausation(agentAuditCommand, cmd.ID()), event.WithSchemaVersion(1)}
 		if !actor.IsZero() {
 			opts = append(opts, event.WithActor(actor))
 		}

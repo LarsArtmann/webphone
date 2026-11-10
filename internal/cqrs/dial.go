@@ -149,7 +149,7 @@ func decideDialAttempt(s dialState, ver event.Version, cmd AttemptDial) ([]event
 		if err != nil {
 			return nil, err
 		}
-		attempt, err := dialAttemptEvents(s, cmd, ver+1)
+		attempt, err := dialAttemptEvents(s, cmd, ver.Increment())
 		if err != nil {
 			return nil, err
 		}
@@ -182,7 +182,7 @@ func dialAttemptEvents(s dialState, cmd AttemptDial, ver event.Version) ([]event
 	windows := make(map[string]int64, len(s.Windows)+1)
 	maps.Copy(windows, s.Windows)
 	windows[cmd.Remote] = cmd.Now.Unix()
-	events = append(events, dialExpungeEvents(windows, owner, streamID, event.Type(metaengine.EventTypeName(domain.DialWindowExpunged{})), ver+1)...)
+	events = append(events, dialExpungeEvents(windows, owner, streamID, event.Type(metaengine.EventTypeName(domain.DialWindowExpunged{})), ver.Increment())...)
 
 	return events, nil
 }
@@ -218,7 +218,7 @@ func dialExpungeEvents(slots map[string]int64, owner string, streamID id.StreamI
 			continue // an unemittable expunge must never block the attempt
 		}
 		facts = append(facts, evt)
-		ver++
+		ver = ver.Increment()
 	}
 	return facts
 }
@@ -257,7 +257,7 @@ func decideSaveOverride(s dialState, ver event.Version, cmd SaveOverride) ([]eve
 				all[j], all[j-1] = all[j-1], all[j]
 			}
 		}
-		next := ver + 1
+		next := ver.Increment()
 		for _, old := range all[:len(all)-dialOverridesMaxSlots] {
 			evt, err := dialEvent(domain.DialOverrideExpunged{
 				Key: domain.DialWindowKey{Owner: owner, Remote: old.remote},
@@ -266,14 +266,14 @@ func decideSaveOverride(s dialState, ver event.Version, cmd SaveOverride) ([]eve
 				continue
 			}
 			events = append(events, evt)
-			next++
+			next = next.Increment()
 		}
 	}
 	return events, nil
 }
 
 func dialEvent(fact any, streamID id.StreamID, ver event.Version) (event.Event, error) {
-	return event.New(event.Type(metaengine.EventTypeName(fact)), streamID, DialStreamType, ver+1, fact)
+	return event.New(event.Type(metaengine.EventTypeName(fact)), streamID, DialStreamType, ver.Increment(), fact, event.WithSchemaVersion(1))
 }
 
 // ─── registration + projections ────────────────────────────────────

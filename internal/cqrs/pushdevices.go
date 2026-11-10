@@ -92,12 +92,12 @@ func decideSavePushDevice(s pushDevicesState, ver event.Version, cmd SavePushDev
 		return nil, errorfamily.WrapRejectionf(readmodels.ErrListFull, "cqrs.push_device_list_full",
 			"%s at %d push devices", cmd.Owner, pushDevicesMaxPerOwner)
 	}
-	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.PushDeviceRegistered{})), cmd.StreamID(), PushDevicesStreamType, ver+1, domain.PushDeviceRegistered{
+	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.PushDeviceRegistered{})), cmd.StreamID(), PushDevicesStreamType, ver.Increment(), domain.PushDeviceRegistered{
 		Key:       domain.PushDeviceKey{Owner: cmd.Owner, DeviceID: cmd.DeviceID},
 		Transport: cmd.Transport,
 		Token:     cmd.Token,
 		UpdatedAt: cmd.Now,
-	})
+	}, event.WithSchemaVersion(1))
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.push_device_save", "build PushDeviceRegistered")
 	}
@@ -108,9 +108,9 @@ func decideRemovePushDevice(s pushDevicesState, ver event.Version, cmd RemovePus
 	if _, known := s.Devices[cmd.DeviceID]; !known {
 		return nil, nil
 	}
-	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.PushDeviceRemoved{})), cmd.StreamID(), PushDevicesStreamType, ver+1, domain.PushDeviceRemoved{
+	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.PushDeviceRemoved{})), cmd.StreamID(), PushDevicesStreamType, ver.Increment(), domain.PushDeviceRemoved{
 		Key: domain.PushDeviceKey{Owner: cmd.Owner, DeviceID: cmd.DeviceID},
-	})
+	}, event.WithSchemaVersion(1))
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.push_device_remove", "build PushDeviceRemoved")
 	}

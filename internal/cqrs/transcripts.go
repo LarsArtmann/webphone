@@ -135,7 +135,7 @@ func applyTranscriptState(s transcriptState, evt event.Event) (transcriptState, 
 }
 
 func transcriptEvent(fact any, streamID id.StreamID, ver event.Version) (event.Event, error) {
-	evt, err := event.New(event.Type(metaengine.EventTypeName(fact)), streamID, TranscriptsStreamType, ver, fact)
+	evt, err := event.New(event.Type(metaengine.EventTypeName(fact)), streamID, TranscriptsStreamType, ver, fact, event.WithSchemaVersion(1))
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.transcript_event", "build %T", fact)
 	}
@@ -168,13 +168,13 @@ func decideAppendTranscript(s transcriptState, ver event.Version, cmd AppendTran
 		return 0
 	})
 	events := make([]event.Event, 0, max(len(kept)-transcriptFloorPerCall, 0)+1)
-	evt, err := transcriptEvent(fact, cmd.StreamID(), ver+1)
+	evt, err := transcriptEvent(fact, cmd.StreamID(), ver.Increment())
 	if err != nil {
 		return nil, err
 	}
 	events = append(events, evt)
 	for _, seg := range kept[:max(len(kept)-transcriptFloorPerCall, 0)] {
-		expunge, err := transcriptEvent(domain.TranscriptExpunged{Key: domain.TranscriptSegmentKey{ID: seg.ID}}, cmd.StreamID(), ver+event.Version(len(events))+1)
+		expunge, err := transcriptEvent(domain.TranscriptExpunged{Key: domain.TranscriptSegmentKey{ID: seg.ID}}, cmd.StreamID(), ver.Increment().Add(uint(len(events))))
 		if err != nil {
 			return nil, err
 		}
