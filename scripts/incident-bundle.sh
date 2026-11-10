@@ -127,12 +127,15 @@ mkdir -p "$OUT"
 	if [ "${BUNDLE_SKIP_GH:-}" = "1" ]; then
 		echo "(skipped in self-test)"
 	elif command -v gh >/dev/null 2>&1; then
-		gh run list --limit 20 --json createdAt,displayTitle,conclusion,url 2>/dev/null |
-			python3 - "$SINCE" <<'PY' || echo "(gh window unavailable — check GH_TOKEN)"
+		gh_json=$(mktemp)
+		gh run list --limit 20 --json createdAt,displayTitle,conclusion,url 2>/dev/null >"$gh_json" ||
+			echo "(gh window unavailable — check GH_TOKEN)"
+		python3 - "$SINCE" "$gh_json" <<'PY'
 import json, sys
 since = sys.argv[1]
 try:
-    runs = json.load(sys.stdin)
+    with open(sys.argv[2]) as f:
+        runs = json.load(f)
 except Exception:
     print("(gh returned nothing — token scope?)")
     raise SystemExit
@@ -142,6 +145,7 @@ if not hits:
 for r in hits:
     print(f"- {r['createdAt']} {r['conclusion']}: {r['displayTitle'][:70]} {r['url']}")
 PY
+		rm -f "$gh_json"
 	else
 		echo "(gh unavailable)"
 	fi

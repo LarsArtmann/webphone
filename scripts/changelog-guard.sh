@@ -45,7 +45,6 @@ git rev-parse --git-dir >/dev/null 2>&1 || {
 
 [ -n "$RANGE" ] || RANGE="origin/main..HEAD"
 base="${RANGE%%..*}"
-head="${RANGE##*..}"
 
 if ! git rev-parse --verify --quiet "$base^{commit}" >/dev/null; then
 	echo "changelog-guard: WARN: base ref '$base' does not resolve (shallow clone or first push) — guard is a NO-OP for $RANGE" >&2
@@ -75,9 +74,8 @@ is_product_code() {
 	# shepherding scripts are tooling (they do not ship)
 	scripts/*) return 1 ;;
 	# product code: Go, templ views + their codegen, served assets, packaging
-	*.go) return 0 ;;
+	*.go | *_templ.go) return 0 ;;
 	*.templ) return 0 ;;
-	*_templ.go) return 0 ;;
 	internal/web/assets/*) return 0 ;;
 	nix/*) return 0 ;;
 	flake.nix | flake.lock) return 0 ;;
