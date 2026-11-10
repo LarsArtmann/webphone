@@ -51,6 +51,31 @@ cannot pass while the UI still lies about send/receive. Pair it with
 shot, or run the full matrix to see every surface as the off-deployment
 renders it.
 
+Remote/prod tracking extension (2026-11-10): `--base-url https://host`
+points the SAME harness at a RUNNING deployment instead of a local boot
+— no binary, no seeding; the session is minted over POST /api/session
+with WEBPHONE_CAPTURE_EXTENSION / WEBPHONE_CAPTURE_PASSWORD (the PBX
+directory verifies them for real; nothing is ever logged) and injected
+into the browser exactly like the seed cookie. Markers run LENIENT
+(warn + keep the shot) because real data legitimately lacks the seeded
+fixtures, styled-404 surfaces are skipped, and the thread surfaces
+become the first --threads (default 6) LIVE deep links off the real
+list. The browser takes a REAL SIP registration for the run (the wss is
+bridged on a deployed stack) — shots are honest, and the registration
+dies with the run. Shots carry REAL customer data: ui-shots/ is
+gitignored, keep it that way.
+
+Screenshot tracking (`--track`): each run lands in
+`<out-dir>/<host>/<UTC-stamp>/` (history is NEVER wiped), with a per-run
+gallery.html + summary.json (deployment /version, --label, shot ledger)
+and a host-level compare.html diffing the newest run against the
+previous one — per surface: previous | current | pixel-diff heat map
+(pillow; side-by-side only without it) with a changed-% badge. The WHOLE
+page is captured (CDP captureBeyondViewport), not just the 1280x900
+window, so below-the-fold layout rot is visible; `--viewport-only` opts
+out and `--viewport WxH` (repeatable) adds extra passes (e.g. 390x844
+for the mobile layout).
+
 Budget decision (documented, 2026-10-02): this is a LOCAL harness, NOT a
 flake check — headless chromium cannot run inside a nix build sandbox
 without a KVM VM, and a KVM browser VM here would duplicate the stack's
@@ -60,23 +85,36 @@ relative times make byte-goldens flake by design.
 
 Run (from the repo root):
   nix build .#webphone --out-link /tmp/wp-visual-bin
-  nix shell nixpkgs#chromium nixpkgs#python312.withPackages(ps: [ ps.selenium ]) \\
+  nix shell nixpkgs#chromium nixpkgs#chromedriver \
+    nixpkgs#python312.withPackages(ps: [ ps.selenium ps.pillow ]) \
     --command python3 scripts/ui-capture.py --binary /tmp/wp-visual-bin/bin/webphone
 
-Output: ui-shots/<n>-<name>-<light|dark>.png (up to 24 files).
+Remote (prod) tracked run:
+  WEBPHONE_CAPTURE_EXTENSION=1001 WEBPHONE_CAPTURE_PASSWORD=... \
+  nix shell nixpkgs#chromium nixpkgs#chromedriver \
+    nixpkgs#python312.withPackages(ps: [ ps.selenium ps.pillow ]) \
+    --command python3 scripts/ui-capture.py --base-url https://pbx.artmann.tech --track
+
+Output: ui-shots/<n>-<name>-<light|dark>.png (up to 24 files); with
+--track: ui-shots/<host>/<UTC-stamp>/ plus gallery.html, summary.json
+and a host-level compare.html.
 """
 
 from __future__ import annotations
 
 import argparse
+import base64
 import glob
+import html
 import http.client
 import json
 import os
+import re
 import subprocess  # nosec B404 - deliberately spawns the local webphone binary under test
 import sys
 import threading
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -392,6 +430,377 @@ def seed(base: str) -> tuple[str | None, str | None, str]:
         if cookie.name == "webphone_session" and cookie.value:
             session = cookie.value
     return thread_path, attach_thread_path, session
+
+
+def login_remote(base: str, extension: str, password: str) -> str:
+    """Mint a session over POST /api/session (the island's own flow) and
+    return the webphone_session cookie value; "" on any refusal.
+
+    The credentials verify against the REAL PBX directory on a deployment,
+    so a wrong pair is a hard, named stop — never a retry loop (the login
+    lane is rate limited per IP and a loop would lock the operator out).
+    """
+    jar = urllib.request.HTTPCookieProcessor()
+    opener = urllib.request.build_opener(jar)
+    try:
+        page = opener.open(base + "/", timeout=30).read().decode("utf-8", "replace")
+    except (OSError, http.client.HTTPException) as exc:
+        print(f"login: cannot reach {base} ({exc})", file=sys.stderr)
+        return ""
+    token = re.search(r'name="csrf-token" content="([^"]+)"', page)
+    if token is None:
+        print(
+            f"login: {base}/ carries no csrf meta token — not a webphone page?",
+            file=sys.stderr,
+        )
+        return ""
+    body = json.dumps({"extension": extension, "password": password}).encode()
+    req = urllib.request.Request(base + "/api/session", data=body, method="POST")
+    req.add_header("Content-Type", "application/json")
+    req.add_header("X-CSRF-Token", token.group(1))
+    try:
+        opener.open(req, timeout=30)
+    except urllib.error.HTTPError as exc:
+        if exc.code in (401, 403):
+            print(
+                f"login: refused ({exc.code}): WEBPHONE_CAPTURE_EXTENSION / "
+                "WEBPHONE_CAPTURE_PASSWORD failed the directory verification",
+                file=sys.stderr,
+            )
+        elif exc.code == 429:
+            print(
+                "login: rate limited (429) — wait a minute and retry",
+                file=sys.stderr,
+            )
+        else:
+            print(f"login: HTTP {exc.code} from /api/session", file=sys.stderr)
+        return ""
+    for cookie in jar.cookiejar:
+        if cookie.name == "webphone_session" and cookie.value:
+            return cookie.value
+    print("login: no webphone_session cookie was minted", file=sys.stderr)
+    return ""
+
+
+def _get(base: str, path: str, session: str | None = None) -> str:
+    req = urllib.request.Request(base + path)
+    if session:
+        req.add_header("Cookie", f"webphone_session={session}")
+    with urllib.request.urlopen(req, timeout=30) as resp:  # nosec B310 - read-only fetch of the server under capture
+        return resp.read().decode("utf-8", "replace")
+
+
+def resolve_remote_surfaces(
+    base: str, session: str, threads_n: int
+) -> list[tuple[str, str | None]]:
+    """Build the surface list from LIVE data: the first `threads_n` thread
+    deep links off the real list, plus the static tabs. Prints the resolved
+    notes so the operator sees exactly what will be shot."""
+    links: list[str] = []
+    try:
+        page = _get(base, "/messages", session)
+        marker = 'hx-get="/partials/messages/'
+        for match in re.finditer(re.escape(marker), page):
+            start = match.start() + len('hx-get="/partials')
+            link = page[start : page.find('"', start)]
+            if link and link not in links:
+                links.append(link)
+    except (OSError, http.client.HTTPException) as exc:
+        print(
+            f"resolve: /messages unreadable ({exc}) — thread surfaces skipped",
+            file=sys.stderr,
+        )
+    surfaces: list[tuple[str, str | None]] = [("messages", "/messages")]
+    chosen = links[:threads_n]
+    for idx, link in enumerate(chosen, 1):
+        surfaces.append((f"thread-{idx:02d}", link))
+    for idx, link in enumerate(chosen, 1):
+        try:
+            fragment = _get(base, "/partials" + link, session)
+        except (OSError, http.client.HTTPException):
+            continue
+        if "data-transcribe-src" in fragment:
+            print(f"media: thread-{idx:02d} carries transcribable audio ({link})")
+    surfaces += [("fax", "/fax"), ("voicemail", "/voicemail"), ("history", "/history")]
+    try:
+        if "data-copy-transcript" in _get(base, "/history", session):
+            surfaces.append(("history-transcript", "/history"))
+        else:
+            print(
+                "note: no call transcripts on this deployment — "
+                "history-transcript skipped"
+            )
+    except (OSError, http.client.HTTPException):
+        pass
+    surfaces += [
+        ("contacts", "/contacts"),
+        ("settings", "/settings"),
+        ("not-found", "/nope"),
+    ]
+    print("surfaces: " + ", ".join(name for name, _ in surfaces))
+    return surfaces
+
+
+def fetch_version(base: str) -> str | None:
+    """The deployment's /version (open route); None when fenced or absent."""
+    try:
+        with urllib.request.urlopen(base + "/version", timeout=10) as resp:  # nosec B310 - read-only version probe
+            return str(json.loads(resp.read()).get("version") or "") or None
+    except (OSError, ValueError, http.client.HTTPException):
+        return None
+
+
+def shoot(driver, target: str, full_page: bool) -> None:
+    """Save a screenshot; full_page captures the ENTIRE document via CDP
+    (captureBeyondViewport), not just the window — below-the-fold layout
+    rot is exactly what this harness exists to expose."""
+    if not full_page:
+        driver.save_screenshot(target)
+        return
+    shot = driver.execute_cdp_cmd(
+        "Page.captureScreenshot",
+        {"format": "png", "captureBeyondViewport": True},
+    )
+    with open(target, "wb") as fh:
+        fh.write(base64.b64decode(shot["data"]))
+
+
+def shot_key(path: str) -> str:
+    """`01-messages-light.png` -> `messages-light` — the STABLE compare key
+    (numbering drifts between runs, the surface name does not)."""
+    match = re.match(r"^\d+-(.+)\.png$", os.path.basename(path))
+    return match.group(1) if match else os.path.splitext(os.path.basename(path))[0]
+
+
+def pixel_diff(
+    prev_path: str, cur_path: str, diff_path: str, threshold: int = 12
+) -> tuple[float, bool] | None:
+    """Heat-map the changed pixels into diff_path; returns the changed
+    fraction, or None without pillow / on a size mismatch (content height
+    changed — the side-by-side carries the signal there)."""
+    try:
+        from PIL import Image, ImageChops, ImageEnhance
+    except ImportError:
+        return None
+    prev = Image.open(prev_path).convert("RGB")
+    cur = Image.open(cur_path).convert("RGB")
+    if prev.size != cur.size:
+        return None
+    grey = ImageChops.difference(prev, cur).convert("L")
+    hist = grey.histogram()
+    total = prev.size[0] * prev.size[1]
+    changed = sum(hist[threshold:]) / total
+    mask = grey.point(lambda v: 255 if v >= threshold else 0)
+    faded = ImageEnhance.Brightness(prev).enhance(0.35)
+    heat = Image.composite(Image.new("RGB", prev.size, (235, 20, 60)), faded, mask)
+    os.makedirs(os.path.dirname(diff_path), exist_ok=True)
+    heat.save(diff_path)
+    return changed, True
+
+
+_REPORT_CSS = """<!doctype html><html><head><meta charset="utf-8">
+<title>webphone shots</title><style>
+body{font:14px/1.4 system-ui,sans-serif;margin:16px;background:#111;color:#eee}
+h1{font-size:18px;margin:0 0 4px} p{color:#999;margin:4px 0 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+figure{margin:0;background:#1c1c1c;padding:8px;border-radius:8px}
+img{width:100%;display:block;border:1px solid #333}
+figcaption{color:#bbb;padding-top:6px;font-size:12px}
+section{margin-bottom:24px}
+section h2{font-size:15px;margin:0 0 8px}
+.row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.badge{background:#c8143c;color:#fff;border-radius:4px;padding:1px 6px;font-size:12px;margin-left:6px}
+.badge.new{background:#287f6c}
+.missing{color:#666;border:1px dashed #444;border-radius:6px;padding:24px;text-align:center}
+</style></head><body>
+"""
+
+
+def build_gallery(
+    run_dir: str, base: str, version: str | None, label: str | None
+) -> None:
+    parts = [f"<h1>{html.escape(base)}</h1><p>run {html.escape(os.path.basename(run_dir))}"]
+    if version:
+        parts.append(f" · {html.escape(version)}")
+    if label:
+        parts.append(f" · {html.escape(label)}")
+    parts.append("</p>" + '<div class="grid">')
+    for path in sorted(glob.glob(os.path.join(run_dir, "*.png"))):
+        rel = os.path.basename(path)
+        key = shot_key(path)
+        parts.append(
+            f'<figure><a href="{html.escape(rel)}"><img src="{html.escape(rel)}" '
+            f'loading="lazy" alt="{html.escape(key)}"></a>'
+            f"<figcaption>{html.escape(key)}</figcaption></figure>"
+        )
+    parts.append("</div></body></html>")
+    with open(os.path.join(run_dir, "gallery.html"), "w", encoding="utf-8") as fh:
+        fh.write("".join(parts))
+
+
+def build_compare(
+    host_dir: str,
+    prev_dir: str,
+    cur_dir: str,
+    version: str | None,
+    label: str | None,
+    changed: dict[str, float],
+) -> None:
+    """One compare.html per host: the newest run against the previous one,
+    per surface — previous | current | diff, worst offenders first."""
+
+    def _collect(run: str) -> dict[str, str]:
+        return {
+            shot_key(p): os.path.basename(p)
+            for p in glob.glob(os.path.join(run, "*.png"))
+        }
+
+    prev_files, cur_files = _collect(prev_dir), _collect(cur_dir)
+    prev_version = None
+    try:
+        with open(os.path.join(prev_dir, "summary.json"), encoding="utf-8") as fh:
+            prev_version = json.load(fh).get("version")
+    except (OSError, ValueError):
+        pass
+
+    def _img(run: str, fname: str | None, caption: str) -> str:
+        if not fname:
+            return f'<div class="missing">no {html.escape(caption)}</div>'
+        src = html.escape(os.path.relpath(os.path.join(run, fname), host_dir))
+        return (
+            f'<figure><img src="{src}" loading="lazy" alt="{html.escape(caption)}">'
+            f"<figcaption>{html.escape(caption)}</figcaption></figure>"
+        )
+
+    def _badge(key: str) -> str:
+        if key not in prev_files:
+            return '<span class="badge new">new</span>'
+        pct = changed.get(key)
+        if pct is not None and pct >= 0.5:
+            return f'<span class="badge">{pct:.2f}%</span>'
+        return ""
+
+    keys = sorted(
+        set(prev_files) | set(cur_files),
+        key=lambda k: (-changed.get(k, 0.0), k),
+    )
+    head = (
+        f"<h1>UI diff — {html.escape(os.path.basename(prev_dir))} → "
+        f"{html.escape(os.path.basename(cur_dir))}</h1><p>"
+    )
+    versions = " · ".join(v for v in (prev_version, version) if v)
+    if versions:
+        head += html.escape(versions) + " · "
+    if label:
+        head += html.escape(label) + " · "
+    head += html.escape(os.path.basename(host_dir)) + "</p>"
+    sections = []
+    for key in keys:
+        diff_rel = f"diffs/{key}.png" if key in changed else None
+        sections.append(
+            f"<section><h2>{html.escape(key)}{_badge(key)}</h2>"
+            "<div class='row'>"
+            + _img(prev_dir, prev_files.get(key), "previous")
+            + _img(cur_dir, cur_files.get(key), "current")
+            + _img(cur_dir, diff_rel, "diff")
+            + "</div></section>"
+        )
+    with open(os.path.join(host_dir, "compare.html"), "w", encoding="utf-8") as fh:
+        fh.write(_REPORT_CSS + head + "".join(sections) + "</body></html>")
+
+
+def track(
+    run_dir: str,
+    base: str,
+    label: str | None,
+    full_page: bool,
+    viewports: list[tuple[int, int]],
+) -> None:
+    """History + diff bookkeeping for --track runs: summary.json, the
+    per-run gallery, and the host-level compare against the previous run."""
+    host_dir = os.path.dirname(run_dir)
+    runs = sorted(
+        d
+        for d in os.listdir(host_dir)
+        if os.path.isdir(os.path.join(host_dir, d)) and re.match(r"^\d{8}T\d{6}Z$", d)
+    )
+    run_id = os.path.basename(run_dir)
+    earlier = [d for d in runs if d < run_id]
+    prev_name = earlier[-1] if earlier else None
+    prev_dir = os.path.join(host_dir, prev_name) if prev_name else None
+    version = fetch_version(base)
+    prev_by_key: dict[str, str] = {}
+    if prev_dir:
+        for path in glob.glob(os.path.join(prev_dir, "*.png")):
+            prev_by_key[shot_key(path)] = path
+    shots = []
+    diffed: list[tuple[str, float]] = []
+    for path in sorted(glob.glob(os.path.join(run_dir, "*.png"))):
+        key = shot_key(path)
+        entry: dict[str, object] = {
+            "key": key,
+            "file": os.path.basename(path),
+            "bytes": os.path.getsize(path),
+            "prev_file": None,
+            "changed_pct": None,
+            "diff_file": None,
+        }
+        prev_path = prev_by_key.get(key)
+        if prev_path:
+            entry["prev_file"] = os.path.relpath(prev_path, run_dir)
+            diff_path = os.path.join(run_dir, "diffs", f"{key}.png")
+            result = pixel_diff(prev_path, path, diff_path)
+            if result is None:
+                entry["size_match"] = False
+                print(f"diff: {key} — height changed; side-by-side only")
+            else:
+                changed_pct = result[0] * 100
+                entry["changed_pct"] = round(changed_pct, 3)
+                entry["diff_file"] = os.path.relpath(diff_path, run_dir)
+                entry["size_match"] = True
+                diffed.append((key, changed_pct))
+        shots.append(entry)
+    summary = {
+        "run": run_id,
+        "base": base,
+        "version": version,
+        "label": label,
+        "full_page": full_page,
+        "viewports": [f"{w}x{h}" for w, h in viewports],
+        "prev_run": prev_name,
+        "shots": shots,
+    }
+    with open(os.path.join(run_dir, "summary.json"), "w", encoding="utf-8") as fh:
+        json.dump(summary, fh, indent=2, sort_keys=True)
+        fh.write("\n")
+    build_gallery(run_dir, base, version, label)
+    print(f"gallery: {os.path.join(run_dir, 'gallery.html')}")
+    if prev_dir:
+        build_compare(host_dir, prev_dir, run_dir, version, label, dict(diffed))
+        print(f"compare: {os.path.join(host_dir, 'compare.html')} (vs {prev_name})")
+    else:
+        print("compare: no previous run — first run in this history")
+    diffed.sort(key=lambda pair: pair[1], reverse=True)
+    notable = [(key, pct) for key, pct in diffed if pct >= 0.5]
+    print(f"track: {len(shots)} shot(s), {len(diffed)} differ from {prev_name or '—'}")
+    for key, pct in notable[:10]:
+        print(f"  changed {pct:5.2f}%  {key}")
+    if diffed and not notable:
+        print("  nothing above the 0.5% noise bar")
+    print(f"history: {len(runs)} run(s) under {host_dir}")
+
+
+def _parse_viewport(text: str) -> tuple[int, int]:
+    width, _, height = text.lower().partition("x")
+    if not width.isdigit() or not height.isdigit():
+        raise SystemExit(
+            f"bad --viewport {text!r} (want WxH, e.g. 1280x900 or 390x844)"
+        )
+    return int(width), int(height)
+
+
+def _sanitize_dirname(base: str) -> str:
+    return re.sub(r"[^A-Za-z0-9._-]+", "_", urllib.parse.urlsplit(base).netloc or "local")
 
 
 def capture(
