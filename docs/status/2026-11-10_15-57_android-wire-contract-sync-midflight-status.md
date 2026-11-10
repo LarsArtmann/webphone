@@ -104,20 +104,20 @@ session-field drift.
 
 ## f) NEXT (impact-sorted; IDs from the plan's fine table)
 
-1. ~~a2.1/a2.2: delegate FcmReceiver + NtfySubscriptionService parsing to WireFacts (verbatim behavior).~~ done at `2c578b5`
+1. ~~a2.1/a2.2: delegate FcmReceiver + NtfySubscriptionService parsing to WireFacts (verbatim behavior).~~ done in webphone-android (`2c578b5`)
 2. ~~a2.3: SessionApi — extract pure `parseSessionIdentity(body, config, wsOrigin)` + `registerPayload(...)`; fix credential keys + `/config.js` seam.~~ done at `2c578b5 7dd7e53`
 3. ~~a1.1/a1.2: `sync-wire-fixtures.sh` + vendor the 9 fixtures into test resources.~~ done at `a9d09b1 baafd6f`
-4. ~~a2.4: WireContractTest over fixtures through the real decoders (incl. brokered-arm `sip_credential`, register keys, ntfy priorities 5/3).~~ done at `7dd7e53`
-5. ~~a3.1-3: android CHANGELOG/TODO_LIST/AGENTS rows (sync ritual + "live contract checks unblocked locally").~~ done at `748e6f3`
+4. ~~a2.4: WireContractTest over fixtures through the real decoders (incl. brokered-arm `sip_credential`, register keys, ntfy priorities 5/3).~~ done in webphone-android (`7dd7e53`)
+5. ~~a3.1-3: android CHANGELOG/TODO_LIST/AGENTS rows (sync ritual + "live contract checks unblocked locally").~~ done in webphone-android (`748e6f3`)
 6. ~~a3.3: gradle gates green (testDebugUnitTest + ktlintCheck; assembleDebug if time).~~ done (docs-health pass verify-gate green on the baafd6f tree)
 7. ~~f1.3: android detailed commit + push origin + github (no workflow-file touch ⇒ mirror-safe).~~ done at `baafd6f a58a68c`
 8. f1.2-tail: confirm webphone CI stays green through the concurrent session's pushes (attributed, not mine to fix).
 9. Final buildflow tail (BUILDFLOW_NO_RESULT_CACHE=1) on webphone tree.
 10. ~~d1.1: deferred rows (loopback live-check script; runtime digest handshake w/ trigger; device-train checklist refresh).~~ done at `3f955f2`
 11. Consider a `/config.js` key fixture (android now reads it — keys pinned today only by island boot) — small webphone addition + re-vendor. **→ deferred with trigger — TODO rows in both repos name the config.js key fixture**
-12. ~~Update the android README honesty marker: session-field drift found+fixed via fixtures (replaces "caught at first device boot").~~ done at `a58a68c`
+12. ~~Update the android README honesty marker: session-field drift found+fixed via fixtures (replaces "caught at first device boot").~~ done in webphone-android (`a58a68c`)
 13. ~~Re-run `scripts/audit-verify.sh` + docs battery after ledger edits land.~~ done (docs-health pass audit-verify 91/91 + docs battery all green after the archive sweep)
-14. ~~Watch the android forgejo→github mirror lag after push (PAT/workflow-scope trap documented in their AGENTS).~~ done at `a58a68c`
+14. ~~Watch the android forgejo→github mirror lag after push (PAT/workflow-scope trap documented in their AGENTS).~~ done — both remotes pushed directly, tips verified equal (`a58a68c` is the webphone-android tip), no mirror lag possible
 
 ## g) QUESTIONS FOR THE OWNER (cannot be determined from here)
 
