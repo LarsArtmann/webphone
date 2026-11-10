@@ -1040,6 +1040,17 @@ evidence in the 16-50 plan + its execution status). Open rows:
       re-vendor leg). Trigger for the runtime half: first real
       server/app version-skew incident. **Priority:** Low ·
       **Effort:** M→S (build-time half done).
+- [ ] **Wire-fixture follow-ups (deferred, with triggers)** — (a) the
+      android-side loopback live-check script: boot a loopback webphone
+      and drive the app's real decoders against its LIVE `/api/session`
+      + `/config.js` answers (fixtures pin the shape, this would pin a
+      deployment; trigger: device-train prep wanting deployment-level
+      proof); (b) CONSIDER a `/config.js` key fixture pinning
+      `sipDomain`/`websocketPath` in the same sync (trigger: the first
+      config.js key drift or a second config consumer — the android
+      repo owns the regex reads). Rows mirrored in webphone-android's
+      TODO_LIST; the KMP spike stays deferred per the 2026-11-08
+      preflight (quiet-repo gate). **Priority:** Low · **Effort:** S each.
 - [x] **DONE 2026-11-04 (ETag half): /openapi.json conditional GET** —
       the go-etag/server middleware serves bodyless 304 revalidation on
       `/openapi.json` + `/manifest.webmanifest` (mount is the skip set;
@@ -1225,6 +1236,6 @@ ceiling) + markdownlint posture execution (post-sitting row-18 verdict). Plan:
 **Status:** 🟡 `P2 SHIPPED server-side; P1 shell scaffolded (webphone-android v0.1, BUILD GREEN + 16KB-aligned); the two remaining legs live OUTSIDE this repo` · **Priority:** High · **Effort:** M (each leg) · **Preflight 2026-11-08:** the android repo is QUIET (clean tree, last commit 11-05, 2 commits/7d — half the KMP gate met, so the spike STAYS deferred; the go/no-go note + the first-device-train checklist: [docs/planning/2026-11-08_native-app-preflight.md](docs/planning/2026-11-08_native-app-preflight.md))
 
 - **Stack leg (nix-international-telephony) — LANDED 2026-11-08:** the FS dialplan now POSTs the ring facts (`{owner, from, call_id, state: ring|end}`) to the `ringhook.py` loopback shim, which Bearer-signs the forward to `webphone:/hooks/ring` (`services.telephony.ringhook.*`; dialplan arms only when enabled — off = byte-identical; eval arm + 7-spec unittest). REMAINS: the end-to-end ring proof (needs a push device registered + the shim enabled in a VM or the live host) and the ring-group-path ruling (§g-1). The seam is no longer inert stack-side; it is OFF by default until an deployment sets `ringhook.enable`.
-- **Shell leg (webphone-android):** first device train — exercise the SIP UA against the live WSS gateway (REGISTER/INVITE/BYE/DTMF/hold + incoming INVITE + REFER/NOTIFY are implemented but UNTESTED against FreeSWITCH), compose the real CallStyle notification (v0.1 posts the FSI heads-up), the origin-picker settings UI (App.origin is a constant today), and the `/api/session` field-name check against the served sessionIdentity shape.
+- **Shell leg (webphone-android):** first device train — exercise the SIP UA against the live WSS gateway (REGISTER/INVITE/BYE/DTMF/hold + incoming INVITE + REFER/NOTIFY are implemented but UNTESTED against FreeSWITCH), compose the real CallStyle notification (v0.1 posts the FSI heads-up), and the origin-picker settings UI (App.origin is a constant today). The `/api/session` field-name check LANDED 2026-11-10: the wire-contract sync train fixed the android `resumeSession` drift (it read `sip_domain`/`sip_password`/`websocket_url`, keys the server never sends — REGISTER ran on empty credentials) and now pins both sessionIdentity arms + the push payloads + the registration DTO via byte-pinned fixtures (`docs/contracts/wire/` here, vendored + decoded by `WireContractTest` there; re-vendor ritual in the release runbook).
 
 **Evidence:** decision doc `docs/planning/2026-10-23_16-13_native-app-platform-decision.md` (status: DECIDED + SHIPPING); `~/projects/webphone-android` README honesty markers; `internal/push` + `internal/server/hooks/ring_test.go` + `internal/server/push_api_test.go` for the shipped server contract.
