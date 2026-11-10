@@ -59,9 +59,7 @@ templ ReportsPanel(props ReportsPanelProps) {
 				Icon:        icons.Clock,
 			})
 			@reportsTotals(props)
-			<p class="wp-muted wp-reports-undated">
-				{ T(props.Lang, "reports.undated") } { fmtInt(props.Report.Undated) }
-			</p>
+			@reportsUndatedNote(props.Lang, props.Report.Undated)
 			@reportsTopContacts(props)
 		} else if props.Error == "" {
 			@reportsWeek(props)
@@ -69,13 +67,21 @@ templ ReportsPanel(props ReportsPanelProps) {
 			@reportsDays(props)
 			@reportsBusiestHours(props)
 			if props.Report.Undated > 0 {
-				<p class="wp-muted wp-reports-undated">
-					{ T(props.Lang, "reports.undated") } { fmtInt(props.Report.Undated) }
-				</p>
+				@reportsUndatedNote(props.Lang, props.Report.Undated)
 			}
 			@reportsTopContacts(props)
 		}
 	</section>
+}
+
+// reportsUndatedNote is the one home for the "N records resisted their
+// timestamp" line: the all-undated arm renders it unconditionally (its
+// temporal sections are absent), the normal arm only when some records are
+// undated. Same bytes from both arms by construction.
+templ reportsUndatedNote(lang Lang, undated int) {
+	<p class="wp-muted wp-reports-undated">
+		{ T(lang, "reports.undated") } { fmtInt(undated) }
+	</p>
 }
 
 // reportsWeek is the one-number-one-bar headline: how much this week has
