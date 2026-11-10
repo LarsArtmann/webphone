@@ -514,6 +514,10 @@ def resolve_remote_surfaces(
     chosen = links[:threads_n]
     for idx, link in enumerate(chosen, 1):
         surfaces.append((f"thread-{idx:02d}", link))
+        # The open-conversation head is the same evidence pin the local
+        # "thread" surface uses — a live thread page must show it; when real
+        # data shifts beneath a tracked run, leniency degrades to a warning.
+        SURFACE_MARKERS[f"thread-{idx:02d}"] = "#wp-thread-head"
     for idx, link in enumerate(chosen, 1):
         try:
             fragment = _get(base, "/partials" + link, session)
@@ -1005,7 +1009,7 @@ def capture(
                                 driver.execute_script(
                                     "arguments[0].click();", expandable[0]
                                 )
-                    _check_pins(name, path, SURFACE_MARKERS[name])
+                    _check_pins(name, path, SURFACE_MARKERS.get(name, []))
                     for absent in SURFACE_ABSENT_MARKERS.get(name, ()):
                         if driver.find_elements("css selector", absent):
                             message = (
