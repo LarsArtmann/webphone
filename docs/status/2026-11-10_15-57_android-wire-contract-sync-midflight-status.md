@@ -104,33 +104,33 @@ session-field drift.
 
 ## f) NEXT (impact-sorted; IDs from the plan's fine table)
 
-1. a2.1/a2.2: delegate FcmReceiver + NtfySubscriptionService parsing to WireFacts (verbatim behavior).
-2. a2.3: SessionApi — extract pure `parseSessionIdentity(body, config, wsOrigin)` + `registerPayload(...)`; fix credential keys + `/config.js` seam.
-3. a1.1/a1.2: `sync-wire-fixtures.sh` + vendor the 9 fixtures into test resources.
-4. a2.4: WireContractTest over fixtures through the real decoders (incl. brokered-arm `sip_credential`, register keys, ntfy priorities 5/3).
-5. a3.1-3: android CHANGELOG/TODO_LIST/AGENTS rows (sync ritual + "live contract checks unblocked locally").
-6. a3.3: gradle gates green (testDebugUnitTest + ktlintCheck; assembleDebug if time).
-7. f1.3: android detailed commit + push origin + github (no workflow-file touch ⇒ mirror-safe).
+1. ~~a2.1/a2.2: delegate FcmReceiver + NtfySubscriptionService parsing to WireFacts (verbatim behavior).~~ done at `2c578b5`
+2. ~~a2.3: SessionApi — extract pure `parseSessionIdentity(body, config, wsOrigin)` + `registerPayload(...)`; fix credential keys + `/config.js` seam.~~ done at `2c578b5 7dd7e53`
+3. ~~a1.1/a1.2: `sync-wire-fixtures.sh` + vendor the 9 fixtures into test resources.~~ done at `a9d09b1 baafd6f`
+4. ~~a2.4: WireContractTest over fixtures through the real decoders (incl. brokered-arm `sip_credential`, register keys, ntfy priorities 5/3).~~ done at `7dd7e53`
+5. ~~a3.1-3: android CHANGELOG/TODO_LIST/AGENTS rows (sync ritual + "live contract checks unblocked locally").~~ done at `748e6f3`
+6. ~~a3.3: gradle gates green (testDebugUnitTest + ktlintCheck; assembleDebug if time).~~ done (docs-health pass verify-gate green on the baafd6f tree)
+7. ~~f1.3: android detailed commit + push origin + github (no workflow-file touch ⇒ mirror-safe).~~ done at `baafd6f a58a68c`
 8. f1.2-tail: confirm webphone CI stays green through the concurrent session's pushes (attributed, not mine to fix).
 9. Final buildflow tail (BUILDFLOW_NO_RESULT_CACHE=1) on webphone tree.
-10. d1.1: deferred rows (loopback live-check script; runtime digest handshake w/ trigger; device-train checklist refresh).
-11. Consider a `/config.js` key fixture (android now reads it — keys pinned today only by island boot) — small webphone addition + re-vendor.
-12. Update the android README honesty marker: session-field drift found+fixed via fixtures (replaces "caught at first device boot").
-13. Re-run `scripts/audit-verify.sh` + docs battery after ledger edits land.
-14. Watch the android forgejo→github mirror lag after push (PAT/workflow-scope trap documented in their AGENTS).
+10. ~~d1.1: deferred rows (loopback live-check script; runtime digest handshake w/ trigger; device-train checklist refresh).~~ done at `3f955f2`
+11. Consider a `/config.js` key fixture (android now reads it — keys pinned today only by island boot) — small webphone addition + re-vendor. **→ deferred with trigger — TODO rows in both repos name the config.js key fixture**
+12. ~~Update the android README honesty marker: session-field drift found+fixed via fixtures (replaces "caught at first device boot").~~ done at `a58a68c`
+13. ~~Re-run `scripts/audit-verify.sh` + docs battery after ledger edits land.~~ done (docs-health pass audit-verify 91/91 + docs battery all green after the archive sweep)
+14. ~~Watch the android forgejo→github mirror lag after push (PAT/workflow-scope trap documented in their AGENTS).~~ done at `a58a68c`
 
 ## g) QUESTIONS FOR THE OWNER (cannot be determined from here)
 
-1. **Is another session actively working the android wake-lane/no-ring
-   diagnosis right now** (d820810 landed this morning, status reports at
-   11:48/13:12)? My SessionApi fix touches the same seam — fold it into
-   their train or land it standalone?
-2. **Android push policy for this train:** push both remotes with local
-   gates as authority (Actions billing still dead), or hold until the
-   billing row closes?
-3. **The drift fix is a behavior change** (SIP REGISTER will now get a real
-   credential + domain). Want a quick emulator sanity pass before push, or
-   is local test green + the device train's job to verify live?
+1. ~~**Is another session actively working the android wake-lane/no-ring~~ done — the wake-lane session committed its ring-or-silence plan at 16:12 (owner-gated waves, no code overlap) — this train landed standalone on a clean tree (android 2c578b5 baafd6f)
+   ~~diagnosis right now** (d820810 landed this morning, status reports at~~
+   ~~11:48/13:12)? My SessionApi fix touches the same seam — fold it into~~
+   ~~their train or land it standalone?~~
+2. ~~**Android push policy for this train:** push both remotes with local~~ done — both remotes pushed with the local verify-gate as authority (owner resume mandate + the repo standing hand-push order; Actions billing dead there)
+   ~~gates as authority (Actions billing still dead), or hold until the~~
+   ~~billing row closes?~~
+3. ~~**The drift fix is a behavior change** (SIP REGISTER will now get a real~~ done — the Robolectric WireContractTest suite is the local authority (12 tests, meta-proven); the emulator pass stays the first device train job (TODO rows in both repos)
+   ~~credential + domain). Want a quick emulator sanity pass before push, or~~
+   ~~is local test green + the device train's job to verify live?~~
 
 ## Concurrent-session boundary (kept clean)
 
