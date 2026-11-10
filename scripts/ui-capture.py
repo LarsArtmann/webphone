@@ -164,6 +164,7 @@ import json
 import os
 import re
 import shutil
+import socket
 import ssl
 import subprocess  # nosec B404 - deliberately spawns the local webphone binary under test
 import sys
@@ -1135,6 +1136,25 @@ def _bytes_text(n: int) -> str:
     return f"{n / (1024 * 1024):.2f} MB"
 
 
+def _apply_host_maps(mappings: list[str] | None) -> None:
+    """Point chrome AND the python HTTP lane at the same addresses: the
+    --host-map pairs patch socket.getaddrinfo (urllib resolves through
+    it; chrome gets --host-resolver-rules in capture())."""
+    mapped = {
+        host: ip
+        for host, sep, ip in (m.partition("=") for m in mappings or [])
+        if host and ip
+    }
+    if not mapped:
+        return
+    original = socket.getaddrinfo
+
+    def patched(host, *args, **kwargs):
+        return original(mapped.get(host, host), *args, **kwargs)
+
+    socket.getaddrinfo = patched  # type: ignore[assignment]
+
+
 def capture(
     base: str,
     out_dir: str,
@@ -1802,6 +1822,7 @@ def main() -> int:
         global _ssl_context
         _ssl_context = ssl._create_unverified_context()
         print("insecure: TLS verification OFF — local smoke lane only")
+    _apply_host_maps(args.host_map)
 
     full_page = not args.viewport_only
     viewports = (
