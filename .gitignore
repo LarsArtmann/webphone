@@ -113,11 +113,10 @@ htmlcov/
 /webphone
 
 # Visual-harness output (scripts/ui-capture.py). LOCAL-ONLY by budget
-# decision and regenerated from scratch on every run — the harness deletes
-# the directory before shooting, so tracking these was 24 blobs rewritten
-# and re-committed per visual pass (untracked 2026-10-29). The shots are
-# eyeball material; the assertions that make them evidence live in
-# check_thread_layout() and the per-surface DOM markers.
+# decision. NON-track runs regenerate their working set; a --track run
+# NEVER wipes — history is the product (timestamped run dirs, gallery/
+# compare/wire-facts ride along) and retention is the operator's --prune
+# call. Remote shots carry REAL data; keep this gitignored.
 /ui-shots/
 /ui-shots-fax-off/
 
