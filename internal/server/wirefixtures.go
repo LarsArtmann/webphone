@@ -30,8 +30,11 @@ const (
 
 // RenderWireFixtureFiles renders every consumer wire fixture the
 // `webphone contracts` command writes under docs/contracts/wire/ as
-// filename → JSON bytes. Marshal of these structs cannot fail; a stub
-// keeps the render path panic-free (mustMarshalRing's doctrine).
+// filename → JSON bytes. This is the ONE marshal loop for the whole
+// fixture set (the push payloads arrive as opaque values from
+// internal/push — the same pure builders the senders marshal). Marshal
+// of these structs cannot fail; a stub keeps the render path
+// panic-free (mustMarshalRing's doctrine).
 func RenderWireFixtureFiles() map[string][]byte {
 	legacy := sessionIdentity{
 		Extension: fixtureExtension,
@@ -52,13 +55,13 @@ func RenderWireFixtureFiles() map[string][]byte {
 		Token:     push.FixtureNtfyTopic,
 	}
 
-	files := map[string]any{
-		"session-identity-password.json":    legacy,
-		"session-identity-brokered.json":    brokered,
-		"push-device-register-request.json": register,
-	}
-	rendered := push.RenderWireFixtures()
-	for name, payload := range files {
+	payloads := push.RenderWireFixtures()
+	payloads["session-identity-password.json"] = legacy
+	payloads["session-identity-brokered.json"] = brokered
+	payloads["push-device-register-request.json"] = register
+
+	rendered := make(map[string][]byte, len(payloads))
+	for name, payload := range payloads {
 		body, err := json.Marshal(payload)
 		if err != nil {
 			rendered[name] = []byte(`{"error":"unrenderable"}`)

@@ -1,7 +1,5 @@
 package push
 
-import "encoding/json"
-
 // The consumer-side wire fixtures: byte-pinned examples of every payload
 // this seam puts on either transport, rendered through the SAME pure
 // payload builders the senders marshal (ringFcmPayload et al.) — the
@@ -26,14 +24,16 @@ const (
 )
 
 // RenderWireFixtures renders the push seam's consumer fixtures as
-// filename → JSON bytes. Marshal of these all-string structs cannot
-// fail; mustMarshalRing's panic-free doctrine covers the same class.
-func RenderWireFixtures() map[string][]byte {
+// filename → payload VALUE (the unexported envelope structs travel as
+// opaque values; the caller owns the ONE marshal loop — server-side,
+// where the whole fixture set merges). The values come from the same
+// pure payload builders the senders marshal.
+func RenderWireFixtures() map[string]any {
 	ring := Ring{Event: EventRing, From: FixtureFrom, CallID: FixtureCallID}
 	ringEnd := Ring{Event: EventRingEnd, From: FixtureFrom, CallID: FixtureCallID}
 	draft := Draft{Event: EventDraftReady, Contact: FixtureContact, DraftID: FixtureDraftID}
 
-	fixtures := map[string]any{
+	return map[string]any{
 		"push-fcm-ring.json":         ringFcmPayload(FixtureFCMToken, ring),
 		"push-fcm-ring-end.json":     ringFcmPayload(FixtureFCMToken, ringEnd),
 		"push-fcm-draft-ready.json":  draftFcmPayload(FixtureFCMToken, draft),
@@ -41,17 +41,4 @@ func RenderWireFixtures() map[string][]byte {
 		"push-ntfy-ring-end.json":    ringNtfyBody(FixtureNtfyTopic, ringEnd),
 		"push-ntfy-draft-ready.json": draftNtfyBody(FixtureNtfyTopic, draft),
 	}
-
-	rendered := make(map[string][]byte, len(fixtures))
-	for name, payload := range fixtures {
-		body, err := json.Marshal(payload)
-		if err != nil {
-			// Same class as mustMarshalRing: an all-string struct —
-			// render as a stub rather than panic in a render path.
-			rendered[name] = []byte(`{"error":"unrenderable"}`)
-			continue
-		}
-		rendered[name] = body
-	}
-	return rendered
 }
