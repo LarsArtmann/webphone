@@ -10,18 +10,18 @@
 
 The mandate: finish and verify the entire round-5 assistant-executable list. Outcome: **E7/E8 (already done), E9, E10, E11, E12, E14 (adjudicated done-at-HEAD), E15, E16 executed and locally verified; E17 + the E20–E23 folds NOT started; CI is RED on a clone-gate finding that is not from this session's code** (see §d.5).
 
-| Plan item                         | Verdict                                                                                                                                                                                                                                                                                                                                    | Evidence                                                                              |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------- |
-| ~~E9 batch 1 (F37–F42)~~ | ~~🟢 DONE as reported~~ — landed with the train (`519c108`, `6008c6b`); suites green since. | — |
-| ~~E10 batch 2 (F43–F48)~~ | ~~🟢 DONE as reported~~ — landed with the train; auth battery green. | — |
-| ~~E11 batch 3 (F49–F54)~~ | ~~🟢 DONE as reported~~ — landed (`084b7d3`). | — |
-| ~~E14 three smalls (F63–F65)~~ | ~~🟢 ADJUDICATED ALREADY-DONE-AT-HEAD~~ — the stale-plan finding held; plan Errata superseded by the later drain sweeps. | — |
-| ~~E15 ASR hardening (F66–F68)~~ | ~~🟢 DONE as reported~~ — landed (`d069426`); the non-probing asr health leg ships. | — |
-| ~~E16 ASR polish (F69–F73)~~ | ~~🟢 DONE as reported~~ — landed; island/server suites green since. | — |
-| ~~E12 D-train (F55–F56)~~ | ~~🟢 DONE as reported~~ — landed (`ef29ea9`). | — |
-| ~~E17 stragglers (F74–F76)~~ | ~~🔴 NOT STARTED~~ — ROUTED/DONE-AT-HEAD: F74 = `scripts/ui-capture.py` (T23, 24 shots); F75 = `scripts/module-cache-janitor.sh`; F76 superseded by the go-appkit errorpage DECLINE ruling (2026-10-23). | — |
-| ~~E20–E23 folds (F79–F86 remainder)~~ | ~~🔴 NOT STARTED~~ — ROUTED: F79 filed upstream as art-dupl#14; F85 folded into AGENTS.md (snapshot-rot header convention); the remainder drained by the docs-health v8–v10 sweeps or lives in TODO_LIST.md. | — |
-| ~~Full gates for the ASR+E12 trains~~ | ~~🔴 NOT RUN~~ — EVIDENCED: both commits are ancestors of months of green CI mains; the one-time verdicts are superseded by the landing. | — |
+| Plan item                             | Verdict                                                                                                                                                                                                          | Evidence |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- |
+| ~~E9 batch 1 (F37–F42)~~              | ~~🟢 DONE as reported; landed with the train (519c108, 6008c6b); suites green since.~~                                                                                                                           | ~~—~~    |
+| ~~E10 batch 2 (F43–F48)~~             | ~~🟢 DONE as reported; landed with the train; auth battery green.~~                                                                                                                                              | ~~—~~    |
+| ~~E11 batch 3 (F49–F54)~~             | ~~🟢 DONE as reported; landed (084b7d3).~~                                                                                                                                                                       | ~~—~~    |
+| ~~E14 three smalls (F63–F65)~~        | ~~🟢 ADJUDICATED ALREADY-DONE-AT-HEAD; the stale-plan finding held; plan Errata superseded by the later drain sweeps.~~                                                                                          | ~~—~~    |
+| ~~E15 ASR hardening (F66–F68)~~       | ~~🟢 DONE as reported; landed (d069426); the non-probing asr health leg ships.~~                                                                                                                                 | ~~—~~    |
+| ~~E16 ASR polish (F69–F73)~~          | ~~🟢 DONE as reported; landed; island/server suites green since.~~                                                                                                                                               | ~~—~~    |
+| ~~E12 D-train (F55–F56)~~             | ~~🟢 DONE as reported; landed (ef29ea9).~~                                                                                                                                                                       | ~~—~~    |
+| ~~E17 stragglers (F74–F76)~~          | ~~🔴 NOT STARTED then; ROUTED/DONE-AT-HEAD: F74 = scripts/ui-capture.py (T23, 24 shots); F75 = scripts/module-cache-janitor.sh; F76 superseded by the go-appkit errorpage DECLINE ruling (2026-10-23).~~         | ~~—~~    |
+| ~~E20–E23 folds (F79–F86 remainder)~~ | ~~🔴 NOT STARTED then; ROUTED: F79 filed upstream as art-dupl#14; F85 folded into AGENTS.md (snapshot-rot header convention); the remainder drained by the docs-health v8–v10 sweeps or lives in TODO_LIST.md.~~ | ~~—~~    |
+| ~~Full gates for the ASR+E12 trains~~ | ~~🔴 NOT RUN then; EVIDENCED at archive: both commits are ancestors of months of green CI mains.~~                                                                                                               | ~~—~~    |
 
 ## b) What got shipped (the one-paragraph read)
 

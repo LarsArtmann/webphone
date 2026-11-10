@@ -47,6 +47,32 @@ configured, styled 404 otherwise) and therefore deliberately absent from
 both documents — a disabled deployment must not promise a surface it
 does not mount.
 
+## Consumer wire fixtures (`wire/`)
+
+`wire/*.json` are byte-pinned payload EXAMPLES rendered by the same
+`webphone contracts` command, from the same pure payload builders and
+wire structs the senders/handlers marshal
+(`internal/push/fixtures.go`, `internal/server/wirefixtures.go`) — the
+keys are the contract, the values are fixed fakes. They cover what the
+documents structurally describe but the consumers byte-verify:
+
+- the ring/ring_end/draft_ready facts on BOTH transports (FCM data
+  envelope incl. android priority; ntfy publish body incl. the
+  compact-JSON `message` field, title, priority, tags) — pinned
+  nowhere else, since they are transport-internal (no HTTP surface);
+- the two `sessionIdentity` credential arms (`password` legacy vs
+  `sip_credential` brokered — the exactly-one rule);
+- the push-device registration request the shell ENCODES.
+
+`webphone-android` vendors these into its JVM tests
+(`scripts/sync-wire-fixtures.sh` there; `WEBPHONE_DIR` overridable) so
+field drift reds a local test on either side — the server side rides
+the same `contracts-fresh` gate as this document. Change a mirrored
+wire shape ⇒ regenerate here AND re-vendor there (see the release
+runbook's android leg). The push-device LIST response stays
+intentionally unfixed (the shell never reads it; its shape lives in
+the served OpenAPI document).
+
 ## Conditional GET on the served document
 
 `/openapi.json` is generated (stable bytes per build) and fetched with

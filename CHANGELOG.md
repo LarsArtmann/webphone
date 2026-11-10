@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Consumer wire fixtures under `docs/contracts/wire/` (rendered by the
+  same `webphone contracts` command, freshness-gated with the asyncapi
+  document): byte-pinned payload examples for the push facts on both
+  transports (ring/ring_end/draft_ready — FCM data envelope and ntfy
+  publish body), both `sessionIdentity` credential arms, and the
+  push-device registration request. The Android shell vendors these
+  into its JVM tests, so a renamed key reds a local test on either
+  side instead of surfacing at the first device boot (the shell's
+  `sip_domain`/`sip_password` field drift — the bug this exists for —
+  was caught and fixed at landing). The push payload builders were
+  extracted into pure functions shared by the senders and the renderer,
+  so fixture truth cannot diverge from wire truth.
 - Prod screenshot tracking in the visual harness (`scripts/ui-capture.py`):
   `--base-url <deployment>` points the existing 24-shot matrix at a LIVE
   instance (session minted over the session API from env credentials, live

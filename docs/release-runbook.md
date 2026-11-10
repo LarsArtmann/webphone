@@ -159,6 +159,32 @@ re-run the formatter if it moved styled files.
   contended host, plan MANUAL re-execution of the tail steps rather
   than arming background retries.
 
+## webphone-android wire-fixture re-vendor leg (2026-11-10)
+
+The Android call shell (`~/projects/webphone-android`) vendors
+`docs/contracts/wire/*.json` into its JVM tests — the drift tripwire
+for every seam it mirrors (`sessionIdentity`, push-device registration,
+the ring/draft facts on both transports). It does NOT consume the
+binary or the module, so it rides NO pin and NO relock ritual; the only
+obligation fires when the wire itself moves:
+
+1. A change touching `internal/push` payload construction,
+   `sessionIdentity`, `api.PushDeviceRegisterRequest`, or the fixture
+   renderers MUST run `nix develop -c go run ./cmd/webphone contracts`
+   (the `contracts-fresh` gate reds otherwise) and land the regenerated
+   `wire/` files in the SAME commit.
+2. Then re-vendor: `scripts/sync-wire-fixtures.sh` in the android repo
+   (run there; it copies from this checkout, `WEBPHONE_DIR` overridable)
+   and land `testDebugUnitTest` green — a red there means the Kotlin
+   mirror broke, which is exactly what the fixtures exist to catch
+   BEFORE a device boot.
+3. Field-drift precedent (why this leg exists): the shell shipped
+   reading `sip_domain`/`sip_password`/`websocket_url` from
+   `/api/session` — keys the server never sent (real wire:
+   `password`|`sip_credential`; domain/websocket live in `/config.js`)
+   — and the SIP REGISTER silently ran on empty credentials until the
+   fixtures pinned it (fixed 2026-11-10).
+
 ## pbx-artmann relock ritual (2026-09-21/22)
 
 The stack is consumed by pbx-artmann via a rev pin in its flake.nix

@@ -39,6 +39,12 @@ DONE 2026-11-10 (trains cabdeeb8 / abed8247 / 3d1c1ba2 / 12cee0b3): C1 is the on
 - [x] C5: pins + gates + live verification (reports/view suites, nix fmt,
       buildflow, CHANGELOG line, prod ui-capture of the reports surface).
 
+### Prod screenshot-tracking train residue (2026-11-10 14:42 report, §f-24 — harvested by the cadence-sweep session)
+
+- [ ] **ui-capture `--open` flag**: launch the gallery/compare in a browser
+      after a run (local convenience only; the screenshot-tracking train's own
+      ask — a `--open` on `scripts/ui-capture.py` opening `compare.html`).
+
 ### BuildFlow tool-disposition residue (harvested 2026-11-08 from the 2026-10-11 findings-zeroing plan — one home now)
 
 Six tool dispositions the 2026-10-11 plan owned but TODO_LIST never carried;
@@ -996,11 +1002,20 @@ evidence in the 16-50 plan + its execution status). Open rows:
       not use; the seven upstream candidates are NOT obviously fixed).
       Lean: ride the next natural train. Same notes file. **Priority:**
       Low · **Effort:** S (decision) / M (bump).
-- [ ] **webphone-android consumes the specs** — fetch/parse
-      `/openapi.json` in the client bootstrap, derive the push-devices
-      client calls, parse the asyncapi ring contract, verify the CSRF-dance
-      paths against the spec (completion-plan N14; other repo's gates).
-      **Priority:** Medium · **Effort:** M.
+- [ ] **webphone-android consumes the specs** — REMAINING HALF is the
+      runtime digest handshake: fetch a contract digest of exactly the
+      paths/shapes the app uses at origin-config time (the 304 ETag
+      lane makes it free) and render a named "server older than app"
+      surface on mismatch. The BUILD-TIME half LANDED 2026-11-10:
+      `webphone contracts` renders byte-pinned consumer fixtures
+      (`docs/contracts/wire/` — push facts both transports, both
+      sessionIdentity arms, the registration request), freshness-gated
+      with the asyncapi document; the android repo vendors them and
+      its JVM tests decode them through its real parsers
+      (`scripts/sync-wire-fixtures.sh` there; the runbook carries the
+      re-vendor leg). Trigger for the runtime half: first real
+      server/app version-skew incident. **Priority:** Low ·
+      **Effort:** M→S (build-time half done).
 - [x] **DONE 2026-11-04 (ETag half): /openapi.json conditional GET** —
       the go-etag/server middleware serves bodyless 304 revalidation on
       `/openapi.json` + `/manifest.webmanifest` (mount is the skip set;
