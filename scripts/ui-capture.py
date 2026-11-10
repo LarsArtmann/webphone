@@ -944,7 +944,10 @@ def capture(
                             or d.find_elements("css selector", "#login-form")
                         )
                     time.sleep(0.4)  # settle: theme script, fonts
-                    if lenient and _is_styled_404():
+                    if lenient and name != "not-found" and _is_styled_404():
+                        # The deliberate /nope surface IS the styled 404 and
+                        # must still be shot; this skip is for capabilities a
+                        # deployment withheld (e.g. /login without passkey).
                         print(
                             f"skip: {name} at {path} is the styled 404 "
                             "(capability off on this deployment)"
@@ -984,7 +987,7 @@ def capture(
                             "document.querySelectorAll('details.wp-transcript-call')"
                             ".forEach((d) => d.setAttribute('open', ''))"
                         )
-                    if lenient and _is_styled_404():
+                    if lenient and name != "not-found" and _is_styled_404():
                         print(
                             f"skip: {name} at {path} is the styled 404 "
                             "(capability off on this deployment)"
