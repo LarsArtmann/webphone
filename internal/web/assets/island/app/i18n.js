@@ -248,6 +248,10 @@ export const I18N = {
     callUnreachable: "Unavailable — the far end did not answer.",
     callCancelled: "Cancelled before it connected.",
     callNoAnswer: "No answer in time.",
+    callRejectedRemote: "Rejected by the network before it connected.",
+    callNotAcceptable:
+      "No compatible audio path — the far end cannot take the call.",
+    callAuthFailed: "Sign-in refused — the credentials did not authenticate.",
     callFailedCode: (code) => `Call failed (code ${code}).`,
     callFailedUnknown: "The call failed before it connected.",
     summarizeSettled: "Draft in Messages",
@@ -499,6 +503,11 @@ export const I18N = {
     callUnreachable: "Nicht verfügbar — die Gegenseite hat nicht geantwortet.",
     callCancelled: "Abgebrochen, bevor die Verbindung stand.",
     callNoAnswer: "Keine rechtzeitige Antwort.",
+    callRejectedRemote: "Vom Netz abgelehnt, bevor die Verbindung stand.",
+    callNotAcceptable:
+      "Kein kompatibler Audiopfad — die Gegenseite kann den Anruf nicht annehmen.",
+    callAuthFailed:
+      "Anmeldung abgelehnt — die Zugangsdaten wurden nicht akzeptiert.",
     callFailedCode: (code) => `Anruf fehlgeschlagen (Code ${code}).`,
     callFailedUnknown: "Der Anruf ist vor dem Verbinden fehlgeschlagen.",
     summarizeSettled: "Entwurf in Nachrichten",

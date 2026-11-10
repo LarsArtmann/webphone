@@ -463,6 +463,23 @@ async function saveCallNote(row, id, body) {
   }
 }
 
+// DIAL_TIMEOUT_MS is the island's own no-verdict deadline: sip.js 0.21
+// has no INVITE timeout of its own in the browser, so a silent far end
+// would leave the card in Calling forever and the cause mapping would
+// never see a cause at all. 32s is Timer B's shape.
+const DIAL_TIMEOUT_MS = 32000;
+
+// q850CauseOf reads the Q.850 cause out of a SIP Reason header value
+// ("Q.850;cause=21;text=...") — the carrier verdict that rides UNDER a
+// 403 wrapper. 0 when the header is absent or names another numbering
+// plan. THE parser for the trunk's live failure signature.
+/** @param {string | undefined} reason @returns {number} */
+function q850CauseOf(reason) {
+  if (!reason) return 0;
+  const match = /Q\.850;\s*cause=(\d+)/i.exec(reason);
+  return match ? Number(match[1]) : 0;
+}
+
 // failureReasonOf maps one call's outcome to a human reason line for
 // the ended card: the SIP cause first, then the missed-call class for
 // an inbound call that never connected. Established calls ended
@@ -473,6 +490,16 @@ async function saveCallNote(row, id, body) {
 function failureReasonOf(entry) {
   if (entry.established) return null;
   if (!(entry.session instanceof SIP.Inviter)) return t("callMissed");
+  // The Reason header's Q.850 cause outranks the SIP code: the trunk's
+  // live failure is a 403 that carries Q.850;cause=21 (the carrier
+  // rejected the call after a successful registration) — "blocked"
+  // would blame the wrong side.
+  switch (entry.rejectQ850 || 0) {
+    case 17:
+      return t("callBusy");
+    case 21:
+      return t("callRejectedRemote");
+  }
   const cause = entry.rejectCause || 0;
   switch (cause) {
     case 486:
@@ -484,8 +511,9 @@ function failureReasonOf(entry) {
     case 403:
     case 604:
       return t("callBlocked");
-    case 480:
     case 488:
+      return t("callNotAcceptable");
+    case 480:
     case 502:
     case 503:
     case 504:
@@ -494,6 +522,9 @@ function failureReasonOf(entry) {
       return t("callCancelled");
     case 408:
       return t("callNoAnswer");
+    case 401:
+    case 407:
+      return t("callAuthFailed");
     default:
       return cause ? t("callFailedCode")(cause) : t("callFailedUnknown");
   }
@@ -1786,11 +1817,21 @@ export async function placeCall(raw, { force = false, latencyT0 } = {}) {
     await inviter.invite({
       requestDelegate: {
         onReject: (
-          /** @type {{statusCode?: number} | null | undefined} */ res,
+          /** @type {{statusCode?: number, message?: {getHeader?: (name: string) => string | undefined}} | null | undefined} */ res,
         ) => {
           const entry = sessions.get(inviter.id);
-          if (entry)
-            entry.rejectCause = res && res.statusCode ? res.statusCode : 0;
+          if (!entry) return;
+          // First verdict wins: the watchdog's 408 (the island's own
+          // deadline) must not be overwritten by the far end's 487 to
+          // the CANCEL it caused.
+          if (res && res.statusCode && !entry.rejectCause)
+            entry.rejectCause = res.statusCode;
+          const q850 = q850CauseOf(
+            res && res.message && typeof res.message.getHeader === "function"
+              ? res.message.getHeader("Reason")
+              : undefined,
+          );
+          if (q850 && !entry.rejectQ850) entry.rejectQ850 = q850;
         },
       },
     });
@@ -1801,6 +1842,22 @@ export async function placeCall(raw, { force = false, latencyT0 } = {}) {
     if (sent && sent.latency && !sent.latency.invitedAt) {
       sent.latency.invitedAt = Date.now();
     }
+    // The island owns the no-verdict deadline (DIAL_TIMEOUT_MS): the
+    // timer self-guards (only a call that is neither established nor
+    // already failed acts) so no explicit clear is needed; a settled
+    // call just lets it no-op 32s later. The cause is recorded BEFORE
+    // cancel() because a synchronous Terminated teardown could remove
+    // the entry out from under the assignment.
+    setTimeout(() => {
+      const waiting = sessions.get(inviter.id);
+      if (!waiting || waiting.established || waiting.rejectCause) return;
+      waiting.rejectCause = waiting.rejectCause || 408;
+      try {
+        inviter.cancel();
+      } catch {
+        // Already terminating — the verdict line below still lands.
+      }
+    }, DIAL_TIMEOUT_MS);
     return true;
   } catch (err) {
     log(`invite failed: ${errorMessage(err)}`, "error");

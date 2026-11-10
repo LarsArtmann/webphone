@@ -91,6 +91,8 @@ interface IslandCallEntry {
   transferring?: boolean;
   /** The SIP status code that ended a failed outbound INVITE (0 = none). */
   rejectCause?: number;
+  /** The Q.850 cause parsed from that rejection's Reason header (0 = none). */
+  rejectQ850?: number;
   endedReasonShown?: boolean;
   announcedState?: IslandCallDockState;
   captionUnsub?: () => void;
