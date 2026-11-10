@@ -1593,6 +1593,17 @@ def check_thread_layout(driver, base: str, thread_path: str, out_dir: str) -> No
     print("layout: PASS (collapse, persistence, split threshold)")
 
 
+def discard_empty_run(out_dir: str) -> None:
+    """A crashed capture must not leave an EMPTY run dir in the history —
+    the next run's compare would silently treat the empty dir as its
+    "previous" and badge every surface "new" (observed live, 2026-11-10).
+    Only an empty dir is removed; a partial one stays (partial runs are
+    compared gracefully)."""
+    if not glob.glob(os.path.join(out_dir, "*.png")):
+        shutil.rmtree(out_dir, ignore_errors=True)
+        print(f"run discarded (no shots captured): {out_dir}")
+
+
 def self_test() -> int:
     """Verify every pure helper this harness depends on — NO browser, NO
     server. Pillow pixel math runs only when the capture env carries it;
@@ -1983,19 +1994,24 @@ def main() -> int:
             "prod capture: shots carry REAL data — ui-shots/ is gitignored; "
             "keep it that way"
         )
-        ledger = capture(
-            base,
-            out_dir,
-            session,
-            surfaces,
-            only,
-            viewports=viewports,
-            full_page=full_page,
-            lenient=True,
-            anonymous_surfaces=anonymous,
-            insecure=args.insecure,
-            host_maps=args.host_map,
-        )
+        try:
+            ledger = capture(
+                base,
+                out_dir,
+                session,
+                surfaces,
+                only,
+                viewports=viewports,
+                full_page=full_page,
+                lenient=True,
+                anonymous_surfaces=anonymous,
+                insecure=args.insecure,
+                host_maps=args.host_map,
+            )
+        except Exception:
+            if args.track:
+                discard_empty_run(out_dir)
+            raise
         shots = len(ledger)
         exit_code = 0 if shots > 0 else 1
     else:
@@ -2122,19 +2138,24 @@ def main() -> int:
                 print("  anonymous: " + ", ".join(n for n, _ in anonymous))
                 print("  session:   " + ", ".join(n for n, _ in surfaces))
                 return 0
-            ledger = capture(
-                base,
-                out_dir,
-                session,
-                surfaces,
-                only,
-                viewports=viewports,
-                full_page=full_page,
-                layout_proof=True,
-                anonymous_surfaces=anonymous,
-                insecure=args.insecure,
-                host_maps=args.host_map,
-            )
+            try:
+                ledger = capture(
+                    base,
+                    out_dir,
+                    session,
+                    surfaces,
+                    only,
+                    viewports=viewports,
+                    full_page=full_page,
+                    layout_proof=True,
+                    anonymous_surfaces=anonymous,
+                    insecure=args.insecure,
+                    host_maps=args.host_map,
+                )
+            except Exception:
+                if args.track:
+                    discard_empty_run(out_dir)
+                raise
             shots = len(ledger)
             exit_code = 0 if shots >= 22 else 1
         finally:
