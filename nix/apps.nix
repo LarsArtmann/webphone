@@ -76,13 +76,11 @@
       #   always rides the committed instrument.
       apps.ui-track =
         let
-          captureEnv = pkgs.python3.withPackages (
-            ps: [
-              ps.selenium
-              ps.pillow
-            ]
-          );
-          captureScript = pkgs.runCommand "ui-capture.py" { } ''cp ${../scripts/ui-capture.py} $out'';
+          captureEnv = pkgs.python3.withPackages (ps: [
+            ps.selenium
+            ps.pillow
+          ]);
+          captureScript = pkgs.runCommand "ui-capture.py" { } "cp ${../scripts/ui-capture.py} $out";
           script = pkgs.writeShellApplication {
             name = "webphone-ui-track";
             runtimeInputs = [
