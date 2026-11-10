@@ -1714,6 +1714,21 @@
     /** @type {AudioContext | null} */
     var vmAudioContext = null; // browsers cap contexts — one per page, lazy
     var vmFallbackToasted = false;
+    // Playback-failure reporter (the silent-play defect): a failed load used
+    // to answer NOTHING — play()'s rejection was swallowed and the element
+    // carried no error listener, so a 404/403/undecodable recording looked
+    // like a dead button. One honest toast per failure episode (re-armed by
+    // a later successful "playing"), deduped against the element error the
+    // browser fires alongside the play() rejection.
+    var vmErrorNotified = new WeakSet();
+    var VM_PLAYBACK_FAILED_TEXT =
+      "voicemail playback failed — the recording could not be loaded";
+    /** @param {HTMLAudioElement} audio */
+    var vmPlaybackFailed = function (audio) {
+      if (vmErrorNotified.has(audio)) return;
+      vmErrorNotified.add(audio);
+      shellToast(VM_PLAYBACK_FAILED_TEXT, "error");
+    };
 
     var VM_BARS = 48;
     var VM_SPEED_LADDER = [1, 1.5, 2, 0.5];
@@ -1885,6 +1900,12 @@
       audio.addEventListener("play", function () {
         vmSetPlaying(uuid, audio, true);
       });
+      audio.addEventListener("playing", function () {
+        vmErrorNotified.delete(audio); // re-arm honest reporting after a success
+      });
+      audio.addEventListener("error", function () {
+        vmPlaybackFailed(audio);
+      });
       audio.addEventListener("pause", function () {
         vmSetPlaying(uuid, audio, false);
       });
@@ -1987,7 +2008,13 @@
       var player = /** @type {HTMLAudioElement} */ (audio);
       var started = audio.play();
       if (started && hasMethod(started, "catch")) {
-        started.catch(function () {});
+        started.catch(function (reason) {
+          // AbortError = a pause/new play interrupted this attempt — benign,
+          // never a product failure. Everything else surfaces (the element's
+          // own error event dedups through vmErrorNotified).
+          if (reason && reason.name === "AbortError") return;
+          vmPlaybackFailed(player);
+        });
       }
       vmBuildWave(uuid, audio)
         .then(function (peaks) {

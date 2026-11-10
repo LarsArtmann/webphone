@@ -34,6 +34,13 @@ func (h *handlers) proxyPhoneAPI(w http.ResponseWriter, r *http.Request) {
 	}
 	req.SetBasicAuth(sess.Extension.String(), sess.Password)
 	req.Header.Set("Accept", "application/json")
+	// The browser's media element asks for a byte range (Safari refuses to
+	// play a 200-full-body stream; Chrome seeks through 206s). The upstream
+	// answers single-range 206s, so the header must reach it and the range
+	// response headers must reach the browser.
+	if rangeHeader := r.Header.Get("Range"); rangeHeader != "" {
+		req.Header.Set("Range", rangeHeader)
+	}
 	if r.Body != nil && r.Body != http.NoBody {
 		req.Body = io.NopCloser(io.LimitReader(r.Body, 1<<20))
 	}
@@ -45,7 +52,7 @@ func (h *handlers) proxyPhoneAPI(w http.ResponseWriter, r *http.Request) {
 	}
 	defer func() { _ = resp.Body.Close() }() //nolint:erraudit // read-side close on defer; nothing left to act on
 
-	for _, name := range []string{"Content-Type", "Cache-Control"} {
+	for _, name := range []string{"Content-Type", "Cache-Control", "Accept-Ranges", "Content-Range"} {
 		if value := resp.Header.Get(name); value != "" {
 			w.Header().Set(name, value)
 		}

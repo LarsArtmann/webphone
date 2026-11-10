@@ -1209,6 +1209,49 @@ test("the play button drives the audio and falls back honestly", async () => {
   assert.match(toast.textContent, /built-in player controls/);
 });
 
+// The silent-play defect: a failed recording (404/403/undecodable) used to
+// answer NOTHING — the play() rejection was swallowed. The element error and
+// the rejection now surface ONE honest toast per failure episode.
+test("a failed recording surfaces one honest toast, deduped", async () => {
+  const { audio, play } = makePlayerRow("u9");
+  const failedCount = () =>
+    toasts()
+      .children.map((toast) => toast.textContent)
+      .filter((text) => text.includes("playback failed")).length;
+  const before = failedCount();
+  audio.play = () => Promise.reject({ name: "NotSupportedError" });
+  doc.dispatch("click", { target: play });
+  const onError = audio.listeners.error[0];
+  onError();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(
+    failedCount() - before,
+    1,
+    "the element error and the play() rejection dedup into one toast",
+  );
+  assert.match(
+    toasts().children.at(-1).textContent,
+    /could not be loaded/,
+  );
+});
+
+test("an interrupted play attempt stays silent (AbortError is benign)", async () => {
+  const { audio, play } = makePlayerRow("u10");
+  const failedCount = () =>
+    toasts()
+      .children.map((toast) => toast.textContent)
+      .filter((text) => text.includes("playback failed")).length;
+  const before = failedCount();
+  audio.play = () => Promise.reject({ name: "AbortError" });
+  doc.dispatch("click", { target: play });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(
+    failedCount() - before,
+    0,
+    "an interruption is not a product failure",
+  );
+});
+
 test("playing marks the row, swaps the label, and clears unread + badge", () => {
   const badge = doc.getElementById("wp-nav-vm-badge");
   badge.textContent = "2";

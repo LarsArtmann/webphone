@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Voicemail play failures are no longer silent: a recording that fails to
+  load (404/403/undecodable) now surfaces one honest toast per failure
+  episode instead of a dead button — the `play()` rejection is no longer
+  swallowed and the audio element carries an `error` listener (benign
+  `AbortError` interruptions stay silent). The `/phone-api` proxy now also
+  forwards the browser's `Range` header upstream and passes `Accept-Ranges`/
+  `Content-Range` back, so the operator's 206 range support engages through
+  the app path (Safari-class browsers refuse a 200-full-body stream; seek
+  works everywhere).
+
 ## [2.12.0] - 2026-11-09
 
 ### Changed

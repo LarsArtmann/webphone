@@ -81,3 +81,64 @@ func TestPhoneAPIProxyDisabledReturns503(t *testing.T) {
 		t.Fatalf("proxy without phone api: %d %s (want 503)", resp.StatusCode, body)
 	}
 }
+
+// The browser's media element asks for byte ranges (Safari refuses to play
+// a 200-full-body stream; Chrome seeks through 206s). The upstream answers
+// single-range 206s, so the proxy must carry the Range header upstream and
+// the range response headers back down.
+func TestPhoneAPIProxyForwardsRangeAndPassthroughHeaders(t *testing.T) {
+	var (
+		mu       sync.Mutex
+		sawRange string
+	)
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/phone-api/voicemail/1001/summary" && r.Method == http.MethodGet {
+			// signIn verifies the session credentials through this route.
+			_, _ = w.Write([]byte(`{"new":0,"old":0}`))
+			return
+		}
+		if r.URL.Path != "/phone-api/voicemail/1001/messages/abc-123/audio" {
+			http.NotFound(w, r)
+			return
+		}
+		mu.Lock()
+		sawRange = r.Header.Get("Range")
+		mu.Unlock()
+		w.Header().Set("Content-Type", "audio/wav")
+		w.Header().Set("Accept-Ranges", "bytes")
+		w.Header().Set("Content-Range", "bytes 0-3/8")
+		w.WriteHeader(http.StatusPartialContent)
+		_, _ = w.Write([]byte("RIFF"))
+	}))
+	t.Cleanup(upstream.Close)
+
+	c := signIn(t, newTestServerWithPhoneAPI(t, upstream.URL))
+	req, err := http.NewRequest(http.MethodGet, c.base+"/phone-api/voicemail/1001/messages/abc-123/audio", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Range", "bytes=0-3")
+	resp, err := c.http.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	body := readAll(t, resp)
+	if resp.StatusCode != http.StatusPartialContent {
+		t.Fatalf("proxied range request: %d %s (want 206)", resp.StatusCode, body)
+	}
+	mu.Lock()
+	if sawRange != "bytes=0-3" {
+		mu.Unlock()
+		t.Fatalf("upstream Range = %q, want %q", sawRange, "bytes=0-3")
+	}
+	mu.Unlock()
+	if got := resp.Header.Get("Content-Range"); got != "bytes 0-3/8" {
+		t.Errorf("Content-Range not passed through: %q", got)
+	}
+	if got := resp.Header.Get("Accept-Ranges"); got != "bytes" {
+		t.Errorf("Accept-Ranges not passed through: %q", got)
+	}
+	if got := resp.Header.Get("Content-Type"); got != "audio/wav" {
+		t.Errorf("Content-Type not passed through: %q", got)
+	}
+}
