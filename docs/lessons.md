@@ -1081,3 +1081,39 @@ recording keeps one toast") and docs/error-contract.md.
   verification (background shell, unit file, `nohup`), and a
   "seam refused/unavailable" symptom must be answered by a liveness
   probe of its dependencies before anything else is blamed.
+
+## Deployment truth (2026-11-10)
+
+- **A fix on main is not a fix in prod until `/version` matches.** The
+  voicemail-playback round landed on main 2026-11-09 (signed tests, the
+  proxy Range pin, the toast contract — every gate green), and the
+  2026-11-10 morning still found prod serving the old binary: the
+  operator clicked a dead voicemail button and the honest toast did not
+  exist in the served bytes, because the served bytes were `v2.12.0`.
+  Nothing in the fleet watched that gap — CI green, a pushed tag, and a
+  cut release are all statements about the REPO, never about the host.
+  Two closes: the release train now treats the deploy as a step with a
+  verification (B5: `/version` = the released version, then the
+  operator-facing surfaces re-shot on real data), and the watch lane's
+  third observer (`scripts/stale-prod-watch.sh`, 2026-11-10) compares
+  prod's public `/version` against the newest GitHub release every 15
+  minutes and files a `stale-prod` issue after 24 h of drift. The
+  companion trap: the stack lock "riding main" does NOT deploy anything
+  either — the relock only moves what a future `nixos-rebuild` WOULD
+  build; the rebuild itself is the fix.
+- **Release attempt ledger: batch the preflight, don't discover the
+  blockers serially.** v2.13.0 needed five release.sh attempts before
+  its first green pass through step 7: attempt 1 died on a test race
+  (a closed httptest server's port rebound by the helper's own ASR
+  provider — fixed by the always-refused `http://127.0.0.1:1`
+  convention), attempt 2 on a cqrs-lint critical (the wirefixture
+  password literal — fixed with the `//cqrs-lint:ignore(S001)`
+  directive at the site, enroll.go:25 precedent), attempt 3 on lychee
+  (private-repo excludes missing then), attempt 4 on the stack
+  lock-move-guard (the relock commit message lacked the ritual marker).
+  Every one of those was discoverable WITHOUT a tag: buildflow + the
+  race suite + lychee run locally in ~15 minutes against the working
+  tree. The next release runs the preflight batch BEFORE attempt 1, so
+  attempt 1 is the tag attempt. Corollary: a re-run needs
+  `WEBPHONE_RELEASE_SKIP_VERSION_GUARD=1` only while the version-bump
+  commit is untagged — after the tag is up, the guard passes on its own.
