@@ -2,9 +2,11 @@ package server
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/larsartmann/webphone/internal/crm"
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/web/views"
 )
 
@@ -29,6 +31,75 @@ func crmContacts(people map[string]crm.Person, resolver *crm.Resolver) views.CRM
 	}
 
 	return contacts
+}
+
+// personalNames is the number→name map the owner's own contacts store
+// answers for the numbers a surface is about to render. One home for the
+// personal half of every display directory: request handlers AND the SSE
+// push lane build their directory through directoryFor, so a live morph
+// can never rename a row a full render named differently (the
+// split-brain this seam exists to prevent).
+//
+// A nil gate (test compositions) or a failed read yields nil: names
+// degrade to the CRM half, a contacts outage must not blank the panels.
+func personalNames(ctx context.Context, contacts readmodels.ContactGate, owner domain.Extension, numbers []string) map[string]string {
+	if contacts == nil || len(numbers) == 0 {
+		return nil
+	}
+
+	personal, err := contacts.List(ctx, owner)
+	if err != nil {
+		slog.Warn("contacts directory read failed; names degrade to CRM/numbers", "owner", owner.String(), "error", err)
+		return nil
+	}
+
+	wanted := make(map[string]struct{}, len(numbers))
+	for _, number := range numbers {
+		wanted[number] = struct{}{}
+	}
+
+	names := make(map[string]string, len(numbers))
+	for _, contact := range personal {
+		phone := contact.Phone.String()
+		if _, needed := wanted[phone]; needed && contact.Name != "" {
+			names[phone] = contact.Name
+		}
+	}
+
+	return names
+}
+
+// directoryFor merges the display directory every row-label view reads:
+// the owner's own contacts name a number FIRST (the curated personal
+// record beats the CRM — owner call 2026-11-10, flippable by reordering
+// this merge), the optional CRM answers the numbers nobody saved. Both
+// lanes — request handlers and the SSE push lane — merge through this
+// ONE home.
+//
+// Personal names carry no deep link (the Contacts panel owns those). Zero
+// config on both seams renders raw numbers with no link: byte-identical
+// to the pre-integration product.
+func directoryFor(ctx context.Context, contacts readmodels.ContactGate, resolver *crm.Resolver, owner domain.Extension, numbers []string) views.CRMContacts {
+	if len(numbers) == 0 {
+		return nil
+	}
+
+	directory := make(views.CRMContacts, len(numbers))
+	remaining := make([]string, 0, len(numbers))
+	personal := personalNames(ctx, contacts, owner, numbers)
+	for _, number := range numbers {
+		if name, ok := personal[number]; ok {
+			directory[number] = views.CRMContact{Name: name}
+			continue
+		}
+		remaining = append(remaining, number)
+	}
+
+	for number, contact := range crmContacts(resolver.People(ctx, remaining), resolver) {
+		directory[number] = contact
+	}
+
+	return directory
 }
 
 // crmNumberFor reports the string the CRM should be asked about for a thread's

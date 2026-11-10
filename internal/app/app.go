@@ -324,6 +324,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			do.MustInvoke[*server.ExtensionHubs](i),
 			do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).ThreadsSvc(),
 			do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).FaxesSvc(), //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service's fax backend (SUPERB Phase 6)
+			do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).ContactsSvc(),
 			do.MustInvoke[*crm.Resolver](i),
 			cfg.ASR.Enabled(),
 			views.FaxCapability{Send: cfg.Fax.SendEnabled(), Receive: cfg.Fax.ReceiveEnabled()},

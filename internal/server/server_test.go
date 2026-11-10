@@ -153,7 +153,7 @@ func newTestServerWithConfig(
 	// The notifier reads the capability from the SAME config the panels
 	// do (mirroring app.go): a test that declares a fax lane off must get
 	// SSE payloads that agree with the full render.
-	notifier := NewNotifier(hubs, messages, cqrs.NewFaxes(coreSys), nil, false, views.FaxCapability{
+	notifier := NewNotifier(hubs, messages, cqrs.NewFaxes(coreSys), nil, nil, false, views.FaxCapability{
 		Send:    cfg.Fax.SendEnabled(),
 		Receive: cfg.Fax.ReceiveEnabled(),
 	})

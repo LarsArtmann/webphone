@@ -68,7 +68,7 @@ func (h *handlers) messagesPanelPrefilled(r *http.Request, sess session.Session,
 	if reviews != nil {
 		numbers = append(numbers, crmNumbers(reviews.Drafts, func(draft textagent.Draft) string { return draft.Contact })...)
 	}
-	contacts := h.crmDirectory(r.Context(), numbers)
+	contacts := h.crmDirectory(r.Context(), sess.Extension, numbers)
 	return views.ThreadsPanel(views.ThreadsPanelProps{
 		Threads: threads, Query: query, Archived: archived, ArchivedCount: archivedCount,
 		Identity: h.identityFor(sess.Extension), CRM: contacts, Lang: h.lang(r),
@@ -112,7 +112,7 @@ func (h *handlers) threadPanelPrefilled(r *http.Request, sess session.Session, i
 		[]string{thread.Remote.String()},
 		crmNumbers(rail, func(summary store.ThreadSummary) string { return crmNumberFor(summary.Thread.Remote) })...,
 	)
-	contacts := h.crmDirectory(r.Context(), numbers)
+	contacts := h.crmDirectory(r.Context(), sess.Extension, numbers)
 	// Reply snippets feed the composer's chip lane + picker (M21);
 	// nil-safe: hand-composed test Deps may carry no snippet store.
 	var snippets []domain.Snippet
@@ -167,7 +167,7 @@ func (h *handlers) faxPanel(r *http.Request, sess session.Session) (templ.Compon
 		return nil, err
 	}
 	numbers := crmNumbers(jobs, func(job domain.FaxJob) string { return job.Remote.String() })
-	return views.FaxPanel(views.FaxPanelProps{Jobs: jobs, Capability: h.faxCapability(), Identity: h.identityFor(sess.Extension), CRM: h.crmDirectory(r.Context(), numbers), Lang: h.lang(r)}), nil
+	return views.FaxPanel(views.FaxPanelProps{Jobs: jobs, Capability: h.faxCapability(), Identity: h.identityFor(sess.Extension), CRM: h.crmDirectory(r.Context(), sess.Extension, numbers), Lang: h.lang(r)}), nil
 }
 
 // faxCapability mirrors the deployment's config.Fax into the view type —
@@ -190,7 +190,7 @@ func (h *handlers) voicemailPanel(r *http.Request, sess session.Session) (templ.
 	}
 	return views.VoicemailPanel(views.VoicemailPanelProps{
 		Enabled: true, Summary: summary, Messages: messages,
-		CRM: h.crmDirectory(r.Context(), crmNumbers(messages, func(msg pbx.VoicemailMessage) string { return msg.CIDNumber })), Lang: h.lang(r),
+		CRM: h.crmDirectory(r.Context(), sess.Extension, crmNumbers(messages, func(msg pbx.VoicemailMessage) string { return msg.CIDNumber })), Lang: h.lang(r),
 		ASR: h.asrOn(),
 	}), nil
 }
@@ -221,18 +221,17 @@ func (h *handlers) fetchVoicemail(r *http.Request, creds pbx.Credentials) (pbx.V
 	return summary, page.Messages, nil
 }
 
-// crmDirectory resolves numbers against the optional CRM integration for
-// view props: the published name plus, when a deep-link template is
-// configured, the address of that contact in the CRM's own UI.
+// crmDirectory resolves numbers into view props for the session's owner:
+// the owner's personal contacts name a number first, the optional CRM
+// integration answers the rest (the published name plus, when a
+// deep-link template is configured, the address of that contact in the
+// CRM's own UI). One merge home: directoryFor — the SSE push lane reads
+// the same map, so a live morph cannot rename a row differently.
 //
-// A disabled (or nil) resolver returns nil, so the views' displayName
-// fallback renders raw numbers with no link: zero CRM config renders
-// byte-identically to the pre-integration product.
-func (h *handlers) crmDirectory(ctx context.Context, numbers []string) views.CRMContacts {
-	if len(numbers) == 0 {
-		return nil
-	}
-	return crmContacts(h.deps.CRM.People(ctx, numbers), h.deps.CRM)
+// Zero config on both seams renders raw numbers with no link:
+// byte-identical to the pre-integration product.
+func (h *handlers) crmDirectory(ctx context.Context, owner domain.Extension, numbers []string) views.CRMContacts {
+	return directoryFor(ctx, h.deps.Contacts, h.deps.CRM, owner, numbers)
 }
 
 // asrOn is the one gate every server-rendered transcribe affordance
@@ -271,14 +270,14 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 		// filter did not choose. The transcripts carry the answer.
 		return views.HistoryPanel(views.HistoryPanelProps{
 			Enabled: true, Disposition: disposition.String(), Lang: lang, Transcripts: transcripts,
-			CRM:          h.crmDirectory(r.Context(), transcriptNumbers),
+			CRM:          h.crmDirectory(r.Context(), sess.Extension, transcriptNumbers),
 			AgentEnabled: h.textAgentOn(),
 		}), nil
 	}
 	if !h.deps.PhoneAPI.Enabled() {
 		return views.HistoryPanel(views.HistoryPanelProps{
 			Lang: lang, Query: query, Transcripts: transcripts,
-			CRM:          h.crmDirectory(r.Context(), transcriptNumbers),
+			CRM:          h.crmDirectory(r.Context(), sess.Extension, transcriptNumbers),
 			AgentEnabled: h.textAgentOn(),
 		}), nil
 	}
@@ -302,7 +301,7 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 	numbers = append(numbers, transcriptNumbers...)
 	return views.HistoryPanel(views.HistoryPanelProps{
 		Enabled: true, Entries: entries, Query: query, Dir: dir, Outcome: outcome,
-		CRM: h.crmDirectory(r.Context(), numbers), Lang: lang, Transcripts: transcripts,
+		CRM: h.crmDirectory(r.Context(), sess.Extension, numbers), Lang: lang, Transcripts: transcripts,
 		AgentEnabled: h.textAgentOn(),
 	}), nil
 }

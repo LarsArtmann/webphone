@@ -86,16 +86,18 @@ func agentDetail(err error) string {
 // <section> for an outerHTML swap, so the review loop refreshes without
 // re-rendering the whole Messages tab (a half-typed composer survives).
 func (h *handlers) partialDrafts(w http.ResponseWriter, r *http.Request) {
-	if _, ok := h.textAgentSession(w, r); !ok {
+	sess, ok := h.textAgentSession(w, r)
+	if !ok {
 		return
 	}
-	h.draftPanel(w, r)
+	h.draftPanel(w, r, sess)
 }
 
-// draftCRMContacts resolves the drafts' contact numbers against the
-// optional CRM feed so the review list shows names like the thread rows
-// do. Nil-safe on every leg (no drafts, no resolver).
-func (h *handlers) draftCRMContacts(r *http.Request, reviews *textagent.Reviews) views.CRMContacts {
+// draftCRMContacts resolves the drafts' contact numbers for the
+// session's owner (personal contacts first, CRM fallback) so the review
+// list shows names like the thread rows do. Nil-safe on every leg (no
+// drafts, no gate, no resolver).
+func (h *handlers) draftCRMContacts(r *http.Request, owner domain.Extension, reviews *textagent.Reviews) views.CRMContacts {
 	if reviews == nil || len(reviews.Drafts) == 0 {
 		return nil
 	}
@@ -103,16 +105,16 @@ func (h *handlers) draftCRMContacts(r *http.Request, reviews *textagent.Reviews)
 	for _, draft := range reviews.Drafts {
 		numbers = append(numbers, draft.Contact)
 	}
-	return h.crmDirectory(r.Context(), numbers)
+	return h.crmDirectory(r.Context(), owner, numbers)
 }
 
 // draftPanel renders the drafts panel fragment (approve and discard
 // both swap #wp-drafts outerHTML with the fresh list).
-func (h *handlers) draftPanel(w http.ResponseWriter, r *http.Request) {
+func (h *handlers) draftPanel(w http.ResponseWriter, r *http.Request, sess session.Session) {
 	reviews, fetchErr := h.textAgentReviews(r)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := views.DraftsPanel(views.DraftsPanelProps{
-		Drafts: reviews, Error: fetchErr, CRM: h.draftCRMContacts(r, reviews), Lang: h.lang(r),
+		Drafts: reviews, Error: fetchErr, CRM: h.draftCRMContacts(r, sess.Extension, reviews), Lang: h.lang(r),
 	}).Render(r.Context(), w); err != nil {
 		http.Error(w, "render error", http.StatusInternalServerError)
 	}
@@ -160,7 +162,7 @@ func (h *handlers) textAgentPanelAction(
 	if toastKey != "" {
 		notifyToast(w, "ok", h.T(r, toastKey))
 	}
-	h.draftPanel(w, r)
+	h.draftPanel(w, r, sess)
 }
 
 // approveDraft sends a pending draft — verbatim, or with the human

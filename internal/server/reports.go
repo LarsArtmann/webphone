@@ -51,7 +51,7 @@ func (h *handlers) reportsPanel(r *http.Request, sess session.Session) (templ.Co
 
 	props.Enabled = true
 	props.Report = report
-	props.CRM = h.crmDirectory(r.Context(), crmNumbers(report.TopContacts(views.TopContactRows),
+	props.CRM = h.crmDirectory(r.Context(), sess.Extension, crmNumbers(report.TopContacts(views.TopContactRows),
 		func(contact reports.Contact) string { return contact.Number }))
 
 	return views.ReportsPanel(props), nil

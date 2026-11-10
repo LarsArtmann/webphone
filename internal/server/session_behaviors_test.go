@@ -63,7 +63,7 @@ func start(t GinkgoTInterface, phoneAPIURL string, mutate ...func(*config.Config
 	coreSys, err := cqrs.NewCoreSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
 	Expect(err).NotTo(HaveOccurred())
 	t.Cleanup(func() { _ = coreSys.Close() })
-	notifier := server.NewNotifier(hubs, cqrs.NewThreads(coreSys), cqrs.NewFaxes(coreSys), nil, false, views.FaxCapability{Send: true, Receive: true})
+	notifier := server.NewNotifier(hubs, cqrs.NewThreads(coreSys), cqrs.NewFaxes(coreSys), nil, nil, false, views.FaxCapability{Send: true, Receive: true})
 	cfg := config.Config{
 		Addr: ":0", DataDir: t.TempDir(), WebsocketPath: "/sip",
 		SessionTTL: time.Hour,
