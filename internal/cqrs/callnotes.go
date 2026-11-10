@@ -49,6 +49,7 @@ type SaveCallNote struct {
 	Owner  string
 	CallID string
 	Body   string
+	At     time.Time // stamped at the service seam; the decision stays deterministic
 }
 
 // SaveCallDisposition records the operator's post-call verdict on the
@@ -58,6 +59,7 @@ type SaveCallDisposition struct {
 	Owner       string
 	CallID      string
 	Disposition domain.Disposition
+	At          time.Time // stamped at the service seam; the decision stays deterministic
 }
 
 // noteSlot is one call's note-slot state.
@@ -109,14 +111,14 @@ func decideSaveNote(s notesState, ver event.Version, cmd SaveCallNote) ([]event.
 	if err != nil {
 		return nil, err
 	}
-	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.CallNoteSaved{})), cmd.StreamID(), NotesStreamType, ver+1, domain.CallNoteSaved{
+	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.CallNoteSaved{})), cmd.StreamID(), NotesStreamType, ver.Increment(), domain.CallNoteSaved{
 		Key:         domain.CallNoteKey{Owner: cmd.Owner, CallID: cmd.CallID},
 		Owner:       cmd.Owner,
 		CallID:      cmd.CallID,
 		Body:        cmd.Body,
 		Disposition: prev.Disposition,
-		UpdatedAt:   time.Now(),
-	})
+		UpdatedAt:   cmd.At,
+	}, event.WithSchemaVersion(1))
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.note_save", "build CallNoteSaved")
 	}
@@ -128,14 +130,14 @@ func decideSaveDisposition(s notesState, ver event.Version, cmd SaveCallDisposit
 	if err != nil {
 		return nil, err
 	}
-	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.CallNoteSaved{})), cmd.StreamID(), NotesStreamType, ver+1, domain.CallNoteSaved{
+	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.CallNoteSaved{})), cmd.StreamID(), NotesStreamType, ver.Increment(), domain.CallNoteSaved{
 		Key:         domain.CallNoteKey{Owner: cmd.Owner, CallID: cmd.CallID},
 		Owner:       cmd.Owner,
 		CallID:      cmd.CallID,
 		Body:        prev.Body,
 		Disposition: cmd.Disposition,
-		UpdatedAt:   time.Now(),
-	})
+		UpdatedAt:   cmd.At,
+	}, event.WithSchemaVersion(1))
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.disposition_save", "build CallNoteSaved")
 	}
@@ -278,7 +280,7 @@ func (s *Notes) Set(ctx context.Context, owner domain.Extension, callID, body st
 
 	if err := dispatchOwnerCommand(ctx, s.sys, "note.save", owner.String(),
 		func(base *command.BasicCommand) *SaveCallNote {
-			return &SaveCallNote{BasicCommand: base, Owner: owner.String(), CallID: callID, Body: body}
+			return &SaveCallNote{BasicCommand: base, Owner: owner.String(), CallID: callID, Body: body, At: time.Now()}
 		}); err != nil {
 		return noteDispatchError(err, "note.save")
 	}
@@ -293,7 +295,7 @@ func (s *Notes) SetDisposition(ctx context.Context, owner domain.Extension, call
 
 	if err := dispatchOwnerCommand(ctx, s.sys, "note.disposition_save", owner.String(),
 		func(base *command.BasicCommand) *SaveCallDisposition {
-			return &SaveCallDisposition{BasicCommand: base, Owner: owner.String(), CallID: callID, Disposition: disposition}
+			return &SaveCallDisposition{BasicCommand: base, Owner: owner.String(), CallID: callID, Disposition: disposition, At: time.Now()}
 		}); err != nil {
 		return noteDispatchError(err, "note.disposition_save")
 	}

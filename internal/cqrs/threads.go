@@ -111,14 +111,14 @@ func decideAppendMessage(s threadState, ver event.Version, cmd AppendMessage) ([
 	fact.Summary = state.summaryImage()
 	evts := make([]event.Event, 0, 1+len(cmd.Msg.Attachments))
 	appendEvt, err := event.New(event.Type(metaengine.EventTypeName(domain.MessageAppended{})),
-		cmd.StreamID(), ThreadsStreamType, ver+1, fact)
+		cmd.StreamID(), ThreadsStreamType, ver.Increment(), fact, event.WithSchemaVersion(1))
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.thread_append", "build MessageAppended")
 	}
 	evts = append(evts, appendEvt)
 	for _, att := range cmd.Msg.Attachments {
 		attEvt, attErr := event.New(event.Type(metaengine.EventTypeName(domain.AttachmentStored{})),
-			cmd.StreamID(), ThreadsStreamType, ver+event.Version(len(evts))+1, domain.AttachmentStored{
+			cmd.StreamID(), ThreadsStreamType, ver.Increment().Add(uint(len(evts))), domain.AttachmentStored{
 				ID:        att.ID.String(),
 				MessageID: att.MessageID.String(),
 				Owner:     cmd.Msg.Owner.String(),
@@ -126,7 +126,7 @@ func decideAppendMessage(s threadState, ver event.Version, cmd AppendMessage) ([
 				MimeType:  att.MimeType,
 				SizeBytes: att.SizeBytes,
 				Path:      att.Path,
-			})
+			}, event.WithSchemaVersion(1))
 		if attErr != nil {
 			return nil, errorfamily.WrapInfrastructuref(attErr, "cqrs.thread_append", "build AttachmentStored")
 		}
@@ -146,14 +146,14 @@ func decideAdvanceDelivery(s threadState, ver event.Version, cmd AdvanceDelivery
 		return nil, nil // the settled state answers; verdicts never land here while deliveryMoves stands
 	}
 	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.OutboundAdvanced{})),
-		cmd.StreamID(), ThreadsStreamType, ver+1, domain.OutboundAdvanced{
+		cmd.StreamID(), ThreadsStreamType, ver.Increment(), domain.OutboundAdvanced{
 			Key:           domain.MessageRowKey{MessageID: cmd.MessageID.String()},
 			MessageID:     cmd.MessageID.String(),
 			Status:        string(next.Status),
 			ProviderRef:   next.ProviderRef,
 			FailureKind:   string(next.FailureKind),
 			FailureDetail: next.FailureDetail,
-		})
+		}, event.WithSchemaVersion(1))
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.thread_advance", "build OutboundAdvanced")
 	}
@@ -177,14 +177,14 @@ func decideSetThreadFlag(s threadState, ver event.Version, cmd SetThreadFlag) ([
 		next.Muted = cmd.On
 	}
 	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.ThreadFlagSet{})),
-		cmd.StreamID(), ThreadsStreamType, ver+1, domain.ThreadFlagSet{
+		cmd.StreamID(), ThreadsStreamType, ver.Increment(), domain.ThreadFlagSet{
 			Key:      domain.ThreadRowKey{ThreadID: s.ThreadID},
 			Summary:  next.summaryImage(),
 			Owner:    cmd.Owner.String(),
 			ThreadID: s.ThreadID,
 			Flag:     cmd.Flag,
 			On:       cmd.On,
-		})
+		}, event.WithSchemaVersion(1))
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.thread_flag", "build ThreadFlagSet")
 	}
@@ -198,12 +198,12 @@ func decideMarkThreadRead(s threadState, ver event.Version, cmd MarkThreadRead) 
 	next := s
 	next.Unread = 0
 	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.ThreadUnreadCleared{})),
-		cmd.StreamID(), ThreadsStreamType, ver+1, domain.ThreadUnreadCleared{
+		cmd.StreamID(), ThreadsStreamType, ver.Increment(), domain.ThreadUnreadCleared{
 			Key:      domain.ThreadRowKey{ThreadID: s.ThreadID},
 			Summary:  next.summaryImage(),
 			Owner:    cmd.Owner.String(),
 			ThreadID: s.ThreadID,
-		})
+		}, event.WithSchemaVersion(1))
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.thread_read", "build ThreadUnreadCleared")
 	}
@@ -225,9 +225,9 @@ func decideDeleteThread(s threadState, ver event.Version, cmd DeleteThread) ([]e
 		Reason:        cmd.Reason,
 	}
 	evts := make([]event.Event, 0, 1+len(s.Messages)+len(s.AttachIDs))
-	next := func() event.Version { return ver + event.Version(len(evts)) + 1 }
+	next := func() event.Version { return ver.Increment().Add(uint(len(evts))) }
 	tombstone, err := event.New(event.Type(metaengine.EventTypeName(domain.ThreadDeleted{})),
-		cmd.StreamID(), ThreadsStreamType, next(), deleted)
+		cmd.StreamID(), ThreadsStreamType, next(), deleted, event.WithSchemaVersion(1))
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.thread_delete", "build ThreadDeleted")
 	}
@@ -237,7 +237,7 @@ func decideDeleteThread(s threadState, ver event.Version, cmd DeleteThread) ([]e
 			cmd.StreamID(), ThreadsStreamType, next(), domain.MessageRemoved{
 				Key:       domain.MessageRowKey{MessageID: msgID},
 				MessageID: msgID,
-			})
+			}, event.WithSchemaVersion(1))
 		if remErr != nil {
 			return nil, errorfamily.WrapInfrastructuref(remErr, "cqrs.thread_delete", "build MessageRemoved")
 		}
@@ -248,7 +248,7 @@ func decideDeleteThread(s threadState, ver event.Version, cmd DeleteThread) ([]e
 			cmd.StreamID(), ThreadsStreamType, next(), domain.AttachmentRemoved{
 				Key: domain.AttachmentRowKey{ID: attID},
 				ID:  attID,
-			})
+			}, event.WithSchemaVersion(1))
 		if remErr != nil {
 			return nil, errorfamily.WrapInfrastructuref(remErr, "cqrs.thread_delete", "build AttachmentRemoved")
 		}

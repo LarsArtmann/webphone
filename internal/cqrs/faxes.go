@@ -130,7 +130,7 @@ func decideRecordFax(s faxState, ver event.Version, cmd RecordFax) ([]event.Even
 		UpdatedAt:    cmd.Job.UpdatedAt,
 	}
 	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.FaxReceipted{})),
-		cmd.StreamID(), FaxesStreamType, ver+1, fact)
+		cmd.StreamID(), FaxesStreamType, ver.Increment(), fact, event.WithSchemaVersion(1))
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.fax_record", "build FaxReceipted")
 	}
@@ -156,7 +156,7 @@ func decideAdvanceFaxStatus(s faxState, ver event.Version, cmd AdvanceFaxStatus)
 		AdvancedAt:  cmd.At,
 	}
 	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.FaxStatusAdvanced{})),
-		cmd.StreamID(), FaxesStreamType, ver+1, fact)
+		cmd.StreamID(), FaxesStreamType, ver.Increment(), fact, event.WithSchemaVersion(1))
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.fax_advance", "build FaxStatusAdvanced")
 	}
@@ -168,7 +168,7 @@ func decideExpungeFax(s faxState, ver event.Version, cmd ExpungeFax) ([]event.Ev
 		return nil, nil
 	}
 	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.FaxExpunged{})),
-		cmd.StreamID(), FaxesStreamType, ver+1, domain.FaxExpunged{Key: domain.FaxKey{ID: cmd.FaxID.String()}})
+		cmd.StreamID(), FaxesStreamType, ver.Increment(), domain.FaxExpunged{Key: domain.FaxKey{ID: cmd.FaxID.String()}}, event.WithSchemaVersion(1))
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.fax_expunge", "build FaxExpunged")
 	}

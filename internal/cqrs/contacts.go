@@ -97,12 +97,12 @@ func decideSaveContact(s contactsState, ver event.Version, cmd SaveContact) ([]e
 		return nil, errorfamily.WrapRejectionf(readmodels.ErrListFull, "cqrs.contact_list_full",
 			"%s at %d contacts", owner, contactsMaxPerOwner)
 	}
-	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.ContactSaved{})), cmd.StreamID(), ContactsStreamType, ver+1, domain.ContactSaved{
+	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.ContactSaved{})), cmd.StreamID(), ContactsStreamType, ver.Increment(), domain.ContactSaved{
 		Key:       domain.ContactKey{Owner: owner, Phone: phone},
 		ID:        id,
 		Name:      cmd.Contact.Name,
 		CreatedAt: createdAt,
-	})
+	}, event.WithSchemaVersion(1))
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.contact_save", "build ContactSaved")
 	}
@@ -114,9 +114,9 @@ func decideDeleteContact(s contactsState, ver event.Version, cmd DeleteContact) 
 		if slot.ID != cmd.ContactID.String() {
 			continue
 		}
-		evt, err := event.New(event.Type(metaengine.EventTypeName(domain.ContactDeleted{})), cmd.StreamID(), ContactsStreamType, ver+1, domain.ContactDeleted{
+		evt, err := event.New(event.Type(metaengine.EventTypeName(domain.ContactDeleted{})), cmd.StreamID(), ContactsStreamType, ver.Increment(), domain.ContactDeleted{
 			Key: domain.ContactKey{Owner: cmd.Owner, Phone: phone},
-		})
+		}, event.WithSchemaVersion(1))
 		if err != nil {
 			return nil, errorfamily.WrapInfrastructuref(err, "cqrs.contact_delete", "build ContactDeleted")
 		}
