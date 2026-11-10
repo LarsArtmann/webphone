@@ -66,5 +66,39 @@
           type = "app";
           program = lib.getExe script;
         };
+
+      # The prod UI-tracking loop as ONE command: `nix run .#ui-track -- \
+      #   --base-url https://host --track` (creds in
+      #   WEBPHONE_CAPTURE_EXTENSION / WEBPHONE_CAPTURE_PASSWORD). Carries
+      #   the whole capture env (chromium + chromedriver + selenium +
+      #   pillow) — no nested `nix shell` dance. The harness script is
+      #   copied from THIS flake's source tree into the store, so the app
+      #   always rides the committed instrument.
+      apps.ui-track =
+        let
+          captureEnv = pkgs.python3.withPackages (
+            ps: [
+              ps.selenium
+              ps.pillow
+            ]
+          );
+          captureScript = pkgs.runCommand "ui-capture.py" { } ''cp ${../scripts/ui-capture.py} $out'';
+          script = pkgs.writeShellApplication {
+            name = "webphone-ui-track";
+            runtimeInputs = [
+              pkgs.chromium
+              pkgs.chromedriver
+              captureEnv
+            ];
+            checkPhase = ""; # the text is a plain exec; shellcheck adds no value here
+            text = ''
+              exec ${captureEnv}/bin/python3 ${captureScript} "$@"
+            '';
+          };
+        in
+        {
+          type = "app";
+          program = lib.getExe script;
+        };
     };
 }

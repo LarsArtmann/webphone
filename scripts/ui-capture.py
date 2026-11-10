@@ -895,7 +895,14 @@ def track(
     shots = []
     diffed: list[tuple[str, float]] = []
     clipped_keys: set[str] = set()
-    for path in sorted(glob.glob(os.path.join(run_dir, "*.png"))):
+    # The layout-proof artifact (zz-thread-collapsed) is evidence for the
+    # proof, not a matrix cell — it must not enter the diff ledger.
+    matrix = [
+        p
+        for p in sorted(glob.glob(os.path.join(run_dir, "*.png")))
+        if not os.path.basename(p).startswith("zz-")
+    ]
+    for path in matrix:
         key = shot_key(path)
         entry: dict[str, object] = {
             "key": key,
