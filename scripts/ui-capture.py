@@ -1614,6 +1614,16 @@ def discard_empty_run(out_dir: str) -> None:
         print(f"run discarded (no shots captured): {out_dir}")
 
 
+def open_target(produced: str | None, out_dir: str, has_display: bool) -> str | None:
+    """The --open decision: raise the track artifact (compare.html when a
+    previous run existed, else the run's gallery), falling back to the
+    out dir; None = no display on this host, nothing to open (the caller
+    prints the note). Pure so --self-test can pin it without a display."""
+    if not has_display:
+        return None
+    return "file://" + os.path.abspath(produced or out_dir)
+
+
 def self_test() -> int:
     """Verify every pure helper this harness depends on — NO browser, NO
     server. Pillow pixel math runs only when the capture env carries it;
@@ -1718,6 +1728,28 @@ def self_test() -> int:
             repr(removed),
         )
         check("prune refuses keep<1", prune_runs(td, 0) == [])
+
+        empty = os.path.join(td, "20260104T000000Z")
+        os.makedirs(empty)
+        discard_empty_run(empty)
+        check("discard removes the EMPTY crashed run", not os.path.exists(empty))
+        keep = os.path.join(td, "20260105T000000Z")
+        os.makedirs(keep)
+        with open(os.path.join(keep, "01-a-light.png"), "wb") as fh:
+            fh.write(b"png")
+        discard_empty_run(keep)
+        check("discard keeps a run that has shots", os.path.exists(keep))
+
+    check(
+        "open raises the produced artifact",
+        open_target("runs/x/compare.html", "runs/x", True)
+        == "file://" + os.path.abspath("runs/x/compare.html"),
+    )
+    check(
+        "open falls back to the run dir",
+        open_target(None, "runs/first", True) == "file://" + os.path.abspath("runs/first"),
+    )
+    check("open headless refuses", open_target("runs/x/compare.html", "runs/x", False) is None)
 
     try:
         from PIL import Image
@@ -2193,8 +2225,13 @@ def main() -> int:
             prune_keep=args.prune,
         )
         if args.open:
-            if os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"):
-                webbrowser.open("file://" + os.path.abspath(produced or out_dir))
+            shown = open_target(
+                produced,
+                out_dir,
+                bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")),
+            )
+            if shown:
+                webbrowser.open(shown)
             else:
                 print("--open: no display on this host — open the HTML manually")
     if only is not None and not remote:

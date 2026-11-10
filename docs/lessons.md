@@ -1071,3 +1071,13 @@ recording keeps one toast") and docs/error-contract.md.
   push, and `gh run list` after (the 13:50Z red belonged to the other
   train and self-healed — the verdict that matters is the run for YOUR
   push sha).
+- **A helper server configured by a dying process dies with it.** The
+  fake Kith machine API behind the CRM-strip shot was started inside a
+  short-lived python snippet, so it vanished the moment the snippet
+  returned — the app then booted against a dead port, the CRM seam
+  failed closed, and two boots went by before the real bug was
+  visible: not the app, the harness setup. Every server the subject
+  depends on must be launched from a process that OUTLIVES the
+  verification (background shell, unit file, `nohup`), and a
+  "seam refused/unavailable" symptom must be answered by a liveness
+  probe of its dependencies before anything else is blamed.
