@@ -77,6 +77,42 @@ func TestReportsTotalsGridRendersTheNoAnswerCardOnlyWhenNonZero(t *testing.T) {
 	}
 }
 
+// TestReportsTotalsRendersTheNoAnswerCauseRanking pins the E2 subline:
+// the trunk's own vocabulary under the NoAnswer card, loudest cause
+// first, ties by name — and no subline at all when the fold saw no
+// cause (the same byte-determinism rule the ladders follow).
+func TestReportsTotalsRendersTheNoAnswerCauseRanking(t *testing.T) {
+	props := ReportsPanelProps{
+		Enabled: true,
+		Report: reports.Report{
+			Totals:          reports.Totals{Calls: 4, Outbound: 4, NoAnswer: 4},
+			NoAnswerByCause: map[string]int{"NO_ANSWER": 2, "USER_BUSY": 1, "CALL_REJECTED": 1},
+		},
+		Lang: LangEN,
+	}
+	rendered := renderComponent(t, reportsTotals(props))
+	want := `<p class="wp-muted wp-reports-causes">No answer by cause: NO_ANSWER 2 · CALL_REJECTED 1 · USER_BUSY 1</p>`
+	if !strings.Contains(rendered, want) {
+		t.Errorf("cause ranking bytes:\n%.600s\nwant to contain:\n%s", rendered, want)
+	}
+
+	props.Report.NoAnswerByCause = nil
+	quiet := renderComponent(t, reportsTotals(props))
+	if strings.Contains(quiet, "wp-reports-causes") {
+		t.Errorf("a window without causes must not render the ranking:\n%s", quiet)
+	}
+}
+
+// TestNoAnswerCausesLineLocalizesTheLead pins the German byte shape:
+// the lead is the only localized part, the causes stay the trunk's own.
+func TestNoAnswerCausesLineLocalizesTheLead(t *testing.T) {
+	line := noAnswerCausesLine(LangDE, map[string]int{"USER_BUSY": 3})
+	want := "Keine Antwort, nach Grund: USER_BUSY 3"
+	if line != want {
+		t.Errorf("de line = %q, want %q", line, want)
+	}
+}
+
 // undatedProps is a window whose every record resisted its timestamp:
 // real totals and contacts, no day bucket at all.
 func undatedProps() ReportsPanelProps {

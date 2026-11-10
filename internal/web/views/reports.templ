@@ -301,10 +301,9 @@ func noAnswerCausesLine(lang Lang, causes map[string]int) string {
 	slices.SortFunc(rows, func(a, b causeRow) int {
 		return cmp.Or(b.count-a.count, strings.Compare(a.name, b.name))
 	})
-	parts := make([]string, 0, len(rows)+1)
-	parts = append(parts, T(lang, "reports.noanswer.causes"))
+	parts := make([]string, 0, len(rows))
 	for _, row := range rows {
 		parts = append(parts, fmt.Sprintf("%s %d", row.name, row.count))
 	}
-	return strings.Join(parts, " ")
+	return T(lang, "reports.noanswer.causes") + " " + strings.Join(parts, " · ")
 }

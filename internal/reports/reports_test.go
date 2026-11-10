@@ -91,6 +91,37 @@ func TestNoAnswerCountsOutboundThatNeverConnected(t *testing.T) {
 	}
 }
 
+// TestNoAnswerByCauseNamesTheTrunkVerdict pins the E2 cause buckets: a
+// never-connected outbound lands its FreeSWITCH hangup cause verbatim,
+// an empty cause counts as UNKNOWN (the row exists, its reason did not
+// survive the trip), and answered/missed calls contribute nothing.
+func TestNoAnswerByCauseNamesTheTrunkVerdict(t *testing.T) {
+	report := reports.Aggregate(reports.Input{
+		Entries: []pbx.CDR{
+			{Context: "internal", CallerIDNumber: "1001", DestinationNumber: "+4930111", Start: "2026-11-04 09:00:00", Billsec: 0, HangupCause: "NO_ANSWER"},
+			{Context: "internal", CallerIDNumber: "1001", DestinationNumber: "+4930122", Start: "2026-11-04 09:05:00", Billsec: 0, HangupCause: "USER_BUSY"},
+			{Context: "internal", CallerIDNumber: "1001", DestinationNumber: "+4930133", Start: "2026-11-04 09:10:00", Billsec: 0, HangupCause: "NO_ANSWER"},
+			{Context: "internal", CallerIDNumber: "1001", DestinationNumber: "+4930144", Start: "2026-11-04 09:15:00", Billsec: 0, HangupCause: ""},
+			{Context: "internal", CallerIDNumber: "1001", DestinationNumber: "+4930155", Start: "2026-11-04 09:20:00", Billsec: 45, HangupCause: "NORMAL_CLEARING"},
+			{Context: "public", CallerIDNumber: "+4930166", DestinationNumber: "1001", Start: "2026-11-04 09:25:00", Billsec: 0, HangupCause: "ORIGINATOR_CANCEL"},
+		},
+		Location: berlin,
+	})
+
+	want := map[string]int{"NO_ANSWER": 2, "USER_BUSY": 1, "UNKNOWN": 1}
+	if len(report.NoAnswerByCause) != len(want) {
+		t.Fatalf("causes = %v, want %v", report.NoAnswerByCause, want)
+	}
+	for cause, count := range want {
+		if report.NoAnswerByCause[cause] != count {
+			t.Fatalf("cause %s = %d, want %d (%v)", cause, report.NoAnswerByCause[cause], count, report.NoAnswerByCause)
+		}
+	}
+	if report.Totals.NoAnswer != 4 {
+		t.Fatalf("no-answer total = %d, want 4", report.Totals.NoAnswer)
+	}
+}
+
 // TestContactsRankByTalkThenVolumeThenNumber pins the total order: talk
 // time first (where the time went), volume next, and the number last so
 // two runs over the same records can never disagree — map iteration
