@@ -1015,3 +1015,24 @@ pushing.
   share a DID — inbound needs its own fax DID (the stack asserts
   `faxDid ≠ voice DID`), outbound needs a fax app + fax-enabled number
   or a bridge implementing `/fax`.
+
+### The dead play button and the two-verdict split brain (2026-11-10, voicemail playback)
+
+The play button on `pbx.artmann.tech/voicemail` did nothing visible: the
+`play()` rejection was swallowed (`started.catch(function () {})`) and the
+audio element carried no `error` listener, so a 404/403/undecodable
+recording answered NOTHING — the one feedback channel left was the
+waveform-fallback toast, which fired on the same root cause and said the
+opposite thing ("waveform unavailable — using built-in player controls"
+over a player that could not play). The fix order matters and is the
+lesson: first give the failure its OWN surface (one honest toast per
+episode, deduped per element, re-armed after a success), THEN audit every
+other surface that can fire on the same failure — the fallback's toast now
+stays silent for the unreachable-recording class (the discriminator is
+`recordingArrived`, set where the fetch actually runs, so the wave path
+and the player path cannot disagree), and keeps talking only for genuine
+capability shortfalls where playback still works. Two auto-surfaces on one
+failure episode are a split brain even when both are individually honest;
+the capability/failure class split must be decided at the detection site,
+not reconstructed at the display site. Pinned in shell.test.mjs ("a dead
+recording keeps one toast") and docs/error-contract.md.

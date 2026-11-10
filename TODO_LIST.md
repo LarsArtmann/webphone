@@ -14,6 +14,30 @@ front matter does not carry their history (one home per fact, per the rule above
 
 ## Open tasks
 
+### Voicemail playback train residue (2026-11-10 — the fix is pushed; production legs open)
+
+The two product defects are fixed and CI-green (`fc352e66`: honest toast +
+Range forwarding; `shell.js` one-honest-toast split-brain repair). The LIVE
+root cause of the original "play does nothing" report is still unconfirmed —
+no credentials on the deployment. Discriminating evidence: the next failure
+now names itself via the toast (silence = fixed; text = live trigger named).
+
+- [ ] **Stack redeploy** riding webphone `main` so the fixes reach
+      `pbx.artmann.tech`; then click play and RECORD the verdict (the new
+      toast text is the live trigger's name).
+- [ ] **Host-side diagnostics** (needs deployment access):
+      `journalctl -u telephony-operator | grep -E "send_file|audio not found"`
+      + `systemctl status telephony-fs-state-acl` — the runbook's audio-404
+      class (`docs/ops-runbook.md` § audio).
+- [ ] **Stack coverage arms**: browser E2E voicemail playback (zero
+      voicemail surface in `tests/browser-e2e.py` today);
+      `verify-live.sh` authenticated audio fetch; `operator.nix` pin for
+      206-through-the-proxy.
+- [ ] **Local freshness replay** before push (rebuild `tw.css` + `git diff`
+      inside the battery) — the advisory `tw-freshness` lane armed on
+      external nixpkgs drift (tailwindcss v4.3.4) and reded after landing;
+      a local replay would have caught it pre-push.
+
 ### Reports tab quality train (2026-11-10, owner triage of the live panel — plan: docs/planning/2026-11-10_10-15_SUPERB-reports-tab-quality-plan.html)
 
 DONE 2026-11-10 (trains cabdeeb8 / abed8247 / 3d1c1ba2 / 12cee0b3): C1 is the one-line root fix
