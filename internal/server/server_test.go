@@ -419,6 +419,37 @@ func TestServedPageHoldsTheDomContract(t *testing.T) {
 	}
 }
 
+// TestAnonymousDeepLinksRenderTheDoorOnly pins the anonymous deep-link
+// shape: every tab URL answers 200 with the shell whose tab region is
+// the SignInHint door (the SPA-style entry the post-login island boot
+// expects), and NO tab content — panel rows and affordances are built
+// only inside the session block of renderShell, so an anonymous request
+// can neither leak data nor promise an affordance (the live deployment
+// answers /voicemail with this shape; pinned here so it stays a door,
+// never a floor plan).
+func TestAnonymousDeepLinksRenderTheDoorOnly(t *testing.T) {
+	c := newClient(t)
+	leaks := map[string]string{
+		"/messages":  "wp-thread-rowwrap",
+		"/voicemail": "wp-vm-play",
+		"/reports":   "wp-reports-totals",
+		"/settings":  "wp-settings-head",
+	}
+	for _, path := range []string{"/messages", "/messages/t1", "/fax", "/voicemail", "/history", "/reports", "/contacts", "/settings"} {
+		resp, body := c.do(http.MethodGet, path, nil, "")
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("anonymous %s: status %d, want 200 (the shell is the door)", path, resp.StatusCode)
+		}
+		page := string(body)
+		if !strings.Contains(page, "wp-welcome-hint") {
+			t.Errorf("anonymous %s lost the SignInHint door", path)
+		}
+		if marker := leaks[path]; marker != "" && strings.Contains(page, marker) {
+			t.Errorf("anonymous %s leaked panel markup (%s) — tab content must build only for a session", path, marker)
+		}
+	}
+}
+
 // TestServedPagePreloadsIslandGraph pins the head preload contract: one
 // modulepreload link per island ES module (the graph list is generated
 // from the embedded files — it can only drift if the rendering loop is
