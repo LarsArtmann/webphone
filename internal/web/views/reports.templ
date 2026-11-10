@@ -48,26 +48,43 @@ templ ReportsPanel(props ReportsPanelProps) {
 			<p class="wp-empty">{ T(props.Lang, "reports.needsAPI.pre") }<code>phone_api_url</code>{ T(props.Lang, "reports.needsAPI.post") }</p>
 		} else if props.Error == "" && props.Report.Totals.Calls == 0 {
 			@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, "reports.empty"), Icon: icons.Clock})
+		} else if props.Error == "" && len(props.Report.Days) == 0 {
+			// Every record resists its timestamp (Calls > 0 with no day
+			// bucket means all of them are Undated): the temporal sections
+			// would read as a fake quiet week, so the panel names the
+			// real cause and renders only the date-independent facts.
+			@display.EmptyState(display.EmptyStateProps{
+				Title:       T(props.Lang, "reports.undated.empty.title"),
+				Description: T(props.Lang, "reports.undated.empty.desc"),
+				Icon:        icons.Clock,
+			})
+			@reportsTotals(props)
+			<p class="wp-muted wp-reports-undated">
+				{ T(props.Lang, "reports.undated") } { fmtInt(props.Report.Undated) }
+			</p>
+			@reportsTopContacts(props)
 		} else if props.Error == "" {
 			@reportsWeek(props)
 			@reportsTotals(props)
 			@reportsDays(props)
 			@reportsBusiestHours(props)
-			@reportsTopContacts(props)
 			if props.Report.Undated > 0 {
 				<p class="wp-muted wp-reports-undated">
 					{ T(props.Lang, "reports.undated") } { fmtInt(props.Report.Undated) }
 				</p>
 			}
+			@reportsTopContacts(props)
 		}
 	</section>
 }
 
 // reportsWeek is the one-number-one-bar headline: how much this week has
-// spent, against the budget when the deployment configured one.
+// spent, against the budget when the deployment configured one. It needs
+// at least one datable record — without that guard an all-undated window
+// would headline a week of zeros that looks like a quiet week.
 templ reportsWeek(props ReportsPanelProps) {
 	{{ week := props.Report.ThisWeek
-	   showWeek := !week.Start.IsZero() }}
+	   showWeek := !week.Start.IsZero() && len(props.Report.Days) > 0 }}
 	if showWeek {
 		<section class="wp-reports-week">
 			<h3 class="wp-reports-head">{ T(props.Lang, "reports.week") }</h3>
@@ -126,21 +143,24 @@ templ reportsStat(value, label string, alert bool) {
 
 // reportsDays is the per-day ladder, each day's talk time bar sized
 // against the window's own busiest day — a shape, not an absolute scale
-// nobody can calibrate.
+// nobody can calibrate. Guarded like the hours and contact ladders: a
+// heading above nothing reads as data, not absence.
 templ reportsDays(props ReportsPanelProps) {
 	{{ max := props.Report.MaxDayTalk() }}
-	<section class="wp-reports-section">
-		<h3 class="wp-reports-head">{ T(props.Lang, "reports.days") }</h3>
-		for _, day := range props.Report.Days {
-			<div class="wp-reports-row">
-				<span class="wp-reports-day">{ formatFor(props.Lang, day.Date, "Mon 02.01.", "Mon, Jan 2") }</span>
-				<span class="wp-muted wp-reports-day-meta">
-					{ fmtInt(day.Calls) } · { talkTimeLabel(day.Talk) }
-				</span>
-				<meter class="wp-bar" min="0" max={ fmtInt(dayScaleMax(max)) } value={ fmtInt(secondsOf(day.Talk)) }></meter>
-			</div>
-		}
-	</section>
+	if len(props.Report.Days) > 0 {
+		<section class="wp-reports-section">
+			<h3 class="wp-reports-head">{ T(props.Lang, "reports.days") }</h3>
+			for _, day := range props.Report.Days {
+				<div class="wp-reports-row">
+					<span class="wp-reports-day">{ formatFor(props.Lang, day.Date, "Mon 02.01.", "Mon, Jan 2") }</span>
+					<span class="wp-muted wp-reports-day-meta">
+						{ fmtInt(day.Calls) } · { talkTimeLabel(day.Talk) }
+					</span>
+					<meter class="wp-bar" min="0" max={ fmtInt(dayScaleMax(max)) } value={ fmtInt(secondsOf(day.Talk)) }></meter>
+				</div>
+			}
+		</section>
+	}
 }
 
 // reportsBusiestHours answers "when does the phone ring": the hour
