@@ -34,10 +34,10 @@ func reportsStub(t *testing.T) *httptest.Server {
 
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"entries":[
-			{"context":"public","caller_id_number":"+441632960961","caller_id_name":"Alice","destination_number":"1001","start":"` + yesterday + ` 09:00","billsec":120},
-			{"context":"public","caller_id_number":"+441632960961","caller_id_name":"Alice","destination_number":"1001","start":"` + today + ` 10:00","billsec":60},
-			{"context":"public","caller_id_number":"+491700000000","caller_id_name":"Bob","destination_number":"1001","start":"` + today + ` 11:00","billsec":0},
-			{"context":"from-internal","caller_id_number":"1001","caller_id_name":"","destination_number":"+493012345678","start":"` + today + ` 12:00","billsec":30}
+			{"context":"public","caller_id_number":"+441632960961","caller_id_name":"Alice","destination_number":"1001","start":"` + yesterday + ` 09:00:00","billsec":120},
+			{"context":"public","caller_id_number":"+441632960961","caller_id_name":"Alice","destination_number":"1001","start":"` + today + ` 10:00:00","billsec":60},
+			{"context":"public","caller_id_number":"+491700000000","caller_id_name":"Bob","destination_number":"1001","start":"` + today + ` 11:00:00","billsec":0},
+			{"context":"from-internal","caller_id_number":"1001","caller_id_name":"","destination_number":"+493012345678","start":"` + today + ` 12:00:00","billsec":30}
 		]}`))
 	}))
 	t.Cleanup(srv.Close)

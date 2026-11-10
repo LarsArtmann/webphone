@@ -32,10 +32,10 @@ func cdr(context, caller, dest, start string, billsec int) pbx.CDR {
 func TestAggregateFoldsDirectionOutcomeAndTalk(t *testing.T) {
 	report := reports.Aggregate(reports.Input{
 		Entries: []pbx.CDR{
-			cdr("public", "+4930111", "1001", "2026-11-04 09:05", 90),
-			cdr("public", "+4930222", "1001", "2026-11-04 10:15", 0),
-			cdr("internal", "1001", "+4930333", "2026-11-04 11:30", 30),
-			cdr("internal", "1001", "+4930444", "2026-11-04 12:00", 0),
+			cdr("public", "+4930111", "1001", "2026-11-04 09:05:00", 90),
+			cdr("public", "+4930222", "1001", "2026-11-04 10:15:00", 0),
+			cdr("internal", "1001", "+4930333", "2026-11-04 11:30:00", 30),
+			cdr("internal", "1001", "+4930444", "2026-11-04 12:00:00", 0),
 		},
 		Location: berlin,
 		Now:      time.Date(2026, 11, 4, 18, 0, 0, 0, berlin),
@@ -71,10 +71,10 @@ func TestAggregateFoldsDirectionOutcomeAndTalk(t *testing.T) {
 func TestContactsRankByTalkThenVolumeThenNumber(t *testing.T) {
 	report := reports.Aggregate(reports.Input{
 		Entries: []pbx.CDR{
-			cdr("public", "+49b", "1001", "2026-11-04 09:00", 60),
-			cdr("public", "+49a", "1001", "2026-11-04 09:10", 60),
-			cdr("internal", "1001", "+49c", "2026-11-04 09:20", 300),
-			cdr("public", "+49a", "1001", "2026-11-04 09:30", 0),
+			cdr("public", "+49b", "1001", "2026-11-04 09:00:00", 60),
+			cdr("public", "+49a", "1001", "2026-11-04 09:10:00", 60),
+			cdr("internal", "1001", "+49c", "2026-11-04 09:20:00", 300),
+			cdr("public", "+49a", "1001", "2026-11-04 09:30:00", 0),
 		},
 		Location: berlin,
 	})
@@ -106,9 +106,9 @@ func TestContactsRankByTalkThenVolumeThenNumber(t *testing.T) {
 func TestBusiestHoursOrdersAndSkipsEmptyHours(t *testing.T) {
 	report := reports.Aggregate(reports.Input{
 		Entries: []pbx.CDR{
-			cdr("public", "+4930", "1001", "2026-11-04 17:05", 30),
-			cdr("public", "+4931", "1001", "2026-11-04 17:45", 30),
-			cdr("internal", "1001", "+4932", "2026-11-04 08:10", 10),
+			cdr("public", "+4930", "1001", "2026-11-04 17:05:00", 30),
+			cdr("public", "+4931", "1001", "2026-11-04 17:45:00", 30),
+			cdr("internal", "1001", "+4932", "2026-11-04 08:10:00", 10),
 		},
 		Location: berlin,
 	})
@@ -139,10 +139,10 @@ func TestThisWeekCountsOnlyTheMondayWindow(t *testing.T) {
 	// 2026-11-04 is a Wednesday; that week started Monday 2026-11-02.
 	report := reports.Aggregate(reports.Input{
 		Entries: []pbx.CDR{
-			cdr("public", "+4930", "1001", "2026-10-28 09:00", 600), // previous week
-			cdr("public", "+4931", "1001", "2026-11-01 23:30", 120), // Sunday: previous week
-			cdr("public", "+4932", "1001", "2026-11-02 00:05", 60),  // Monday: this week
-			cdr("public", "+4933", "1001", "2026-11-04 09:00", 60),  // Wednesday: this week
+			cdr("public", "+4930", "1001", "2026-10-28 09:00:00", 600), // previous week
+			cdr("public", "+4931", "1001", "2026-11-01 23:30:00", 120), // Sunday: previous week
+			cdr("public", "+4932", "1001", "2026-11-02 00:05:00", 60),  // Monday: this week
+			cdr("public", "+4933", "1001", "2026-11-04 09:00:00", 60),  // Wednesday: this week
 		},
 		Location: berlin,
 		Now:      time.Date(2026, 11, 4, 12, 0, 0, 0, berlin),
@@ -174,7 +174,7 @@ func TestThisWeekCountsOnlyTheMondayWindow(t *testing.T) {
 // OverBudget stays true so the copy can say what happened.
 func TestBudgetBarClampsAndFlagsOverspend(t *testing.T) {
 	report := reports.Aggregate(reports.Input{
-		Entries:  []pbx.CDR{cdr("public", "+4930", "1001", "2026-11-04 09:00", 300)},
+		Entries:  []pbx.CDR{cdr("public", "+4930", "1001", "2026-11-04 09:00:00", 300)},
 		Location: berlin,
 		Now:      time.Date(2026, 11, 4, 12, 0, 0, 0, berlin),
 		Budget:   2 * time.Minute,
@@ -189,7 +189,7 @@ func TestBudgetBarClampsAndFlagsOverspend(t *testing.T) {
 	}
 
 	half := reports.Aggregate(reports.Input{
-		Entries:  []pbx.CDR{cdr("public", "+4930", "1001", "2026-11-04 09:00", 60)},
+		Entries:  []pbx.CDR{cdr("public", "+4930", "1001", "2026-11-04 09:00:00", 60)},
 		Location: berlin,
 		Now:      time.Date(2026, 11, 4, 12, 0, 0, 0, berlin),
 		Budget:   2 * time.Minute,
@@ -209,21 +209,22 @@ func TestUnparsableStartsAreCountedNotGuessed(t *testing.T) {
 		Entries: []pbx.CDR{
 			cdr("public", "+4930", "1001", "", 60),
 			cdr("public", "+4931", "1001", "not-a-timestamp", 30),
-			cdr("public", "+4932", "1001", "2026-11-04 09:00", 60),
+			cdr("public", "+4932", "1001", "2026-11-04 09:00:00", 60),
+			cdr("public", "+4933", "1001", "2026-11-04 09:05", 60), // minute-only: the pre-2026-11-10 layout
 		},
 		Location: berlin,
 	})
 
-	if report.Totals.Calls != 3 || report.Totals.Talk != 150*time.Second {
-		t.Fatalf("totals = %+v, want 3 calls / 2m30s", report.Totals)
+	if report.Totals.Calls != 4 || report.Totals.Talk != 210*time.Second {
+		t.Fatalf("totals = %+v, want 4 calls / 3m30s", report.Totals)
 	}
 
-	if report.Undated != 2 {
-		t.Fatalf("undated = %d, want 2", report.Undated)
+	if report.Undated != 3 {
+		t.Fatalf("undated = %d, want 3", report.Undated)
 	}
 
-	if len(report.Days) != 1 || len(report.Contacts) != 3 {
-		t.Fatalf("days = %d contacts = %d, want 1 and 3", len(report.Days), len(report.Contacts))
+	if len(report.Days) != 1 || len(report.Contacts) != 4 {
+		t.Fatalf("days = %d contacts = %d, want 1 and 4", len(report.Days), len(report.Contacts))
 	}
 }
 
@@ -232,7 +233,7 @@ func TestUnparsableStartsAreCountedNotGuessed(t *testing.T) {
 // claim at all (rather than a guessed window).
 func TestZeroClockRendersWithoutAWeek(t *testing.T) {
 	report := reports.Aggregate(reports.Input{
-		Entries:  []pbx.CDR{cdr("public", "+4930", "1001", "2026-11-04 09:00", 60)},
+		Entries:  []pbx.CDR{cdr("public", "+4930", "1001", "2026-11-04 09:00:00", 60)},
 		Location: berlin,
 	})
 
@@ -278,9 +279,9 @@ func TestEmptyWindowReportsNothing(t *testing.T) {
 func TestDaysAreAscending(t *testing.T) {
 	report := reports.Aggregate(reports.Input{
 		Entries: []pbx.CDR{
-			cdr("public", "+4930", "1001", "2026-11-04 09:00", 60),
-			cdr("public", "+4931", "1001", "2026-11-01 09:00", 60),
-			cdr("public", "+4932", "1001", "2026-11-03 09:00", 60),
+			cdr("public", "+4930", "1001", "2026-11-04 09:00:00", 60),
+			cdr("public", "+4931", "1001", "2026-11-01 09:00:00", 60),
+			cdr("public", "+4932", "1001", "2026-11-03 09:00:00", 60),
 		},
 		Location: berlin,
 	})

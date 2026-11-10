@@ -21,10 +21,13 @@ import (
 	"github.com/larsartmann/webphone/internal/pbx"
 )
 
-// startLayout is the phone API's CDR start format ("2026-11-04 18:42").
-// It matches the History tab's day bucketing: both read the same wire
-// field, so a format change has to move both.
-const startLayout = "2006-01-02 15:04"
+// startLayout is the phone API's CDR start format ("2026-11-04 18:42:13").
+// FreeSWITCH writes start_stamp as %Y-%m-%d %T (switch_channel.c) and the
+// operator API passes it through verbatim, so the seconds are load-bearing:
+// parsing minute-only left every live record Undated (2026-11-10 triage).
+// It matches the History tab's day bucketing (Start[:10]): both read the
+// same wire field, so a format change has to move both.
+const startLayout = "2006-01-02 15:04:05"
 
 // HoursInDay is the size of the Report.Hours ladder.
 const HoursInDay = 24
