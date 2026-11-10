@@ -76,6 +76,59 @@ window, so below-the-fold layout rot is visible; `--viewport-only` opts
 out and `--viewport WxH` (repeatable) adds extra passes (e.g. 390x844
 for the mobile layout).
 
+Conditional surfaces (2026-11-10): the matrix follows the deployment, not
+a hardcoded list — `/enroll` joins the anonymous pass when the page
+actually renders the form (probe GET /enroll, never a guessed link),
+`admin` joins when the session's nav carries the admin link, and
+`crm-context` joins when a live thread fragment carries the CRM strip.
+Each conditional surface carries its own marker pin; the styled-404
+skip stays the backstop for capabilities withheld mid-run.
+
+Instrument honesty (2026-11-10): `--self-test` verifies every pure
+helper (shot keys, viewport parsing, link scraping, marker
+normalization, clip math, transcript probe words, prune retention, the
+partial-compare tolerance — pixel math too, when pillow is installed)
+without chromium; `--dry-run` logs in, resolves the surface list and
+exits BEFORE a browser starts (the credential/surface sanity lane);
+a ringing inbound call during a surface shot is detected (`#incoming-call`)
+and that shot is re-taken once after a settle wait, so a run never
+silently archives a banner shot as a clean matrix cell; tracked runs
+additionally snapshot the wire facts (`/config.js` + the Settings
+server section, verbatim) into `wire-facts.json`.
+
+Diff controls (2026-11-10, calibration pending real data — defaults
+preserve today's behavior): `--diff-threshold N` is the per-pixel
+delta bar (default 12), `--badge-bar PCT` the compare badge/noise bar
+(default 0.5%), and `--diff-clip N` enables the height-drift policy:
+when a full-page shot's height changed, both images are cropped to
+their common top N pixels and the diff runs on the clipped region
+(marked `clipped` in summary.json) instead of skipping to
+side-by-side.
+
+TLS smoke recipe (the passkey-smoke shape, local only): the binary
+serves PLAIN HTTP — put a TLS front in front of it
+(`nix shell nixpkgs#caddy`, a Caddyfile with `https://webphone.test:18443`
++ `tls internal` + `reverse_proxy 127.0.0.1:18097`), then run the REMOTE
+lane against it: `--base-url https://webphone.test:18443 --insecure
+--host-map webphone.test=127.0.0.1` (chrome gets `--accept-insecure-certs`
++ a host-resolver rule; the HTTP probes skip verification). This is
+the only lane where verification may be skipped — NEVER point
+--insecure at a production host. Note the login lane answers 429 when
+rate limited and stays MANUAL by ruling: no auto-retry, a retry loop
+against the per-IP limiter locks the operator out.
+
+Fixture recipe (bare-boot remote lane): the local boot writes its
+config to `/tmp/wp-visual-data/ui-capture-config.json` and seeds
+extension 1001 with password `pw`; a manual boot with
+`WEBPHONE_CONFIG=/tmp/wp-visual-data/ui-capture-config.json` on the
+same port is a valid --base-url target for exercising the remote lane
+without touching a real deployment.
+
+Partial runs are compared gracefully (pinned by --self-test): a run
+dir missing shots (interrupted pass) diffs the shots it has and
+renders explicit `no previous`/`no current` boxes for the rest —
+an interrupted run never corrupts the chain.
+
 Budget decision (documented, 2026-10-02): this is a LOCAL harness, NOT a
 flake check — headless chromium cannot run inside a nix build sandbox
 without a KVM VM, and a KVM browser VM here would duplicate the stack's
@@ -110,6 +163,8 @@ import http.client
 import json
 import os
 import re
+import shutil
+import ssl
 import subprocess  # nosec B404 - deliberately spawns the local webphone binary under test
 import sys
 import threading
@@ -117,7 +172,12 @@ import time
 import urllib.error
 import urllib.parse
 import urllib.request
+import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+# TLS verification context: None = verify (every real target). --insecure
+# swaps in an unverified context for the LOCAL TLS-front smoke only.
+_ssl_context: ssl.SSLContext | None = None
 
 SEED_THREADS = [
     ("+441632960961", "Contract question", "Can you send the revised contract?"),
@@ -213,11 +273,24 @@ ANONYMOUS_MARKERS = {
     # pin the WIRE id only, not prose we do not own.
     "login-card": ("#passkey-login", "Sign in with passkey"),
     "login-page": ("#lp-login-form", None),
+    # The token-gated enroll page (conditional: shot only when the
+    # deployment renders the form — see probe_enroll).
+    "enroll": ("#enroll-form", None),
 }
 # Selectors that must NOT exist on a surface. Only --fax-off populates
 # an entry (the fax surface must not carry the compose form while the
 # boot declares send=false); the loop asserts absence after the pins.
 SURFACE_ABSENT_MARKERS: dict[str, tuple[str, ...]] = {}
+
+# A ringing inbound call mid-pass (the island banner, hidden when idle):
+# the ring guard re-shoots the affected cell once instead of archiving
+# a banner shot as a clean matrix cell.
+RINGING_SELECTOR = "#incoming-call:not([hidden])"
+
+# Remote-only conditional surfaces resolve markers at resolve time
+# (thread-NN, crm-context on real data); the admin panel's wire id is
+# unconditional markup of the admin surface itself.
+SURFACE_MARKERS["admin"] = "#admin-panel"
 
 
 FAKE_CRM_TOKEN = "ui-capture-crm-token"  # nosec B105 - LOCAL-ONLY visual harness; never a real credential
@@ -410,17 +483,15 @@ def seed(base: str) -> tuple[str | None, str | None, str]:
     # Thread paths: the list page's deep links, first (newest of the two
     # plain threads) and last (the attachment thread).
     html = opener.open(base + "/messages").read().decode()
-    marker = 'hx-get="/partials/messages/'
-    starts = [m.start() for m in re.finditer(marker, html)]
+    links = scrape_thread_links(html)
 
     def link_at(idx: int) -> str | None:
         # Skips past 'hx-get="/partials' so the slice keeps the deep-link
         # shape "/messages/<thread-id>" (a leading slash driver.get needs).
-        start = starts[idx] + len('hx-get="/partials')
-        return html[start : html.find('"', start)]
+        return links[idx] if idx < len(links) else None
 
-    thread_path = link_at(0) if starts else None
-    attach_thread_path = link_at(-1) if len(starts) > 1 else None
+    thread_path = link_at(0) if links else None
+    attach_thread_path = link_at(-1) if len(links) > 1 else None
     # The minted session cookie rides back to the caller: the browser
     # gets it INJECTED (driver.add_cookie) instead of replaying the
     # island's login — the island gates its panel on the SIP WebSocket,
@@ -441,7 +512,8 @@ def login_remote(base: str, extension: str, password: str) -> str:
     lane is rate limited per IP and a loop would lock the operator out).
     """
     jar = urllib.request.HTTPCookieProcessor()
-    opener = urllib.request.build_opener(jar)
+    handler = urllib.request.HTTPSHandler(context=_ssl_context) if _ssl_context else None
+    opener = urllib.request.build_opener(*([handler] if handler else []), jar)
     try:
         page = opener.open(base + "/", timeout=30).read().decode("utf-8", "replace")
     except (OSError, http.client.HTTPException) as exc:
@@ -486,30 +558,32 @@ def _get(base: str, path: str, session: str | None = None) -> str:
     req = urllib.request.Request(base + path)
     if session:
         req.add_header("Cookie", f"webphone_session={session}")
-    with urllib.request.urlopen(req, timeout=30) as resp:  # nosec B310 - read-only fetch of the server under capture
+    with urllib.request.urlopen(req, timeout=30, context=_ssl_context) as resp:  # nosec B310 - read-only fetch of the server under capture
         return resp.read().decode("utf-8", "replace")
 
 
-def resolve_remote_surfaces(
-    base: str, session: str, threads_n: int
-) -> list[tuple[str, str | None]]:
+def resolve_remote_surfaces(base: str, session: str, threads_n: int) -> dict:
     """Build the surface list from LIVE data: the first `threads_n` thread
-    deep links off the real list, plus the static tabs. Prints the resolved
-    notes so the operator sees exactly what will be shot."""
+    deep links off the real list, plus the static tabs and the CONDITIONAL
+    surfaces the deployment proves (CRM strip in a thread fragment, admin
+    in the nav). Returns {"surfaces", "threads_found", "threads_requested"}
+    and prints the resolved notes so the operator sees exactly what will be
+    shot."""
     links: list[str] = []
+    admin = False
     try:
         page = _get(base, "/messages", session)
-        marker = 'hx-get="/partials/messages/'
-        for match in re.finditer(re.escape(marker), page):
-            start = match.start() + len('hx-get="/partials')
-            link = page[start : page.find('"', start)]
-            if link and link not in links:
-                links.append(link)
+        links = scrape_thread_links(page)
+        admin = has_admin_nav(page)
     except (OSError, http.client.HTTPException) as exc:
         print(
             f"resolve: /messages unreadable ({exc}) — thread surfaces skipped",
             file=sys.stderr,
         )
+    if admin:
+        print("admin: the session's nav carries the admin link — /admin joins the matrix")
+    if 0 < len(links) < threads_n:
+        print(f"note: {len(links)} live thread(s) < --threads {threads_n} — shooting all of them")
     surfaces: list[tuple[str, str | None]] = [("messages", "/messages")]
     chosen = links[:threads_n]
     for idx, link in enumerate(chosen, 1):
@@ -518,6 +592,7 @@ def resolve_remote_surfaces(
         # "thread" surface uses — a live thread page must show it; when real
         # data shifts beneath a tracked run, leniency degrades to a warning.
         SURFACE_MARKERS[f"thread-{idx:02d}"] = "#wp-thread-head"
+    crm_link: str | None = None
     for idx, link in enumerate(chosen, 1):
         try:
             fragment = _get(base, "/partials" + link, session)
@@ -525,10 +600,24 @@ def resolve_remote_surfaces(
             continue
         if "data-transcribe-src" in fragment:
             print(f"media: thread-{idx:02d} carries transcribable audio ({link})")
+        if crm_link is None and fragment_has_crm_strip(fragment):
+            crm_link = link
+    if crm_link:
+        # One home for the pin: the real CRM strip's wire id, selector-only
+        # (the local fixture's copy pins do not hold against real Kith data).
+        print(f"crm: thread fragment {crm_link} carries #wp-crm-context — crm-context joins")
+        SURFACE_MARKERS["crm-context"] = "#wp-crm-context"
     surfaces += [("fax", "/fax"), ("voicemail", "/voicemail"), ("history", "/history")]
     try:
-        if "data-copy-transcript" in _get(base, "/history", session):
-            surfaces.append(("history-transcript", "/history"))
+        history_html = _get(base, "/history", session)
+        if "data-copy-transcript" in history_html:
+            # A dense shot needs a q= that actually matches: scrape a word
+            # out of the first transcript body instead of guessing a term.
+            word = transcript_probe_word(history_html)
+            path = f"/history?q={urllib.parse.quote(word)}" if word else "/history"
+            surfaces.append(("history-transcript", path))
+            if word:
+                print(f"history: dense search rides q={word!r} (scraped from a live transcript)")
         else:
             print(
                 "note: no call transcripts on this deployment — "
@@ -539,19 +628,32 @@ def resolve_remote_surfaces(
     surfaces += [
         ("contacts", "/contacts"),
         ("settings", "/settings"),
-        ("not-found", "/nope"),
     ]
+    if crm_link:
+        surfaces.append(("crm-context", crm_link))
+    if admin:
+        surfaces.append(("admin", "/admin"))
+    surfaces += [("not-found", "/nope")]
     print("surfaces: " + ", ".join(name for name, _ in surfaces))
-    return surfaces
+    return {
+        "surfaces": surfaces,
+        "threads_found": len(links),
+        "threads_requested": threads_n,
+    }
 
 
-def fetch_version(base: str) -> str | None:
-    """The deployment's /version (open route); None when fenced or absent."""
+def fetch_version_info(base: str) -> dict | None:
+    """The deployment's /version (open route) as {"version", "commit"};
+    None when fenced or absent."""
     try:
-        with urllib.request.urlopen(base + "/version", timeout=10) as resp:  # nosec B310 - read-only version probe
-            return str(json.loads(resp.read()).get("version") or "") or None
+        with urllib.request.urlopen(base + "/version", timeout=10, context=_ssl_context) as resp:  # nosec B310 - read-only version probe
+            payload = json.loads(resp.read())
     except (OSError, ValueError, http.client.HTTPException):
         return None
+    info = {"version": str(payload.get("version") or "") or None}
+    commit = str(payload.get("commit") or "").strip()
+    info["commit"] = commit[:12] if commit else None
+    return info if info["version"] or info["commit"] else None
 
 
 def shoot(driver, target: str, full_page: bool) -> None:
@@ -577,29 +679,40 @@ def shot_key(path: str) -> str:
 
 
 def pixel_diff(
-    prev_path: str, cur_path: str, diff_path: str, threshold: int = 12
+    prev_path: str,
+    cur_path: str,
+    diff_path: str,
+    threshold: int = 12,
+    clip: int | None = None,
 ) -> tuple[float, bool] | None:
-    """Heat-map the changed pixels into diff_path; returns the changed
-    fraction, or None without pillow / on a size mismatch (content height
-    changed — the side-by-side carries the signal there)."""
+    """Heat-map the changed pixels into diff_path; returns (changed
+    fraction, clipped) — or None without pillow / on an undiffable pair.
+    With --diff-clip set, a height drift crops both shots to their common
+    top-N region and diffs there (clipped=True, the summary marks it);
+    without the bar a size mismatch stays a skip (side-by-side carries it)."""
     try:
         from PIL import Image, ImageChops, ImageEnhance
     except ImportError:
         return None
     prev = Image.open(prev_path).convert("RGB")
     cur = Image.open(cur_path).convert("RGB")
-    if prev.size != cur.size:
+    box = clip_box(prev.size, cur.size, clip)
+    if box is None:
         return None
+    clipped = prev.size != cur.size
+    if clipped:
+        prev = prev.crop((0, 0, box[0], box[1]))
+        cur = cur.crop((0, 0, box[0], box[1]))
     grey = ImageChops.difference(prev, cur).convert("L")
     hist = grey.histogram()
-    total = prev.size[0] * prev.size[1]
+    total = box[0] * box[1]
     changed = sum(hist[threshold:]) / total
     mask = grey.point(lambda v: 255 if v >= threshold else 0)
     faded = ImageEnhance.Brightness(prev).enhance(0.35)
     heat = Image.composite(Image.new("RGB", prev.size, (235, 20, 60)), faded, mask)
     os.makedirs(os.path.dirname(diff_path), exist_ok=True)
     heat.save(diff_path)
-    return changed, True
+    return changed, clipped
 
 
 _REPORT_CSS = """<!doctype html><html><head><meta charset="utf-8">
@@ -615,13 +728,19 @@ section h2{font-size:15px;margin:0 0 8px}
 .row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
 .badge{background:#c8143c;color:#fff;border-radius:4px;padding:1px 6px;font-size:12px;margin-left:6px}
 .badge.new{background:#287f6c}
+.size{color:#8899a6;font-weight:normal;font-size:12px;margin-left:6px}
+.clipped{background:#8a6d1a;color:#fff;border-radius:4px;padding:1px 6px;font-size:12px;margin-left:6px}
 .missing{color:#666;border:1px dashed #444;border-radius:6px;padding:24px;text-align:center}
 </style></head><body>
 """
 
 
 def build_gallery(
-    run_dir: str, base: str, version: str | None, label: str | None
+    run_dir: str,
+    base: str,
+    version: str | None,
+    label: str | None,
+    wire_note: str | None = None,
 ) -> None:
     parts = [
         f"<h1>{html.escape(base)}</h1><p>run {html.escape(os.path.basename(run_dir))}"
@@ -630,6 +749,8 @@ def build_gallery(
         parts.append(f" · {html.escape(version)}")
     if label:
         parts.append(f" · {html.escape(label)}")
+    if wire_note:
+        parts.append(f" · {html.escape(wire_note)}")
     parts.append("</p>" + '<div class="grid">')
     for path in sorted(glob.glob(os.path.join(run_dir, "*.png"))):
         rel = os.path.basename(path)
@@ -651,9 +772,12 @@ def build_compare(
     version: str | None,
     label: str | None,
     changed: dict[str, float],
+    badge_bar: float = 0.5,
+    clipped_keys: set[str] | None = None,
 ) -> None:
     """One compare.html per host: the newest run against the previous one,
-    per surface — previous | current | diff, worst offenders first."""
+    per surface — previous | current | diff, worst offenders first, with
+    byte-size deltas and links into both run galleries."""
 
     def _collect(run: str) -> dict[str, str]:
         return {
@@ -662,6 +786,7 @@ def build_compare(
         }
 
     prev_files, cur_files = _collect(prev_dir), _collect(cur_dir)
+    clipped_keys = clipped_keys or set()
     prev_version = None
     try:
         with open(os.path.join(prev_dir, "summary.json"), encoding="utf-8") as fh:
@@ -678,13 +803,26 @@ def build_compare(
             f"<figcaption>{html.escape(caption)}</figcaption></figure>"
         )
 
-    def _badge(key: str) -> str:
+    def _badge(key: str, clipped: bool = False) -> str:
+        mark = '<span class="clipped">clipped</span>' if clipped else ""
         if key not in prev_files:
-            return '<span class="badge new">new</span>'
+            return f'<span class="badge new">new</span>{mark}'
         pct = changed.get(key)
-        if pct is not None and pct >= 0.5:
-            return f'<span class="badge">{pct:.2f}%</span>'
-        return ""
+        if pct is not None and pct >= badge_bar:
+            return f'<span class="badge">{pct:.2f}%</span>{mark}'
+        return mark
+
+    def _sizes(key: str) -> str:
+        prev_f, cur_f = prev_files.get(key), cur_files.get(key)
+        if not prev_f or not cur_f:
+            return ""
+        prev_n = os.path.getsize(os.path.join(prev_dir, prev_f))
+        cur_n = os.path.getsize(os.path.join(cur_dir, cur_f))
+        delta = (cur_n - prev_n) / prev_n * 100 if prev_n else 0
+        return (
+            f'<span class="size">{_bytes_text(prev_n)} → {_bytes_text(cur_n)} '
+            f"({delta:+.1f}%)</span>"
+        )
 
     keys = sorted(
         set(prev_files) | set(cur_files),
@@ -700,11 +838,16 @@ def build_compare(
     if label:
         head += html.escape(label) + " · "
     head += html.escape(os.path.basename(host_dir)) + "</p>"
+    head += (
+        f'<p><a href="{html.escape(os.path.relpath(prev_dir, host_dir))}/gallery.html">'
+        f"previous gallery</a> · <a href=\"{html.escape(os.path.relpath(cur_dir, host_dir))}"
+        f'/gallery.html">current gallery</a></p>'
+    )
     sections = []
     for key in keys:
         diff_rel = f"diffs/{key}.png" if key in changed else None
         sections.append(
-            f"<section><h2>{html.escape(key)}{_badge(key)}</h2>"
+            f"<section><h2>{html.escape(key)}{_badge(key, key in clipped_keys)}{_sizes(key)}</h2>"
             "<div class='row'>"
             + _img(prev_dir, prev_files.get(key), "previous")
             + _img(cur_dir, cur_files.get(key), "current")
@@ -718,21 +861,27 @@ def build_compare(
 def track(
     run_dir: str,
     base: str,
-    version: str | None,
+    facts: dict | None,
     label: str | None,
     full_page: bool,
     viewports: list[tuple[int, int]],
-) -> None:
+    ledger: list[dict[str, str]] | None = None,
+    wire: dict[str, str | None] | None = None,
+    threads: dict | None = None,
+    diff_threshold: int = 12,
+    badge_bar: float = 0.5,
+    diff_clip: int | None = None,
+    prune_keep: int | None = None,
+) -> str | None:
     """History + diff bookkeeping for --track runs: summary.json, the
     per-run gallery, and the host-level compare against the previous run.
-    The version is fetched by main() while the server is still up (the
-    local boot is already torn down by the time this runs)."""
+    Version facts are fetched by main() while the server is still up (the
+    local boot is already torn down by the time this runs). Returns the
+    produced HTML path (compare when a previous run exists, else the
+    gallery) so --open can raise it."""
+    version = (facts or {}).get("version")
     host_dir = os.path.dirname(run_dir)
-    runs = sorted(
-        d
-        for d in os.listdir(host_dir)
-        if os.path.isdir(os.path.join(host_dir, d)) and re.match(r"^\d{8}T\d{6}Z$", d)
-    )
+    runs = _run_dirs(host_dir)
     run_id = os.path.basename(run_dir)
     earlier = [d for d in runs if d < run_id]
     prev_name = earlier[-1] if earlier else None
@@ -741,61 +890,108 @@ def track(
     if prev_dir:
         for path in glob.glob(os.path.join(prev_dir, "*.png")):
             prev_by_key[shot_key(path)] = path
+    urls = {entry["key"]: entry["url"] for entry in ledger or []}
     shots = []
     diffed: list[tuple[str, float]] = []
+    clipped_keys: set[str] = set()
     for path in sorted(glob.glob(os.path.join(run_dir, "*.png"))):
         key = shot_key(path)
         entry: dict[str, object] = {
             "key": key,
             "file": os.path.basename(path),
+            "url": urls.get(key),
             "bytes": os.path.getsize(path),
             "prev_file": None,
             "changed_pct": None,
             "diff_file": None,
+            "clipped": False,
         }
         prev_path = prev_by_key.get(key)
         if prev_path:
             entry["prev_file"] = os.path.relpath(prev_path, run_dir)
             diff_path = os.path.join(run_dir, "diffs", f"{key}.png")
-            result = pixel_diff(prev_path, path, diff_path)
+            result = pixel_diff(
+                prev_path, path, diff_path, threshold=diff_threshold, clip=diff_clip
+            )
             if result is None:
                 entry["size_match"] = False
-                print(f"diff: {key} — height changed; side-by-side only")
+                print(f"diff: {key} — size mismatch beyond the clip bar; side-by-side only")
             else:
-                changed_pct = result[0] * 100
-                entry["changed_pct"] = round(changed_pct, 3)
+                changed_pct, clipped = result
+                entry["changed_pct"] = round(changed_pct * 100, 3)
                 entry["diff_file"] = os.path.relpath(diff_path, run_dir)
                 entry["size_match"] = True
-                diffed.append((key, changed_pct))
+                entry["clipped"] = clipped
+                if clipped:
+                    clipped_keys.add(key)
+                    print(f"diff: {key} — height drifted; diffed the common top {diff_clip}px (clipped)")
+                diffed.append((key, changed_pct * 100))
         shots.append(entry)
+    if wire is not None:
+        with open(os.path.join(run_dir, "wire-facts.json"), "w", encoding="utf-8") as fh:
+            json.dump(wire, fh, indent=2, sort_keys=True)
+            fh.write("\n")
     summary = {
         "run": run_id,
         "base": base,
         "version": version,
+        "commit": (facts or {}).get("commit"),
         "label": label,
         "full_page": full_page,
         "viewports": [f"{w}x{h}" for w, h in viewports],
         "prev_run": prev_name,
+        "threads_requested": (threads or {}).get("threads_requested"),
+        "threads_found": (threads or {}).get("threads_found"),
+        "wire_facts": {
+            "config_js": wire is not None and wire.get("config_js") is not None,
+            "settings_server_html": wire is not None
+            and wire.get("settings_server_html") is not None,
+        },
         "shots": shots,
     }
     with open(os.path.join(run_dir, "summary.json"), "w", encoding="utf-8") as fh:
         json.dump(summary, fh, indent=2, sort_keys=True)
         fh.write("\n")
-    build_gallery(run_dir, base, version, label)
+    wire_note = None
+    if wire is not None:
+        bits = ["config.js ✓" if wire.get("config_js") else "config.js —"]
+        bits.append(
+            "settings server section ✓" if wire.get("settings_server_html") else "settings server section —"
+        )
+        wire_note = "wire: " + ", ".join(bits)
+    build_gallery(run_dir, base, version, label, wire_note)
     print(f"gallery: {os.path.join(run_dir, 'gallery.html')}")
+    produced = os.path.join(run_dir, "gallery.html")
     if prev_dir:
-        build_compare(host_dir, prev_dir, run_dir, version, label, dict(diffed))
+        build_compare(
+            host_dir,
+            prev_dir,
+            run_dir,
+            version,
+            label,
+            dict(diffed),
+            badge_bar=badge_bar,
+            clipped_keys=clipped_keys,
+        )
         print(f"compare: {os.path.join(host_dir, 'compare.html')} (vs {prev_name})")
+        produced = os.path.join(host_dir, "compare.html")
     else:
         print("compare: no previous run — first run in this history")
     diffed.sort(key=lambda pair: pair[1], reverse=True)
-    notable = [(key, pct) for key, pct in diffed if pct >= 0.5]
+    notable = [(key, pct) for key, pct in diffed if pct >= badge_bar]
     print(f"track: {len(shots)} shot(s), {len(diffed)} differ from {prev_name or '—'}")
     for key, pct in notable[:10]:
         print(f"  changed {pct:5.2f}%  {key}")
     if diffed and not notable:
-        print("  nothing above the 0.5% noise bar")
+        print(f"  nothing above the {badge_bar:g}% noise bar")
     print(f"history: {len(runs)} run(s) under {host_dir}")
+    if prune_keep is not None:
+        removed = prune_runs(host_dir, prune_keep)
+        if removed:
+            print(f"prune: removed {len(removed)} old run(s): {', '.join(removed)}")
+        else:
+            print(f"prune: nothing to remove (keep {prune_keep})")
+    return produced
 
 
 def _parse_viewport(text: str) -> tuple[int, int]:
@@ -813,6 +1009,124 @@ def _sanitize_dirname(base: str) -> str:
     )
 
 
+def scrape_thread_links(page: str) -> list[str]:
+    """The /messages deep links off a rendered list page, in list order,
+    deduped — the ONE link-scrape home (seed() and the remote resolver
+    share it)."""
+    marker = 'hx-get="/partials/messages/'
+    links: list[str] = []
+    for match in re.finditer(re.escape(marker), page):
+        start = match.start() + len('hx-get="/partials')
+        link = page[start : page.find('"', start)]
+        if link and link not in links:
+            links.append(link)
+    return links
+
+
+def normalize_pins(pins) -> list[tuple[str, str | None]]:
+    """A marker is a selector, a (selector, copy) tuple, or a LIST of
+    those pins — one normalized shape for the pin loop."""
+    if isinstance(pins, str):
+        return [(pins, None)]
+    if isinstance(pins, tuple):
+        return [pins]
+    return list(pins)
+
+
+def clip_box(
+    size_a: tuple[int, int], size_b: tuple[int, int], clip: int | None
+) -> tuple[int, int] | None:
+    """The common region two shots can be diffed on, or None when
+    unclip-able: widths must match, equal heights need no clip, and a
+    height drift only diffs when --diff-clip gave a bar (top-N policy)."""
+    if size_a[0] != size_b[0]:
+        return None
+    if size_a[1] == size_b[1]:
+        return size_a
+    if not clip or clip <= 0:
+        return None
+    return (size_a[0], min(size_a[1], size_b[1], clip))
+
+
+def has_admin_nav(page: str) -> bool:
+    return 'href="/admin"' in page
+
+
+def fragment_has_crm_strip(fragment: str) -> bool:
+    return 'id="wp-crm-context"' in fragment
+
+
+def transcript_probe_word(page: str) -> str | None:
+    """A word scraped from the first transcript group body, for a
+    ?q= search that will actually match real data (the seeded q=revenue
+    only exists on the local fixture)."""
+    block = re.search(r'<details class="wp-transcript-call".*?</details>', page, re.S)
+    if not block:
+        return None
+    text = re.sub(r"<[^>]+>", " ", block.group(0))
+    for word in re.findall(r"[A-Za-z]{6,}", text):
+        return word
+    return None
+
+
+def probe_enroll(base: str) -> bool:
+    """True when the deployment renders the token-gated enroll form —
+    probed directly (the page is reached via distributed token links,
+    never linked from the login surface)."""
+    try:
+        return 'id="enroll-form"' in _get(base, "/enroll")
+    except (OSError, http.client.HTTPException, urllib.error.HTTPError):
+        return False
+
+
+def _run_dirs(host_dir: str) -> list[str]:
+    return sorted(
+        d
+        for d in os.listdir(host_dir)
+        if os.path.isdir(os.path.join(host_dir, d)) and re.match(r"^\d{8}T\d{6}Z$", d)
+    )
+
+
+def prune_runs(host_dir: str, keep: int) -> list[str]:
+    """Newest-N retention over one host's run history; returns the removed
+    run names. A keep < 1 refuses (a retention foot-gun is not a feature)."""
+    if keep < 1:
+        return []
+    runs = _run_dirs(host_dir)
+    doomed = runs[:-keep] if len(runs) > keep else []
+    for name in doomed:
+        shutil.rmtree(os.path.join(host_dir, name))
+    return doomed
+
+
+def snapshot_wire_facts(base: str, session: str | None) -> dict[str, str | None]:
+    """Verbatim wire facts for the run dir: /config.js (the island's whole
+    config surface) and the Settings server section (the service rows as
+    rendered). Raw text, not an interpretation — forensics, not claims."""
+    facts: dict[str, str | None] = {"config_js": None, "settings_server_html": None}
+    try:
+        facts["config_js"] = _get(base, "/config.js")
+    except (OSError, http.client.HTTPException, urllib.error.HTTPError):
+        pass
+    try:
+        page = _get(base, "/settings", session)
+        match = re.search(
+            r'<details class="wp-settings-server">.*?</details>', page, re.S
+        )
+        facts["settings_server_html"] = match.group(0) if match else None
+    except (OSError, http.client.HTTPException, urllib.error.HTTPError):
+        pass
+    return facts
+
+
+def _bytes_text(n: int) -> str:
+    if n < 1024:
+        return f"{n} B"
+    if n < 1024 * 1024:
+        return f"{n / 1024:.1f} KB"
+    return f"{n / (1024 * 1024):.2f} MB"
+
+
 def capture(
     base: str,
     out_dir: str,
@@ -823,9 +1137,13 @@ def capture(
     full_page: bool = True,
     lenient: bool = False,
     layout_proof: bool = False,
-) -> int:
+    anonymous_surfaces: list[tuple[str, str]] | None = None,
+    insecure: bool = False,
+    host_maps: list[str] | None = None,
+) -> list[dict[str, str]]:
     """Drive headless chromium through every (surface, theme, viewport)
-    cell and screenshot it; returns the shot count.
+    cell and screenshot it; returns the shot LEDGER (key, file, url per
+    shot — the count is len()).
 
     lenient=True (remote --base-url runs): a missing marker is a printed
     warning and a KEPT shot, and a styled-404 page skips its surface —
@@ -858,9 +1176,14 @@ def capture(
     driver_path = shutil.which("chromedriver")
     from selenium.webdriver.chrome.service import Service
 
+    driver_path = shutil.which("chromedriver")
+    from selenium.webdriver.chrome.service import Service
+
     service = Service(executable_path=driver_path) if driver_path else None
     driver = webdriver.Chrome(service=service, options=options)
     shots = 0
+    ledger: list[dict[str, str]] = []
+    anonymous = anonymous_surfaces if anonymous_surfaces is not None else ANONYMOUS_SURFACES
 
     def _target(name: str, theme: str, vp: tuple[int, int]) -> str:
         suffix = "" if len(viewports) == 1 else f"-{vp[0]}x{vp[1]}"
@@ -884,14 +1207,9 @@ def capture(
         )
 
     def _check_pins(name: str, path: str, pins) -> None:
-        # A marker is a selector, a (selector, copy) tuple, or a LIST of
-        # those pins (a surface that proves two things). Strict mode raises
-        # inside _marker_fail; lenient mode warns and keeps going.
-        if isinstance(pins, str):
-            pins = [(pins, None)]
-        elif isinstance(pins, tuple):
-            pins = [pins]
-        for marker, expected_text in pins:
+        # Strict mode raises inside _marker_fail; lenient mode warns and
+        # keeps going.
+        for marker, expected_text in normalize_pins(pins):
             if not driver.find_elements("css selector", marker):
                 _marker_fail(name, path, marker, None)
                 return
@@ -936,7 +1254,7 @@ def capture(
                 # and /login bounces a live session home (303). Drop the
                 # cookie for these shots, restore it after.
                 driver.delete_cookie("webphone_session")
-                for name, path in ANONYMOUS_SURFACES:
+                for name, path in anonymous:
                     if only is not None and name not in only:
                         continue
                     driver.get(base + path)
@@ -964,6 +1282,20 @@ def capture(
                     _check_pins(name, path, ANONYMOUS_MARKERS[name])
                     target = _target(name, theme, vp)
                     shoot(driver, target, full_page)
+                    if driver.find_elements("css selector", RINGING_SELECTOR):
+                        print(
+                            f"warn: {name}: an inbound call is ringing — re-shooting "
+                            "once after a settle wait"
+                        )
+                        time.sleep(3)
+                        shoot(driver, target, full_page)
+                    ledger.append(
+                        {
+                            "key": shot_key(target),
+                            "file": os.path.basename(target),
+                            "url": driver.current_url,
+                        }
+                    )
                     print(f"captured {target}")
                     shots += 1
                 if session:
@@ -1034,6 +1366,20 @@ def capture(
                                 raise AssertionError(message + "; aborting")
                     target = _target(name, theme, vp)
                     shoot(driver, target, full_page)
+                    if driver.find_elements("css selector", RINGING_SELECTOR):
+                        print(
+                            f"warn: {name}: an inbound call is ringing — re-shooting "
+                            "once after a settle wait"
+                        )
+                        time.sleep(3)
+                        shoot(driver, target, full_page)
+                    ledger.append(
+                        {
+                            "key": shot_key(target),
+                            "file": os.path.basename(target),
+                            "url": driver.current_url,
+                        }
+                    )
                     print(f"captured {target}")
                     shots += 1
                     if (
@@ -1055,7 +1401,7 @@ def capture(
                         check_thread_layout(driver, base, path, out_dir)
     finally:
         driver.quit()
-    return shots
+    return ledger
 
 
 def check_thread_layout(driver, base: str, thread_path: str, out_dir: str) -> None:
