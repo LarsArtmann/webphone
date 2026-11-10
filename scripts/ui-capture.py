@@ -167,6 +167,7 @@ import shutil
 import ssl
 import subprocess  # nosec B404 - deliberately spawns the local webphone binary under test
 import sys
+import tempfile
 import threading
 import time
 import urllib.error
@@ -1536,6 +1537,117 @@ def check_thread_layout(driver, base: str, thread_path: str, out_dir: str) -> No
     print("layout: PASS (collapse, persistence, split threshold)")
 
 
+def self_test() -> int:
+    """Verify every pure helper this harness depends on — NO browser, NO
+    server. Pillow pixel math runs only when the capture env carries it;
+    everything else must pass everywhere. Non-zero exit on any failure."""
+    failures: list[str] = []
+
+    def check(name: str, ok: bool, detail: str = "") -> None:
+        if ok:
+            print(f"  ok   {name}")
+        else:
+            failures.append(name)
+            print(f"  FAIL {name}: {detail}")
+
+    check("shot_key strips numbering", shot_key("07-thread-01-dark.png") == "thread-01-dark")
+    check("shot_key unnumbered passthrough", shot_key("zz-thread-collapsed.png") == "zz-thread-collapsed")
+    check("viewport parse", _parse_viewport("390x844") == (390, 844))
+    check("viewport parse caps", _parse_viewport("1280X900") == (1280, 900))
+    try:
+        _parse_viewport("wide")
+        check("viewport junk rejected", False, "no SystemExit")
+    except SystemExit:
+        check("viewport junk rejected", True)
+    check("sanitize host", _sanitize_dirname("https://pbx.artmann.tech") == "pbx.artmann.tech")
+    check("sanitize local", _sanitize_dirname("http://127.0.0.1:18097") == "127.0.0.1_18097")
+
+    fixture = (
+        '<a hx-get="/partials/messages/t1">x</a>'
+        '<a hx-get="/partials/messages/t2">y</a>'
+        '<a hx-get="/partials/messages/t1">dup</a>'
+    )
+    check(
+        "thread scrape order + dedup",
+        scrape_thread_links(fixture) == ["/messages/t1", "/messages/t2"],
+        repr(scrape_thread_links(fixture)),
+    )
+    check("pins: str", normalize_pins(".a") == [(".a", None)])
+    check("pins: tuple", normalize_pins((".a", "txt")) == [(".a", "txt")])
+    check("pins: list", normalize_pins([(".a", None), (".b", "x")]) == [(".a", None), (".b", "x")])
+
+    check("clip: equal sizes", clip_box((800, 900), (800, 900), None) == (800, 900))
+    check("clip: no bar refuses drift", clip_box((800, 900), (800, 1400), None) is None)
+    check("clip: bar bounds height", clip_box((800, 900), (800, 1400), 600) == (800, 600))
+    check("clip: width mismatch refused", clip_box((800, 900), (900, 900), 600) is None)
+
+    check("admin nav detected", has_admin_nav('<a href="/admin">Admin</a>'))
+    check("admin nav exact", not has_admin_nav('<a href="/admin2">x</a>'))
+    check("crm strip detected", fragment_has_crm_strip('<div id="wp-crm-context">'))
+    check("crm strip absent", not fragment_has_crm_strip("<div>nope</div>"))
+    word = transcript_probe_word(
+        '<details class="wp-transcript-call"><summary>s</summary>'
+        "<p>Quarterly revenue figures up</p></details>"
+    )
+    check("transcript probe word", word == "Quarterly", repr(word))
+    check("transcript probe absent", transcript_probe_word("<p>nothing</p>") is None)
+
+    with tempfile.TemporaryDirectory() as td:
+        prev = os.path.join(td, "20260101T000000Z")
+        cur = os.path.join(td, "20260102T000000Z")
+        os.makedirs(prev)
+        os.makedirs(cur)
+        with open(os.path.join(prev, "01-a-light.png"), "wb") as fh:
+            fh.write(b"png")
+        for name in ("01-a-light.png", "02-b-light.png"):
+            with open(os.path.join(cur, name), "wb") as fh:
+                fh.write(b"png")
+        build_compare(td, prev, cur, "vX", None, {}, badge_bar=0.5)
+        with open(os.path.join(td, "compare.html"), encoding="utf-8") as fh:
+            out = fh.read()
+        check(
+            "partial run compares gracefully",
+            "no previous" in out and "02-b-light" in out and "01-a-light" in out,
+        )
+
+    with tempfile.TemporaryDirectory() as td:
+        for stamp in ("20260101T000000Z", "20260102T000000Z", "20260103T000000Z"):
+            os.makedirs(os.path.join(td, stamp))
+        removed = prune_runs(td, 2)
+        check(
+            "prune keeps newest N",
+            removed == ["20260101T000000Z"]
+            and sorted(os.listdir(td)) == ["20260102T000000Z", "20260103T000000Z"],
+            repr(removed),
+        )
+        check("prune refuses keep<1", prune_runs(td, 0) == [])
+
+    try:
+        from PIL import Image
+    except ImportError:
+        print("  skip pixel_diff math (pillow not installed — capture env only)")
+    else:
+        with tempfile.TemporaryDirectory() as td:
+            Image.new("RGB", (10, 10), (0, 0, 0)).save(os.path.join(td, "a.png"))
+            Image.new("RGB", (10, 10), (255, 255, 255)).save(os.path.join(td, "b.png"))
+            Image.new("RGB", (10, 20), (0, 0, 0)).save(os.path.join(td, "c.png"))
+            join = lambda n: os.path.join(td, n)
+            same = pixel_diff(join("a.png"), join("a.png"), join("d0.png"), threshold=12)
+            check("pixel: identical = 0%", same is not None and same[0] == 0.0, repr(same))
+            full = pixel_diff(join("a.png"), join("b.png"), join("d1.png"), threshold=12)
+            check("pixel: full change = 100%", full is not None and abs(full[0] - 1.0) < 1e-9, repr(full))
+            skip = pixel_diff(join("a.png"), join("c.png"), join("d2.png"))
+            check("pixel: height drift skips w/o clip", skip is None, repr(skip))
+            clipped = pixel_diff(join("a.png"), join("c.png"), join("d3.png"), clip=10)
+            check("pixel: clip path diffs top-N", clipped is not None and clipped[1] is True, repr(clipped))
+
+    if failures:
+        print(f"self-test: {len(failures)} FAILURE(S)")
+        return 1
+    print("self-test: all checks pass")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary", default="/tmp/webphone-bin")  # nosec B108 - LOCAL-ONLY visual harness by budget decision (AGENTS T23)
@@ -1611,7 +1723,78 @@ def main() -> int:
         default=None,
         help="free-text note stored in summary.json and the galleries",
     )
+    parser.add_argument(
+        "--self-test",
+        action="store_true",
+        help="verify every pure helper (scrapes, clip math, prune, "
+        "partial-compare tolerance; pixel math when pillow is present) "
+        "without starting a browser; non-zero exit on any failure",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="log in, resolve the surface list and exit BEFORE a browser "
+        "starts — the credential/surface sanity lane",
+    )
+    parser.add_argument(
+        "--insecure",
+        action="store_true",
+        help="skip TLS verification (the LOCAL TLS-front smoke ONLY — "
+        "never point this at a production host)",
+    )
+    parser.add_argument(
+        "--host-map",
+        action="append",
+        metavar="HOST=IP",
+        default=None,
+        help="point chrome's DNS at an IP (repeatable; e.g. "
+        "webphone.test=127.0.0.1 for the local TLS front)",
+    )
+    parser.add_argument(
+        "--diff-threshold",
+        type=int,
+        default=12,
+        metavar="N",
+        help="per-pixel delta counted as changed (default 12)",
+    )
+    parser.add_argument(
+        "--badge-bar",
+        type=float,
+        default=0.5,
+        metavar="PCT",
+        help="compare badge / console noise bar in %% (default 0.5)",
+    )
+    parser.add_argument(
+        "--diff-clip",
+        type=int,
+        default=None,
+        metavar="N",
+        help="height-drift policy: diff the common top N pixels of "
+        "full-page pairs whose heights changed (default: skip to "
+        "side-by-side)",
+    )
+    parser.add_argument(
+        "--prune",
+        type=int,
+        default=None,
+        metavar="N",
+        help="with --track: keep only the newest N runs per host "
+        "(removes older run dirs after the compare is written)",
+    )
+    parser.add_argument(
+        "--open",
+        action="store_true",
+        help="open the produced compare/gallery HTML when the run ends "
+        "(no-op with a note on a headless host)",
+    )
     args = parser.parse_args()
+
+    if args.self_test:
+        return self_test()
+    if args.insecure:
+        global _ssl_context
+        _ssl_context = ssl._create_unverified_context()
+        print("insecure: TLS verification OFF — local smoke lane only")
 
     full_page = not args.viewport_only
     viewports = (
@@ -1620,6 +1803,8 @@ def main() -> int:
     remote = args.base_url is not None
     base = (args.base_url or f"http://127.0.0.1:{args.port}").rstrip("/")
     only = set(args.surface) if args.surface else None
+    threads_info: dict = {}
+    wire: dict[str, str | None] | None = None
 
     if args.track:
         # History lives under <out-dir>/<host>/<UTC-stamp>/ and is NEVER
@@ -1639,10 +1824,18 @@ def main() -> int:
             os.remove(stale)
 
     if remote:
+        anonymous = list(ANONYMOUS_SURFACES)
+        if probe_enroll(base):
+            print(
+                "enroll: the deployment renders the token-gated form — "
+                "/enroll joins the anonymous pass"
+            )
+            anonymous.append(("enroll", "/enroll"))
+        threads_info: dict = {}
         if args.anonymous:
             surfaces = []
             session = ""
-            version = fetch_version(base)
+            version_facts = fetch_version_info(base)
         else:
             extension = os.environ.get("WEBPHONE_CAPTURE_EXTENSION")
             password = os.environ.get("WEBPHONE_CAPTURE_PASSWORD")
@@ -1657,24 +1850,28 @@ def main() -> int:
                 )
                 return 2
             try:
-                urllib.request.urlopen(base + "/livez", timeout=10)  # nosec B310 - readiness probe of the remote server under capture
+                urllib.request.urlopen(base + "/livez", timeout=10, context=_ssl_context)  # nosec B310 - readiness probe of the remote server under capture
             except (OSError, http.client.HTTPException) as exc:
                 print(f"{base} is unreachable ({exc})", file=sys.stderr)
                 return 1
             session = login_remote(base, extension, password)
             if not session:
                 return 1
-            version = fetch_version(base)
-            if version:
-                print(f"deployment: {version}")
-            surfaces = resolve_remote_surfaces(base, session, args.threads)
+            version_facts = fetch_version_info(base)
+            if version_facts:
+                commit = version_facts.get("commit") or "sha fenced"
+                print(f"deployment: {version_facts['version']} ({commit})")
+            resolved = resolve_remote_surfaces(base, session, args.threads)
+            surfaces = resolved["surfaces"]
+            threads_info = resolved
+        wire = snapshot_wire_facts(base, session) if args.track else None
         if only is not None:
             # A typo must fail loudly: a filtered run that matches nothing
             # would print "0 shots" and look like a clean pass.
             unknown = sorted(
                 only
                 - {name for name, _ in surfaces}
-                - {name for name, _ in ANONYMOUS_SURFACES}
+                - {name for name, _ in anonymous}
             )
             if unknown:
                 print(
@@ -1683,11 +1880,19 @@ def main() -> int:
                     file=sys.stderr,
                 )
                 return 2
+        if args.dry_run:
+            print("dry-run: surfaces resolved; no browser started")
+            print("  anonymous: " + ", ".join(n for n, _ in anonymous))
+            print(
+                "  session:   "
+                + (", ".join(n for n, _ in surfaces) or "(anonymous mode)")
+            )
+            return 0
         print(
             "prod capture: shots carry REAL data — ui-shots/ is gitignored; "
             "keep it that way"
         )
-        shots = capture(
+        ledger = capture(
             base,
             out_dir,
             session,
@@ -1696,7 +1901,11 @@ def main() -> int:
             viewports=viewports,
             full_page=full_page,
             lenient=True,
+            anonymous_surfaces=anonymous,
+            insecure=args.insecure,
+            host_maps=args.host_map,
         )
+        shots = len(ledger)
         exit_code = 0 if shots > 0 else 1
     else:
         data_dir = "/tmp/wp-visual-data"  # nosec B108 - LOCAL-ONLY visual harness by budget decision (AGENTS T23)
@@ -1776,11 +1985,14 @@ def main() -> int:
             else:
                 print("server did not come up", file=sys.stderr)
                 return 1
-            version = fetch_version(base)
+            version_facts = fetch_version_info(base)
             thread_path, attach_thread_path, session = seed(base)
             if not session:
                 print("seed did not mint a session cookie", file=sys.stderr)
                 return 1
+            anonymous = list(ANONYMOUS_SURFACES)
+            if probe_enroll(base):
+                anonymous.append(("enroll", "/enroll"))
             surfaces: list[tuple[str, str | None]] = []
             for name, path in TABS:
                 if name == "thread":
@@ -1797,7 +2009,7 @@ def main() -> int:
                 # A typo must fail loudly: a filtered run that matches nothing
                 # would print "0 shots" and look like a clean pass.
                 known = {name for name, _ in TABS} | {
-                    name for name, _ in ANONYMOUS_SURFACES
+                    name for name, _ in anonymous
                 }
                 if "crm-context" in only and not args.crm:
                     print(
@@ -1815,7 +2027,13 @@ def main() -> int:
                         file=sys.stderr,
                     )
                     return 2
-            shots = capture(
+            wire = snapshot_wire_facts(base, session) if args.track else None
+            if args.dry_run:
+                print("dry-run: fixture seeded, surfaces resolved; no browser started")
+                print("  anonymous: " + ", ".join(n for n, _ in anonymous))
+                print("  session:   " + ", ".join(n for n, _ in surfaces))
+                return 0
+            ledger = capture(
                 base,
                 out_dir,
                 session,
@@ -1824,7 +2042,11 @@ def main() -> int:
                 viewports=viewports,
                 full_page=full_page,
                 layout_proof=True,
+                anonymous_surfaces=anonymous,
+                insecure=args.insecure,
+                host_maps=args.host_map,
             )
+            shots = len(ledger)
             exit_code = 0 if shots >= 22 else 1
         finally:
             server.terminate()
@@ -1832,7 +2054,26 @@ def main() -> int:
 
     print(f"ui-capture: {shots} shots in {out_dir}/")
     if args.track:
-        track(out_dir, base, version, args.label, full_page, viewports)
+        produced = track(
+            out_dir,
+            base,
+            version_facts,
+            args.label,
+            full_page,
+            viewports,
+            ledger=ledger,
+            wire=wire,
+            threads=threads_info or None,
+            diff_threshold=args.diff_threshold,
+            badge_bar=args.badge_bar,
+            diff_clip=args.diff_clip,
+            prune_keep=args.prune,
+        )
+        if args.open:
+            if os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY"):
+                webbrowser.open("file://" + os.path.abspath(produced or out_dir))
+            else:
+                print("--open: no display on this host — open the HTML manually")
     if only is not None and not remote:
         # Every requested surface must have produced BOTH theme shots
         # (per viewport).
