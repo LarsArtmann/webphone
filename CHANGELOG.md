@@ -50,16 +50,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   records all fail the parse renders an honest "Time views unavailable" state
   — totals, the undated count and the contact ranking — instead of a fake
   quiet week; in a mixed window the caveat sits under the temporal sections
-  it explains.
+  it explains, and renders through one home (`reportsUndatedNote`) behind a
+  single temporal guard — byte-identical output, proven by render diff.
 - Voicemail play failures are no longer silent: a recording that fails to
   load (404/403/undecodable) now surfaces one honest toast per failure
   episode instead of a dead button — the `play()` rejection is no longer
   swallowed and the audio element carries an `error` listener (benign
-  `AbortError` interruptions stay silent). The `/phone-api` proxy now also
-  forwards the browser's `Range` header upstream and passes `Accept-Ranges`/
-  `Content-Range` back, so the operator's 206 range support engages through
-  the app path (Safari-class browsers refuse a 200-full-body stream; seek
-  works everywhere).
+  `AbortError` interruptions stay silent), and the waveform-unavailable
+  fallback toast stays silent when the recording itself could not be
+  fetched, so a dead player never shows two contradicting verdicts. The
+  `/phone-api` proxy now also forwards the browser's `Range` header
+  upstream and passes `Accept-Ranges`/`Content-Range` back, so the
+  operator's 206 range support engages through the app path
+  (Safari-class browsers refuse a 200-full-body stream; seek works
+  everywhere).
 
 ## [2.12.0] - 2026-11-09
 
