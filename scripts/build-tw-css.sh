@@ -121,9 +121,14 @@ for f in icon.templ icon_templ.go; do
 	cp "$ICONS_DIR/$f" "$stage/$COMP/icons/$f"
 done
 tw() { # input output
-	nix run "github:NixOS/nixpkgs/$rev#tailwindcss_4" -- \
-		-i "$stage/internal/web/assets/$1" \
-		-o "$stage/$2"
+	# cwd = the STAGE, never the repo: Tailwind v4's implicit content
+	# detection scans the CWD's git tree even when -i points elsewhere,
+	# so a repo cwd leaks plan-doc PROSE into the bundle (a utility name
+	# in a markdown sentence emitted .top-5 on 2026-11-10 — the staging
+	# exists for exactly this isolation; this cd finishes the job).
+	(cd "$stage" && nix run "github:NixOS/nixpkgs/$rev#tailwindcss_4" -- \
+		-i "internal/web/assets/$1" \
+		-o "$2")
 }
 
 # ORDER MATTERS: the shell build runs BEFORE the loginpage sources land
