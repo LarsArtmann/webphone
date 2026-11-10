@@ -16,22 +16,27 @@ front matter does not carry their history (one home per fact, per the rule above
 
 ### Reports tab quality train (2026-11-10, owner triage of the live panel — plan: docs/planning/2026-11-10_10-15_SUPERB-reports-tab-quality-plan.html)
 
-Five verified-open items; C1 is the one-line root fix (73/73 CDR rows undated
-because FreeSWITCH writes `start_stamp` with seconds, `%Y-%m-%d %T`, and
-`reports.startLayout` accepts none):
+DONE 2026-11-10 (trains cabdeeb8 / abed8247 / 3d1c1ba2 / 12cee0b3): C1 is the one-line root fix
+(73/73 CDR rows undated because FreeSWITCH writes `start_stamp` with seconds,
+`%Y-%m-%d %T`, and `reports.startLayout` accepts none):
 
-- [ ] C1: `startLayout` "2006-01-02 15:04" → "2006-01-02 15:04:05" +
+- [x] C1: `startLayout` "2006-01-02 15:04" → "2006-01-02 15:04:05" +
       real-format fixtures in `reports_test.go` (restores This-week, By-day,
-      Hours — the 1%).
-- [ ] C2: honest unknown rendering — all-undated ⇒ EmptyState instead of
+      Hours — the 1%). Minute-only timestamps now pin as Undated
+      (counted, never dropped).
+- [x] C2: honest unknown rendering — all-undated ⇒ EmptyState instead of
       "This week — 0"; guard the By-day heading; move the undated caveat next
       to the temporal block; new i18n keys in BOTH maps.
-- [ ] C3: resolve top-contact names through the contacts store first, CRM
-      fallback, at the shared `crmDirectory` seam; muted styling for
-      non-dialable remotes ("pifo42h1" class).
-- [ ] C4: `Totals.NoAnswer` (unanswered outbound) as a seventh stat card when
-      > 0; check `.wp-reports-totals` columns.
-- [ ] C5: pins + gates + live verification (reports/view suites, nix fmt,
+- [x] C3: resolve top-contact names through the contacts store first, CRM
+      fallback, at the shared `crmDirectory` seam (extended into
+      `directoryFor` — the SSE push lane merges through the SAME home, so a
+      morph can never rename a row a full render named differently);
+      muted mono for non-dialable remotes ("pifo42h1" class).
+- [x] C4: `Totals.NoAnswer` (unanswered outbound) as a seventh stat card when
+      > 0; `.wp-reports-totals` checked — auto-fit takes any card count,
+      no CSS change. Card renders NEUTRAL (deviation from the plan's
+      "alert tone": the alert red is the inbound-miss tone by contract).
+- [x] C5: pins + gates + live verification (reports/view suites, nix fmt,
       buildflow, CHANGELOG line, prod ui-capture of the reports surface).
 
 ### BuildFlow tool-disposition residue (harvested 2026-11-08 from the 2026-10-11 findings-zeroing plan — one home now)

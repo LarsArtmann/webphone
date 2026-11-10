@@ -19,9 +19,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Shots are full-page by default (CDP captureBeyondViewport), extra
   `--viewport WxH` passes cover the mobile layout, and `--anonymous`
   shoots the deployment's login surfaces without credentials.
+- The Reports tab names the top talkers from the operator's own address
+  book first (the CRM answers the numbers nobody saved, and both lanes —
+  full render and SSE push — merge through one home so a live update can
+  never rename a row differently), and its totals grid accounts for the
+  outbound calls that never connected: a neutral "No answer" card appears
+  only when the window held one, so 73 calls minus 24 answered no longer
+  silently vanish.
 
 ### Fixed
 
+- The Reports tab stopped lying about time: FreeSWITCH writes CDR
+  `start_stamp` with seconds (`%Y-%m-%d %T`) but the projection parsed
+  minute-only, so every live record landed in "unreadable timestamp" and the
+  tab headline read "This week — 0 calls" beside an empty By-day ladder. The
+  parser now accepts the real wire format (a minute-only timestamp still
+  degrades to the counted-undated state, never a guess), and a window whose
+  records all fail the parse renders an honest "Time views unavailable" state
+  — totals, the undated count and the contact ranking — instead of a fake
+  quiet week; in a mixed window the caveat sits under the temporal sections
+  it explains.
 - Voicemail play failures are no longer silent: a recording that fails to
   load (404/403/undecodable) now surfaces one honest toast per failure
   episode instead of a dead button — the `play()` rejection is no longer
