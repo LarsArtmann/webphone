@@ -39,7 +39,8 @@ func RenderWireFixtureFiles() map[string][]byte {
 	legacy := sessionIdentity{
 		Extension: fixtureExtension,
 		DID:       fixtureDID,
-		Password:  "fixture-directory-password",
+		//cqrs-lint:ignore(S001) a wire FIXTURE value pinning the sessionIdentity shape for the Android shell's JVM tests — not a credential, nothing it unlocks
+		Password: "fixture-directory-password",
 	}
 	brokered := sessionIdentity{
 		Extension:     fixtureExtension,
