@@ -1923,15 +1923,27 @@
     };
 
     /** @param {string} uuid @param {HTMLAudioElement | null} audio */
-    var vmFallback = function (uuid, audio) {
-      // Honest degradation (C1): without WebAudio there is no waveform;
-      // the browser's native controls take over so playback still works.
+    /**
+     * Honest degradation (C1): without WebAudio there is no waveform; the
+     * browser's native controls take over so playback still works. One
+     * honest toast per failure: when the recording itself could not be
+     * fetched, the player's playback-failed toast already owns that verdict
+     * and a second "waveform unavailable" toast would read as a
+     * contradicting claim on a dead player — the fallback stays silent for
+     * that class (recordingMissing) and keeps its toast for genuine
+     * capability shortfalls (no WebAudio, undecodable bytes), where playback
+     * still works.
+     * @param {string} uuid
+     * @param {HTMLAudioElement | null} audio
+     * @param {boolean} recordingMissing
+     */
+    var vmFallback = function (uuid, audio, recordingMissing) {
       if (audio) audio.controls = true;
       ["vm-play-", "vm-speed-", "vm-wave-"].forEach(function (prefix) {
         var el = document.getElementById(prefix + uuid);
         if (el) el.hidden = true;
       });
-      if (!vmFallbackToasted) {
+      if (!vmFallbackToasted && !recordingMissing) {
         vmFallbackToasted = true;
         shellToast(
           "voicemail waveform unavailable — using built-in player controls",
@@ -1944,7 +1956,7 @@
      * Decode the row's audio once and cache its waveform peaks.
      * @param {string} uuid
      * @param {HTMLAudioElement} audio
-     * @returns {Promise<number[] | undefined>}
+     * @returns {Promise<number[] | void>}
      */
     var vmBuildWave = function (uuid, audio) {
       if (vmPeaksCache.has(uuid)) {
@@ -1962,12 +1974,24 @@
         context = new Ctor();
         vmAudioContext = context;
       }
+      // One honest toast per failure: a fetch that was attempted and failed
+      // means the recording itself is unreachable — the same failure the
+      // player reports — and vmFallback must stay silent for it.
+      var recordingMissing = false;
       return fetch(src)
-        .then(function (response) {
-          if (!response.ok)
-            throw new Error("audio fetch HTTP " + response.status);
-          return response.arrayBuffer();
-        })
+        .then(
+          function (response) {
+            if (!response.ok) {
+              recordingMissing = true;
+              throw new Error("audio fetch HTTP " + response.status);
+            }
+            return response.arrayBuffer();
+          },
+          function () {
+            recordingMissing = true;
+            throw new Error("audio fetch failed");
+          },
+        )
         .then(function (buffer) {
           // Bound once: the promise callbacks below run in a later frame,
           // where the checker can no longer narrow `context`.
@@ -1981,6 +2005,9 @@
           var peaks = vmPeaks(decoded.getChannelData(0), VM_BARS);
           vmCachePeaks(uuid, peaks);
           return peaks;
+        })
+        .catch(function () {
+          vmFallback(uuid, audio, recordingMissing);
         });
     };
 
@@ -2016,15 +2043,11 @@
           vmPlaybackFailed(player);
         });
       }
-      vmBuildWave(uuid, audio)
-        .then(function (peaks) {
-          vmPaint(uuid, player);
-          var canvas = canvasElement("vm-wave-" + uuid);
-          if (canvas) vmDraw(canvas, peaks || [], 0);
-        })
-        .catch(function () {
-          vmFallback(uuid, player);
-        });
+      vmBuildWave(uuid, audio).then(function (peaks) {
+        vmPaint(uuid, player);
+        var canvas = canvasElement("vm-wave-" + uuid);
+        if (canvas) vmDraw(canvas, peaks || [], 0);
+      });
     };
 
     /** @param {HTMLElement} btn */

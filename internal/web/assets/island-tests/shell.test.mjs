@@ -1252,6 +1252,48 @@ test("an interrupted play attempt stays silent (AbortError is benign)", async ()
   );
 });
 
+// One honest toast per failure: an unreachable recording used to speak
+// TWICE — the playback-failed toast AND the "waveform unavailable"
+// fallback toast, a contradicting verdict on a dead player. The fallback
+// now stays silent when the recording fetch itself failed and the honest
+// toast owns the verdict.
+test("a dead recording keeps one toast — the fallback stays silent", async () => {
+  const { audio, play } = makePlayerRow("u11");
+  const realFetch = globalThis.fetch;
+  const realCtor = window.AudioContext;
+  globalThis.fetch = () => Promise.reject(new TypeError("Failed to fetch"));
+  window.AudioContext = function FakeAudioContext() {};
+  const toastCount = () =>
+    toasts()
+      .children.map((toast) => toast.textContent)
+      .filter(
+        (text) =>
+          text.includes("playback failed") ||
+          text.includes("built-in player controls"),
+      ).length;
+  const before = toastCount();
+  try {
+    doc.dispatch("click", { target: play });
+    audio.listeners.error[0]();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  } finally {
+    globalThis.fetch = realFetch;
+    if (realCtor === undefined) delete window.AudioContext;
+    else window.AudioContext = realCtor;
+  }
+  assert.equal(
+    audio.controls,
+    true,
+    "native controls still engage for a broken row",
+  );
+  assert.equal(
+    toastCount() - before,
+    1,
+    "exactly one honest toast — no waveform-fallback noise",
+  );
+  assert.match(toasts().children.at(-1).textContent, /could not be loaded/);
+});
+
 test("playing marks the row, swaps the label, and clears unread + badge", () => {
   const badge = doc.getElementById("wp-nav-vm-badge");
   badge.textContent = "2";
