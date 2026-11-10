@@ -83,9 +83,9 @@ func TestReportsPanelAllUndatedNamesTheCauseRendersOnlyRealFacts(t *testing.T) {
 	}
 
 	for _, absent := range []string{
-		"This week",               // the fake quiet week
-		`class="wp-reports-week"`, // its section
-		`class="wp-reports-section"`, // days/hours/contacts headings all ride it
+		"This week",     // the fake quiet week
+		"By day",        // an empty ladder heading
+		"Busiest hours", // its ladder guard already skips empty hours
 	} {
 		if strings.Contains(rendered, absent) {
 			t.Errorf("all-undated panel must not render %q:\n%.600s", absent, rendered)
@@ -105,6 +105,7 @@ func TestReportsPanelMixedUndatedKeepsSectionsAndExplainsTheGap(t *testing.T) {
 	}
 	props.Report.Days = []reports.Day{{Date: time.Date(2026, 11, 4, 9, 0, 0, 0, berlin), Calls: 24, Talk: 11 * time.Minute}}
 	props.Report.Undated = 49
+	props.Report.ThisWeek = reports.Week{Start: time.Date(2026, 11, 2, 0, 0, 0, 0, berlin), Calls: 24, Talk: 11 * time.Minute}
 
 	rendered := renderComponent(t, ReportsPanel(props))
 
@@ -119,7 +120,7 @@ func TestReportsPanelMixedUndatedKeepsSectionsAndExplainsTheGap(t *testing.T) {
 		}
 	}
 
-	if !strings.Contains(rendered, "Time views unavailable") {
+	if strings.Contains(rendered, "Time views unavailable") {
 		t.Errorf("a partial window must NOT render the all-undated state:\n%.600s", rendered)
 	}
 
