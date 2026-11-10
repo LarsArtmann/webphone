@@ -1,5 +1,7 @@
 # Status: SUPERB Phases 1–2 + A21 shipped — system composition root live, dial gate + snippets journal-backed
 
+> ARCHIVED 2026-11-10 (docs-health cadence sweep, 67→65): fully adjudicated — every row struck or routed (check-rows --strict + bare-rows green before the mv). Phases 1-2 + A21 are LANDED (AGENTS.md ONE-journal-world + dial-gate + snippets seams; shipped in v2.12.0).
+
 > **Snapshot rot:** claims verified as of **2026-11-08 12:52 CET** — final push `3e179805` CI **SUCCESS** (run `42476804599`, all jobs green), main green at that commit.
 > **Scope:** this session's run: red-main repairs (mine + concurrent sessions' gaps closed additively), **Phase 1 (A10–A14) fully landed**, **Phase 2 (A15–A20) fully landed**, **Phase 3 / A21 (snippets) landed**. Verified via: live gates (full go suites, `buildflow` no-cache incl. the findings gate, live smoke incl. the `dialgate` scenario 9/9, the backup drill, `nix build` + `.#checks.x86_64-linux.webphone-error-drill`, art-dupl check 0-new), benchmarks, and CI verdicts on every push. NOT verified: the concurrent sessions' remaining in-flight work (their views/crm edits stay theirs).
 

@@ -1,5 +1,7 @@
 # Status: SUPERB Phase 0 executed — all eight spikes GO, gate A09 recorded, D1–D8 ruled
 
+> ARCHIVED 2026-11-10 (docs-health cadence sweep, 67→65): fully adjudicated — every row struck or routed (check-rows --strict + bare-rows green before the mv). The SUPERB work it describes is LANDED: the composition root, dial gate and snippets live in AGENTS.md and the v2.12.0/v2.13.0 CHANGELOG sections.
+
 > **Snapshot rot:** claims verified as of **2026-11-08 08:52 CET** (CI verdict on the latest push still `in_progress` at write time — re-check `gh run view 42460315090` before relying on it).
 > **Scope:** this report covers THIS session's run only — Phase 0 (A01–A09) of the [SUPERB command & event sourcing plan](../planning/2026-11-08_04-04_SUPERB-command-event-sourcing.md). Verified via: live commands (module-cache source reads, the hello-system spike build/runs, the cqrs-lint worktree run, docs-gates battery), git log/gh runs, and the committed docs themselves. NOT verified: the concurrent sessions' work (the 07:19/07:38 CI reds are ATTRIBUTED to their commits, not investigated), the in-flight CI run's outcome, and anything prior to this session.
 
