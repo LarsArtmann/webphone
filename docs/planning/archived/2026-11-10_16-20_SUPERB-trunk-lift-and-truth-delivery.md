@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-10 (same-day execution): every row struck with its verdict (check-rows --strict + bare-rows green before the mv). The 1%–4% chains are done; the owner legs, lift day and quiet-host rows are owned in TODO_LIST §Trunk truth + v2.13.0 release train. Verdicts: the 19:14 report.
+
 # SUPERB Pareto Plan — Trunk Lift & Truth Delivery (2026-11-10 16:20)
 
 > **Scope**: the 38 open items this session surfaced (status report `docs/status/2026-11-10_16-03_trunk-screened-reports-fix-pending-release.md`). Cross-repo by nature: the carrier lane lives in `pbx-artmann`/`nix-international-telephony`, the truth lane lives here (webphone). This plan does NOT re-dispatch other trains' work — their rows in TODO_LIST.md stay theirs.
