@@ -111,8 +111,8 @@ session-field drift.
 5. ~~a3.1-3: android CHANGELOG/TODO_LIST/AGENTS rows (sync ritual + "live contract checks unblocked locally").~~ done in webphone-android (`748e6f3`)
 6. ~~a3.3: gradle gates green (testDebugUnitTest + ktlintCheck; assembleDebug if time).~~ done (docs-health pass verify-gate green on the baafd6f tree)
 7. ~~f1.3: android detailed commit + push origin + github (no workflow-file touch ⇒ mirror-safe).~~ done at `baafd6f a58a68c`
-8. f1.2-tail: confirm webphone CI stays green through the concurrent session's pushes (attributed, not mine to fix).
-9. Final buildflow tail (BUILDFLOW_NO_RESULT_CACHE=1) on webphone tree.
+8. ~~f1.2-tail: confirm webphone CI stays green through the concurrent session's pushes (attributed, not mine to fix).~~ done — run 42851723276 all-green on 722cef89 after this train healed the red it could own (format bytes, cadence archive, the tw.css CWD leak)
+9. ~~Final buildflow tail (BUILDFLOW_NO_RESULT_CACHE=1) on webphone tree.~~ done — full run 80 steps with one local-load flake (TestAutoReviewDispatchRoundTrip, 3/3 green isolated, CI green on identical bytes) cleared by the failed-only rerun (rc=0)
 10. ~~d1.1: deferred rows (loopback live-check script; runtime digest handshake w/ trigger; device-train checklist refresh).~~ done at `3f955f2`
 11. Consider a `/config.js` key fixture (android now reads it — keys pinned today only by island boot) — small webphone addition + re-vendor. **→ deferred with trigger — TODO rows in both repos name the config.js key fixture**
 12. ~~Update the android README honesty marker: session-field drift found+fixed via fixtures (replaces "caught at first device boot").~~ done in webphone-android (`a58a68c`)
