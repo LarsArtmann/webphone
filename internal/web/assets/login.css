@@ -470,6 +470,9 @@
   .z-50 {
     z-index: 50;
   }
+  .row-8 {
+    grid-row: 8;
+  }
   .row-18 {
     grid-row: 18;
   }
@@ -2510,6 +2513,11 @@ h3 {
 }
 .wp-muted {
   color: var(--muted);
+}
+.wp-mono {
+  font-family:
+    ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: var(--text-xs);
 }
 .wp-link {
   color: var(--accent-strong);

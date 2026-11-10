@@ -1,15 +1,18 @@
 package server
 
 import (
+	"context"
 	"encoding/json/v2"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/larsartmann/webphone/internal/config"
 	"github.com/larsartmann/webphone/internal/crm"
+	"github.com/larsartmann/webphone/internal/domain"
 )
 
 // crmStub is a Ledger machine-API double for the server tests.
@@ -495,6 +498,60 @@ func postJSONRaw(t *testing.T, c *client, path string, payload any) (*http.Respo
 	}
 	resp, respBody := c.do(http.MethodPost, path, body, "application/json")
 	return resp, string(respBody)
+}
+
+// TestReportsPanelPrefersPersonalContactNames pins the directory merge
+// (2026-11-10): the owner's saved contact names the report's top talker
+// with the CRM entirely OFF, and with the CRM ON the personal name wins
+// — the curated personal record beats the machine feed. The SSE push
+// lane merges through the same directoryFor home, so a live morph can
+// never rename the row back to a raw number.
+func TestReportsPanelPrefersPersonalContactNames(t *testing.T) {
+	contacts := newTestReadmodels(t)
+	owner := domain.MustParseExtension("1001")
+	phone := domain.MustParsePhone("+441632960961")
+	if err := contacts.Save(context.Background(), domain.Contact{
+		ID: domain.GenerateContactID(), Owner: owner,
+		Name: "Pifo Labs", Phone: phone, CreatedAt: time.Now(),
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	t.Run("crm off", func(t *testing.T) {
+		server := newTestServerWithPhoneAPI(t, reportsStub(t).URL, func(d *Deps) { d.Contacts = contacts })
+		c := signIn(t, server)
+		_, body := c.do(http.MethodGet, "/partials/reports", nil, "")
+		if page := string(body); !strings.Contains(page, "Pifo Labs") {
+			t.Errorf("personal contact did not name the report row: %.600s", page)
+		}
+	})
+
+	t.Run("personal beats crm", func(t *testing.T) {
+		stub := &crmStub{}
+		resolver := crmResolverFor(t, stub)
+		server := newTestServerWithPhoneAPI(t, reportsStub(t).URL, func(d *Deps) {
+			d.Contacts = contacts
+			d.CRM = resolver
+		})
+		c := signIn(t, server)
+		_, body := c.do(http.MethodGet, "/partials/reports", nil, "")
+		page := string(body)
+		if !strings.Contains(page, "Pifo Labs") {
+			t.Errorf("personal name must beat the CRM answer: %.600s", page)
+		}
+		if !strings.Contains(page, "Ada Lovelace") {
+			t.Errorf("the CRM still answers the numbers nobody saved: %.600s", page)
+		}
+
+		stub.mu.Lock()
+		lookups := append([]string(nil), stub.lookupNumbers...)
+		stub.mu.Unlock()
+		for _, asked := range lookups {
+			if asked == "+441632960961" {
+				t.Errorf("a personally-named number must not reach the CRM: lookups %v", lookups)
+			}
+		}
+	})
 }
 
 // TestHistoryRendersCRMNames pins the enrichment: with the integration

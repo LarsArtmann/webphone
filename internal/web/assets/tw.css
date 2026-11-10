@@ -464,6 +464,9 @@
   .isolate {
     isolation: isolate;
   }
+  .row-8 {
+    grid-row: 8;
+  }
   .row-18 {
     grid-row: 18;
   }

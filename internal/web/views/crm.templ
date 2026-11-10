@@ -1,5 +1,9 @@
 package views
 
+import (
+	"github.com/larsartmann/webphone/internal/domain"
+)
+
 // crmNameLink is the ONE place a CRM link is built. It renders the
 // contact's published name as a link into the CRM's own UI when the
 // deployment configured a deep-link template, and the plain name otherwise:
@@ -50,9 +54,15 @@ templ crmCreateLink(number string, createURL string, contacts CRMContacts, lang 
 // name, linked into the CRM when a template is configured, in the row's
 // canonical strong. Fax rows and History's CDR rows both render exactly this,
 // and two hand-kept copies would drift the day one of them gains an
-// attribute.
+// attribute. A remote the phone alphabet cannot read renders muted mono
+// instead: it is not a number, and a number-shaped strong would lie about
+// what the PBX sent.
 templ remoteLabel(number string, contacts CRMContacts, lang Lang) {
-	<strong class="wp-thread-remote">@crmNameLink(number, contacts, lang)</strong>
+	if _, err := domain.ParsePhone(number); err != nil {
+		<span class="wp-muted wp-mono">{ number }</span>
+	} else {
+		<strong class="wp-thread-remote">@crmNameLink(number, contacts, lang)</strong>
+	}
 }
 
 // crmDraftContact is a draft's caller label: the CRM-served name LINKED

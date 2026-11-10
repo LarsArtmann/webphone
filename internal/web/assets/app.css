@@ -805,6 +805,15 @@ h3 {
   color: var(--muted);
 }
 
+/* A remote party the phone alphabet cannot read (not a number, the PBX
+ * gave us garbage): render it honestly as machine output, not as a
+ * phone-number-shaped strong. Tokens only, like every other label. */
+.wp-mono {
+  font-family:
+    ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: var(--text-xs);
+}
+
 .wp-link {
   color: var(--accent-strong);
 }
