@@ -110,8 +110,9 @@ serves PLAIN HTTP — put a TLS front in front of it
 (`nix shell nixpkgs#caddy`, a Caddyfile with `https://webphone.test:18443`
 + `tls internal` + `reverse_proxy 127.0.0.1:18097`), then run the REMOTE
 lane against it: `--base-url https://webphone.test:18443 --insecure
---host-map webphone.test=127.0.0.1` (chrome gets `--accept-insecure-certs`
-+ a host-resolver rule; the HTTP probes skip verification). This is
+--host-map webphone.test=127.0.0.1` (chrome gets the `acceptInsecureCerts`
+capability + a host-resolver rule; the HTTP probes skip verification
+and resolve through the same map). This is
 the only lane where verification may be skipped — NEVER point
 --insecure at a production host. Note the login lane answers 429 when
 rate limited and stays MANUAL by ruling: no auto-retry, a retry loop
@@ -1190,8 +1191,6 @@ def capture(
     # The NIX chromium/chromedriver (Selenium Manager's downloaded driver
     # is a generic binary that cannot exec on nix). Both come from the
     # documented nix shell; fall back to PATH discovery.
-    import shutil
-
     chrome = shutil.which("chromium")
     if chrome:
         options.binary_location = chrome
@@ -1201,6 +1200,15 @@ def capture(
     options.add_argument("--use-fake-device-for-media-stream")
     options.add_argument("--use-fake-ui-for-media-stream")
     options.add_argument("--window-size=1280,900")
+    if insecure:
+        # The LOCAL TLS-front smoke only (self-signed cert): the W3C
+        # capability is what chromedriver honors — the switch form is
+        # silently ignored.
+        options.set_capability("acceptInsecureCerts", True)
+    for mapping in host_maps or []:
+        host, sep, ip = mapping.partition("=")
+        if host and ip:
+            options.add_argument(f"--host-resolver-rules=MAP {host} {ip}")
     driver_path = shutil.which("chromedriver")
     from selenium.webdriver.chrome.service import Service
 
