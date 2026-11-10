@@ -1,5 +1,16 @@
 # Tracking-train closeout follow-up — the dormant-path pins, the harvest, and the honest ledger
 
+> ARCHIVED-REPORT POSTSCRIPT (same evening): landing this report tipped
+> the corpus to 66 live reports and red the cadence gate; the ritual
+> drained the OLDEST report (2026-10-23_15-25, 93 bare rows) — every row
+> now carries a verified verdict (check-rows --strict + bare-rows green
+> before the mv; the annotate ratchet back at its 203 pin). The tooling
+> lesson it cost: the annotate auditor recognizes a FIXED verdict-word
+> set (done/resolved/superseded/fixed/adopted/decided/verified/won't
+> implement/not-do/duplicate/struck/moot/no longer, or the `→ routed`
+> arrow) — my `routed (...)` / `wont-do (...)` prefixes were invisible
+> to it and cost a battery iteration to decode.
+
 > Claims verified as of 23:29. This session executed every remaining
 > owner-NEUTRAL item from the tracking train's self-review
 > (docs/status/2026-11-10_19-12_tracking-train-self-review.md §f), then
