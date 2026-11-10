@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- The ended call card names WHY a dial failed, per verdict: the trunk's
+  live signature — a 403 carrying `Q.850;cause=21` — reads as a network
+  rejection instead of a block (the Reason header's Q.850 cause outranks
+  the SIP code), 488 gets its own incompatible-audio line, 401/407 name
+  the credential refusal, and a silent far end now has an island-owned
+  deadline: 32 s (Timer B's shape) cancels the hanging INVITE, records
+  408, and renders "No answer in time." (`calls.js` `failureReasonOf`,
+  i18n keys in both maps, `calls-reason.test.mjs`).
+- The Reports tab answers WHY the outbound calls never connected: the
+  fold buckets each never-connected outbound's FreeSWITCH hangup cause
+  verbatim (`Report.NoAnswerByCause`, empty cause counts as UNKNOWN)
+  and a subline under the No answer card ranks them loudest-first
+  (`noAnswerCausesLine`, i18n both maps).
+- The watch lane's third observer, `scripts/stale-prod-watch.sh`: prod's
+  public /version against the newest GitHub release; drift past 24 h
+  files a `stale-prod` issue carrying the evidence and the deploy path —
+  the 2026-11-09/10 lesson (a fix on main is not a fix in prod until
+  /version matches) now has an owner. Prod unreachable stays the
+  trunk-watch's signal, not this one's.
+
 ### Changed
 
 - The visual harness's `--open` decision is a pure helper (`open_target`)

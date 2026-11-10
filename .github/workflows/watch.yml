@@ -42,3 +42,6 @@ jobs:
 
       - name: daemon-audit (guarded files / drift in the tip auto-commit)
         run: scripts/daemon-audit.sh --file-issue
+
+      - name: stale-prod-watch (prod /version vs the newest release)
+        run: scripts/stale-prod-watch.sh
