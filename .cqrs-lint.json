@@ -15,6 +15,7 @@
       "E014",
       "F003",
       "F004",
+      "F005",
       "F007",
       "F028"
     ],
@@ -27,6 +28,7 @@
       "E014": "Read-your-writes is owned by the D7 awaitOwnWrite worker checkpoint (250ms budget) — AGENTS.md owns that ruling; this detector cannot see the projectionhost seam it wraps. Revisit only if awaitOwnWrite is ever retired.",
       "F003": "OpenTelemetry declined by the go-appkit deep-dive ruling (docs/research/2026-10-23_go-appkit-deep-dive.html): this single-binary deployment does not operate distributed tracing.",
       "F004": "Prometheus metrics exist via httputil.Metrics (/metrics latency histograms + status_class counters, AGENTS.md § Latency metrics). The rule looks for the cqrsprometheus.Setup module specifically and cannot see them.",
+      "F005": "Every event is stamped schema v1 (the WithSchemaVersion train, 2026-11-10); an upcaster registry is born with the FIRST v2 event, not before — registering one now would be an empty ritual. Re-enable at the first real schema change.",
       "F007": "Command idempotency lives at the store level: sys.Dedup is the ONE CAS home (callsIdem/hooksIdem/fax replay guard, 1h TTLs, successes only). Dispatcher-level idempotency middleware would duplicate that capability.",
       "F028": "Logging is injected: slog loggers are threaded through handlers and Deps; slog.SetDefault is deliberately never used."
     }

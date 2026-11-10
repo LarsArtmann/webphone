@@ -92,7 +92,8 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		content, readErr := io.ReadAll(io.LimitReader(file, messaging.MaxAttachmentSize+1))
-		_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure //cqrs-lint:ignore(C015,C023) same best-effort close
+		//cqrs-lint:ignore(C015,C023) best-effort close: nothing left to act on after the primary error surfaces below
+		_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
 		if readErr != nil || int64(len(content)) > messaging.MaxAttachmentSize {
 			h.renderPanelError(w, r, sess, views.TabMessages, http.StatusUnprocessableEntity, h.T(r, "err.attachmentLarge"))
 			return
@@ -147,7 +148,8 @@ func (h *handlers) sendFax(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pdf, readErr := io.ReadAll(io.LimitReader(file, fax.MaxPDFSize+1))
-	_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure //cqrs-lint:ignore(C015,C023) same best-effort close
+	//cqrs-lint:ignore(C015,C023) best-effort close: nothing left to act on after the primary error surfaces below
+	_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
 	if readErr != nil || int64(len(pdf)) > fax.MaxPDFSize {
 		h.renderPanelError(w, r, sess, views.TabFax, http.StatusUnprocessableEntity, h.T(r, "err.pdfLarge"))
 		return
@@ -722,7 +724,8 @@ func (h *handlers) importContacts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data, readErr := io.ReadAll(io.LimitReader(file, 5<<20))
-	_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure //cqrs-lint:ignore(C015,C023) same best-effort close
+	//cqrs-lint:ignore(C015,C023) best-effort close: nothing left to act on after the primary error surfaces below
+	_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
 	if readErr != nil {
 		h.renderPanelError(w, r, sess, views.TabContacts, http.StatusUnprocessableEntity, h.T(r, "contacts.readFailed"))
 		return

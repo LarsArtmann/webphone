@@ -50,6 +50,17 @@
 # from a moved clone or CI, re-run `buildflow -s branching-flow
 # --save-baseline` (findings stay under the severity cap everywhere, so a
 # non-matching baseline warns, never gates).
+# STALENESS-WARNING GOTCHA (2026-11-10, nearly cost the file): the
+# "accepted-noise entries match nothing in each of the last 3 runs"
+# warning is measured per RUN'S OWN findings — a single-step `-s cqrs-lint`
+# run can NEVER match this branching-flow baseline, so three scoped runs
+# in a row fabricate a fully-stale verdict (68 of 157 entries matched a
+# full branching-flow run the same day; the file was deleted on the false
+# alarm and RESTORED from df4e4f2b). Trust the staleness verdict only
+# after a FULL run. Line-drift from landed edits retires individual ids
+# silently (warns, never gates) — do NOT refresh via --save-baseline to
+# silence it: a refresh snapshots EVERY tool's current findings (the
+# suppress-everything anti-pattern the 2026-10-28 retirement called out).
 baseline: .buildflow-baseline.json
 #
 # tool_paths: govulncheck must be built with the module's Go (1.27).

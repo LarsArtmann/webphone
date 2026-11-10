@@ -47,7 +47,8 @@ type SaveCallReview struct {
 	Text       string
 	Language   string
 	Confidence int
-	At         time.Time // stamped at the service seam; the decision stays deterministic
+	//cqrs-lint:ignore(C013) command INPUT, not a journaled payload — the detector's shape guess misnames it a projection view; the journaled fact stores UpdatedAt and the fold reads .Unix()
+	At time.Time // stamped at the service seam; the decision stays deterministic
 }
 
 // reviewSlot is one call's review-slot state.
