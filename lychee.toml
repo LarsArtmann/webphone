@@ -5,3 +5,12 @@
 exclude = [
   "github.com/LarsArtmann/projects-management-automation",
 ]
+
+# Point-in-time archives quote the links they fixed at their write-time;
+# checking them re-fails history. The live copies of those reports live
+# outside these directories.
+exclude_path = [
+  "docs/announcements/archived",
+  "docs/architecture-understanding/archived",
+  "docs/research/archived",
+]

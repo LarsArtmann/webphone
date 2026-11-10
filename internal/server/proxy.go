@@ -25,7 +25,7 @@ func (h *handlers) proxyPhoneAPI(w http.ResponseWriter, r *http.Request) {
 	}
 
 	rest := strings.TrimPrefix(r.URL.Path, "/phone-api")
-	upstream := h.deps.PhoneAPI.ResolvePath(rest, r.URL.RawQuery)
+	upstream := h.deps.PhoneAPI.UpstreamURL(rest, r.URL.RawQuery)
 
 	req, err := http.NewRequestWithContext(r.Context(), r.Method, upstream, nil)
 	if err != nil {

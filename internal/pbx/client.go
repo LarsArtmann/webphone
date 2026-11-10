@@ -64,9 +64,12 @@ var ErrUnauthorized = errors.New("phone api rejected the credentials")
 // Enabled reports whether a phone API is wired up.
 func (c *Client) Enabled() bool { return c != nil && c.base != nil }
 
-// ResolvePath builds the absolute upstream URL for a /phone-api-relative
-// path (without the "/phone-api" prefix), used by the proxy.
-func (c *Client) ResolvePath(rest, rawQuery string) string { //nolint:branching-flow // the documented join-path-and-query-separately home (url.JoinPath percent-encodes '?'); the names carry the contract
+// UpstreamURL builds the absolute upstream URL for a /phone-api-relative
+// path (without the "/phone-api" prefix), used by the proxy. (Named for
+// the URL it returns: constants.ResolvePath is the canonical
+// filesystem-path helper of the same shape, and delegation is
+// impossible across URL-vs-filesystem semantics.)
+func (c *Client) UpstreamURL(rest, rawQuery string) string { //nolint:branching-flow // the documented join-path-and-query-separately home (url.JoinPath percent-encodes '?'); the names carry the contract
 	target := c.base.JoinPath(rest).String()
 	if rawQuery != "" {
 		target += "?" + rawQuery

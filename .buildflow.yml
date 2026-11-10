@@ -135,6 +135,30 @@ exclude:
 #     * F019 + F026 (readmodels contacts): REAL metaengine usage polish
 #       (Volume hints on query declarations, WithPrefetch on scans);
 #       rides the train's query-declaration work (TODO_LIST).
+#   2026-11-10 FULL TRIAGE (186 findings after the ONE-journal-world
+#   decider train): every rule now carries an explicit ruling. The
+#   PERMANENT-ARCHITECTURE declines moved to .cqrs-lint.json (rules.disable
+#   + machine-readable reasons; C044 prefixed-key symmetry, B004/B010
+#   cqrs-gen decline, B007 explicit route registrations, D005 detector
+#   misattribution, E014 D7 awaitOwnWrite, F003/F004/F007/F028 project
+#   facts). Per-SITE rulings live as //cqrs-lint:ignore(RULE) directives
+#   at the finding's line (A032 foreign-token/seam-minted transcript ids,
+#   F031 fetchSegments variadic hides the callers' explicit WithLimit,
+#   D014 DeliveryEvent/FaxEvent machine triggers, C009 boot-time
+#   fail-fast panics, C023/C015 best-effort closes). REAL FIXES landed
+#   same-day: C006 ver.Increment() everywhere, D013 WithSchemaVersion(1)
+#   on every event.New, C007 command-carried At stamps (notes/reviews
+#   deciders deterministic, pushdevices cmd.Now precedent), B005
+#   decider.StrictApply on all 11 folds via per-aggregate stream-vocab
+#   vars shared with the decls' Events, D014 exact-name json tags on the
+#   journaled tombstones (byte-neutral). STILL VISIBLE by choice (each
+#   must stay armed): C014 time.Local (deliberate boot-time zone), D006
+#   errTraceRequestFailed sentinel (recorder trigger vocabulary,
+#   erraudit-clean), E023 database/sql mixing (sessions SQL per the D2
+#   ruling + DLQ engine-tier exempt — the rule's own text), F009
+#   visibility poll time.After (the in-process D7 read-your-writes
+#   budget, not a durable timer), F021 fold-count advisories (deliberate
+#   view decomposition).
 # - nix-hash-fix: UNSKIPPED 2026-10-15 (owner decision). Its 10/10
 #   chronic failure is POST-BUMP-ONLY: the step computes the right
 #   vendorHash but never writes it in this repo layout, so with the pin

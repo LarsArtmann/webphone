@@ -254,7 +254,7 @@ func (h *handlers) attachment(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "attachment missing", http.StatusGone)
 		return
 	}
-	defer func() { _ = file.Close() }() //nolint:erraudit // read-side close on defer; nothing left to act on //cqrs-lint:ignore(C015,C023) same best-effort close
+	defer func() { _ = file.Close() }() //nolint:erraudit // read-side close on defer; nothing left to act on
 	w.Header().Set("Content-Type", attachment.MimeType)
 	w.Header().Set("Content-Disposition", fmt.Sprintf("inline; filename=%q", attachment.Name))
 	if _, err := io.Copy(w, file); err != nil {
