@@ -515,7 +515,9 @@ def login_remote(base: str, extension: str, password: str) -> str:
     lane is rate limited per IP and a loop would lock the operator out).
     """
     jar = urllib.request.HTTPCookieProcessor()
-    handler = urllib.request.HTTPSHandler(context=_ssl_context) if _ssl_context else None
+    handler = (
+        urllib.request.HTTPSHandler(context=_ssl_context) if _ssl_context else None
+    )
     opener = urllib.request.build_opener(*([handler] if handler else []), jar)
     try:
         page = opener.open(base + "/", timeout=30).read().decode("utf-8", "replace")
@@ -584,9 +586,13 @@ def resolve_remote_surfaces(base: str, session: str, threads_n: int) -> dict:
             file=sys.stderr,
         )
     if admin:
-        print("admin: the session's nav carries the admin link — /admin joins the matrix")
+        print(
+            "admin: the session's nav carries the admin link — /admin joins the matrix"
+        )
     if 0 < len(links) < threads_n:
-        print(f"note: {len(links)} live thread(s) < --threads {threads_n} — shooting all of them")
+        print(
+            f"note: {len(links)} live thread(s) < --threads {threads_n} — shooting all of them"
+        )
     surfaces: list[tuple[str, str | None]] = [("messages", "/messages")]
     chosen = links[:threads_n]
     for idx, link in enumerate(chosen, 1):
@@ -608,7 +614,9 @@ def resolve_remote_surfaces(base: str, session: str, threads_n: int) -> dict:
     if crm_link:
         # One home for the pin: the real CRM strip's wire id, selector-only
         # (the local fixture's copy pins do not hold against real Kith data).
-        print(f"crm: thread fragment {crm_link} carries #wp-crm-context — crm-context joins")
+        print(
+            f"crm: thread fragment {crm_link} carries #wp-crm-context — crm-context joins"
+        )
         SURFACE_MARKERS["crm-context"] = "#wp-crm-context"
     surfaces += [("fax", "/fax"), ("voicemail", "/voicemail"), ("history", "/history")]
     try:
@@ -620,7 +628,9 @@ def resolve_remote_surfaces(base: str, session: str, threads_n: int) -> dict:
             path = f"/history?q={urllib.parse.quote(word)}" if word else "/history"
             surfaces.append(("history-transcript", path))
             if word:
-                print(f"history: dense search rides q={word!r} (scraped from a live transcript)")
+                print(
+                    f"history: dense search rides q={word!r} (scraped from a live transcript)"
+                )
         else:
             print(
                 "note: no call transcripts on this deployment — "
@@ -649,7 +659,9 @@ def fetch_version_info(base: str) -> dict | None:
     """The deployment's /version (open route) as {"version", "commit"};
     None when fenced or absent."""
     try:
-        with urllib.request.urlopen(base + "/version", timeout=10, context=_ssl_context) as resp:  # nosec B310 - read-only version probe
+        with urllib.request.urlopen(
+            base + "/version", timeout=10, context=_ssl_context
+        ) as resp:  # nosec B310 - read-only version probe
             payload = json.loads(resp.read())
     except (OSError, ValueError, http.client.HTTPException):
         return None
@@ -843,7 +855,7 @@ def build_compare(
     head += html.escape(os.path.basename(host_dir)) + "</p>"
     head += (
         f'<p><a href="{html.escape(os.path.relpath(prev_dir, host_dir))}/gallery.html">'
-        f"previous gallery</a> · <a href=\"{html.escape(os.path.relpath(cur_dir, host_dir))}"
+        f'previous gallery</a> · <a href="{html.escape(os.path.relpath(cur_dir, host_dir))}'
         f'/gallery.html">current gallery</a></p>'
     )
     sections = []
@@ -925,7 +937,9 @@ def track(
             )
             if result is None:
                 entry["size_match"] = False
-                print(f"diff: {key} — size mismatch beyond the clip bar; side-by-side only")
+                print(
+                    f"diff: {key} — size mismatch beyond the clip bar; side-by-side only"
+                )
             else:
                 changed_pct, clipped = result
                 entry["changed_pct"] = round(changed_pct * 100, 3)
@@ -934,11 +948,15 @@ def track(
                 entry["clipped"] = clipped
                 if clipped:
                     clipped_keys.add(key)
-                    print(f"diff: {key} — height drifted; diffed the common top {diff_clip}px (clipped)")
+                    print(
+                        f"diff: {key} — height drifted; diffed the common top {diff_clip}px (clipped)"
+                    )
                 diffed.append((key, changed_pct * 100))
         shots.append(entry)
     if wire is not None:
-        with open(os.path.join(run_dir, "wire-facts.json"), "w", encoding="utf-8") as fh:
+        with open(
+            os.path.join(run_dir, "wire-facts.json"), "w", encoding="utf-8"
+        ) as fh:
             json.dump(wire, fh, indent=2, sort_keys=True)
             fh.write("\n")
     summary = {
@@ -966,7 +984,9 @@ def track(
     if wire is not None:
         bits = ["config.js ✓" if wire.get("config_js") else "config.js —"]
         bits.append(
-            "settings server section ✓" if wire.get("settings_server_html") else "settings server section —"
+            "settings server section ✓"
+            if wire.get("settings_server_html")
+            else "settings server section —"
         )
         wire_note = "wire: " + ", ".join(bits)
     build_gallery(run_dir, base, version, label, wire_note)
@@ -1070,7 +1090,7 @@ def transcript_probe_word(page: str) -> str | None:
     """A word scraped from the first transcript group body, for a
     ?q= search that will actually match real data (the seeded q=revenue
     only exists on the local fixture)."""
-    block = re.search(r'<details class="wp-transcript-call".*?</details>', page, re.S)
+    block = re.search(r'<details class="wp-transcript-call".*?</details>', page, re.DOTALL)
     if not block:
         return None
     text = re.sub(r"<[^>]+>", " ", block.group(0))
@@ -1121,7 +1141,7 @@ def snapshot_wire_facts(base: str, session: str | None) -> dict[str, str | None]
     try:
         page = _get(base, "/settings", session)
         match = re.search(
-            r'<details class="wp-settings-server">.*?</details>', page, re.S
+            r'<details class="wp-settings-server">.*?</details>', page, re.DOTALL
         )
         facts["settings_server_html"] = match.group(0) if match else None
     except (OSError, http.client.HTTPException, urllib.error.HTTPError):
@@ -1213,13 +1233,14 @@ def capture(
     from selenium.webdriver.chrome.service import Service
 
     driver_path = shutil.which("chromedriver")
-    from selenium.webdriver.chrome.service import Service
 
     service = Service(executable_path=driver_path) if driver_path else None
     driver = webdriver.Chrome(service=service, options=options)
     shots = 0
     ledger: list[dict[str, str]] = []
-    anonymous = anonymous_surfaces if anonymous_surfaces is not None else ANONYMOUS_SURFACES
+    anonymous = (
+        anonymous_surfaces if anonymous_surfaces is not None else ANONYMOUS_SURFACES
+    )
 
     def _target(name: str, theme: str, vp: tuple[int, int]) -> str:
         suffix = "" if len(viewports) == 1 else f"-{vp[0]}x{vp[1]}"
@@ -1585,8 +1606,14 @@ def self_test() -> int:
             failures.append(name)
             print(f"  FAIL {name}: {detail}")
 
-    check("shot_key strips numbering", shot_key("07-thread-01-dark.png") == "thread-01-dark")
-    check("shot_key unnumbered passthrough", shot_key("zz-thread-collapsed.png") == "zz-thread-collapsed")
+    check(
+        "shot_key strips numbering",
+        shot_key("07-thread-01-dark.png") == "thread-01-dark",
+    )
+    check(
+        "shot_key unnumbered passthrough",
+        shot_key("zz-thread-collapsed.png") == "zz-thread-collapsed",
+    )
     check("viewport parse", _parse_viewport("390x844") == (390, 844))
     check("viewport parse caps", _parse_viewport("1280X900") == (1280, 900))
     try:
@@ -1594,8 +1621,14 @@ def self_test() -> int:
         check("viewport junk rejected", False, "no SystemExit")
     except SystemExit:
         check("viewport junk rejected", True)
-    check("sanitize host", _sanitize_dirname("https://pbx.artmann.tech") == "pbx.artmann.tech")
-    check("sanitize local", _sanitize_dirname("http://127.0.0.1:18097") == "127.0.0.1_18097")
+    check(
+        "sanitize host",
+        _sanitize_dirname("https://pbx.artmann.tech") == "pbx.artmann.tech",
+    )
+    check(
+        "sanitize local",
+        _sanitize_dirname("http://127.0.0.1:18097") == "127.0.0.1_18097",
+    )
 
     fixture = (
         '<a hx-get="/partials/messages/t1">x</a>'
@@ -1609,12 +1642,20 @@ def self_test() -> int:
     )
     check("pins: str", normalize_pins(".a") == [(".a", None)])
     check("pins: tuple", normalize_pins((".a", "txt")) == [(".a", "txt")])
-    check("pins: list", normalize_pins([(".a", None), (".b", "x")]) == [(".a", None), (".b", "x")])
+    check(
+        "pins: list",
+        normalize_pins([(".a", None), (".b", "x")]) == [(".a", None), (".b", "x")],
+    )
 
     check("clip: equal sizes", clip_box((800, 900), (800, 900), None) == (800, 900))
     check("clip: no bar refuses drift", clip_box((800, 900), (800, 1400), None) is None)
-    check("clip: bar bounds height", clip_box((800, 900), (800, 1400), 600) == (800, 600))
-    check("clip: width drift crops too", clip_box((800, 900), (815, 900), 600) == (800, 600))
+    check(
+        "clip: bar bounds height", clip_box((800, 900), (800, 1400), 600) == (800, 600)
+    )
+    check(
+        "clip: width drift crops too",
+        clip_box((800, 900), (815, 900), 600) == (800, 600),
+    )
 
     check("admin nav detected", has_admin_nav('<a href="/admin">Admin</a>'))
     check("admin nav exact", not has_admin_nav('<a href="/admin2">x</a>'))
@@ -1667,14 +1708,28 @@ def self_test() -> int:
             Image.new("RGB", (10, 10), (255, 255, 255)).save(os.path.join(td, "b.png"))
             Image.new("RGB", (10, 20), (0, 0, 0)).save(os.path.join(td, "c.png"))
             join = lambda n: os.path.join(td, n)
-            same = pixel_diff(join("a.png"), join("a.png"), join("d0.png"), threshold=12)
-            check("pixel: identical = 0%", same is not None and same[0] == 0.0, repr(same))
-            full = pixel_diff(join("a.png"), join("b.png"), join("d1.png"), threshold=12)
-            check("pixel: full change = 100%", full is not None and abs(full[0] - 1.0) < 1e-9, repr(full))
+            same = pixel_diff(
+                join("a.png"), join("a.png"), join("d0.png"), threshold=12
+            )
+            check(
+                "pixel: identical = 0%", same is not None and same[0] == 0.0, repr(same)
+            )
+            full = pixel_diff(
+                join("a.png"), join("b.png"), join("d1.png"), threshold=12
+            )
+            check(
+                "pixel: full change = 100%",
+                full is not None and abs(full[0] - 1.0) < 1e-9,
+                repr(full),
+            )
             skip = pixel_diff(join("a.png"), join("c.png"), join("d2.png"))
             check("pixel: height drift skips w/o clip", skip is None, repr(skip))
             clipped = pixel_diff(join("a.png"), join("c.png"), join("d3.png"), clip=10)
-            check("pixel: clip path diffs top-N", clipped is not None and clipped[1] is True, repr(clipped))
+            check(
+                "pixel: clip path diffs top-N",
+                clipped is not None and clipped[1] is True,
+                repr(clipped),
+            )
 
     if failures:
         print(f"self-test: {len(failures)} FAILURE(S)")
@@ -1886,7 +1941,9 @@ def main() -> int:
                 )
                 return 2
             try:
-                urllib.request.urlopen(base + "/livez", timeout=10, context=_ssl_context)  # nosec B310 - readiness probe of the remote server under capture
+                urllib.request.urlopen(
+                    base + "/livez", timeout=10, context=_ssl_context
+                )  # nosec B310 - readiness probe of the remote server under capture
             except (OSError, http.client.HTTPException) as exc:
                 print(f"{base} is unreachable ({exc})", file=sys.stderr)
                 return 1
@@ -1905,9 +1962,7 @@ def main() -> int:
             # A typo must fail loudly: a filtered run that matches nothing
             # would print "0 shots" and look like a clean pass.
             unknown = sorted(
-                only
-                - {name for name, _ in surfaces}
-                - {name for name, _ in anonymous}
+                only - {name for name, _ in surfaces} - {name for name, _ in anonymous}
             )
             if unknown:
                 print(
@@ -2044,9 +2099,7 @@ def main() -> int:
             if only is not None:
                 # A typo must fail loudly: a filtered run that matches nothing
                 # would print "0 shots" and look like a clean pass.
-                known = {name for name, _ in TABS} | {
-                    name for name, _ in anonymous
-                }
+                known = {name for name, _ in TABS} | {name for name, _ in anonymous}
                 if "crm-context" in only and not args.crm:
                     print(
                         "surface 'crm-context' needs --crm: without the fake CRM the "
