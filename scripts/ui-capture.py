@@ -319,7 +319,7 @@ FAKE_CRM_CONTEXT = {
     "next_task": {"title": "Send the revised offer", "due_at": "2027-11-02T09:00:00Z"},
     "last_activity_at": "2026-10-24T11:03:00Z",
 }
-FAKE_CRM_LOOKUP = {
+FAKE_CRM_LOOKUP: dict[str, object] = {
     "results": [
         {
             "id": FAKE_CRM_CONTACT_ID,
@@ -394,9 +394,10 @@ def start_fake_crm() -> tuple[str, str]:
     """
     server = ThreadingHTTPServer(("127.0.0.1", 0), _FakeCRMHandler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
-    host, port = server.server_address[0], server.server_address[1]
+    host, port = server.server_address[:2]
+    host_text = host if isinstance(host, str) else host.decode()
 
-    return f"http://{host}:{port}", FAKE_CRM_TOKEN
+    return f"http://{host_text}:{port}", FAKE_CRM_TOKEN
 
 
 def seed(base: str) -> tuple[str | None, str | None, str]:
