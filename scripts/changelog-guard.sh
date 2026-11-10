@@ -74,7 +74,7 @@ is_product_code() {
 	# shepherding scripts are tooling (they do not ship)
 	scripts/*) return 1 ;;
 	# product code: Go, templ views + their codegen, served assets, packaging
-	*.go | *_templ.go) return 0 ;;
+	*.go) return 0 ;;
 	*.templ) return 0 ;;
 	internal/web/assets/*) return 0 ;;
 	nix/*) return 0 ;;

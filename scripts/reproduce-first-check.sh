@@ -28,13 +28,13 @@ say() { echo "reproduce-first: $*"; }
 
 go_floor_guard() {
 	if ! command -v go >/dev/null 2>&1; then
-		say "ENV-GO go is not on PATH — run inside: nix develop -c $0 $*"
+		say "ENV-GO go is not on PATH — run inside: nix develop -c $0"
 		exit 3
 	fi
 	if [ -f go.mod ] &&
 		grep -qE '^go [0-9.]+' go.mod &&
 		! go version >/dev/null 2>&1; then
-		say "ENV-GO go cannot start against this go.mod — run inside: nix develop -c $0 $*"
+		say "ENV-GO go cannot start against this go.mod — run inside: nix develop -c $0"
 		exit 3
 	fi
 }

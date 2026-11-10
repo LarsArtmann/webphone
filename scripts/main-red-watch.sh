@@ -155,7 +155,7 @@ EXISTS*)
 	;;
 esac
 
-RUN_ID=$(GH_REPO= python3 -c 'import json,sys; print(json.loads(sys.argv[1])[0]["databaseId"])' "$LIST_JSON")
+RUN_ID=$(GH_REPO='' python3 -c 'import json,sys; print(json.loads(sys.argv[1])[0]["databaseId"])' "$LIST_JSON")
 RUN_URL=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])[0].get("url",""))' "$LIST_JSON")
 RUN_TITLE=$(python3 -c 'import json,sys; print(json.loads(sys.argv[1])[0].get("displayTitle","")[:80])' "$LIST_JSON")
 FAILED_JOBS=$(gh run view "$RUN_ID" --json jobs --jq '[.jobs[] | select(.conclusion=="failure") | .name] | join(", ")' 2>/dev/null || echo "unknown")
