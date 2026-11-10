@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"log/slog"
+	"maps"
 
 	"github.com/larsartmann/webphone/internal/crm"
 	"github.com/larsartmann/webphone/internal/domain"
@@ -95,9 +96,7 @@ func directoryFor(ctx context.Context, contacts readmodels.ContactGate, resolver
 		remaining = append(remaining, number)
 	}
 
-	for number, contact := range crmContacts(resolver.People(ctx, remaining), resolver) {
-		directory[number] = contact
-	}
+	maps.Copy(directory, crmContacts(resolver.People(ctx, remaining), resolver))
 
 	return directory
 }
