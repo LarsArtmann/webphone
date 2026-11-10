@@ -1,7 +1,15 @@
 #!/usr/bin/env python3
 """One-shot prod CDR read: mint a session, pull /phone-api/history, print
 the C3 inbound-window + D2 row-level verdicts. Read-only; nothing stored
-outside stdout."""
+outside stdout.
+
+The session mint is the nosurf double-submit dance: GET / (picks up the
+cookie jar + the meta csrf-token), then POST /api/session with
+X-CSRF-Token over the SAME cookie jar — a jar-less POST answers 400 and
+looks like bad credentials. 201 = session created. The password file is
+the extension's PBX directory secret (~/.pbx-prod-secrets/), the same
+one the login flow reads. Promotion of the /tmp recipe, 2026-11-10
+(C3/D2 verification; /tmp rots)."""
 import json
 import re
 import sys
