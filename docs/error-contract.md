@@ -407,7 +407,6 @@ a deliberate code change, regenerate:
 | cqrs.fax_stream                              | Rejection                 | internal/cqrs/faxesstore.go        |
 | cqrs.fax_sweep_scan                          | Infrastructure            | internal/cqrs/faxesstore.go        |
 | cqrs.fax_trim                                | Infrastructure            | internal/cqrs/faxesstore.go        |
-| cqrs.journal_import                          | Infrastructure, Rejection | internal/app/importutil.go         |
 | cqrs.message_by_ref                          | Infrastructure            | internal/cqrs/threadsstore.go      |
 | cqrs.message_count                           | Infrastructure            | internal/cqrs/threadsreads.go      |
 | cqrs.message_lookup                          | Infrastructure            | internal/cqrs/threadsreads.go      |

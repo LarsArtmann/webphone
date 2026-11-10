@@ -324,7 +324,7 @@ func assertColumns(t *testing.T, db *sql.DB, table string, wants ...string) {
 	if err != nil {
 		t.Fatalf("table_info %s: %v", table, err)
 	}
-	defer rows.Close()
+	defer func() { _ = rows.Close() }()
 	have := map[string]bool{}
 	for rows.Next() {
 		var cid int

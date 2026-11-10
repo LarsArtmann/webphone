@@ -11,7 +11,7 @@ import (
 	"time"
 
 	"github.com/a-h/templ"
-	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
+	"github.com/larsartmann/cqrs-htmx/v4/httperr"
 	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/httputil"
 
@@ -631,7 +631,7 @@ func errorPanel(message string, lang views.Lang) templ.Component {
 // webhook bodies are byte-stable-pinned for providers.
 func (h *handlers) internalError(w http.ResponseWriter, r *http.Request, op string, err error) {
 	errorfamily.LogErrorContext(r.Context(), fmt.Errorf("%s: %w", op, err), nil)
-	http.Error(w, op+": "+cqrshtmx.SafeDetail(err, http.StatusInternalServerError, false), http.StatusInternalServerError)
+	http.Error(w, op+": "+httperr.SafeDetail(err, http.StatusInternalServerError, false), http.StatusInternalServerError)
 }
 
 func csrfToken(r *http.Request) string {

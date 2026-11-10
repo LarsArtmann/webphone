@@ -476,7 +476,7 @@ func TestTokenEndpointRequiresClientSecretBasic(t *testing.T) {
 	if err != nil {
 		t.Fatalf("post-form probe: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusUnauthorized {
 		t.Fatalf("client_secret_post must be refused with 401, got %d", resp.StatusCode)
 	}
@@ -493,7 +493,7 @@ func TestTokenEndpointRequiresClientSecretBasic(t *testing.T) {
 	if err != nil {
 		t.Fatalf("raw-secret probe: %v", err)
 	}
-	defer resp2.Body.Close()
+	defer func() { _ = resp2.Body.Close() }()
 	if resp2.StatusCode != http.StatusUnauthorized {
 		t.Fatalf("the raw (padded+newline) secret must be refused with 401, got %d", resp2.StatusCode)
 	}

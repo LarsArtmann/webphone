@@ -65,6 +65,9 @@
         {
           type = "app";
           program = lib.getExe script;
+          meta.description =
+            "Scan the webphone runtime closure for known CVEs; findings already "
+            + "patched in the locked nixpkgs rev are triaged, not failed.";
         };
 
       # The prod UI-tracking loop as ONE command: `nix run .#ui-track -- \
@@ -97,6 +100,9 @@
         {
           type = "app";
           program = lib.getExe script;
+          meta.description =
+            "Run the prod UI-tracking capture loop (chromium + chromedriver + "
+            + "selenium + pillow) against a live deployment.";
         };
     };
 }

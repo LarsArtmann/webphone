@@ -19,7 +19,7 @@ import (
 	"strings"
 	"time"
 
-	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
+	"github.com/larsartmann/cqrs-htmx/v4/httperr"
 	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/fax"
@@ -94,7 +94,7 @@ func New(deps Deps) *Handlers {
 // semantics is not this helper's job.
 func webhookFail(w http.ResponseWriter, kind string, err error) {
 	slog.Warn("webhook apply failed", "kind", kind, "err", err)
-	http.Error(w, cqrshtmx.SafeDetail(err, http.StatusInternalServerError, false), http.StatusInternalServerError)
+	http.Error(w, httperr.SafeDetail(err, http.StatusInternalServerError, false), http.StatusInternalServerError)
 }
 
 // RetryAfterHint is the Retry-After value the 503 writers send: one

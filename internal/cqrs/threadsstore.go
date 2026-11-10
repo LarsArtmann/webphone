@@ -47,17 +47,6 @@ func NewThreads(sys *system.System) *Threads {
 	}
 }
 
-// key resolves the thread stream key for a stored thread id (any of the
-// three identity fields answers; the summary carries them all).
-func (s *Threads) key(owner domain.Extension, id domain.ThreadID) (string, error) {
-	view, err := s.threadByID(owner, id)
-	if err != nil {
-		return "", err
-	}
-	return ThreadStreamKey(owner, domain.MustNetwork(view.Network),
-		domain.MustParseAddress(domain.MustNetwork(view.Network), view.Remote)), nil
-}
-
 func (s *Threads) threadByID(owner domain.Extension, id domain.ThreadID) (readmodels.ThreadSummaryView, error) {
 	views, err := s.threads.Scan(context.Background(),
 		metaengine.WithFilter("owner", metaengine.FilterEq, owner.String()),

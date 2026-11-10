@@ -22,14 +22,6 @@ func threadBattery(t *testing.T) (*system.System, *Threads) {
 	return sys, NewThreads(sys)
 }
 
-func threadMsg(t *testing.T, owner domain.Extension, remote domain.Address, id domain.MessageID, thread domain.ThreadID, dir domain.Direction, body string, at time.Time) domain.Message {
-	t.Helper()
-	if dir == domain.DirectionInbound {
-		return domain.NewInboundMessage(id, thread, owner, remote, body, 0, at)
-	}
-	return domain.NewOutboundMessage(id, thread, owner, remote, body, 0, at)
-}
-
 func TestThreadAppendCreatesAndAdvances(t *testing.T) {
 	_, backend := threadBattery(t)
 	ctx := context.Background()

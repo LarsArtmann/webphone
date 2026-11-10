@@ -340,7 +340,7 @@ func newAdminCDRStub(t testing.TB, failFor map[string]bool) *httptest.Server {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		fmt.Fprintf(w, `{"entries":[{"context":"public","caller_id_number":%q,"destination_number":"+4989000000","start":"2026-11-04 1%c:00:00","billsec":42}]}`, extension, extension[len(extension)-1])
+		_, _ = fmt.Fprintf(w, `{"entries":[{"context":"public","caller_id_number":%q,"destination_number":"+4989000000","start":"2026-11-04 1%c:00:00","billsec":42}]}`, extension, extension[len(extension)-1])
 	}))
 	t.Cleanup(stub.Close)
 	return stub

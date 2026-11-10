@@ -67,6 +67,6 @@ func runCatalog(args []string) error {
 			"write the openapi specification"))
 	}
 
-	fmt.Fprintf(os.Stdout, "catalog: wrote eventcatalog tree to %s\n", dir)
+	_, _ = fmt.Fprintf(os.Stdout, "catalog: wrote eventcatalog tree to %s\n", dir)
 	return nil
 }

@@ -210,7 +210,7 @@ func TestDialGateSlotsListing(t *testing.T) {
 			t.Fatalf("seed dial %s: %d", remote, r.StatusCode)
 		}
 	}
-	resp, body = c.do(http.MethodGet, "/api/dials", nil, "")
+	_, body = c.do(http.MethodGet, "/api/dials", nil, "")
 	if err := json.Unmarshal(body, &got); err != nil {
 		t.Fatalf("decode listing: %v", err)
 	}
@@ -227,7 +227,7 @@ func TestDialGateSlotsListing(t *testing.T) {
 	// Owner scoping: another extension sees none of these.
 	other := clientFor(t, srv)
 	other.login("2002", "pw")
-	resp, body = other.do(http.MethodGet, "/api/dials", nil, "")
+	_, body = other.do(http.MethodGet, "/api/dials", nil, "")
 	if err := json.Unmarshal(body, &got); err != nil {
 		t.Fatalf("decode other listing: %v", err)
 	}

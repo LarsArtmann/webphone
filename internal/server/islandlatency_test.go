@@ -85,6 +85,3 @@ func TestIslandLatencyASRBytesHistogram(t *testing.T) {
 		t.Errorf("ASR beacon must not create dial series:\n%s", out)
 	}
 }
-
-//go:fix inline
-func ptrInt64(v int64) *int64 { return new(v) }

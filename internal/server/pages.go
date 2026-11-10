@@ -8,7 +8,7 @@ import (
 
 	"github.com/a-h/templ"
 	loginpage "github.com/larsartmann/cqrs-htmx/loginpage/v4"
-	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
+	"github.com/larsartmann/cqrs-htmx/v4/httperr"
 	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/httputil"
 
@@ -147,7 +147,7 @@ func (h *handlers) identityFor(ext domain.Extension) string {
 // string so the log line names the surface that failed.
 func (h *handlers) safeDetail(r *http.Request, op string, err error) string {
 	errorfamily.LogErrorContext(r.Context(), fmt.Errorf("%s: %w", op, err), nil)
-	return cqrshtmx.SafeDetail(err, http.StatusInternalServerError, false)
+	return httperr.SafeDetail(err, http.StatusInternalServerError, false)
 }
 
 // partial renders just the tab region for an HTMX swap.

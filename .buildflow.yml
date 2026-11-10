@@ -181,6 +181,14 @@ exclude:
 #   `go mod tidy` (this session's or a concurrent one's) writes 1.27.3
 #   back. The finding is warning-severity and never gates. Revisit ONLY
 #   when the cqrs-htmx floors drop below the next patch release.
+# - vulnix: DELIBERATE ADVISORY (2026-11-10). BuildFlow's step scans the
+#   BUILD closure (bootstrap binutils/bison/cargo/brotli derivations) —
+#   this repo's documented triage policy owns the RUNTIME closure via
+#   `nix run .#vulnix` (webphone-vulnix-triage, gated in release.sh);
+#   build-closure advisories never deploy. The step is detect-only and
+#   warning-severity, so it never gates. Revisit ONLY if a runtime
+#   derivation ever appears in its findings — that belongs in the
+#   triage CLI's patch-set check, not a nixpkgs chase from this repo.
 # LOAD-BEARING POLICY (2026-10-08 incident): the single remaining skip
 # below is a reasoned suppression — a daemon commit once truncated 69
 # lines here and the missing skips re-failed the gate silently for

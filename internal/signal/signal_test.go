@@ -113,11 +113,6 @@ func (d *fakeDaemon) closeConns() {
 	}
 }
 
-func dialer(path string) *Client {
-	c := New(path, "+4915112345678", slog.Default())
-	return c
-}
-
 func TestPingAndSendOverTheSocket(t *testing.T) {
 	d := startFakeDaemon(t)
 	c := New(socketPathOf(d), "+4915112345678", slog.Default())

@@ -22,7 +22,7 @@ func TestCspHeaderCarriesTheReportingLane(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	_, _ = io.Copy(io.Discard, resp.Body)
 
 	csp := resp.Header.Get("Content-Security-Policy")
@@ -52,7 +52,7 @@ func TestCspReportJournalsTheViolation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	_, _ = io.Copy(io.Discard, resp.Body)
 	if resp.StatusCode != http.StatusNoContent {
 		t.Fatalf("csp-report status = %d, want 204", resp.StatusCode)

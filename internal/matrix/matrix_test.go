@@ -72,7 +72,7 @@ func newHomeserver(t *testing.T) (*homeserver, *httptest.Server) {
 				return
 			}
 			hs.sends = append(hs.sends, sentEvent{Room: room, Type: eventType, Content: content})
-			_, _ = fmt.Fprint(w, fmt.Sprintf(`{"event_id":"$ev%d"}`, len(hs.sends)))
+			_, _ = fmt.Fprintf(w, `{"event_id":"$ev%d"}`, len(hs.sends))
 		case r.URL.Path == "/_matrix/media/v3/upload":
 			data, _ := io.ReadAll(r.Body)
 			if len(data) == 0 {

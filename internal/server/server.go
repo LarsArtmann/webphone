@@ -21,6 +21,7 @@ import (
 
 	loginpage "github.com/larsartmann/cqrs-htmx/loginpage/v4"
 	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
+	"github.com/larsartmann/cqrs-htmx/v4/htmx"
 	etag "github.com/larsartmann/go-etag/server"
 	"github.com/larsartmann/go-health"
 	"github.com/larsartmann/httputil"
@@ -153,7 +154,7 @@ func newTemplRateLimiter(limit, burst uint) *httputil.KeyedRateLimiter {
 			w.Header().Set("Retry-After", retryAfter)
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			w.WriteHeader(http.StatusTooManyRequests)
-			fmt.Fprintf(w, `<div class="wp-error" role="alert">%s</div>`, templRateLimitedMsg)
+			_, _ = fmt.Fprintf(w, `<div class="wp-error" role="alert">%s</div>`, templRateLimitedMsg)
 		},
 	})
 }
@@ -612,11 +613,11 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("/", h.notFoundPage)
 
 	open := http.NewServeMux()
-	open.Handle("/htmx.min.js", cqrshtmx.HTMXScriptHandler())
-	// One request serves both extensions (cqrshtmx.HTMXExtensionsHandler
+	open.Handle("/htmx.min.js", htmx.ScriptHandler())
+	// One request serves both extensions (htmx.ExtensionsHandler
 	// concatenates sse + idiomorph with per-extension version comments and a
 	// composite ETag) — the page loads exactly one script tag instead of two.
-	open.Handle("/htmx-ext.js", cqrshtmx.HTMXExtensionsHandler(cqrshtmx.HTMXExtSSE, cqrshtmx.HTMXExtIdiomorph))
+	open.Handle("/htmx-ext.js", htmx.ExtensionsHandler(htmx.ExtSSE, htmx.ExtIdiomorph))
 	open.Handle("/assets/", h.assets())
 	open.HandleFunc("GET /config.js", h.configJS)
 	open.HandleFunc("GET /favicon.svg", h.favicon)
