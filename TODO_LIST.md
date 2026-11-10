@@ -65,6 +65,17 @@ DONE 2026-11-10 (trains cabdeeb8 / abed8247 / 3d1c1ba2 / 12cee0b3): C1 is the on
 
 ### Prod screenshot-tracking train residue (2026-11-10 14:42 report, §f-24 — harvested by the cadence-sweep session)
 
+- [ ] **T05 — the authenticated prod capture** (owner-gated: needs
+      `WEBPHONE_CAPTURE_EXTENSION` / `WEBPHONE_CAPTURE_PASSWORD` env
+      creds, asked twice). The command is staged:
+      `nix run .#ui-track -- --base-url https://pbx.artmann.tech --track`.
+      Unblocks in order: owner gallery walkthrough → ranked ugliness
+      inventory (T05 act 2) → first fix with before/after proof (T06) →
+      second run / first real prod compare chain (T07) → calibration
+      values (T09/T10) → mobile pass (T08). Also rides that session:
+      the real-display `--open` pass and the ring-guard positive path
+      (row below).
+
 - [x] **ui-capture `--open` flag**: launch the gallery/compare in a browser
       after a run — LANDED 2026-11-10 (harness v2; opens compare.html on
       a display, prints a headless note otherwise; not yet exercised live
@@ -76,6 +87,21 @@ DONE 2026-11-10 (trains cabdeeb8 / abed8247 / 3d1c1ba2 / 12cee0b3): C1 is the on
       optimistic — identical-seed local runs peaked at 2.5% on relative
       timestamps). Home: the tracking plan's T25; pair the runs ≥8h
       apart so relative times settle.
+
+- [x] **Self-test pins for the dormant paths** (tracking plan T28's
+      second half + §f-3 partial): the EMPTY-run discard guard
+      (empty crashed dir removed, shots-bearing run kept) and the
+      `--open` decision (`open_target`: produced artifact wins,
+      out-dir fallback, headless refusal) are pinned in
+      `--self-test` (35 checks, both envs) — LANDED 2026-11-10.
+      The real-display `--open` pass stays with the first prod session.
+
+- [ ] **Ring-guard positive path**: exercise the
+      `#incoming-call:not([hidden])` re-shoot during a REAL inbound
+      call in a tracked run (first prod session + a caller; the
+      selector is verified against the served markup 2026-11-10 —
+      phone.templ renders `hidden`, the island toggles the attribute).
+      Home: the tracking plan's T13 live half.
 
 ### BuildFlow tool-disposition residue (harvested 2026-11-08 from the 2026-10-11 findings-zeroing plan — one home now)
 
