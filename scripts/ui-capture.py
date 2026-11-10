@@ -989,7 +989,20 @@ def capture(
                     ):
                         expandable = driver.find_elements("css selector", expand_sel)
                         if expandable and expandable[0].is_displayed():
-                            expandable[0].click()
+                            # Narrow viewports park collapsed sections under
+                            # the fixed bottom tab bar — scroll out first, and
+                            # fall back to a JS click when something still
+                            # overlays the summary.
+                            driver.execute_script(
+                                "arguments[0].scrollIntoView({block: 'center'});",
+                                expandable[0],
+                            )
+                            try:
+                                expandable[0].click()
+                            except Exception:
+                                driver.execute_script(
+                                    "arguments[0].click();", expandable[0]
+                                )
                     _check_pins(name, path, SURFACE_MARKERS[name])
                     for absent in SURFACE_ABSENT_MARKERS.get(name, ()):
                         if driver.find_elements("css selector", absent):
@@ -1009,7 +1022,7 @@ def capture(
                         name == "thread"
                         and theme == "light"
                         and layout_proof
-                        and len(viewports) == 1
+                        and vp == (1280, 900)
                     ):
                         # Layout facts belong here, not in a second script: a
                         # screenshot proves a surface RENDERS, not that the
