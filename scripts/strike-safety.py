@@ -71,7 +71,8 @@ def scan_rows(path: str) -> list[str]:
     """Return findings for one file."""
     findings: list[str] = []
     try:
-        lines = open(path, encoding="utf-8", errors="replace").read().split("\n")
+        with open(path, encoding="utf-8", errors="replace") as f:
+            lines = f.read().split("\n")
     except OSError as err:
         return [f"{path}: cannot read: {err}"]
 
@@ -113,7 +114,7 @@ def check_verdict(value: str) -> str | None:
     low = v.lower()
     # Bare evidence with no head is the common mistake; the writer accepts it.
     for head in VERDICT_HEADS:
-        if low.startswith(head) or low.startswith("**" + head):
+        if low.startswith((head, "**" + head)):
             return None
     return f"non-canonical verdict {value!r} — must start with one of: " + ", ".join(
         repr(h) for h in VERDICT_HEADS
@@ -137,37 +138,41 @@ def self_test() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         # Case 1: an escaped pipe inside a code span in a struck cell.
         p = os.path.join(tmp, "escaped.md")
-        open(p, "w").write(
-            "| # | Task | Impact |\n"
-            "| - | ---- | ------ |\n"
-            "| 1 | `a \\| b` ~~old~~ done at `abc1234` | High |\n"
-        )
+        with open(p, "w") as f:
+            f.write(
+                "| # | Task | Impact |\n"
+                "| - | ---- | ------ |\n"
+                "| 1 | `a \\| b` ~~old~~ done at `abc1234` | High |\n"
+            )
         expect("escaped pipe in a struck row is refused", len(scan_rows(p)) >= 1)
 
         # Case 2: the same escaped pipe WITHOUT a strike is legal (it is a
         # plain table cell) — the guard must not become a corpus linter.
         p = os.path.join(tmp, "legal.md")
-        open(p, "w").write(
-            "| # | Task | Impact |\n"
-            "| - | ---- | ------ |\n"
-            "| 1 | `a \\| b` is a legal cell | High |\n"
-        )
+        with open(p, "w") as f:
+            f.write(
+                "| # | Task | Impact |\n"
+                "| - | ---- | ------ |\n"
+                "| 1 | `a \\| b` is a legal cell | High |\n"
+            )
         expect("a clean escaped-pipe cell is allowed", scan_rows(p) == [])
 
         # Case 3: a ragged row (a lost delimiter) is refused.
         p = os.path.join(tmp, "ragged.md")
-        open(p, "w").write(
-            "| # | Task | Impact |\n| - | ---- | ------ |\n| 1 | two cells merged High |\n"
-        )
+        with open(p, "w") as f:
+            f.write(
+                "| # | Task | Impact |\n| - | ---- | ------ |\n| 1 | two cells merged High |\n"
+            )
         expect("ragged row is refused", len(scan_rows(p)) >= 1)
 
         # Case 4: a well-formed struck row passes.
         p = os.path.join(tmp, "clean.md")
-        open(p, "w").write(
-            "| # | Task | Impact |\n"
-            "| - | ---- | ------ |\n"
-            "| ~~1~~ | ~~old~~ done at `abc1234` | ~~High~~ |\n"
-        )
+        with open(p, "w") as f:
+            f.write(
+                "| # | Task | Impact |\n"
+                "| - | ---- | ------ |\n"
+                "| ~~1~~ | ~~old~~ done at `abc1234` | ~~High~~ |\n"
+            )
         expect("well-formed struck row passes", scan_rows(p) == [])
 
     # Verdict vocabulary.

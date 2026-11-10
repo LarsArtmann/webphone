@@ -39,7 +39,7 @@ TESTFUNC_RE = re.compile(r"^func (Test\w+)")
 
 
 def run(argv, **kw):
-    return subprocess.run(argv, capture_output=True, text=True, **kw)
+    return subprocess.run(argv, check=False, capture_output=True, text=True, **kw)
 
 
 def normalize_target(raw):
