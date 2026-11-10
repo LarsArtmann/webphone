@@ -1715,10 +1715,13 @@ def self_test() -> int:
         print("  skip pixel_diff math (pillow not installed — capture env only)")
     else:
         with tempfile.TemporaryDirectory() as td:
-            Image.new("RGB", (10, 10), (0, 0, 0)).save(os.path.join(td, "a.png"))
-            Image.new("RGB", (10, 10), (255, 255, 255)).save(os.path.join(td, "b.png"))
-            Image.new("RGB", (10, 20), (0, 0, 0)).save(os.path.join(td, "c.png"))
-            join = lambda n: os.path.join(td, n)
+
+            def join(name: str) -> str:
+                return os.path.join(td, name)
+
+            Image.new("RGB", (10, 10), (0, 0, 0)).save(join("a.png"))
+            Image.new("RGB", (10, 10), (255, 255, 255)).save(join("b.png"))
+            Image.new("RGB", (10, 20), (0, 0, 0)).save(join("c.png"))
             same = pixel_diff(
                 join("a.png"), join("a.png"), join("d0.png"), threshold=12
             )
