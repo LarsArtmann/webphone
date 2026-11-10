@@ -82,17 +82,28 @@ source). TLS runs 90s apart: 28/28 above the 0.5% bar, same cause. The
 0.5% badge bar is optimistic on this product; expect 2–3% after real
 calibration.
 
-## Next
+## f) NEXT (ranked, roughly Pareto-ordered)
 
-1. Owner answers (creds; fix-foreign-spec permission is moot — T01
-   resolved itself; shot storage).
-2. T05 authenticated prod run → ranked inventory → T06 first UI fix.
-3. T07 second prod run → first real prod diff → T09/T10 calibration
-   values on REAL data.
-
-## Harvest
-
-- [ ] §f — T05 credentials (OG-1) remain the single blocker for the
-      authenticated prod matrix; ask again with the one-liner ready.
-- [ ] §f — T25 night-run calibration needs a quiet-window run pair;
-      schedule it the next time the laptop is on overnight.
+1. T05 — the authenticated prod capture (OG-1 creds still owed); one
+   command ready: `nix run .#ui-track -- --base-url https://pbx.artmann.tech --track`.
+2. Owner gallery walkthrough over that run → the ranked top-5 ugliness
+   inventory written into docs/planning/ (T05 act 2).
+3. T06 — first UI fix from the inventory, proven by a before/after
+   tracked run.
+4. T07 — the second authenticated prod run → the first REAL prod
+   compare chain; judge badges/byte-deltas/clipped marks in anger.
+5. T09/T10 — calibration VALUES on real prod data (threshold + badge
+   bar; the 0.5% bar is optimistic — local identical-seed runs peaked
+   at 2.5% on relative timestamps).
+6. T08 — the mobile prod pass (`--viewport 390x844`) and the default-
+   or-on-demand ruling.
+7. T15 — admin surfaces need an identity-carrying capture lane (the
+   extension-password lane can never be admin; a passkey lane is
+   owner-gated by design).
+8. T25 — night-run stability calibration (a quiet-window run pair on
+   real data; schedule on the next overnight laptop session).
+9. OG-3 — the shot-storage/retention ruling (`--prune` exists for
+   whichever verdict lands).
+10. Upstream: buildflow's nix-hash-fix lock-drift warning fires on a
+    green build with a backwards premise (go.mod older than the hash
+    pin) — an issue on LarsArtmann/buildflow when the owner wants it.
