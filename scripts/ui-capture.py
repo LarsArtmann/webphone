@@ -1093,7 +1093,9 @@ def transcript_probe_word(page: str) -> str | None:
     """A word scraped from the first transcript group body, for a
     ?q= search that will actually match real data (the seeded q=revenue
     only exists on the local fixture)."""
-    block = re.search(r'<details class="wp-transcript-call".*?</details>', page, re.DOTALL)
+    block = re.search(
+        r'<details class="wp-transcript-call".*?</details>', page, re.DOTALL
+    )
     if not block:
         return None
     text = re.sub(r"<[^>]+>", " ", block.group(0))
