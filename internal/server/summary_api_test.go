@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json/v2"
 	"net/http"
-	"net/http/httptest"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -153,9 +152,12 @@ func TestSummaryDraftAgentVerdictPassesThrough(t *testing.T) {
 // verdict) answers 502 so the island toasts and the attempt stays
 // retryable (the idempotency key never recorded).
 func TestSummaryDraftOutageIs502(t *testing.T) {
-	dead := httptest.NewServer(http.NotFoundHandler())
-	dead.Close()
-	hc := clientFor(t, serverWithAgentAndASR(t, dead.URL))
+	// The dead agent rides the textagent convention (127.0.0.1:1, always
+	// refused): the previous close-for-a-free-port dance raced the helper's
+	// own ASR provider — httptest can rebind the just-freed port, the agent
+	// dial then reached that live provider and the "outage" answered
+	// non-502 (the 2026-11-10 release-attempt-1 flake).
+	hc := clientFor(t, serverWithAgentAndASR(t, "http://127.0.0.1:1"))
 	hc.login("1001", "pw")
 	if resp, _ := postTranscript(t, hc, "call-dead", "in", "+4989123456", "words"); resp.StatusCode != http.StatusNoContent {
 		t.Fatalf("seed transcript: %d", resp.StatusCode)
