@@ -41,7 +41,7 @@ func runContracts(args []string) error {
 		return bootErr(bootGeneric, errorfamily.WrapInfrastructure(err, "webphone.cli.contracts",
 			"write "+target))
 	}
-	fmt.Fprintf(os.Stdout, "contracts: wrote %s\n", target)
+	_, _ = fmt.Fprintf(os.Stdout, "contracts: wrote %s\n", target)
 
 	fixtures := server.RenderWireFixtureFiles()
 	wireDir := filepath.Join(*output, "wire") //nolint:branching-flow // flag.String never returns a nil pointer
@@ -60,7 +60,7 @@ func runContracts(args []string) error {
 			return bootErr(bootGeneric, errorfamily.WrapInfrastructure(err, "webphone.cli.contracts",
 				"write "+fixture))
 		}
-		fmt.Fprintf(os.Stdout, "contracts: wrote %s\n", fixture)
+		_, _ = fmt.Fprintf(os.Stdout, "contracts: wrote %s\n", fixture)
 	}
 	return nil
 }

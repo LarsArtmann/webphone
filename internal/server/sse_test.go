@@ -234,8 +234,11 @@ func TestSSEHubShutdownReleasesLiveStreams(t *testing.T) {
 		drained <- copyErr
 	}()
 	select {
-	case <-drained:
-		// Stream ended on hub close — the drain budget is free.
+	case copyErr := <-drained:
+		// Stream ended on hub close — the drain budget is free. The
+		// terminal error is the transport's business (clean EOF or an
+		// abrupt cut); only the prompt END is this test's contract.
+		_ = copyErr
 	case <-time.After(10 * time.Second):
 		t.Fatal("live /events stream still open 10s after hubs.Shutdown — an open tab would hold the HTTP drain for its full 30s budget")
 	}

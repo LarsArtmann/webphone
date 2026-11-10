@@ -88,7 +88,7 @@ func TestCspReportFences(t *testing.T) {
 		t.Fatal(err)
 	}
 	_, _ = io.Copy(io.Discard, resp.Body)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if resp.StatusCode != http.StatusNoContent {
 		t.Fatalf("malformed report status = %d, want 204", resp.StatusCode)
 	}
@@ -98,7 +98,7 @@ func TestCspReportFences(t *testing.T) {
 		t.Fatal(err)
 	}
 	_, _ = io.Copy(io.Discard, resp.Body)
-	resp.Body.Close()
+	_ = resp.Body.Close()
 	if resp.StatusCode != http.StatusMethodNotAllowed {
 		t.Fatalf("GET /csp-report status = %d, want 405", resp.StatusCode)
 	}
@@ -112,7 +112,7 @@ func TestCspReportFences(t *testing.T) {
 		}
 		_, _ = io.Copy(io.Discard, resp.Body)
 		lastStatus = resp.StatusCode
-		resp.Body.Close()
+		_ = resp.Body.Close()
 	}
 	if lastStatus != http.StatusTooManyRequests {
 		t.Fatalf("flood last status = %d, want 429 after burst %d", lastStatus, cspBurst)
