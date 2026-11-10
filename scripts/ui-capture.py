@@ -228,7 +228,9 @@ TABS = [
 # caught the thread deep link rendering the messages list — the shots
 # were byte-identical until the fix). A (selector, text) tuple also
 # pins rendered copy inside the surface.
-SURFACE_MARKERS = {
+SURFACE_MARKERS: dict[
+    str, str | tuple[str, str | None] | list[tuple[str, str | None]]
+] = {
     "messages": ".wp-thread-row",  # seeded threads render rows
     "thread": "#wp-thread-head",  # the open conversation head
     # The two halves of the CRM integration, asserted in the DOM: the caller
@@ -266,11 +268,11 @@ SURFACE_EXPAND = {
 # pre-session, and /login bounces a live session home (303). Render-only
 # passkey config (see main()); no ceremony ever runs, so the rp_id never
 # faces a browser — it only has to pass boot validation.
-ANONYMOUS_SURFACES = [
+ANONYMOUS_SURFACES: list[tuple[str, str | None]] = [
     ("login-card", "/"),
     ("login-page", "/login"),
 ]
-ANONYMOUS_MARKERS = {
+ANONYMOUS_MARKERS: dict[str, tuple[str, str | None]] = {
     # The card's anchor text is the island i18n default (server-rendered,
     # swapped client-side); the library page's copy is the library's —
     # pin the WIRE id only, not prose we do not own.
@@ -1186,7 +1188,7 @@ def capture(
     full_page: bool = True,
     lenient: bool = False,
     layout_proof: bool = False,
-    anonymous_surfaces: list[tuple[str, str]] | None = None,
+    anonymous_surfaces: list[tuple[str, str | None]] | None = None,
     insecure: bool = False,
     host_maps: list[str] | None = None,
 ) -> list[dict[str, str]]:
@@ -1203,6 +1205,7 @@ def capture(
     # Selenium lives only in the capture env (see the AGENTS run recipe
     # and mypy.ini) — never in the lint shell.
     from selenium import webdriver
+    from selenium.common.exceptions import WebDriverException
     from selenium.webdriver.chrome.options import Options
     from selenium.webdriver.support.ui import WebDriverWait
 
@@ -1226,7 +1229,7 @@ def capture(
         # silently ignored.
         options.set_capability("acceptInsecureCerts", True)
     for mapping in host_maps or []:
-        host, sep, ip = mapping.partition("=")
+        host, _, ip = mapping.partition("=")
         if host and ip:
             options.add_argument(f"--host-resolver-rules=MAP {host} {ip}")
     driver_path = shutil.which("chromedriver")
@@ -1313,6 +1316,10 @@ def capture(
                 driver.delete_cookie("webphone_session")
                 for name, path in anonymous:
                     if only is not None and name not in only:
+                        continue
+                    if path is None:
+                        # A conditional surface that resolved empty skips
+                        # rather than shooting an error page.
                         continue
                     driver.get(base + path)
                     if name == "login-card":
@@ -1406,7 +1413,7 @@ def capture(
                             )
                             try:
                                 expandable[0].click()
-                            except Exception:
+                            except WebDriverException:
                                 driver.execute_script(
                                     "arguments[0].click();", expandable[0]
                                 )
@@ -1690,8 +1697,8 @@ def self_test() -> int:
             with open(os.path.join(cur, name), "wb") as fh:
                 fh.write(b"png")
         build_compare(td, prev, cur, "vX", None, {}, badge_bar=0.5)
-        with open(os.path.join(td, "compare.html"), encoding="utf-8") as fh:
-            out = fh.read()
+        with open(os.path.join(td, "compare.html"), encoding="utf-8") as text_fh:
+            out = text_fh.read()
         check(
             "partial run compares gracefully",
             "no previous" in out and "02-b-light" in out and "01-a-light" in out,
@@ -1936,7 +1943,7 @@ def main() -> int:
                 "/enroll joins the anonymous pass"
             )
             anonymous.append(("enroll", "/enroll"))
-        threads_info: dict = {}
+        threads_info = {}
         if args.anonymous:
             surfaces = []
             session = ""
@@ -2103,7 +2110,7 @@ def main() -> int:
             anonymous = list(ANONYMOUS_SURFACES)
             if probe_enroll(base):
                 anonymous.append(("enroll", "/enroll"))
-            surfaces: list[tuple[str, str | None]] = []
+            surfaces = []
             for name, path in TABS:
                 if name == "thread":
                     path = thread_path
