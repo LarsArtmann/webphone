@@ -712,12 +712,15 @@ def build_compare(
 def track(
     run_dir: str,
     base: str,
+    version: str | None,
     label: str | None,
     full_page: bool,
     viewports: list[tuple[int, int]],
 ) -> None:
     """History + diff bookkeeping for --track runs: summary.json, the
-    per-run gallery, and the host-level compare against the previous run."""
+    per-run gallery, and the host-level compare against the previous run.
+    The version is fetched by main() while the server is still up (the
+    local boot is already torn down by the time this runs)."""
     host_dir = os.path.dirname(run_dir)
     runs = sorted(
         d
@@ -728,7 +731,6 @@ def track(
     earlier = [d for d in runs if d < run_id]
     prev_name = earlier[-1] if earlier else None
     prev_dir = os.path.join(host_dir, prev_name) if prev_name else None
-    version = fetch_version(base)
     prev_by_key: dict[str, str] = {}
     if prev_dir:
         for path in glob.glob(os.path.join(prev_dir, "*.png")):
@@ -1288,6 +1290,9 @@ def main() -> int:
         session = login_remote(base, extension, password)
         if not session:
             return 1
+        version = fetch_version(base)
+        if version:
+            print(f"deployment: {version}")
         surfaces = resolve_remote_surfaces(base, session, args.threads)
         if only is not None:
             # A typo must fail loudly: a filtered run that matches nothing
@@ -1397,6 +1402,7 @@ def main() -> int:
             else:
                 print("server did not come up", file=sys.stderr)
                 return 1
+            version = fetch_version(base)
             thread_path, attach_thread_path, session = seed(base)
             if not session:
                 print("seed did not mint a session cookie", file=sys.stderr)
@@ -1452,7 +1458,7 @@ def main() -> int:
 
     print(f"ui-capture: {shots} shots in {out_dir}/")
     if args.track:
-        track(out_dir, base, args.label, full_page, viewports)
+        track(out_dir, base, version, args.label, full_page, viewports)
     if only is not None and not remote:
         # Every requested surface must have produced BOTH theme shots
         # (per viewport).
