@@ -74,6 +74,12 @@ const (
 
 // DeliveryEvent is one trigger of the delivery machine. Construct via
 // SendAccepted, SendRefused or ProviderVerdict.
+//
+// The fields are deliberately unexported (the constructors are the
+// door) and the type is an in-process machine trigger, never a journaled
+// payload — the wire form is DeliveryStep (threadfacts.go). D014's
+// json-tag advice does not apply to it.
+//cqrs-lint:ignore-start(D014)
 type DeliveryEvent struct {
 	kind    eventKind   // which trigger
 	ref     string      // send accepted: gateway correlation id
@@ -81,6 +87,7 @@ type DeliveryEvent struct {
 	detail  string      // refused / verdict-failed: raw reason, rendered verbatim
 	verdict Verdict     // verdict: the provider's answer
 }
+//cqrs-lint:ignore-end(D014)
 
 // SendAccepted: the gateway took the message; ref correlates its later
 // verdicts.

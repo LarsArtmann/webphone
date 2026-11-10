@@ -29,7 +29,9 @@ type SnippetSaved struct {
 	CreatedAt time.Time
 }
 
-// SnippetDeleted is the read-model fact removing one snippet slot.
+// SnippetDeleted is the read-model fact removing one snippet slot. The
+// json tag pins the journal's wire key to today's Go field name —
+// byte-neutral now, rename-safe later.
 type SnippetDeleted struct {
-	Key SnippetKey
+	Key SnippetKey `json:"Key"`
 }

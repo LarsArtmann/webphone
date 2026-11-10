@@ -89,7 +89,7 @@ func systemDedup(i do.Injector) metaengine.DedupStore {
 	svc := do.MustInvokeNamed[*CqrsService](i, cqrsProviderName)
 	dedup, err := svc.Sys.Dedup()
 	if err != nil {
-		panic(fmt.Sprintf("app: system dedup capability: %v", err))
+		panic(fmt.Sprintf("app: system dedup capability: %v", err)) //cqrs-lint:ignore(C009) post-validation impossible state: fail loudly at boot (DO-1)
 	}
 	return dedup
 }

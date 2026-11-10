@@ -43,9 +43,11 @@ type ContactSaved struct {
 	CreatedAt time.Time
 }
 
-// ContactDeleted is the read-model fact removing one contact slot.
+// ContactDeleted is the read-model fact removing one contact slot. The
+// json tag pins the journal's wire key to today's Go field name —
+// byte-neutral now, rename-safe later.
 type ContactDeleted struct {
-	Key ContactKey
+	Key ContactKey `json:"Key"`
 }
 
 // SharedContact is an operator-provided contact from the server config,

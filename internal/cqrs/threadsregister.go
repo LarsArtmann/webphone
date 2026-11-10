@@ -148,7 +148,7 @@ func NewThreadsSystem(ctx context.Context, dsn string) (*system.System, error) {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.threads_boot", "boot thread system at %s", dsn)
 	}
 	if err := sys.Start(ctx); err != nil {
-		_ = sys.Close()
+		_ = sys.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.threads_boot", "start thread system at %s", dsn)
 	}
 	return sys, nil
@@ -175,7 +175,7 @@ func NewCoreSystem(ctx context.Context, dsn string) (*system.System, error) {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.core_boot", "boot core system at %s", dsn)
 	}
 	if err := sys.Start(ctx); err != nil {
-		_ = sys.Close()
+		_ = sys.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.core_boot", "start core system at %s", dsn)
 	}
 	return sys, nil

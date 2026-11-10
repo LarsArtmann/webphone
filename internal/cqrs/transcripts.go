@@ -61,8 +61,8 @@ func TranscriptStreamKey(owner, callID string) string {
 type AppendTranscriptSegment struct {
 	*command.BasicCommand
 	Owner     string
-	CallID    string
-	SegID     string
+	CallID    string //cqrs-lint:ignore(A032) the island's SIP Call-ID: a foreign token, decided-raw per the strong-id ruling
+	SegID     string //cqrs-lint:ignore(A032) seam-minted projection row identity, decided-raw per the strong-id ruling
 	Direction domain.Direction
 	Remote    string
 	StartedAt time.Time
@@ -75,7 +75,7 @@ type AppendTranscriptSegment struct {
 type ExpungeTranscriptSegments struct {
 	*command.BasicCommand
 	Owner  string
-	CallID string
+	CallID string //cqrs-lint:ignore(A032) the island's SIP Call-ID: a foreign token, decided-raw per the strong-id ruling
 	IDs    []string
 }
 
@@ -84,12 +84,12 @@ type ExpungeTranscriptSegments struct {
 type DeleteCallTranscript struct {
 	*command.BasicCommand
 	Owner  string
-	CallID string
+	CallID string //cqrs-lint:ignore(A032) the island's SIP Call-ID: a foreign token, decided-raw per the strong-id ruling
 }
 
 // transcriptSeg is one segment's aggregate state.
 type transcriptSeg struct {
-	ID        string
+	ID        string //cqrs-lint:ignore(A032) the SegID's stored form: a seam-minted row key, decided-raw per the strong-id ruling
 	Direction domain.Direction
 	Remote    string
 	StartedAt int64 // unix seconds (the view's fidelity)
@@ -275,7 +275,10 @@ const transcriptsCollection = "call_transcripts"
 
 // transcriptsKeyInput is the projection's key-extraction input (the
 // same shape the readmodels engine declares).
-type transcriptsKeyInput struct{ ID string }
+type transcriptsKeyInput struct {
+	//cqrs-lint:ignore(A032) an engine scan key input, decided-raw per the strong-id ruling (engine keys stay unbranded)
+	ID string
+}
 
 // transcriptsProjection folds transcript facts into the SAME view
 // shape the server reads today (readmodels.TranscriptSegmentView),
@@ -313,7 +316,7 @@ func TranscriptsDomainDecl() system.DomainConfig {
 	return system.DomainConfig{
 		Commands: func(sys *system.System) {
 			if err := RegisterTranscripts(sys); err != nil {
-				panic(fmt.Sprintf("cqrs: register transcripts aggregate: %v", err))
+				panic(fmt.Sprintf("cqrs: register transcripts aggregate: %v", err)) //cqrs-lint:ignore(C009) boot-time fail-fast on a composition miswire (DO-1; the decl comment owns the why)
 			}
 		},
 		Projections: []system.ProjectionDeclaration{system.RawQuery(transcriptsProjection())},

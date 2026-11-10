@@ -216,7 +216,7 @@ func NotesDomainDecl() system.DomainConfig {
 	return system.DomainConfig{
 		Commands: func(sys *system.System) {
 			if err := RegisterNotes(sys); err != nil {
-				panic(fmt.Sprintf("cqrs: register call-notes aggregate: %v", err))
+				panic(fmt.Sprintf("cqrs: register call-notes aggregate: %v", err)) //cqrs-lint:ignore(C009) boot-time fail-fast on a composition miswire (DO-1; the decl comment owns the why)
 			}
 		},
 		Projections: []system.ProjectionDeclaration{system.RawQuery(notesProjection())},

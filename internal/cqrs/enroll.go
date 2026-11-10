@@ -172,7 +172,7 @@ func EnrollDomainDecl() system.DomainConfig {
 	return system.DomainConfig{
 		Commands: func(sys *system.System) {
 			if err := RegisterEnroll(sys); err != nil {
-				panic(fmt.Sprintf("cqrs: register enroll aggregate: %v", err))
+				panic(fmt.Sprintf("cqrs: register enroll aggregate: %v", err)) //cqrs-lint:ignore(C009) boot-time fail-fast on a composition miswire (DO-1; the decl comment owns the why)
 			}
 		},
 		Projections: []system.ProjectionDeclaration{system.RawQuery(enrollProjection())},
@@ -203,7 +203,7 @@ func NewEnrollSystem(ctx context.Context, dsn string) (*system.System, error) {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.enroll_boot", "boot enroll system at %s", dsn)
 	}
 	if err := sys.Start(ctx); err != nil {
-		_ = sys.Close()
+		_ = sys.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.enroll_boot", "start enroll system at %s", dsn)
 	}
 	return sys, nil

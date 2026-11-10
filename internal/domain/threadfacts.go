@@ -107,15 +107,17 @@ type ThreadUnreadCleared struct {
 // ThreadDeleted is the retention/owner tombstone: the decision gathered
 // every id the stream ever carried, so each projection fold is a pure
 // keyed Remove and replay is exact. Reason is "retention" or "owner".
+// The json tags pin the journal's wire keys to today's Go field names —
+// byte-neutral now, rename-safe later.
 type ThreadDeleted struct {
-	Key           ThreadRowKey
-	Owner         string
-	ThreadID      string
-	Network       string
-	Remote        string
-	MessageIDs    []string
-	AttachmentIDs []string
-	Reason        string
+	Key           ThreadRowKey `json:"Key"`
+	Owner         string       `json:"Owner"`
+	ThreadID      string       `json:"ThreadID"`
+	Network       string       `json:"Network"`
+	Remote        string       `json:"Remote"`
+	MessageIDs    []string     `json:"MessageIDs"`
+	AttachmentIDs []string     `json:"AttachmentIDs"`
+	Reason        string       `json:"Reason"`
 }
 
 // DeliveryStep is the wire form of a DeliveryEvent (the command payload):

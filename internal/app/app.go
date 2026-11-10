@@ -542,7 +542,7 @@ func PasskeyRuntime(p config.Passkey) userauth.PasskeyRuntime {
 		for _, raw := range user.Extensions {
 			ext, err := domain.ParseExtension(raw)
 			if err != nil {
-				panic(fmt.Sprintf("passkey mapping for %q holds unparseable extension %q after config validation: %v", email, raw, err))
+				panic(fmt.Sprintf("passkey mapping for %q holds unparseable extension %q after config validation: %v", email, raw, err)) //cqrs-lint:ignore(C009) post-validation impossible state: fail loudly at boot (DO-1)
 			}
 			extensions = append(extensions, ext)
 		}
@@ -577,7 +577,7 @@ func SSOConfig(a config.Auth) sso.Config {
 			ext, err := domain.ParseExtension(raw)
 			if err != nil {
 				//nolint:branching-flow // composition-root fail-fast (DO-1): config validation already rejects unparseable extensions, so reaching here is an unrepresentable miswire
-				panic(fmt.Sprintf("auth mapping for %q holds unparseable extension %q after config validation: %v", email, raw, err))
+				panic(fmt.Sprintf("auth mapping for %q holds unparseable extension %q after config validation: %v", email, raw, err)) //cqrs-lint:ignore(C009) post-validation impossible state: fail loudly at boot (DO-1)
 			}
 			extensions = append(extensions, ext)
 		}
@@ -622,7 +622,7 @@ func AdminService(cfg config.Config) (*admin.Service, error) {
 			ext, err := domain.ParseExtension(raw)
 			if err != nil {
 				//nolint:branching-flow // composition-root fail-fast (DO-1): config validation already rejects unparseable extensions, so reaching here is an unrepresentable miswire
-				panic(fmt.Sprintf("auth mapping for %q holds unparseable extension %q after config validation: %v", email, raw, err))
+				panic(fmt.Sprintf("auth mapping for %q holds unparseable extension %q after config validation: %v", email, raw, err)) //cqrs-lint:ignore(C009) post-validation impossible state: fail loudly at boot (DO-1)
 			}
 			extensions = append(extensions, ext)
 		}

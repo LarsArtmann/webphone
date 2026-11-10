@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-10 (cadence sweep, this session): gate-clean (check-rows complete + bare-rows clean before the mv). The SUPERB train it tracks completed the same night — the 2026-11-09_01-30 superb-complete-final and 03-40 superb-closeout reports own the endgame verdicts.
+
 # SUPERB Phase 5 mid-flight status — gates closed, upstream trim shipped, core swap 80 %
 
 Snapshot-rot header: claims verified as of **2026-11-08 22:46 CET** (local

@@ -74,19 +74,19 @@ func Open(dataDir string) (*Engine, error) {
 	// silently dropped it must fail the boot, not the first webhook.
 	dedup, ok := eng.(metaengine.DedupStore)
 	if !ok {
-		_ = db.Close()
+		_ = db.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
 		return nil, errorfamily.Newf(errorfamily.Infrastructure, "readmodels.open", "engine %T lacks the dedup capability", eng)
 	}
 	// Same doctrine for the aggregate reader: the metrics surface counts
 	// contacts through it, so a swap that dropped it fails the boot.
 	agg, ok := eng.(metaengine.AggregateReader)
 	if !ok {
-		_ = db.Close()
+		_ = db.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
 		return nil, errorfamily.Newf(errorfamily.Infrastructure, "readmodels.open", "engine %T lacks the aggregate capability", eng)
 	}
 	models, err := metaengine.Plan([]metaengine.Engine{eng}, contactsQuery, snippetsQuery, faxesQuery, transcriptsQuery, notesQuery, reviewsQuery, dialWindowsQuery, dialOverridesQuery, enrollTokensQuery, pushDevicesQuery, agentAuditQuery)
 	if err != nil {
-		_ = db.Close()
+		_ = db.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
 		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.open", "plan read models")
 	}
 	return &Engine{
@@ -181,12 +181,12 @@ func (e *Engine) Shutdown() error {
 	}
 	e.closed = true
 	if err := e.models.Close(); err != nil {
-		_ = e.eng.Close()
-		_ = e.db.Close()
+		_ = e.eng.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
+		_ = e.db.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
 		return errorfamily.WrapInfrastructuref(err, "readmodels.close", "close read-model store")
 	}
 	if err := e.eng.Close(); err != nil {
-		_ = e.db.Close()
+		_ = e.db.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
 		return errorfamily.WrapInfrastructuref(err, "readmodels.close", "close read-model engine")
 	}
 	if err := e.db.Close(); err != nil {

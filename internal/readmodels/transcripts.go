@@ -281,7 +281,7 @@ func (s *Transcripts) Export(ctx context.Context, owner domain.Extension, maxCal
 // seam); the owner FILTER is an explicit scan option each caller
 // passes (or omits, deliberately, on the admin path).
 func (s *Transcripts) fetchSegments(ctx context.Context, scope string, opts ...metaengine.ScanOption) ([]domain.CallTranscriptSegment, error) {
-	views, err := s.reader.Scan(ctx, opts...)
+	views, err := s.reader.Scan(ctx, opts...) //cqrs-lint:ignore(F031) every caller passes an explicit metaengine.WithLimit; the variadic forwarding hides it from the detector
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.transcript_scan", "scan transcripts for %s", scope)
 	}

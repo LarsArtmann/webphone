@@ -202,7 +202,7 @@ func newCqrs(cfg config.Config, log *slog.Logger, domain system.DomainConfig) (*
 	}
 	dlq, err := projectionhost.NewSQLiteDeadLetterStore(ctx, dlqDB)
 	if err != nil {
-		_ = dlqDB.Close()
+		_ = dlqDB.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.dlq", "bootstrap dead-letter store")
 	}
 
@@ -227,7 +227,7 @@ func newCqrs(cfg config.Config, log *slog.Logger, domain system.DomainConfig) (*
 
 	sys, err := system.New(ctx, domain, deployment)
 	if err != nil {
-		_ = dlqDB.Close()
+		_ = dlqDB.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.open", "compose system over %s", dsn)
 	}
 	if domain.Commands == nil && len(domain.Projections) == 0 {
