@@ -55,7 +55,14 @@ re-run the formatter if it moved styled files.
    tag (verify with `git ls-remote` — the daemon may have pushed
    already).
 5. **Link check**: `nix run nixpkgs#lychee -- .` — after the push, so
-   the new tag link resolves.
+   the new tag link resolves. The repo-root `lychee.toml` carries the
+   private-repo `exclude` set — each exclusion must carry its own
+   verified-live evidence in a header comment (the unauthenticated
+   checker 404s private repos; the `gh` credentials verify them
+   elsewhere). The v2.13.0 train killed by exactly one dead link here
+   (an archived report's `../planning/` hop left one level short by the
+   archive `git mv`) — after ANY archive move, re-run lychee before
+   the release attempt.
 6. **Stack bump** (`~/projects/nix-international-telephony`):
    `nix flake lock --update-input webphone`, commit the lock.
 7. **Stack gates**: `nix build -L .#telephony-browser` (browser E2E,

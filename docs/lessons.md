@@ -387,6 +387,15 @@ and the evidence. Newest last is NOT enforced — group by topic.
   suppresses nothing. `erraudit nolint-audit` caught 41 of 109
   directives stale within hours of the train; run it after any
   error-path refactor.
+- **A closed httptest server's port can rebind under its own helper**
+  (2026-11-10, `TestSummaryDraftOutageIs502`): the test closed its
+  fake ASR server, and the helper under test then started the REAL
+  provider on `httptest.NewUnstartedServer` — which grabbed the SAME
+  freed port, so the expected connection-refused became a live
+  handler and the assertion raced the listener's death. The fix
+  pattern generalizes: an always-refused address (`http://127.0.0.1:1`
+  — port 1 is reserved by definition) makes the outage deterministic;
+  never rely on a port you released, even one you owned a line ago.
 
 ## Telephony
 
