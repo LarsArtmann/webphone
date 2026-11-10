@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-10 (docs-health drain): gates clean (check-rows --strict + bare-rows green), live facts carried in AGENTS/TODO_LIST — cadence headroom for the report flood.
+
 # Frontend UX review — IA/roles/flows extension train (session status #2)
 
 > Snapshot: claims verified as of 04:05, 2026-11-07. Covers this session's

@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-10 (docs-health drain): gates clean (check-rows --strict + bare-rows green), live facts carried in AGENTS/TODO_LIST — cadence headroom for the report flood.
+
 # Datastar client-side adoption deep-dive — session status
 
 > Snapshot: claims verified as of 18:34, 2026-11-07. Covers the session that

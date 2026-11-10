@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-10 (docs-health drain): gates clean (check-rows --strict + bare-rows green), live facts carried in AGENTS/TODO_LIST — cadence headroom for the report flood.
+
 # Session status — 2026-11-07 01:54 (red-main #235 heal, vendorHash repair, stack caFile knob)
 
 > Claims verified as of 01:54 CET. CI statements rot fastest: webphone main

@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-10 (docs-health drain): gates clean (check-rows --strict + bare-rows green), live facts carried in AGENTS/TODO_LIST — cadence headroom for the report flood.
+
 # SUPERB frontend-UX fix train — execution status #3
 
 > Snapshot: claims verified as of 08:32, 2026-11-07. Covers the fix-train
