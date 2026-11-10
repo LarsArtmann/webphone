@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-11 (cadence sweep, this session): gate-clean (check-rows complete + bare-rows clean before the mv). The cross-repo legs it tracks shipped — the hub merged, the Android repo merged; v2.13.0 released 2026-11-10.
+
 # Cross-repo legs executed: ringhook wired, hub green, android merged, main healed — full session status
 
 Snapshot-rot header: claims verified as of **2026-11-09 00:49 CET** (local
