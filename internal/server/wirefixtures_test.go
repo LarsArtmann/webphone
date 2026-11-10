@@ -63,13 +63,33 @@ func TestWireFixtureFilesPinTheConsumerContract(t *testing.T) {
 	}
 
 	// The ring fact's keys on both transports — the shell's router keys.
-	for name := range files {
-		if !strings.HasPrefix(name, "push-fcm-") && !strings.HasPrefix(name, "push-ntfy-") {
+	// FCM carries them flat in data; ntfy embeds the fact as compact JSON
+	// inside the message field, so that string is parsed, not grepped.
+	for name, body := range files {
+		if !strings.HasPrefix(name, "push-fcm-") {
 			continue
 		}
-		body := string(files[name])
-		if !strings.Contains(body, `"event":"`) {
+		if !strings.Contains(string(body), `"event":"`) {
 			t.Errorf("%s lacks the event key: %s", name, body)
+		}
+	}
+	for name, body := range files {
+		if !strings.HasPrefix(name, "push-ntfy-") {
+			continue
+		}
+		var envelope struct {
+			Message string `json:"message"`
+		}
+		if err := json.Unmarshal(body, &envelope); err != nil {
+			t.Fatalf("%s does not decode: %v", name, err)
+		}
+		var fact map[string]any
+		if err := json.Unmarshal([]byte(envelope.Message), &fact); err != nil {
+			t.Errorf("%s message field is not the compact-JSON fact (%q): %v", name, envelope.Message, err)
+			continue
+		}
+		if _, ok := fact["event"]; !ok {
+			t.Errorf("%s inner fact lacks the event key: %s", name, envelope.Message)
 		}
 	}
 

@@ -235,12 +235,14 @@
         # fresh render from the handler wire types — the contract
         # cannot rot silently against the code (same recipe as
         # scripts/contracts-fresh.sh, sandboxed against the built
-        # package).
+        # package). Covers the asyncapi document AND the consumer
+        # wire fixtures (docs/contracts/wire/) the native shells
+        # vendor into their tests.
         contracts-fresh =
           pkgs.runCommand "contracts-fresh-check"
             {
               nativeBuildInputs = [ self'.packages.webphone ];
-              meta.description = "docs/contracts/asyncapi.yaml equals a fresh render";
+              meta.description = "docs/contracts (asyncapi.yaml + wire/ fixtures) equals a fresh render";
             }
             ''
               cd ${self}
@@ -248,6 +250,10 @@
               webphone contracts -o $TMPDIR/fresh
               if ! diff -u docs/contracts/asyncapi.yaml $TMPDIR/fresh/asyncapi.yaml; then
                 echo "docs/contracts/asyncapi.yaml is STALE — run: nix develop -c go run ./cmd/webphone contracts" >&2
+                exit 1
+              fi
+              if ! diff -ru docs/contracts/wire $TMPDIR/fresh/wire; then
+                echo "docs/contracts/wire/ is STALE — run: nix develop -c go run ./cmd/webphone contracts (then re-vendor into webphone-android)" >&2
                 exit 1
               fi
               echo "wire contracts fresh" >$out
