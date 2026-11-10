@@ -43,6 +43,40 @@ func TestReportsTotalsGridRendersSixCardsAlertingOnlyMissed(t *testing.T) {
 	}
 }
 
+// TestReportsTotalsGridRendersTheNoAnswerCardOnlyWhenNonZero pins the
+// seventh card: a window without a never-connected outbound renders six
+// cards (a zero would claim a fact about nothing), a window with one
+// renders the seventh NEUTRAL — the alert tone stays reserved for
+// inbound misses (reportsStat's tone contract), not the ordinary noise
+// of an outbound that did not connect.
+func TestReportsTotalsGridRendersTheNoAnswerCardOnlyWhenNonZero(t *testing.T) {
+	props := ReportsPanelProps{
+		Enabled: true,
+		Report: reports.Report{
+			Totals: reports.Totals{Calls: 73, Inbound: 0, Outbound: 73, Answered: 24, NoAnswer: 49, Talk: 116 * time.Minute},
+		},
+		Lang: LangEN,
+	}
+	rendered := renderComponent(t, reportsTotals(props))
+
+	if !strings.Contains(rendered, `<span class="wp-stat-value">49</span> <span class="wp-stat-label">No answer</span>`) {
+		t.Errorf("non-zero no-answer count must render the seventh card: %.600s", rendered)
+	}
+
+	if strings.Contains(rendered, "wp-stat-alert") {
+		t.Errorf("the no-answer card must stay neutral; alert is the inbound-miss tone:\n%s", rendered)
+	}
+
+	props.Report.Totals.NoAnswer = 0
+	quiet := renderComponent(t, reportsTotals(props))
+	if strings.Contains(quiet, "No answer") {
+		t.Errorf("a zero no-answer count must not render a card:\n%s", quiet)
+	}
+	if strings.Count(quiet, `class="wp-stat"`) != 6 {
+		t.Errorf("a quiet window renders six cards, got:\n%s", quiet)
+	}
+}
+
 // undatedProps is a window whose every record resisted its timestamp:
 // real totals and contacts, no day bucket at all.
 func undatedProps() ReportsPanelProps {

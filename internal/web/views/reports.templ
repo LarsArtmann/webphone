@@ -118,7 +118,11 @@ templ reportsWeek(props ReportsPanelProps) {
 }
 
 // reportsTotals is the window's arithmetic: direction and outcome are
-// two different questions, so they get two different rows.
+// two different questions, so they get two different rows. The no-answer
+// card renders only when the window held one — a zero would claim a
+// fact about nothing, and the alert tone stays reserved for inbound
+// misses (a call somebody placed and nobody took), not the ordinary
+// noise of an outbound that did not connect.
 templ reportsTotals(props ReportsPanelProps) {
 	{{ totals := props.Report.Totals }}
 	<section class="wp-reports-totals">
@@ -128,6 +132,9 @@ templ reportsTotals(props ReportsPanelProps) {
 		@reportsStat(fmtInt(totals.Outbound), T(props.Lang, "reports.stat.outbound"), false)
 		@reportsStat(fmtInt(totals.Answered), T(props.Lang, "reports.stat.answered"), false)
 		@reportsStat(fmtInt(totals.Missed), T(props.Lang, "reports.stat.missed"), totals.Missed > 0)
+		if totals.NoAnswer > 0 {
+			@reportsStat(fmtInt(totals.NoAnswer), T(props.Lang, "reports.stat.noanswer"), false)
+		}
 	</section>
 }
 

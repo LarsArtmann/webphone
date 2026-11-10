@@ -41,7 +41,7 @@ func TestAggregateFoldsDirectionOutcomeAndTalk(t *testing.T) {
 		Now:      time.Date(2026, 11, 4, 18, 0, 0, 0, berlin),
 	})
 
-	want := reports.Totals{Calls: 4, Inbound: 2, Outbound: 2, Answered: 2, Missed: 1, Talk: 2 * time.Minute}
+	want := reports.Totals{Calls: 4, Inbound: 2, Outbound: 2, Answered: 2, Missed: 1, NoAnswer: 1, Talk: 2 * time.Minute}
 	if report.Totals != want {
 		t.Fatalf("totals = %+v, want %+v", report.Totals, want)
 	}
@@ -61,6 +61,33 @@ func TestAggregateFoldsDirectionOutcomeAndTalk(t *testing.T) {
 
 	if day.Date.Format("2006-01-02") != "2026-11-04" {
 		t.Fatalf("day date = %s", day.Date)
+	}
+}
+
+// TestNoAnswerCountsOutboundThatNeverConnected pins the outcome
+// partition: Answered carried talk, Missed arrived inbound and carried
+// none, NoAnswer is the outbound that never connected — every call in
+// exactly one bucket, so the three outcomes always sum to Calls.
+func TestNoAnswerCountsOutboundThatNeverConnected(t *testing.T) {
+	report := reports.Aggregate(reports.Input{
+		Entries: []pbx.CDR{
+			cdr("internal", "1001", "+4930111", "2026-11-04 09:00:00", 0), // outbound, never connected
+			cdr("internal", "1001", "+4930122", "2026-11-04 09:05:00", 0), // outbound, never connected
+			cdr("internal", "1001", "+4930133", "2026-11-04 09:10:00", 45),
+			cdr("public", "+4930144", "1001", "2026-11-04 09:15:00", 0), // inbound, missed
+			cdr("public", "+4930155", "1001", "2026-11-04 09:20:00", 30),
+		},
+		Location: berlin,
+	})
+
+	want := reports.Totals{Calls: 5, Inbound: 2, Outbound: 3, Answered: 2, Missed: 1, NoAnswer: 2, Talk: 75 * time.Second}
+	if report.Totals != want {
+		t.Fatalf("totals = %+v, want %+v", report.Totals, want)
+	}
+
+	if report.Totals.Answered+report.Totals.Missed+report.Totals.NoAnswer != report.Totals.Calls {
+		t.Fatalf("outcomes %d + %d + %d do not partition %d calls",
+			report.Totals.Answered, report.Totals.Missed, report.Totals.NoAnswer, report.Totals.Calls)
 	}
 }
 

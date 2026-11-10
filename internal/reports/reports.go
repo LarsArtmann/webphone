@@ -55,10 +55,11 @@ type Report struct {
 
 // Totals is the window's headline arithmetic.
 //
-// Answered and Missed are disjoint: a call is Answered when it carried
-// talk time, Missed when it arrived and carried none. An outbound call
-// that never connected is neither — it counts in Outbound only. That is
-// the History tab's own vocabulary, kept identical so the two tabs never
+// Direction (Inbound/Outbound) and outcome (Answered/Missed/NoAnswer)
+// are different questions, and every call lands in exactly one outcome
+// bucket: Answered carried talk time, Missed arrived inbound and carried
+// none, NoAnswer is an outbound that never connected. That is the
+// History tab's own vocabulary, kept identical so the two tabs never
 // disagree about the same calls.
 type Totals struct {
 	Calls    int
@@ -66,6 +67,7 @@ type Totals struct {
 	Outbound int
 	Answered int
 	Missed   int
+	NoAnswer int
 	Talk     time.Duration
 }
 
@@ -181,6 +183,8 @@ func Aggregate(in Input) Report {
 			report.Totals.Answered++
 		case inbound:
 			report.Totals.Missed++
+		default:
+			report.Totals.NoAnswer++
 		}
 
 		remote := remoteOf(cdr)
