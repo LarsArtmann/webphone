@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "threshold": 1,
-  "recordedAt": "2026-11-09T04:37:37.813205898Z",
+  "recordedAt": "2026-11-10T13:40:20.985157726Z",
   "entries": [
     {
       "hash": "0074763f10c77d08",
@@ -18,9 +18,10 @@
         "internal/web/views/history.templ",
         "internal/web/views/reports.templ",
         "internal/web/views/reports.templ",
+        "internal/web/views/reports.templ",
         "internal/web/views/reports.templ"
       ],
-      "tokens": 5
+      "tokens": 6
     },
     {
       "hash": "090feb586e2e0439",
@@ -364,14 +365,6 @@
       "tokens": 4
     },
     {
-      "hash": "517c1274aca99e5e",
-      "files": [
-        "internal/web/views/reports.templ",
-        "internal/web/views/history.templ"
-      ],
-      "tokens": 2
-    },
-    {
       "hash": "58acd847e751aa14",
       "files": [
         "internal/web/views/admin.templ",
@@ -511,14 +504,6 @@
       "files": [
         "internal/cqrs/threadssweep.go",
         "internal/cqrs/faxesstore.go"
-      ],
-      "tokens": 4
-    },
-    {
-      "hash": "74971bedaa27e5d1",
-      "files": [
-        "internal/cqrs/transcripts.go",
-        "internal/cqrs/threads.go"
       ],
       "tokens": 4
     },
@@ -765,6 +750,14 @@
       "files": [
         "internal/server/api/transcribe.go",
         "internal/server/api/transcribe.go"
+      ],
+      "tokens": 2
+    },
+    {
+      "hash": "9caaa74b4d5af0f3",
+      "files": [
+        "internal/web/views/history.templ",
+        "internal/web/views/reports.templ"
       ],
       "tokens": 2
     },
@@ -1134,11 +1127,12 @@
         "internal/web/views/messages.templ",
         "internal/web/views/settings.templ",
         "internal/web/views/crm.templ",
+        "internal/web/views/crm.templ",
         "internal/web/views/layout.templ",
         "internal/web/views/admin.templ",
         "internal/web/views/reports.templ"
       ],
-      "tokens": 17
+      "tokens": 18
     },
     {
       "hash": "efff352ba59569e9",

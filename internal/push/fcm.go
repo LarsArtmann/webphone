@@ -143,16 +143,10 @@ type fcmMessage struct {
 	} `json:"message"`
 }
 
-// Send ships one ring fact to the device's registration token.
-func (s *FcmSender) Send(ctx context.Context, target string, ring Ring) error {
-	if !s.Enabled() {
-		return ErrDisabled
-	}
-	accessToken, err := s.fetchAccessToken(ctx)
-	if err != nil {
-		return err
-	}
-
+// ringFcmPayload builds the messages:send body for one ring fact — the
+// pure half of Send, shared with the wire-fixture renderer so the pinned
+// consumer contract can never diverge from the sent wire.
+func ringFcmPayload(target string, ring Ring) fcmMessage {
 	priority := "NORMAL"
 	if ring.Event == EventRing {
 		priority = "HIGH"
@@ -165,7 +159,34 @@ func (s *FcmSender) Send(ctx context.Context, target string, ring Ring) error {
 		"call_id": ring.CallID,
 	}
 	body.Message.Android.Priority = priority
-	payload, err := json.Marshal(body)
+	return body
+}
+
+// draftFcmPayload builds the messages:send body for one draft-ready
+// fact (NORMAL priority — good news is not urgent). Pure, like
+// ringFcmPayload, for the same fixture-truth reason.
+func draftFcmPayload(target string, draft Draft) fcmMessage {
+	var body fcmMessage
+	body.Message.Token = target
+	body.Message.Data = map[string]string{
+		"event":    string(draft.Event),
+		"contact":  draft.Contact,
+		"draft_id": draft.DraftID,
+	}
+	body.Message.Android.Priority = "NORMAL"
+	return body
+}
+
+// Send ships one ring fact to the device's registration token.
+func (s *FcmSender) Send(ctx context.Context, target string, ring Ring) error {
+	if !s.Enabled() {
+		return ErrDisabled
+	}
+	accessToken, err := s.fetchAccessToken(ctx)
+	if err != nil {
+		return err
+	}
+	payload, err := json.Marshal(ringFcmPayload(target, ring))
 	if err != nil {
 		return errorfamily.WrapInfrastructuref(err, "push.fcm_send", "encode fcm message")
 	}
@@ -182,15 +203,7 @@ func (s *FcmSender) SendDraft(ctx context.Context, target string, draft Draft) e
 	if err != nil {
 		return err
 	}
-	var body fcmMessage
-	body.Message.Token = target
-	body.Message.Data = map[string]string{
-		"event":    string(draft.Event),
-		"contact":  draft.Contact,
-		"draft_id": draft.DraftID,
-	}
-	body.Message.Android.Priority = "NORMAL"
-	payload, err := json.Marshal(body)
+	payload, err := json.Marshal(draftFcmPayload(target, draft))
 	if err != nil {
 		return errorfamily.WrapInfrastructuref(err, "push.fcm_send", "encode fcm message")
 	}
