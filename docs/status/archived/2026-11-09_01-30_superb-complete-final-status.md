@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-11 (cadence sweep, this session): gate-clean (check-rows complete + bare-rows clean before the mv). SUPERB's completion verdict stands — v2.13.0 released 2026-11-10 carries the train.
+
 # SUPERB COMPLETE — 100% command + event sourcing (A34→A47 closeout)
 
 > **Date:** 2026-11-09 01:30 CET · **Session:** the "GET SHIT DONE — the WHOLE TODO LIST" burst

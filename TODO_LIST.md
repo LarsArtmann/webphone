@@ -1285,3 +1285,15 @@ ceiling) + markdownlint posture execution (post-sitting row-18 verdict). Plan:
 - **api-dial tripwire (14):** the 2026-11-17 revisit of the DEFER recommendation self-surfaces here (memo: pbx-artmann `docs/planning/2026-11-10_17-30_api-dial-stopgap-decision-memo.md`).
 - **Release hygiene on a quiet host (22/30/31):** owner call on `.buildflow.yml`'s stale baseline file (157 accepted entries match nothing — delete or refresh deliberately); re-run `buildflow timings --regressions` on a quiet host before rebaselining the +200% race-step timing; correlate the one SQLITE_BUSY warning from attempt 2's tail if it recurs.
 - **lychee redirect hints (32):** resolve the two/three redirecting URLs to their targets so the hints stop.
+
+### Release-green + B5-staged — open rows (2026-11-11 harvest)
+
+- **Answer the 00-45 report's §g Q1–Q3:** (1) B5 prod-switch authority + timing, (2) main's treefmt red — heal over the other session's refactor files or let them self-heal, (3) the E3 budget number.
+- **Verify webphone CI green on the treefmt-healed tip:** the daemon-swept refactor files owe a formatter pass; main sat red across four consecutive tips (`a3832e4a` → `346cad88`), treefmt-check failing on gofmt alignment around `cqrs-lint:ignore` comments.
+- **Post-switch verification battery** once B5 executes: prod `/version` = `v2.13.0`, journal quiet (no unknown-config-key WARNs), `ui-capture --track` Reports causes subline + voicemail honest-toast verdict on real data, pbx-artmann deploy-ledger row.
+- **Release-log archival:** copy `/tmp/release-2.13.0-{5..11}.log` into the docs evidence home before the next /tmp wipe (the attempt-ledger evidence, row 32 of the 23:32 report).
+- **18-08 report drain train** before the 45-day cadence age threshold (~2026-12-07): 102 bare rows across 13 tables, zero adjudication — the oldest live report.
+- **cadence-candidates script:** turn the archive-candidate scan (check-rows + bare-rows over every live report, oldest-first CLEAN list) into `scripts/cadence-candidates.sh`.
+- **Runbook additions:** `--check`-mode docs battery as the pre-push verdict (the mutating battery hid the rule-F glue that red-ed CI); verify the HEAD sha is unchanged in the same call as the push (the daemon swept 28 files between verify and push); archive one gate-clean report in the same push that files a new one.
+- **erraudit tier re-measure** (overdue since 2026-11-05): tier 1 exit 0, tier 2 must stay 0.
+- **Red-main watcher visibility:** no tracker issue visible through four red tips — verify the LIST-API title-dedup still matches when every sweep changes the commit subject.
