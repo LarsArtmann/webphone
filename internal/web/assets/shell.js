@@ -1962,10 +1962,17 @@
       if (vmPeaksCache.has(uuid)) {
         return Promise.resolve(vmPeaksCache.get(uuid));
       }
+      // One honest toast per failure: a fetch that was attempted and failed
+      // means the recording itself is unreachable — the same failure the
+      // player reports — and vmFallback must stay silent for it.
+      var recordingMissing = false;
+      var fail = function () {
+        vmFallback(uuid, audio, recordingMissing);
+      };
       var src = audio.getAttribute("src");
       var Ctor = window.AudioContext || window.webkitAudioContext;
       if (typeof fetch !== "function" || !src || !Ctor) {
-        return Promise.reject(new Error("webaudio unavailable"));
+        return Promise.reject(new Error("webaudio unavailable")).catch(fail);
       }
       // Bound once: the promise callbacks below run in a later frame, where
       // the checker can no longer narrow the module-level `vmAudioContext`.
@@ -1974,10 +1981,6 @@
         context = new Ctor();
         vmAudioContext = context;
       }
-      // One honest toast per failure: a fetch that was attempted and failed
-      // means the recording itself is unreachable — the same failure the
-      // player reports — and vmFallback must stay silent for it.
-      var recordingMissing = false;
       return fetch(src)
         .then(
           function (response) {
