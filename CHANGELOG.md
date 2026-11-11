@@ -5,6 +5,47 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+
+- **Passkey Settings is the session's OWN account.** The Settings passkey
+  list/revoke resolved the owner through the shared-extension fallback
+  (MappedByExtension), so on a shared line a classic extension-password
+  login could view and revoke the sorted-first human's passkeys. Both
+  surfaces now resolve through the session's login identity
+  (MappedByLogin); a line-password session has no own passkeys — the
+  section renders nothing and revocation answers the uniform 404.
+  (2026-11-11 full-code-review C7, verified; session suite green.)
+- **The ended-call Close button no longer strands the call badge and CRM
+  context.** Close removed only the card DOM node without the
+  wp:calls-changed re-dispatch, leaving "on call" and the live-context
+  slot on a call the shell could no longer see. Close now re-dispatches
+  (pinned by the island test), and the settle path disposes the
+  remote-audio watcher instead of polling a dead stream from the ended
+  card.
+- **The admin thread inventory actually shows the most recent threads.**
+  ListAllThreads sorted AFTER the engine-side limit cut, so the Admin
+  tab's 50-thread window was an arbitrary slice of the fleet, not the
+  newest one. The sort now runs engine-side (last_activity), matching
+  Faxes.ListAll.
+- **The transcript retention sweep can no longer spin.** Its page walk
+  lacked the enroll sweep's per-page termination guard: a page whose
+  expunges all applied as no-ops (projection lag already removed them)
+  rescanned the same window forever. Guard added per page.
+- **Summarize verdict statuses ride an allowlist.** The textagent's HTTP
+  status passed straight through; only actionable verdicts
+  (409/422/429/503) do now — auth/404-shaped agent internals collapse
+  to 502 like the unreachable arm.
+- **The textagent client owns its connection pool** (httpclient.Isolated)
+  instead of contending over http.DefaultTransport — the last seam
+  outside the 2026-11-08 per-client pool ruling.
+- **The dial-gate POST caps its body** (api.JSONBodyLimit mount), the
+  last /api JSON surface without one; badge-count failures are logged
+  instead of silently swallowed; the note textarea carries the server's
+  4000-char maxlength; five comment sites stop describing the retired
+  readmodels.db world as live.
+
 ## [2.14.0] - 2026-11-11
 
 ### Changed
