@@ -138,7 +138,8 @@ async function holdSession(id, hold) {
   // bare await would flip `held` before any 200 OK and strand the
   // toggle on a refused re-INVITE with no error surface (the honesty
   // contract's oldest gap, closed 2026-11-11).
-  const verdict = await inviteVerdict(entry.session);
+  try {
+    const verdict = await inviteVerdict(entry.session);
   if (verdict === "accepted") {
     entry.held = hold;
     setTracks(entry, { recv: !hold, send: !hold && !entry.muted });

@@ -21,6 +21,12 @@
 # missing from PATH is a WARN, not a failure: the gate must never block a
 # commit on a toolchain the caller does not have.
 #
+# Gate 3 (2026-11-11) — Python syntax for staged scripts/*.py: the daemon
+# landed a ui-capture.py corruption (a comment line that lost its leading
+# `#`) at HEAD and nothing gated it — the JS gate covered only assets, and
+# the harness has no compile step in CI. `py_compile` on the STAGED blob
+# catches exactly that class; python3 missing is a WARN like node.
+#
 # The auto-commit daemon commits WITHOUT hooks (the pma unit overrides
 # core.hooksPath via GIT_CONFIG_* env; see AGENTS.md) — this binds humans
 # and sessions, which is where hand edits come from. A deliberate bypass
@@ -57,5 +63,29 @@ done < <(git diff --cached --name-only --diff-filter=ACMR -- internal/web/assets
 
 if [ "$failed" -ne 0 ]; then
 	echo "pre-commit: fix the syntax error above, or bypass with 'git commit --no-verify'" >&2
+	exit 1
+fi
+
+# Gate 3 — staged scripts/*.py must compile (same class as Gate 2: the
+# runtime gate for these scripts is a manual harness run, not CI).
+py_bin="$(command -v python3 || true)"
+if [ -z "$py_bin" ]; then
+	echo "pre-commit: python3 not on PATH — skipped the staged Python syntax gate" >&2
+	exit 0
+fi
+
+failed=0
+while IFS= read -r path; do
+	scratch="$tmpdir/$(basename "$path")"
+	git show ":$path" >"$scratch"
+	if ! "$py_bin" -m py_compile "$scratch" 2>"$tmpdir/py-err"; then
+		echo "pre-commit: $path does not compile as Python:" >&2
+		sed "s|$scratch|$path|g" "$tmpdir/py-err" >&2
+		failed=1
+	fi
+done < <(git diff --cached --name-only --diff-filter=ACMR -- 'scripts/*.py')
+
+if [ "$failed" -ne 0 ]; then
+	echo "pre-commit: fix the Python error above, or bypass with 'git commit --no-verify'" >&2
 	exit 1
 fi
