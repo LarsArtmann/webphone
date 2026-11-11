@@ -137,7 +137,7 @@
   font-size: 0.8rem;
   padding: 4px 8px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--surface);
   color: var(--text);
 }
@@ -383,7 +383,7 @@ button.small {
   padding: 4px 10px;
   font-size: 0.78rem;
   margin-inline-start: 8px;
-  border-radius: 8px;
+  border-radius: var(--radius);
 }
 
 .hint {
@@ -429,7 +429,7 @@ button.small {
   font-size: 0.8rem;
   padding: 4px 8px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius);
   background: var(--surface);
   color: var(--text);
   min-width: 0;
@@ -481,7 +481,7 @@ button.small {
   justify-content: space-between;
   gap: 10px;
   padding: 7px 10px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   color: var(--text);
 }

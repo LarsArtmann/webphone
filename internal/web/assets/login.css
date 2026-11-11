@@ -62,6 +62,8 @@
     --color-blue-600: var(--accent);
     --color-blue-800: var(--accent);
     --color-blue-900: var(--accent);
+    --color-indigo-500: oklch(58.5% 0.233 277.117);
+    --color-indigo-600: oklch(51.1% 0.262 276.966);
     --color-gray-50: oklch(98.5% 0.002 247.839);
     --color-gray-100: oklch(96.7% 0.003 264.542);
     --color-gray-200: oklch(92.8% 0.006 264.531);
@@ -414,6 +416,9 @@
   }
   .mt-2 {
     margin-top: calc(var(--spacing) * 2);
+  }
+  .mt-3 {
+    margin-top: calc(var(--spacing) * 3);
   }
   .mt-4 {
     margin-top: calc(var(--spacing) * 4);
@@ -879,6 +884,9 @@
   .text-green-800 {
     color: var(--ok);
   }
+  .text-indigo-600 {
+    color: var(--color-indigo-600);
+  }
   .text-red-500 {
     color: var(--danger);
   }
@@ -1110,6 +1118,9 @@
     .hover\:text-blue-500:hover {
       color: var(--accent-strong);
     }
+    .hover\:text-gray-900:hover {
+      color: var(--color-gray-900);
+    }
     .hover\:underline:hover {
       text-decoration-line: underline;
     }
@@ -1171,6 +1182,9 @@
   }
   .focus\:ring-blue-600:focus {
     --tw-ring-color: var(--accent);
+  }
+  .focus\:ring-indigo-500:focus {
+    --tw-ring-color: var(--color-indigo-500);
   }
   .focus\:ring-red-500:focus {
     --tw-ring-color: var(--danger);
@@ -1756,6 +1770,14 @@
         .dark *
       ):hover {
       color: var(--accent-strong);
+    }
+    .dark\:hover\:text-gray-50:where(
+        :root[data-theme="dark"],
+        :root[data-theme="dark"] *,
+        .dark,
+        .dark *
+      ):hover {
+      color: var(--color-gray-50);
     }
   }
   .dark\:focus\:bg-blue-500:where(
@@ -3122,7 +3144,7 @@ a:focus-visible {
   flex: 1 1 auto;
   min-width: 80px;
   height: 28px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   touch-action: none;
 }
@@ -3678,7 +3700,7 @@ a:focus-visible {
   background: var(--surface-2);
   border: 1px solid var(--border-strong);
   border-bottom-width: 2px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
 }
 .wp-settings-head {
   margin: 20px 0 6px;
@@ -3697,7 +3719,7 @@ a:focus-visible {
 .wp-admin-ext {
   flex: none;
   padding: 0.1em 0.55em;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--surface-3);
   color: var(--muted);
   font-family:
