@@ -201,6 +201,13 @@ the stack browser E2E passed on the bumped tree. What remains:
   `domain.RelPath` lands · a `config.Seam` helper for the four
   both-or-neither URL+secret pairs — revisit ONLY if a fifth pair
   appears (per-seam stays the owner ruling).
+- Data-model long shots, 2026-10-25 review cohort (4th data-model
+  review's open rows, ruled not baseline): `push.Transport` as a
+  defined type + `ParseTransport` for the Fanout registry/API · the
+  `sso.Finish` value object folded into Complete (carries the `auth:`
+  commit convention) · `FaxJob.DocumentPath` as `domain.RelPath` ·
+  asr/matrix wiring structs · `machineSurface` bool-last argument
+  order.
 
 ## Open questions (owner calls)
 
