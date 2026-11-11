@@ -267,11 +267,11 @@ against the tree at harvest time):
 - ~~Chip-X 24px hit area (F14)~~ → verified LANDED at HEAD before this sweep — the glyph stays 18px and the invisible `::after` (`inset: -3px`) extends the hit to 24px with the F14 comment at the site (app.css)
 - ~~History empty state rewording (F15)~~ → verified LANDED 2026-11-07 (T16) — the review card itself carries the FIXED banner; `history.needsAPI.pre/post` carries the three-beat shape (en+de)
 - ~~Radius/spacing token adoption (F17)~~ → done 2026-11-11 — the stragglers swept: voicemail waveform, mono input, admin-ext chip → `--radius-sm` byte-identical; island `#lang`/small buttons/audio-out selects (8px literals between the tokens) normalized onto `--radius`; tw.css/login.css rebuilt; the 2px fax-step bar stays (a 4px-tall shape no token describes)
-- [ ] Phase-4 release preflight (harvested 2026-11-08 from the 17-22
-      SUPERB report §f-2 residue): the KVM/local-only flake legs —
-      `nix build .#checks.x86_64-linux.webphone-module`, the
-      `webphone-backup` + `webphone-backup-drill` VM tests — before the
-      SUPERB release train; CI cannot exercise them.
+- ~~Phase-4 release preflight (harvested 2026-11-08 from the 17-22
+  SUPERB report §f-2 residue): the KVM/local-only flake legs —
+  `nix build .#checks.x86_64-linux.webphone-module`, the
+  `webphone-backup` + `webphone-backup-drill` VM tests — before the
+  SUPERB release train; CI cannot exercise them.~~ → done 2026-11-11 — all three named legs green on KVM at the 6d2306ed tree: `webphone-module` (eval check, ad03g91w), `webphone-backup-drill` (8d1f8sw), `webphone-backup` (the full VM run, 24bnbx00). Side finding from the same sweep: the FULL buildflow run's go step flaked on `TestAutoReviewDispatchRoundTrip` (`sql: statement is closed` — the detached review goroutine racing the fixture engine's cleanup under sandbox timing; the test passes plain AND `-race` locally including the whole server package at 137s) — a shutdown-race flake class, not a regression; the CI `-race` legs that reached test execution passed
 
 ### 2026-11-07 Datastar deep-dive residue (one home: the report)
 
