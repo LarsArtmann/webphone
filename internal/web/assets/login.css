@@ -3747,6 +3747,12 @@ a:focus-visible {
   .wp-row-actions {
     justify-content: flex-start;
   }
+  .wp-thread-rowwrap .wp-thread-flag {
+    display: none;
+  }
+  .wp-compose > input {
+    flex-basis: 100%;
+  }
   .wp-settings {
     grid-template-columns: 1fr;
     gap: 2px 0;
