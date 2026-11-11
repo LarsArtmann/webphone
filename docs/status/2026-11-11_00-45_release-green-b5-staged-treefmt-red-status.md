@@ -153,58 +153,58 @@ toplevel build was still running at snapshot time.
 
 ## f) UP TO 50 THINGS WE SHOULD GET DONE NEXT
 
-| #  | Item                                                                                                                    | Owner leg?   |
-| -- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
-| 1  | Answer §g Q1–Q3                                                                                                         | yes          |
-| 2  | Finish aarch64 toplevel build (running)                                                                                 | no           |
-| 3  | Execute the B5 prod switch (`nixos-rebuild switch --flake .#pbx --target-host root@pbx.artmann.tech`)                   | gated by Q1  |
-| 4  | Post-switch: prod `/version` = `v2.13.0`                                                                                | no           |
-| 5  | Post-switch: ExecStart store path moved + generation advanced (record both)                                             | no           |
-| 6  | Post-switch: journal shows NO unknown-config-key WARNs (the pin-predates-key healthy-quiet check)                       | no           |
-| 7  | Post-switch: `/healthz` 200, `/metrics`+`/version` fencing unchanged, `/livez`+`/startupz` 200                          | no           |
-| 8  | Post-switch: SIP registration + `/events` SSE + passkey lane live on prod                                               | no           |
-| 9  | Post-switch: dialplan ring hook still 202s (stack side)                                                                 | no           |
-| 10 | Post-switch: `ui-capture.py --base-url https://pbx.artmann.tech --track` — Reports NoAnswer-causes subline on real data | no           |
-| 11 | Post-switch: voicemail click verdict (one honest toast per episode) on prod bytes                                       | no           |
-| 12 | Post-switch: `compare.html` pixel diff vs the pre-switch run                                                            | no           |
-| 13 | Post-switch: post-deploy smoke probe                                                                                    | no           |
-| 14 | pbx-artmann deploy-ledger row (generation, rev, timestamp, verdict)                                                     | no           |
-| 15 | Verify webphone CI green on the treefmt-healed tip                                                                      | no           |
-| 16 | Heal or delegate the treefmt red (Q2)                                                                                   | gated by Q2  |
-| 17 | Check red-main watcher suppression (no issues visible through 4 red tips)                                               | no           |
-| 18 | Relock stack webphone input → main tip (freeze lifted), marker + CHANGELOG + push                                       | no           |
-| 19 | Bump pbx-artmann telephony → `278dc3d` (drift probe: pending), `lock-drift-probe` re-run                                | no           |
-| 20 | Archive the release attempt logs `/tmp/release-2.13.0-{5..11}.log` into the evidence home                               | no           |
-| 21 | Drain-train the 18-08 report (102 bare rows, 13 tables) before the 45-day age threshold (~2026-12-07)                   | no           |
-| 22 | Adjudicate the 19:14 report's 27 bare rows                                                                              | no           |
-| 23 | Verify C2 watcher's next cycle post-switch (NONE verdict with v2.13.0 == v2.13.0)                                       | no           |
-| 24 | Watch the other session's cqrs refactor land complete; attribute full-suite verdicts before acting                      | no           |
-| 25 | Fleet-libs reopen-trigger sweep after the refactor lands (cqrs-htmx usage re-scored)                                    | no           |
-| 26 | Monthly erraudit tier re-measure (OVERDUE since 2026-11-05; tier 1 exit 0, tier 2 = 0)                                  | no           |
-| 27 | E3 budget number → then implement e3.2 against it                                                                       | yes (number) |
-| 28 | A3.4 Telnyx reply send (end-to-end outbound SMS on prod)                                                                | yes          |
-| 29 | C3.2 inbound mobile call (real phone rings the PBX)                                                                     | yes          |
-| 30 | E5.2–E5.4 hikaru legs (external host work)                                                                              | yes          |
-| 31 | E6 first real fax (capability declared; needs a real send)                                                              | yes          |
-| 32 | Runbook: add the verify-HEAD-before-push atomic step                                                                    | no           |
-| 33 | Runbook: add the `--check`-mode battery as the pre-push docs verdict                                                    | no           |
-| 34 | Runbook: add "archive one gate-clean report when you file one" to the report ritual                                     | no           |
-| 35 | Script the cadence-candidate scan (`scripts/cadence-candidates.sh`)                                                     | no           |
-| 36 | Lower the annotate ratchet below 203 only via a real drain (drain-first, then re-measure)                               | no           |
-| 37 | Verify the vendored island bundle untouched by the refactor (island tests in CI green)                                  | no           |
-| 38 | Confirm the release notes render correctly on the release page (fold anchors)                                           | no           |
-| 39 | Update TODO_LIST § open rows: strike the rows this session closed (release cut, docs gates)                             | no           |
-| 40 | CHANGELOG: nothing owed — docs/test-only deltas stay changelog-silent (verify no code delta slipped)                    | no           |
-| 41 | Check `.docs-gates.json` cadence pin still 65 (it is; re-measure at next sweep)                                         | no           |
-| 42 | Post-refactor: re-run `art-dupl check` (new clones only) on the split cqrs files                                        | no           |
-| 43 | Post-refactor: arch-test suite green (`internal/arch`) — module graph + error-code registry                             | no           |
-| 44 | Android repo: confirm no wire-contract drift this train (C1/E2 changed no wire types)                                   | no           |
-| 45 | Backup posture: confirm the switch generation still rides the backup set (system.db journal world)                      | no           |
-| 46 | Verify `stale-prod-watch.sh --self-test` still 10/10 (no changes made — hygiene check)                                  | no           |
-| 47 | Session hygiene: rebuild `/tmp/annotool/annotate` at next archive ritual (/tmp wiped)                                   | no           |
-| 48 | Consider recording the two-session freeze protocol as an AGENTS.md rule (pending Q on binding)                          | yes          |
-| 49 | Roadmap: next release train candidate list (what rides v2.14.0 — the refactor + any E-items)                            | no           |
-| 50 | After the drain trains land: re-measure `audit_max`/`annotate_max` from the corpus (the pins are snapshots)             | no           |
+| #  | Item                                                                                                                                                                                                                              | Owner leg?   |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| 1  | ~~Answer §g Q1–Q3~~ done (harvested — TODO_LIST §Release-green + B5-staged owns Q1/Q3; Q2 is answered: the treefmt red was the cqrs-lint session's pre-fmt bytes and that session healed them, format-proven + pushed `57df1bd3`) | yes          |
+| 2  | Finish aarch64 toplevel build (running)                                                                                                                                                                                           | no           |
+| 3  | Execute the B5 prod switch (`nixos-rebuild switch --flake .#pbx --target-host root@pbx.artmann.tech`)                                                                                                                             | gated by Q1  |
+| 4  | Post-switch: prod `/version` = `v2.13.0`                                                                                                                                                                                          | no           |
+| 5  | Post-switch: ExecStart store path moved + generation advanced (record both)                                                                                                                                                       | no           |
+| 6  | Post-switch: journal shows NO unknown-config-key WARNs (the pin-predates-key healthy-quiet check)                                                                                                                                 | no           |
+| 7  | Post-switch: `/healthz` 200, `/metrics`+`/version` fencing unchanged, `/livez`+`/startupz` 200                                                                                                                                    | no           |
+| 8  | Post-switch: SIP registration + `/events` SSE + passkey lane live on prod                                                                                                                                                         | no           |
+| 9  | Post-switch: dialplan ring hook still 202s (stack side)                                                                                                                                                                           | no           |
+| 10 | Post-switch: `ui-capture.py --base-url https://pbx.artmann.tech --track` — Reports NoAnswer-causes subline on real data                                                                                                           | no           |
+| 11 | Post-switch: voicemail click verdict (one honest toast per episode) on prod bytes                                                                                                                                                 | no           |
+| 12 | Post-switch: `compare.html` pixel diff vs the pre-switch run                                                                                                                                                                      | no           |
+| 13 | Post-switch: post-deploy smoke probe                                                                                                                                                                                              | no           |
+| 14 | pbx-artmann deploy-ledger row (generation, rev, timestamp, verdict)                                                                                                                                                               | no           |
+| 15 | Verify webphone CI green on the treefmt-healed tip                                                                                                                                                                                | no           |
+| 16 | Heal or delegate the treefmt red (Q2)                                                                                                                                                                                             | gated by Q2  |
+| 17 | Check red-main watcher suppression (no issues visible through 4 red tips)                                                                                                                                                         | no           |
+| 18 | Relock stack webphone input → main tip (freeze lifted), marker + CHANGELOG + push                                                                                                                                                 | no           |
+| 19 | Bump pbx-artmann telephony → `278dc3d` (drift probe: pending), `lock-drift-probe` re-run                                                                                                                                          | no           |
+| 20 | Archive the release attempt logs `/tmp/release-2.13.0-{5..11}.log` into the evidence home                                                                                                                                         | no           |
+| 21 | Drain-train the 18-08 report (102 bare rows, 13 tables) before the 45-day age threshold (~2026-12-07)                                                                                                                             | no           |
+| 22 | Adjudicate the 19:14 report's 27 bare rows                                                                                                                                                                                        | no           |
+| 23 | Verify C2 watcher's next cycle post-switch (NONE verdict with v2.13.0 == v2.13.0)                                                                                                                                                 | no           |
+| 24 | Watch the other session's cqrs refactor land complete; attribute full-suite verdicts before acting                                                                                                                                | no           |
+| 25 | Fleet-libs reopen-trigger sweep after the refactor lands (cqrs-htmx usage re-scored)                                                                                                                                              | no           |
+| 26 | Monthly erraudit tier re-measure (OVERDUE since 2026-11-05; tier 1 exit 0, tier 2 = 0)                                                                                                                                            | no           |
+| 27 | E3 budget number → then implement e3.2 against it                                                                                                                                                                                 | yes (number) |
+| 28 | A3.4 Telnyx reply send (end-to-end outbound SMS on prod)                                                                                                                                                                          | yes          |
+| 29 | C3.2 inbound mobile call (real phone rings the PBX)                                                                                                                                                                               | yes          |
+| 30 | E5.2–E5.4 hikaru legs (external host work)                                                                                                                                                                                        | yes          |
+| 31 | E6 first real fax (capability declared; needs a real send)                                                                                                                                                                        | yes          |
+| 32 | Runbook: add the verify-HEAD-before-push atomic step                                                                                                                                                                              | no           |
+| 33 | Runbook: add the `--check`-mode battery as the pre-push docs verdict                                                                                                                                                              | no           |
+| 34 | Runbook: add "archive one gate-clean report when you file one" to the report ritual                                                                                                                                               | no           |
+| 35 | Script the cadence-candidate scan (`scripts/cadence-candidates.sh`)                                                                                                                                                               | no           |
+| 36 | Lower the annotate ratchet below 203 only via a real drain (drain-first, then re-measure)                                                                                                                                         | no           |
+| 37 | Verify the vendored island bundle untouched by the refactor (island tests in CI green)                                                                                                                                            | no           |
+| 38 | Confirm the release notes render correctly on the release page (fold anchors)                                                                                                                                                     | no           |
+| 39 | Update TODO_LIST § open rows: strike the rows this session closed (release cut, docs gates)                                                                                                                                       | no           |
+| 40 | CHANGELOG: nothing owed — docs/test-only deltas stay changelog-silent (verify no code delta slipped)                                                                                                                              | no           |
+| 41 | Check `.docs-gates.json` cadence pin still 65 (it is; re-measure at next sweep)                                                                                                                                                   | no           |
+| 42 | Post-refactor: re-run `art-dupl check` (new clones only) on the split cqrs files                                                                                                                                                  | no           |
+| 43 | Post-refactor: arch-test suite green (`internal/arch`) — module graph + error-code registry                                                                                                                                       | no           |
+| 44 | Android repo: confirm no wire-contract drift this train (C1/E2 changed no wire types)                                                                                                                                             | no           |
+| 45 | Backup posture: confirm the switch generation still rides the backup set (system.db journal world)                                                                                                                                | no           |
+| 46 | Verify `stale-prod-watch.sh --self-test` still 10/10 (no changes made — hygiene check)                                                                                                                                            | no           |
+| 47 | Session hygiene: rebuild `/tmp/annotool/annotate` at next archive ritual (/tmp wiped)                                                                                                                                             | no           |
+| 48 | Consider recording the two-session freeze protocol as an AGENTS.md rule (pending Q on binding)                                                                                                                                    | yes          |
+| 49 | Roadmap: next release train candidate list (what rides v2.14.0 — the refactor + any E-items)                                                                                                                                      | no           |
+| 50 | After the drain trains land: re-measure `audit_max`/`annotate_max` from the corpus (the pins are snapshots)                                                                                                                       | no           |
 
 ## g) QUESTIONS I CANNOT FIGURE OUT MYSELF
 
