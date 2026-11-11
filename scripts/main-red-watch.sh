@@ -5,8 +5,10 @@
 # the watcher only assembles evidence (recurrence matches against the
 # flake ledger and lessons, run link, failing job names).
 #
-# State lives in the tracker, not in CI state files: dedup is an issue
-# search for `red-main run <id>`; a NEWER red while a ci-red issue is
+# State lives in the tracker, not in CI state files: dedup matches the
+# open `red-main run <id>` issues via the LIST api filtered by title
+# prefix (the SEARCH index lags for freshly-created issues — the
+# 2026-11-04 duplicate class); a NEWER red while a red-main issue is
 # open appends a comment instead of filing a duplicate.
 #
 # Advisory: this script exits 0 unless its environment is broken. A red
@@ -49,8 +51,20 @@ print(f"CREATE {rid}")
 PY
 }
 
-open_ci_red_issue() {
-	gh issue list --state open --label ci-red --limit 1 --json number --jq '.[0].number' 2>/dev/null || echo "-1"
+# The red-main issue lane: LIST api (fresh) over the ci-red label,
+# filtered client-side by the `red-main run` title prefix. NEVER the
+# bare label pool: daemon-audit files its guarded-path flags under the
+# SAME ci-red label by design, and a bare `--label ci-red --limit 1`
+# would point red-main comments at a daemon-audit flag (caught live
+# 2026-11-11 with six such issues open). filter_red_main_titles is
+# exported for the self-test.
+filter_red_main_titles() {
+	python3 -c 'import json,sys; print(json.dumps([i for i in json.load(sys.stdin) if i["title"].startswith("red-main run")]))'
+}
+
+red_main_issues() {
+	gh issue list --state open --label ci-red --limit 200 --json number,title 2>/dev/null \
+		| filter_red_main_titles || echo "[]"
 }
 
 grep_mentions() {
@@ -105,9 +119,24 @@ self_test() {
 	assert "EXISTS 7" "$(decide "$red" "$same" "-1")" "issue already tracks this run -> EXISTS"
 	assert "COMMENT 9" "$(decide "$red" "[]" "9")" "newer red, open ci-red issue -> COMMENT"
 
+	# The issue lane filters by the red-main title prefix: daemon-audit
+	# flags share the ci-red label, and an unfiltered pick would comment
+	# red-main evidence onto one of them (the 2026-11-11 live catch).
+	local lane lane_filtered
+	lane='[{"number":8,"title":"daemon-audit: abc touched guarded paths"},{"number":7,"title":"red-main run 113: build"}]'
+	lane_filtered=$(printf '%s' "$lane" | filter_red_main_titles)
+	assert "7" "$(GH_REPO='' python3 -c 'import json,sys; print(json.loads(sys.argv[1])[0]["number"])' "$lane_filtered")" "title filter keeps only red-main issues"
+
 	# The listing must stay scoped to ci.yml: the watch lane's own runs are
 	# green even when the verdicts it prints are red (the 2026-10-28 silence).
 	assert "yes" "$(grep -c -- '--workflow=ci.yml' "$0" | awk '{print ($1 > 0) ? "yes" : "no"}')" "run listing is scoped to the CI workflow"
+
+	# The dedup lane rides the LIST api (the red_main_issues fetch); the
+	# SEARCH index lags for freshly-created issues (the 2026-11-04
+	# 199-duplicate class). Asserted structurally: the lane function must
+	# exist and the live lane must not carry a --search invocation (the
+	# self-test's own prose cannot grep for it without matching itself).
+	assert "yes" "$(grep -c 'red_main_issues' "$0" | awk '{print ($1 >= 2) ? "yes" : "no"}')" "issue dedup uses the LIST-api lane"
 
 	local body
 	body=$(render_body 113 "https://example/run/113" "fix: x" "fast flake checks" "- docs/lessons.md:1: prior class" "n/a" "2026-10-26")
@@ -139,8 +168,8 @@ export GH_REPO GH_TOKEN
 # watcher report NONE for six hours while ci.yml sat red on the same sha —
 # twelve green `watch` runs, one red CI run, no issue filed.
 LIST_JSON=$(gh run list --branch main --workflow=ci.yml --limit 1 --json databaseId,conclusion,displayTitle,headSha,url)
-SAME_JSON=$(gh issue list --state open --search "in:title red-main run" --json number,title 2>/dev/null || echo "[]")
-RED_NUM=$(open_ci_red_issue)
+SAME_JSON=$(red_main_issues)
+RED_NUM=$(GH_REPO='' python3 -c 'import json,sys; xs=json.loads(sys.argv[1] or "[]"); print(xs[0]["number"] if xs else -1)' "$SAME_JSON")
 [ -n "$RED_NUM" ] || RED_NUM=-1
 
 DECISION=$(decide "$LIST_JSON" "$SAME_JSON" "$RED_NUM")

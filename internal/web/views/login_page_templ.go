@@ -72,7 +72,7 @@ func LoginPageExtra(primary bool, sso bool) templ.Component {
 				return templ_7745c5c3_Err
 			}
 			if primary {
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"lp-divider my-6 flex items-center gap-3 text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500\"><span class=\"h-px flex-1 bg-gray-200 dark:bg-gray-700\" aria-hidden=\"true\"></span> or <span class=\"h-px flex-1 bg-gray-200 dark:bg-gray-700\" aria-hidden=\"true\"></span></div>")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"lp-divider my-6 text-center text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500\"><div class=\"mb-2 border-t border-gray-200 dark:border-gray-700\" aria-hidden=\"true\"></div>or</div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}

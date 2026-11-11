@@ -238,3 +238,12 @@ New calls append here with date + ask.
 - 2026-11-11 13:4x — whole-TODO-list session's jscpd attribution (plan T6 µ22, the BuildFlow tool-disposition residue): ran `buildflow -s jscpd` scoped (BUILDFLOW_NO_RESULT_CACHE discipline assumed; detect-only step, non-gating). 15 findings, ALL in `internal/web/assets/island-tests/*.test.mjs` bootstrap harnesses — attributed as the test-fixture class (standing-ruling row added above). NO art-dupl `-t 1` re-run owed (jscpd and art-dupl are different detectors; the art-dupl baseline is adjudicated separately — today's live 2-group sighting belongs to the concurrent login-page train's templ sweep and stays with THAT train per the 2026-11-10 precedent). Status: docs/status/2026-11-11_12-27_whole-todo-list-execution-trains.md.
 
 - 2026-11-11 14:3x — the readmodels fax-twin deletion train (TODO row 2026-11-09 + the EnrollTokens rider): moved the fax tests (fax/teststore_test.go + archiver_test.go) to the cqrs backend, deleted readmodels faxes.go + the EnrollTokens engine store (enroll.go keeps EnrollGate + EnrollTokenView — the live seams), dissolved the 3 baselined fax-twin clone groups. Verified with the CI-pinned detector `-t 1`: **0 clones reference readmodels/faxes.go**; the live `scan` shows only the standing ACCEPT groups (ProjectionHostOptions appends ×3, sweep fragments) + the concurrent login-page train's 2 templ groups (theirs per the 2026-11-10 precedent). The enroll twin pair (11-09 04:3x row) dissolved with the same deletion. Baseline NOT re-recorded here: the sibling train's 2 new templ groups make a clean set-diff impossible from this side — the baseline ride-along lands with whichever train closes them (the 04:1x 11-09 doctrine: one train, one baseline write).
+
+## Sweep log
+
+- 2026-11-11 (front-door train): pinned-v0.7.2 re-run over the login
+  ExtraSection + SignInHint changes — two new templ-shape groups found
+  and DISSOLVED at the sites (the welcome hint's link moved to its own
+  `<p>`; the ExtraSection divider became a border-t rule instead of the
+  library's twin-span idiom) — 0 new clones, baseline 134 untouched.
+  No rulings added; nothing accepted.
