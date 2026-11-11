@@ -14,6 +14,14 @@ front matter does not carry their history (one home per fact, per the rule above
 
 ## Open tasks
 
+### UI/UX destination trains (ratified 2026-11-11 — plan: docs/planning/2026-11-11_15-11_ui-ux-destination.md)
+
+- [ ] **Train 2 — per-surface desktop IA**: History as a scannable table, Reports as a
+      dashboard, contacts/settings layouts fitted to their content — under the shared
+      shell; acceptance = screenshots show RESTRUCTURES, not just paint.
+- [ ] **Train 3 — mobile dialer surface**: island-as-dialer on mobile (ring/dial
+      reachable like an app tab), bottom-bar integration.
+
 ### Voicemail playback train residue (2026-11-10 — the fix is pushed; production legs open)
 
 The two product defects are fixed and CI-green (`fc352e66`: honest toast +
