@@ -826,207 +826,273 @@
     </style>
   </head>
   <body>
-    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
+    <!-- Full-bleed top bar -->
     <div class="top-bar">
-      <span>REPORT TYPE</span>
-      <span>YYYY-MM-DD</span>
-      <span>AUTHOR / TEAM</span>
+      <span>ARCHITECTURE REVIEW</span>
+      <span>2026-11-11</span>
+      <span>Cross-ref: 2026-09-30 re-review + 2026-10-17 modularization 4th entry</span>
     </div>
 
     <div class="layout">
-      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
       <aside class="sidebar" data-nav>
         <nav>
           <div class="label">Contents</div>
-          <a href="#summary">Summary</a>
-          <a href="#findings">Findings</a>
-          <a href="#issues">Issue Cards</a>
-          <a href="#proposal">Proposal</a>
-          <a href="#plan">Plan</a>
+          <a href="#summary">00 Summary</a>
+          <a href="#deltas">01 Prior deltas</a>
+          <a href="#scores">02 Scores</a>
+          <a href="#findings">03 Findings</a>
+          <a href="#strengths">04 Strengths</a>
+          <a href="#roadmap">05 Roadmap</a>
         </nav>
       </aside>
 
       <main class="main">
-        <!-- Hero -->
         <div class="hero">
-          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
           <div class="hero-shapes">
             <div class="circle"></div>
             <div class="square"></div>
             <div class="tri"></div>
           </div>
-          <div class="hero-badge">Report Type</div>
-          <h1>Report Title</h1>
+          <div class="hero-badge">Architecture review &middot; series #4</div>
+          <h1>Post journal-world re-score</h1>
           <p class="hero-subtitle">
-            One-sentence description of what this report covers.
+            Structural assessment of the 36-package single-binary after the ONE-journal-world
+            retirement (2026-11-09), the /login front door (2026-11-11), and the admin/push/chat
+            trains. Companion D2 pair rendered same session.
           </p>
         </div>
 
-        <!-- Inline TOC (alternative to sidebar; pick one) -->
         <nav class="toc">
           <h3>Contents</h3>
           <ul>
             <li><a href="#summary">Summary</a></li>
+            <li><a href="#deltas">Prior deltas verified</a></li>
+            <li><a href="#scores">Seven-dimension scores</a></li>
             <li><a href="#findings">Findings</a></li>
-            <li><a href="#issues">Issue Cards</a></li>
-            <li><a href="#proposal">Proposal</a></li>
-            <li><a href="#plan">Plan</a></li>
+            <li><a href="#strengths">Strengths</a></li>
+            <li><a href="#roadmap">Action roadmap</a></li>
           </ul>
         </nav>
 
-        <!-- Stats Dashboard -->
         <h2 id="summary"><span class="num">00</span>Summary</h2>
         <div class="stat-grid">
           <div class="stat-card">
-            <div class="stat-value">42</div>
-            <div class="stat-label">Total Items</div>
-          </div>
-          <div class="stat-card stat-bad">
-            <div class="stat-value">7</div>
-            <div class="stat-label">Critical</div>
-          </div>
-          <div class="stat-card stat-warn">
-            <div class="stat-value">12</div>
-            <div class="stat-label">Warnings</div>
+            <div class="stat-value">36</div>
+            <div class="stat-label">Packages (126 internal edges)</div>
           </div>
           <div class="stat-card stat-good">
-            <div class="stat-value">35</div>
-            <div class="stat-label">Resolved</div>
+            <div class="stat-value">0</div>
+            <div class="stat-label">Import cycles (arch-test enforced)</div>
+          </div>
+          <div class="stat-card stat-good">
+            <div class="stat-value">4.29</div>
+            <div class="stat-label">Average score (was 4.5 on 09-30)</div>
+          </div>
+          <div class="stat-card stat-warn">
+            <div class="stat-value">3</div>
+            <div class="stat-label">Open findings (P1&times;1, P2&times;1, P3&times;1)</div>
           </div>
         </div>
+        <p>
+          The 09-30 review&rsquo;s four findings all resolved or materially advanced; the decline
+          from 4.5 to 4.29 is concentrated in one dimension &mdash; <strong>internal/server
+          crossed the god-package threshold it was sitting on</strong> (now 106 files,
+          ~7.1k LOC non-test + ~14.6k LOC test, 342 exported declarations, efferent coupling
+          25). Everything the 09-30 review praised held or improved: the domain kernel stays
+          pure (instability 0.0, 25 dependents), the journal collapse to ONE SQLite world
+          finished, and boot typing turned fail-closed.
+        </p>
 
-        <!-- Findings as Cards -->
-        <h2 id="findings"><span class="num">01</span>Findings</h2>
-
-        <div class="card card-problem">
-          <h4>Critical Issue</h4>
-          <p>Description of the problem and its impact.</p>
-        </div>
-
-        <div class="card card-solution">
-          <h4>Recommended Fix</h4>
-          <p>Description of the solution with rationale.</p>
-        </div>
-
-        <!-- Issue Cards -->
-        <h2 id="issues"><span class="num">02</span>Issue Cards</h2>
-
-        <div class="issue issue-critical">
-          <span class="severity severity-critical">Blocking</span>
-          <h3>Critical finding title</h3>
-          <div class="where">path/to/file.go:42-58</div>
-          <p>
-            Describe the problem and cite the code or behavior that proves it.
-          </p>
-          <div class="callout callout-solution">
-            <strong>Fix</strong>
-            State the concrete recommended action.
-          </div>
-        </div>
-
-        <div class="issue issue-important">
-          <span class="severity severity-important">Important</span>
-          <h3>Important finding title</h3>
-          <div class="where">path/to/another.go:12-19</div>
-          <p>
-            Explain the risk and why a careful reviewer would hesitate before
-            shipping.
-          </p>
-        </div>
-
-        <div class="issue issue-nice">
-          <span class="severity severity-nice">Nice to have</span>
-          <h3>Polish suggestion</h3>
-          <div class="where">docs/ or config</div>
-          <p>
-            Minor documentation gaps or future-proofing suggestions go here.
-          </p>
-        </div>
-
-        <!-- Strengths -->
-        <h2>Strengths</h2>
-        <div class="strengths">
-          <div class="strength">
-            <div class="check">+</div>
-            <div class="text">
-              <strong>Specific strength</strong>
-              <span>Explain why it matters and what it enables.</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Table with Badges -->
-        <h2>Issue Table</h2>
+        <h2 id="deltas"><span class="num">01</span>Prior deltas verified</h2>
         <table>
           <thead>
-            <tr>
-              <th>#</th>
-              <th>Severity</th>
-              <th>Issue</th>
-              <th>Status</th>
-            </tr>
+            <tr><th>2026-09-30 finding</th><th>Severity</th><th>Status today</th><th>Evidence</th></tr>
           </thead>
           <tbody>
             <tr>
-              <td>1</td>
-              <td><span class="badge badge-critical">Critical</span></td>
-              <td>Missing error handling</td>
-              <td><span class="badge badge-fixed">Fixed</span></td>
+              <td>internal/server on the god-package threshold</td>
+              <td><span class="badge badge-high">High</span></td>
+              <td><span class="badge badge-low">Worse</span></td>
+              <td>api/ + hooks/ carved 2026-10-17; flat file count since grew to 32 surfaces (admin, csp_report, islandlatency, livecontext, login_page, passkey_settings&hellip;)</td>
             </tr>
             <tr>
-              <td>2</td>
-              <td><span class="badge badge-high">High</span></td>
-              <td>Race condition</td>
+              <td>fax.Service type-asserts its own gateway seam</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td><span class="badge badge-fixed">Fixed</span></td>
+              <td>gateway.Receipt.Resolution contract + resolution_test.go pins (landed from that review)</td>
+            </tr>
+            <tr>
+              <td>Operator config types fail silent</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td><span class="badge badge-fixed">Fixed</span></td>
+              <td>config.ConfigInvalidError + internal/config/unknown.go (unknown-key WARN), fail-closed boot gates</td>
+            </tr>
+            <tr>
+              <td>No schema_version table</td>
+              <td><span class="badge badge-medium">Medium</span></td>
+              <td><span class="badge badge-fixed">Fixed</span></td>
+              <td>store/db.go:327 single-row schema_version; versioned migrations</td>
+            </tr>
+            <tr>
+              <td>web/views reaches pbx + store for prop types</td>
+              <td><span class="badge badge-medium">Medium</span></td>
               <td><span class="badge badge-low">Open</span></td>
+              <td>store.ThreadSummary &times;7 sites, pbx.CDR &times;4, pbx.Voicemail* &times;3, plus messaging/textagent/reports props (finding F2 below)</td>
             </tr>
           </tbody>
         </table>
 
-        <!-- Before/After Comparison -->
-        <h2 id="proposal">Before / After</h2>
-        <div class="compare-header">
-          <div class="compare-before">Before</div>
-          <div class="compare-after">After</div>
+        <h2 id="scores"><span class="num">02</span>Seven-dimension scores</h2>
+        <table>
+          <thead>
+            <tr><th>Dimension</th><th>09-30</th><th>Now</th><th>Evidence</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Coupling</td><td>4.5</td><td>4.5</td><td>Deps-seam interfaces throughout; DI container owns lifetime; fax&ndash;gateway coupling now contract-typed. Only porous edge: view props typed by infra packages.</td></tr>
+            <tr><td>Cohesion</td><td>4.5</td><td>4.0</td><td>Every package but <code>server</code> passes the one-paragraph test. server mixes wiring + HTML rendering + platform plumbing + auth surfaces + admin under one package name.</td></tr>
+            <tr><td>Modularity</td><td>4.5</td><td>4.5</td><td>internal/ everywhere; DAG enforced by internal/arch tests (domain imports nothing internal; services never import server/web); per-package fakes keep units isolated.</td></tr>
+            <tr><td>Composability</td><td>4.5</td><td>4.5</td><td>Sender registry (new chat network = RegisterSender), middleware chain, gate interfaces, machine tables as data, capability flags feeding panel + SSE + Settings from one source.</td></tr>
+            <tr><td>Scalability</td><td>4.5</td><td>4.0</td><td>Feature ripple stays low (~6 files per recent train), but every new surface lands in internal/server wiring + its 74-file single test package (14.6k LOC, 326 test funcs) &mdash; compile-unit friction compounds.</td></tr>
+            <tr><td>Service orientation</td><td>4.0</td><td>4.0</td><td>Modular monolith by ratification: extraction-ready seams (journal behind cqrs, identity behind userauth, comms behind messaging); data ownership deliberately unified in system.db (ONE journal world).</td></tr>
+            <tr><td>Dependency direction</td><td>4.5</td><td>4.5</td><td>Domain pure and test-enforced; services HTTP-free; config fail-closed at boot. Residual: views&rarr;store/pbx/messaging/textagent/reports prop reach-through (same edge since 09-30).</td></tr>
+          </tbody>
+        </table>
+        <div class="callout callout-amber">
+          <strong>Verdict: Good (4.29)</strong>
+          No urgent restructuring. Address the lowest pair (cohesion, scalability) &mdash; both
+          point at the same fix: the internal/server carve.
         </div>
-        <div class="compare-row">
-          <div>
-            <pre><code><span class="tok-comment">// Old code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>(data <span class="tok-type">interface</span>{}) { }</code></pre>
-          </div>
-          <div>
-            <pre><code><span class="tok-comment">// New code</span>
-<span class="tok-keyword">func</span> <span class="tok-func">process</span>[T <span class="tok-type">any</span>](data T) { }</code></pre>
+
+        <h2 id="findings"><span class="num">03</span>Findings</h2>
+
+        <div class="issue issue-critical">
+          <span class="severity severity-critical">P1 &middot; High</span>
+          <h3>internal/server crossed the god-package threshold</h3>
+          <div class="where">internal/server &mdash; 32 non-test surfaces, 106 files, Ce=25, I=0.93, 342 exported declarations</div>
+          <p>
+            The 09-30 review flagged the threshold; since then the package absorbed admin,
+            csp_report, islandlatency, livecontext, login_page and passkey_settings &mdash; every
+            product surface added since lands here. The methodology bar (&gt;30 exported
+            symbols, &gt;1000 LOC) is exceeded 10&times; over on exports. The dormant auth-package
+            carve blueprint (docs/modularization/2026-10-17_PROPOSAL.html) covers only the
+            identity quarter.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Execute the three-way carve along already-visible seams:
+            <strong>server/auth</strong> (login_page, session_api, passkey_*, sso_api, auth_audit
+            &mdash; the 2026-10-17 blueprint), <strong>server/html</strong> (pages, panels,
+            actions, notifier, sse), <strong>server/platform</strong> (assets, metrics, csp_report,
+            trace, proxy, internal_directory, islandlatency, latency, configjs, export). wiring
+            stays thin in server proper. Mirror of the improved-state D2 rendered this session.
           </div>
         </div>
 
-        <!-- ASCII Diagram -->
-        <h2>Dependency Tree</h2>
-        <div class="dep-tree">
-          <span class="root">root</span> ├──
-          <span class="ok">wanted-dep</span> └──
-          <span class="unwanted">unwanted-dep</span>
+        <div class="issue issue-important">
+          <span class="severity severity-important">P2 &middot; Medium</span>
+          <h3>View props are typed by infrastructure packages</h3>
+          <div class="where">internal/web/views/{messages,history,voicemail,settings,reports,admin}.templ</div>
+          <p>
+            templ surfaces consume <code>store.ThreadSummary</code> (7 sites),
+            <code>pbx.CDR</code> (4), <code>pbx.VoicemailSummary/VoicemailMessage</code> (3),
+            plus messaging/textagent/reports prop types &mdash; the presentation layer depends on
+            SQL-row and HTTP-client packages for shapes. This is the same edge the 09-30 review
+            flagged; it survived the journal-world swap because the store types stayed the
+            de-facto view models for the surfaces cqrs did not absorb.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Give views their own prop types (or reuse the readmodels *View shapes where they
+            match) and convert once at the server boundary &mdash; the same pattern
+            server.crmContacts already uses for CRM people. Removes 5 of views&rsquo; 7
+            non-foundation edges.
+          </div>
         </div>
 
-        <!-- Numbered Steps -->
-        <h2 id="plan"><span class="num">03</span>Migration Plan</h2>
+        <div class="issue issue-nice">
+          <span class="severity severity-nice">P3 &middot; Low</span>
+          <h3>store&rsquo;s frozen ladder needs its retirement date owned</h3>
+          <div class="where">internal/store/db.go header + docs/planning/2026-11-09_storage-ladder-retirement.md</div>
+          <p>
+            The ladder is frozen by ruling and everything already answers from system.db; store
+            keeps sessions (by D2 ruling) plus import-only history that retention empties over
+            time. The end state &mdash; store as sessions-only &mdash; is declared but no row owns
+            verifying when the legacy importers can be deleted.
+          </p>
+          <div class="callout callout-solution">
+            <strong>Fix</strong>
+            Add a TODO_LIST row: &ldquo;delete legacy_* importers when the retention sweep has
+            emptied them on the production deployment&rdquo; with the detection command
+            (row counts over the legacy tables).
+          </div>
+        </div>
+
+        <h2 id="strengths">Strengths</h2>
+        <div class="strengths">
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>ONE journal world, done</strong>
+              <span>Every aggregate answers from system.db through cqrs deciders + metaengine projections; readmodels is gates + views; the split-brain risk two SQL worlds carried is gone.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Architecture invariants are tests, not conventions</strong>
+              <span>internal/arch enforces the DAG (domain imports nothing internal, services never import server/web), island import closure, error-code registry freshness. Drift fails CI, not review.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Lifecycle legality lives in machine tables</strong>
+              <span>deliveryMoves/faxMoves/AppendToThread + the Notifier.Project switch: new transitions are data, not branch-by-branch service edits.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Fail-closed boot + capability declaration</strong>
+              <span>ConfigInvalidError and unknown-key WARN name what the binary ignores; missing fax axes are declared bools converted once server-side &mdash; the UI never discovers a capability by failing.</span>
+            </div>
+          </div>
+          <div class="strength">
+            <div class="check">+</div>
+            <div class="text">
+              <strong>Low feature ripple</strong>
+              <span>Recent trains (reports naming, never-connected accounting) each touched ~6 files inside 2&ndash;3 packages &mdash; the structure is not fighting feature growth; only the server wiring point concentrates it.</span>
+            </div>
+          </div>
+        </div>
+
+        <h2 id="roadmap"><span class="num">05</span>Action roadmap</h2>
         <div class="migration-step">
           <div class="migration-num">1</div>
           <div class="migration-content">
-            <h4>Add generic type parameter</h4>
-            <p>Update the function signature to accept a type parameter.</p>
+            <h4>P2 &mdash; views prop typing (Effort S/M, no ordering constraint)</h4>
+            <p>Introduce view-owned prop types; convert at the server boundary; delete the views&rarr;store/pbx/messaging/textagent edges. Smallest blast radius, immediate coupling win; do it before the server carve so the carve moves typed props, not infra imports.</p>
           </div>
         </div>
         <div class="migration-step">
           <div class="migration-num">2</div>
           <div class="migration-content">
-            <h4>Update all call sites</h4>
-            <p>Pass explicit types at each call site for type safety.</p>
+            <h4>P1 &mdash; internal/server three-way carve (Effort M; reuses the dormant auth blueprint)</h4>
+            <p>server/auth &rarr; server/html &rarr; server/platform, wiring thin in server proper; the api/hooks carves (2026-10-17) prove the pattern. Each move is one independently revertable commit with its test files; arch tests stay green throughout.</p>
+          </div>
+        </div>
+        <div class="migration-step">
+          <div class="migration-num">3</div>
+          <div class="migration-content">
+            <h4>P3 &mdash; own the store ladder retirement date (Effort S)</h4>
+            <p>TODO_LIST row with the detection command; delete legacy_* importers when the retention sweep has emptied them in production.</p>
           </div>
         </div>
 
         <footer class="footer">
-          Generated YYYY-MM-DD &middot; All claims verified against source code
-          where noted
+          Generated 2026-11-11 &middot; Claims verified against source this session (package
+          graph via go list, symbol counts via rg, store/db.go:327, resolution_test.go) &middot;
+          Companion D2 pair: 2026-11-11_15-22-webphone-architecture{,-improved}.svg
         </footer>
       </main>
     </div>
