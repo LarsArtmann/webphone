@@ -1,5 +1,7 @@
 # Prod UI-tracking continuation — self-review: what was forgotten, what was weak, what is next
 
+> **ARCHIVED 2026-11-11 (docs-health cadence sweep, paired with the 15-18 filing):** all rows adjudicated in-session — §a/§b done with evidence, §c carries its triggers, §d owned + healed; harvested into TODO_LIST where still live. Gates at archive time: `annotate check-rows --strict` + `bare-rows` both green.
+
 > Claims verified as of 19:12. This session executed the Pareto plan
 > (docs/planning/2026-11-10_15-05_SUPERB-prod-ui-tracking-pareto-plan.md)
 > end-to-end minus the owner-gated tasks, then turned the plan's own
