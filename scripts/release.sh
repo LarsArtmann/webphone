@@ -229,7 +229,14 @@ step "7/9 stack: relock, gates, push ($STACK)"
 	echo "stack tree not clean" >&2
 	exit 1
 }
-run bash -c "cd '$STACK' && nix flake lock --update-input webphone"
+# Pin the TAG, not the branch tip: the deprecated --update-input alias
+# is a full flake update, so a resume hours after the tag push would
+# re-lock the stack to whatever landed on main since (observed
+# 2026-11-11: the tip had gained an unverified refactor whose race
+# tests fail — the lock-move-guard refused the sweep commit and the
+# guard message is what caught the drift). The tag exists by step 5,
+# so the tag URL is always resolvable here.
+run bash -c "cd '$STACK' && nix flake lock --override-input webphone github:LarsArtmann/webphone/$TAG"
 if [ "$DRY_RUN" != "1" ]; then
 	git -C "$STACK" add flake.lock
 	git -C "$STACK" diff --cached --quiet || git -C "$STACK" commit -m "chore: bump webphone input to $TAG"
