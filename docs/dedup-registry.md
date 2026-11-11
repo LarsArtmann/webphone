@@ -247,3 +247,17 @@ New calls append here with date + ask.
   `<p>`; the ExtraSection divider became a border-t rule instead of the
   library's twin-span idiom) — 0 new clones, baseline 134 untouched.
   No rulings added; nothing accepted.
+
+- 2026-11-11 (v2.14.0 release preflight): the FIRST full buildflow since the
+  tracked eventcatalog render outputs landed (35c7a295) red on jscpd's only
+  error finding — `docs/contracts/asyncapi.yaml` (199 lines) vs the catalog
+  export's verbatim copy at `work/out/webphone/eventcatalog/.../specifications/asyncapi.yaml`.
+  RULING: generated-vs-generated, the canonical intentional class (one
+  render, two committed locations) — never extract, never baseline a
+  position-keyed entry (the yaml regenerates on every wire change and the
+  entry would rot into the suppression-that-suppresses-nothing class). The
+  durable home is a repo `.jscpd.json` unioning `**/work/**` into
+  BuildFlow's curated ignore list (BuildFlow#48 merge semantics — glob
+  shape must be `**/x/**`, bare `x/**` matches nothing). jscpd gate
+  re-scoped: error 0, 15 warnings (island test-table similarity, the
+  standing class).
