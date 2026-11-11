@@ -64,7 +64,7 @@ func TestPersistenceFailuresAreInfrastructure(t *testing.T) {
 
 	// Thread organization (M22, T18): the flag toggle + archived count
 	// joined later than the file's original pins; same closed-db posture.
-	if err := messages.SetThreadFlag(ctx, owner, domain.GenerateThreadID(), store.FlagPinned, true); err == nil {
+	if err := messages.SetThreadFlag(ctx, owner, domain.GenerateThreadID(), flagPinned, true); err == nil {
 		t.Fatal("SetThreadFlag on closed db: want error")
 	} else {
 		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)

@@ -41,7 +41,7 @@ func appendMsg(t *testing.T, messages *Messages, owner domain.Extension, remote 
 	}
 }
 
-func TestthreadFlagRoundTrips(t *testing.T) {
+func TestThreadFlagRoundTrips(t *testing.T) {
 	messages := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
