@@ -34,6 +34,18 @@ set -euo pipefail
 REPO="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$REPO"
 
+# --check verifies the committed artifacts ARE a fresh rebuild (the
+# 2026-11-10 reded-after-landing class: an external nixpkgs drift —
+# tailwindcss v4.3.4 — made the committed bytes stale and only the
+# advisory lane noticed). Same staged pipeline, then compare; drift
+# restores the committed bytes and exits 1, so a check never mutates.
+MODE=build
+case "${1:-}" in
+--check) MODE=check ;;
+"") ;;
+*) echo "usage: build-tw-css.sh [--check]" >&2; exit 2 ;;
+esac
+
 rev="$(jq -r '.nodes.nixpkgs.locked.rev' flake.lock)"
 
 # Radius drift gate: the inputs' radius literals must equal the app.css
@@ -144,6 +156,12 @@ for f in page.templ page_templ.go assets/login.js; do
 done
 tw login.css.input login.css
 
+snapshot=""
+if [ "$MODE" = check ]; then
+	snapshot="$(mktemp -d)"
+	cp internal/web/assets/tw.css internal/web/assets/login.css "$snapshot/"
+fi
+
 mv "$stage/tw.css" internal/web/assets/tw.css
 mv "$stage/login.css" internal/web/assets/login.css
 
@@ -173,4 +191,24 @@ grep -qF '.dark' internal/web/assets/login.css
 # artifact bytes, shipping a rebuild that reds the format check; the
 # flag forces the formatter to actually run (276ms, collapses the file).
 TREEFMT_NO_CACHE=1 nix fmt internal/web/assets/tw.css internal/web/assets/login.css
+
+if [ "$MODE" = check ]; then
+	drift=0
+	for pair in "tw.css" "login.css"; do
+		if ! cmp -s "internal/web/assets/$pair" "$snapshot/$pair"; then
+			echo "tw-freshness: STALE $pair — the committed bytes are not a fresh rebuild" >&2
+			drift=1
+		fi
+	done
+	# Restore: a check leaves the tree exactly as it found it.
+	cp "$snapshot/tw.css" "$snapshot/login.css" internal/web/assets/
+	rm -rf "$snapshot"
+	if [ "$drift" -eq 1 ]; then
+		echo "tw-freshness: run scripts/build-tw-css.sh and commit the rebuilt artifacts" >&2
+		exit 1
+	fi
+	echo "tw-freshness: artifacts in sync with locked nixpkgs $rev"
+	exit 0
+fi
+
 echo "rebuilt internal/web/assets/{tw,login}.css with locked nixpkgs $rev"
