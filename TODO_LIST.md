@@ -106,13 +106,13 @@ DONE 2026-11-10 (trains cabdeeb8 / abed8247 / 3d1c1ba2 / 12cee0b3): C1 is the on
 Six tool dispositions the 2026-10-11 plan owned but TODO_LIST never carried;
 each verified still-open at harvest time (the plan doc keeps its detail):
 
-- [ ] go-auto-upgrade: add the `warnings_budget` marker + rationale comment to
-      `.buildflow.yml` (lo/jsonv1 declined per doctrine; plan T6 µ20).
-- [ ] jscpd: attribute the 6 island-test clone rows in docs/dedup-registry.md
-      (test-fixture class; plan T6 µ22).
-- [ ] lychee: rerun `-v` and reconcile the 5-vs-0 delta; the standing
-      authenticate-vs-exclude policy waits on sitting pack §F9.
-- [ ] nix: add `meta.description` to the vulnix app (nix/apps.nix; plan T6 µ23).
+- ~~go-auto-upgrade: add the `warnings_budget` marker + rationale comment to
+      `.buildflow.yml` (lo/jsonv1 declined per doctrine; plan T6 µ20).~~ → done 2026-11-11 — VERIFIED HEALED, no marker owed: `buildflow -s go-auto-upgrade` runs clean at the current tip (the lo/jsonv1 warning premise the marker was drafted for no longer fires — upstream healed it), so a rationale comment would document a warning that does not exist
+- ~~jscpd: attribute the 6 island-test clone rows in docs/dedup-registry.md
+      (test-fixture class; plan T6 µ22).~~ → done 2026-11-11 — attributed: `buildflow -s jscpd` = 15 findings, ALL island-test bootstrap harnesses; standing-ruling row + sweep-log line landed in docs/dedup-registry.md (13:4x)
+- ~~lychee: rerun `-v` and reconcile the 5-vs-0 delta; the standing
+      authenticate-vs-exclude policy waits on sitting pack §F9.~~ → verification half done 2026-11-11 — rerun: 579 OK, 0 errors, 3 redirects (`nix run nixpkgs#lychee -- . --no-progress`, lychee.toml config). The reconcile found an UPSTREAM display gap: lychee 0.24.2 names redirect URLs in NO local mode (-v/-vv/--json/detailed carry only the count), so the 5-vs-0 delta cannot be decomposed locally — no URL guessing. The §F9 policy call stays owner-gated; the upstream gap question rides §g of the 14-02 report
+- [x] ~~nix: add `meta.description` to the vulnix app (nix/apps.nix; plan T6 µ23).~~ → done — VERIFIED ALREADY-SHIPPED (meta.description present at both app sites in nix/apps.nix; landed with the sibling session's sweep)
 - [ ] File the drafted BuildFlow bandit-provider issue
       (docs/drafts/2026-10-11_buildflow-bandit-stdout-findings.md; owner banner
       still unchecked).
@@ -213,9 +213,9 @@ New open items from the legs session, not homed elsewhere yet.
       dialplan arms); consider a typed ringhook front in webphone's own
       NixOS module for non-stack hosts; a ringhook health leg joining
       telephony-health; the operator command sheet recipe.
-- [ ] **Confirm crm's own gates on the vendorHash repair** (`37a1957`):
+- ~~**Confirm crm's own gates on the vendorHash repair** (`37a1957`):
       the hub build proves the build; crm's treefmt/buildflow verdicts
-      were not read this session.
+      were not read this session.~~ → done 2026-11-11 — crm's full test suite green (`nix develop -c env -u GOEXPERIMENT go test -count=1 ./...` EXIT=0, all internal packages ok at e383ba9); treefmt step is not_applicable there (no treefmt.toml — the tool answers REJECTION honestly, not a red); the vendorHash repair never touched crm's tree (webphone-side pin only)
 
 ### 2026-11-08 SUPERB Phase-5 mid-flight residue (harvested from the 22:46 report)
 
