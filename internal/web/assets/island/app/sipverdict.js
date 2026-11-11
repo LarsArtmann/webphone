@@ -24,30 +24,30 @@ export const verdictTimeout = 30_000;
  * @returns {Promise<"accepted"|"rejected"|"send-failed"|"timeout">}
  */
 export function inviteVerdict(session) {
-	return new Promise((resolve) => {
-		let settled = false;
-		const settle = (verdict) => {
-			if (settled) return;
-			settled = true;
-			resolve(verdict);
-		};
-		const timer = setTimeout(() => settle("timeout"), verdictTimeout);
-		const done = (verdict) => {
-			clearTimeout(timer);
-			settle(verdict);
-		};
-		session
-			.invite({
-				requestDelegate: {
-					onAccept: () => done("accepted"),
-					onReject: () => done("rejected"),
-				},
-			})
-			.catch(() => {
-				// The send itself failed (dialog gone, session ended under
-				// us) — a distinct verdict from a refused re-INVITE, same
-				// caller outcome: keep the prior settled state.
-				done("send-failed");
-			});
-	});
+  return new Promise((resolve) => {
+    let settled = false;
+    const settle = (verdict) => {
+      if (settled) return;
+      settled = true;
+      resolve(verdict);
+    };
+    const timer = setTimeout(() => settle("timeout"), verdictTimeout);
+    const done = (verdict) => {
+      clearTimeout(timer);
+      settle(verdict);
+    };
+    session
+      .invite({
+        requestDelegate: {
+          onAccept: () => done("accepted"),
+          onReject: () => done("rejected"),
+        },
+      })
+      .catch(() => {
+        // The send itself failed (dialog gone, session ended under
+        // us) — a distinct verdict from a refused re-INVITE, same
+        // caller outcome: keep the prior settled state.
+        done("send-failed");
+      });
+  });
 }

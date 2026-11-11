@@ -2828,6 +2828,91 @@
       input.files = transfer.files;
       renderAttachChips(input, box);
     });
+    // Train 3 (2026-11-11 destination): the Phone tab — the mobile dialer
+    // affordance in the bottom bar. The island is a VIEW toggle, not a
+    // route, so the entry is JS-created (tab→island affordances live in
+    // the shell, never island modules) and CSS keeps it invisible on the
+    // desktop bar (the island has its own column there). Tapping focuses
+    // the island full-screen; tapping a real tab — or Phone again —
+    // returns. The label stays English: shell copy is English-only (D3).
+    var WP_PHONE_SVG = svgIconHtml(
+      "M6.6 10.8c1.4 2.9 3.7 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.3 0 .7-.2 1l-2.3 2.2z",
+    );
+    var setPhonePressed = function (/** @type {boolean} */ pressed) {
+      var phone = document.querySelector(".wp-nav-phone");
+      var root = document.documentElement;
+      root.classList.toggle("wp-phone-focus", pressed);
+      if (phone) {
+        phone.setAttribute("aria-pressed", pressed ? "true" : "false");
+        phone.classList.toggle("wp-active", pressed);
+      }
+    };
+    var installPhoneTab = function () {
+      var nav = /** @type {HTMLElement | null} */ (
+        document.querySelector(".wp-nav")
+      );
+      if (!nav || nav.querySelector(".wp-nav-phone")) return;
+      var tab = document.createElement("button");
+      tab.type = "button";
+      tab.className = "wp-nav-link wp-nav-phone";
+      tab.setAttribute("aria-pressed", "false");
+      tab.innerHTML =
+        '<span class="wp-nav-ic">' +
+        WP_PHONE_SVG +
+        "</span>" +
+        "<span>Phone</span>";
+      tab.addEventListener("click", function () {
+        var focused =
+          document.documentElement.classList.contains("wp-phone-focus");
+        if (focused) {
+          setPhonePressed(false);
+          return;
+        }
+        var strip = /** @type {HTMLElement} */ (nav);
+        strip
+          .querySelectorAll(".wp-nav-link[data-tab]")
+          .forEach(function (link) {
+            link.classList.remove("wp-active");
+            link.setAttribute("aria-current", "false");
+          });
+        setPhonePressed(true);
+      });
+      nav.appendChild(tab);
+      return tab;
+    };
+    installPhoneTab();
+    // The nav re-renders (language switch rides a morph re-fetch) and
+    // idiomorph drops the JS-created child — recreate it after every
+    // swap into the strip, carrying the focus state if one is live.
+    document.addEventListener("htmx:afterSwap", function (event) {
+      var target = eventDetail(event).target;
+      if (
+        target &&
+        target.classList &&
+        target.classList.contains("wp-nav") &&
+        !target.querySelector(".wp-nav-phone")
+      ) {
+        var tab = installPhoneTab();
+        var focused =
+          document.documentElement.classList.contains("wp-phone-focus");
+        if (tab && focused) {
+          tab.setAttribute("aria-pressed", "true");
+          tab.classList.add("wp-active");
+        }
+      }
+    });
+    // A real tab click leaves the dialer focus — the content column is
+    // the thing being navigated to.
+    document.addEventListener("click", function (event) {
+      var link = closestHTMLElement(
+        eventElement(event),
+        ".wp-nav-link[data-tab]",
+      );
+      if (!link) return;
+      if (document.documentElement.classList.contains("wp-phone-focus")) {
+        setPhonePressed(false);
+      }
+    });
     // Test seam only: on the wire this file is a classic script where
     // `module` does not exist, so the guard is a no-op in the browser. It
     // sits INSIDE the try on purpose: the five seams exist only once the
@@ -2838,6 +2923,8 @@
       module.exports.vmPeaks = vmPeaks;
       module.exports.vmClock = vmClock;
       module.exports.agentModeOpened = agentModeOpened;
+      module.exports.installPhoneTab = installPhoneTab;
+      module.exports.setPhonePressed = setPhonePressed;
       module.exports.errorMessage = errorMessage;
       module.exports.clock = clock;
     }

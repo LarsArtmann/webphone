@@ -73,22 +73,26 @@ templ ContactsPanel(props ContactsPanelProps) {
 		if len(props.Personal) == 0 && len(props.Shared) == 0 {
 			@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, "contacts.empty"), Icon: icons.Users, Class: "wp-empty-state"})
 		}
-		for _, contact := range props.Personal {
-			@ContactRow(contact, props.Lang)
-		}
-		for _, contact := range props.Shared {
-			<article class="wp-row">
-				<span class={ "wp-avatar", "wp-avatar-shared", avatarHueClass(contact.Name+contact.Number) } aria-hidden="true">{ avatarFor(contact.Name) }</span>
-				<span class="wp-thread-text">
-					<strong class="wp-thread-remote">{ contact.Name }</strong>
-					<span class="wp-muted">{ contact.Number }</span>
-				</span>
-				<span class="wp-shared-tag">{ T(props.Lang, "contacts.shared") }</span>
-				<span class="wp-row-actions">
-					<button class="wp-mini" data-dial={ contact.Number }>{ T(props.Lang, "contacts.call") }</button>
-				</span>
-			</article>
-		}
+		// Train 2 fitted layout: the book fills a responsive card grid at
+		// wide containers (auto-fill keeps one column below ~360px cells).
+		<div class="wp-contacts-grid">
+			for _, contact := range props.Personal {
+				@ContactRow(contact, props.Lang)
+			}
+			for _, contact := range props.Shared {
+				<article class="wp-row">
+					<span class={ "wp-avatar", "wp-avatar-shared", avatarHueClass(contact.Name+contact.Number) } aria-hidden="true">{ avatarFor(contact.Name) }</span>
+					<span class="wp-thread-text">
+						<strong class="wp-thread-remote">{ contact.Name }</strong>
+						<span class="wp-muted">{ contact.Number }</span>
+					</span>
+					<span class="wp-shared-tag">{ T(props.Lang, "contacts.shared") }</span>
+					<span class="wp-row-actions">
+						<button class="wp-mini" data-dial={ contact.Number }>{ T(props.Lang, "contacts.call") }</button>
+					</span>
+				</article>
+			}
+		</div>
 	</section>
 }
 

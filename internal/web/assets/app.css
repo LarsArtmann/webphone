@@ -585,6 +585,11 @@ h3 {
   text-decoration: none;
   border: 1px solid transparent;
   border-radius: 999px;
+  /* The Phone tab is a BUTTON in the same class (Train 3): the reset
+ * keeps the UA chrome out of the pill — anchors are unaffected. */
+  background-color: transparent;
+  font-family: inherit;
+  cursor: pointer;
   transition:
     color var(--dur-fast) var(--ease),
     background var(--dur-fast) var(--ease),
@@ -642,6 +647,25 @@ h3 {
 @container tabcol (max-width: 880px) {
   .wp-nav-link {
     font-size: var(--text-sm);
+  }
+}
+
+/* Train 3 (mobile dialer): the Phone tab is JS-created (shell.js) and
+ * exists ONLY on the mobile bottom bar — desktop's island already has
+ * its own column. The focus state makes the island the one body column:
+ * the dialer reads like an app tab (ring/dial reachable, content
+ * returns on the next real tab tap). */
+.wp-nav-phone {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .wp-nav-phone {
+    display: inline-flex;
+  }
+
+  html.wp-phone-focus .wp-main-col {
+    display: none;
   }
 }
 
@@ -1946,6 +1970,14 @@ a:focus-visible {
 .wp-fax-dir {
   color: var(--muted);
   font-size: var(--text-sm);
+}
+
+/* Train 2 fitted layout: the contacts book fills a responsive card grid
+ * (auto-fill collapses to one column on narrow containers by itself). */
+.wp-contacts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 8px 12px;
 }
 
 .wp-shared-tag {
