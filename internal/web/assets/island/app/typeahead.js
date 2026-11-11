@@ -153,7 +153,7 @@ export function initDialTypeahead() {
   list.id = "dial-suggest";
   list.className = "wp-typeahead";
   list.setAttribute("role", "listbox");
-  list.setAttribute("aria-label", "Contact suggestions");
+  list.setAttribute("aria-label", t("typeaheadLabel"));
   list.hidden = true;
   els.dialForm.append(list);
 
