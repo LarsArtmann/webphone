@@ -34,6 +34,10 @@ Fleet-libs utilization audit (2026-11-04, docs/review/libs/ — index.html + one
 
 - Native-app platform direction (calls are the product; ring-while-closed is a HARD requirement; push transport = ntfy AND FCM): P0 PWA-LITE SHIPPED; owner GO on P1+P2 (2026-10-23, second session): the P2 push seam SHIPPED in this repo (`internal/push`) and the P1 shell lives as a SEPARATE repo `~/projects/webphone-android` (v0.1 scaffold — chosen over an `android/` subtree to keep the Go/treefmt/buildflow gates and the stack's narHash-shaped pin out of a Gradle tree; comparison table, evidence and phases in `docs/planning/2026-10-23_16-13_native-app-platform-decision.md`). **Flutter is a HARD NO**: closed as an option for ANY path (Android or Linux native included), a ruling not a cost/benefit call — never re-propose.
 
+## Owner decisions (2026-11-11)
+
+- The UI/UX bar is the OWNER'S EYES, not review checklists: repeated asks for a visible redesign were answered with craft-fix trains that left the look unchanged (the 2026-11-07 review concluded "ship-quality" against its own rubric while the owner disagreed). Standing rules: (1) mobile is a FIRST-CLASS surface — content-first order, icon bottom bar, both landed 2026-11-11; (2) any future UX review must judge the LOOK ("would the owner SEE a difference?"), not only compliance metrics; (3) the 2026-11-11 indigo restyle (app.css + island/style.css mirrored tokens, segmented pill nav with icons, view-transition tab swaps) is the NEW BASELINE — future trains evolve it, they do not quietly revert it. "Multi-page" is delivered as real URLs per tab + pushState + cross-fades, NOT full page loads: the SIP island must survive navigation (a reload drops live calls).
+
 ## Commands
 
 ```console
