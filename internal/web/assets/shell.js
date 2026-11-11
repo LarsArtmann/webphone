@@ -1473,8 +1473,7 @@
     var dirtyDraftAreas = new WeakSet();
     document.addEventListener("input", function (event) {
       var area = /** @type {HTMLTextAreaElement} */ (eventElement(event));
-      if (!area || !area.matches || !area.matches(".wp-draft-edit textarea"))
-        return;
+      if (!area || !area.closest || !area.closest(".wp-draft-edit")) return;
       dirtyDraftAreas.add(area);
     });
     document.addEventListener("htmx:beforeRequest", function (event) {
