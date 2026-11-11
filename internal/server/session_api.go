@@ -80,14 +80,7 @@ func (h *handlers) createSession(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not create session", http.StatusInternalServerError)
 		return
 	}
-	response := h.sessionIdentityResponse(r.Context(), extension, "")
-	// Derived mode: the 201 answer carries the session-derived REGISTER
-	// credential (never the typed password); the browser registers with
-	// it. no-store keeps it out of every cache.
-	if h.deps.Config.SIP.DerivedCredentials() {
-		response.SIPCredential = sipcred.Derive(h.deps.Config.SIP.CredentialSecret, token.String())
-		w.Header().Set("Cache-Control", "no-store")
-	}
+	response := h.sessionAnswer(w, r.Context(), token, extension, "")
 	authAudit("login", "extension", extension.String(), "ok")
 	writeJSON(w, http.StatusCreated, response)
 }
@@ -157,15 +150,7 @@ func (h *handlers) switchExtension(w http.ResponseWriter, r *http.Request) {
 	// must leave the operator on their working line.
 	h.deps.Sessions.Delete(oldToken)
 	authAudit("switch", "email", sess.LoginEmail, sess.Extension.String()+" -> "+target.String())
-	response := h.sessionIdentityResponse(r.Context(), target, sess.LoginEmail)
-	// Credential policy mirrors createSession: derived mode answers the
-	// session-derived REGISTER credential; legacy mode answers nothing
-	// (the reload's boot probe fetches the row's own payload).
-	if h.deps.Config.SIP.DerivedCredentials() {
-		response.SIPCredential = sipcred.Derive(h.deps.Config.SIP.CredentialSecret, token.String())
-		w.Header().Set("Cache-Control", "no-store")
-	}
-	writeJSON(w, http.StatusOK, response)
+	writeJSON(w, http.StatusOK, h.sessionAnswer(w, r.Context(), token, target, sess.LoginEmail))
 }
 
 // verifyDirectoryCredentials is the ONE fail-closed PBX directory check
@@ -217,6 +202,26 @@ func (h *handlers) mintSession(w http.ResponseWriter, r *http.Request, extension
 	session.SetCookie(w, r, token, h.deps.Config.SessionTTL, h.cookies)
 	httputil.InvalidateCSRFCookie(w, h.csrfCfg)
 	return token, nil
+}
+
+// sessionAnswer builds the post-mint credential answer — the ONE home
+// of the derived-credential policy: with brokering on, the response
+// carries the session-derived REGISTER credential (the directory
+// password never reaches the browser) under no-store; with it off, the
+// legacy wire stays silent HERE, and the login surfaces that must hand
+// back the file-sourced password (passkey finish, session resume) add
+// their credential plus the no-store that credential demands at their
+// own site — the policy lives once, the real divergences stay visible
+// where they diverge.
+func (h *handlers) sessionAnswer(
+	w http.ResponseWriter, ctx context.Context, token session.Token, extension domain.Extension, loginEmail string,
+) sessionIdentity {
+	response := h.sessionIdentityResponse(ctx, extension, loginEmail)
+	if h.deps.Config.SIP.DerivedCredentials() {
+		response.SIPCredential = sipcred.Derive(h.deps.Config.SIP.CredentialSecret, token.String())
+		w.Header().Set("Cache-Control", "no-store")
+	}
+	return response
 }
 
 // sessionIdentity is the typed wire shape of what a freshly minted
@@ -322,14 +327,11 @@ func (h *handlers) getSession(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Header().Set("Cache-Control", "no-store")
-	response := h.sessionIdentityResponse(r.Context(), sess.Extension, sess.LoginEmail)
-	// Credential policy (see sessionIdentity): derived mode answers the
-	// session-derived REGISTER credential — the directory password never
-	// reaches the browser — while legacy mode keeps the historical
-	// password wire byte-identical. no-store keeps either out of caches.
-	if h.deps.Config.SIP.DerivedCredentials() {
-		response.SIPCredential = sipcred.Derive(h.deps.Config.SIP.CredentialSecret, session.TokenFromRequest(r).String())
-	} else {
+	response := h.sessionAnswer(w, r.Context(), session.TokenFromRequest(r), sess.Extension, sess.LoginEmail)
+	// The resume endpoint is one of the two legacy-carrier surfaces (the
+	// browser REGISTER needs the row's own payload); its credential plus
+	// the unconditional no-store ride this site, not the shared policy.
+	if !h.deps.Config.SIP.DerivedCredentials() {
 		response.Password = sess.Password
 	}
 	writeJSON(w, http.StatusOK, response)
