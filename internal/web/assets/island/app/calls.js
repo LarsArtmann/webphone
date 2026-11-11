@@ -140,24 +140,22 @@ async function holdSession(id, hold) {
   // contract's oldest gap, closed 2026-11-11).
   try {
     const verdict = await inviteVerdict(entry.session);
-  if (verdict === "accepted") {
-    entry.held = hold;
-    setTracks(entry, { recv: !hold, send: !hold && !entry.muted });
-    // A held call carries no audio either way — pause the capture so
-    // the provider never receives (and hallucinates on) silence.
-    pauseLiveTranscription(id, hold);
-    // M22: the SETTLED state is the announcement (the pending chip text
-    // swaps silently) — the screen reader hears where the call landed.
-    announce(t(hold ? "heldAnnounce" : "resumedAnnounce"), "info");
-  } else {
-    // Keep the prior settled state; the failed-toggle announce names
-    // what happened (rejected / timed-out / send-failed all land here
-    // with the honest reason, never a silent stranded `held`).
-    log(`hold toggle ${verdict}`, "error");
-    announce(
-      t(hold ? "holdFailed" : "resumeFailed")(verdict),
-      "error",
-    );
+    if (verdict === "accepted") {
+      entry.held = hold;
+      setTracks(entry, { recv: !hold, send: !hold && !entry.muted });
+      // A held call carries no audio either way — pause the capture so
+      // the provider never receives (and hallucinates on) silence.
+      pauseLiveTranscription(id, hold);
+      // M22: the SETTLED state is the announcement (the pending chip text
+      // swaps silently) — the screen reader hears where the call landed.
+      announce(t(hold ? "heldAnnounce" : "resumedAnnounce"), "info");
+    } else {
+      // Keep the prior settled state; the failed-toggle announce names
+      // what happened (rejected / timed-out / send-failed all land here
+      // with the honest reason, never a silent stranded `held`).
+      log(`hold toggle ${verdict}`, "error");
+      announce(t(hold ? "holdFailed" : "resumeFailed")(verdict), "error");
+    }
   } finally {
     entry.holdPending = null;
     const queued = entry.holdQueued;
