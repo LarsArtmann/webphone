@@ -1,5 +1,7 @@
 # Prod screenshot-tracking train (the unlighthouse lane) — status
 
+> ARCHIVED 2026-11-11 (docs-health cadence sweep): gate-clean archive candidate (check-rows --strict + bare-rows clean) — the two-oldest CLEAN pair archived to bring the live count back under the 65 cap after the 13-54 report filed.
+
 > Claims verified as of 14:42 CET (2026-11-10). Push/CI statements rot fastest; the remote tip and the unpushed set were re-read moments before this header's timestamp.
 > Session: single Crush train, task = "full unlighthouse-kind screenshot tracking for https://pbx.artmann.tech so the UI (layout) can actually be made not-ugly".
 

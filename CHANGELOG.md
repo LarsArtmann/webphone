@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Auth is ONE dedicated page.** `/login` — the cqrs-htmx loginpage
+  library page (v4.18.0, new `Config.ExtraSection` seam) — is now the
+  front door in EVERY deployment mode: it carries the extension +
+  password form (`views.LoginPageExtra`, break-glass disclosure under
+  the passkey ceremony, primary method when the identity layer is off)
+  and the Pocket ID door; an anonymous root navigation redirects there
+  (303) and the island login card is gone. Signing in redirects home,
+  where the island's boot probe resumes and REGISTERs — the passkey
+  lane's proven path. SSO failures land on `/login?sso_error=` and the
+  page translates the reason into its alert; the island-side
+  `ssoerror.js` and its toast vocabulary are retired. Deep links keep
+  the SignInHint door (now linking to `/login`); `/login` serves the
+  form's standalone module at `/assets/login-page.js` (same-origin
+  script — no nonce needed).
+
 ### Added
 
 - The ended call card names WHY a dial failed, per verdict: the trunk's

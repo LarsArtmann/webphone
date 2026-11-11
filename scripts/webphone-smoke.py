@@ -1186,11 +1186,11 @@ def run_checks(
         '/assets/login-page.js' in page,
         "the standalone submit module is not referenced",
     )
-    status_root, _, _ = s.request("GET", "/")
+    status_root, body_root, _ = s.request("GET", "/")
     c.ok(
         "anonymous root lands on the front door",
-        status_root == 200 and b'login-form' in body or status_root == 200,
-        f"root GET answered {status_root}",
+        status_root == 200 and b'login-form' in body_root,
+        f"root GET answered {status_root} without the login form",
     )
     match = re.search(r'name="csrf-token" content="([^"]+)"', page)
     c.ok("CSRF meta present", match is not None, "no csrf-token meta")
@@ -1439,6 +1439,14 @@ def run_checks(
             "login rotated the CSRF token",
             s.csrf != pre_login_token and s.adopt_csrf(),
             "adoption missing or stale token reused",
+        )
+        # The signed-in root now renders the SHELL (the island contract
+        # markers live here since the front door took the login form).
+        status, shell, _ = s.request("GET", "/")
+        c.ok(
+            "signed-in shell serves the island",
+            status == 200 and b'id="reg-status"' in shell and b'id="phone-view"' in shell,
+            f"{status} island ids missing",
         )
         # 6b. The pre-login token is dead: POSTs with it must 403, while the
         # same probe with the adopted token passes CSRF (unknown path = 404).

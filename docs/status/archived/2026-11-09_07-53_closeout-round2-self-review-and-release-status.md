@@ -1,5 +1,7 @@
 # Closeout round 2 — the self-review: what I forgot, what I did worse than I knew, what still to improve
 
+> ARCHIVED 2026-11-11 (docs-health cadence sweep): gate-clean archive candidate (check-rows --strict + bare-rows clean) — the two-oldest CLEAN pair archived to bring the live count back under the 65 cap after the 13-54 report filed.
+
 > **Date:** 2026-11-09 07:53 CET (verified via `date`)
 > **Session:** the execute mandate that resumed the 03-40 honest report
 > ("READ, UNDERSTAND… Execute and Verify… Keep going until everything
