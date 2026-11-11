@@ -64,12 +64,13 @@ test("the drafts poll is dropped while an edit textarea is dirty", () => {
 
   // The next panel swap replaces the nodes wholesale: the fresh textarea
   // was never typed into, so the poll flows again.
+  edit.remove();
   const fresh = doc.createElement();
   fresh.className = "wp-draft-edit";
   const freshArea = doc.createElement();
   freshArea.selector = ".wp-draft-edit textarea";
   fresh.append(freshArea);
-  panel.replaceChild(fresh, edit);
+  panel.append(fresh);
 
   dropped = 0;
   doc.dispatch("htmx:beforeRequest", {
