@@ -18,6 +18,7 @@ import (
 	"github.com/larsartmann/webphone/internal/crm"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/pbx"
+	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/store"
 	"github.com/larsartmann/webphone/internal/textagent"
@@ -42,7 +43,7 @@ func (h *handlers) messagesPanelPrefilled(r *http.Request, sess session.Session,
 	query := strings.TrimSpace(r.URL.Query().Get("q"))
 	archived := r.URL.Query().Get("archived") == "1"
 	var (
-		threads       []store.ThreadSummary
+		threads       []readmodels.ThreadSummary
 		archivedCount int
 		err           error
 	)
@@ -61,7 +62,7 @@ func (h *handlers) messagesPanelPrefilled(r *http.Request, sess session.Session,
 			return nil, err //nolint:erraudit // context_loss FP: archivedCount is an OUT param, garbage exactly when the count failed
 		}
 	}
-	numbers := crmNumbers(threads, func(summary store.ThreadSummary) string { return crmNumberFor(summary.Thread.Remote) })
+	numbers := crmNumbers(threads, func(summary readmodels.ThreadSummary) string { return crmNumberFor(summary.Thread.Remote) })
 	reviews, draftsErr := h.textAgentReviews(r)
 	// The drafts panel shares the thread rows' name feed: every pending
 	// draft's contact resolves through the same CRM map.
@@ -110,7 +111,7 @@ func (h *handlers) threadPanelPrefilled(r *http.Request, sess session.Session, i
 	}
 	numbers := append(
 		[]string{thread.Remote.String()},
-		crmNumbers(rail, func(summary store.ThreadSummary) string { return crmNumberFor(summary.Thread.Remote) })...,
+		crmNumbers(rail, func(summary readmodels.ThreadSummary) string { return crmNumberFor(summary.Thread.Remote) })...,
 	)
 	contacts := h.crmDirectory(r.Context(), sess.Extension, numbers)
 	// Reply snippets feed the composer's chip lane + picker (M21);

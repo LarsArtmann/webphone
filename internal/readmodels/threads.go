@@ -58,8 +58,22 @@ type AttachmentView struct {
 	Path      string `json:"path"`
 }
 
-// ThreadFlag is the persistence-layer spelling of the three organization
-// axes (the store's ThreadFlag, journal-side).
+// ThreadSummary is a thread row as shown in the thread list: the thread
+// plus a preview of its last message — the render shape every consumer
+// (views, notifier, admin) speaks. The wire-shaped ThreadSummaryView is
+// the engine record at rest; SummariesOfView re-parses into this at the
+// gate (the wire stays raw by doctrine, the brands come back here).
+type ThreadSummary struct {
+	Thread         domain.Thread
+	LastBody       string
+	LastDirection  domain.Direction
+	LastChannel    domain.Channel
+	LastAttachment bool // the last message carries at least one attachment
+}
+
+// ThreadFlag names one organization axis of a thread (M22): the ONE
+// home of the pinned/archived/muted vocabulary — domain.Thread carries
+// the same three axes as bools, and this is their command spelling.
 type ThreadFlag string
 
 const (

@@ -11,7 +11,6 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/messaging"
 	"github.com/larsartmann/webphone/internal/readmodels"
-	"github.com/larsartmann/webphone/internal/store"
 	"github.com/larsartmann/webphone/internal/web/views"
 )
 
@@ -110,7 +109,7 @@ func (n *Notifier) messagesChanged(ctx context.Context, owner domain.Extension, 
 	lang := n.hubs.Lang(owner)
 	if threadViews, err := n.messages.ListThreads(ctx, owner); err == nil {
 		threads := readmodels.SummariesOfView(threadViews)
-		numbers := crmNumbers(threads, func(summary store.ThreadSummary) string { return crmNumberFor(summary.Thread.Remote) })
+		numbers := crmNumbers(threads, func(summary readmodels.ThreadSummary) string { return crmNumberFor(summary.Thread.Remote) })
 		n.publish(ctx, owner, sseEventThreads, views.ThreadsList(threads, directoryFor(ctx, n.contacts, n.crm, owner, numbers), lang))
 	} else {
 		slog.Debug("sse: render thread list failed", "error", err)

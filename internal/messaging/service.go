@@ -18,7 +18,6 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/gateway"
 	"github.com/larsartmann/webphone/internal/readmodels"
-	"github.com/larsartmann/webphone/internal/store"
 )
 
 // Limits keep uploads and bodies honest without a config knob each.
@@ -240,7 +239,7 @@ func (s *Service) ResolveThread(
 }
 
 // Threads lists the owner's threads for the sidebar.
-func (s *Service) Threads(ctx context.Context, owner domain.Extension) ([]store.ThreadSummary, error) {
+func (s *Service) Threads(ctx context.Context, owner domain.Extension) ([]readmodels.ThreadSummary, error) {
 	views, err := s.messages.ListThreads(ctx, owner)
 	if err != nil {
 		return nil, err
@@ -251,7 +250,7 @@ func (s *Service) Threads(ctx context.Context, owner domain.Extension) ([]store.
 // AllThreads is the admin surface's cross-owner inventory (see the
 // store's ListAllThreads for the seam contract): every line's
 // conversations, newest first, archived included.
-func (s *Service) AllThreads(ctx context.Context, limit int) ([]store.ThreadSummary, error) {
+func (s *Service) AllThreads(ctx context.Context, limit int) ([]readmodels.ThreadSummary, error) {
 	views, err := s.messages.ListAllThreads(ctx, limit)
 	if err != nil {
 		return nil, err
@@ -268,7 +267,7 @@ func (s *Service) ThreadAny(ctx context.Context, id domain.ThreadID) (domain.Thr
 
 // ArchivedThreads lists the owner's archived threads (the filing
 // cabinet view — ListThreads excludes them by design).
-func (s *Service) ArchivedThreads(ctx context.Context, owner domain.Extension) ([]store.ThreadSummary, error) {
+func (s *Service) ArchivedThreads(ctx context.Context, owner domain.Extension) ([]readmodels.ThreadSummary, error) {
 	views, err := s.messages.ListArchivedThreads(ctx, owner)
 	if err != nil {
 		return nil, err
@@ -285,9 +284,9 @@ func (s *Service) ArchivedCount(ctx context.Context, owner domain.Extension) (in
 // notifies the owner's surfaces — the SSE "threads" push re-renders the
 // list with the new ordering/visibility.
 func (s *Service) SetThreadFlag(
-	ctx context.Context, owner domain.Extension, id domain.ThreadID, flag store.ThreadFlag, on bool,
+	ctx context.Context, owner domain.Extension, id domain.ThreadID, flag readmodels.ThreadFlag, on bool,
 ) error {
-	if err := s.messages.SetThreadFlag(ctx, owner, id, readmodels.ThreadFlag(flag), on); err != nil {
+	if err := s.messages.SetThreadFlag(ctx, owner, id, flag, on); err != nil {
 		return err
 	}
 	s.emitThreads(ctx, owner)
@@ -303,7 +302,7 @@ func (s *Service) emitThreads(ctx context.Context, owner domain.Extension) {
 // ThreadSearch filters the owner's threads by a text query over the
 // remote number and every message body. Callers route empty queries to
 // Threads instead — the store treats them as a wildcard.
-func (s *Service) ThreadSearch(ctx context.Context, owner domain.Extension, query string) ([]store.ThreadSummary, error) {
+func (s *Service) ThreadSearch(ctx context.Context, owner domain.Extension, query string) ([]readmodels.ThreadSummary, error) {
 	views, err := s.messages.SearchThreads(ctx, owner, query)
 	if err != nil {
 		return nil, err

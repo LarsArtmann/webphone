@@ -41,14 +41,14 @@ func appendMsg(t *testing.T, messages *Messages, owner domain.Extension, remote 
 	}
 }
 
-func TestThreadFlagRoundTrips(t *testing.T) {
+func TestthreadFlagRoundTrips(t *testing.T) {
 	messages := newTestDB(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
 	threadID := seedThread(t, messages, owner, remote)
 
-	for _, flag := range []ThreadFlag{FlagPinned, FlagArchived, FlagMuted} {
+	for _, flag := range []threadFlag{flagPinned, flagArchived, flagMuted} {
 		if err := messages.SetThreadFlag(ctx, owner, threadID, flag, true); err != nil {
 			t.Fatalf("set %s: %v", flag, err)
 		}
@@ -61,7 +61,7 @@ func TestThreadFlagRoundTrips(t *testing.T) {
 		t.Fatalf("flags not persisted: %+v", thread)
 	}
 
-	for _, flag := range []ThreadFlag{FlagPinned, FlagArchived, FlagMuted} {
+	for _, flag := range []threadFlag{flagPinned, flagArchived, flagMuted} {
 		if err := messages.SetThreadFlag(ctx, owner, threadID, flag, false); err != nil {
 			t.Fatalf("clear %s: %v", flag, err)
 		}
@@ -73,16 +73,16 @@ func TestThreadFlagRoundTrips(t *testing.T) {
 
 	// Owner scoping and misses are ErrNotFound, not silent success.
 	other := domain.MustParseExtension("1002")
-	if err := messages.SetThreadFlag(ctx, other, threadID, FlagPinned, true); !errors.Is(err, ErrNotFound) {
+	if err := messages.SetThreadFlag(ctx, other, threadID, flagPinned, true); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("foreign owner flag: got %v, want ErrNotFound", err)
 	}
 	missing := domain.GenerateThreadID()
-	if err := messages.SetThreadFlag(ctx, owner, missing, FlagPinned, true); !errors.Is(err, ErrNotFound) {
+	if err := messages.SetThreadFlag(ctx, owner, missing, flagPinned, true); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("missing thread flag: got %v, want ErrNotFound", err)
 	}
 
 	// An unknown flag is a programming error surfaced as a rejection.
-	if err := messages.SetThreadFlag(ctx, owner, threadID, ThreadFlag("nope"), true); err == nil ||
+	if err := messages.SetThreadFlag(ctx, owner, threadID, threadFlag("nope"), true); err == nil ||
 		!strings.Contains(err.Error(), "unknown") {
 		t.Fatalf("unknown flag: got %v, want unknown-flag rejection", err)
 	}
@@ -97,7 +97,7 @@ func TestArchiveExclusionAndAutoUnarchive(t *testing.T) {
 	threadA := seedThread(t, messages, owner, remoteA)
 	seedThread(t, messages, owner, remoteB)
 
-	if err := messages.SetThreadFlag(ctx, owner, threadA, FlagArchived, true); err != nil {
+	if err := messages.SetThreadFlag(ctx, owner, threadA, flagArchived, true); err != nil {
 		t.Fatal(err)
 	}
 
@@ -136,7 +136,7 @@ func TestArchiveExclusionAndAutoUnarchive(t *testing.T) {
 	}
 
 	// Outbound never unarchives (you know you replied).
-	if err := messages.SetThreadFlag(ctx, owner, threadA, FlagArchived, true); err != nil {
+	if err := messages.SetThreadFlag(ctx, owner, threadA, flagArchived, true); err != nil {
 		t.Fatal(err)
 	}
 	appendMsg(t, messages, owner, remoteA, threadA, domain.DirectionOutbound, "reply while filed")
@@ -175,7 +175,7 @@ func TestPinnedOrdering(t *testing.T) {
 	// pre-pin order is deliberately unasserted (two seeds in the same
 	// second tie on last_activity_at; only the pin flip is this test's
 	// subject).
-	if err := messages.SetThreadFlag(ctx, owner, oldID, FlagPinned, true); err != nil {
+	if err := messages.SetThreadFlag(ctx, owner, oldID, flagPinned, true); err != nil {
 		t.Fatal(err)
 	}
 	threads, _ := messages.ListThreads(ctx, owner)
@@ -203,7 +203,7 @@ func TestSummaryFlagsAndAttachmentPreview(t *testing.T) {
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
 	threadID := seedThread(t, messages, owner, remote)
 
-	if err := messages.SetThreadFlag(ctx, owner, threadID, FlagPinned, true); err != nil {
+	if err := messages.SetThreadFlag(ctx, owner, threadID, flagPinned, true); err != nil {
 		t.Fatal(err)
 	}
 	withAttachment := domain.Message{

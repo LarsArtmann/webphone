@@ -10,7 +10,7 @@ import (
 	"github.com/a-h/templ"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/pbx"
-	"github.com/larsartmann/webphone/internal/store"
+	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/textagent"
 )
 
@@ -238,8 +238,8 @@ func TestSignInHintRendersDismissAndCompactLineBothLanguages(t *testing.T) {
 // suppressed badge with its state glyph, and the archived row's
 // unarchive-only shape — in both UI languages.
 func TestThreadRowFlagControlsBothLanguages(t *testing.T) {
-	newSummary := func(flags domain.Thread) store.ThreadSummary {
-		return store.ThreadSummary{Thread: flags}
+	newSummary := func(flags domain.Thread) readmodels.ThreadSummary {
+		return readmodels.ThreadSummary{Thread: flags}
 	}
 	plain := newSummary(domain.Thread{
 		ID: domain.GenerateThreadID(), Remote: domain.MustParseAddress(domain.NetworkSMS, "+441632960961"), Unread: 2,

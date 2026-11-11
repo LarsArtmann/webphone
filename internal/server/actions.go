@@ -580,10 +580,10 @@ func (h *handlers) markThreadRead(w http.ResponseWriter, r *http.Request) {
 
 // threadFlagActions maps the action path segment onto the store flag
 // (M22): one handler, three spellings, routed by POST /messages/{id}/{flag}.
-var threadFlagActions = map[string]store.ThreadFlag{
-	"pin":     store.FlagPinned,
-	"archive": store.FlagArchived,
-	"mute":    store.FlagMuted,
+var threadFlagActions = map[string]readmodels.ThreadFlag{
+	"pin":     readmodels.FlagPinned,
+	"archive": readmodels.FlagArchived,
+	"mute":    readmodels.FlagMuted,
 }
 
 // setThreadFlag pins, archives or mutes a thread — or clears the flag

@@ -7,7 +7,7 @@ import (
 	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/pbx"
-	"github.com/larsartmann/webphone/internal/store"
+	"github.com/larsartmann/webphone/internal/readmodels"
 )
 
 // AdminPanel is the Admin tab: read-only visibility across EVERY line of
@@ -24,7 +24,7 @@ type AdminPanelProps struct {
 	Numbers []AdminNumberRow
 	// Threads is the cross-owner conversation inventory, newest first
 	// (archived threads included, badged).
-	Threads []store.ThreadSummary
+	Threads []readmodels.ThreadSummary
 	// ThreadsError degrades the section instead of dying the panel
 	// (the honest-degrade doctrine every panel follows).
 	ThreadsError string

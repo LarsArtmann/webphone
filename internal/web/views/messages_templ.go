@@ -18,7 +18,7 @@ import (
 	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/messaging"
-	"github.com/larsartmann/webphone/internal/store"
+	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/textagent"
 )
 
@@ -27,7 +27,7 @@ import (
 // sse-swap="threads" — a live push refreshes the rows without wiping a
 // draft half-typed into the composer.
 type ThreadsPanelProps struct {
-	Threads []store.ThreadSummary
+	Threads []readmodels.ThreadSummary
 	// Query is the active thread-search filter ("" = unfiltered list);
 	// the search input echoes it so a morph swap keeps the typed text.
 	Query string
@@ -253,7 +253,7 @@ func ThreadsPanel(props ThreadsPanelProps) templ.Component {
 // ThreadsList renders the thread rows (or the empty state). It is the
 // payload of the SSE "threads" event, so it must stay swap-safe: no
 // wrapper element, no composer.
-func ThreadsList(threads []store.ThreadSummary, contacts CRMContacts, lang Lang) templ.Component {
+func ThreadsList(threads []readmodels.ThreadSummary, contacts CRMContacts, lang Lang) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -286,7 +286,7 @@ func ThreadsList(threads []store.ThreadSummary, contacts CRMContacts, lang Lang)
 	})
 }
 
-func ThreadRow(summary store.ThreadSummary, contacts CRMContacts, lang Lang) templ.Component {
+func ThreadRow(summary readmodels.ThreadSummary, contacts CRMContacts, lang Lang) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -1061,7 +1061,7 @@ func flagLabel(lang Lang, state bool, action, reverse string) string {
 // prefixes the text (M21.2) so a photo thread reads as one at a glance.
 // The prefix is a small inline SVG (not the paperclip emoji it replaced)
 // and renders in the row, not here — this stays a pure text one-liner.
-func threadPreview(summary store.ThreadSummary, lang Lang) string {
+func threadPreview(summary readmodels.ThreadSummary, lang Lang) string {
 	return preview(summary.LastBody, summary.LastChannel, lang)
 }
 
@@ -1526,7 +1526,7 @@ type ThreadViewProps struct {
 	// renders, the split stays stacked, and nothing is lost — a failed
 	// list read degrades to the pre-split single-column shape instead of
 	// hiding the conversation behind an error.
-	Rail []store.ThreadSummary
+	Rail []readmodels.ThreadSummary
 	// Snippets are the owner's reply snippets (M21): quick ones render
 	// as chips, all of them sit behind the picker — above the REPLY
 	// composer only (a new conversation never needs canned answers).
@@ -1661,7 +1661,7 @@ func ThreadView(props ThreadViewProps) templ.Component {
 // the head must re-render, and the transcript must be re-read owner-scoped.
 // Targeting only the detail column would leave a stale aria-current
 // behind — the honest cost is one list re-read per switch.
-func ConversationRail(rail []store.ThreadSummary, current domain.ThreadID, contacts CRMContacts, lang Lang) templ.Component {
+func ConversationRail(rail []readmodels.ThreadSummary, current domain.ThreadID, contacts CRMContacts, lang Lang) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
