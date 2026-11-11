@@ -119,16 +119,38 @@ templ HistoryPanel(props HistoryPanelProps) {
 			@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, emptyKey), Icon: icons.Clock})
 		}
 		// D9: rows group under calendar-day heads (Today / Yesterday /
-		// weekday + date, with the group count) — the same separator
-		// vocabulary the message transcript established.
-		for _, group := range groupCDRsByDay(props.Entries) {
-			if group.Key != "" {
-				@dayHead(props.Lang, group.Day, len(group.Rows))
-			}
-			for _, cdr := range group.Rows {
-				@CDRRow(cdr, props.CRM, props.Lang)
-			}
-		}
+		// weekday + date, with the group count) — Train 2 renders the CDR
+		// list as a scannable TABLE (sticky column heads, right-aligned
+		// tabular When/Duration columns; day groups ride tbody sections),
+		// the same separator vocabulary otherwise.
+		<div class="wp-table-wrap" role="region" tabindex="0" aria-label={ T(props.Lang, "history.table.label") }>
+			<table class="wp-table">
+				<thead>
+					<tr>
+						<th scope="col" class="wp-sr-only">{ T(props.Lang, "history.dir.label") }</th>
+						<th scope="col">{ T(props.Lang, "history.col.contact") }</th>
+						<th scope="col" class="wp-table-num">{ T(props.Lang, "history.col.when") }</th>
+						<th scope="col" class="wp-table-num">{ T(props.Lang, "history.col.duration") }</th>
+						<th scope="col" class="wp-sr-only">{ T(props.Lang, "history.col.actions") }</th>
+					</tr>
+				</thead>
+				for _, group := range groupCDRsByDay(props.Entries) {
+					<tbody>
+						if group.Key != "" {
+							<tr class="wp-day-head">
+								<th colspan="5" scope="colgroup">
+									<span>{ dayHeadLabel(props.Lang, group.Day) }</span>
+									<span class="wp-day-count">· { fmtInt(len(group.Rows)) }</span>
+								</th>
+							</tr>
+						}
+						for _, cdr := range group.Rows {
+							@CDRRow(cdr, props.CRM, props.Lang)
+						}
+					</tbody>
+				}
+			</table>
+		</div>
 		if len(props.Transcripts) > 0 {
 			@TranscriptSection(props)
 		}
@@ -314,30 +336,35 @@ func groupCDRsByDay(entries []pbx.CDR) []cdrDayGroup {
 }
 
 templ CDRRow(cdr pbx.CDR, contacts CRMContacts, lang Lang) {
-	<article class={ "wp-row", templ.KV("wp-row-missed", cdrMissed(cdr)) }>
-		<span
-			class={ "wp-dir-chip", templ.KV("wp-dir-in", cdr.Context == "public"), templ.KV("wp-dir-missed", cdrMissed(cdr)) }
-			role="img"
-			aria-label={ cdrDirLabel(cdr, lang) }
-		>@icons.Icon(cdrDirGlyph(cdr), "wp-icon")</span>
-		<span class="wp-thread-text">
+	<tr class={ templ.KV("wp-row-missed", cdrMissed(cdr)) }>
+		<td class="wp-table-dir">
+			<span
+				class={ "wp-dir-chip", templ.KV("wp-dir-in", cdr.Context == "public"), templ.KV("wp-dir-missed", cdrMissed(cdr)) }
+				role="img"
+				aria-label={ cdrDirLabel(cdr, lang) }
+			>@icons.Icon(cdrDirGlyph(cdr), "wp-icon")</span>
+		</td>
+		<td class="wp-table-remote">
 			@remoteLabel(cdrTarget(cdr), contacts, lang)
-			<span class="wp-muted">{ cdr.Start } · { durationLabel(cdr.Billsec) }</span>
-		</span>
-		if dial := CDRDialTarget(cdr); dial != "" {
-			<span class="wp-row-actions">
-				<button class="wp-mini" data-dial={ dial }>{ T(lang, "contacts.call") }</button>
-				<button class="wp-mini" data-sms={ dial }>{ T(lang, "contacts.sms") }</button>
-				<button
-					class="wp-mini"
-					data-save-contact={ dial }
-					data-name={ firstNonEmpty(cdr.CallerIDName, displayName(cdrTarget(cdr), contacts)) }
-					aria-label={ T(lang, "contacts.saveAs") }
-					title={ T(lang, "contacts.saveAs") }
-				>@icons.Icon(icons.Star, "wp-icon")</button>
-			</span>
-		}
-	</article>
+		</td>
+		<td class="wp-table-num wp-table-when" data-label={ T(lang, "history.col.when") }>{ cdr.Start }</td>
+		<td class="wp-table-num wp-table-dur" data-label={ T(lang, "history.col.duration") }>{ durationLabel(cdr.Billsec) }</td>
+		<td class="wp-table-actions">
+			if dial := CDRDialTarget(cdr); dial != "" {
+				<span class="wp-row-actions">
+					<button class="wp-mini" data-dial={ dial }>{ T(lang, "contacts.call") }</button>
+					<button class="wp-mini" data-sms={ dial }>{ T(lang, "contacts.sms") }</button>
+					<button
+						class="wp-mini"
+						data-save-contact={ dial }
+						data-name={ firstNonEmpty(cdr.CallerIDName, displayName(cdrTarget(cdr), contacts)) }
+						aria-label={ T(lang, "contacts.saveAs") }
+						title={ T(lang, "contacts.saveAs") }
+					>@icons.Icon(icons.Star, "wp-icon")</button>
+				</span>
+			}
+		</td>
+	</tr>
 }
 
 // dispositionConfirmed reports whether a transcript group carries an

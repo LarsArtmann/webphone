@@ -564,6 +564,7 @@ trigger fires, never on a schedule.
 | The dashboard library swaps its embedded SDK version                                            | go-datastar            | re-verify the /health CSP scope                                     |
 | A product surface wants server-pushed reactive state (live Reports-shaped, not fragment morphs) | go-datastar            | re-run the client-side NO-GO (2026-11-07 deep-dive, posture 78/100) |
 | The library ships a parse-with-rules hook or a new linter rule                                  | go-branded-id          | migrate the invariant INTO the seam / adopt the rule                |
+| A second binary in this repo, or an interactive operator CLI beyond the three ritual one-shots | cmdguard               | re-run as an adoption audit (docs/review/libs/cmdguard.md, 2026-11-11) |
 
 ### Fax enablement (owner + carrier action, 2026-10-30)
 
