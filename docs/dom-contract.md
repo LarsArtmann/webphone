@@ -32,12 +32,6 @@ island sources verbatim — see AGENTS.md "The DOM + bundle contract".
 <!-- dom-contract:begin -->
 
 reg-status
-login-view
-login-form
-login-error
-ext
-pass
-remember
 phone-view
 offline-banner
 whoami-ext
@@ -89,18 +83,44 @@ that follow.
 
 <!-- dom-contract-conditional:begin -->
 
-sso-login
-sso-error
-
 <!-- dom-contract-conditional:end -->
+
+## The login page (a separate surface, every mode)
+
+The login page at `/login` is THE auth front door in every deployment
+mode (the island card carries no login form; an anonymous root
+navigation redirects there). It is hosted by the cqrs-htmx loginpage
+library — its `lp-*` ids are library-owned contract (presence checks
+only, pinned in login_page_test.go) — and carries webphone's own
+section (views.LoginPageExtra + /assets/login-page.js):
+
+<!-- login-page-contract:begin -->
+
+login-form
+ext
+pass
+remember
+login-error
+sso-login
+
+<!-- login-page-contract:end -->
+
+`sso-login` (the Pocket ID door, `/api/auth/oauth2/begin`) renders only
+when the OIDC seam is configured; the extension form renders in EVERY
+mode — bare when the passkey ceremony is off (the primary method),
+inside the "Use extension and password instead" disclosure when it is
+on (the break-glass lifeline). The old island-side ids (`login-view`,
+`passkey-login`, `sso-error`) are RETIRED with the card; the SSO
+failure line moved to the library page's `?error=` alert.
 
 ## Conditional ids (SSO lane)
 
 Rendered when the deployment configures the OIDC lane
-(`auth.oauth2.*`): `sso-login` (the Pocket ID front-door link) and
-`sso-error` (its failure line). The island's `ssoerror.js` writes into
-the latter, which is why the id is declared in its typed lookups even
-though the markup is conditional.
+(`auth.oauth2.*`): `sso-login` — the Pocket ID front-door button — now
+lives on the LOGIN PAGE (see the login-page block above), not on the
+island. The old island-side failure line (`sso-error`) is retired: the
+OIDC callback redirects a failure to `/login?sso_error=<code>`, which
+the login page translates into the library alert's text.
 
 ## Conditional ids (admin surface)
 
@@ -133,20 +153,15 @@ the owner-scoped lookup misses.
 
 ## Conditional ids (passkey mode)
 
-These ids render ONLY when the deployment enables the passkey
-(WebAuthn) login mode (`auth.passkey.*`); the always-on contract above
-stays complete without them, and the E2E must not assume them:
-
-- `passkey-login` — the `/login` front-door LINK on the island login
-  card (the cqrs-htmx `loginpage` library page owns the whole ceremony;
-  the card only navigates there — a plain anchor, works without
-  scripts)
-
-The passkey ceremony UI itself lives on the SEPARATE `/login` page
-(same gate), rendered by the library: `lp-login-form`, `lp-email`,
-`lp-login-btn`, `lp-error` (plus the `loginpage-config` JSON blob its
-embedded nonce'd script reads). That markup is library-owned contract —
-do not pin it beyond presence checks.
+The passkey ceremony UI lives on the `/login` page (the ONE front
+door), rendered by the cqrs-htmx loginpage library when the identity
+layer is wired: `lp-login-form`, `lp-email`, `lp-login-btn`, `lp-error`
+(plus the `loginpage-config` JSON blob its embedded nonce'd script
+reads). That markup is library-owned contract — do not pin it beyond
+presence checks. With the ceremony on the page, webphone's extension
+form renders inside the break-glass disclosure (see the login-page
+block above); the old island-card front-door link (`passkey-login`) is
+retired with the card.
 
 Settings passkey management (passkey mode on AND the signed-in
 extension has a mapped account) renders `wp-passkeys-head`,
@@ -159,9 +174,10 @@ on) renders `wp-agent-audit-head` and either `wp-agent-audit-empty`
 (no rows yet, seam on) or `wp-agent-audit-list` (the newest audit
 rows); absent markup means the seam is off with no recorded history.
 
-With the mode on, the extension login moves INSIDE a
-`details.passkey-breakglass` disclosure (summary: "Use extension and
-password instead") but keeps its own ids and behavior unchanged.
+With the mode on, the extension login renders on the LOGIN PAGE inside
+a `details` disclosure (summary: "Use extension and password instead")
+but keeps its own ids and behavior unchanged (see the login-page block
+above).
 
 The standalone `/enroll` page (same gate) carries `enroll-view`,
 `enroll-form`, `enroll-token`, `enroll-credential-name`,

@@ -358,33 +358,43 @@ func TestTypeGateIncludeStaysAGlob(t *testing.T) {
 // islandDomIDs parses the ids the gate declares for the island's typed lookups
 // (types/island.d.ts, interface IslandDomIds). Both quoted and bare property
 // names are legal in the declaration, so both are read.
+const (
+	islandIDsOpen  = "interface IslandDomIds {"
+	loginIDsOpen   = "interface LoginPageDomIds {"
+	islandIDSFloor = 20
+)
+
+// islandDomIDs extracts the typed DOM-handle ids from types/island.d.ts:
+// the island shell's IslandDomIds plus the login page's LoginPageDomIds
+// (both mirrors of docs/dom-contract.md's fenced blocks).
 func islandDomIDs(t *testing.T) []string {
 	t.Helper()
 	raw, err := os.ReadFile(path.Join(repoRoot, "types", "island.d.ts"))
 	if err != nil {
 		t.Fatalf("read types/island.d.ts: %v", err)
 	}
-	const open = "interface IslandDomIds {"
 	body := string(raw)
-	begin := strings.Index(body, open)
-	if begin < 0 {
-		t.Fatalf("types/island.d.ts lost %q", open)
-	}
-	end := strings.Index(body[begin:], "\n}")
-	if end < 0 {
-		t.Fatal("types/island.d.ts has an unterminated IslandDomIds interface")
-	}
 	var ids []string
-	for line := range strings.SplitSeq(body[begin+len(open):begin+end], "\n") {
-		line = strings.TrimSpace(line)
-		if line == "" || strings.HasPrefix(line, "//") {
-			continue
+	for _, open := range []string{islandIDsOpen, loginIDsOpen} {
+		begin := strings.Index(body, open)
+		if begin < 0 {
+			t.Fatalf("types/island.d.ts lost %q", open)
 		}
-		name, _, ok := strings.Cut(line, ":")
-		if !ok {
-			t.Fatalf("cannot parse IslandDomIds member %q", line)
+		end := strings.Index(body[begin:], "\n}")
+		if end < 0 {
+			t.Fatalf("types/island.d.ts has an unterminated interface at %q", open)
 		}
-		ids = append(ids, strings.Trim(strings.TrimSpace(name), `"`))
+		for line := range strings.SplitSeq(body[begin+len(open):begin+end], "\n") {
+			line = strings.TrimSpace(line)
+			if line == "" || strings.HasPrefix(line, "//") {
+				continue
+			}
+			name, _, ok := strings.Cut(line, ":")
+			if !ok {
+				t.Fatalf("cannot parse DOM-id member %q", line)
+			}
+			ids = append(ids, strings.Trim(strings.TrimSpace(name), `"`))
+		}
 	}
 	if len(ids) < 20 {
 		t.Fatalf("types/island.d.ts declares only %d island ids — truncated?", len(ids))
@@ -393,10 +403,12 @@ func islandDomIDs(t *testing.T) []string {
 }
 
 // documentedDomIDs reads BOTH fenced id blocks of docs/dom-contract.md: the
-// always-on contract (parsed by internal/server too) and the conditional one.
-// The island declares handles for ids from either block — `sso-error` exists
-// only when the OIDC lane is configured, yet its typed lookup is still worth
-// declaring — so the mirror is checked against the union.
+// always-on contract (parsed by internal/server too), the conditional one,
+// and the login page's own block (its ids live on /login, never on the
+// shell). The island and the login page declare handles for ids from any
+// block — `sso-login` renders only when the OIDC lane is configured, yet
+// its typed lookup is still worth declaring — so the mirror is checked
+// against the union.
 func documentedDomIDs(t *testing.T) map[string]bool {
 	t.Helper()
 	raw, err := os.ReadFile(path.Join(repoRoot, "docs", "dom-contract.md"))
@@ -406,6 +418,7 @@ func documentedDomIDs(t *testing.T) map[string]bool {
 	fences := [][2]string{
 		{"<!-- dom-contract:begin -->", "<!-- dom-contract:end -->"},
 		{"<!-- dom-contract-conditional:begin -->", "<!-- dom-contract-conditional:end -->"},
+		{"<!-- login-page-contract:begin -->", "<!-- login-page-contract:end -->"},
 	}
 	body := string(raw)
 	ids := map[string]bool{}
