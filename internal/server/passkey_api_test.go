@@ -22,8 +22,8 @@ import (
 
 	identitymodel "github.com/larsartmann/cqrs-htmx/identity-model/v4"
 	"github.com/larsartmann/webphone/internal/config"
+	"github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/sipcred"
 	"github.com/larsartmann/webphone/internal/userauth"
 )
@@ -78,11 +78,12 @@ func newPasskeyServerWithConfig(t *testing.T, tweak func(*config.Config), depsMu
 		t.Fatal(err)
 	}
 	ext := domain.MustParseExtension("1000")
-	engine, err := readmodels.Open(dir)
+	sys, err := cqrs.NewEnrollSystem(context.Background(), filepath.Join(dir, "system.db"))
 	if err != nil {
-		t.Fatalf("readmodels.Open: %v", err)
+		t.Fatalf("cqrs.NewEnrollSystem: %v", err)
 	}
-	t.Cleanup(func() { _ = engine.Shutdown() })
+	t.Cleanup(func() { _ = sys.GracefulClose(context.Background()) })
+	enroll := cqrs.NewEnrollTokens(sys)
 	svc, err := userauth.New(context.Background(), userauth.PasskeyRuntime{
 		RPID:          "localhost",
 		RPDisplayName: "WebPhone",
@@ -92,7 +93,7 @@ func newPasskeyServerWithConfig(t *testing.T, tweak func(*config.Config), depsMu
 		},
 		ExtensionPasswordFiles: map[string]string{"1000": passFile},
 		WebAuthn:               pkStub{},
-	}, dir, engine.EnrollTokens(), slog.Default())
+	}, dir, enroll, slog.Default())
 	if err != nil {
 		t.Fatalf("userauth.New: %v", err)
 	}

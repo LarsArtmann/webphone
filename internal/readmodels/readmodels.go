@@ -47,12 +47,10 @@ type Engine struct {
 	models   *metaengine.Store
 	contacts *Contacts
 	snippets *Snippets
-	faxes    *Faxes
 	calls    *Transcripts
 	notes    *Notes
 	reviews  *Reviews
 	dials    *DialWindows
-	enroll   *EnrollTokens
 	devices  *PushDevices
 	agents   *AgentAudit
 	db       *sql.DB
@@ -84,7 +82,7 @@ func Open(dataDir string) (*Engine, error) {
 		_ = db.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
 		return nil, errorfamily.Newf(errorfamily.Infrastructure, "readmodels.open", "engine %T lacks the aggregate capability", eng)
 	}
-	models, err := metaengine.Plan([]metaengine.Engine{eng}, contactsQuery, snippetsQuery, faxesQuery, transcriptsQuery, notesQuery, reviewsQuery, dialWindowsQuery, dialOverridesQuery, enrollTokensQuery, pushDevicesQuery, agentAuditQuery)
+	models, err := metaengine.Plan([]metaengine.Engine{eng}, contactsQuery, snippetsQuery, transcriptsQuery, notesQuery, reviewsQuery, dialWindowsQuery, dialOverridesQuery, pushDevicesQuery, agentAuditQuery)
 	if err != nil {
 		_ = db.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
 		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.open", "plan read models")
@@ -96,12 +94,10 @@ func Open(dataDir string) (*Engine, error) {
 		models:   models,
 		contacts: newContacts(models, agg),
 		snippets: newSnippets(models),
-		faxes:    newFaxes(models, agg),
 		calls:    newTranscripts(models, agg),
 		notes:    newNotes(models),
 		reviews:  newReviews(models),
 		dials:    newDialWindows(models),
-		enroll:   newEnrollTokens(models),
 		devices:  newPushDevices(models),
 		agents:   newAgentAudit(models),
 		db:       db,
@@ -127,10 +123,6 @@ func (e *Engine) Contacts() *Contacts { return e.contacts }
 // store's replacement behind the same method contract).
 func (e *Engine) Snippets() *Snippets { return e.snippets }
 
-// Faxes returns the engine-backed fax store (the SQL store's
-// replacement behind the same method contract).
-func (e *Engine) Faxes() *Faxes { return e.faxes }
-
 // Transcripts returns the engine-backed transcript store (the SQL
 // store's replacement behind the same method contract).
 func (e *Engine) Transcripts() *Transcripts { return e.calls }
@@ -149,11 +141,6 @@ func (e *Engine) Reviews() *Reviews { return e.reviews }
 // DialWindows returns the engine-backed dial-cooldown store (issue #7:
 // the (owner, remote) window plus one-shot overrides).
 func (e *Engine) DialWindows() *DialWindows { return e.dials }
-
-// EnrollTokens returns the engine-backed enrollment-token store (the
-// userauth SQL table's replacement; token classification stays in the
-// userauth service).
-func (e *Engine) EnrollTokens() *EnrollTokens { return e.enroll }
 
 // PushDevices returns the engine-backed registered-device store (the
 // push seam's ring fan-out source; owner-scoped everywhere).

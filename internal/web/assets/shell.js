@@ -345,7 +345,9 @@
         // page has the anonymous door's sign-in link (a deep link), that
         // link is the actionable element — focus it. The toast names the
         // state either way.
-        var signinLink = document.querySelector(".wp-welcome-signin");
+        var signinLink = /** @type {HTMLElement | null} */ (
+          document.querySelector(".wp-welcome-signin")
+        );
         if (signinLink) signinLink.focus();
         shellToast(
           "Phone is signed out — use the sign-in link to continue.",

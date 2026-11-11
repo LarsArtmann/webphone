@@ -10,11 +10,35 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
+// FaxView is the fax projection row both backends fold into (the
+// journal-backed system.db projection reads/writes this exact shape;
+// Unix-nanos timestamps keep list ordering EXACTLY numeric — the
+// retired SQL store compared unix seconds with a rowid tiebreak, and
+// nanos make ties virtually impossible and the order stable).
+//
+// branching-flow COMPOSITION_mixin (baselined): the projection row
+// mirrors the retired SQL row verbatim (parity port).
+// brandid-lint:ignore(BD003) engine projection row: the json tags are the storage schema (strong-id wire ruling)
+type FaxView struct {
+	ID           string              `json:"id"`
+	Owner        string              `json:"owner"`
+	Remote       string              `json:"remote"`
+	Direction    domain.FaxDirection `json:"direction"`
+	Status       domain.FaxStatus    `json:"status"`
+	Pages        int                 `json:"pages"`
+	DocumentPath string              `json:"document_path"`
+	ProviderRef  string              `json:"provider_ref"`
+	Error        string              `json:"error"`
+	CreatedAt    int64               `json:"created_at"`
+	UpdatedAt    int64               `json:"updated_at"`
+}
+
+// brandid-lint:ignore(BD003) engine key-extraction input: wire shape (strong-id wire ruling)
+type faxInput struct{ ID string }
+
 // FaxGate is the fax seam (SUPERB Phase 6): every Faxes method the
 // server, the notifier and the metrics surface call, answered by the
-// journal-backed backend. The engine-backed readmodels.Faxes stays as
-// the import source and rollback lane; ErrNotFound keeps its store
-// meaning.
+// journal-backed backend. ErrNotFound keeps its store meaning.
 type FaxGate interface {
 	List(ctx context.Context, owner domain.Extension, limit int) ([]domain.FaxJob, error)
 	Get(ctx context.Context, owner domain.Extension, id domain.FaxID) (domain.FaxJob, error)
@@ -31,7 +55,7 @@ type FaxGate interface {
 }
 
 // FaxJobOfView converts one projection row into the domain job (the
-// ONE view→domain home; the engine's toJob delegates here).
+// ONE view→domain home).
 func FaxJobOfView(v FaxView) domain.FaxJob {
 	return domain.FaxJob{
 		ID:           domain.MustFaxID(v.ID),
@@ -49,12 +73,11 @@ func FaxJobOfView(v FaxView) domain.FaxJob {
 }
 
 // FaxesProjection builds the fax-jobs read model over the GIVEN
-// collection — the folds' one home, shared by the readmodels engine
-// (readmodels.db, the frozen import lane) and the cqrs system's
-// journal projection (system.db, the live lane). Inserted by
-// FaxReceipted facts, merged by FaxStatusAdvanced facts (the
-// provider-ref keep-when-empty rule lives here, once), removed by
-// retention's FaxExpunged facts.
+// collection — the folds' one home, consumed verbatim by the cqrs
+// system's journal projection (system.db). Inserted by FaxReceipted
+// facts, merged by FaxStatusAdvanced facts (the provider-ref
+// keep-when-empty rule lives here, once), removed by retention's
+// FaxExpunged facts.
 func FaxesProjection(collection string) metaengine.QueryDecl[faxInput, FaxView] {
 	return metaengine.Query[faxInput, FaxView](collection,
 		metaengine.OnRecord(domain.FaxReceipted{},

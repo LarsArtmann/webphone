@@ -2,67 +2,16 @@ package readmodels
 
 import (
 	"context"
-	"errors"
 	"testing"
 	"time"
 
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/store"
 )
 
-// The cross-owner admin seams: ListAll/GetAny (faxes) and RecentAll
-// (transcripts) are the ONLY reads without the owner filter — these
-// pins hold them to that contract.
-
-func TestFaxesListAllCrossesOwnersNewestFirst(t *testing.T) {
-	engine := openTestEngine(t)
-	faxes := engine.Faxes()
-	ctx := context.Background()
-	base := time.Unix(1700000000, 0)
-
-	older := mustFax(t, "1001", "+15550000001", domain.FaxOutbound, domain.FaxQueued, base)
-	newer := mustFax(t, "1002", "+15550000002", domain.FaxInbound, domain.FaxReceived, base.Add(time.Minute))
-	for _, job := range []domain.FaxJob{older, newer} {
-		if err := faxes.Create(ctx, job); err != nil {
-			t.Fatal(err)
-		}
-	}
-	jobs, err := faxes.ListAll(ctx, 10)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(jobs) != 2 || jobs[0].ID != newer.ID || jobs[1].ID != older.ID {
-		t.Errorf("ListAll = [%s %s], want newest-first across owners", jobs[0].ID, jobs[1].ID)
-	}
-	if jobs, err = faxes.ListAll(ctx, 1); err != nil || len(jobs) != 1 {
-		t.Errorf("limit must bound the inventory: %d, %v", len(jobs), err)
-	}
-}
-
-func TestFaxesGetAnyCrossesOwners(t *testing.T) {
-	engine := openTestEngine(t)
-	faxes := engine.Faxes()
-	ctx := context.Background()
-	foreign := mustFax(t, "1002", "+15550000009", domain.FaxInbound, domain.FaxReceived, time.Unix(1700000000, 0))
-	if err := faxes.Create(ctx, foreign); err != nil {
-		t.Fatal(err)
-	}
-
-	// The owner-scoped sibling refuses the foreign read; GetAny grants it.
-	if _, err := faxes.Get(ctx, domain.MustParseExtension("1001"), foreign.ID); !errors.Is(err, store.ErrNotFound) {
-		t.Errorf("owner-scoped Get must refuse: %v", err)
-	}
-	job, err := faxes.GetAny(ctx, foreign.ID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if job.Owner != foreign.Owner {
-		t.Errorf("owner = %s, want %s (the row carries its line)", job.Owner, foreign.Owner)
-	}
-	if _, err = faxes.GetAny(ctx, domain.GenerateFaxID()); !errors.Is(err, store.ErrNotFound) {
-		t.Errorf("unknown id must answer not-found: %v", err)
-	}
-}
+// The cross-owner admin seam: RecentAll (transcripts) is the ONLY
+// read without the owner filter in this package — this pin holds it to
+// that contract. (The fax ListAll/GetAny twins dissolved into the cqrs
+// backend; their pins live in cqrs/faxes_test.go now.)
 
 func TestTranscriptsRecentAllCrossesOwners(t *testing.T) {
 	engine := openTestEngine(t)
