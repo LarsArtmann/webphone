@@ -9,7 +9,6 @@ import (
 	identitymodel "github.com/larsartmann/cqrs-htmx/identity-model/v4"
 	"github.com/larsartmann/go-error-family"
 
-	"github.com/larsartmann/webphone/internal/sipcred"
 	"github.com/larsartmann/webphone/internal/web/views"
 )
 
@@ -48,10 +47,6 @@ func parsePasskeyUserID(w http.ResponseWriter, raw string) (identitymodel.UserID
 // must not double as an email-enumeration oracle (usermgmt's own handler
 // has the same posture; its log keeps the honest detail).
 func (h *handlers) passkeyBeginLogin(w http.ResponseWriter, r *http.Request) {
-	if h.deps.UserAuth == nil {
-		http.NotFound(w, r)
-		return
-	}
 	var body struct {
 		Email string `json:"email"`
 	}
@@ -83,10 +78,6 @@ func (h *handlers) passkeyBeginLogin(w http.ResponseWriter, r *http.Request) {
 // The response is the createSession shape plus display_name and numbers
 // so the island can show the user's real identity and numbers.
 func (h *handlers) passkeyFinishLogin(w http.ResponseWriter, r *http.Request) {
-	if h.deps.UserAuth == nil {
-		http.NotFound(w, r)
-		return
-	}
 	raw := r.URL.Query().Get("user_id")
 	if raw == "" {
 		http.Error(w, "user_id query parameter is required", http.StatusBadRequest)
@@ -123,17 +114,13 @@ func (h *handlers) passkeyFinishLogin(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not create session", http.StatusInternalServerError)
 		return
 	}
-	// The finish response carries the REGISTER credential back to the
-	// island: the session-derived credential when brokering is on (the
-	// directory password NEVER reaches the browser), else the
-	// file-sourced password (legacy wire, byte-identical). Same no-store
-	// posture as the resume endpoint — the credential stays out of every
-	// cache.
+	// The finish response is the OTHER legacy-carrier surface (the
+	// browser REGISTER needs the file-sourced password when brokering
+	// is off): its credential plus the unconditional no-store ride this
+	// site; the derived-credential policy itself lives in sessionAnswer.
 	w.Header().Set("Cache-Control", "no-store")
-	response := h.sessionIdentityResponse(r.Context(), extension, mapped.Email)
-	if h.deps.Config.SIP.DerivedCredentials() {
-		response.SIPCredential = sipcred.Derive(h.deps.Config.SIP.CredentialSecret, token.String())
-	} else {
+	response := h.sessionAnswer(w, r.Context(), token, extension, mapped.Email)
+	if !h.deps.Config.SIP.DerivedCredentials() {
 		response.Password = password
 	}
 	authAudit("login", "email", mapped.Email, "passkey verified; session minted")
@@ -144,10 +131,6 @@ func (h *handlers) passkeyFinishLogin(w http.ResponseWriter, r *http.Request) {
 // (minted by the CLI). Unknown, expired and used tokens are
 // indistinguishable — the endpoint must not leak token state.
 func (h *handlers) passkeyEnrollVerify(w http.ResponseWriter, r *http.Request) {
-	if h.deps.UserAuth == nil {
-		http.NotFound(w, r)
-		return
-	}
 	var body struct {
 		Token string `json:"token"`
 	}
@@ -169,10 +152,6 @@ func (h *handlers) passkeyEnrollVerify(w http.ResponseWriter, r *http.Request) {
 // passkeyEnrollBegin starts the credential registration ceremony for the
 // user the (already verified) enrollment token named.
 func (h *handlers) passkeyEnrollBegin(w http.ResponseWriter, r *http.Request) {
-	if h.deps.UserAuth == nil {
-		http.NotFound(w, r)
-		return
-	}
 	var body struct {
 		UserID string `json:"user_id"`
 	}
@@ -195,10 +174,6 @@ func (h *handlers) passkeyEnrollBegin(w http.ResponseWriter, r *http.Request) {
 // passkeyEnrollFinish persists the attested credential. After this the
 // account can passkey-log in; the page sends the user to the login form.
 func (h *handlers) passkeyEnrollFinish(w http.ResponseWriter, r *http.Request) {
-	if h.deps.UserAuth == nil {
-		http.NotFound(w, r)
-		return
-	}
 	raw := r.URL.Query().Get("user_id")
 	if raw == "" {
 		http.Error(w, "user_id query parameter is required", http.StatusBadRequest)
@@ -226,10 +201,6 @@ func (h *handlers) passkeyEnrollFinish(w http.ResponseWriter, r *http.Request) {
 // module (assets/enroll/enroll.js) drives verify → begin → finish
 // against the three POST endpoints above.
 func (h *handlers) enrollPage(w http.ResponseWriter, r *http.Request) {
-	if h.deps.UserAuth == nil {
-		http.NotFound(w, r)
-		return
-	}
 	props := views.EnrollProps{
 		Lang:      h.lang(r),
 		CSRFToken: csrfToken(r),
