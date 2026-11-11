@@ -73,3 +73,12 @@ and healed; see the ledger below).
 4. `internal/cqrs/faxes_test.go` sits at 361/350 lines (buildflow
    file-size error) — ANOTHER session's file, left untouched by this
    train.
+
+## f) Up to 50 things we should get done next
+
+| # | Item                                                                                                                                             | Verdict                                                                                                                                                                                                                                   |
+| - | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | The stack browser E2E (445s budget, KVM VM) against the one-page front door — this report defers the live run to its next session's first action | OPEN — rides the "Stack coverage arms" TODO row (`webphone-relock` + browser E2E are its named halves)                                                                                                                                    |
+| 2 | The consuming stack's `webphone-relock` ritual on the next stack train (the front door changed the served login surface the vhost fronts)        | OPEN — rides the standing stack-relock rows in TODO_LIST ("stack relock" + CHANGELOG lock-move)                                                                                                                                           |
+| 3 | `internal/cqrs/faxes_test.go` at 361/350 lines (buildflow file-size error, item 4 above)                                                         | RESOLVED in-flight 2026-11-11 — the owning session split the two fax-gate tests it had added into `internal/cqrs/faxesgate_test.go` (270 + 101 lines); `buildflow -s file-size-check` green; `go test ./internal/cqrs -run TestFax` green |
+| 4 | CI verdicts on this report's pushes (one `gh run list` check, this report's item 1)                                                              | OPEN — the docs-format reds on the pre-repair trees were healed by the `75ba79c5` dprint repair commit; the repair-tip run is the one that matters                                                                                        |

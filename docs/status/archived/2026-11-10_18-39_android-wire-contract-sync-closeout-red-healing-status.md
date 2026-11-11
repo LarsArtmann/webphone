@@ -1,9 +1,9 @@
 # Android wire-contract sync CLOSEOUT + the red-healing side-train — 2026-11-10 18:39 CET
 
+> **ARCHIVED 2026-11-11 (docs-health cadence sweep, 66→65):** all rows adjudicated in-session — §a/§b done with evidence, §c carries its triggers, §d owned + healed; harvested into TODO_LIST where still live. Gates at archive time: `annotate check-rows --strict` + `bare-rows` both green.
+
 > Claims verified as of 18:39 CET. Push/CI statements rot fastest: the
 > verdicts below name their runs/shas; the concurrent sessions are LIVE
-
-> **ARCHIVED 2026-11-11 (docs-health cadence sweep, 66→65):** all rows adjudicated in-session — §a/§b done with evidence, §c carries its triggers, §d owned + healed; harvested into TODO_LIST where still live. Gates at archive time: `annotate check-rows --strict` + `bare-rows` both green.
 > and will move both repos past this snapshot.
 
 **Scope line.** This report covers ONE session: the completion of the
