@@ -1034,6 +1034,131 @@ def faxcap_scenario(binary: str, workdir: str) -> int:
     return 1 if c.failures else 0
 
 
+def enroll_scenario(binary: str, workdir: str) -> int:
+    """The -enroll-passkey CLI one-shot end-to-end (the 2026-11-09
+    split-brain class).
+
+    One config file drives BOTH sides: the CLI one-shot runs under the
+    SAME config and data dir as the server, so its token lands in the
+    same system.db journal the server verifies from — mint on a fresh
+    dir, boot the server, verify the fresh token 200, replay the burned
+    token 503, and prove the /enroll page (the conditional surface)
+    renders with passkey enabled.
+    """
+    c = Check()
+
+    datadir = f"{workdir}/data-enroll"
+    os.makedirs(datadir, exist_ok=True)
+    pwfile = f"{workdir}/pw-1001"
+    with open(pwfile, "w", encoding="utf-8") as fh:
+        fh.write("pw\n")
+    cfg = {
+        # The CLI one-shot validates the WHOLE config: a real addr shape
+        # up front, rewritten to the server's port before boot.
+        "addr": "127.0.0.1:18099",
+        "data_dir": datadir,
+        "gateway": {"webhook_secret": "test-secret"},  # nosec B105 - fixture secret for the self-booted smoke server
+        "auth": {
+            "users": {"lars@example.com": {"extensions": ["1001"]}},
+            "extension_password_files": {"1001": pwfile},
+            "passkey": {
+                "rp_id": "webphone.test",
+                "rp_origins": ["https://webphone.test"],
+            },
+        },
+    }
+    cfg_path = f"{workdir}/config-enroll.json"
+    with open(cfg_path, "w", encoding="utf-8") as fh:
+        json.dump(cfg, fh)
+
+    def cli_mint() -> tuple[int, str, str]:
+        env = dict(os.environ)
+        env["WEBPHONE_CONFIG"] = cfg_path
+        done = subprocess.run(  # nosec B603 - argv-list (no shell) run of the CLI one-shot under test
+            [binary, "-enroll-passkey", "lars@example.com"],
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        return done.returncode, done.stdout, done.stderr
+
+    def boot() -> tuple[subprocess.Popen, str]:
+        port = free_port()
+        cfg["addr"] = f"127.0.0.1:{port}"
+        with open(cfg_path, "w", encoding="utf-8") as fh:
+            json.dump(cfg, fh)
+        env = dict(os.environ)
+        env["WEBPHONE_CONFIG"] = cfg_path
+        srv = subprocess.Popen(  # nosec B603 - argv-list (no shell) launch of the local binary under test
+            [binary], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+        base = f"http://127.0.0.1:{port}"
+        deadline = time.monotonic() + TIMEOUT
+        while time.monotonic() < deadline:
+            try:
+                urllib.request.urlopen(base + "/healthz", timeout=1).read()  # nosec B310 - readiness probe of the local server under test
+                return srv, base
+            except OSError:
+                time.sleep(0.1)
+        srv.kill()
+        raise RuntimeError("enroll scenario: server did not become ready")
+
+    # Mint FIRST: the one-shot opens the journal alone, the server joins
+    # it after — the shared-journal contract without a write race.
+    rc, out, err = cli_mint()
+    c.ok("enroll: CLI one-shot exits 0", rc == 0, err.strip()[:160])
+    m = re.search(r"token=([A-Za-z0-9_-]+)", out)
+    c.ok("enroll: the link carries a token", m is not None, out.strip()[:160])
+    if not m:
+        print(f"enroll scenario: {c.passed} passed, {len(c.failures)} failed")
+        for failure in c.failures:
+            print(f"  FAILED: {failure}")
+        return 1
+    token = m.group(1)
+
+    srv, base = boot()
+    try:
+        s = Smoke(base)
+        status, body, _ = s.request("GET", "/enroll")
+        page = body.decode("utf-8", "replace")
+        c.ok("enroll: the page renders with passkey on", status == 200, f"status {status}")
+        m = re.search(r'name="csrf-token" content="([^"]+)"', page)
+        if m:
+            s.csrf = m.group(1)
+
+        status, body, _ = s.request(
+            "POST",
+            "/api/auth/passkey/enroll/verify",
+            json.dumps({"token": token}).encode(),
+            "application/json",
+        )
+        c.ok(
+            "enroll: fresh token verifies 200",
+            status == 200 and b"lars@example.com" in body,
+            f"status {status} body {body[:120].decode('utf-8', 'replace')}",
+        )
+
+        status, _, _ = s.request(
+            "POST",
+            "/api/auth/passkey/enroll/verify",
+            json.dumps({"token": token}).encode(),
+            "application/json",
+        )
+        c.ok("enroll: burned token answers 503", status == 503, f"status {status}")
+    finally:
+        srv.terminate()
+        try:
+            srv.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            srv.kill()
+
+    print(f"enroll scenario: {c.passed} passed, {len(c.failures)} failed")
+    for failure in c.failures:
+        print(f"  FAILED: {failure}")
+    return 1 if c.failures else 0
+
+
 def run_checks(
     s: Smoke,
     boot_configured: Callable[[], tuple[str, Callable[[], None]]] | None = None,
@@ -1642,6 +1767,7 @@ def main() -> int:
         rc = max(rc, dialgate_scenario(binary, workdir))
         rc = max(rc, faxcap_scenario(binary, workdir))
         rc = max(rc, metrics_scenario(binary, workdir))
+        rc = max(rc, enroll_scenario(binary, workdir))
         return rc
     finally:
         server.terminate()
