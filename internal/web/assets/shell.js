@@ -1459,16 +1459,35 @@
     // The drafts panel polls every 30s (DraftsPanel in messages.templ);
     // a poll that fires while an edit <details> is open would swap the
     // panel out from under the textarea and silently eat the typed
-    // change. Dropping the poll request here is the CSP-safe choke
-    // point (htmx trigger filters need eval), and the poll fires again
-    // once the edit closes. Only the panel's own poll is gated: the
+    // change. A textarea the user typed into and then folded shut holds
+    // an unsaved change just the same, so a dirty edit textarea gates
+    // the poll too (F11): the flag rides a WeakSet keyed by the node,
+    // and every panel swap (approve, discard, the next poll that gets
+    // through) replaces #wp-drafts wholesale, so the dead nodes — and
+    // their flags with them — are forgotten. Dropping the poll request
+    // here is the CSP-safe choke point (htmx trigger filters need eval),
+    // and the poll fires again once the edit is saved, discarded or
+    // closed empty. Only the panel's own poll is gated: the
     // approve/discard buttons are children of the panel and keep
     // working while an edit is open.
+    var dirtyDraftAreas = new WeakSet();
+    document.addEventListener("input", function (event) {
+      var area = /** @type {HTMLTextAreaElement} */ (eventElement(event));
+      if (!area || !area.matches || !area.matches(".wp-draft-edit textarea"))
+        return;
+      dirtyDraftAreas.add(area);
+    });
     document.addEventListener("htmx:beforeRequest", function (event) {
       var elt =
         (eventDetail(event) && eventDetail(event).elt) || eventElement(event);
       if (!elt || !elt.matches || !elt.matches("#wp-drafts")) return;
-      if (document.querySelector(".wp-draft-edit[open]")) {
+      var dirty = false;
+      document
+        .querySelectorAll(".wp-draft-edit textarea")
+        .forEach(function (area) {
+          if (dirtyDraftAreas.has(area)) dirty = true;
+        });
+      if (document.querySelector(".wp-draft-edit[open]") || dirty) {
         event.preventDefault();
       }
     });

@@ -38,6 +38,49 @@ test("the drafts poll is dropped while an edit is open", () => {
   assert.equal(dropped, 0, "the poll flows once the edit closes");
 });
 
+test("the drafts poll is dropped while an edit textarea is dirty", () => {
+  const panel = doc.getElementById("wp-drafts");
+  panel.matches = (s) => s === "#wp-drafts" || s === panel.selector;
+  const edit = doc.createElement();
+  edit.className = "wp-draft-edit";
+  const area = doc.createElement();
+  area.selector = ".wp-draft-edit textarea";
+  edit.append(area);
+  panel.append(edit);
+
+  let dropped = 0;
+  doc.dispatch("input", { target: area });
+  doc.dispatch("htmx:beforeRequest", {
+    detail: { elt: panel },
+    preventDefault() {
+      dropped += 1;
+    },
+  });
+  assert.equal(
+    dropped,
+    1,
+    "the poll is canceled while the edit holds unsaved text, even folded shut",
+  );
+
+  // The next panel swap replaces the nodes wholesale: the fresh textarea
+  // was never typed into, so the poll flows again.
+  const fresh = doc.createElement();
+  fresh.className = "wp-draft-edit";
+  const freshArea = doc.createElement();
+  freshArea.selector = ".wp-draft-edit textarea";
+  fresh.append(freshArea);
+  panel.replaceChild(fresh, edit);
+
+  dropped = 0;
+  doc.dispatch("htmx:beforeRequest", {
+    detail: { elt: panel },
+    preventDefault() {
+      dropped += 1;
+    },
+  });
+  assert.equal(dropped, 0, "the poll flows once the dirty node is swapped away");
+});
+
 test("a debounced draft files under the thread it was typed in", async () => {
   const transcript = doc.getElementById("thread-transcript");
   transcript.dataset.thread = "t1";
