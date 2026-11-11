@@ -153,6 +153,7 @@ func enrollProjection() metaengine.QueryDecl[enrollKeyInput, readmodels.EnrollTo
 				}
 			}),
 		metaengine.OnRecord(domain.EnrollTokenBurned{}, metaengine.Remove[readmodels.EnrollTokenView]()),
+		metaengine.Volume(humanScaleVolume),
 	)
 }
 

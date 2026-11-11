@@ -171,6 +171,7 @@ func pushDevicesProjection() metaengine.QueryDecl[pushDevicesKeyInput, readmodel
 		metaengine.OnRecord(domain.PushDeviceRemoved{}, metaengine.Remove[readmodels.PushDeviceView]()),
 		metaengine.FilterOnField[readmodels.PushDeviceView]("owner", metaengine.FilterEq),
 		metaengine.SortOnField[readmodels.PushDeviceView]("updated_at", true),
+		metaengine.Volume(humanScaleVolume),
 	)
 }
 

@@ -186,6 +186,7 @@ func contactsProjection() metaengine.QueryDecl[contactsKeyInput, readmodels.Cont
 		metaengine.OnRecord(domain.ContactDeleted{}, metaengine.Remove[readmodels.ContactView]()),
 		metaengine.FilterOnField[readmodels.ContactView]("owner", metaengine.FilterEq),
 		metaengine.SortOnField[readmodels.ContactView]("created_at", true),
+		metaengine.Volume(humanScaleVolume),
 	)
 }
 

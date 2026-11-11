@@ -170,6 +170,7 @@ func snippetsProjection() metaengine.QueryDecl[snippetKeyInput, readmodels.Snipp
 		metaengine.OnRecord(domain.SnippetDeleted{}, metaengine.Remove[readmodels.SnippetView]()),
 		metaengine.FilterOnField[readmodels.SnippetView]("owner", metaengine.FilterEq),
 		metaengine.SortOnField[readmodels.SnippetView]("created_at", false),
+		metaengine.Volume(humanScaleVolume),
 	)
 }
 

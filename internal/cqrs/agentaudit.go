@@ -196,6 +196,7 @@ func agentAuditProjection() metaengine.QueryDecl[agentAuditInput, readmodels.Age
 		metaengine.OnRecord(domain.AgentAuditExpunged{}, metaengine.Remove[readmodels.AgentAuditView]()),
 		metaengine.FilterOnField[readmodels.AgentAuditView]("owner", metaengine.FilterEq),
 		metaengine.SortOnField[readmodels.AgentAuditView]("seq", false),
+		metaengine.Volume(humanScaleVolume),
 	)
 }
 

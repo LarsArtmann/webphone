@@ -206,6 +206,7 @@ func notesProjection() metaengine.QueryDecl[notesKeyInput, readmodels.CallNoteVi
 			}),
 		metaengine.FilterOnField[readmodels.CallNoteView]("owner", metaengine.FilterEq),
 		metaengine.SortOnField[readmodels.CallNoteView]("updated_at", false),
+		metaengine.Volume(humanScaleVolume),
 	)
 }
 

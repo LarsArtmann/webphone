@@ -166,6 +166,7 @@ func reviewsProjection() metaengine.QueryDecl[reviewsKeyInput, readmodels.CallRe
 			}),
 		metaengine.FilterOnField[readmodels.CallReviewView]("owner", metaengine.FilterEq),
 		metaengine.SortOnField[readmodels.CallReviewView]("updated_at", false),
+		metaengine.Volume(humanScaleVolume),
 	)
 }
 

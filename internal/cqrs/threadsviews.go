@@ -64,6 +64,12 @@ func messageViewOf(f domain.MessageAppended) readmodels.MessageView {
 // by the remove/update key inference — every keyed fold's fact carries
 // its Key field).
 
+// humanScaleVolume is the Volume hint every query declaration carries:
+// webphone is single-tenant, and even its highest-rate facts (live-call
+// transcript segments) average well under one per second — the
+// planner's 1000/sec default would overestimate by three orders.
+const humanScaleVolume = 1
+
 // threadProjections declares the three collections. Update folds (the
 // prev-aware shape) carry only their delta — the row's other fields
 // survive through prev, exactly as the SQL UPDATE touched one column;
@@ -84,6 +90,7 @@ func threadProjections() []system.ProjectionDeclaration {
 			}),
 		metaengine.OnRecord(domain.ThreadDeleted{}, metaengine.Remove[readmodels.ThreadSummaryView]()),
 		metaengine.FilterOnField[readmodels.ThreadSummaryView]("owner", metaengine.FilterEq),
+		metaengine.Volume(humanScaleVolume),
 	)
 
 	messages := metaengine.Query[domain.MessageRowKey, readmodels.MessageView](messagesCollection,
@@ -105,6 +112,7 @@ func threadProjections() []system.ProjectionDeclaration {
 		metaengine.FilterOnField[readmodels.MessageView]("message_id", metaengine.FilterEq),
 		metaengine.FilterOnField[readmodels.MessageView]("thread_id", metaengine.FilterEq),
 		metaengine.SortOnField[readmodels.MessageView]("created_at", true),
+		metaengine.Volume(humanScaleVolume),
 	)
 
 	attachments := metaengine.Query[domain.AttachmentRowKey, readmodels.AttachmentView](attachmentsColName,
@@ -123,6 +131,7 @@ func threadProjections() []system.ProjectionDeclaration {
 		metaengine.OnRecord(domain.AttachmentRemoved{}, metaengine.Remove[readmodels.AttachmentView]()),
 		metaengine.FilterOnField[readmodels.AttachmentView]("owner", metaengine.FilterEq),
 		metaengine.FilterOnField[readmodels.AttachmentView]("id", metaengine.FilterEq),
+		metaengine.Volume(humanScaleVolume),
 	)
 
 	decls := make([]system.ProjectionDeclaration, 0, 3)

@@ -37,6 +37,7 @@ func dialWindowsProjection() metaengine.QueryDecl[dialWindowKeyInput, readmodels
 		metaengine.SortOnField[readmodels.DialWindowView]("at", false),
 		metaengine.WithCap(dialWindowsGlobalCeiling, "at"),
 		metaengine.WithCapPerGroup("owner", dialWindowsMaxSlots),
+		metaengine.Volume(humanScaleVolume),
 	)
 }
 
@@ -52,5 +53,6 @@ func dialOverridesProjection() metaengine.QueryDecl[dialWindowKeyInput, readmode
 		metaengine.SortOnField[readmodels.DialOverrideView]("at", false),
 		metaengine.WithCap(dialWindowsGlobalCeiling, "at"),
 		metaengine.WithCapPerGroup("owner", dialOverridesMaxSlots),
+		metaengine.Volume(humanScaleVolume),
 	)
 }

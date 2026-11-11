@@ -307,6 +307,7 @@ func transcriptsProjection() metaengine.QueryDecl[transcriptsKeyInput, readmodel
 		metaengine.SortOnField[readmodels.TranscriptSegmentView]("seq", true),
 		metaengine.WithCap(transcriptsGlobalCeiling, "seq"),
 		metaengine.WithCapPerGroup("owner", readmodels.TranscriptSegmentsMaxPerExtension),
+		metaengine.Volume(humanScaleVolume),
 	)
 }
 
