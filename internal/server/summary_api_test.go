@@ -231,15 +231,36 @@ func summaryServerWithPush(t *testing.T, transport push.Sender) (*testServer, *c
 	t.Helper()
 	stub := newStubReviewAPI(t)
 	engine := newTestEngine(t)
-	fanout := push.NewFanout(map[string]push.Sender{transport.Describe(): transport}, nil)
+	devices := engine.PushDevices()
+	fanout := push.NewFanout(map[string]push.Sender{transport.Describe(): transport}, summaryFanRegistry{devices})
 	provider, _ := fakeProvider(t, http.StatusOK, "hi")
 	server := newTestServerWithPhoneAPI(t, "", func(deps *Deps) {
 		deps.ASR = asrClientFor(t, provider.URL)
 		deps.TextAgent = agentClientFor(t, stub.server.URL)
 		deps.Push = fanout
-		deps.PushDevices = engine.PushDevices()
+		deps.PushDevices = devices
 	})
-	return server, clientFor(t, server), engine.PushDevices()
+	return server, clientFor(t, server), devices
+}
+
+// summaryFanRegistry adapts the engine-backed device store to the
+// fanout's prune seam (test-side twin of app's pushRegistryAdapter).
+type summaryFanRegistry struct{ devices *readmodels.PushDevices }
+
+func (r summaryFanRegistry) List(ctx context.Context, owner domain.Extension) ([]push.Device, error) {
+	views, err := r.devices.List(ctx, owner)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]push.Device, 0, len(views))
+	for _, v := range views {
+		out = append(out, push.Device{DeviceID: v.DeviceID, Transport: v.Transport, Token: v.Token})
+	}
+	return out, nil
+}
+
+func (r summaryFanRegistry) Remove(ctx context.Context, owner domain.Extension, deviceID string) error {
+	return r.devices.Remove(ctx, owner, deviceID)
 }
 
 // TestSummaryDraftPushesOnlyWhenSeamOn: a fanout with no live transport
