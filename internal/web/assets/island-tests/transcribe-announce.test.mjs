@@ -122,7 +122,8 @@ test("the lag warn announces once per streak and recovery re-arms it", async () 
     await emit(recorder, "fail"); // failure 3: announce unavailable
     nowMs += 8_001;
     await emit(recorder, "fail"); // failure 4: streak continues, quiet
-    await emit(recorder, "ok"); // success: the streak flags reset
+    nowMs += 61_000; // step past the 60s backoff cap before recovery
+    await emit(recorder, "ok"); // fast success: the streak flags reset
     await emit(recorder, "laggy"); // lagging again: announce re-armed
 
     const seen = toasts();
@@ -135,19 +136,38 @@ test("the lag warn announces once per streak and recovery re-arms it", async () 
 });
 
 test("the unavailable warn waits for the third consecutive failure", async () => {
-  const before = toasts().length;
   const recorder = await start("fail-c2");
   try {
+    // A laggy-but-successful segment first: it resets the failure flags
+    // (a fresh streak) and puts a DIFFERENT message last, so the dedup
+    // cannot swallow the unavailable announce below. Count-based asserts
+    // stay immune to toast expiry.
+    await emit(recorder, "laggy");
+    const lagBaseline = countToast(t("transcribeLag"), toasts());
+    const failBaseline = countToast(t("transcribeUnavailable"), toasts());
     await emit(recorder, "fail");
     nowMs += 3_000;
     await emit(recorder, "fail");
-    assert.equal(toasts().length, before, "two failures stay quiet");
+    assert.equal(
+      countToast(t("transcribeUnavailable"), toasts()),
+      failBaseline,
+      "two failures stay quiet",
+    );
     nowMs += 5_000;
     await emit(recorder, "fail");
-    assert.equal(toasts().length, before + 1, "the third failure announces");
+    assert.equal(
+      countToast(t("transcribeUnavailable"), toasts()),
+      failBaseline + 1,
+      "the third failure announces",
+    );
+    assert.equal(countToast(t("transcribeLag"), toasts()), lagBaseline);
     nowMs += 8_001;
     await emit(recorder, "fail");
-    assert.equal(toasts().length, before + 1, "the fourth stays quiet");
+    assert.equal(
+      countToast(t("transcribeUnavailable"), toasts()),
+      failBaseline + 1,
+      "the fourth stays quiet",
+    );
   } finally {
     stopLiveTranscription("fail-c2");
   }
