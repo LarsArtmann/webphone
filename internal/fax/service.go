@@ -47,9 +47,9 @@ type Archiver interface {
 }
 
 // Store is the fax-job persistence seam: the contract the SQL store
-// held and the read-model engine now serves (same methods, same
-// verdicts). AdvanceIdempotent is the webhook lane's in-process replay
-// guard — see readmodels.Faxes for the exact semantics.
+// held and the journal-backed cqrs backend now serves (same methods,
+// same verdicts). AdvanceIdempotent is the webhook lane's replay
+// guard — see cqrs.Faxes for the exact semantics.
 //
 // branching-flow IFACE_COMPLETE (baselined): single prod implementer BY
 // DESIGN — this consumer-side seam is what retired the SQL store
