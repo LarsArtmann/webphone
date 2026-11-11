@@ -61,14 +61,32 @@
   --dur-fast: 150ms;
   --dur: 250ms;
   --ease: cubic-bezier(0.2, 0, 0, 1);
+  /* A press must answer inside ~100ms or it reads as lag — deliberately
+   * faster than --dur-fast. */
+  --dur-press: 80ms;
+  /* State layers (M3 idiom, destination §5): hover and press answer with
+   * translucent accent overlays at these strengths; focus answers with
+   * the ring — three channels, visibly distinct in combination. */
+  --state-hover: 8%;
+  --state-pressed: 12%;
+  --focus-ring: 2px solid var(--accent);
+  --focus-ring-offset: 2px;
   /* F16/F17: the secondary type scale and the row/panel rhythms. The
      corpus migrates opportunistically — new panels pick from these,
      the sub-scale micro sizes catch up as their surfaces are touched. */
   --text-xs: 0.8em;
   --text-sm: 0.875em;
   --text-md: 0.95em;
+  /* Ramp roles (destination §5): 17px emphasized body, then the two
+   * display sizes — the fluid M26 curves live INSIDE the tokens so the
+   * panel/page headings keep their raised presence from one home. */
+  --text-lg: 1.0625rem;
+  --text-xl: clamp(1.2rem, 1rem + 0.9vw, 1.5rem);
+  --text-2xl: clamp(1.35rem, 2.2vw, 1.7rem);
   --panel-pad: 24px 26px 26px;
-  --row-pad: 10px 12px;
+  /* List rows sit on the 4px grid (destination §5): 12px both axes —
+   * the three row families (threads, faxes, live-context) share it. */
+  --row-pad: 12px;
   --row-gap: 12px;
   /* Shell geometry (theme-invariant). The island's column bounds and the
    * content ceiling live here so the collapse (P2), the grid and the
@@ -341,8 +359,8 @@ h3 {
   border-radius: 999px;
   cursor: pointer;
   transition:
-    color 120ms ease,
-    border-color 120ms ease;
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
 }
 
 .wp-theme-toggle:hover {
@@ -372,8 +390,8 @@ h3 {
     border-radius: 999px;
     cursor: pointer;
     transition:
-      color 120ms ease,
-      border-color 120ms ease;
+      color var(--dur-fast) var(--ease),
+      border-color var(--dur-fast) var(--ease);
   }
 
   .wp-palette-open:hover {
@@ -505,9 +523,9 @@ h3 {
   font-size: var(--text-sm);
   cursor: pointer;
   transition:
-    color 120ms ease,
-    border-color 120ms ease,
-    background 120ms ease;
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
 }
 
 @media (min-width: 901px) {
@@ -559,8 +577,8 @@ h3 {
 .wp-nav-link {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  padding: 8px 15px;
+  gap: clamp(4px, 0.5cqw, 7px);
+  padding: 8px clamp(8px, 1.1cqw, 15px);
   color: var(--muted);
   font-weight: 550;
   font-size: var(--text-md);
@@ -568,14 +586,18 @@ h3 {
   border: 1px solid transparent;
   border-radius: 999px;
   transition:
-    color 120ms ease,
-    background 120ms ease,
-    border-color 120ms ease;
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
 }
 
 .wp-nav-link:hover {
   color: var(--text);
-  background: var(--surface-2);
+  background: color-mix(in oklab, var(--text) 6%, transparent);
+}
+
+.wp-nav-link:active {
+  scale: 0.97;
 }
 
 .wp-nav-link.wp-active {
@@ -610,6 +632,17 @@ h3 {
   padding: 1px 7px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
+}
+
+/* Single-row fit (§f 12): the nav lives inside the tab column, so the
+ * pill paddings/gap scale with the CONTAINER (cqw of tabcol) instead of
+ * the viewport — with the island open at 1280 the row compacts fluidly
+ * instead of wrapping Settings onto a second line; the container step
+ * drops the label size last. */
+@container tabcol (max-width: 880px) {
+  .wp-nav-link {
+    font-size: var(--text-sm);
+  }
 }
 
 /* Live-call presence (shell.js mirrors the island's call count into the
@@ -737,7 +770,7 @@ h3 {
 .wp-skeleton {
   display: grid;
   gap: var(--row-gap);
-  padding: 18px 16px;
+  padding: 16px;
 }
 
 .wp-skeleton[hidden] {
@@ -785,7 +818,7 @@ h3 {
    * stays a percentage, so the user's browser font-size preference
    * still wins). The restyle gives page titles real presence — a page
    * should announce itself. */
-  font-size: clamp(1.2rem, 1rem + 0.9vw, 1.5rem);
+  font-size: var(--text-xl);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -908,7 +941,7 @@ h3 {
 
 .wp-welcome-title {
   margin: 0;
-  font-size: clamp(1.35rem, 2.2vw, 1.7rem);
+  font-size: var(--text-2xl);
   font-weight: 750;
   letter-spacing: -0.025em;
   max-width: 18em;
@@ -1228,11 +1261,31 @@ button.wp-danger:hover {
 }
 
 .wp-row-actions .wp-mini:hover,
-.wp-thread-rowwrap .wp-mini:hover,
+.wp-thread-rowwrap .wp-mini:hover {
+  border-color: transparent;
+  background: color-mix(
+    in oklab,
+    var(--accent) var(--state-hover),
+    transparent
+  );
+}
+
+/* Press answers deeper than hover (12% layer) plus a micro-scale; the
+ * keyboard channel keeps the global focus ring, not a background flip. */
+.wp-row-actions .wp-mini:active,
+.wp-thread-rowwrap .wp-mini:active {
+  border-color: transparent;
+  scale: 0.96;
+  background: color-mix(
+    in oklab,
+    var(--accent) var(--state-pressed),
+    transparent
+  );
+}
+
 .wp-row-actions .wp-mini:focus-visible,
 .wp-thread-rowwrap .wp-mini:focus-visible {
   border-color: transparent;
-  background: var(--accent-soft);
 }
 
 /* Inline SVG icons (rendered by the templ-components icons package —
@@ -1285,8 +1338,8 @@ input[type="file"]::file-selector-button {
   margin-inline-end: 12px;
   cursor: pointer;
   transition:
-    background 120ms ease,
-    color 120ms ease;
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
 }
 
 input[type="file"]::file-selector-button:hover {
@@ -1325,8 +1378,8 @@ select:focus-visible,
 summary:focus-visible,
 button:focus-visible,
 a:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 2px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 /* Thread search (Messages tab): full-width box above the list. The form
@@ -1375,8 +1428,8 @@ a:focus-visible {
   text-decoration: none;
   color: var(--text);
   transition:
-    border-color 120ms ease,
-    background 120ms ease;
+    border-color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
 }
 
 .wp-thread-row:hover {
@@ -1407,9 +1460,13 @@ a:focus-visible {
 
 .wp-thread-side {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 8px;
   align-self: start;
+}
+
+.wp-thread-side .wp-mini {
+  align-self: center;
 }
 
 .wp-thread-when {
@@ -1584,8 +1641,8 @@ a:focus-visible {
   border-inline-start: 3px solid transparent;
   border-radius: var(--radius);
   transition:
-    border-color 120ms ease,
-    background 120ms ease;
+    border-color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
 }
 
 .wp-row:hover {
@@ -1895,13 +1952,17 @@ a:focus-visible {
   color: inherit;
   text-decoration: none;
   transition:
-    background 120ms ease,
-    border-color 120ms ease;
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
 }
 
 .wp-rail-row:hover {
   background: var(--surface-2);
   border-color: var(--border);
+}
+
+.wp-rail-row:active {
+  background: color-mix(in oklab, var(--text) 6%, transparent);
 }
 
 /* The open conversation is a SELECTED row, not a hovered one: accent-soft
@@ -1960,9 +2021,10 @@ a:focus-visible {
   min-width: 0;
   font-size: var(--text-xs);
   color: var(--muted);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* The rail's when-stamp matches the thread list's voice but never eats the
@@ -2066,6 +2128,18 @@ a:focus-visible {
   border-bottom-left-radius: 6px;
   background: var(--surface-2);
   align-self: flex-start;
+}
+
+/* Burst grouping (destination §6): consecutive bubbles ride tight so a
+ * burst reads as one utterance; a polarity change breathes at the
+ * container's full gap — CSS-only via the adjacent-sibling pair. */
+.wp-bubble + .wp-bubble {
+  margin-top: -4px;
+}
+
+.wp-bubble + .wp-bubble.wp-out,
+.wp-bubble.wp-out + .wp-bubble:not(.wp-out) {
+  margin-top: 4px;
 }
 
 /* Outbound polarity is carried by FILL, not tint: the sent voice is a
@@ -2473,6 +2547,7 @@ a:focus-visible {
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
   }
@@ -2506,12 +2581,12 @@ a:focus-visible {
 .wp-overlay-input {
   width: 100%;
   max-width: 480px;
-  padding: 10px 14px;
+  padding: 12px 16px;
   font: inherit;
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
+  border-radius: 999px;
 }
 
 .wp-overlay-list {
@@ -2533,6 +2608,10 @@ a:focus-visible {
   border-radius: var(--radius-sm);
   cursor: pointer;
   color: var(--text);
+}
+
+.wp-overlay-item:hover {
+  background: color-mix(in oklab, var(--text) 6%, transparent);
 }
 
 .wp-overlay-item.wp-selected {
@@ -2628,7 +2707,7 @@ details.wp-admin-call-row {
 .htmx-request.htmx-indicator {
   opacity: 1;
   visibility: visible;
-  transition: opacity 200ms ease-in;
+  transition: opacity var(--dur) var(--ease);
 }
 
 /* ==================================================================
@@ -2701,9 +2780,9 @@ a.wp-thread-row.wp-pinned {
   font-size: var(--text-sm);
   cursor: pointer;
   transition:
-    background 120ms ease,
-    color 120ms ease,
-    border-color 120ms ease;
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
 }
 
 .wp-chip:hover {
@@ -2855,6 +2934,7 @@ dialog.wp-lightbox {
 
 dialog.wp-lightbox::backdrop {
   background: var(--scrim);
+  backdrop-filter: blur(2px);
 }
 
 dialog.wp-lightbox img {
