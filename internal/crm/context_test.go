@@ -58,6 +58,7 @@ func newContextClient(t *testing.T, stub *contextStub) (*Client, *Resolver) {
 const fullContextJSON = `{
   "id": "01M",
   "name": "Ada Lovelace",
+  "email": "ada@example.com",
   "company": "Analytical Engines Ltd",
   "tags": ["lead", "conference"],
   "open_deals": [
