@@ -9,7 +9,8 @@ import (
 )
 
 // Legacy-transcripts seam (2026-10-15): the call-transcript truth moved
-// to the metaengine read models (readmodels.db). The SQL
+// to the metaengine read models (readmodels.db at the time; system.db
+// since the 2026-11-09 journal swap). The SQL
 // call_transcripts table stays untouched in webphone.db (the migration
 // ladder never rewrites shipped shape), so an upgraded deployment's
 // transcript history rides this ONE transitional read at boot: the

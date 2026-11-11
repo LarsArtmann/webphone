@@ -61,8 +61,9 @@ type JournalSweepers struct {
 // without spawning anything. Session rows are NOT touched here: the
 // session store already sweeps its own expiry lazily (on read and on
 // the next mint). engine is the read-model container: fax jobs and
-// call transcripts live in readmodels.db since the T11/T13 swaps, so
-// their retention legs ride the engine sweeps (fax documents come
+// call transcripts live in system.db since the 2026-11-09 journal
+// swap (readmodels.db before that, T11/T13), so their retention legs
+// ride the engine sweeps (fax documents come
 // back for unlinking; transcripts carry no blobs). threads is the
 // journal-backed core leg (A36): expired threads tombstone out of the
 // views AND the journal itself, so the GDPR arm deletes bytes, not

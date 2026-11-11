@@ -1,6 +1,12 @@
 // Package readmodels owns webphone's metaengine storage: the
-// sqlite-backed engine whose read models and dedup windows live in
-// their OWN database file (readmodels.db), separate from webphone.db.
+// sqlite-backed engine whose read models and dedup windows used to
+// live in their OWN database file (readmodels.db). Since the
+// 2026-11-09 storage-ladder retirement (A43) the composition root
+// stopped opening readmodels.db — every projection answers from
+// system.db and the Engine here is a TEST implementer; on upgraded
+// deployments the file is an inert orphan outside the backup set. The
+// header below records WHY the separate file existed (the DDL-ownership
+// doctrine that system.db now carries forward).
 //
 // Why a separate file: the hand-written migration ladder in store/db.go
 // is a ratified invariant (plan N5/N6) — engine-owned DDL never gets

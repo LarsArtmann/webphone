@@ -117,8 +117,8 @@ var _ DialGate = (*DialWindows)(nil)
 // per-(owner, remote) last-attempt windows plus one-shot overrides.
 // The gate decision and the record ride ONE mutex section — the
 // check+record transaction — so a racing double-click cannot pass two
-// checks before either record lands. Rides readmodels.db (the backup
-// set covers it).
+// checks before either record lands. Rides system.db (the journal
+// world's engine; readmodels.db retired 2026-11-09).
 //
 // branching-flow COMPOSITION_mixin (baselined): the shared engine-seam
 // shape (models+reader+mu, see Notes/Reviews) — deliberate symmetry,

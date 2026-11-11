@@ -89,9 +89,8 @@ var _ ReviewsGate = (*Reviews)(nil)
 // Reviews is the engine-backed post-call-review store: the durable
 // record of what the AI made of one finished call, one slot per
 // (owner, call id). The automatic job and the manual summarize path
-// both write through Set; History renders the states. Rides
-// readmodels.db (user data — the backup set covers it since the
-// readmodels train).
+// both write through Set; History renders the states. Rides system.db
+// (the journal world's engine; readmodels.db retired 2026-11-09).
 //
 // branching-flow COMPOSITION_mixin (baselined): the shared engine-seam
 // shape (models+reader+mu, see Notes/Contacts) — deliberate symmetry,
