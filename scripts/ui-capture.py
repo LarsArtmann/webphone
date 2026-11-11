@@ -1749,9 +1749,13 @@ def self_test() -> int:
     )
     check(
         "open falls back to the run dir",
-        open_target(None, "runs/first", True) == "file://" + os.path.abspath("runs/first"),
+        open_target(None, "runs/first", True)
+        == "file://" + os.path.abspath("runs/first"),
     )
-    check("open headless refuses", open_target("runs/x/compare.html", "runs/x", False) is None)
+    check(
+        "open headless refuses",
+        open_target("runs/x/compare.html", "runs/x", False) is None,
+    )
 
     try:
         from PIL import Image

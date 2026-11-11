@@ -13,10 +13,10 @@ one the login flow reads. Promotion of the /tmp recipe, 2026-11-10
 
 import json
 import re
-import sys
-import urllib.request
-import urllib.error
 import ssl
+import sys
+import urllib.error
+import urllib.request
 from pathlib import Path
 
 BASE = "https://pbx.artmann.tech"
