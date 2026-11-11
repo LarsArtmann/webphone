@@ -56,14 +56,6 @@ type ShellProps struct {
 	Unread int
 	// NewVoicemail counts badge the Voicemail nav item.
 	NewVoicemail int
-	// Passkey renders the island's passkey (WebAuthn) front door with
-	// the extension login demoted to break-glass. False keeps the served
-	// shell byte-equivalent to the pre-passkey login card.
-	Passkey bool
-	// SSO renders the OIDC (Pocket ID) front door: one link into the
-	// IdP's authorization-code + PKCE dance. False renders nothing, so
-	// deployments without OIDC keep their exact login card.
-	SSO bool
 	// Admin renders the Admin tab in the nav: the signed-in session's
 	// login email carries the admin flag (resolved per request from the
 	// live mapping). False keeps the served shell byte-equivalent to a
@@ -180,7 +172,7 @@ templ ShellBody(props ShellProps) {
 	</header>
 	<div class="wp-body">
 		<aside class="wp-island" id="wp-island" aria-label="Phone">
-			@PhoneIsland(PhoneIslandProps{Passkey: props.Passkey, SSO: props.SSO})
+			@PhoneIsland()
 			// The live call's CRM context (issue #10). One fixed slot, filled
 			// by the shell from /partials/live-context when a call starts and
 			// emptied when the last one ends: an empty answer renders nothing
@@ -379,7 +371,10 @@ templ SignInHint(lang Lang) {
 			<li>{ T(lang, "welcome.point2") }</li>
 			<li>{ T(lang, "welcome.point3") }</li>
 		</ul>
-		<p class="wp-welcome-hint">{ T(lang, "signin.hint") }</p>
+		<p class="wp-welcome-hint">
+			{ T(lang, "signin.hint") }
+			<a class="wp-welcome-signin" href="/login">{ T(lang, "signin.link") }</a>
+		</p>
 		<p class="wp-welcome-compact-line">{ T(lang, "welcome.compact") }</p>
 		<button type="button" class="wp-mini wp-welcome-dismiss">{ T(lang, "welcome.dismiss") }</button>
 	</section>

@@ -17,12 +17,6 @@
 interface IslandDomIds {
   "reg-status": HTMLElement;
   lang: HTMLSelectElement;
-  "login-view": HTMLElement;
-  "login-form": HTMLFormElement;
-  "login-error": HTMLElement;
-  ext: HTMLInputElement;
-  pass: HTMLInputElement;
-  remember: HTMLInputElement;
   "phone-view": HTMLElement;
   "whoami-ext": HTMLElement;
   logout: HTMLButtonElement;
@@ -55,7 +49,6 @@ interface IslandDomIds {
   "wp-adv-toggle": HTMLButtonElement;
   "wp-advanced": HTMLElement;
   "wp-devtest-btn": HTMLButtonElement;
-  "sso-error": HTMLElement;
   "audio-out-wrap": HTMLElement;
   "audio-output": HTMLSelectElement;
 }

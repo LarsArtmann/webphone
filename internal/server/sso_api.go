@@ -121,7 +121,9 @@ func (h *handlers) ssoCallback(w http.ResponseWriter, r *http.Request) {
 }
 
 // ssoFailed logs the classified detail and returns the browser to the
-// login card with a short reason code the island can localize.
+// login page with a short reason code the page translates into its alert
+// (ssoLoginFailureText). The island card no longer renders any login
+// surface, so the failure lands on /login directly.
 func (h *handlers) ssoFailed(w http.ResponseWriter, r *http.Request, err error, op string) {
 	slog.Warn("webphone: oidc login failed", "op", op, "error", err,
 		"family", errorfamily.Classify(err).String(), "code", errorfamily.Code(err))
@@ -129,7 +131,7 @@ func (h *handlers) ssoFailed(w http.ResponseWriter, r *http.Request, err error, 
 	h.clearSSOCookie(w, ssoNonceCookie)
 	h.clearSSOCookie(w, ssoVerifierCookie)
 	w.Header().Set("Cache-Control", "no-store")
-	http.Redirect(w, r, "/?sso_error="+ssoErrorCode(err), http.StatusSeeOther)
+	http.Redirect(w, r, "/login?sso_error="+ssoErrorCode(err), http.StatusSeeOther)
 }
 
 // ssoErrorCode maps a failure onto the island's small reason vocabulary:

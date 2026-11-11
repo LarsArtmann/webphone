@@ -32,12 +32,6 @@ const defineMessages = (table) => table;
 export const I18N = {
   en: defineMessages({
     regState: "Registration state",
-    signin: "Sign in to your extension",
-    extension: "Extension",
-    password: "Password",
-    remember: "remember extension on this device (never the password)",
-    connect: "Connect",
-    connecting: "Connecting…",
     signedInAs: "signed in as",
     signOut: "sign out",
     signOutTitle: "Unregister and sign out",
@@ -118,30 +112,6 @@ export const I18N = {
     iceLoss: (lost) => `${lost} packets lost on receive — network congestion?`,
     iceFailed: "connection failed — media blocked between the networks",
     reconnecting: (delay) => `reconnecting in ${delay}s…`,
-    loginError: (message) =>
-      `Could not connect: ${message}. Check extension/password and that your browser trusts the server certificate.`,
-    passkeySection: "Sign in with a passkey",
-    passkeySignin: "Sign in with passkey",
-    passkeyBreakglass: "Use extension and password instead",
-    ssoSection: "Sign in with Pocket ID",
-    ssoSignin: "Continue to Pocket ID",
-    ssoPasskeyHint:
-      "Passkeys and every other sign-in method your account has work in Pocket ID.",
-    ssoErrorUnmapped:
-      "Your Pocket ID account has no phone mapping here — ask the operator to add your email address.",
-    ssoErrorDirectory:
-      "Your phone account's password could not be verified — ask the operator to refresh it, then try again.",
-    ssoErrorUnverified:
-      "Your Pocket ID email is not verified — verify it in Pocket ID, then try again.",
-    ssoErrorGroups:
-      "Your Pocket ID account is missing the required access group for this phone — ask the operator to add it, then try again.",
-    ssoErrorStale: "That sign-in attempt expired — please start again.",
-    ssoErrorConfig:
-      "Sign-in is not configured correctly on the server — the operator finds the details in the journal.",
-    ssoErrorUnavailable:
-      "Pocket ID is not reachable right now — try again in a minute, or use extension and password.",
-    ssoErrorFailed:
-      "Sign-in with Pocket ID failed — try again, or use extension and password.",
     enrollVerified: (email) =>
       `Token verified for ${email}. Follow your device to create the passkey.`,
     enrollSuccess: "Passkey created. Go to the main page and sign in with it.",
@@ -169,17 +139,10 @@ export const I18N = {
     dtmfFailed: (detail) => `could not send tone: ${detail}`,
     vmDeleteFailed: (detail) => `could not delete message: ${detail}`,
     vmPlayFailed: (detail) => `could not play message: ${detail}`,
-    sessionFailed401:
-      "The server rejected the tab sign-in — check extension and password.",
-    sessionThrottled: "Too many attempts — wait a moment, then try again.",
     rateLimited: (seconds) =>
       seconds === null
         ? "Too many requests"
         : `Too many requests — retry in ${seconds}s`,
-    sessionFailed: (status) =>
-      `Tab sign-in failed (HTTP ${status}) — calls keep working, tabs stay locked.`,
-    sessionNetFailed:
-      "Could not reach the server for tab sign-in — calls keep working.",
     lineSwitchLabel: "Line",
     switchBlockedByCall: "End the call before switching lines.",
     switchFailed: (status) => `Could not switch lines (HTTP ${status}).`,
@@ -198,8 +161,6 @@ export const I18N = {
     ssePillDown: "Live tab updates: not connected",
     ssePillRetry: "Live tab updates: reconnecting…",
     resuming: "resuming session…",
-    resumeRejected: (message) =>
-      `Your saved sign-in was rejected (${message}) — the password may have changed. Sign in again.`,
     crmLogFailed: (detail) =>
       `Call not recorded in the CRM (${detail}) — you can log it manually.`,
     typeaheadLabel: "Contact suggestions",
@@ -270,34 +231,6 @@ export const I18N = {
   }),
   de: defineMessages({
     regState: "Registrierungsstatus",
-    signin: "Anmeldung an Ihrer Nebenstelle",
-    extension: "Nebenstelle",
-    password: "Passwort",
-    remember: "Nebenstelle auf diesem Gerät merken (niemals das Passwort)",
-    connect: "Verbinden",
-    connecting: "Verbindung wird aufgebaut…",
-    passkeySection: "Mit Passkey anmelden",
-    passkeySignin: "Mit Passkey anmelden",
-    passkeyBreakglass: "Stattdessen Nebenstelle und Passwort verwenden",
-    ssoSection: "Mit Pocket ID anmelden",
-    ssoSignin: "Weiter zu Pocket ID",
-    ssoPasskeyHint:
-      "Passkeys und alle anderen Anmeldeverfahren Ihres Kontos funktionieren in Pocket ID.",
-    ssoErrorUnmapped:
-      "Ihr Pocket ID-Konto hat hier keine Telefon-Zuordnung — bitten Sie den Betreiber, Ihre E-Mail-Adresse einzutragen.",
-    ssoErrorDirectory:
-      "Das Passwort Ihres Telefon-Kontos konnte nicht verifiziert werden — bitten Sie den Betreiber, es zu erneuern, und versuchen Sie es erneut.",
-    ssoErrorUnverified:
-      "Ihre Pocket ID-E-Mail ist nicht bestätigt — bestätigen Sie sie in Pocket ID und versuchen Sie es erneut.",
-    ssoErrorGroups:
-      "Ihrem Pocket ID-Konto fehlt die erforderliche Zugriffsgruppe für dieses Telefon — bitten Sie den Betreiber, sie einzutragen, und versuchen Sie es erneut.",
-    ssoErrorStale: "Dieser Anmeldeversuch ist abgelaufen — bitte neu starten.",
-    ssoErrorConfig:
-      "Die Anmeldung ist serverseitig nicht korrekt konfiguriert — der Betreiber findet die Details im Journal.",
-    ssoErrorUnavailable:
-      "Pocket ID ist gerade nicht erreichbar — versuchen Sie es in einer Minute erneut oder nutzen Sie Nebenstelle und Passwort.",
-    ssoErrorFailed:
-      "Anmeldung mit Pocket ID fehlgeschlagen — erneut versuchen oder Nebenstelle und Passwort verwenden.",
     enrollVerified: (email) =>
       `Token verifiziert für ${email}. Folgen Sie Ihrem Gerät, um den Passkey zu erstellen.`,
     enrollSuccess:
@@ -396,8 +329,6 @@ export const I18N = {
     iceFailed:
       "Verbindung fehlgeschlagen — Medien zwischen den Netzen blockiert",
     reconnecting: (delay) => `Neuverbindung in ${delay}s…`,
-    loginError: (message) =>
-      `Verbindung fehlgeschlagen: ${message}. Prüfen Sie Nebenstelle/Passwort und ob Ihr Browser dem Serverzertifikat vertraut.`,
     callFailed: (detail) => `Anruf fehlgeschlagen: ${detail}`,
     callEnded: (dur) => `Anruf beendet · ${dur}`,
     missedCall: (from) => `verpasster Anruf von ${from}`,
@@ -419,18 +350,10 @@ export const I18N = {
       `Nachricht konnte nicht gelöscht werden: ${detail}`,
     vmPlayFailed: (detail) =>
       `Nachricht konnte nicht abgespielt werden: ${detail}`,
-    sessionFailed401:
-      "Die Server-Anmeldung wurde abgelehnt — Nebenstelle und Passwort prüfen.",
-    sessionThrottled:
-      "Zu viele Versuche — bitte kurz warten und erneut versuchen.",
     rateLimited: (seconds) =>
       seconds === null
         ? "Zu viele Anfragen"
         : `Zu viele Anfragen — erneuter Versuch in ${seconds}s`,
-    sessionFailed: (status) =>
-      `Server-Anmeldung fehlgeschlagen (HTTP ${status}) — Anrufe funktionieren weiter, Tabs bleiben gesperrt.`,
-    sessionNetFailed:
-      "Server für die Tab-Anmeldung nicht erreichbar — Anrufe funktionieren weiter.",
     lineSwitchLabel: "Nebenstelle",
     switchBlockedByCall:
       "Anruf beenden, bevor die Nebenstelle gewechselt wird.",
@@ -452,8 +375,6 @@ export const I18N = {
     ssePillDown: "Live-Aktualisierungen: nicht verbunden",
     ssePillRetry: "Live-Aktualisierungen: verbinde neu…",
     resuming: "Sitzung wird fortgesetzt…",
-    resumeRejected: (message) =>
-      `Gespeicherte Anmeldung abgelehnt (${message}) — das Passwort hat sich möglicherweise geändert. Bitte erneut anmelden.`,
     crmLogFailed: (detail) =>
       `Anruf nicht im CRM erfasst (${detail}) — bitte manuell nachtragen.`,
     typeaheadLabel: "Kontaktvorschläge",

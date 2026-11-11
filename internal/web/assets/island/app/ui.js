@@ -22,12 +22,6 @@ export const $ = (id) =>
 export const els = {
   regStatus: $("reg-status"),
   lang: $("lang"),
-  loginView: $("login-view"),
-  loginForm: $("login-form"),
-  loginError: $("login-error"),
-  ext: $("ext"),
-  pass: $("pass"),
-  remember: $("remember"),
   phoneView: $("phone-view"),
   whoami: $("whoami-ext"),
   logout: $("logout"),

@@ -1,99 +1,19 @@
-// Server session sync: after the island's SIP REGISTER succeeds, hand the
-// same credentials to the webphone server so the tabs and the phone-api
-// proxy can act for this extension. The session lives in an HttpOnly
-// cookie server-side; the password is never persisted in the browser.
-//
-// With credential brokering on (sipCredentialMode), createSession also
-// RETURNS the session-derived REGISTER credential from the 201 answer —
-// the login-first call site registers with it and the typed password
-// never leaves island memory.
+// Server session sync: the island rides the session cookie the server
+// mints (the login page's form POST, a passkey finish, or the OIDC
+// callback — the boot resume probe reads the same row). The session
+// lives in an HttpOnly cookie server-side; the password is never
+// persisted in the browser.
 //
 // Failures are deliberately non-fatal: the call UI does not depend on the
-// server session — if it cannot be created, tabs stay gated and the island
-// keeps calling. Every outcome lands in #log (English, operator-facing)
+// server session — if a resume fails, the island is never rendered (the
+// anonymous root redirects to /login) and a broken probe answers the
+// front door. Every outcome lands in #log (English, operator-facing)
 // so a tab-only breakage is visible in the island's own history.
 
 import { t } from "./i18n.js";
 import { announce, errorMessage, log } from "./ui.js";
 import { csrfToken } from "./csrf.js";
 import { sessions, viewStateOf } from "./state.js";
-
-/**
- * @param {string} extension
- * @param {string} password
- * @param {{ quiet?: boolean }} [options]
- * @returns {Promise<string | null>} the derived REGISTER credential, when brokering is on
- */
-export async function createSession(
-  extension,
-  password,
-  { quiet = false } = {},
-) {
-  try {
-    const res = await fetch("/api/session", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRF-Token": csrfToken(),
-      },
-      body: JSON.stringify({ extension, password }),
-    });
-    if (!res.ok) {
-      // The tab session is deliberately non-fatal (calls keep working),
-      // but "non-fatal" must not mean "invisible": every rejection class
-      // gets a toast in the user's language, alongside the #log line —
-      // unless the caller surfaces the failure inline (quiet).
-      if (!quiet) {
-        if (res.status === 401) {
-          announce(t("sessionFailed401"), "warn");
-        } else if (res.status === 429) {
-          announce(t("sessionThrottled"), "warn");
-        } else {
-          announce(t("sessionFailed")(res.status), "warn");
-        }
-      }
-      log(`server session failed (HTTP ${res.status})`, "error");
-      console.warn(
-        "webphone: server session not created (HTTP " + res.status + ")",
-      );
-      return null;
-    }
-    // did is the extension's presented number (server config); it rides
-    // the event detail so the whoami line can show the real number too.
-    // sip_credential is the derived REGISTER credential (brokering on).
-    // The agent_mode* fields feed the shell's drafts pill (M13); empty
-    // when the seam is off or the boot probe could not see the agent.
-    let did = "";
-    let sipCredential = null;
-    let agent = {};
-    try {
-      const data = await res.json();
-      did = data.did || "";
-      sipCredential = data.sip_credential || null;
-      agent = {
-        agentMode: data.agent_mode || "",
-        agentModeSource: data.agent_mode_source || "",
-        agentDefaultMode: data.agent_default_mode || "",
-        agentModes: Array.isArray(data.agent_modes) ? data.agent_modes : [],
-      };
-    } catch {
-      // A bodyless or non-JSON success is not fatal: identity is cosmetic.
-    }
-    // The login response invalidated the old CSRF token (fixation
-    // defense); adopt the fresh one before anything else POSTs — the
-    // shared post-login sequence (adopt → SSE attach → announce) lives
-    // in adoptServerSession below.
-    await adoptServerSession({ did, ...agent });
-    return sipCredential;
-  } catch (err) {
-    if (!quiet) announce(t("sessionNetFailed"), "warn");
-    log(`server session failed (${errorMessage(err)})`, "error");
-    console.warn(
-      "webphone: server session not created (" + errorMessage(err) + ")",
-    );
-    return null;
-  }
-}
 
 // adoptServerSession finishes every client-side step of a login whose
 // server session ALREADY exists (the extension path mints it in

@@ -339,19 +339,17 @@ func New(deps Deps) http.Handler {
 	// cookie derives: behind the TLS-terminating proxy r.TLS is always
 	// nil, so Secure must come from the wired policy, not the request.
 	cookies := session.CookiePolicy{Secure: csrfCfg.Secure}
-	// The library passkey login page over the identity layer. Our config
-	// is constant (fixed paths, valid CSS URL), so a build failure is a
-	// wiring defect, not an operator state: log it loudly and leave the
-	// handler nil — /login then answers the styled 404 instead of a
+	// The library login page over the identity layer (when wired) plus
+	// webphone's own extension form + OIDC door (ExtraSection). It exists
+	// in EVERY mode — /login is the one auth front door; a build failure
+	// is a wiring defect, not an operator state: log it loudly and leave
+	// the handler nil — /login then answers the styled 404 instead of a
 	// half-built login surface.
 	var loginPage *loginpage.Handler
-	if deps.UserAuth != nil {
-		lp, err := newLoginPage(deps)
-		if err != nil {
-			slog.Error("webphone: login page build failed; /login answers the styled 404", "error", err)
-		} else {
-			loginPage = lp
-		}
+	if lp, err := newLoginPage(deps); err != nil {
+		slog.Error("webphone: login page build failed; /login answers the styled 404", "error", err)
+	} else {
+		loginPage = lp
 	}
 	// The island beacon intake is config-gated (metrics.island_beacon,
 	// default OFF): the API seam gets a true nil INTERFACE (the traceSeam
@@ -478,7 +476,16 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("GET /contacts/export", h.exportContacts)
 	protected.Handle("POST /api/session",
 		h.loginLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(h.createSession))))
-	// The passkey (WebAuthn) login + enrollment surface: registered ONLY
+	// The login page front door — THE auth surface in every mode (the
+	// library passkey page when the identity layer is wired, webphone's
+	// extension form + OIDC door in its ExtraSection always). The nonce
+	// middleware mints the per-request CSP nonce; loginPage overrides the
+	// app-wide strict CSP for this surface alone (the library's inline
+	// ceremony scripts carry the nonce). Anonymous surface: the handler
+	// redirects a live session to the shell.
+	protected.Handle("GET /login",
+		httputil.Nonce(httputil.NonceConfig{})(http.HandlerFunc(h.loginPage)))
+	// The passkey (WebAuthn) login + enrollment ceremonies: registered ONLY
 	// when the identity layer is wired (config-gated in the composition
 	// root) — a disabled deployment keeps answering the styled 404.
 	// Login ceremonies share the login flood budget (email probing is
@@ -486,13 +493,6 @@ func New(deps Deps) http.Handler {
 	// one-time token is the real gate, the bucket only fences runaway
 	// clients).
 	if deps.UserAuth != nil {
-		// The library login page's front door. The nonce middleware
-		// mints the per-request CSP nonce; loginPage overrides the
-		// app-wide strict CSP for this surface alone (the library's
-		// inline ceremony scripts carry the nonce). Anonymous surface:
-		// the handler redirects a live session to the shell.
-		protected.Handle("GET /login",
-			httputil.Nonce(httputil.NonceConfig{})(http.HandlerFunc(h.loginPage)))
 		// The passkey login ceremonies at the usermgmt-canonical paths
 		// the library page's JS drives (usermgmt's pinned wire
 		// contract; the handlers are webphone's session-minting own).

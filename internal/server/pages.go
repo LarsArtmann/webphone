@@ -75,8 +75,17 @@ type handlers struct {
 	island *islandLatency
 }
 
-// page renders the full shell for the root URL.
+// page renders the full shell for the root URL. The login page is the
+// front door: an anonymous root navigation redirects there instead of
+// rendering the app shell (deep links keep the SignInHint door — a stale
+// share stays addressable, / never invites a dead shell). The redirect is
+// no-store: an auth hop must never be cached.
 func (h *handlers) page(w http.ResponseWriter, r *http.Request) {
+	if _, ok := session.From(r.Context()); !ok {
+		w.Header().Set("Cache-Control", "no-store")
+		http.Redirect(w, r, "/login", http.StatusSeeOther)
+		return
+	}
 	h.renderShell(w, r, views.TabMessages)
 }
 
@@ -96,10 +105,6 @@ func (h *handlers) renderShell(w http.ResponseWriter, r *http.Request, tab views
 	// string map cannot fail.
 	props.CSRFHxHeaders, _ = templ.JSONString(map[string]string{"X-CSRF-Token": props.CSRFToken}) //nolint:erraudit // json.Marshal of map[string]string cannot fail
 	props.Lang = lang
-	// The passkey front door renders only when the identity layer is
-	// wired; a disabled deployment keeps the extension-only login card.
-	props.Passkey = h.deps.Config.Auth.Passkey.Enabled()
-	props.SSO = h.deps.SSO != nil
 	// The live-call context slot exists only when the CRM seam is on: zero
 	// CRM config keeps the served shell byte-identical to a deployment
 	// that never had the integration (issue #10).

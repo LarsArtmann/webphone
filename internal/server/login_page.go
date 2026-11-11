@@ -4,33 +4,46 @@ import (
 	"net/http"
 
 	loginpage "github.com/larsartmann/cqrs-htmx/loginpage/v4"
+	"github.com/larsartmann/cqrs-htmx/usermgmt/v4"
 	"github.com/larsartmann/httputil"
 
 	"github.com/larsartmann/webphone/internal/session"
+	"github.com/larsartmann/webphone/internal/web/views"
 )
 
-// The library-owned passkey login page (cqrs-htmx/loginpage): the proven
-// ceremony client (Base64URL coercion, browser detection, friendly error
-// copy, spinner states) replaces the hand-rolled island form + JS. The
-// server-side ceremony endpoints stay webphone's own — they mint the
-// webphone session and return the SIP REGISTER credential — and speak
-// usermgmt's pinned wire contract, which is exactly what the library's
-// embedded JS drives: begin {email} → {options, session_key}, finish
-// ?user_id=<session_key> + raw assertion → redirect to "/" where the
-// island's boot probe (GET /api/session) signs in and REGISTERs — the
-// same resume path the SSO lane and a returning browser take.
+// The library-owned login page (cqrs-htmx/loginpage) at /login: THE auth
+// front door in every mode. The library renders the passkey ceremony when
+// the identity layer is wired, and its ExtraSection slot hosts webphone's
+// own lanes — the OIDC (Pocket ID) door and the extension + SIP-password
+// form (views.LoginPageExtra). The server-side ceremony + session
+// endpoints stay webphone's own; the library page speaks usermgmt's pinned
+// wire contract, which is exactly what the library's embedded JS drives:
+// begin {email} → {options, session_key}, finish ?user_id=<session_key> +
+// raw assertion → redirect to "/" where the island's boot probe (GET
+// /api/session) signs in and REGISTERs — the same resume path the SSO lane
+// and a returning browser take. The extension form's submit
+// (/assets/login-page.js) posts /api/session and lands on the same resume
+// path; no island runtime lives on this page.
 
 // newLoginPage builds the library login page over the embedded identity
-// layer. Registration stays HIDDEN: enrollment is token-gated by design
-// (CLI-minted, operator-provisioned; the /enroll page owns that flow) —
-// a phone system never grows self-service accounts. The page carries no
-// OAuth2 buttons: the island card keeps the Pocket ID link (zero-hop,
-// unchanged), so each sign-in method keeps exactly one door.
+// layer (when wired) plus webphone's own sign-in section. Registration
+// stays HIDDEN: enrollment is token-gated by design (CLI-minted,
+// operator-provisioned; the /enroll page owns that flow) — a phone system
+// never grows self-service accounts. The page carries no library OAuth2
+// buttons: the OIDC seam is webphone's own lane, hosted as part of the
+// ExtraSection, so each sign-in method keeps exactly one door.
 func newLoginPage(deps Deps) (*loginpage.Handler, error) {
+	var svc *usermgmt.Service
+	if deps.UserAuth != nil {
+		svc = deps.UserAuth.Usermgmt()
+	}
+	passkeyOn := deps.Config.Auth.Passkey.Enabled()
 	return loginpage.New(loginpage.Config{
-		Service:  deps.UserAuth.Usermgmt(),
-		Title:    "Sign in",
-		Brand:    "WebPhone",
+		Service: svc,
+		Title:   "Sign in",
+		Brand:   "WebPhone",
+		// A live session post-login lands on the shell, where the boot
+		// probe resumes and registers.
 		Redirect: "/",
 		// The scoped Tailwind build carrying the app tokens + the
 		// loginpage/templ-components classes (see login.css.input).
@@ -39,9 +52,16 @@ func newLoginPage(deps Deps) (*loginpage.Handler, error) {
 		// library's JS posts to: /api/auth/webauthn/login/{begin,finish}.
 		AuthPrefix: "/api",
 		// The nonce the CSP override below pins onto the page's inline
-		// scripts (ceremony JS + config JSON + the theme preload).
+		// scripts (ceremony JS + config JSON + the theme preload). The
+		// ExtraSection's script is same-origin external ('self'), no
+		// nonce needed.
 		NonceFromRequest: httputil.NonceFromRequest,
 		NoRegistration:   true,
+		// webphone's own sign-in lanes: extension form always (the
+		// break-glass lifeline under the passkey ceremony, the primary
+		// method when the identity layer is off), Pocket ID above it
+		// when the OIDC seam is wired.
+		ExtraSection: views.LoginPageExtra(!passkeyOn, deps.SSO != nil),
 	})
 }
 
@@ -58,14 +78,25 @@ func loginContentSecurityPolicy(nonce string) string {
 		"frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 }
 
-// loginPage serves the passkey login page. A live session skips it
-// entirely (the shell is where a signed-in browser belongs); the
-// passkey-off deployment never registers the route and keeps answering
-// the styled 404.
+// loginPage serves the login page. A live session skips it entirely (the
+// shell is where a signed-in browser belongs). An SSO callback failure
+// lands here as ?sso_error=<code>; the short code translates into the
+// library page's ?error= alert (the login page is English-only server
+// copy, so the sentence is built server-side, not island-side).
 func (h *handlers) loginPage(w http.ResponseWriter, r *http.Request) {
 	if h.loginPageHandler == nil {
 		h.notFound(w, r)
 		return
+	}
+	if code := r.URL.Query().Get("sso_error"); code != "" && r.URL.Query().Get("error") == "" {
+		query := r.URL.Query()
+		query.Del("sso_error")
+		query.Set("error", ssoLoginFailureText(code))
+		rewritten := *r
+		u := *r.URL
+		u.RawQuery = query.Encode()
+		rewritten.URL = &u
+		r = &rewritten
 	}
 	if _, ok := session.From(r.Context()); ok {
 		w.Header().Set("Cache-Control", "no-store")
@@ -77,4 +108,27 @@ func (h *handlers) loginPage(w http.ResponseWriter, r *http.Request) {
 	// scripts. The nonce middleware generated the value this request.
 	w.Header().Set("Content-Security-Policy", loginContentSecurityPolicy(httputil.NonceFromRequest(r)))
 	h.loginPageHandler.ServeHTTP(w, r)
+}
+
+// ssoLoginFailureText renders the island's old ?sso_error= reason
+// vocabulary (ssoErrorCode) as the one English sentence the login page's
+// alert shows. The honest detail stays in the journal; a browser cannot
+// act on it.
+func ssoLoginFailureText(code string) string {
+	switch code {
+	case "unmapped":
+		return "Your email has no phone line mapped; ask the operator to add one."
+	case "directory":
+		return "Your phone line's directory entry could not be read; ask the operator."
+	case "unverified":
+		return "Your email is not verified at the identity provider."
+	case "groups":
+		return "Your account's groups do not grant phone access."
+	case "stale":
+		return "This sign-in attempt expired; start again."
+	case "config", "unavailable":
+		return "Sign-in is temporarily unavailable; try again shortly."
+	default:
+		return "Sign-in failed; try again."
+	}
 }

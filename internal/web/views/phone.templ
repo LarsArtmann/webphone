@@ -4,25 +4,20 @@ import (
 	"github.com/larsartmann/templ-components/icons"
 )
 
-// PhoneIslandProps carries the server-known login surface: whether the
-// deployment offers the passkey (WebAuthn) front door. Off (the default)
-// the island renders EXACTLY the pre-passkey markup — the break-glass
-// extension form is the only login.
-type PhoneIslandProps struct {
-	Passkey bool
-	// SSO renders the OIDC (Pocket ID) front door above the other login
-	// modes. Off keeps the markup identical to a passkey-only (or plain)
-	// deployment.
-	SSO bool
-}
-
 // PhoneIsland is the SIP call island, ported verbatim from the static
 // site's index.html: every id, class and data-i18n attribute is part of the
 // published DOM contract driven by the upstream browser E2E suite (see
 // AGENTS.md). The scripts at the bottom boot it (config.js renders
 // window.PBX_CONFIG; sip.min.js is the vendored bundle; main.js is the ES
 // module entry).
-templ PhoneIsland(props PhoneIslandProps) {
+//
+// There is NO login card here: /login (the cqrs-htmx loginpage page
+// hosting views.LoginPageExtra) is the one auth front door — an anonymous
+// root navigation redirects there before this island ever renders, and
+// the island's boot probe resumes a returning browser's session without
+// it. The island renders only for a browser the server has already seen
+// a session cookie from.
+templ PhoneIsland() {
 	<div class="island">
 		<main class="app">
 			<header class="topbar">
@@ -33,49 +28,6 @@ templ PhoneIsland(props PhoneIslandProps) {
 				</select>
 				<span id="reg-status" class="status status-offline" data-i18n-title="regState">offline</span>
 			</header>
-
-			<section id="login-view" class="card">
-				if props.SSO {
-					<h2 data-i18n="ssoSection">Sign in with Pocket ID</h2>
-					// The OIDC front door: a plain navigation into the
-					// authorization-code + PKCE dance. The callback mints
-					// the session cookie and lands back here, where the
-					// island's boot probe signs in and registers — no JS
-					// on this path at all.
-					<a id="sso-login" class="primary wp-sso" href="/api/auth/oauth2/begin" data-i18n="ssoSignin">Continue to Pocket ID</a>
-					<p class="hint" id="sso-error" hidden></p>
-					<p class="hint" data-i18n="ssoPasskeyHint">Passkeys and every other sign-in method your account has work in Pocket ID.</p>
-				}
-				if props.Passkey {
-					<h2 data-i18n="passkeySection">Sign in with a passkey</h2>
-					// The passkey front door: the library-owned login page at
-					// /login (cqrs-htmx/loginpage) drives the ceremony —
-					// its finish mints the session and the redirect back
-					// here hands the browser to the island's boot probe,
-					// which signs in and REGISTERs (the SSO lane's exact
-					// resume path). A plain link: no island JS, no inline
-					// ceremony client, works without scripts.
-					<a id="passkey-login" class="primary wp-passkey-link" href="/login" data-i18n="passkeySignin">Sign in with passkey</a>
-					// Break-glass: the extension + SIP-password login stays
-					// one disclosure away — it works without the identity
-					// layer and is the recovery path when a passkey is lost.
-					<details class="passkey-breakglass">
-						<summary data-i18n="passkeyBreakglass">Use extension and password instead</summary>
-						@ExtensionLoginForm()
-					</details>
-				} else if props.SSO {
-					// SSO without passkey: the extension login stays one
-					// disclosure away (the lifeline property — signing into
-					// a phone must never depend on the IdP).
-					<details class="passkey-breakglass">
-						<summary data-i18n="passkeyBreakglass">Use extension and password instead</summary>
-						@ExtensionLoginForm()
-					</details>
-				} else {
-					<h2 data-i18n="signin">Sign in to your extension</h2>
-					@ExtensionLoginForm()
-				}
-			</section>
 
 			<section id="phone-view" class="card" hidden>
 				<div id="offline-banner" class="offline-banner" role="status" hidden data-i18n="offlineBanner">You are offline — calls cannot be made or received.</div>
@@ -178,30 +130,6 @@ templ PhoneIsland(props PhoneIslandProps) {
 
 		<audio id="remote-audio" autoplay></audio>
 	</div>
-}
-
-// ExtensionLoginForm is the verbatim pre-passkey login form + error
-// slot: the ONLY login when the identity mode is off, and the
-// break-glass recovery path (one disclosure away) when it is on. Its
-// ids (#login-form, #ext, #pass, #remember, #login-error) are core DOM
-// contract in both positions.
-templ ExtensionLoginForm() {
-	<form id="login-form" autocomplete="off" aria-describedby="login-error">
-		<label>
-			<span data-i18n="extension">Extension</span>
-			<input id="ext" name="extension" inputmode="numeric" autocomplete="username" placeholder="1000" required></input>
-		</label>
-		<label>
-			<span data-i18n="password">Password</span>
-			<input id="pass" name="password" type="password" autocomplete="current-password" placeholder="••••••••" required></input>
-		</label>
-		<label class="remember">
-			<input id="remember" type="checkbox"></input>
-			<span data-i18n="remember">remember extension on this device (never the password)</span>
-		</label>
-		<button type="submit" class="primary" data-i18n="connect">Connect</button>
-	</form>
-	<p class="hint" id="login-error" hidden></p>
 }
 
 // IslandScripts loads the island's three scripts in dependency order:
