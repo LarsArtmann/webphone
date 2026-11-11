@@ -188,7 +188,7 @@ func SnippetsDomainDecl() system.DomainConfig {
 			}
 		},
 		Projections: []system.ProjectionDeclaration{system.RawQuery(snippetsProjection())},
-		Events: snippetStreamEventTypes,
+		Events:      snippetStreamEventTypes,
 	}
 }
 

@@ -197,7 +197,7 @@ func PushDevicesDomainDecl() system.DomainConfig {
 			}
 		},
 		Projections: []system.ProjectionDeclaration{system.RawQuery(pushDevicesProjection())},
-		Events: pushDeviceStreamEventTypes,
+		Events:      pushDeviceStreamEventTypes,
 	}
 }
 

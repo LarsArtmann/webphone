@@ -143,6 +143,6 @@ func ThreadsDomainDecl() system.DomainConfig {
 			}
 		},
 		Projections: threadProjections(),
-		Events: threadStreamEventTypes,
+		Events:      threadStreamEventTypes,
 	}
 }

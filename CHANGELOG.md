@@ -31,6 +31,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Event-sourcing hygiene across every cqrs decider (the cqrs-lint triage
+  train): event versions now advance through the library's own
+  `Version.Increment()` arithmetic instead of hand-counted literals, every
+  new event carries an explicit schema-version stamp, the note and review
+  deciders take their timestamps FROM the command (`At`, stamped once at the
+  service seam) so a replay can never reorder a journal, every fold applies
+  through `decider.StrictApply` (an unknown stream event type is corruption,
+  loudly), and the journaled thread-tombstone facts carry exact-name JSON
+  tags (byte-neutral on the wire). No observable behavior changes — this is
+  the replay-safety and future-proofing floor under the one-journal-world
+  design.
+- The PBX proxy's URL builder is named for what it returns
+  (`pbx.Client.UpstreamURL`, was `ResolvePath`): join path and query
+  separately, one home, same bytes.
 - The visual harness's `--open` decision is a pure helper (`open_target`)
   and, with the EMPTY-run discard guard, carries `--self-test` cases — the
   crashed-capture bug that once let an empty run hijack the next compare's

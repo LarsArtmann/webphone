@@ -160,11 +160,12 @@ const (
 // An in-process machine trigger, never a journaled payload — the wire
 // forms are FaxReceipted/FaxStatusAdvanced/FaxExpunged. D014's json-tag
 // advice does not apply to it.
-//cqrs-lint:ignore-start(D014)
+// cqrs-lint:ignore-start(D014)
 type FaxEvent struct {
 	kind   faxEventKind
 	status FaxStatus // verdict: the provider's answer (transmitted or failed)
 }
+
 //cqrs-lint:ignore-end(D014)
 
 // FaxAccepted: the gateway took the job; its verdict arrives later on

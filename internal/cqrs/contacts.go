@@ -205,7 +205,7 @@ func ContactsDomainDecl() system.DomainConfig {
 			}
 		},
 		Projections: []system.ProjectionDeclaration{system.RawQuery(contactsProjection())},
-		Events: contactStreamEventTypes,
+		Events:      contactStreamEventTypes,
 	}
 }
 

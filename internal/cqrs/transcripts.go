@@ -320,6 +320,6 @@ func TranscriptsDomainDecl() system.DomainConfig {
 			}
 		},
 		Projections: []system.ProjectionDeclaration{system.RawQuery(transcriptsProjection())},
-		Events: transcriptStreamEventTypes,
+		Events:      transcriptStreamEventTypes,
 	}
 }

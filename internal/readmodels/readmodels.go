@@ -182,7 +182,7 @@ func (e *Engine) Shutdown() error {
 	e.closed = true
 	if err := e.models.Close(); err != nil {
 		_ = e.eng.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
-		_ = e.db.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
+		_ = e.db.Close()  //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
 		return errorfamily.WrapInfrastructuref(err, "readmodels.close", "close read-model store")
 	}
 	if err := e.eng.Close(); err != nil {

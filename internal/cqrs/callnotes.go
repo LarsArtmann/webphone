@@ -220,7 +220,7 @@ func NotesDomainDecl() system.DomainConfig {
 			}
 		},
 		Projections: []system.ProjectionDeclaration{system.RawQuery(notesProjection())},
-		Events: notesStreamEventTypes,
+		Events:      notesStreamEventTypes,
 	}
 }
 

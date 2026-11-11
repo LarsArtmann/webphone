@@ -219,7 +219,7 @@ func AgentAuditDomainDecl() system.DomainConfig {
 			}
 		},
 		Projections: []system.ProjectionDeclaration{system.RawQuery(agentAuditProjection())},
-		Events: agentAuditStreamEventTypes,
+		Events:      agentAuditStreamEventTypes,
 	}
 }
 

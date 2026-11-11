@@ -180,7 +180,7 @@ func ReviewsDomainDecl() system.DomainConfig {
 			}
 		},
 		Projections: []system.ProjectionDeclaration{system.RawQuery(reviewsProjection())},
-		Events: reviewStreamEventTypes,
+		Events:      reviewStreamEventTypes,
 	}
 }
 

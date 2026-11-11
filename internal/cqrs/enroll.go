@@ -176,7 +176,7 @@ func EnrollDomainDecl() system.DomainConfig {
 			}
 		},
 		Projections: []system.ProjectionDeclaration{system.RawQuery(enrollProjection())},
-		Events: enrollStreamEventTypes,
+		Events:      enrollStreamEventTypes,
 	}
 }
 
