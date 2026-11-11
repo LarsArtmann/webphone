@@ -69,7 +69,7 @@
   --text-md: 0.95em;
   --panel-pad: 24px 26px 26px;
   --row-pad: 10px 12px;
-  --row-gap: var(--row-gap);
+  --row-gap: 12px;
   /* Shell geometry (theme-invariant). The island's column bounds and the
    * content ceiling live here so the collapse (P2), the grid and the
    * Messages split cannot disagree — one number, one home. The collapsed
