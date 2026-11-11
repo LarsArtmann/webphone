@@ -676,6 +676,23 @@ def fetch_version_info(base: str) -> dict | None:
     return info if info["version"] or info["commit"] else None
 
 
+def apply_hover(driver, selector: str | None, where: str) -> None:
+    """Move the pointer onto the first selector match so :hover/:active
+    state layers land in the shot (--hover). A surface without a match is
+    a silent no-op — hover states are additive evidence, not assertions."""
+    if not selector:
+        return
+    try:
+        els = driver.find_elements("css selector", selector)
+        if els:
+            from selenium.webdriver.common.action_chains import ActionChains
+
+            ActionChains(driver).move_to_element(els[0]).perform()
+            time.sleep(0.15)  # settle: the layer's transition is 150ms
+    except Exception as exc:  # noqa: BLE001 - harness-grade: hover is best-effort
+        print(f"warn: {where}: hover {selector!r} skipped ({exc.__class__.__name__})")
+
+
 def shoot(driver, target: str, full_page: bool) -> None:
     """Save a screenshot; full_page captures the ENTIRE document via CDP
     (captureBeyondViewport), not just the window — below-the-fold layout
@@ -1196,6 +1213,7 @@ def capture(
     anonymous_surfaces: list[tuple[str, str | None]] | None = None,
     insecure: bool = False,
     host_maps: list[str] | None = None,
+    hover: str | None = None,
 ) -> list[dict[str, str]]:
     """Drive headless chromium through every (surface, theme, viewport)
     cell and screenshot it; returns the shot LEDGER (key, file, url per
@@ -1434,6 +1452,7 @@ def capture(
                             else:
                                 raise AssertionError(message + "; aborting")
                     target = _target(name, theme, vp)
+                    apply_hover(driver, hover, name)
                     shoot(driver, target, full_page)
                     if driver.find_elements("css selector", RINGING_SELECTOR):
                         print(
@@ -1860,6 +1879,15 @@ def main() -> int:
         "390x844 for the mobile layout; default 1280x900)",
     )
     parser.add_argument(
+        "--hover",
+        default=None,
+        metavar="SELECTOR",
+        help="move the pointer onto the first CSS-selector match before "
+        "every surface shot so :hover/:active state layers land in the "
+        "picture (e.g. --hover .wp-thread-rowwrap); surfaces without a "
+        "match skip the hover silently",
+    )
+    parser.add_argument(
         "--viewport-only",
         action="store_true",
         help="capture just the window instead of the full page height",
@@ -2058,6 +2086,7 @@ def main() -> int:
                 anonymous_surfaces=anonymous,
                 insecure=args.insecure,
                 host_maps=args.host_map,
+                hover=args.hover,
             )
         except Exception:
             if args.track:
@@ -2202,6 +2231,7 @@ def main() -> int:
                     anonymous_surfaces=anonymous,
                     insecure=args.insecure,
                     host_maps=args.host_map,
+                    hover=args.hover,
                 )
             except Exception:
                 if args.track:

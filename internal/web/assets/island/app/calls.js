@@ -41,6 +41,7 @@ import {
   scheduleVoicemailRefresh,
 } from "./panels.js";
 import { restoreTitle, titleFlashStop } from "./notify.js";
+import { inviteVerdict } from "./sipverdict.js";
 import { applyTransition, sessions, state, viewStateOf } from "./state.js";
 import {
   CAPTION_LINE_CAP,
@@ -132,8 +133,13 @@ async function holdSession(id, hold) {
   if (!move.changed) return;
   entry.holdPending = hold ? "holding" : "resuming";
   renderCalls();
-  try {
-    await entry.session.invite();
+  // The verdict lane (sipverdict): the re-INVITE verdict — not the
+  // send — settles the state. sip.js resolves invite() on SEND; a
+  // bare await would flip `held` before any 200 OK and strand the
+  // toggle on a refused re-INVITE with no error surface (the honesty
+  // contract's oldest gap, closed 2026-11-11).
+  const verdict = await inviteVerdict(entry.session);
+  if (verdict === "accepted") {
     entry.held = hold;
     setTracks(entry, { recv: !hold, send: !hold && !entry.muted });
     // A held call carries no audio either way — pause the capture so
@@ -142,10 +148,13 @@ async function holdSession(id, hold) {
     // M22: the SETTLED state is the announcement (the pending chip text
     // swaps silently) — the screen reader hears where the call landed.
     announce(t(hold ? "heldAnnounce" : "resumedAnnounce"), "info");
-  } catch (err) {
-    log(`hold toggle failed: ${errorMessage(err)}`, "error");
+  } else {
+    // Keep the prior settled state; the failed-toggle announce names
+    // what happened (rejected / timed-out / send-failed all land here
+    // with the honest reason, never a silent stranded `held`).
+    log(`hold toggle ${verdict}`, "error");
     announce(
-      t(hold ? "holdFailed" : "resumeFailed")(errorMessage(err)),
+      t(hold ? "holdFailed" : "resumeFailed")(verdict),
       "error",
     );
   } finally {

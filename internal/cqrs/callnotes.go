@@ -181,14 +181,12 @@ func RegisterNotes(sys *system.System) error {
 	return nil
 }
 
-// notesKeyInput is the projection's key-extraction input (the same
-// shape the readmodels engine declares).
+// notesKeyInput is the projection's key-extraction input.
 type notesKeyInput struct {
 	Key domain.CallNoteKey
 }
 
-// notesCollection names the system engine's projection (the same name
-// the readmodels engine declares — different databases, one shape).
+// notesCollection names the system engine's note projection.
 const notesCollection = "call_notes"
 
 // notesProjection folds note facts into the SAME view shape the server

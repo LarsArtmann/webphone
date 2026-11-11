@@ -123,6 +123,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- The prod-dead `readmodels` call-note and call-review stores: the
+  engine-backed `Notes`/`Reviews` twins (prod has answered both from
+  the cqrs journal since Phase 4) are deleted; `readmodels` keeps only
+  the gate/view surface (`NotesGate`/`CallNoteView`,
+  `ReviewsGate`/`CallReviewView`, the cap constants and sentinels).
+  The two missing slot-shape pins port to the cqrs backend tests, and
+  both backends' write doors now carry the D7 `awaitOwnWrite`
+  read-your-writes beat (the engine store's synchronous fold used to
+  provide it; the History panel re-fetches right behind the SSE
+  nudge). 7 retired `readmodels.note_*` / `readmodels.review_*` /
+  `readmodels.disposition_*` error codes leave the contract table.
 - The prod-dead `readmodels` transcript store: the engine-backed
   `Transcripts` (prod has answered transcripts from the cqrs journal
   since A27) is deleted; the server test harness drives the

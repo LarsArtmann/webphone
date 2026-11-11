@@ -136,15 +136,12 @@ func RegisterReviews(sys *system.System) error {
 	return nil
 }
 
-// reviewsKeyInput is the projection's key-extraction input (the same
-// shape the readmodels engine declares).
+// reviewsKeyInput is the projection's key-extraction input.
 type reviewsKeyInput struct {
 	Key domain.CallReviewKey
 }
 
-// reviewsCollection names the system engine's projection (the same
-// name the readmodels engine declares — different databases, one
-// shape).
+// reviewsCollection names the system engine's review projection.
 const reviewsCollection = "call_reviews"
 
 // reviewsProjection folds review facts into the SAME view shape the

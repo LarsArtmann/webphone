@@ -143,7 +143,24 @@ test("hold UI shows the pending truth until the re-INVITE settles", async () => 
         },
       };
     }
-    invite() {
+    invite(opts) {
+      // The re-INVITE toggles carry a requestDelegate (the verdict
+      // lane): the stub fires onAccept/onReject instead of resolving.
+      if (opts?.requestDelegate) {
+        if (holdMode === "resolve") {
+          const sent = Promise.resolve();
+          sent.then(() => opts.requestDelegate.onAccept());
+          return sent;
+        }
+        return new Promise((resolve, reject) =>
+          gates.push({
+            resolve,
+            reject,
+            accept: () => opts.requestDelegate.onAccept(),
+            refuse: () => opts.requestDelegate.onReject(),
+          }),
+        );
+      }
       if (holdMode === "resolve") return Promise.resolve();
       return new Promise((resolve, reject) => gates.push({ resolve, reject }));
     }
@@ -196,7 +213,7 @@ test("hold UI shows the pending truth until the re-INVITE settles", async () => 
   assert.equal(holdBtn.textContent, t("callHolding"));
   assert.equal(holdBtn.disabled, true, "no second toggle while in flight");
 
-  gates.pop().resolve();
+  gates.pop().accept();
   await settle();
   assert.equal(card.dataset.state, "held", "settled: actually on hold");
   assert.match(chipText(), /on hold/i);
@@ -210,7 +227,7 @@ test("hold UI shows the pending truth until the re-INVITE settles", async () => 
   assert.equal(holdBtn.textContent, t("callResuming"));
   assert.equal(holdBtn.disabled, true);
 
-  gates.pop().reject(new Error("boom"));
+  gates.pop().refuse();
   await settle();
   assert.equal(card.dataset.state, "held", "failure keeps the settled truth");
   assert.match(chipText(), /on hold/i);
@@ -248,7 +265,24 @@ test("a failed hold announces the hold direction", async () => {
         },
       };
     }
-    invite() {
+    invite(opts) {
+      // The re-INVITE toggles carry a requestDelegate (the verdict
+      // lane): the stub fires onAccept/onReject instead of resolving.
+      if (opts?.requestDelegate) {
+        if (holdMode === "resolve") {
+          const sent = Promise.resolve();
+          sent.then(() => opts.requestDelegate.onAccept());
+          return sent;
+        }
+        return new Promise((resolve, reject) =>
+          gates.push({
+            resolve,
+            reject,
+            accept: () => opts.requestDelegate.onAccept(),
+            refuse: () => opts.requestDelegate.onReject(),
+          }),
+        );
+      }
       if (holdMode === "resolve") return Promise.resolve();
       return new Promise((resolve, reject) => gates.push({ resolve, reject }));
     }
@@ -405,7 +439,24 @@ test("a wish queued mid-flight replays after the in-flight toggle settles", asyn
         },
       };
     }
-    invite() {
+    invite(opts) {
+      // The re-INVITE toggles carry a requestDelegate (the verdict
+      // lane): the stub fires onAccept/onReject instead of resolving.
+      if (opts?.requestDelegate) {
+        if (holdMode === "resolve") {
+          const sent = Promise.resolve();
+          sent.then(() => opts.requestDelegate.onAccept());
+          return sent;
+        }
+        return new Promise((resolve, reject) =>
+          gates.push({
+            resolve,
+            reject,
+            accept: () => opts.requestDelegate.onAccept(),
+            refuse: () => opts.requestDelegate.onReject(),
+          }),
+        );
+      }
       if (holdMode === "resolve") return Promise.resolve();
       return new Promise((resolve, reject) => gates.push({ resolve, reject }));
     }
