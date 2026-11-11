@@ -420,6 +420,11 @@ func New(deps Deps) http.Handler {
 
 	csrf := httputil.CSRFMiddleware(csrfCfg)
 
+	// The registrations below ARE the route table (the B007 ruling,
+	// cqrs-lint triage 2026-11-11, declined: config): explicit rows keep
+	// every surface greppable and its gate visible at the site. Do not
+	// "fix" them into a loop over a data table — the table would just
+	// move the same rows one indirection away.
 	protected := http.NewServeMux()
 	protected.HandleFunc("GET /{$}", h.page)
 	protected.HandleFunc("GET /messages", h.tabPage)
