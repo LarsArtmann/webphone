@@ -525,11 +525,11 @@ a deliberate code change, regenerate:
 | pbx.request                                  | Infrastructure            | internal/pbx/client.go             |
 | pbx.transport                                | Transient                 | internal/pbx/client.go             |
 | pbx.url                                      | Rejection                 | internal/pbx/client.go             |
-| push.draft_devices                           | Infrastructure            | internal/server/api/summary_api.go |
-| push.draft_send                              | Infrastructure            | internal/server/api/summary_api.go |
+| push.fact                                    | Rejection                 | internal/push/push.go              |
 | push.fcm_send                                | Infrastructure, Rejection | internal/push/fcm.go               |
 | push.fcm_token                               | Infrastructure, Rejection | internal/push/fcm.go               |
 | push.ntfy_send                               | Infrastructure, Rejection | internal/push/ntfy.go              |
+| push.registry                                | Rejection                 | internal/push/push.go              |
 | push.transport                               | Rejection                 | internal/push/push.go              |
 | readmodels.agent_audit_append                | Infrastructure            | internal/readmodels/agentaudit.go  |
 | readmodels.agent_audit_recent                | Infrastructure            | internal/readmodels/agentaudit.go  |
@@ -565,14 +565,6 @@ a deliberate code change, regenerate:
 | readmodels.snippet_list_full                 | Rejection                 | internal/readmodels/snippets.go    |
 | readmodels.snippet_missing                   | Rejection                 | internal/readmodels/snippets.go    |
 | readmodels.snippet_save                      | Infrastructure            | internal/readmodels/snippets.go    |
-| readmodels.transcript_append                 | Infrastructure            | internal/readmodels/transcripts.go |
-| readmodels.transcript_call                   | Infrastructure            | internal/readmodels/transcripts.go |
-| readmodels.transcript_cap                    | Infrastructure            | internal/readmodels/transcripts.go |
-| readmodels.transcript_count                  | Infrastructure            | internal/readmodels/transcripts.go |
-| readmodels.transcript_delete                 | Infrastructure            | internal/readmodels/transcripts.go |
-| readmodels.transcript_scan                   | Infrastructure            | internal/readmodels/transcripts.go |
-| readmodels.transcript_sweep                  | Infrastructure            | internal/readmodels/transcripts.go |
-| readmodels.transcript_trim                   | Infrastructure            | internal/readmodels/transcripts.go |
 | session.insert                               | Infrastructure            | internal/session/sqlite.go         |
 | session.migrate                              | Infrastructure            | internal/session/sqlite.go         |
 | session.migrate_login_email                  | Infrastructure            | internal/session/sqlite.go         |

@@ -74,7 +74,7 @@ type testServer struct {
 	hubs        *ExtensionHubs
 	messages    readmodels.ThreadGate
 	faxes       *cqrs.Faxes
-	transcripts *readmodels.Transcripts
+	transcripts *cqrs.Transcripts
 	phoneAPI    *pbx.Client
 }
 
@@ -158,7 +158,7 @@ func newTestServerWithConfig(
 		Receive: cfg.Fax.ReceiveEnabled(),
 	})
 	faxes := cqrs.NewFaxes(coreSys)
-	transcripts := engine.Transcripts()
+	transcripts := cqrs.NewTranscripts(coreSys)
 	// SQLite session store (not the mem store): the /metrics aggregates
 	// count the sessions TABLE, which only the SQLite store's schema
 	// creates — TestMetricsServesAggregatesOnly pins that surface.

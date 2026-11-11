@@ -32,16 +32,18 @@ import (
 // TranscriptsStreamType keys per-(owner, call) transcript streams.
 const TranscriptsStreamType = "transcripts"
 
-// transcriptFloorPerCall mirrors readmodels.TranscriptSegmentsMaxPerCall
-// at the aggregate (the per-call bound the decision enforces).
+// transcriptFloorPerCall is the aggregate's per-call bound (the
+// decision enforces readmodels.TranscriptSegmentsMaxPerCall).
 const transcriptFloorPerCall = readmodels.TranscriptSegmentsMaxPerCall
 
-// transcriptsGlobalCeiling mirrors the readmodels declaration's
-// collection-global safety net above the per-owner grouped cap.
+// transcriptsGlobalCeiling is the collection-global safety net ABOVE
+// the per-owner grouped cap: sized for hundreds of owners at the full
+// per-extension budget without ever competing with the grouped bound.
 const transcriptsGlobalCeiling = 1_000_000
 
-// transcriptFetchWindow mirrors the readmodels read window behind
-// Recent/Search (wide enough that the newest calls reassemble whole).
+// transcriptFetchWindow is the read window behind Recent/Search: wide
+// enough that the maxCalls newest calls reassemble whole even when one
+// call alone produced hundreds of segments.
 const transcriptFetchWindow = 2000
 
 // transcriptSweepPageSize bounds one retention scan/expunge batch.
@@ -269,8 +271,8 @@ func RegisterTranscripts(sys *system.System) error {
 	return nil
 }
 
-// transcriptsCollection names the system engine's projection (the same
-// name the readmodels engine declares).
+// transcriptsCollection names the system engine's transcript
+// projection collection.
 const transcriptsCollection = "call_transcripts"
 
 // transcriptsKeyInput is the projection's key-extraction input (the
@@ -280,10 +282,9 @@ type transcriptsKeyInput struct {
 	ID string
 }
 
-// transcriptsProjection folds transcript facts into the SAME view
-// shape the server reads today (readmodels.TranscriptSegmentView),
-// caps declared exactly like the engine store's query (the per-owner
-// grouped cap + the collection-global net).
+// transcriptsProjection folds transcript facts into the server's view
+// shape (readmodels.TranscriptSegmentView), with the per-owner grouped
+// cap and the collection-global net declared on the query.
 func transcriptsProjection() metaengine.QueryDecl[transcriptsKeyInput, readmodels.TranscriptSegmentView] {
 	return metaengine.Query[transcriptsKeyInput, readmodels.TranscriptSegmentView](transcriptsCollection,
 		metaengine.OnRecord(domain.TranscriptAppended{},

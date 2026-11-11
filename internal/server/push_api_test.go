@@ -27,7 +27,7 @@ func newPushServer(t *testing.T) *testServer {
 	fanout := push.NewFanout(map[string]push.Sender{
 		push.TransportNtfy: pushStubTransport{},
 		push.TransportFcm:  pushStubTransport{},
-	})
+	}, nil)
 	return newTestServerWithPhoneAPI(t, "", func(d *Deps) {
 		d.Push = fanout
 		d.PushDevices = engine.PushDevices()

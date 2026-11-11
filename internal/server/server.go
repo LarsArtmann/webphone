@@ -392,7 +392,6 @@ func New(deps Deps) http.Handler {
 		Unread:    h.unread,
 		Dedup:     deps.Dedup,
 		Push:      deps.Push,
-		Devices:   deps.PushDevices,
 	})
 	// The carved island JSON surface (internal/server/api): the hub
 	// implements the narrow Server seam (session gate + contacts nudge)

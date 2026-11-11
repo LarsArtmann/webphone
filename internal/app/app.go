@@ -49,6 +49,7 @@ import (
 	"github.com/larsartmann/webphone/internal/paperless"
 	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/push"
+	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/retention"
 	"github.com/larsartmann/webphone/internal/server"
 	"github.com/larsartmann/webphone/internal/session"
@@ -120,6 +121,35 @@ type App struct {
 	// cascade closes it again idempotently; the field exists because the
 	// drain runs BEFORE do.Shutdown.
 	Hubs *server.ExtensionHubs
+	// Push is the OPTIONAL push fanout (nil-safe by the seam's own
+	// doctrine). The field exists so Start can arm the prune registry
+	// once the cqrs system — which the push-devices store rides — has
+	// resolved; the HTTP listener accepts only afterwards, so every Fan
+	// sees an armed registry.
+	Push *push.Fanout
+}
+
+// pushRegistryAdapter adapts the engine-backed push-devices store to
+// the fanout's prune seam: the fanout stays dependency-light (domain
+// types only), and the conversion is the adapter's whole job.
+type pushRegistryAdapter struct {
+	devices readmodels.PushDeviceGate
+}
+
+func (a pushRegistryAdapter) List(ctx context.Context, owner domain.Extension) ([]push.Device, error) {
+	views, err := a.devices.List(ctx, owner)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]push.Device, 0, len(views))
+	for _, v := range views {
+		out = append(out, push.Device{DeviceID: v.DeviceID, Transport: v.Transport, Token: v.Token})
+	}
+	return out, nil
+}
+
+func (a pushRegistryAdapter) Remove(ctx context.Context, owner domain.Extension, deviceID string) error {
+	return a.devices.Remove(ctx, owner, deviceID)
 }
 
 // wrapf is this package's home for family-neutral startup wraps (same
@@ -253,7 +283,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			}
 			senders[push.TransportFcm] = sender
 		}
-		return push.NewFanout(senders), nil
+		return push.NewFanout(senders, nil), nil
 	}()
 	if err != nil {
 		return nil, wrapf("open push senders: %w", err)
@@ -504,7 +534,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	}
 
 	//nolint:branching-flow // MustInvoke in the composition root is doctrine (DO-1 fail-fast miswires); arch-test pins it to internal/app
-	return &App{injector: injector, cfg: cfg, log: log, Probe: probe, Trace: trace, Handler: handler, Hubs: do.MustInvoke[*server.ExtensionHubs](injector)}, nil
+	return &App{injector: injector, cfg: cfg, log: log, Probe: probe, Trace: trace, Handler: handler, Hubs: do.MustInvoke[*server.ExtensionHubs](injector), Push: pushFanout}, nil
 }
 
 // probeRefreshIf keeps the probe in live mode (interval 0, the exact
@@ -672,6 +702,13 @@ func (a *App) Start(ctx context.Context) error {
 	}
 	if err := cqrs.Start(ctx); err != nil {
 		return wrapf("start cqrs system: %w", err)
+	}
+	// Arm the fanout's prune registry now that the push-devices store
+	// resolves (it rides the cqrs system): start order guarantees every
+	// later Fan sees an armed registry, and the adapter keeps the fanout
+	// dependency-light (domain types only).
+	if a.Push != nil {
+		a.Push.WithRegistry(pushRegistryAdapter{devices: cqrs.PushDevicesSvc()})
 	}
 	retention.Start(ctx, db.SQL(), blobs, retention.JournalSweepers{
 		Threads: cqrs.ThreadsSvc(), Faxes: cqrs.FaxesSvc(), Transcripts: cqrs.TranscriptsSvc(),

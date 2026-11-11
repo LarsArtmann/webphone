@@ -1,9 +1,9 @@
 // The transcripts backend (SUPERB Phase 4, A27): the dispatch-backed
-// transcript store — the same contract the engine-backed store exposed
-// (Append with both retention bounds, the reassembly reads, the
-// end-user delete, the metrics count, the retention sweep). The read
-// bodies are a parity port of the engine store's reads (migration
-// twins; they retire with the readmodels engine at Phase 7).
+// transcript store — the ONE implementation of
+// readmodels.TranscriptGate (Append with both retention bounds, the
+// reassembly reads, the end-user delete, the metrics count, the
+// retention sweep). The readmodels engine store that used to implement
+// the gate beside it retired with the 2026-11-11 storage-ladder train A.
 package cqrs
 
 import (
@@ -175,8 +175,11 @@ func (s *Transcripts) Export(ctx context.Context, owner domain.Extension, maxCal
 }
 
 // fetchSegments reads segments newest-first behind the given scan
-// options — the ONE home for the transcript read (the engine store's
-// fetchSegments twin; retires with it).
+// options — the ONE home for the transcript read so Recent, RecentAll,
+// Search and Export cannot drift apart. scope names the read's reach
+// in the failure message (one owner, or all owners for the admin
+// seam); the owner FILTER is an explicit scan option each caller
+// passes (or omits, deliberately, on the admin path).
 func (s *Transcripts) fetchSegments(ctx context.Context, scope string, opts ...metaengine.ScanOption) ([]domain.CallTranscriptSegment, error) {
 	views, err := s.reader.Scan(ctx, opts...)
 	if err != nil {

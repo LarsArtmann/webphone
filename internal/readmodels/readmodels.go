@@ -36,9 +36,9 @@ import (
 const fileName = "readmodels.db"
 
 // humanScaleVolume is the Volume hint every query declaration carries:
-// webphone is single-tenant, and even its highest-rate facts (live-call
-// transcript segments) average well under one per second — the
-// planner's 1000/sec default would overestimate by three orders.
+// webphone is single-tenant, and even its highest-rate facts (live
+// message appends) average well under one per second — the planner's
+// 1000/sec default would overestimate by three orders.
 const humanScaleVolume = 1
 
 // Engine is the container-adapted metaengine engine: the sqlite
@@ -53,7 +53,6 @@ type Engine struct {
 	models   *metaengine.Store
 	contacts *Contacts
 	snippets *Snippets
-	calls    *Transcripts
 	notes    *Notes
 	reviews  *Reviews
 	dials    *DialWindows
@@ -88,7 +87,7 @@ func Open(dataDir string) (*Engine, error) {
 		_ = db.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
 		return nil, errorfamily.Newf(errorfamily.Infrastructure, "readmodels.open", "engine %T lacks the aggregate capability", eng)
 	}
-	models, err := metaengine.Plan([]metaengine.Engine{eng}, contactsQuery, snippetsQuery, transcriptsQuery, notesQuery, reviewsQuery, dialWindowsQuery, dialOverridesQuery, pushDevicesQuery, agentAuditQuery)
+	models, err := metaengine.Plan([]metaengine.Engine{eng}, contactsQuery, snippetsQuery, notesQuery, reviewsQuery, dialWindowsQuery, dialOverridesQuery, pushDevicesQuery, agentAuditQuery)
 	if err != nil {
 		_ = db.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
 		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.open", "plan read models")
@@ -100,7 +99,6 @@ func Open(dataDir string) (*Engine, error) {
 		models:   models,
 		contacts: newContacts(models, agg),
 		snippets: newSnippets(models),
-		calls:    newTranscripts(models, agg),
 		notes:    newNotes(models),
 		reviews:  newReviews(models),
 		dials:    newDialWindows(models),
@@ -128,10 +126,6 @@ func (e *Engine) Contacts() *Contacts { return e.contacts }
 // Snippets returns the engine-backed reply-snippet store (the SQL
 // store's replacement behind the same method contract).
 func (e *Engine) Snippets() *Snippets { return e.snippets }
-
-// Transcripts returns the engine-backed transcript store (the SQL
-// store's replacement behind the same method contract).
-func (e *Engine) Transcripts() *Transcripts { return e.calls }
 
 // Notes returns the engine-backed post-call-note store (M16).
 func (e *Engine) Notes() *Notes { return e.notes }
