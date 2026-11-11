@@ -31,6 +31,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Every outbound HTTP seam (pbx proxy, ASR providers, matrix, push
+  transports, crm) now mints its client through the one home
+  `httpclient.Isolated`: each client owns a private clone of the default
+  transport instead of sharing the process-global connection pool, which
+  a parallel test's httptest.Server.Close could retire mid-roundtrip
+  (the flake class the 2026-11-08 crm repair killed at one seam;
+  production behavior unchanged).
 - Event-sourcing hygiene across every cqrs decider (the cqrs-lint triage
   train): event versions now advance through the library's own
   `Version.Increment()` arithmetic instead of hand-counted literals, every

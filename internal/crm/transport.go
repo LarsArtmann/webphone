@@ -7,6 +7,7 @@ import (
 	"os"
 
 	"github.com/larsartmann/go-error-family"
+	"github.com/larsartmann/webphone/internal/httpclient"
 )
 
 // newHTTPClient builds the seam's HTTP client. Without caFile it is the
@@ -23,15 +24,7 @@ import (
 // chains.
 func newHTTPClient(caFile string) (*http.Client, error) {
 	if caFile == "" {
-		// Clone (not share) DefaultTransport: a client with its own pool
-		// never rides connections that another test's httptest.Server.Close
-		// may retire mid-roundtrip (httptest "helpfully" closes idle
-		// connections on the global transport; a shared pool made the
-		// failure-classes suite flaky under parallel tests).
-		return &http.Client{
-			Timeout:   requestTimeout,
-			Transport: http.DefaultTransport.(*http.Transport).Clone(),
-		}, nil
+		return httpclient.Isolated(requestTimeout), nil
 	}
 
 	bundle, err := os.ReadFile(caFile)
