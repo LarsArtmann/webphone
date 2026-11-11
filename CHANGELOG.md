@@ -25,7 +25,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   trade their dashed boxes for tonal surfaces; Reports stat cards go
   tonal; the island's status/language pills gain fills and the offline
   banner loses its hard rail for a tonal container. tw.css/login.css
-  re-pinned to the 12px radius.
+  re-pinned to the 12px radius and rebuilt after the shell edits
+  (login.css inlines app.css, so every later shell edit re-lands there).
 - **Visible redesign: green identity kept, icon navigation, content-first
   mobile.** The 2026-11-07 UX review validated the design against its own
   craft bar while the owner kept asking for a different look — this train
