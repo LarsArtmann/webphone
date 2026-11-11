@@ -221,6 +221,15 @@ export function settleEndedCall(id) {
   if (!entry) return;
   stopLiveTranscription(id);
   if (entry.captionUnsub) entry.captionUnsub();
+  // The remote-audio watcher rides the LIVE stream (the audio-gap leg
+  // of the latency beacon); the call is over, so it dies here rather
+  // than polling a dead stream from the ended card (teardown would
+  // dispose it too, but a settled card can outlive the session table
+  // for a long time).
+  if (entry.audioWatch) {
+    entry.audioWatch();
+    entry.audioWatch = undefined;
+  }
   // The segment STORE dies with the live call (it feeds the next live
   // card's pre-render); the ended card's strip lines live in the DOM and
   // keep serving Copy/Clear after it. Closing, not clearing, is what
@@ -287,7 +296,12 @@ function morphToEndedCard(id, entry) {
       const close = document.createElement("button");
       close.className = "ghost close-ended-btn";
       close.textContent = t("close");
-      close.addEventListener("click", () => card.remove());
+      // Full teardown, not a bare DOM removal: the session-table entry,
+      // its watchers and the focus chain die with the card, and the
+      // render tick re-dispatches wp:calls-changed — a bare remove()
+      // would strand the live-call badge and the CRM context slot on a
+      // call that no longer exists.
+      close.addEventListener("click", () => teardownSession(id));
       controls.append(close);
     },
   );

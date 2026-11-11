@@ -466,22 +466,37 @@ func TestPasskeyFinishAnswersTheDerivedCredentialWhenBrokeringIsOn(t *testing.T)
 	}
 }
 
-// TestPasskeySettingsListsAndRevokes covers the A2 slice end to end: the
-// settings partial lists the mapped account's enrolled passkeys, the
-// session-gated revoke removes the named credential (owner-matched via
-// the session extension's mapping), and an unmapped extension's settings
-// carry no passkeys section at all.
+// TestPasskeySettingsListsAndRevokes covers the A2 slice end to end: a
+// PASSKEY-MINTED session (the session's own login identity) lists the
+// mapped account's enrolled passkeys and revokes the named credential;
+// classic extension logins authenticated the line, not a human — they
+// render no passkeys section at all and revocation answers the uniform
+// 404 (the own-account contract, C7 review fix).
 func TestPasskeySettingsListsAndRevokes(t *testing.T) {
 	server, svc := newPasskeyServer(t)
 	enrollCredential(t, svc, pkEmail)
 	c := clientFor(t, server)
-	c.login("1000", pkPassword)
+
+	// Sign in through the ceremony so the session carries the login
+	// identity: begin server-side, finish over HTTP with the
+	// deterministic stub assertion.
+	begun, err := svc.BeginLogin(context.Background(), pkEmail)
+	if err != nil {
+		t.Fatalf("begin login: %v", err)
+	}
+	resp, body := c.do(http.MethodPost,
+		"/api/auth/webauthn/login/finish?user_id="+begun.SessionKey,
+		[]byte(`{"id":"x","rawId":"eA","type":"public-key","response":{"clientDataJSON":"eA"}}`),
+		"application/json")
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("passkey login: %d %s", resp.StatusCode, body)
+	}
 
 	creds, ok := svc.Credentials(pkEmail)
 	if !ok || len(creds) != 1 {
 		t.Fatalf("Credentials(%q) = %v, %v; want one enrolled key", pkEmail, creds, ok)
 	}
-	resp, body := c.do(http.MethodGet, "/partials/settings", nil, "")
+	resp, body = c.do(http.MethodGet, "/partials/settings", nil, "")
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("settings partial: %d %s", resp.StatusCode, body)
 	}
@@ -507,10 +522,24 @@ func TestPasskeySettingsListsAndRevokes(t *testing.T) {
 		t.Errorf("settings partial must render the empty state after revoke:\n%s", body)
 	}
 
-	// An extension without a mapped account gets no passkeys section.
+	// A classic extension login on the SAME mapped extension has no login
+	// identity: no passkeys section, and revocation answers 404 before
+	// touching any account (a line-password session must not manage the
+	// sorted-first human's credentials).
 	c2 := clientFor(t, server)
-	c2.login("2001", pkPassword)
+	c2.login("1000", pkPassword)
 	_, body = c2.do(http.MethodGet, "/partials/settings", nil, "")
+	if strings.Contains(string(body), "wp-passkeys-head") {
+		t.Errorf("extension login must not render the passkeys section:\n%s", body)
+	}
+	if resp, _ := c2.do(http.MethodDelete, "/api/passkeys/some-credential", nil, ""); resp.StatusCode != http.StatusNotFound {
+		t.Errorf("extension-login revoke: %d, want 404", resp.StatusCode)
+	}
+
+	// An extension without a mapped account gets no passkeys section.
+	c3 := clientFor(t, server)
+	c3.login("2001", pkPassword)
+	_, body = c3.do(http.MethodGet, "/partials/settings", nil, "")
 	if strings.Contains(string(body), "wp-passkeys-head") {
 		t.Errorf("unmapped extension must not render the passkeys section:\n%s", body)
 	}
