@@ -12,12 +12,13 @@ require (
 	github.com/knadh/koanf/providers/file v1.2.1
 	github.com/knadh/koanf/v2 v2.4.1
 	github.com/larsartmann/cqrs-htmx/identity-model/v4 v4.17.0
-	github.com/larsartmann/cqrs-htmx/loginpage/v4 v4.17.0
+	github.com/larsartmann/cqrs-htmx/loginpage/v4 v4.18.0
 	github.com/larsartmann/cqrs-htmx/usermgmt/v4 v4.20.0
 	github.com/larsartmann/cqrs-htmx/usermgmt/webauthn/v4 v4.13.0
 	github.com/larsartmann/cqrs-htmx/v4 v4.18.1
 	github.com/larsartmann/go-atomic-write v0.6.2
 	github.com/larsartmann/go-branded-id v0.7.1
+	github.com/larsartmann/go-codec v0.3.3
 	github.com/larsartmann/go-cqrs-lite/catalog/v4 v4.14.0
 	github.com/larsartmann/go-cqrs-lite/command/v4 v4.14.1
 	github.com/larsartmann/go-cqrs-lite/decider/v4 v4.8.0
@@ -86,7 +87,6 @@ require (
 	github.com/justinas/nosurf v1.2.0 // indirect
 	github.com/knadh/koanf/maps v0.1.3 // indirect
 	github.com/knadh/koanf/parsers/yaml v1.1.1 // indirect
-	github.com/larsartmann/go-codec v0.3.3 // indirect
 	github.com/larsartmann/go-cqrs-lite/claiming/v4 v4.0.2 // indirect
 	github.com/larsartmann/go-cqrs-lite/commandlifecycle/projections/v4 v4.2.3 // indirect
 	github.com/larsartmann/go-cqrs-lite/commandlifecycle/v4 v4.3.1 // indirect
