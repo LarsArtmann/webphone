@@ -5,8 +5,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/readmodels"
 )
+
+func mustExtension(t *testing.T, raw string) domain.Extension {
+	t.Helper()
+	owner, err := domain.ParseExtension(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return owner
+}
 
 // TestDialWindowsGate pins the gate's check+record semantics (issue
 // #7): the first dial records and allows, an immediate re-dial inside

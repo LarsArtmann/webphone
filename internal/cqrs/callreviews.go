@@ -194,6 +194,7 @@ func ReviewsDomainDecl() system.DomainConfig {
 type Reviews struct {
 	sys    *system.System
 	reader *metaengine.TypedReader[readmodels.CallReviewView]
+	vers   streamVersions
 	mu     sync.Mutex
 }
 
@@ -201,7 +202,7 @@ var _ readmodels.ReviewsGate = (*Reviews)(nil)
 
 // NewReviews builds the backend over a System.
 func NewReviews(sys *system.System) *Reviews {
-	return &Reviews{sys: sys, reader: metaengine.NewReader[readmodels.CallReviewView](sys.MetaEngine(), reviewsCollection)}
+	return &Reviews{sys: sys, reader: metaengine.NewReader[readmodels.CallReviewView](sys.MetaEngine(), reviewsCollection), vers: streamVersions{}}
 }
 
 // Get returns the owner's review for one call, or nil when none
@@ -242,5 +243,6 @@ func (s *Reviews) Set(ctx context.Context, owner domain.Extension, callID string
 		}
 		return errorfamily.WrapInfrastructuref(err, "cqrs.review_save", "dispatch review.save")
 	}
+	awaitOwnWrite(ctx, s.sys, ReviewsStreamType, owner.String(), reviewsCollection, s.vers)
 	return nil
 }

@@ -53,8 +53,6 @@ type Engine struct {
 	models   *metaengine.Store
 	contacts *Contacts
 	snippets *Snippets
-	notes    *Notes
-	reviews  *Reviews
 	dials    *DialWindows
 	devices  *PushDevices
 	agents   *AgentAudit
@@ -87,7 +85,7 @@ func Open(dataDir string) (*Engine, error) {
 		_ = db.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
 		return nil, errorfamily.Newf(errorfamily.Infrastructure, "readmodels.open", "engine %T lacks the aggregate capability", eng)
 	}
-	models, err := metaengine.Plan([]metaengine.Engine{eng}, contactsQuery, snippetsQuery, notesQuery, reviewsQuery, dialWindowsQuery, dialOverridesQuery, pushDevicesQuery, agentAuditQuery)
+	models, err := metaengine.Plan([]metaengine.Engine{eng}, contactsQuery, snippetsQuery, dialWindowsQuery, dialOverridesQuery, pushDevicesQuery, agentAuditQuery)
 	if err != nil {
 		_ = db.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
 		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.open", "plan read models")
@@ -99,8 +97,6 @@ func Open(dataDir string) (*Engine, error) {
 		models:   models,
 		contacts: newContacts(models, agg),
 		snippets: newSnippets(models),
-		notes:    newNotes(models),
-		reviews:  newReviews(models),
 		dials:    newDialWindows(models),
 		devices:  newPushDevices(models),
 		agents:   newAgentAudit(models),
@@ -127,16 +123,9 @@ func (e *Engine) Contacts() *Contacts { return e.contacts }
 // store's replacement behind the same method contract).
 func (e *Engine) Snippets() *Snippets { return e.snippets }
 
-// Notes returns the engine-backed post-call-note store (M16).
-func (e *Engine) Notes() *Notes { return e.notes }
-
 // AgentAudit returns the engine-backed agent-action audit store (D5,
 // the durable read model behind the journal line).
 func (e *Engine) AgentAudit() *AgentAudit { return e.agents }
-
-// Reviews returns the engine-backed post-call-review store (issue #8:
-// the automatic review's durable artifact slot).
-func (e *Engine) Reviews() *Reviews { return e.reviews }
 
 // DialWindows returns the engine-backed dial-cooldown store (issue #7:
 // the (owner, remote) window plus one-shot overrides).

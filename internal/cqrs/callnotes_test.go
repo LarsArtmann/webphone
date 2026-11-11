@@ -174,3 +174,64 @@ func TestNoteStateSurvivesRestart(t *testing.T) {
 		time.Sleep(5 * time.Millisecond)
 	}
 }
+
+// TestNoteVerdictFirstAndClearedBody pins the slot-shape pins the
+// engine store's suite carried: a verdict on a NOTELESS call creates
+// the slot with an empty body, and an empty-body save CLEARS the note
+// while the slot stays (a cleared note is a state, not an absence).
+func TestNoteVerdictFirstAndClearedBody(t *testing.T) {
+	s := bootNotes(t, t.TempDir())
+	ctx := context.Background()
+	owner := mustExt(t, "1001")
+
+	if err := s.SetDisposition(ctx, owner, "call-9", domain.DispositionVoicemail); err != nil {
+		t.Fatalf("set disposition on noteless call: %v", err)
+	}
+	view := awaitNote(t, s, owner, "call-9")
+	if view.Disposition != domain.DispositionVoicemail.String() || view.Body != "" {
+		t.Fatalf("verdict-first slot: %+v", view)
+	}
+	var err error
+
+	if err := s.Set(ctx, owner, "call-9", "rueckruf vereinbart"); err != nil {
+		t.Fatalf("set note: %v", err)
+	}
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		view, err = s.Get(ctx, owner, "call-9")
+		if err != nil {
+			t.Fatalf("Get: %v", err)
+		}
+		if view != nil && view.Body == "rueckruf vereinbart" {
+			if view.Disposition != domain.DispositionVoicemail.String() {
+				t.Fatalf("note save must carry the verdict forward: %+v", view)
+			}
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("note never landed: %+v", view)
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+
+	if err := s.Set(ctx, owner, "call-9", ""); err != nil {
+		t.Fatalf("clear: %v", err)
+	}
+	deadline = time.Now().Add(5 * time.Second)
+	for {
+		view, err = s.Get(ctx, owner, "call-9")
+		if err != nil {
+			t.Fatalf("Get: %v", err)
+		}
+		if view != nil && view.Body == "" {
+			if view.Disposition != domain.DispositionVoicemail.String() {
+				t.Fatalf("cleared body must keep the verdict: %+v", view)
+			}
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("cleared body never landed (slot must stay): %+v", view)
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+}

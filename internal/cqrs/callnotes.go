@@ -8,9 +8,10 @@
 // a verdict save keeps the prose) moved out of the store's pre-read
 // into the decision: the decider simply knows its slot. The
 // ErrNoteListFull CONFLICT classification (the only true 409) survives
-// the swap verbatim. No D7 await: the HTTP surfaces answer 204 and the
-// SSE nudge is payload-less, so nothing re-reads this projection in
-// the same request.
+// the swap verbatim. Writes carry the D7 awaitOwnWrite: the History
+// panel re-fetches the note right behind the SSE nudge, so the
+// read-your-writes beat (the engine store's old synchronous fold) is
+// the honest contract.
 package cqrs
 
 import (
@@ -234,6 +235,7 @@ func NotesDomainDecl() system.DomainConfig {
 type Notes struct {
 	sys    *system.System
 	reader *metaengine.TypedReader[readmodels.CallNoteView]
+	vers   streamVersions
 	mu     sync.Mutex
 }
 
@@ -241,7 +243,7 @@ var _ readmodels.NotesGate = (*Notes)(nil)
 
 // NewNotes builds the backend over a System.
 func NewNotes(sys *system.System) *Notes {
-	return &Notes{sys: sys, reader: metaengine.NewReader[readmodels.CallNoteView](sys.MetaEngine(), notesCollection)}
+	return &Notes{sys: sys, reader: metaengine.NewReader[readmodels.CallNoteView](sys.MetaEngine(), notesCollection), vers: streamVersions{}}
 }
 
 // Get returns the owner's note for one call, or nil when none exists.
@@ -279,7 +281,8 @@ func noteDispatchError(err error, op string) error {
 
 // Set upserts the owner's note for one call; the decision keeps an
 // existing disposition. A NEW call past the cap refuses with the
-// ErrNoteListFull Conflict contract.
+// ErrNoteListFull Conflict contract. The D7 await keeps the read-your-writes
+// beat (the History panel re-fetches right behind the SSE nudge).
 func (s *Notes) Set(ctx context.Context, owner domain.Extension, callID, body string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -290,6 +293,7 @@ func (s *Notes) Set(ctx context.Context, owner domain.Extension, callID, body st
 		}); err != nil {
 		return noteDispatchError(err, "note.save")
 	}
+	awaitOwnWrite(ctx, s.sys, NotesStreamType, owner.String(), notesCollection, s.vers)
 	return nil
 }
 
@@ -305,5 +309,6 @@ func (s *Notes) SetDisposition(ctx context.Context, owner domain.Extension, call
 		}); err != nil {
 		return noteDispatchError(err, "note.disposition_save")
 	}
+	awaitOwnWrite(ctx, s.sys, NotesStreamType, owner.String(), notesCollection, s.vers)
 	return nil
 }
