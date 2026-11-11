@@ -263,21 +263,23 @@ SURFACE_EXPAND = {
     "settings": "details.wp-settings-server > summary",
 }
 
-# Anonymous surfaces (2026-10-25): shot per theme BEFORE the session'd
-# tabs, with the session cookie deleted — the login card only renders
-# pre-session, and /login bounces a live session home (303). Render-only
+# Anonymous surfaces (2026-10-25; front-door update 2026-11-11): shot per
+# theme BEFORE the session'd tabs, with the session cookie deleted — the
+# anonymous root redirects to /login (the one front door; the island card
+# is gone), and /login bounces a live session home (303). Render-only
 # passkey config (see main()); no ceremony ever runs, so the rp_id never
 # faces a browser — it only has to pass boot validation.
 ANONYMOUS_SURFACES: list[tuple[str, str | None]] = [
-    ("login-card", "/"),
     ("login-page", "/login"),
+    ("login-extension-form", "/login"),
 ]
 ANONYMOUS_MARKERS: dict[str, tuple[str, str | None]] = {
-    # The card's anchor text is the island i18n default (server-rendered,
-    # swapped client-side); the library page's copy is the library's —
-    # pin the WIRE id only, not prose we do not own.
-    "login-card": ("#passkey-login", "Sign in with passkey"),
+    # The passkey ceremony section (library-owned markup, passkey-ON
+    # boots only) and webphone's own extension + password section
+    (#login-form, present in EVERY mode) — pin the WIRE ids, not prose
+    # we do not own.
     "login-page": ("#lp-login-form", None),
+    "login-extension-form": ("#login-form", None),
     # The token-gated enroll page (conditional: shot only when the
     # deployment renders the form — see probe_enroll).
     "enroll": ("#enroll-form", None),
