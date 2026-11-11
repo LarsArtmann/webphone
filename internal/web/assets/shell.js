@@ -188,10 +188,20 @@
     //    wraps every swap in document.startViewTransition when the
     //    browser has the API, so switching tabs cross-fades like a page
     //    change instead of a hard content snap. Progressive enhancement
-    //    only — no API, no config change. Reduced motion is handled in
-    //    CSS (the ::view-transition pseudos live outside the document
-    //    tree, so JS cannot reach them and must not try).
-    if (window.htmx && window.htmx.config) {
+    //    only — no API, no config change. Reduced motion gates the API
+    //    itself, not just the CSS: a reduced-motion user (or a headless
+    //    suite forcing the flag) gets no startViewTransition calls at
+    //    all, because the spec SKIPS a running transition when a new
+    //    one starts — on a churning page (SSE morphs + tab swaps) the
+    //    pending swap aborts and its content never lands (the 2026-11-11
+    //    E2E contacts stall: "Transition was skipped. New ViewTransition
+    //    started", five runs, zero POSTs). The CSS-only guard hid the
+    //    cross-fade but left the API — and the skip — alive.
+    if (
+      window.htmx &&
+      window.htmx.config &&
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
       window.htmx.config.globalViewTransitions = true;
     }
 
