@@ -1185,3 +1185,18 @@ recording keeps one toast") and docs/error-contract.md.
   tag then points at daemon-shaped history, which is fine ONLY because
   the tag content (not the commit message) is what ships. Verify the
   tag's tree with a test run, not with `git log`.
+
+## Detached-review shutdown race (accepted, 2026-11-11 owner ruling)
+
+`TestAutoReviewDispatchRoundTrip` failed ONCE under the buildflow sandbox
+(`sql: statement is closed`) and never since — plain AND `-race` runs stay
+green. Root cause: the automatic review dispatches its AI draft as a detached
+job (fire-and-forget goroutine, `context.WithoutCancel`, 15s budget — the same
+shape as the draft-push fan-out), and under sandbox CPU starvation that
+goroutine can still be mid-query when the test's engine cleanup closes the
+sqlite handle. VERDICT: ACCEPT AND DOCUMENT, no hardening train. The race is
+test-harness-only (prod shutdown drains HTTP → probe → container in order, and
+the goroutine's context budget outlives the request either way); a join-the-
+goroutine harness would wire test-only synchronization into a seam whose prod
+contract is deliberately detached. REOPEN TRIGGER: a second occurrence OUTSIDE
+the buildflow sandbox, or the same signature on a NON-test surface.

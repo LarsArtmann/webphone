@@ -182,6 +182,25 @@ New open items from the legs session, not homed elsewhere yet.
   engine-backed store has zero non-test callers — same
   test-double pattern; readmodels/enroll.go + the engine field in
   readmodels.go).~~ → done 2026-11-11 — faxes.go DELETED (FaxView/faxInput moved into faxesgate.go; FaxesProjection/FaxJobOfView/FaxGate kept); enroll.go slimmed to EnrollGate + EnrollTokenView (the live cqrs seams); Engine lost the faxes/enroll fields + accessors + Plan entries. Tests moved: fax/teststore_test.go boots the journal backend (`cqrs.FaxesDomainDecl` + `NewFaxes`), userauth/session_switch/passkey_api tests boot `cqrs.NewEnrollSystem`+`NewEnrollTokens`; the dying readmodels coverage PORTED (ListAll newest-first + ref guards + the 11-row faxMoves mirror + idempotent-second-key, now cqrs tests); admin_reads fax pins moved to cqrs/faxes_test.go (transcripts pin stays). Registry regen'd (-14 codes); art-dupl scan: 0 clones reference readmodels/faxes.go (3 twin groups dissolved — registry row updated); full `go test -count=1 ./...` green.
+- [x] ~~**Storage-ladder train A: delete the prod-dead readmodels
+      transcripts store** (the SUPERB 80/20 plan's M02; the faxes+enroll
+      recipe verbatim — prod has answered transcripts from the cqrs
+      journal since A27; the engine-backed `Transcripts` had zero
+      non-test callers)~~ → done 2026-11-11 — transcripts.go DELETED;
+      the surviving surface moved to transcriptsgate.go (TranscriptGate,
+      TranscriptSegmentView, both cap constants, ReassembleTranscripts —
+      the gate+view home the doctrine keeps); Engine lost the
+      calls field/accessor/Plan entry. The server test harness rides
+      `cqrs.NewTranscripts(coreSys)` (NewCoreSystem already carried the
+      decl; the gate's Append awaits its own projection fold, so the
+      harness stays deterministic). The admin RecentAll pin + the
+      window/caps table (2230-segment flood via direct projection
+      folds), the owner-cap trim (5010→5000 through EnforceCaps), the
+      metacharacter-literal search pin, and the 8×25 concurrent-append
+      no-loss test all PORTED to cqrs/transcripts_test.go; the per-call
+      floor stays decision-pinned (TestTranscriptPerCallFloorEvictsOldest).
+      Registry regen'd (−8 `readmodels.transcript_*` codes); art-dupl:
+      0 clones reference the deleted file.
 - [x] **fleet-libs `go-cqrs-lite.md` re-score (B159) + ROADMAP ES
       annotation (B160)** — the A46 leftovers: SUPERB made webphone the
       library's deepest consumer (threads/faxes aggregates, system

@@ -123,6 +123,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- The prod-dead `readmodels` transcript store: the engine-backed
+  `Transcripts` (prod has answered transcripts from the cqrs journal
+  since A27) is deleted; the server test harness drives the
+  journal-backed backend directly and `readmodels` keeps only the
+  gate/view surface (`TranscriptGate`, `TranscriptSegmentView`, the
+  retention-cap constants, `ReassembleTranscripts` in
+  transcriptsgate.go). The window/cap/owner-scope/concurrency
+  coverage ports to the cqrs backend tests. 8 retired
+  `readmodels.transcript_*` error codes leave the contract table.
 - The prod-dead `readmodels` fax store and enrollment-token store: the
   engine-backed `Faxes` (prod has answered faxes from the cqrs journal
   since P7) and `EnrollTokens` (the CLI journal swap made them
