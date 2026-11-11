@@ -1,7 +1,7 @@
 # go-datastar — adjacent library audit (closeout T24)
 
 **Verdict:** transitive-only, deliberately: the ONE consumer is the health dashboard's embedded SDK (`dashboard.WithEmbeddedDatastarSDK` → `/health/datastar.js`), and the import lives in go-health-dashboard, not webphone. The app's own realtime deliberately rides SSE (go-sse) + htmx morph swaps — Datastar's signal-patch model would be a second reactive idiom for zero product gain. templ-components/datastar v1.26.0 rides indirect and unconsumed for the same reason.
-**Pin:** v0.6.2 + `go-datastar/static` v0.6.1 (both indirect) · **Latest:** v0.6.3 (one patch behind, transitive — not webphone's bump to make) · **Currency:** rides the consumers · **Status:** indirect-only
+**Pin:** v0.6.2 + `go-datastar/static` v0.6.1 (both indirect) · **Latest:** v0.7.0 (2026-11-07 lockstep release, re-verified 2026-11-11) · **Currency:** rides the consumers — v0.7.0 flows in when templ-components/go-health-dashboard bump their requires; not webphone's bump to make · **Status:** indirect-only
 **Audited:** 2026-11-04 · **Prior reports:** none.
 **Run all commands from the webphone checkout root** (repo-relative paths).
 

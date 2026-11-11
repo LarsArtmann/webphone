@@ -60,7 +60,7 @@ The thin-but-deep pattern is right for a domain-specific phone shell — do NOT 
 All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
 
 ```console
-rg -o "icons\.Icon" -N -g '*.templ' internal/ | wc -l                    # expect 28 (24 at audit; the admin layout rewrite removed nav icons → 12; the Reports + live-context + SUPERB panel trains added 16 back 2026-11-06..09 — icons.Icon stays the one icon home)
+rg -o "icons\.Icon" -N -g '*.templ' internal/ | wc -l                    # expect 29 (24 at audit; the admin layout rewrite removed nav icons → 12; the Reports + live-context + SUPERB panel trains added 16 back 2026-11-06..09; +1 nav tabIcon site 2026-11-11 segmented pill nav — icons.Icon stays the one icon home)
 rg -n "RelativeTime|CountBadge|errorpage" -g '*.templ' --type go internal/ | wc -l   # expect 0
 rg -n "wp-empty" -g '*.templ' internal/ | wc -l                          # expect 17 (9 at audit; admin panels +7 2026-11-04; SUPERB panels +1 2026-11-09 — swap candidates only, not adoption gaps)
 rg -c "display\.StatusBadge|feedback\.Alert" -g '*.templ' internal/ | wc -l   # expect 0 (the DECLINED components stay unused; SimpleEmptyState rides the two T12 swaps)
