@@ -1158,3 +1158,30 @@ recording keeps one toast") and docs/error-contract.md.
   (dependency bumps ride `buildflow update`, never the daemon) exists
   for exactly this; the daemon's hookless commits remain the open
   guard hole.
+- **A sibling library repo can be unbuildable in its own workspace —
+  build the module, not the workspace (2026-11-11, the loginpage
+  ExtraSection train).** cqrs-htmx's go.work replaces
+  `go-cqrs-lite/catalog/v4` with a sibling checkout whose `catalog/`
+  subdirectory no longer exists, so EVERY workspace-aware go command
+  fails with a replace-resolution error, and the repo's flake devshell
+  is independently broken (stale go-source hash on its fixed-output
+  derivation). The working recipe for single-module work there:
+  `cd <module> && GOWORK=off GOTOOLCHAIN=auto go test/build ./...` —
+  module-graph resolution through the proxy, workspace replaced
+  nothing. Do not "fix" the go.work on a drive-by: it is the repo
+  owner's dev setup and a fleet-wide policy call.
+- **cqrs-htmx's push gate enforces family-train alignment that its
+  commit gate only advises (2026-11-11).** The pre-commit hook runs the
+  release-train check `--advisory` (train-lag warnings only) while the
+  PRE-PUSH hook fails the push on lag > 0 — so a library feature can
+  sit committed-but-unpushable behind examples-module version lag that
+  has nothing to do with the change. The sanctioned path is bumping
+  the lagging requires (four go.mod lines in examples/system-demo +
+  systemadapter), not `--no-verify`; the gate's own output names the
+  advisory/enforcing split. Same repo: the default branch is `master`
+  (`git push origin main` silently matches nothing), and the
+  auto-commit daemon will sweep mid-edit files into "chore:" commits
+  while a failing pre-commit hook blocks YOUR narrative commit — the
+  tag then points at daemon-shaped history, which is fine ONLY because
+  the tag content (not the commit message) is what ships. Verify the
+  tag's tree with a test run, not with `git log`.
