@@ -130,7 +130,7 @@ templ faxUnavailableNotice(lang Lang, key string) {
 // full render (the Notifier carries the same boot-time flags).
 templ FaxList(jobs []domain.FaxJob, contacts CRMContacts, cap FaxCapability, lang Lang) {
 	if len(jobs) == 0 {
-		@display.EmptyState(display.EmptyStateProps{Title: T(lang, faxEmptyKey(cap)), Icon: icons.Document})
+		@display.EmptyState(display.EmptyStateProps{Title: T(lang, faxEmptyKey(cap)), Icon: icons.Document, Class: "wp-empty-state"})
 	}
 	for _, job := range jobs {
 		@FaxRow(job, contacts, lang)

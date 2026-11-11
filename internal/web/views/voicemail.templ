@@ -66,7 +66,7 @@ templ VoicemailPanel(props VoicemailPanelProps) {
 		// unreachable provider leaves the message list empty for lack of an
 		// answer, not because the mailbox is empty.
 		if props.Enabled && props.Error == "" && len(props.Messages) == 0 {
-			@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, "vm.empty"), Icon: icons.Phone})
+			@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, "vm.empty"), Icon: icons.Phone, Class: "wp-empty-state"})
 		}
 	</section>
 }

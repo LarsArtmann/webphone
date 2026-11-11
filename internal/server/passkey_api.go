@@ -42,6 +42,18 @@ func parsePasskeyUserID(w http.ResponseWriter, raw string) (identitymodel.UserID
 	return userID, true
 }
 
+// passkeyUserIDQuery is the ONE home for the ceremony callbacks'
+// user_id prologue (both finish handlers share it): read the query
+// parameter, refuse the empty form, parse strictly at the door.
+func passkeyUserIDQuery(w http.ResponseWriter, r *http.Request) (identitymodel.UserID, bool) {
+	raw := r.URL.Query().Get("user_id")
+	if raw == "" {
+		http.Error(w, "user_id query parameter is required", http.StatusBadRequest)
+		return identitymodel.UserID{}, false
+	}
+	return parsePasskeyUserID(w, raw)
+}
+
 // passkeyBeginLogin starts the passkey ceremony for an email. Unknown
 // emails and credential-less accounts answer the SAME 401 — the endpoint
 // must not double as an email-enumeration oracle (usermgmt's own handler
@@ -78,12 +90,7 @@ func (h *handlers) passkeyBeginLogin(w http.ResponseWriter, r *http.Request) {
 // The response is the createSession shape plus display_name and numbers
 // so the island can show the user's real identity and numbers.
 func (h *handlers) passkeyFinishLogin(w http.ResponseWriter, r *http.Request) {
-	raw := r.URL.Query().Get("user_id")
-	if raw == "" {
-		http.Error(w, "user_id query parameter is required", http.StatusBadRequest)
-		return
-	}
-	userID, ok := parsePasskeyUserID(w, raw)
+	userID, ok := passkeyUserIDQuery(w, r)
 	if !ok {
 		return
 	}
@@ -174,12 +181,7 @@ func (h *handlers) passkeyEnrollBegin(w http.ResponseWriter, r *http.Request) {
 // passkeyEnrollFinish persists the attested credential. After this the
 // account can passkey-log in; the page sends the user to the login form.
 func (h *handlers) passkeyEnrollFinish(w http.ResponseWriter, r *http.Request) {
-	raw := r.URL.Query().Get("user_id")
-	if raw == "" {
-		http.Error(w, "user_id query parameter is required", http.StatusBadRequest)
-		return
-	}
-	userID, ok := parsePasskeyUserID(w, raw)
+	userID, ok := passkeyUserIDQuery(w, r)
 	if !ok {
 		return
 	}

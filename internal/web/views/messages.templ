@@ -105,6 +105,7 @@ templ ThreadsPanel(props ThreadsPanelProps) {
 				@display.EmptyState(display.EmptyStateProps{
 					Title: T(props.Lang, "threads.noMatch.pre") + "“" + props.Query + "”" + T(props.Lang, "threads.noMatch.post"),
 					Icon:  icons.Search,
+					Class: "wp-empty-state",
 				})
 			} else {
 				@ThreadsList(props.Threads, props.CRM, props.Lang)
@@ -123,7 +124,7 @@ templ ThreadsPanel(props ThreadsPanelProps) {
 // wrapper element, no composer.
 templ ThreadsList(threads []readmodels.ThreadSummary, contacts CRMContacts, lang Lang) {
 	if len(threads) == 0 {
-		@display.EmptyState(display.EmptyStateProps{Title: T(lang, "threads.empty"), Icon: icons.Inbox})
+		@display.EmptyState(display.EmptyStateProps{Title: T(lang, "threads.empty"), Icon: icons.Inbox, Class: "wp-empty-state"})
 	}
 	for _, summary := range threads {
 		@ThreadRow(summary, contacts, lang)

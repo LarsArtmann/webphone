@@ -852,6 +852,39 @@ h3 {
   font-size: var(--text-md);
 }
 
+/* The library EmptyState (templ-components) inside shell panels: the
+ * stock gray tile takes the accent tonal fill and becomes a circle, the
+ * icon inks accent, and the block left-aligns into the list's own
+ * rhythm (destination §6). Scoped via the component's Class prop —
+ * the library markup itself stays stock. */
+.wp-empty-state {
+  text-align: left;
+}
+
+.wp-empty-state > div {
+  margin: 0;
+  max-width: none;
+}
+
+.wp-empty-state > div > div:first-child {
+  margin-inline: 0;
+  border-radius: 999px;
+  background: var(--accent-soft);
+}
+
+.wp-empty-state svg {
+  color: var(--accent-strong);
+}
+
+.wp-empty-state h3 {
+  color: var(--text);
+  font-size: var(--text-lg);
+}
+
+.wp-empty-state p {
+  color: var(--muted);
+}
+
 .wp-error {
   color: var(--danger);
   margin: 0;

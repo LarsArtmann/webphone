@@ -71,7 +71,7 @@ templ ContactsPanel(props ContactsPanelProps) {
 			<a class="wp-export-link" href="/contacts/export">{ T(props.Lang, "contacts.export") }</a>
 		</div>
 		if len(props.Personal) == 0 && len(props.Shared) == 0 {
-			@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, "contacts.empty"), Icon: icons.Users})
+			@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, "contacts.empty"), Icon: icons.Users, Class: "wp-empty-state"})
 		}
 		for _, contact := range props.Personal {
 			@ContactRow(contact, props.Lang)
