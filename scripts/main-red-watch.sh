@@ -63,8 +63,8 @@ filter_red_main_titles() {
 }
 
 red_main_issues() {
-	gh issue list --state open --label ci-red --limit 200 --json number,title 2>/dev/null \
-		| filter_red_main_titles || echo "[]"
+	gh issue list --state open --label ci-red --limit 200 --json number,title 2>/dev/null |
+		filter_red_main_titles || echo "[]"
 }
 
 grep_mentions() {

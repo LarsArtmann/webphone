@@ -14,8 +14,7 @@ import { installBrowserGlobals } from "./helpers.mjs";
 const doc = installBrowserGlobals();
 // The script's meta reader guards with instanceof; node ships no
 // HTMLMetaElement, so the guard needs the global to exist.
-globalThis.HTMLMetaElement =
-  globalThis.HTMLMetaElement || class HTMLMetaElement {};
+globalThis.HTMLMetaElement = globalThis.HTMLMetaElement || class HTMLMetaElement {};
 await import("../login/login-page.js");
 
 // fetch stub: one POST /api/session per case. handler(body) → {status,
@@ -76,8 +75,16 @@ test("a 201 signs in and sends the browser home (the boot probe resumes)", async
   };
   await submit();
   assert.equal(posts.length, 1, "exactly one POST /api/session");
-  assert.deepEqual(JSON.parse(posts[0].body), { extension: "1001", password: "pw" }, "the extension is trimmed, the password is not");
-  assert.equal(permissionAsked, true, "the submit click is the notification-permission gesture (the old island login's behavior)");
+  assert.deepEqual(
+    JSON.parse(posts[0].body),
+    { extension: "1001", password: "pw" },
+    "the extension is trimmed, the password is not",
+  );
+  assert.equal(
+    permissionAsked,
+    true,
+    "the submit click is the notification-permission gesture (the old island login's behavior)",
+  );
   assert.equal(
     localStorage.getItem("pbx-extension"),
     "1001",

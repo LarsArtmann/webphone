@@ -157,7 +157,8 @@ PROD=$(prod_version "$URL")
 RELEASE_JSON=$(gh release list --limit 1 --json tagName,createdAt 2>/dev/null || echo "[]")
 TAG=$(python3 -c 'import json,sys; runs=json.loads(sys.argv[1] or "[]"); print(runs[0]["tagName"] if runs else "")' "$RELEASE_JSON")
 RELEASE_DATE=$(python3 -c 'import json,sys; runs=json.loads(sys.argv[1] or "[]"); print(runs[0]["createdAt"] if runs else "")' "$RELEASE_JSON")
-AGE=$(python3 - "$RELEASE_DATE" <<'PY'
+AGE=$(
+	python3 - "$RELEASE_DATE" <<'PY'
 import sys
 from datetime import datetime, timezone
 
@@ -182,7 +183,8 @@ EXISTS*)
 	;;
 esac
 
-PROD_COMMIT=$(python3 - "$URL" <<'PY'
+PROD_COMMIT=$(
+	python3 - "$URL" <<'PY'
 import json, socket, sys, urllib.request
 
 socket.setdefaulttimeout(20)

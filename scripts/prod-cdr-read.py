@@ -10,6 +10,7 @@ looks like bad credentials. 201 = session created. The password file is
 the extension's PBX directory secret (~/.pbx-prod-secrets/), the same
 one the login flow reads. Promotion of the /tmp recipe, 2026-11-10
 (C3/D2 verification; /tmp rots)."""
+
 import json
 import re
 import sys
@@ -32,8 +33,11 @@ class NoRedirect(urllib.request.HTTPRedirectHandler):
 
 
 import http.cookiejar
+
 jar = http.cookiejar.CookieJar()
-opener = urllib.request.build_opener(NoRedirect, urllib.request.HTTPCookieProcessor(jar))
+opener = urllib.request.build_opener(
+    NoRedirect, urllib.request.HTTPCookieProcessor(jar)
+)
 
 
 def get(path, cookie=None):
@@ -72,7 +76,9 @@ if rc != 200 or not m:
 csrf = m.group(1)
 
 # 2. mint the session
-rc, body, headers = post_json("/api/session", {"extension": EXT, "password": password}, csrf)
+rc, body, headers = post_json(
+    "/api/session", {"extension": EXT, "password": password}, csrf
+)
 if rc not in (200, 201):
     print(f"FAIL: session mint rc={rc}: {body[:200]}")
     sys.exit(1)
@@ -105,23 +111,39 @@ inbound = [e for e in entries if e.get("context") == "public"]
 outbound = [e for e in entries if e.get("context") != "public"]
 ans_in = [e for e in inbound if e.get("billsec", 0) > 0]
 ans_out = [e for e in outbound if e.get("billsec", 0) > 0]
-undated = [e for e in entries if not re.match(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$", e.get("start", ""))]
-print(f"inbound: {len(inbound)} (answered {len(ans_in)}) | outbound: {len(outbound)} (answered {len(ans_out)})")
+undated = [
+    e
+    for e in entries
+    if not re.match(r"^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$", e.get("start", ""))
+]
+print(
+    f"inbound: {len(inbound)} (answered {len(ans_in)}) | outbound: {len(outbound)} (answered {len(ans_out)})"
+)
 print(f"rows failing the seconds-parse: {len(undated)}")
 
 print("\n=== inbound rows (the C3 window) ===")
 for e in inbound[:20]:
-    print(f"  start={e.get('start','?')} from={e.get('caller_id_number','?')} name={e.get('caller_id_name','')!r} billsec={e.get('billsec',0)}")
+    print(
+        f"  start={e.get('start', '?')} from={e.get('caller_id_number', '?')} name={e.get('caller_id_name', '')!r} billsec={e.get('billsec', 0)}"
+    )
 
 print("\n=== answered rows detail (the D2 24-answered story) ===")
 for e in ans_out:
-    print(f"  start={e.get('start','?')} dest={e.get('destination_number','?')} name={e.get('caller_id_name','')!r} billsec={e.get('billsec',0)}")
+    print(
+        f"  start={e.get('start', '?')} dest={e.get('destination_number', '?')} name={e.get('caller_id_name', '')!r} billsec={e.get('billsec', 0)}"
+    )
 
 print("\n=== rows with garbled/odd caller names (the pifo42h1 hunt) ===")
 for e in entries:
     n = e.get("caller_id_name", "")
-    if n and not re.match(r"^[\w\s.+\-()]*$", n) or (n and re.search(r"[^A-Za-z0-9 +.\-()]", n)):
-        print(f"  start={e.get('start','?')} ctx={e.get('context','?')} from={e.get('caller_id_number','?')} name={n!r} dest={e.get('destination_number','?')} billsec={e.get('billsec',0)}")
+    if (
+        n
+        and not re.match(r"^[\w\s.+\-()]*$", n)
+        or (n and re.search(r"[^A-Za-z0-9 +.\-()]", n))
+    ):
+        print(
+            f"  start={e.get('start', '?')} ctx={e.get('context', '?')} from={e.get('caller_id_number', '?')} name={n!r} dest={e.get('destination_number', '?')} billsec={e.get('billsec', 0)}"
+        )
 
 # the literal pifo42h1 hunt
 hits = [e for e in entries if "pifo" in json.dumps(e).lower()]

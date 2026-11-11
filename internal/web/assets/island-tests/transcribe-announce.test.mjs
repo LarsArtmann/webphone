@@ -64,9 +64,8 @@ globalThis.MediaRecorder = class {
 
 const { t } = await import("../island/app/i18n.js");
 const { els } = await import("../island/app/ui.js");
-const { startLiveTranscription, stopLiveTranscription } = await import(
-  "../island/app/transcribe.js"
-);
+const { startLiveTranscription, stopLiveTranscription } =
+  await import("../island/app/transcribe.js");
 
 const toasts = () => els.toasts.children.map((c) => c.textContent);
 const countToast = (needle, list) => list.filter((s) => s === needle).length;
@@ -128,7 +127,11 @@ test("the lag warn announces once per streak and recovery re-arms it", async () 
 
     const seen = toasts();
     assert.equal(countToast(t("transcribeLag"), seen), 2, `lag toasts: ${JSON.stringify(seen)}`);
-    assert.equal(countToast(t("transcribeUnavailable"), seen), 1, `failure toasts: ${JSON.stringify(seen)}`);
+    assert.equal(
+      countToast(t("transcribeUnavailable"), seen),
+      1,
+      `failure toasts: ${JSON.stringify(seen)}`,
+    );
     assert.deepEqual(seen, [t("transcribeLag"), t("transcribeUnavailable"), t("transcribeLag")]);
   } finally {
     stopLiveTranscription("lag-c1");

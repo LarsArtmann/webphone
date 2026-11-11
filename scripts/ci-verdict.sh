@@ -17,13 +17,13 @@
 set -uo pipefail
 
 usage() {
-  echo "usage: scripts/ci-verdict.sh <sha> | --self-test" >&2
-  exit 3
+	echo "usage: scripts/ci-verdict.sh <sha> | --self-test" >&2
+	exit 3
 }
 
 verdict_from_json() {
-  # stdin: gh run list --json workflowName,headSha,conclusion JSON for ONE sha
-  python3 -c '
+	# stdin: gh run list --json workflowName,headSha,conclusion JSON for ONE sha
+	python3 -c '
 import json, sys
 
 runs = json.load(sys.stdin)
@@ -51,41 +51,41 @@ sys.exit(0)
 }
 
 if [ "${1:-}" = "--self-test" ]; then
-  fail=0
-  check() {
-    local name="$1" fixture="$2" want="$3"
-    local got
-    got=$(echo "$fixture" | verdict_from_json)
-    local code=$?
-    if [ "$code" != "$want" ]; then
-      echo "self-test FAIL: $name (exit $code, want $want): $got" >&2
-      fail=1
-    else
-      echo "self-test ok: $name (exit $code)"
-    fi
-  }
+	fail=0
+	check() {
+		local name="$1" fixture="$2" want="$3"
+		local got
+		got=$(echo "$fixture" | verdict_from_json)
+		local code=$?
+		if [ "$code" != "$want" ]; then
+			echo "self-test FAIL: $name (exit $code, want $want): $got" >&2
+			fail=1
+		else
+			echo "self-test ok: $name (exit $code)"
+		fi
+	}
 
-  check empty '[]' 1
-  check watch-only '[{"workflowName":"watch","headSha":"a","conclusion":"success"},{"workflowName":"watch","headSha":"a","conclusion":"success"}]' 1
-  check ci-green '[{"workflowName":"CI","headSha":"a","conclusion":"success"},{"workflowName":"watch","headSha":"a","conclusion":"success"}]' 0
-  check ci-red '[{"workflowName":"CI","headSha":"a","conclusion":"failure"}]' 2
-  check ci-pending '[{"workflowName":"CI","headSha":"a","conclusion":null},{"workflowName":"CI","headSha":"a","conclusion":"success"}]' 2
+	check empty '[]' 1
+	check watch-only '[{"workflowName":"watch","headSha":"a","conclusion":"success"},{"workflowName":"watch","headSha":"a","conclusion":"success"}]' 1
+	check ci-green '[{"workflowName":"CI","headSha":"a","conclusion":"success"},{"workflowName":"watch","headSha":"a","conclusion":"success"}]' 0
+	check ci-red '[{"workflowName":"CI","headSha":"a","conclusion":"failure"}]' 2
+	check ci-pending '[{"workflowName":"CI","headSha":"a","conclusion":null},{"workflowName":"CI","headSha":"a","conclusion":"success"}]' 2
 
-  if [ "$fail" = 0 ]; then
-    echo "self-test: all cases pass"
-    exit 0
-  fi
-  exit 1
+	if [ "$fail" = 0 ]; then
+		echo "self-test: all cases pass"
+		exit 0
+	fi
+	exit 1
 fi
 
 sha="${1:-}"
 case "$sha" in
-  ""|-*|help) usage ;;
+"" | -* | help) usage ;;
 esac
 
 runs=$(gh run list --commit "$sha" --limit 100 \
-  --json workflowName,headSha,conclusion 2>&1) || {
-  echo "gh run list failed: $runs" >&2
-  exit 3
+	--json workflowName,headSha,conclusion 2>&1) || {
+	echo "gh run list failed: $runs" >&2
+	exit 3
 }
 echo "$runs" | verdict_from_json

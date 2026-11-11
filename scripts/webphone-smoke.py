@@ -1122,7 +1122,11 @@ def enroll_scenario(binary: str, workdir: str) -> int:
         s = Smoke(base)
         status, body, _ = s.request("GET", "/enroll")
         page = body.decode("utf-8", "replace")
-        c.ok("enroll: the page renders with passkey on", status == 200, f"status {status}")
+        c.ok(
+            "enroll: the page renders with passkey on",
+            status == 200,
+            f"status {status}",
+        )
         m = re.search(r'name="csrf-token" content="([^"]+)"', page)
         if m:
             s.csrf = m.group(1)
@@ -1183,13 +1187,13 @@ def run_checks(
     )
     c.ok(
         "login form drives its own module",
-        '/assets/login-page.js' in page,
+        "/assets/login-page.js" in page,
         "the standalone submit module is not referenced",
     )
     status_root, body_root, _ = s.request("GET", "/")
     c.ok(
         "anonymous root lands on the front door",
-        status_root == 200 and b'login-form' in body_root,
+        status_root == 200 and b"login-form" in body_root,
         f"root GET answered {status_root} without the login form",
     )
     match = re.search(r'name="csrf-token" content="([^"]+)"', page)
@@ -1451,7 +1455,9 @@ def run_checks(
         status, shell, _ = s.request("GET", "/")
         c.ok(
             "signed-in shell serves the island",
-            status == 200 and b'id="reg-status"' in shell and b'id="phone-view"' in shell,
+            status == 200
+            and b'id="reg-status"' in shell
+            and b'id="phone-view"' in shell,
             f"{status} island ids missing",
         )
         # 6b. The pre-login token is dead: POSTs with it must 403, while the

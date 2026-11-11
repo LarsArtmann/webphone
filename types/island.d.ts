@@ -284,9 +284,9 @@ interface IslandEnrollVerifyBody {
 // the form; #sso-login renders only when the OIDC seam is configured.
 interface LoginPageDomIds {
   "login-form": HTMLFormElement;
-  "ext": HTMLInputElement;
-  "pass": HTMLInputElement;
-  "remember": HTMLInputElement;
+  ext: HTMLInputElement;
+  pass: HTMLInputElement;
+  remember: HTMLInputElement;
   "login-error": HTMLElement;
   "sso-login": HTMLAnchorElement;
 }

@@ -43,7 +43,10 @@ MODE=build
 case "${1:-}" in
 --check) MODE=check ;;
 "") ;;
-*) echo "usage: build-tw-css.sh [--check]" >&2; exit 2 ;;
+*)
+	echo "usage: build-tw-css.sh [--check]" >&2
+	exit 2
+	;;
 esac
 
 rev="$(jq -r '.nodes.nixpkgs.locked.rev' flake.lock)"

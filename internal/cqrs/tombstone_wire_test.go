@@ -2,7 +2,7 @@ package cqrs
 
 import (
 	"bytes"
-	"encoding/json"
+	"encoding/json/v2"
 	"reflect"
 	"testing"
 

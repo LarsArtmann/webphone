@@ -22,25 +22,25 @@ TOOL="${ANNOTATE:-/tmp/annotool/annotate}"
 SRC="$HOME/.config/crush/skills/docs-health/assets/annotate.go"
 
 if [ ! -x "$TOOL" ]; then
-  mkdir -p "$(dirname "$TOOL")" || exit 1
-  GOTOOLCHAIN=local GO111MODULE=off go build -o "$TOOL" "$SRC" || exit 1
+	mkdir -p "$(dirname "$TOOL")" || exit 1
+	GOTOOLCHAIN=local GO111MODULE=off go build -o "$TOOL" "$SRC" || exit 1
 fi
 
 cd "$REPO" || exit 1
 clean=0
 dirty=0
 for f in docs/status/*.md; do
-  [ -f "$f" ] || continue
-  base="$(basename "$f")"
-  [ "$base" = "INDEX.md" ] && continue
-  if "$TOOL" check-rows --strict "$f" >/dev/null 2>&1 &&
-    "$TOOL" bare-rows "$f" >/dev/null 2>&1; then
-    echo "CLEAN  $base"
-    clean=$((clean + 1))
-  else
-    echo "DIRTY  $base"
-    dirty=$((dirty + 1))
-  fi
+	[ -f "$f" ] || continue
+	base="$(basename "$f")"
+	[ "$base" = "INDEX.md" ] && continue
+	if "$TOOL" check-rows --strict "$f" >/dev/null 2>&1 &&
+		"$TOOL" bare-rows "$f" >/dev/null 2>&1; then
+		echo "CLEAN  $base"
+		clean=$((clean + 1))
+	else
+		echo "DIRTY  $base"
+		dirty=$((dirty + 1))
+	fi
 done
 echo "----"
 echo "$clean clean candidate(s) (archive-eligible, oldest first), $dirty dirty (owe drain trains)."

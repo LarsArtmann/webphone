@@ -25,40 +25,43 @@ cd "$(git rev-parse --show-toplevel)"
 ONLY=""
 SKIP=""
 for arg in "$@"; do
-  case "$arg" in
-    --only=*) ONLY="${arg#--only=}" ;;
-    --skip=*) SKIP="${arg#--skip=}" ;;
-    *) echo "usage: pre-push-gates.sh [--only=g1,g2] [--skip=g1,g2]" >&2; exit 2 ;;
-  esac
+	case "$arg" in
+	--only=*) ONLY="${arg#--only=}" ;;
+	--skip=*) SKIP="${arg#--skip=}" ;;
+	*)
+		echo "usage: pre-push-gates.sh [--only=g1,g2] [--skip=g1,g2]" >&2
+		exit 2
+		;;
+	esac
 done
 
 want() {
-  local gate="$1"
-  if [ -n "$ONLY" ]; then
-    [[ ",$ONLY," == *",$gate,"* ]]
-    return
-  fi
-  if [ -n "$SKIP" ]; then
-    [[ ",$SKIP," != *",$gate,"* ]]
-    return
-  fi
-  return 0
+	local gate="$1"
+	if [ -n "$ONLY" ]; then
+		[[ ",$ONLY," == *",$gate,"* ]]
+		return
+	fi
+	if [ -n "$SKIP" ]; then
+		[[ ",$SKIP," != *",$gate,"* ]]
+		return
+	fi
+	return 0
 }
 
 fail=0
 run_gate() {
-  local gate="$1"
-  shift
-  if ! want "$gate"; then
-    echo "== $gate: skipped"
-    return
-  fi
-  echo "== $gate"
-  if ! "$@"; then
-    echo "RED: $gate failed — fix before push (the gate's output names the fix)" >&2
-    fail=1
-    return 1
-  fi
+	local gate="$1"
+	shift
+	if ! want "$gate"; then
+		echo "== $gate: skipped"
+		return
+	fi
+	echo "== $gate"
+	if ! "$@"; then
+		echo "RED: $gate failed — fix before push (the gate's output names the fix)" >&2
+		fail=1
+		return 1
+	fi
 }
 
 # env -u GOEXPERIMENT: the host-env leak flips encoding/json to v2 locally
@@ -71,7 +74,7 @@ run_gate twcss bash scripts/build-tw-css.sh --check
 run_gate docs bash scripts/docs-gates.sh --check
 
 if [ "$fail" -ne 0 ]; then
-  echo "pre-push-gates: RED — the battery found drift before CI did"
-  exit 1
+	echo "pre-push-gates: RED — the battery found drift before CI did"
+	exit 1
 fi
 echo "pre-push-gates: all requested gates green"

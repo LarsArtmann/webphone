@@ -106,15 +106,13 @@ async function rejectedCall(id, res) {
   return entry;
 }
 
-const reasonText = (entry) =>
-  entry.dom.querySelector(".call-reason-text")?.textContent ?? "";
+const reasonText = (entry) => entry.dom.querySelector(".call-reason-text")?.textContent ?? "";
 
 test("a 403 that carries Q.850;cause=21 names the network rejection", async () => {
   const entry = await rejectedCall("call-s1", {
     statusCode: 403,
     message: {
-      getHeader: (name) =>
-        name === "Reason" ? 'Q.850;cause=21;text="Call rejected"' : undefined,
+      getHeader: (name) => (name === "Reason" ? 'Q.850;cause=21;text="Call rejected"' : undefined),
     },
   });
   assert.match(
