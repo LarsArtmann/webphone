@@ -41,7 +41,7 @@ const (
 type pkStub struct{}
 
 func (pkStub) BeginRegistration(_ context.Context, _ []byte) ([]byte, []byte, error) {
-	return []byte(`{"publicKey":{}}`), []byte(`{}`), nil
+	return []byte(`{"publicKey":{"challenge":"dGVzdA=="}}`), []byte(`{}`), nil
 }
 
 func (pkStub) FinishRegistration(_ context.Context, _, _, _ []byte) ([]byte, error) {
@@ -323,6 +323,19 @@ func TestPasskeyEnrollHandlersWalkTheCeremony(t *testing.T) {
 	}
 	if err := json.Unmarshal(body, &begun); err != nil || len(begun.Options) == 0 || begun.SessionKey == "" {
 		t.Fatalf("enroll begin body %q: %v", body, err)
+	}
+	// Open the options object: the wire nests the ceremony dictionary under
+	// "publicKey" (go-webauthn's CredentialCreation shape) and both JS
+	// consumers read the challenge through that envelope — a body that is
+	// non-empty but shapeless would strand the ceremony client-side.
+	var creationOptions struct {
+		PublicKey struct {
+			Challenge string `json:"challenge"`
+		} `json:"publicKey"`
+	}
+	if err := json.Unmarshal(begun.Options, &creationOptions); err != nil ||
+		creationOptions.PublicKey.Challenge == "" {
+		t.Fatalf("enroll begin options %q: no publicKey.challenge (%v)", begun.Options, err)
 	}
 
 	// finish: persist the attested credential (the stub provider accepts

@@ -51,22 +51,36 @@ export function bytesToBase64url(buffer) {
 const toBytes = (value) =>
   value instanceof ArrayBuffer || value instanceof Uint8Array ? value : base64url.decode(value);
 
+// unwrapPublicKeyEnvelope: usermgmt's begin endpoints marshal go-webauthn's
+// CredentialCreation wrapper, so the ceremony dictionary arrives nested under
+// a {"publicKey": {...}} key (the WebAuthn API's own parameter shape).
+// navigator.credentials.create takes the INNER dictionary — unwrap here, at
+// the wire boundary; a bare dictionary keeps working for other callers.
+/** @param {IslandRegistrationOptionsWire | Record<string, unknown>} options */
+const unwrapPublicKeyEnvelope = (options) =>
+  options != null &&
+  typeof options.publicKey === "object" &&
+  options.publicKey !== null
+    ? /** @type {IslandRegistrationOptionsWire} */ (options.publicKey)
+    : /** @type {IslandRegistrationOptionsWire} */ (options);
+
 // prepareRegistrationOptions turns the server's
 // PublicKeyCredentialCreationOptions JSON into the dictionary
 // navigator.credentials.create accepts: challenge, user.id and each
 // excludeCredentials[].id become byte views.
 /**
- * @param {IslandRegistrationOptionsWire} options
+ * @param {IslandRegistrationOptionsWire | Record<string, unknown>} options
  * @returns {Record<string, unknown>}
  */
 export function prepareRegistrationOptions(options) {
+  const src = unwrapPublicKeyEnvelope(options);
   /** @type {Record<string, unknown>} */
-  const prepared = { ...options, challenge: toBytes(options.challenge) };
-  if (options.user) {
-    prepared.user = { ...options.user, id: toBytes(options.user.id) };
+  const prepared = { ...src, challenge: toBytes(src.challenge) };
+  if (src.user) {
+    prepared.user = { ...src.user, id: toBytes(src.user.id) };
   }
-  if (Array.isArray(options.excludeCredentials)) {
-    prepared.excludeCredentials = options.excludeCredentials.map((entry) => ({
+  if (Array.isArray(src.excludeCredentials)) {
+    prepared.excludeCredentials = src.excludeCredentials.map((entry) => ({
       ...entry,
       id: toBytes(entry.id),
     }));
