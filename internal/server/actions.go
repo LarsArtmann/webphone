@@ -432,6 +432,11 @@ func (h *handlers) countUnread(r *http.Request, sess session.Session) int {
 	}
 	threads, err := h.deps.Messaging.Threads(r.Context(), sess.Extension)
 	if err != nil {
+		// Badge-only degradation: zero is the honest "cannot count" answer
+		// for a nav badge, but the failure is logged so a store outage is
+		// visible beyond a quietly dark badge (the error-path owner rule).
+		// The empty result is NOT cached — the next render recomputes.
+		slog.WarnContext(r.Context(), "unread badge count failed", "error", err)
 		return 0
 	}
 	total := 0
@@ -455,6 +460,9 @@ func (h *handlers) countVoicemail(r *http.Request, sess session.Session) int {
 	}
 	summary, err := h.deps.PhoneAPI.VoicemailSummary(r.Context(), sess.PBXCredentials())
 	if err != nil {
+		// Same badge-only degradation as countUnread: zero on failure, the
+		// failure logged, nothing cached.
+		slog.WarnContext(r.Context(), "voicemail badge count failed", "error", err)
 		return 0
 	}
 	return summary.New

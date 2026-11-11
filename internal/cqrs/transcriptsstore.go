@@ -274,6 +274,7 @@ func (s *Transcripts) SweepBefore(ctx context.Context, cutoff time.Time) (int64,
 	expungeType := event.Type(metaengine.EventTypeName(domain.TranscriptExpunged{}))
 	var removed int64
 	for {
+		pageRemoved := int64(0)
 		views, err := s.reader.Scan(ctx,
 			metaengine.WithFilter("seq", metaengine.FilterLt, cutoff.UnixNano()),
 			metaengine.WithSort("seq", false),
@@ -300,7 +301,15 @@ func (s *Transcripts) SweepBefore(ctx context.Context, cutoff time.Time) (int64,
 			if err != nil {
 				return removed, errorfamily.WrapInfrastructuref(err, "cqrs.transcript_sweep", "dispatch transcript.expunge")
 			}
-			removed += int64(count)
+			pageRemoved += int64(count)
+		}
+		removed += pageRemoved
+		// Termination guard (the enroll sweep's shape, PER PAGE): a page
+		// whose expunges all applied as no-ops (the projection already
+		// removed them) must end the walk — rescanning the same window
+		// would spin forever.
+		if pageRemoved == 0 {
+			return removed, nil
 		}
 	}
 }

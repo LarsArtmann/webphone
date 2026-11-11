@@ -18,8 +18,14 @@ import (
 
 // ListAllThreads returns every owner's threads, most recently active
 // first, bounded by limit (the admin inventory; archived included).
+// The sort runs ENGINE-SIDE (like Faxes.ListAll): a limit-then-sort
+// would truncate to `limit` arbitrary threads first and only then
+// order them — the inventory would silently show an arbitrary window
+// of the fleet, not the most recent one.
 func (s *Threads) ListAllThreads(ctx context.Context, limit int) ([]readmodels.ThreadSummaryView, error) {
-	views, err := s.threads.Scan(ctx, metaengine.WithLimit(limit))
+	views, err := s.threads.Scan(ctx,
+		metaengine.WithSort("last_activity", true),
+		metaengine.WithLimit(limit))
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.threads_list_all", "list all threads")
 	}

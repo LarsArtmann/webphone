@@ -256,6 +256,7 @@ templ TranscriptSection(props HistoryPanelProps) {
 					<textarea
 						id={ "wp-note-body-" + group.CallID }
 						data-note-body={ group.CallID }
+						maxlength="4000"
 						rows="3"
 					>{ group.Note }</textarea>
 					<button
