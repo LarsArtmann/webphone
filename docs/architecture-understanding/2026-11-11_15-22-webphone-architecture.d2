@@ -1,0 +1,241 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    theme-id: 200
+  }
+}
+
+classes: {
+  actor: {
+    style: {
+      fill: "#f4d35e"
+      stroke: "#f4d35e"
+      font-color: "#0e0e10"
+      bold: true
+    }
+  }
+  front: {
+    style: {
+      fill: "#6eb5ff"
+      stroke: "#6eb5ff"
+      font-color: "#0e0e10"
+      bold: true
+    }
+  }
+  surface: {
+    style: {
+      fill: "#ffb347"
+      stroke: "#ffb347"
+      font-color: "#0e0e10"
+    }
+  }
+  service: {
+    style: {
+      fill: "#1d1d24"
+      stroke: "#ffb347"
+      font-color: "#f4f4f0"
+    }
+  }
+  seam: {
+    style: {
+      fill: "#1d1d24"
+      stroke: "#6eb5ff"
+      font-color: "#f4f4f0"
+    }
+  }
+  base: {
+    style: {
+      fill: "#101014"
+      stroke: "#4a4a55"
+      font-color: "#c9c9d4"
+    }
+  }
+  external: {
+    style: {
+      fill: "#26262e"
+      stroke: "#8a8a96"
+      stroke-dash: 4
+      font-color: "#f4f4f0"
+    }
+  }
+}
+
+direction: down
+
+operator: Operator (browser) {
+  class: actor
+  island: SIP island — sip.js 0.21.2, served verbatim
+  tabs: HTMX tabs — real URLs + pushState, morph swaps
+  login: "/login front door — passkey | extension | Pocket ID"
+}
+
+front: TLS front — Caddy (stack module) {
+  class: front
+  style.stroke-dash: 4
+  web: reverse_proxy + /events unbuffered
+  sip: /sip WSS bridge to the PBX
+}
+
+webphone: webphone single binary — current state {
+  style: {
+    stroke: "#ffb347"
+    stroke-width: 2
+    font-color: "#ffb347"
+    bold: true
+  }
+
+  cmd: cmd/webphone — process lifecycle {
+    class: base
+  }
+
+  app: internal/app — composition root (samber/do v2) {
+    class: surface
+  }
+
+  http: internal/server — HTTP hub (106 files, I=0.93) {
+    class: surface
+    wiring: server.go — Deps · middleware chain · mount
+    html: pages · panels · actions (templ render)
+    platform: assets · metrics · csp · trace · proxy · internal
+    api: server/api — JSON surfaces
+    hooks: server/hooks — webhook ingest + idem
+    sse: Broadcaster + ExtensionHubs (/events)
+  }
+
+  identity: identity {
+    class: seam
+    loginpage: "/login (loginpage/v4 + ExtraSection)"
+    userauth: userauth — in-process usermgmt v4
+    sso: sso — Pocket ID OIDC
+    authmap: authmap — shared users map
+    session: session — SQLite rows, sliding TTL
+    sipcred: sipcred — per-session derived SIP credential
+    admin: admin — read-only all-lines property
+  }
+
+  comms: comms services {
+    class: service
+    messaging: messaging.Service — sender registry
+    chatloop: chatloop — receiver backoff ladder
+    matrix: matrix — /sync loop, receipts
+    signal: signal — socket reader
+    faxsvc: fax.Service — lifecycle machine table
+    paperless: paperless.Archiver
+    gateway: gateway — loopback | webhook seam
+  }
+
+  operator_services: operator services {
+    class: service
+    crmres: crm.Resolver — TTL + single-flight
+    textagent: textagent — AI drafts + reviews
+    asr: asr.Client — /api/transcribe
+    push: push — ntfy + FCM fanout
+    reports: reports — CDR projection (pure)
+    retention: retention — tombstones + trims
+    blob: blob — atomic-write tree
+    vcard: vcard — pure parser
+  }
+
+  journal: ONE journal world — system.db {
+    class: seam
+    cqrs: cqrs — deciders + projections (go-cqrs-lite system)
+    readmodels: readmodels — gate interfaces + views
+    store: store — sessions SQL + import-only ladder
+  }
+
+  domain: internal/domain — branded IDs · value objects · zero internal imports {
+    class: base
+  }
+
+  views: web/views — 16 templ surfaces {
+    class: base
+  }
+}
+
+sysdb: system.db (SQLite WAL) {
+  shape: cylinder
+  class: base
+}
+usermgmtdb: usermgmt.db (identity journal) {
+  shape: cylinder
+  class: base
+}
+blobs: blob tree (nanoid files) {
+  shape: stored_data
+  class: base
+}
+
+pbxstack: FreeSWITCH PBX {
+  class: external
+}
+bridge: telnyx-webhooks bridge {
+  class: external
+}
+kith: Kith CRM (bearer /api) {
+  class: external
+}
+paperlessd: Paperless {
+  class: external
+}
+matrixhs: Matrix homeserver {
+  class: external
+}
+signald: Signal daemon {
+  class: external
+}
+speaches: Speaches ASR (local) {
+  class: external
+}
+ntfy: ntfy push {
+  class: external
+}
+fcm: FCM push {
+  class: external
+}
+pocketid: Pocket ID (OIDC IdP) {
+  class: external
+}
+
+operator.island -> front.sip: "RTP/DTMF over WSS"
+operator.tabs -> front.web: "htmx partials + morph"
+operator.login -> front.web: "POST /api/session · ceremonies"
+front.web -> webphone.http.wiring: proxies
+front.sip -> pbxstack: "SIP over WSS"
+
+webphone.cmd -> webphone.app: "Start · drain · bootreport"
+webphone.app -> webphone.http: wires
+webphone.app -> webphone.comms: starts receiver loops
+webphone.app -> webphone.operator_services: wires
+webphone.app -> webphone.journal.cqrs: "system.New"
+
+webphone.http.html -> webphone.views: renders
+webphone.http.html -> webphone.operator_services.crmres: live-context
+webphone.http.api -> webphone.identity: session gate
+webphone.http.hooks -> webphone.comms.messaging: Receive
+webphone.http.sse -> operator.tabs: "events (threads · fax · contacts)"
+
+webphone.identity.loginpage -> webphone.identity.userauth: ceremonies
+webphone.identity.userauth -> usermgmtdb: journal
+webphone.identity.sso -> pocketid: "OIDC redirect"
+webphone.identity.session -> webphone.operator_services.crmres: password probe
+
+webphone.comms.messaging -> webphone.journal.cqrs: commands
+webphone.comms.matrix -> matrixhs: "/sync + send"
+webphone.comms.signal -> signald: socket
+webphone.comms.faxsvc -> paperlessd: archive inbound
+webphone.comms.chatloop -> webphone.comms.messaging: intake
+
+webphone.operator_services.crmres -> kith: "GET /api (bearer)"
+webphone.operator_services.asr -> speaches: transcriptions
+webphone.operator_services.push -> ntfy: ring
+webphone.operator_services.push -> fcm: ring
+webphone.operator_services.reports -> pbxstack: "CDR page"
+
+webphone.journal.cqrs -> sysdb: "events + projections"
+webphone.journal.readmodels -> sysdb: engine views
+webphone.journal.store -> sysdb: sessions
+
+webphone.http.platform -> pbxstack: "/phone-api proxy + /internal/directory"
+webphone.comms.gateway -> bridge: "outbound multipart + Bearer"
+bridge -> webphone.http.hooks: "inbound + status /hooks/*"
+pbxstack -> webphone.http.hooks: "/hooks/ring (dialplan)"

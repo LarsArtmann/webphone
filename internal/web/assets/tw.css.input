@@ -99,7 +99,7 @@
      tokens because Tailwind's own token names (--radius-md/--radius-lg)
      collide with the app names they must follow; build-tw-css.sh
      asserts the values stay in lockstep with app.css. */
-  --radius-md: 10px;
+  --radius-md: 12px;
   --radius-lg: 16px;
 }
 

@@ -1,5 +1,13 @@
 # Status: daemon-damage repair + push-train dedup (2026-10-24)
 
+> **Live remainder** (archived 2026-11-11, docs-health cadence gate): §b2
+> helper micro-test debt, §b6/§c7 pma-unit root cause (characterized in
+> AGENTS.md §Buildflow health warning; the nix-config fix is a fleet-wide
+> policy call, still open), and §c8 the `.buildflow.yml` disappearance guard
+> (routed to the 2026-11-11 restyle report §f row 50). Everything else
+> (push/CI proof for that train, smoke/captures for that repair, baseline
+> refresh — the file was RETIRED 2026-10-28) is historically moot.
+
 **Snapshot-rot header:** all claims verified as of **2026-10-24 07:28 CEST (+0200)**,
 HEAD `b7e6efb`, working tree clean. Push and CI statements rot fastest; they are
 timestamped, not presented as timeless.
@@ -96,6 +104,8 @@ fix.
 - This status report.
 
 ### 8. Verification battery (all local)
+
+<!-- check-rows:ledger -->
 
 | Gate                                                   | Result                                                                               |
 | ------------------------------------------------------ | ------------------------------------------------------------------------------------ |

@@ -276,7 +276,7 @@ ANONYMOUS_SURFACES: list[tuple[str, str | None]] = [
 ANONYMOUS_MARKERS: dict[str, tuple[str, str | None]] = {
     # The passkey ceremony section (library-owned markup, passkey-ON
     # boots only) and webphone's own extension + password section
-    (#login-form, present in EVERY mode) — pin the WIRE ids, not prose
+    # (#login-form, present in EVERY mode) — pin the WIRE ids, not prose
     # we do not own.
     "login-page": ("#lp-login-form", None),
     "login-extension-form": ("#login-form", None),

@@ -148,58 +148,58 @@ morning's pin `9b47bc78`).
 
 <!-- check-rows:ledger -->
 
-| #  | Area        | Task                                                                                      | Why / verification                             |
-| -- | ----------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------- |
-| 1  | deploy      | Close out the parallel front-door train, then full release dance to prod                  | prod pin `9b47bc78` predates the whole restyle |
-| 2  | split-brain | Reconcile the 15:11 UI-destination doc's "one indigo accent" with the owner's green veto  | two conflicting ratified truths in AGENTS.md   |
-| 3  | gates       | Full `buildflow` run owed at next train start (the 2026-10-08 lesson)                     | skipped this train                             |
-| 4  | gates       | `nix flake check` incl. island-lint over shell.js                                         | never run this train                           |
-| 5  | design      | Owner walkthrough of the new green look (screenshots or local boot) before prod           | no human eye has seen it yet                   |
-| 6  | design      | Per-tab head icons echoing nav glyphs in panel headers                                    | page identity, cheap templ change              |
-| 7  | design      | Focus-visible ring unification (accent 3px soft ring on all interactives)                 | consistency across old+new surfaces            |
-| 8  | design      | Skeleton shimmer color to the accent-soft family                                          | still neutral gray                             |
-| 9  | design      | Toast + lightbox + command-palette visual pass under new elevation scale                  | untouched by the restyle                       |
-| 10 | design      | Reports tab meter styling under new tokens                                                | unverified                                     |
-| 11 | design      | `::selection` accent-soft selection color                                                 | small polish                                   |
-| 12 | design      | Dark scrollbar styling to match the slate surfaces                                        | default scrollbars read foreign                |
-| 13 | design      | Empty-state glyphs per panel (icons.Icon)                                                 | empties still text-only                        |
-| 14 | mobile      | Composer input 16px font-size to stop iOS focus-zoom                                      | classic phone annoyance                        |
-| 15 | mobile      | Dialpad one-hand reachability pass (thumb zone, key sizes)                                | never audited                                  |
-| 16 | mobile      | Thread master-detail back-target prominence ("All messages" link) on phones               | only path back below the split                 |
-| 17 | mobile      | Landscape / short-viewport pass (bottom bar vs. content)                                  | untested                                       |
-| 18 | mobile      | Sticky call-card top offset vs. header height on mobile                                   | verify no overlap with sticky header           |
-| 19 | mobile      | German long-label ellipsis acceptance on the bottom bar (visual check)                    | DOM asserts presence, not readability          |
-| 20 | mobile      | `viewport` meta `interactive-widget=resizes-content` check for keyboard compose           | keyboard may cover the composer                |
-| 21 | ux          | Per-tab scroll-position restoration on back/forward                                       | htmx history config                            |
-| 22 | ux          | Active-tab haptic feedback on the bottom bar (feature-detected `vibrate`)                 | phone feel                                     |
-| 23 | a11y        | F9: localize 8 island-built `aria-label` literals (de)                                    | 2026-11-07 residue                             |
-| 24 | a11y        | F11: drafts-poll skip-if-dirty guard                                                      | can eat an unsent reply mid-edit               |
-| 25 | a11y        | F14: chip-X 24px hit area (WCAG 2.5.8)                                                    | currently 18px glyph + 24px invisible halo     |
-| 26 | a11y        | F15: history empty-state rewording decision                                               | residue                                        |
-| 27 | a11y        | F17: radius-token straggler sweep across panels                                           | hardcoded radii remain                         |
-| 28 | a11y        | CI contrast-assertion script over token pairs                                             | AA math lives only in comments today           |
-| 29 | pwa         | `theme-color` meta tag (both themes)                                                      | missing; status-bar coloring in installed app  |
-| 30 | pwa         | Verify favicon/manifest colors against the retained green                                 | hue restored, likely fine — verify once        |
-| 31 | evidence    | Commit a before/after restyle gallery into the repo                                       | ui-shots/ is wiped scratch                     |
-| 32 | tooling     | `scripts/ci-verdict.sh`: pending ≠ failure exit codes                                     | misread twice today                            |
-| 33 | tooling     | ui-capture `--lenient` flag for local runs                                                | markers broke mid-run today                    |
-| 34 | tooling     | dprint/docs battery as pre-commit hook for .md                                            | three rc=20 CI reds today                      |
-| 35 | tooling     | ui-capture marker versioning handshake vs. moving surfaces                                | login front-door broke HEAD markers            |
-| 36 | tooling     | eventcatalog generator: emit dprint-canonical bytes (root cause of 9-file red)            | or exclude work/ from dprint                   |
-| 37 | docs        | Archive the 2026-11-07 review (gates-first ritual) once §f rows harvest                   | its bar is superseded by the owner ruling      |
-| 38 | docs        | Re-measure `.docs-gates.json` ratchets at next sweep (DF-brittle caveat)                  | corpus grew this train                         |
-| 39 | prod        | `ui-track` baseline run against the new design after deploy                               | banks the new comparison floor                 |
-| 40 | prod        | Anonymous + threads prod shots for the gallery                                            | the public face changed                        |
-| 41 | quality     | Sweep `.wp-mini`/`wp-chip` hover states under the new interaction language                | mixed old/new idioms                           |
-| 42 | quality     | Verify enroll page + admin deep links under new chrome (captures exist, unreviewed)       | coverage                                       |
-| 43 | island      | Keypad `--key` faces sanity check in dark theme (reverted to originals)                   | tokens changed twice today                     |
-| 44 | tests       | Pin the settings mobile single-column collapse (a CSS-shape test via the capture harness) | regression guard for the overflow fix          |
-| 45 | tests       | Pin the mobile bottom-bar icon presence per tab (dom-contract note)                       | icons are load-bearing now                     |
-| 46 | process     | Add "served-CSS change ⇒ artifact rebuild + capture" to the release runbook checklist     | manual this train                              |
-| 47 | process     | Owner-taste question checklist for future UI trains (hue/type/density/layout character)   | §d1                                            |
-| 48 | design      | Consider per-surface layouts (destination doc Train 2) AFTER owner confirms green         | blocked on §g1                                 |
-| 49 | design      | Island "crafted phone object" pass (destination doc Train 1 remainder) under green        | keypad/call cards under new elevation          |
-| 50 | design      | Type ramp audit: tabular numerals + state layers per destination doc                      | premium feel without webfonts                  |
+| #  | Area        | Task                                                                                                                           | Why / verification                                   |
+| -- | ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| 1  | deploy      | Close out the parallel front-door train, then full release dance to prod                                                       | prod pin `9b47bc78` predates the whole restyle       |
+| 2  | split-brain | Reconcile the 15:11 UI-destination doc's "one indigo accent" with the owner's green veto                                       | two conflicting ratified truths in AGENTS.md         |
+| 3  | gates       | Full `buildflow` run owed at next train start (the 2026-10-08 lesson)                                                          | skipped this train                                   |
+| 4  | gates       | `nix flake check` incl. island-lint over shell.js                                                                              | never run this train                                 |
+| 5  | design      | Owner walkthrough of the new green look (screenshots or local boot) before prod                                                | no human eye has seen it yet                         |
+| 6  | design      | Per-tab head icons echoing nav glyphs in panel headers                                                                         | page identity, cheap templ change                    |
+| 7  | design      | Focus-visible ring unification (accent 3px soft ring on all interactives)                                                      | consistency across old+new surfaces                  |
+| 8  | design      | Skeleton shimmer color to the accent-soft family                                                                               | still neutral gray                                   |
+| 9  | design      | Toast + lightbox + command-palette visual pass under new elevation scale                                                       | untouched by the restyle                             |
+| 10 | design      | Reports tab meter styling under new tokens                                                                                     | unverified                                           |
+| 11 | design      | `::selection` accent-soft selection color                                                                                      | small polish                                         |
+| 12 | design      | Dark scrollbar styling to match the slate surfaces                                                                             | default scrollbars read foreign                      |
+| 13 | design      | Empty-state glyphs per panel (icons.Icon)                                                                                      | empties still text-only                              |
+| 14 | mobile      | Composer input 16px font-size to stop iOS focus-zoom                                                                           | classic phone annoyance                              |
+| 15 | mobile      | Dialpad one-hand reachability pass (thumb zone, key sizes)                                                                     | never audited                                        |
+| 16 | mobile      | Thread master-detail back-target prominence ("All messages" link) on phones                                                    | only path back below the split                       |
+| 17 | mobile      | Landscape / short-viewport pass (bottom bar vs. content)                                                                       | untested                                             |
+| 18 | mobile      | Sticky call-card top offset vs. header height on mobile                                                                        | verify no overlap with sticky header                 |
+| 19 | mobile      | German long-label ellipsis acceptance on the bottom bar (visual check)                                                         | DOM asserts presence, not readability                |
+| 20 | mobile      | `viewport` meta `interactive-widget=resizes-content` check for keyboard compose                                                | keyboard may cover the composer                      |
+| 21 | ux          | Per-tab scroll-position restoration on back/forward                                                                            | htmx history config                                  |
+| 22 | ux          | Active-tab haptic feedback on the bottom bar (feature-detected `vibrate`)                                                      | phone feel                                           |
+| 23 | a11y        | F9: localize 8 island-built `aria-label` literals (de)                                                                         | 2026-11-07 residue                                   |
+| 24 | a11y        | F11: drafts-poll skip-if-dirty guard                                                                                           | can eat an unsent reply mid-edit                     |
+| 25 | a11y        | F14: chip-X 24px hit area (WCAG 2.5.8)                                                                                         | currently 18px glyph + 24px invisible halo           |
+| 26 | a11y        | F15: history empty-state rewording decision                                                                                    | residue                                              |
+| 27 | a11y        | F17: radius-token straggler sweep across panels                                                                                | hardcoded radii remain                               |
+| 28 | a11y        | CI contrast-assertion script over token pairs                                                                                  | AA math lives only in comments today                 |
+| 29 | pwa         | `theme-color` meta tag (both themes)                                                                                           | missing; status-bar coloring in installed app        |
+| 30 | pwa         | Verify favicon/manifest colors against the retained green                                                                      | hue restored, likely fine — verify once              |
+| 31 | evidence    | Commit a before/after restyle gallery into the repo                                                                            | ui-shots/ is wiped scratch                           |
+| 32 | tooling     | `scripts/ci-verdict.sh`: pending ≠ failure exit codes                                                                          | misread twice today                                  |
+| 33 | tooling     | ui-capture `--lenient` flag for local runs                                                                                     | markers broke mid-run today                          |
+| 34 | tooling     | dprint/docs battery as pre-commit hook for .md                                                                                 | three rc=20 CI reds today                            |
+| 35 | tooling     | ui-capture marker versioning handshake vs. moving surfaces                                                                     | login front-door broke HEAD markers                  |
+| 36 | tooling     | eventcatalog generator: emit dprint-canonical bytes (root cause of 9-file red)                                                 | or exclude work/ from dprint                         |
+| 37 | docs        | Archive the 2026-11-07 review (gates-first ritual) once §f rows harvest                                                        | its bar is superseded by the owner ruling            |
+| 38 | docs        | Re-measure `.docs-gates.json` ratchets at next sweep (DF-brittle caveat)                                                       | corpus grew this train                               |
+| 39 | prod        | `ui-track` baseline run against the new design after deploy                                                                    | banks the new comparison floor                       |
+| 40 | prod        | Anonymous + threads prod shots for the gallery                                                                                 | the public face changed                              |
+| 41 | quality     | Sweep `.wp-mini`/`wp-chip` hover states under the new interaction language                                                     | mixed old/new idioms                                 |
+| 42 | quality     | Verify enroll page + admin deep links under new chrome (captures exist, unreviewed)                                            | coverage                                             |
+| 43 | island      | Keypad `--key` faces sanity check in dark theme (reverted to originals)                                                        | tokens changed twice today                           |
+| 44 | tests       | Pin the settings mobile single-column collapse (a CSS-shape test via the capture harness)                                      | regression guard for the overflow fix                |
+| 45 | tests       | Pin the mobile bottom-bar icon presence per tab (dom-contract note)                                                            | icons are load-bearing now                           |
+| 46 | process     | Add "served-CSS change ⇒ artifact rebuild + capture" to the release runbook checklist                                          | manual this train                                    |
+| 47 | process     | Owner-taste question checklist for future UI trains (hue/type/density/layout character)                                        | §d1                                                  |
+| 48 | design      | Consider per-surface layouts (destination doc Train 2) AFTER owner confirms green                                              | blocked on §g1                                       |
+| 49 | design      | Destination-doc Train 1 remainder under green: island "crafted phone object" pass + type ramp (tabular numerals, state layers) | blocked on §g1                                       |
+| 50 | gates       | A guard that fails when `.buildflow.yml` disappears or loses steps (routed from the archived 2026-10-24 report)                | daemon truncated 69 skip_steps once, undetected 16 h |
 
 ## g) Questions I cannot answer myself
 
