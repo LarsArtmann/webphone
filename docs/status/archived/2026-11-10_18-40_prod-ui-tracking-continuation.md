@@ -1,5 +1,7 @@
 # Prod UI-tracking continuation — the loop is trusted, the gates are green
 
+> **ARCHIVED 2026-11-11 (docs-health cadence sweep, paired with the 15-08 filing):** all rows adjudicated in-session — §a/§b done with evidence, §c carries its triggers, §d owned + healed; harvested into TODO_LIST where still live. Gates at archive time: `annotate check-rows --strict` + `bare-rows` both green.
+
 > Claims verified as of 18:40. Continuation of the 14:42 screenshot-tracking
 > train, executing the Pareto plan (docs/planning/2026-11-10_15-05_SUPERB-
 > prod-ui-tracking-pareto-plan.md). The plan's Ledger section carries the
