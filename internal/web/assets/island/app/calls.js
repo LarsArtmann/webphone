@@ -296,12 +296,14 @@ function morphToEndedCard(id, entry) {
       const close = document.createElement("button");
       close.className = "ghost close-ended-btn";
       close.textContent = t("close");
-      // Full teardown, not a bare DOM removal: the session-table entry,
-      // its watchers and the focus chain die with the card, and the
-      // render tick re-dispatches wp:calls-changed — a bare remove()
-      // would strand the live-call badge and the CRM context slot on a
-      // call that no longer exists.
-      close.addEventListener("click", () => teardownSession(id));
+      // The settle path already emptied the session table and dispatched
+      // wp:calls-changed; Close is pure DOM removal PLUS a re-dispatch —
+      // a bare remove() would strand the live-call badge and the CRM
+      // context slot on a call the shell can no longer see.
+      close.addEventListener("click", () => {
+        card.remove();
+        document.dispatchEvent(new CustomEvent("wp:calls-changed"));
+      });
       controls.append(close);
     },
   );
