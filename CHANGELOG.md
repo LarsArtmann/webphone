@@ -98,6 +98,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and, with the EMPTY-run discard guard, carries `--self-test` cases — the
   crashed-capture bug that once let an empty run hijack the next compare's
   "previous" cannot silently return (35 checks, both environments).
+- UI-hygiene fixes from the whole-TODO-list pass: the drafts panel's 30 s
+  poll now pauses while an open editor has unsaved keystrokes (a WeakSet
+  dirty flag beside the `[open]` guard — a poll mid-typing could swap the
+  list and drop the draft), the message typeahead's initial aria-label
+  rides the i18n dictionary instead of a hardcoded English string, and
+  the remaining hard-coded 6px/8px corner radii move onto the shared
+  radius tokens (byte-identical CSS output).
 
 ## [2.13.0] - 2026-11-10
 
