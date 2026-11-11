@@ -26,13 +26,13 @@ export const verdictTimeout = 30_000;
 export function inviteVerdict(session) {
   return new Promise((resolve) => {
     let settled = false;
-    const settle = (verdict) => {
+    const settle = /** @param {"accepted"|"rejected"|"send-failed"|"timeout"} verdict */ (verdict) => {
       if (settled) return;
       settled = true;
       resolve(verdict);
     };
     const timer = setTimeout(() => settle("timeout"), verdictTimeout);
-    const done = (verdict) => {
+    const done = /** @param {"accepted"|"rejected"|"send-failed"|"timeout"} verdict */ (verdict) => {
       clearTimeout(timer);
       settle(verdict);
     };
