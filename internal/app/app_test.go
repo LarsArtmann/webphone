@@ -263,12 +263,15 @@ func TestDashboardEnableWarnsTheFenceIsTheProxy(t *testing.T) {
 // TestAppServesMainPageUnderStrictCSP guards the boundary: the shell
 // page keeps webphone's strict app-wide CSP (no unsafe-eval, no nonce)
 // — the relaxed dashboard policy applies to the /health subtree ONLY.
+// An anonymous root navigation now redirects to the login page (whose
+// nonce lane is BY DESIGN), so the probe reads an anonymous DEEP LINK,
+// which renders the same shell session-free.
 func TestAppServesMainPageUnderStrictCSP(t *testing.T) {
 	application := startApp(t, true)
 	server := httptest.NewServer(application.Handler)
 	t.Cleanup(server.Close)
 
-	resp, err := http.Get(server.URL + "/")
+	resp, err := http.Get(server.URL + "/messages")
 	if err != nil {
 		t.Fatal(err)
 	}
