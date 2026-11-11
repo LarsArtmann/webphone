@@ -2,24 +2,24 @@
 
 **Status:** DESTINATION (owner-ratified direction, 2026-11-11) · **Amended same day ~15:25:** the accent is GREEN (owner veto 15:15 — "my app is green, not Tailwind default"; indigo read as default-SaaS and is wrong for this product). Wherever an earlier draft of this file said indigo, green is the ruling. · **Author:** session with owner direction calls · **Execution:** Train 1 begins this session; Trains 2–3 are queued.
 
-The bar is the OWNER'S EYES (owner ruling 2026-11-11): a train that leaves the look unchanged is a failed train, no matter what a compliance review says. Every shipped train on this file must pass one test — *side-by-side screenshots where anyone can point at the difference in under five seconds.*
+The bar is the OWNER'S EYES (owner ruling 2026-11-11): a train that leaves the look unchanged is a failed train, no matter what a compliance review says. Every shipped train on this file must pass one test — _side-by-side screenshots where anyone can point at the difference in under five seconds._
 
 ---
 
 ## 1. Owner direction calls (2026-11-11, this session)
 
-| Call | Ruling |
-| --- | --- |
-| Product character | **Hybrid with an operator-desk lean** — everyday surfaces (Messages, island) stay Google-Voice-clean; power surfaces (History, Reports, Admin, live-call context) get CCAI-grade density and information richness. When in doubt, density wins over airiness on power surfaces, calm wins on conversation surfaces. |
-| Typography | **System stack only.** The CSP stays untouched (no webfonts, no CDN, ruling stands). The premium feel is manufactured from weight/size/tracking rhythm, tabular numerals, and spacing — not from a distinct typeface. |
-| First train | **Full visual pass** — every surface visibly restyled in one train, NO layout restructuring. Judgment rule: the owner must SEE the difference. |
-| Desktop layout destination | **Per-surface layouts under one shell** — Messages keeps master–detail, History becomes a scannable table, Reports becomes a dashboard, contacts/settings get their fitting layouts (Trains 2+). |
+| Call                       | Ruling                                                                                                                                                                                                                                                                                                              |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Product character          | **Hybrid with an operator-desk lean** — everyday surfaces (Messages, island) stay Google-Voice-clean; power surfaces (History, Reports, Admin, live-call context) get CCAI-grade density and information richness. When in doubt, density wins over airiness on power surfaces, calm wins on conversation surfaces. |
+| Typography                 | **System stack only.** The CSP stays untouched (no webfonts, no CDN, ruling stands). The premium feel is manufactured from weight/size/tracking rhythm, tabular numerals, and spacing — not from a distinct typeface.                                                                                               |
+| First train                | **Full visual pass** — every surface visibly restyled in one train, NO layout restructuring. Judgment rule: the owner must SEE the difference.                                                                                                                                                                      |
+| Desktop layout destination | **Per-surface layouts under one shell** — Messages keeps master–detail, History becomes a scannable table, Reports becomes a dashboard, contacts/settings get their fitting layouts (Trains 2+).                                                                                                                    |
 
 ## 2. Reference DNA — what we actually take
 
 **Google Voice** (consumer-clean half): conversation-first; quiet chrome that recedes behind content; list rows with a clear primary line, muted preview, right-aligned timestamp; owner-side bubbles in the accent, inbound bubbles neutral; pill-shaped navigation affordances; search as a first-class surface.
 
-**CCAI Platform agent desktop** (operator-desk half; structure verified from Google's docs — visual presentation is our synthesis): a panel workspace where the active interaction, the customer context, and assistive knowledge are all visible at once; session tabs; transcripts as first-class artifacts; density that stays scannable. We take the *posture* — context-at-a-glance, disciplined panels, information-dense power surfaces — not a clone of any specific screenshot.
+**CCAI Platform agent desktop** (operator-desk half; structure verified from Google's docs — visual presentation is our synthesis): a panel workspace where the active interaction, the customer context, and assistive knowledge are all visible at once; session tabs; transcripts as first-class artifacts; density that stays scannable. We take the _posture_ — context-at-a-glance, disciplined panels, information-dense power surfaces — not a clone of any specific screenshot.
 
 **Material Design 3** (craft vocabulary; from working knowledge of the public spec): surface-container tiers instead of border-heavy boxes; state layers (hover ≈ 8%, focus/pressed ≈ 10–12% overlays) instead of color swaps; a shape scale from pill (chips/badges) through medium (controls) to large (cards); elevation as a shadow ladder, not one shadow everywhere; an emphasized easing curve for motion; a type ramp where every step pairs a size with a weight and tracking.
 
@@ -70,11 +70,11 @@ The token block stays mirrored between `app.css` and `island/style.css` (standin
 
 ## 7. Trains
 
-| Train | Scope | Acceptance |
-| --- | --- | --- |
+| Train                                   | Scope                                                                                                                                                | Acceptance                                                                                                                                                                                                            |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | **1 — Full visual pass** (this session) | §5 tokens + §6 chrome, island, list rows, bubbles, empty states, dark-mode parity. CSS-first; markup edits only where a pin-safe win justifies them. | 26-shot capture set before/after where every surface shows a pointable difference; all gates green (fmt, tw/login.css rebuild, tsc, island tests, view pins, smoke, buildflow); ink discipline WCAG note still holds. |
-| **2 — Per-surface desktop IA** | History table, Reports dashboard, contacts/settings layouts under the shared shell. | Each tab's layout fits its content type; screenshots show restructures, not just paint. |
-| **3 — Mobile dialer surface** | Island-as-dialer on mobile (ring/dial reachable like an app tab), bottom-bar integration. | Ring-while-closed UX parity with the PWA-lite goals. |
+| **2 — Per-surface desktop IA**          | History table, Reports dashboard, contacts/settings layouts under the shared shell.                                                                  | Each tab's layout fits its content type; screenshots show restructures, not just paint.                                                                                                                               |
+| **3 — Mobile dialer surface**           | Island-as-dialer on mobile (ring/dial reachable like an app tab), bottom-bar integration.                                                            | Ring-while-closed UX parity with the PWA-lite goals.                                                                                                                                                                  |
 
 ## 8. Fences (unchanged, restated because they bound every train)
 

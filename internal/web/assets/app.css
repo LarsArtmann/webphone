@@ -43,11 +43,27 @@
   --danger-soft: rgb(239 106 95 / 14%);
   --warn: #e0a63e;
   --ok: #3fd694;
-  --shadow: 0 1px 2px rgb(0 0 0 / 50%), 0 18px 44px -14px rgb(0 0 0 / 55%);
+  /* Elevation ladder (destination §5): one meaning per level — 1 resting
+   * panels, 2 raised chrome (nav, jump chip, popovers), 3 overlays. The
+   * bare --shadow stays as the level-1 alias so existing call sites keep
+   * working; new work names the level. */
+  --shadow-1:
+    0 1px 2px rgb(0 0 0 / 40%), 0 10px 28px -12px rgb(0 0 0 / 46%);
+  --shadow-2:
+    0 2px 6px rgb(0 0 0 / 42%), 0 20px 48px -16px rgb(0 0 0 / 55%);
+  --shadow-3:
+    0 4px 10px rgb(0 0 0 / 45%), 0 28px 64px -18px rgb(0 0 0 / 62%);
+  --shadow: var(--shadow-1);
   --hairline: 1px solid var(--border);
   --radius-sm: 8px;
-  --radius: 10px;
+  --radius: 12px;
   --radius-lg: 16px;
+  /* Motion tokens (destination §5): every component transition references
+   * these, so the whole shell shares one feel; --ease is the M3 emphasized
+   * curve. Reduced motion still flattens everything globally. */
+  --dur-fast: 150ms;
+  --dur: 250ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
   /* F16/F17: the secondary type scale and the row/panel rhythms. The
      corpus migrates opportunistically — new panels pick from these,
      the sub-scale micro sizes catch up as their surfaces are touched. */
@@ -97,8 +113,13 @@
     --warn: #9a5b0a;
     --ok: #0e8752;
     --on-accent: #ffffff;
-    --shadow:
-      0 1px 2px rgb(16 24 32 / 7%), 0 16px 36px -10px rgb(16 24 32 / 13%);
+    --shadow-1:
+      0 1px 2px rgb(16 24 32 / 6%), 0 8px 22px -10px rgb(16 24 32 / 12%);
+    --shadow-2:
+      0 2px 6px rgb(16 24 32 / 7%), 0 16px 36px -12px rgb(16 24 32 / 16%);
+    --shadow-3:
+      0 4px 10px rgb(16 24 32 / 8%), 0 24px 52px -14px rgb(16 24 32 / 22%);
+    --shadow: var(--shadow-1);
   }
 }
 
@@ -124,7 +145,13 @@
   --warn: #9a5b0a;
   --ok: #0e8752;
   --on-accent: #ffffff;
-  --shadow: 0 1px 2px rgb(16 24 32 / 7%), 0 16px 36px -10px rgb(16 24 32 / 13%);
+  --shadow-1:
+    0 1px 2px rgb(16 24 32 / 6%), 0 8px 22px -10px rgb(16 24 32 / 12%);
+  --shadow-2:
+    0 2px 6px rgb(16 24 32 / 7%), 0 16px 36px -12px rgb(16 24 32 / 16%);
+  --shadow-3:
+    0 4px 10px rgb(16 24 32 / 8%), 0 24px 52px -14px rgb(16 24 32 / 22%);
+  --shadow: var(--shadow-1);
 }
 
 * {
@@ -529,7 +556,7 @@ h3 {
   background: var(--surface);
   border: var(--hairline);
   border-radius: 999px;
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 10%, transparent);
+  box-shadow: var(--shadow-1);
 }
 
 .wp-nav-link {
@@ -694,7 +721,7 @@ h3 {
      in. Morph-driven updates reuse the existing nodes and never re-run
      the animation, so live pushes stay calm; reduced motion disables it
      with the global guard below. */
-  animation: wp-panel-in 160ms ease-out;
+  animation: wp-panel-in var(--dur) var(--ease);
 }
 
 @keyframes wp-panel-in {
@@ -786,11 +813,11 @@ h3 {
 
 .wp-empty {
   color: var(--muted);
-  padding: 18px 16px;
+  padding: 28px 20px;
   text-align: center;
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius);
-  background: transparent;
+  border: var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
   margin: 0;
   font-size: var(--text-md);
 }
@@ -1107,15 +1134,15 @@ button.wp-danger {
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--text);
-  border-radius: var(--radius);
+  border-radius: 999px;
   padding: 9px 16px;
   cursor: pointer;
   font: inherit;
   font-weight: 550;
   transition:
-    background 120ms ease,
-    border-color 120ms ease,
-    color 120ms ease;
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
 }
 
 /* The composer's Send button (and the load-older button) are adopted
@@ -1131,7 +1158,7 @@ button.wp-primary {
   border-color: var(--accent);
   color: var(--on-accent);
   font-weight: 600;
-  padding: 9px 18px;
+  padding: 9px 20px;
 }
 
 button.wp-primary:hover {
@@ -1155,7 +1182,7 @@ button.wp-danger:hover {
   border: 1px solid var(--border);
   background: transparent;
   color: var(--muted);
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   padding: 5px 12px;
   cursor: pointer;
   font: inherit;
@@ -1164,9 +1191,9 @@ button.wp-danger:hover {
   text-decoration: none;
   white-space: nowrap;
   transition:
-    background 120ms ease,
-    border-color 120ms ease,
-    color 120ms ease;
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
 }
 
 .wp-mini:hover {
@@ -1191,6 +1218,24 @@ button.wp-danger:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Ghost row actions (destination §6): minis inside LIST rows drop their
+ * border and read as quiet text-buttons — a wall of outlined keys reads
+ * as chrome, not actions, and on a phone it strangles the row's own
+ * content. Hover/focus brings the accent state layer back; the flags'
+ * quieting below stays on top. */
+.wp-row-actions .wp-mini,
+.wp-thread-rowwrap .wp-mini {
+  border-color: transparent;
+}
+
+.wp-row-actions .wp-mini:hover,
+.wp-thread-rowwrap .wp-mini:hover,
+.wp-row-actions .wp-mini:focus-visible,
+.wp-thread-rowwrap .wp-mini:focus-visible {
+  border-color: transparent;
+  background: var(--accent-soft);
 }
 
 /* Inline SVG icons (rendered by the templ-components icons package —
@@ -1261,7 +1306,7 @@ select {
   border-radius: var(--radius-sm);
   padding: 9px 12px;
   font: inherit;
-  transition: border-color 120ms ease;
+  transition: border-color var(--dur-fast) var(--ease);
 }
 
 input::placeholder,
@@ -1284,7 +1329,7 @@ summary:focus-visible,
 button:focus-visible,
 a:focus-visible {
   outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: 2px;
 }
 
 /* Thread search (Messages tab): full-width box above the list. The form
@@ -1296,6 +1341,8 @@ a:focus-visible {
 
 .wp-thread-search input[type="search"] {
   width: 100%;
+  border-radius: 999px;
+  padding-inline: 16px;
 }
 
 /* --- rows: threads, contacts, fax, voicemail, history ---------------------- */
@@ -1962,7 +2009,7 @@ a:focus-visible {
   font-size: var(--text-sm);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-2);
   white-space: nowrap;
 }
 
@@ -2017,11 +2064,10 @@ a:focus-visible {
 
 .wp-bubble {
   max-width: min(78%, 34rem);
-  padding: 9px 13px;
-  border-radius: var(--radius);
-  border-bottom-left-radius: 4px;
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  border-bottom-left-radius: 6px;
   background: var(--surface-2);
-  border: 1px solid var(--border);
   align-self: flex-start;
 }
 
@@ -2032,8 +2078,8 @@ a:focus-visible {
   background: var(--accent);
   border-color: transparent;
   color: var(--on-accent);
-  border-bottom-left-radius: var(--radius);
-  border-bottom-right-radius: 4px;
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: 6px;
 }
 
 .wp-bubble.wp-out .wp-bubble-meta {
@@ -2189,7 +2235,7 @@ a:focus-visible {
    replaces it; a failed send keeps text and attachments visible with a
    danger tint so the retry never loses context. */
 .wp-bubble.wp-opt {
-  border-style: dashed;
+  border: 1px dashed var(--border-strong);
   opacity: 0.75;
 }
 
@@ -2465,8 +2511,8 @@ a:focus-visible {
   overflow: auto;
   background: var(--surface);
   border: var(--hairline);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-3);
 }
 
 .wp-overlay-item {
@@ -2695,8 +2741,8 @@ a.wp-thread-row.wp-pinned {
   padding: 6px;
   background: var(--surface);
   border: var(--hairline);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-2);
 }
 
 .wp-snippet-item {
@@ -3040,10 +3086,10 @@ dialog.wp-lightbox img {
   display: flex;
   flex-direction: column;
   gap: 2px;
-  padding: var(--row-pad);
-  border: var(--hairline);
-  border-radius: var(--radius);
-  background: var(--surface);
+  padding: 12px 14px;
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
 }
 
 .wp-stat-value {
