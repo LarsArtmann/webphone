@@ -251,3 +251,38 @@ flake check was red on stale VM tests. Capture each leg's rc explicitly
 (`{ cmd > log 2>&1; echo $? > rc; }`) and read the rc files; the tails
 lie. The same class killed CI verdicts: every push owes its `gh run
 watch`, not a glance at the last lines.
+
+### Train-hygiene rules from the v2.13.0 seven-attempt war (2026-11-10/11)
+
+- **Run the docs battery in `--check` mode as the pre-push verdict.**
+  The mutating battery (`scripts/docs-gates.sh` without `--check`) runs
+  dprint fmt BEFORE counting, so rule-F damage (spaces stripped around
+  inline code spans) is repaired pre-count and the local run goes green
+  while CI's `--check` mode counts the RAW bytes and goes red — the
+  v2.13.0 attempt-7 annotate regression. The surviving fix for rule-F
+  is rewording code spans away from wrap points; restoring the space is
+  undone by the next fmt.
+- **Assert the HEAD sha inside the same tool call as the push.** The
+  daemon sweeps every ~2 min and can commit foreign in-flight work
+  between your verification and your push (28 swept files published
+  once, 2026-10-27; again observed 2026-11-11). Capture
+  `git rev-parse HEAD`, run the gates, then push only after asserting
+  the sha is unchanged — or accept that what lands is the swept tip and
+  say so in the claim.
+- **Archive one gate-clean report in the same push that files a new
+  one.** Cadence is a budget (`max_unarchived: 65`): filing without
+  archiving spends a slot you may not have, and the slot is only
+  refilled by a gates-first archive (`annotate check-rows --strict` +
+  `annotate bare-rows` BEFORE the `git mv`).
+- **Copy release attempt logs into the evidence home AT attempt
+  completion — never "later".** All seven `/tmp/release-2.13.0-*.log`
+  files were purged by tmpfiles while the session idled overnight; the
+  verdicts survived only because the CHANGELOG + status docs carried
+  them. `cp` into `docs/status/` evidence or a committed log dir before
+  starting the next attempt.
+- **A partial fix is not a pushable fix.** When the red tip's repair is
+  entangled with another session's unpushed commits (2026-11-11: the
+  island-js red needed BOTH the shell.js guard change and a test-file
+  fix that landed three commits later in their train), no prefix of the
+  branch heals main — pushing a middle commit re-reds CI on a different
+  test. Leave the train to its owner; monitor, don't race.
