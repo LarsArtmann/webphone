@@ -351,6 +351,11 @@ func multipartBody(t *testing.T, fields map[string]string, files map[string]stru
 
 func TestServedPageHoldsTheDomContract(t *testing.T) {
 	c := newClient(t)
+	// The shell renders only for a session: an anonymous root navigation
+	// redirects to /login (the dedicated front door), so every shell id
+	// here is a signed-in fact. The /login page's own ids are pinned by
+	// login_page_test.go against their contract block in the same file.
+	c.login("1001", "pw")
 	resp, body := c.do(http.MethodGet, "/", nil, "")
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("page status %d", resp.StatusCode)
@@ -371,24 +376,23 @@ func TestServedPageHoldsTheDomContract(t *testing.T) {
 	}
 	// F19: a signed-out page is a door, not a floor plan — the tab row
 	// renders only for a session that can use it. The anonymous shell
-	// keeps the #wp-nav region (the post-login re-fetch target) with
-	// zero links; the welcome + login stack centers instead.
-	if strings.Contains(page, "wp-nav-link") {
+	// (deep links keep the door; / redirects to the login page) keeps the
+	// #wp-nav region (the post-login re-fetch target) with zero links.
+	anonResp, anonBody := c.do(http.MethodGet, "/messages", nil, "")
+	if anonResp.StatusCode != http.StatusOK {
+		t.Fatalf("anonymous deep link status %d", anonResp.StatusCode)
+	}
+	if strings.Contains(string(anonBody), "wp-nav-link") {
 		t.Error("anonymous page renders nav links — the signed-out shape is nav-free (F19)")
 	}
 	// The active tab is announced to screen readers with the spec-exact
 	// aria-current="page"; every other tab states "false" explicitly, so
 	// the shell's swap-time toggle flips between two definite values
-	// (shell.js §1) instead of adding/removing the attribute. A signed-in
-	// fact: F19 removed the tab row from the anonymous page, so the
-	// assertion reads the authed page.
-	c.login("1001", "pw")
-	_, authedBody := c.do(http.MethodGet, "/", nil, "")
-	authed := string(authedBody)
-	if !strings.Contains(authed, `aria-current="page"`) {
+	// (shell.js §1) instead of adding/removing the attribute.
+	if !strings.Contains(page, `aria-current="page"`) {
 		t.Error("served page lost aria-current=page on the active tab")
 	}
-	if !strings.Contains(authed, `aria-current="false"`) {
+	if !strings.Contains(page, `aria-current="false"`) {
 		t.Error("served page lost aria-current=false on the inactive tabs")
 	}
 	// The toast host is the WHOLE feedback channel's live region: without
@@ -459,6 +463,9 @@ func TestAnonymousDeepLinksRenderTheDoorOnly(t *testing.T) {
 // parent (a 17-step waterfall).
 func TestServedPagePreloadsIslandGraph(t *testing.T) {
 	c := newClient(t)
+	// The shell renders only for a session (anonymous / redirects to the
+	// login page) — the graph is a signed-in fact.
+	c.login("1001", "pw")
 	resp, body := c.do(http.MethodGet, "/", nil, "")
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("page status %d", resp.StatusCode)
@@ -489,6 +496,9 @@ func TestServedPagePreloadsIslandGraph(t *testing.T) {
 // (the island's switch) → Accept-Language "de*" → English.
 func TestShellHtmlLangFollowsSessionLang(t *testing.T) {
 	c := newClient(t)
+	// Language negotiation is a shell fact; the shell renders only for a
+	// session (anonymous / redirects to the login page).
+	c.login("1001", "pw")
 	cases := []struct {
 		name   string
 		cookie string
@@ -557,6 +567,9 @@ func TestFaviconAnswersBothNames(t *testing.T) {
 // (without it browsers request /favicon.ico and 404).
 func TestServedPageSatisfiesStrictCSP(t *testing.T) {
 	c := newClient(t)
+	// The shell renders only for a session (anonymous / redirects to the
+	// login page, whose nonce lane has its own test).
+	c.login("1001", "pw")
 	resp, body := c.do(http.MethodGet, "/", nil, "")
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("page status %d", resp.StatusCode)
@@ -605,7 +618,7 @@ func TestStaticAssetsServe(t *testing.T) {
 		"/htmx-ext.js":                    "Idiomorph",
 		"/assets/app.css":                 "--accent",
 		"/assets/shell.js":                "data-dial",
-		"/assets/island/app/main.js":      "loginForm",
+		"/assets/island/app/main.js":      "resumeSession",
 		"/assets/island/app/shortcuts.js": "MediaPlayPause",
 		"/assets/island/app/session.js":   "initSseLiveIndicator",
 		// The dial alphabet is a cross-side contract: the island regex must
@@ -616,6 +629,7 @@ func TestStaticAssetsServe(t *testing.T) {
 		"/assets/island/app/panels.js":     "replace(/[^\\d+*#a-zA-Z]/g, \"\")",
 		"/assets/island/style.css":         "#wp-sse-live",
 		"/assets/vendor/sip.min.js":        "UserAgent",
+		"/assets/login-page.js":            "api/session",
 		"/config.js":                       "window.PBX_CONFIG",
 		"/favicon.svg":                     "<svg",
 		"/assets/island/icon-192.png":      "\x89PNG\r\n\x1a\n",

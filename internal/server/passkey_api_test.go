@@ -135,7 +135,6 @@ func TestPasskeyOffAnswersTheStyled404(t *testing.T) {
 		{http.MethodPost, passkeyBegin},
 		{http.MethodPost, passkeyFinish + "?user_id=x"},
 		{http.MethodPost, "/api/auth/passkey/enroll/verify"},
-		{http.MethodGet, "/login"},
 		{http.MethodGet, "/enroll"},
 	} {
 		resp, body := c.do(target.method, target.path, []byte(`{}`), "application/json")
@@ -146,6 +145,9 @@ func TestPasskeyOffAnswersTheStyled404(t *testing.T) {
 			t.Errorf("%s %s: the 404 must stay the styled shell, got %q", target.method, target.path, body)
 		}
 	}
+	// /login is NOT in this list anymore: the page exists in every mode
+	// (the extension form is the mode-off sign-in; login_page_test.go
+	// pins its shape).
 }
 
 func TestPasskeyBeginIsUniformAgainstEnumeration(t *testing.T) {

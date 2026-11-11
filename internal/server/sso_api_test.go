@@ -212,8 +212,8 @@ func TestSSOCallbackStateMismatchReturnsToTheLoginCard(t *testing.T) {
 		t.Fatalf("callback: %v", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
-	if got := resp.Header.Get("Location"); got != "/?sso_error=stale" {
-		t.Errorf("Location = %q, want the stale-attempt verdict", got)
+	if got := resp.Header.Get("Location"); got != "/login?sso_error=stale" {
+		t.Errorf("Location = %q, want the stale-attempt verdict on the login page", got)
 	}
 	if stub.gotCode != "" {
 		t.Error("a forged state must never reach the token exchange")
@@ -270,8 +270,8 @@ func TestSSOCallbackWithoutAttemptCookiesIsStale(t *testing.T) {
 		t.Fatalf("callback: %v", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
-	if got := resp.Header.Get("Location"); got != "/?sso_error=stale" {
-		t.Errorf("Location = %q, want the stale-attempt verdict", got)
+	if got := resp.Header.Get("Location"); got != "/login?sso_error=stale" {
+		t.Errorf("Location = %q, want the stale-attempt verdict on the login page", got)
 	}
 }
 

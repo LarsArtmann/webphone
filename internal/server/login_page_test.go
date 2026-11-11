@@ -108,13 +108,46 @@ func TestLoginPageRedirectsALiveSessionHome(t *testing.T) {
 	}
 }
 
-func TestLoginPageAnswersTheStyled404WhenPasskeyIsOff(t *testing.T) {
+// TestLoginPageServesTheExtensionFormWhenPasskeyIsOff pins the mode-off
+// shape: /login EXISTS in every mode — the extension + password form is
+// the sign-in when the identity layer is off — but renders NO passkey
+// ceremony UI (no lp-* form, no ceremony config) and carries the CSRF
+// meta the form's module posts with.
+func TestLoginPageServesTheExtensionFormWhenPasskeyIsOff(t *testing.T) {
 	c := newClient(t) // standard fixture: no UserAuth
 	resp, body := c.do(http.MethodGet, "/login", nil, "")
-	if resp.StatusCode != http.StatusNotFound {
-		t.Fatalf("/login with the mode off: status %d, want 404", resp.StatusCode)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("/login with the mode off: status %d, want 200", resp.StatusCode)
 	}
-	if !strings.Contains(string(body), "WebPhone") {
-		t.Errorf("the off-mode 404 must stay the styled shell, got %q", body)
+	if cc := resp.Header.Get("Cache-Control"); cc != "no-store" {
+		t.Errorf("/login Cache-Control = %q, want no-store (auth surface)", cc)
+	}
+	page := string(body)
+	for _, want := range []string{
+		`id="login-form"`,
+		`id="ext"`,
+		`id="pass"`,
+		`id="remember"`,
+		`id="login-error"`,
+		`src="/assets/login-page.js"`,
+		`<meta name="csrf-token"`,
+		`/assets/login.css`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Errorf("/login (mode off) lacks %s:\n%.400s", want, page)
+		}
+	}
+	for _, dead := range []string{`id="lp-login-form"`, `id="loginpage-config"`, `/api/auth/webauthn/login/begin`} {
+		if strings.Contains(page, dead) {
+			t.Errorf("/login (mode off) renders the passkey-only artifact %s — the ceremony UI is identity-layer-gated", dead)
+		}
+	}
+	// The linked stylesheet + the form's module must actually SERVE — the
+	// link-present-but-asset-404 class is invisible to markup assertions.
+	for _, asset := range []string{"/assets/login.css", "/assets/login-page.js"} {
+		assetResp, _ := c.do(http.MethodGet, asset, nil, "")
+		if assetResp.StatusCode != http.StatusOK {
+			t.Errorf("%s status %d, want 200 (the login page links it)", asset, assetResp.StatusCode)
+		}
 	}
 }

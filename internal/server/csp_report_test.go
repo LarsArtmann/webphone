@@ -18,7 +18,11 @@ import (
 // browser sees must have somewhere to go, or the lane is decorative.
 func TestCspHeaderCarriesTheReportingLane(t *testing.T) {
 	ts := newTestServer(t)
-	resp, err := http.Get(ts.URL + "/")
+	// An anonymous DEEP LINK still renders the shell: the strict CSP +
+	// reporting lane ride every HTML surface, and /messages answers 200
+	// without a session (the door shape) — / itself redirects to /login,
+	// whose nonce lane is a different contract.
+	resp, err := http.Get(ts.URL + "/messages")
 	if err != nil {
 		t.Fatal(err)
 	}

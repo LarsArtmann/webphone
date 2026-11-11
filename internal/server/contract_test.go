@@ -89,6 +89,9 @@ func TestSessionGatesLiveOnlyInTheHelper(t *testing.T) {
 // disables the CSP-hostile inline indicator styles.
 func TestHtmxConfigMetaPrecedesScript(t *testing.T) {
 	c := newClient(t)
+	// The shell renders only for a session (anonymous / redirects to the
+	// login page).
+	c.login("1001", "pw")
 	resp, body := c.do(http.MethodGet, "/", nil, "")
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("page status %d", resp.StatusCode)
