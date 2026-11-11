@@ -2548,6 +2548,12 @@ h3 {
   color: var(--accent-strong);
   font-weight: 550;
 }
+.wp-welcome-signin {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .wp-welcome-compact-line {
   display: none;
   margin: 0;

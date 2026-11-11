@@ -35,6 +35,31 @@ var AllTabs = []Tab{TabMessages, TabFax, TabVoicemail, TabHistory, TabReports, T
 // Path returns the tab's route.
 func (t Tab) Path() string { return "/" + string(t) }
 
+// tabIcon gives every tab a glyph so the nav reads as an app rail instead
+// of a text strip — on the mobile bottom bar (8 slots on a 390px screen)
+// the icon is what makes the labels legible at their small size.
+func tabIcon(t Tab) icons.Name {
+	switch t {
+	case TabMessages:
+		return icons.Inbox
+	case TabFax:
+		return icons.Printer
+	case TabVoicemail:
+		return icons.Microphone
+	case TabHistory:
+		return icons.Clock
+	case TabReports:
+		return icons.Chart
+	case TabContacts:
+		return icons.Users
+	case TabSettings:
+		return icons.Settings
+	case TabAdmin:
+		return icons.ShieldCheck
+	}
+	return icons.Name("")
+}
+
 // ShellProps carries everything the outer page needs.
 type ShellProps struct {
 	ActiveTab Tab
@@ -234,6 +259,7 @@ templ NavLinks(props ShellProps) {
 					hx-push-url={ tab.Path() }
 					data-tab={ string(tab) }
 				>
+					<span class="wp-nav-ic">@icons.Icon(tabIcon(tab), "wp-icon")</span>
 					<span>{ T(props.Lang, "tab."+string(tab)) }</span>
 					if tab == TabMessages && props.Unread > 0 {
 						<span class="wp-nav-badge" aria-label={ badgeCount(props.Lang, props.Unread, "nav.unread") }>{ fmtInt(props.Unread) }</span>

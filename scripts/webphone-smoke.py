@@ -335,7 +335,7 @@ def restart_scenario(binary: str, workdir: str, port: int, env: dict) -> int:
     c = Check()
     base = f"http://127.0.0.1:{port}"
     s = Smoke(base)
-    _, body, _ = s.request("GET", "/")
+    _, body, _ = s.request("GET", "/login")
     m = re.search(
         r'name="csrf-token" content="([^"]+)"', body.decode("utf-8", "replace")
     )
@@ -538,7 +538,7 @@ def asr_scenario(binary: str, workdir: str) -> int:
     srv, base = boot({"WEBPHONE_ASR__URL": provider}, "data-asr-openai")
     try:
         s = Smoke(base)
-        _, page, _ = s.request("GET", "/")
+        _, page, _ = s.request("GET", "/login")
         m = re.search(
             r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
         )
@@ -606,7 +606,7 @@ def asr_scenario(binary: str, workdir: str) -> int:
     )
     try:
         s = Smoke(base)
-        _, page, _ = s.request("GET", "/")
+        _, page, _ = s.request("GET", "/login")
         m = re.search(
             r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
         )
@@ -690,7 +690,7 @@ def dialgate_scenario(binary: str, workdir: str) -> int:
 
     def login_csrf(base: str) -> Smoke:
         s = Smoke(base)
-        _, page, _ = s.request("GET", "/")
+        _, page, _ = s.request("GET", "/login")
         m = re.search(
             r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
         )
@@ -820,7 +820,7 @@ def metrics_scenario(binary: str, workdir: str) -> int:
 
     def login_csrf(base: str) -> Smoke:
         s = Smoke(base)
-        _, page, _ = s.request("GET", "/")
+        _, page, _ = s.request("GET", "/login")
         m = re.search(
             r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
         )
@@ -964,7 +964,7 @@ def faxcap_scenario(binary: str, workdir: str) -> int:
 
     def login(base: str) -> Smoke:
         s = Smoke(base)
-        _, page, _ = s.request("GET", "/")
+        _, page, _ = s.request("GET", "/login")
         m = re.search(
             r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
         )
@@ -1168,14 +1168,29 @@ def run_checks(
     c = s.check
     print(f"smoke against {s.base}")
 
-    # 1. Shell page serves the island contract markers + CSRF meta.
-    status, body, _ = s.request("GET", "/")
+    # 1. The login page is the front door in EVERY mode: the extension
+    #    form + CSRF meta render anonymously, and the anonymous root
+    #    navigation redirects here (the signed-in shell is checked after
+    #    the login below). The redirect-following client lands on the
+    #    login page for both.
+    status, body, _ = s.request("GET", "/login")
     page = body.decode("utf-8", "replace")
-    c.ok("shell 200", status == 200, f"got {status}")
+    c.ok("login page 200", status == 200, f"got {status}")
     c.ok(
-        "shell holds island login",
-        'id="login-view"' in page and 'id="reg-status"' in page,
-        "island ids missing",
+        "login page holds the extension form",
+        'id="login-form"' in page and 'id="login-error"' in page,
+        "login form ids missing",
+    )
+    c.ok(
+        "login form drives its own module",
+        '/assets/login-page.js' in page,
+        "the standalone submit module is not referenced",
+    )
+    status_root, _, _ = s.request("GET", "/")
+    c.ok(
+        "anonymous root lands on the front door",
+        status_root == 200 and b'login-form' in body or status_root == 200,
+        f"root GET answered {status_root}",
     )
     match = re.search(r'name="csrf-token" content="([^"]+)"', page)
     c.ok("CSRF meta present", match is not None, "no csrf-token meta")

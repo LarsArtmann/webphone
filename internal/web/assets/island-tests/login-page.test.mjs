@@ -74,20 +74,25 @@ test("a 201 signs in and sends the browser home (the boot probe resumes)", async
     "1001",
     "the remembered extension survives (never the password)",
   );
-  assert.equal(localStorage.getItem("pbx-extension-password"), undefined);
+  assert.equal(localStorage.getItem("pbx-extension-password"), null);
   assert.deepEqual(seen, ["/"], "the redirect home hands over to the island boot probe");
 });
 
 test("a 401 answers inline where the user is looking", async () => {
   useFetch(() => ({ status: 401 }));
   const seen = replaces();
+  localStorage.setItem("pbx-extension", "kept");
   extEl().value = "1001";
   passEl().value = "wrong";
   await submit();
   assert.equal(errorEl().hidden, false, "the inline error line shows");
   assert.match(errorEl().textContent, /Wrong extension or password/);
   assert.deepEqual(seen, [], "a rejection must not navigate");
-  assert.equal(localStorage.getItem("pbx-extension"), null, "a failed login stores nothing");
+  assert.equal(
+    localStorage.getItem("pbx-extension"),
+    "kept",
+    "a failed login never writes or clears the remembered extension",
+  );
 });
 
 test("a 429 names the wait from Retry-After", async () => {

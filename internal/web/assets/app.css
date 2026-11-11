@@ -879,6 +879,15 @@ h3 {
   font-weight: 550;
 }
 
+/* The hint's sign-in link (the auth-front-door train): the login card
+   left the island, so the door's one action navigates to /login. */
+.wp-welcome-signin {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 /* M18: once dismissed (per browser) the welcome collapses to a single
    sign-in line. theme-preload.js sets the root class before first
    paint so the full panel never flashes; shell.js owns the dismiss
