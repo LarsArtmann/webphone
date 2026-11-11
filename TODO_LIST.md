@@ -1297,3 +1297,16 @@ ceiling) + markdownlint posture execution (post-sitting row-18 verdict). Plan:
 - **Runbook additions:** `--check`-mode docs battery as the pre-push verdict (the mutating battery hid the rule-F glue that red-ed CI); verify the HEAD sha is unchanged in the same call as the push (the daemon swept 28 files between verify and push); archive one gate-clean report in the same push that files a new one.
 - **erraudit tier re-measure** (overdue since 2026-11-05): tier 1 exit 0, tier 2 must stay 0.
 - **Red-main watcher visibility:** no tracker issue visible through four red tips — verify the LIST-API title-dedup still matches when every sweep changes the commit subject.
+
+### cqrs-lint triage follow-ups — open rows (2026-11-11 harvest, the 01-58 report's §f)
+
+- **File the suppression state-machine draft upstream** (`~/projects/BuildFlow/docs/drafts/cqrs-lint-suppression-block-comment-state-machine.md`; owner review tick first) — and the **D005 draft** beside it (same gate, older).
+- **Track the upstream `/*` lexer fix**: on the next cqrs-lint bump, remove the actions.go hedge comment if the fix shipped; until then any directive below a one-`/*` line comment in the six swept files is dead on arrival.
+- **Confirm the enroll.go S001 heuristic change upstream** (the wirefixtures twin still fires — intentional change or drift?).
+- **Train-specific decay pass: `erraudit nolint-audit`** after the C007/At-command train (the calendar's quarterly re-measure is separate, next due 2026-12-08).
+- **Pin the D014 tags with a replay test**: round-trip an OLD-shape journal row through DecodePayloadAuto (byte-neutrality argued, not pinned).
+- **`cqrs-lint scorecard` before/after** (did the disabled F-series distort the adoption score?) and **`cqrs-lint doctor` render check** of the disable-reasons.
+- **Write the triage decision table** (config-disable / directive / keep-visible / fix) into one home; move three lessons into docs/lessons.md (scoped-verifier-cannot-adjudicate-baseline, read-the-pins-first, the result-cache war story).
+- **Pin the B007 ruling** with a comment at the server.New registration block; consider feeding the stream-vocab vars to the catalog (B010 duplication).
+- **Owner decisions pending**: cqrs-lint gating posture (answer or TODO row), C044 prefixed-key permanence (answer or priced TODO row), BuildFlow rebuild + reinstall (freshness only), dprint-remote-plugins advisory, `buildflow format` fingerprint drift, test-race +202% on a quiet host.
+- **Cosmetic**: the AGENTS.md erraudit bullet's stale inline "next 2026-11-05" date (the watch calendar owns the real date, 2026-12-08).
