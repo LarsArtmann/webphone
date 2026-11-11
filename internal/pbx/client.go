@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/go-error-family"
+	"github.com/larsartmann/webphone/internal/httpclient"
 )
 
 // Client talks to one phone API base URL.
@@ -38,7 +39,7 @@ func NewClient(baseURL string) (*Client, error) {
 	}
 	return &Client{
 		base:   parsed.JoinPath("/phone-api"),
-		client: &http.Client{Timeout: 15 * time.Second},
+		client: httpclient.Isolated(15 * time.Second),
 	}, nil
 }
 
@@ -84,7 +85,7 @@ func (c *Client) HTTPClient() *http.Client {
 	if c.client != nil {
 		return c.client
 	}
-	return &http.Client{Timeout: 15 * time.Second}
+	return httpclient.Isolated(15 * time.Second)
 }
 
 // Credentials are the extension's SIP credentials (Basic auth).

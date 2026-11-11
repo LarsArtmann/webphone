@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/go-error-family"
+	"github.com/larsartmann/webphone/internal/httpclient"
 )
 
 // FCM HTTP v1 wire: a service account (JSON key file) mints a
@@ -119,7 +120,7 @@ func NewFcmSender(credentialsFile string) (*FcmSender, error) {
 		key:      rsaKey,
 		tokenURI: account.TokenURI,
 		sendURL:  fmt.Sprintf(fcmSendURLTemplate, account.ProjectID),
-		client:   &http.Client{Timeout: fcmRequestTimeout},
+		client:   httpclient.Isolated(fcmRequestTimeout),
 	}, nil
 }
 

@@ -25,6 +25,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/go-error-family"
+	"github.com/larsartmann/webphone/internal/httpclient"
 )
 
 const (
@@ -125,7 +126,7 @@ func NewGoogleClient(cfg GoogleConfig) (*GoogleClient, error) {
 		recognizer: "/v2/projects/" + cfg.Project + "/locations/" + location + "/recognizers/_:recognize",
 		model:      model,
 		language:   language,
-		client:     &http.Client{Timeout: requestTimeout},
+		client:     httpclient.Isolated(requestTimeout),
 	}, nil
 }
 

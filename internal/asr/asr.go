@@ -29,6 +29,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/go-error-family"
+	"github.com/larsartmann/webphone/internal/httpclient"
 )
 
 // Sentinels mirror the pbx/crm seam: disabled is Infrastructure (nil
@@ -160,7 +161,7 @@ func NewClient(baseURL, token, model string) (*Client, error) { //nolint:branchi
 		token:  token,
 		model:  model,
 		path:   transcriptionsPath,
-		client: &http.Client{Timeout: requestTimeout},
+		client: httpclient.Isolated(requestTimeout),
 	}, nil
 }
 

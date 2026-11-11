@@ -28,6 +28,7 @@ import (
 	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/gateway"
+	"github.com/larsartmann/webphone/internal/httpclient"
 )
 
 // downloadCap bounds one inbound media download: the homeserver accepts
@@ -66,7 +67,7 @@ func New(homeserver, userID, token string) *Client { //nolint:branching-flow // 
 		homeserver: strings.TrimRight(homeserver, "/"),
 		userID:     userID,
 		token:      token,
-		http:       &http.Client{Timeout: 60 * time.Second},
+		http:       httpclient.Isolated(60 * time.Second),
 		dmRooms:    map[string]string{},
 	}
 }

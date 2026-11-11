@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/go-error-family"
+	"github.com/larsartmann/webphone/internal/httpclient"
 )
 
 // ntfy wire: JSON publish to the server root — one round trip, the
@@ -48,7 +49,7 @@ func NewNtfySender(baseURL, token string) (*NtfySender, error) { //nolint:branch
 	return &NtfySender{
 		base:   parsed,
 		token:  token,
-		client: &http.Client{Timeout: ntfyRequestTimeout},
+		client: httpclient.Isolated(ntfyRequestTimeout),
 	}, nil
 }
 
