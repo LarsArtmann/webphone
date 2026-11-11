@@ -491,6 +491,9 @@ func TestPasskeySettingsListsAndRevokes(t *testing.T) {
 	if resp.StatusCode != http.StatusCreated {
 		t.Fatalf("passkey login: %d %s", resp.StatusCode, body)
 	}
+	// The mint rotated the CSRF cookie (fixation defense); the client
+	// adopts the fresh token exactly as the island does post-login.
+	c.token = c.csrfToken()
 
 	creds, ok := svc.Credentials(pkEmail)
 	if !ok || len(creds) != 1 {

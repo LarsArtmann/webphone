@@ -34,10 +34,10 @@ const draftPushTimeout = 15 * time.Second
 // browser surface forwards verbatim (see the passthrough arm in the
 // summarize handler).
 var agentStatusPassthrough = []int{
-	http.StatusConflict,             // a draft conflict the retry advice addresses
-	http.StatusUnprocessableEntity,  // a bad ask the composer can fix
-	http.StatusTooManyRequests,      // rate pressure: retry later is the fix
-	http.StatusServiceUnavailable,   // the agent's honest unavailable
+	http.StatusConflict,            // a draft conflict the retry advice addresses
+	http.StatusUnprocessableEntity, // a bad ask the composer can fix
+	http.StatusTooManyRequests,     // rate pressure: retry later is the fix
+	http.StatusServiceUnavailable,  // the agent's honest unavailable
 }
 
 // SummaryDraftRequest is the POST /api/calls/{id}/summary-draft wire
