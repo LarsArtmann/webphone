@@ -174,9 +174,11 @@ var threadFlagColumns = map[threadFlag]string{
 	flagMuted:    "muted",
 }
 
-// SetThreadFlag sets or clears one organization flag on the owner's
-// thread. A missing thread (or another owner's) is ErrNotFound.
-func (s *Messages) SetThreadFlag(
+// setThreadFlag sets or clears one organization flag on the owner's
+// thread (the SQL ladder's private verb — the gate is cqrs-only since
+// the journal swap; nothing outside the package can call this). A
+// missing thread (or another owner's) is ErrNotFound.
+func (s *Messages) setThreadFlag(
 	ctx context.Context, owner domain.Extension, id domain.ThreadID, flag threadFlag, on bool,
 ) error {
 	column, ok := threadFlagColumns[flag]

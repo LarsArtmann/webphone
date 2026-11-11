@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	errorfamily "github.com/larsartmann/go-error-family"
+	errorfamilytest "github.com/larsartmann/go-error-family/errorfamilytest"
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
@@ -41,6 +43,27 @@ func appendMsg(t *testing.T, messages *Messages, owner domain.Extension, remote 
 	}
 }
 
+// Closed-db posture (the family pin that used to live in family_test;
+// setThreadFlag is store-internal now, so the pin moved in-package).
+func TestThreadFlagOnClosedDBIsInfrastructure(t *testing.T) {
+	db, err := Open(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	messages := NewMessages(db)
+	if err := db.Close(); err != nil {
+		t.Fatal(err)
+	}
+	ctx := context.Background()
+	owner := domain.MustParseExtension("1001")
+	if err := messages.setThreadFlag(ctx, owner, domain.GenerateThreadID(), flagPinned, true); err == nil {
+		t.Fatal("setThreadFlag on closed db: want error")
+	} else {
+		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
+		errorfamilytest.AssertCode(t, err, "store.thread_flag")
+	}
+}
+
 func TestThreadFlagRoundTrips(t *testing.T) {
 	messages := newTestDB(t)
 	ctx := context.Background()
@@ -49,7 +72,7 @@ func TestThreadFlagRoundTrips(t *testing.T) {
 	threadID := seedThread(t, messages, owner, remote)
 
 	for _, flag := range []threadFlag{flagPinned, flagArchived, flagMuted} {
-		if err := messages.SetThreadFlag(ctx, owner, threadID, flag, true); err != nil {
+		if err := messages.setThreadFlag(ctx, owner, threadID, flag, true); err != nil {
 			t.Fatalf("set %s: %v", flag, err)
 		}
 	}
@@ -62,7 +85,7 @@ func TestThreadFlagRoundTrips(t *testing.T) {
 	}
 
 	for _, flag := range []threadFlag{flagPinned, flagArchived, flagMuted} {
-		if err := messages.SetThreadFlag(ctx, owner, threadID, flag, false); err != nil {
+		if err := messages.setThreadFlag(ctx, owner, threadID, flag, false); err != nil {
 			t.Fatalf("clear %s: %v", flag, err)
 		}
 	}
@@ -73,16 +96,16 @@ func TestThreadFlagRoundTrips(t *testing.T) {
 
 	// Owner scoping and misses are ErrNotFound, not silent success.
 	other := domain.MustParseExtension("1002")
-	if err := messages.SetThreadFlag(ctx, other, threadID, flagPinned, true); !errors.Is(err, ErrNotFound) {
+	if err := messages.setThreadFlag(ctx, other, threadID, flagPinned, true); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("foreign owner flag: got %v, want ErrNotFound", err)
 	}
 	missing := domain.GenerateThreadID()
-	if err := messages.SetThreadFlag(ctx, owner, missing, flagPinned, true); !errors.Is(err, ErrNotFound) {
+	if err := messages.setThreadFlag(ctx, owner, missing, flagPinned, true); !errors.Is(err, ErrNotFound) {
 		t.Fatalf("missing thread flag: got %v, want ErrNotFound", err)
 	}
 
 	// An unknown flag is a programming error surfaced as a rejection.
-	if err := messages.SetThreadFlag(ctx, owner, threadID, threadFlag("nope"), true); err == nil ||
+	if err := messages.setThreadFlag(ctx, owner, threadID, threadFlag("nope"), true); err == nil ||
 		!strings.Contains(err.Error(), "unknown") {
 		t.Fatalf("unknown flag: got %v, want unknown-flag rejection", err)
 	}
@@ -97,7 +120,7 @@ func TestArchiveExclusionAndAutoUnarchive(t *testing.T) {
 	threadA := seedThread(t, messages, owner, remoteA)
 	seedThread(t, messages, owner, remoteB)
 
-	if err := messages.SetThreadFlag(ctx, owner, threadA, flagArchived, true); err != nil {
+	if err := messages.setThreadFlag(ctx, owner, threadA, flagArchived, true); err != nil {
 		t.Fatal(err)
 	}
 
@@ -136,7 +159,7 @@ func TestArchiveExclusionAndAutoUnarchive(t *testing.T) {
 	}
 
 	// Outbound never unarchives (you know you replied).
-	if err := messages.SetThreadFlag(ctx, owner, threadA, flagArchived, true); err != nil {
+	if err := messages.setThreadFlag(ctx, owner, threadA, flagArchived, true); err != nil {
 		t.Fatal(err)
 	}
 	appendMsg(t, messages, owner, remoteA, threadA, domain.DirectionOutbound, "reply while filed")
@@ -175,7 +198,7 @@ func TestPinnedOrdering(t *testing.T) {
 	// pre-pin order is deliberately unasserted (two seeds in the same
 	// second tie on last_activity_at; only the pin flip is this test's
 	// subject).
-	if err := messages.SetThreadFlag(ctx, owner, oldID, flagPinned, true); err != nil {
+	if err := messages.setThreadFlag(ctx, owner, oldID, flagPinned, true); err != nil {
 		t.Fatal(err)
 	}
 	threads, _ := messages.ListThreads(ctx, owner)
@@ -203,7 +226,7 @@ func TestSummaryFlagsAndAttachmentPreview(t *testing.T) {
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
 	threadID := seedThread(t, messages, owner, remote)
 
-	if err := messages.SetThreadFlag(ctx, owner, threadID, flagPinned, true); err != nil {
+	if err := messages.setThreadFlag(ctx, owner, threadID, flagPinned, true); err != nil {
 		t.Fatal(err)
 	}
 	withAttachment := domain.Message{
