@@ -2393,6 +2393,21 @@ a:focus-visible {
   .wp-row-actions {
     justify-content: flex-start;
   }
+
+  /* The settings definition grid collapses to one column: the desktop
+   * `auto 1fr` pair sizes the label column to its content, and a long
+   * German label ("Anrufe werden auf diesem Server transkribiert") is
+   * wider than a 390px viewport — the page overflowed horizontally by
+   * ~50px (caught by the 2026-11-11 mobile capture pass; label-above-
+   * value is also the denser mobile reading order). */
+  .wp-settings {
+    grid-template-columns: 1fr;
+    gap: 2px 0;
+  }
+
+  .wp-settings dd {
+    margin: 0 0 12px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

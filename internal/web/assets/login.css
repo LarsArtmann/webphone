@@ -3717,6 +3717,13 @@ a:focus-visible {
   .wp-row-actions {
     justify-content: flex-start;
   }
+  .wp-settings {
+    grid-template-columns: 1fr;
+    gap: 2px 0;
+  }
+  .wp-settings dd {
+    margin: 0 0 12px;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
   * {
