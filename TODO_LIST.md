@@ -33,10 +33,8 @@ now names itself via the toast (silence = fixed; text = live trigger named).
       voicemail surface in `tests/browser-e2e.py` today);
       `verify-live.sh` authenticated audio fetch; `operator.nix` pin for
       206-through-the-proxy.
-- [ ] **Local freshness replay** before push (rebuild `tw.css` + `git diff`
-      inside the battery) — the advisory `tw-freshness` lane armed on
-      external nixpkgs drift (tailwindcss v4.3.4) and reded after landing;
-      a local replay would have caught it pre-push.
+- ~~**Local freshness replay** before push (rebuild `tw.css` + `git diff`
+  inside the battery)~~ → done 2026-11-11 — `scripts/build-tw-css.sh --check`: the same staged pipeline, then byte-compare against the committed artifacts, restore + exit 1 on drift (verified in-sync at HEAD; the sibling's docs-gates `--check` CI leg covers the docs half)
 
 ### Reports tab quality train (2026-11-10, owner triage of the live panel — plan: docs/planning/2026-11-10_10-15_SUPERB-reports-tab-quality-plan.html)
 
@@ -170,7 +168,12 @@ New open items from the legs session, not homed elsewhere yet.
       `FaxJobOfView`/`FaxGate` (faxesgate.go, the shared fold builder
       both DBs ride), then delete the store — dissolves 3 of the 6
       clone groups baselined 2026-11-09 (the registry's post-P7 fax
-      twins row).
+      twins row). **RIDER (2026-11-11 doctrine sweep): the same train
+      deletes the prod-dead `readmodels.EnrollTokens`** (the
+      composition root wires `CqrsService.EnrollSvc()`; the
+      engine-backed store has zero non-test callers — same
+      test-double pattern; readmodels/enroll.go + the engine field in
+      readmodels.go).
 - [x] **fleet-libs `go-cqrs-lite.md` re-score (B159) + ROADMAP ES
       annotation (B160)** — the A46 leftovers: SUPERB made webphone the
       library's deepest consumer (threads/faxes aggregates, system
@@ -189,40 +192,13 @@ New open items from the legs session, not homed elsewhere yet.
       suggestions collide with the JSON-wire raw-string ruling), file
       the noise classes upstream, or baseline with rationale once the
       error_rules-bearing BuildFlow release lands.
-- [ ] **CI-verdict instrument fixes (the 2026-11-09 misread-green
-      class)**: (a) `scripts/ci-verdict.sh <sha>` printing the
-      CI-WORKFLOW conclusion for a sha — the watch workflow's
-      scheduled runs masquerade as CI verdicts in a name-less `gh run
-      list`, and one session re-pointed a tag and published a release
-      on that misread; (b) give the watch workflow a distinct
-      displayTitle prefix for the same reason; (c) AGENTS.md gains the
-      workflowName-verified-verdict rule beside the 2026-10-05
-      check-CI-after-every-push rule.
-- [ ] **Mechanical ride-along probes for code trains** — the
-      errorfamily-registry freshness (`TestErrorCodeRegistryIsFresh`,
-      regen + diff in the SAME commit as any new code) and the
-      art-dupl check (any line-moving refactor re-keys ruled twins)
-      are now THREE-time lesson repeaters caught only by CI. A
-      pre-push battery step or buildflow lane makes them mechanical.
-- [ ] **Smoke scenario for `-enroll-passkey`** — mint via the CLI
-      one-shot, verify 200 through the live server, burned token 503.
-      Webphone's own CI would have caught the 2026-11-09 CLI/server
-      split-brain (readmodels.db vs system.db) before any release
-      shipped it; today only the stack's enroll-verify VM check
-      catches the class.
-- [ ] **Doctrine-doc sweep after the enroll CLI journal swap**: AGENTS
-      + the userauth one-home paragraphs still describe the one-shot
-      as opening the readmodels engine; also check whether
-      `readmodels.EnrollTokens` is now prod-dead (only the fax-style
-      test doubles may hold it) — if dead, its deletion rides the
-      readmodels faxes-store deletion row's pattern.
-- [ ] **Clone the transport-isolation fix into pbx, asr, matrix,
-      paperless** — the crm client's Clone() repair (2026-11-08) killed
-      the parallel-test flake class at ONE seam; the same bare
-      http.Client-literal rides the process-global transport at the
-      other four (pbx/client.go two sites, asr.go + google.go,
-      matrix/client.go). Production-neutral; the class bites only
-      under parallel httptest suites.
+- ~~**CI-verdict instrument fixes (the 2026-11-09 misread-green
+  class)**~~ → done 2026-11-11 — (a) `scripts/ci-verdict.sh <sha>` names the workflow and answers ONLY the CI run's conclusion (5-case self-test; exit 0/1/2 = green/no-run/red); (b) the watch lane's `run-name` now says "NOT a CI verdict"; (c) the workflowName-verified rule sits beside the check-CI rule in AGENTS. Live proof the day it landed: the tool exposed a real CI red (vendorHash mismatch) hiding under green watch rows
+- ~~**Mechanical ride-along probes for code trains**~~ → done 2026-11-11 — `scripts/pre-push-gates.sh` runs the six push-critical gates in ONE command (registry freshness, art-dupl pinned check, changelog-guard, templ-generate --check, build-tw-css --check, docs-gates --check); `--only=`/`--skip=` per gate
+- ~~**Smoke scenario for `-enroll-passkey`**~~ → done 2026-11-11 — `enroll_scenario` in webphone-smoke.py: CLI one-shot + server under ONE config file (the shared-journal contract), fresh token verifies 200, replay answers 503, /enroll page renders; full suite 8/8 scenarios green (the split-brain class is now webphone-caught)
+- ~~**Doctrine-doc sweep after the enroll CLI journal swap**~~ → done 2026-11-11 — AGENTS' ONE-journal-world bullet and README § Passkey were already current; the one stale artifact (userauth's `readmodels.enroll_*` code reference) fixed to `cqrs.enroll_*`; `readmodels.EnrollTokens` confirmed PROD-DEAD (composition root wires `CqrsService.EnrollSvc()`; zero non-test callers) — its deletion JOINS the readmodels faxes-store row below
+- ~~**Clone the transport-isolation fix into pbx, asr, matrix,
+  paperless**~~ → done 2026-11-11 — the crm Clone pattern extracted into the ONE home `internal/httpclient.Isolated` (stdlib-only leaf + micro-test) and migrated: pbx ×2 (incl. the HTTPClient fallback), asr ×2, matrix, push ×2 (unnamed in this row but the same bare-literal class), crm's plain branch; paperless rides the go-paperless SDK (no local client — the row's title overcounted). Production-neutral
 - [ ] **Hub runner durable fix** — ExecStartPre provisioning (or a
       static uid / group-write) for the build-state roots, so the next
       DynamicUser renumber cannot red every hub build (the 2026-11-08
@@ -286,19 +262,11 @@ Residue harvested 2026-11-07 (the execution train's open items):
 Residue harvested 2026-11-08 (the §f rows audit-all flagged; each verified
 against the tree at harvest time):
 
-- [ ] Drafts-poll skip-if-dirty guard (F11): no dirty check exists in
-      shell.js's drafts poll — verify-skip when a draft textarea is
-      mid-edit (grep-verified absent).
-- [ ] Localize island-built aria-labels (F9): 8 `aria-label` literals in
-      island/app JS render English in the de locale (grep-verified count).
-- [ ] Chip-X 24px hit area (F14): `.wp-chip-x` is 18px (app.css:998-997),
-      WCAG 2.5.8 asks 24 — grow the hit area without growing the glyph.
-- [ ] History empty state rewording (F15): the filter-aware copy predates
-      the review; reword per F15 if the reviewer's phrasing still reads
-      better.
-- [ ] Radius/spacing token adoption (F17): tokens exist
-      (`--radius-sm/--radius/--radius-lg` app.css:38-40) but hardcoded
-      radii remain across panels — sweep the stragglers.
+- ~~Drafts-poll skip-if-dirty guard (F11)~~ → done 2026-11-11 — the dirty flag (WeakSet keyed by the textarea node) gates the poll alongside the existing `[open]` guard; folded-shut-but-typed edits no longer lose text; 3-case spec in drafts-guard.test.mjs
+- ~~Localize island-built aria-labels (F9)~~ → done 2026-11-11 — the last hardcode (typeahead's listbox) rides `t("typeaheadLabel")` (both i18n maps carried the key; main.js already re-labels on switch); the other seven were localized by later trains; shell.js copy stays English by the D3 ruling
+- ~~Chip-X 24px hit area (F14)~~ → verified LANDED at HEAD before this sweep — the glyph stays 18px and the invisible `::after` (`inset: -3px`) extends the hit to 24px with the F14 comment at the site (app.css)
+- ~~History empty state rewording (F15)~~ → verified LANDED 2026-11-07 (T16) — the review card itself carries the FIXED banner; `history.needsAPI.pre/post` carries the three-beat shape (en+de)
+- ~~Radius/spacing token adoption (F17)~~ → done 2026-11-11 — the stragglers swept: voicemail waveform, mono input, admin-ext chip → `--radius-sm` byte-identical; island `#lang`/small buttons/audio-out selects (8px literals between the tokens) normalized onto `--radius`; tw.css/login.css rebuilt; the 2px fax-step bar stays (a 4px-tall shape no token describes)
 - [ ] Phase-4 release preflight (harvested 2026-11-08 from the 17-22
       SUPERB report §f-2 residue): the KVM/local-only flake legs —
       `nix build .#checks.x86_64-linux.webphone-module`, the
@@ -368,9 +336,7 @@ What remains, each with its ONE home:
        (77–86%; the rest is the infrastructure-error branch), and one assertion is
        mutation-proved. Delta recorded in
        `docs/reviews/2026-09-20_coverage-baseline.md` § 2026-11-07.
-10. **Wire the `docs-gates` battery into CI** — adopted locally this sweep
-    (`scripts/docs-gates.sh`, `.docs-gates.json`); the pre-canon archive residue is
-    RATCHETED, so nothing reds main when new drift appears until the CI leg lands.
+10. ~~**Wire the `docs-gates` battery into CI**~~ — done 2026-11-11 (the sibling's CI leg): `ci.yml` fast-checks runs `scripts/docs-gates.sh --check` (line ~115), the non-mutating mode; the ratchets hold
 11. **Bulk verdict pass over the archive residue** — after the v8 sweep archived 68
     reports, the live status-report set is blocked by un-inventoried §a/§b table rows
     (~1 600 measured 2026-11-06; those reports use a Verdict COLUMN instead of the
@@ -382,8 +348,7 @@ What remains, each with its ONE home:
     (Verdict-column evidence transcribed + hash-resolved), routed strikes for §f rows,
     then `check-rows`/`bare-rows` BEFORE each `git mv`. The cadence ratchet holds the
     residency and may only move DOWN.
-12. **`/context` contract snapshot test** pinning webphone's parse against Kith's
-    published shape (a CRM-side schema change is invisible today).
+12. ~~**`/context` contract snapshot test**~~ — done 2026-11-11: the producer's RENDERED bytes captured from the CRM's own machine API (crm@85c7f2e, throwaway dumper deleted, tree verified clean) pinned in `internal/crm/testdata/kith_context_snapshot.json`; one test parses those exact bytes into the mapped Context, a second keeps fixture↔snapshot honest both directions (every producer-emitted key must exist in the fixture with the same JSON type; the fixture may not invent keys)
 13. [x] **History nudge for the notes save path — DONE 2026-11-07 (P2-3)**: a
         successful `call_notes` PUT publishes the payload-less `notes` SSE event
         (`NotifyCallNotesChanged` on the api Server seam, same shape as the contacts
@@ -392,8 +357,7 @@ What remains, each with its ONE home:
         declares BOTH `review` (F89 shipped it undeclared) and `notes`. Pinned by
         `TestCallNoteSaveNudgesHistory` (exactly one payload-less nudge to the
         owner's hub).
-14. **`scripts/templ-generate.sh` wrapper** that pins the regen compiler to go.mod's
-    version and asserts the generated header stamp (the 2026-11-05 near-miss class).
+14. ~~**`scripts/templ-generate.sh` wrapper**~~ — done (landed 2026-11-07 by the sibling session; verified in-sync at templ v0.3.1100 today) — reads the pin from go.mod, warns on a disagreeing PATH templ, `--check` snapshots + regenerates + restores
 15. **Attended-transfer UI vs the NO-GO ruling** — `FEATURES.md` claimed the row
     FULLY_FUNCTIONAL while `docs/research/2026-10-27_attended-transfer-spike.md` says
     the bridge is UNVERIFIED (the stack has no Replaces dialplan handling); the status
@@ -410,10 +374,7 @@ What remains, each with its ONE home:
     2026-11-06 10:45 report because it carried no §f at all ("nothing to check"),
     so the ritual certified nothing (the vacuous-PASS class). A newest report
     without §f should be a finding, not a green.
-18. **Enforce CHANGELOG coverage for code-path commits** — the metaengine
-    per-group cap train (2026-11-06 17:59) landed with no `[Unreleased]` line and
-    nothing reds. Cheapest shape: a buildflow step diffing non-test Go/JS paths
-    against CHANGELOG.md.
+18. ~~**Enforce CHANGELOG coverage for code-path commits**~~ — done (landed by the sibling session): `scripts/changelog-guard.sh` (+ selftest) — product-code deltas without a CHANGELOG.md change exit 1, tooling/tests/docs exempt per the ratified bar
 19. **Record the DF-brittleness + standalone-verb gotchas UPSTREAM** (docs-gates
     repo, Artmann-Technologies): `audit_max` shifts with living-doc growth because
     "generic" is a document-frequency threshold (observed 330 → 331 from one
@@ -753,10 +714,7 @@ fixes, the shutdown release-count log, push draft wrap-code pins, errors.AsType,
    prod, confirm the reason card + offline toast + reconnect pill title render on
    the live deployment (browser E2E owed only if served markup changed — it did
    not: all surfaces are island-JS-created).
-5. **Flush-announce island spec (harvested 2026-11-08 from the 10-27 error-surface
-   report §f-15)**: the announce paths landed (`transcribeLag`/`transcribeUnavailable`
-   in transcribe.js) but no island spec covers them — pin the laggy-streak
-   announce-once behavior with a node:test spec.
+5. ~~**Flush-announce island spec**~~ — done 2026-11-11: `island-tests/transcribe-announce.test.mjs` (steppable clock) pins both arms — the lag warn announces once per streak and a fast segment re-arms it; the unavailable warn waits for the third consecutive failure and stays quiet while the streak continues (the 60s backoff gate is part of the sequence)
 
 ### Language stance: island type gate SHIPPED, Go→JS + full KMP rejected (2026-10-27 plan)
 
@@ -1284,7 +1242,7 @@ ceiling) + markdownlint posture execution (post-sitting row-18 verdict). Plan:
 - **Watcher fire-drill (13):** deliberately trip one alert class (canary against a deliberately-wrong host in a scratch run) to prove the GitHub-issue filing + suppression path works inside the systemd user environment — the alert leg has never fired in earnest.
 - **api-dial tripwire (14):** the 2026-11-17 revisit of the DEFER recommendation self-surfaces here (memo: pbx-artmann `docs/planning/2026-11-10_17-30_api-dial-stopgap-decision-memo.md`).
 - **Release hygiene on a quiet host (22/30/31):** owner call on `.buildflow.yml`'s stale baseline file (157 accepted entries match nothing — delete or refresh deliberately); re-run `buildflow timings --regressions` on a quiet host before rebaselining the +200% race-step timing; correlate the one SQLITE_BUSY warning from attempt 2's tail if it recurs.
-- **lychee redirect hints (32):** resolve the two/three redirecting URLs to their targets so the hints stop.
+- ~~**lychee redirect hints (32):**~~ partially — 0 errors at today's run (579 OK, the 5-vs-0 delta reconciles as green); the 3 redirecting URLs are UNNAMED by lychee 0.24.2 in every local output mode (-v/-vv/json/detailed carry only the count — an upstream display gap worth filing, owner-gated); no URL guessing
 
 ### Release-green + B5-staged — open rows (2026-11-11 harvest)
 
@@ -1314,9 +1272,9 @@ ceiling) + markdownlint posture execution (post-sitting row-18 verdict). Plan:
 - **Track the upstream `/*` lexer fix**: on the next cqrs-lint bump, remove the actions.go hedge comment if the fix shipped; until then any directive below a one-`/*` line comment in the six swept files is dead on arrival.
 - **Confirm the enroll.go S001 heuristic change upstream** (the wirefixtures twin still fires — intentional change or drift?).
 - **Train-specific decay pass: `erraudit nolint-audit`** after the C007/At-command train (the calendar's quarterly re-measure is separate, next due 2026-12-08).
-- **Pin the D014 tags with a replay test**: round-trip an OLD-shape journal row through DecodePayloadAuto (byte-neutrality argued, not pinned).
-- **`cqrs-lint scorecard` before/after** (did the disabled F-series distort the adoption score?) and **`cqrs-lint doctor` render check** of the disable-reasons.
-- **Write the triage decision table** (config-disable / directive / keep-visible / fix) into one home; move three lessons into docs/lessons.md (scoped-verifier-cannot-adjudicate-baseline, read-the-pins-first, the result-cache war story).
-- **Pin the B007 ruling** with a comment at the server.New registration block; consider feeding the stream-vocab vars to the catalog (B010 duplication).
+- ~~**Pin the D014 tags with a replay test**~~ → done 2026-11-11 — `internal/cqrs/tombstone_wire_test.go`: untagged old-shape witnesses replay through `DecodePayloadAuto` and must re-encode byte-identically; JSON wire keys pinned to the Go field names with byte goldens; MUTATION-PROVEN (a planted `json:"reason"` drift fails both legs)
+- ~~**`cqrs-lint scorecard` before/after** and **`cqrs-lint doctor` render check**~~ → done 2026-11-11 — scorecard: adoption 11/36 relevant modules (30%, Grade Sparse) and the score counts MODULE adoption, so the 11 disabled LINT rules could not distort it; doctor renders all 11 disable-reasons (217 rules total, 206 active, 11 disabled, each `why` verbatim)
+- ~~**Write the triage decision table**; move three lessons~~ → done 2026-11-11 — the 4-way table (config-disable / directive / keep-visible / fix) is the standing rule beside the CHANGELOG bar in AGENTS (cites the 00-36 report); docs/lessons.md § Tooling traps gains the result-cache war story, the scoped-verifier near-miss, and the vendorHash-tail red (CI's own-hash repair)
+- ~~**Pin the B007 ruling**; consider feeding the stream-vocab vars to the catalog (B010)~~ → done/ruled 2026-11-11 — the ruling comment sits at server.New's registration block (explicit rows ARE the route table); B010 DECLINED: the catalog's scope is the four SSE seam events by ruling (nothing fabricates a CQRS write model into the federation), the stream vocab is the internal write model, and the seam events do not map 1:1 onto streams
 - **Owner decisions pending**: cqrs-lint gating posture (answer or TODO row), C044 prefixed-key permanence (answer or priced TODO row), BuildFlow rebuild + reinstall (freshness only), dprint-remote-plugins advisory, `buildflow format` fingerprint drift, test-race +202% on a quiet host.
-- **Cosmetic**: the AGENTS.md erraudit bullet's stale inline "next 2026-11-05" date (the watch calendar owns the real date, 2026-12-08).
+- ~~**Cosmetic**: the AGENTS.md erraudit bullet's stale inline "next 2026-11-05" date~~ → done 2026-11-11 — the bullet now defers to the watch calendar (next 2026-12-08, last measured 2026-11-08)
