@@ -458,8 +458,9 @@ the 06-55 webphone-backlog residuals, routed here as ROADMAP fuel
 - TOTP/OAuth2 login modes (usermgmt supports TOTP; island + DOM
   contract work).
 - Membership-remap: replace `auth.passkey.users` with a usermgmt
-  relation; loginpage adoption ruling (standalone page vs island
-  no-reload) — written decision owed.
+  relation. (The loginpage adoption ruling RESOLVED 2026-11-11: the
+  standalone `/login` page won — it is the front door in every mode,
+  shipped in 2.14.0.)
 - `passwordFile` permission assertions in the webphone NixOS module
   (dataDir-style).
 - `/internal/directory` listing cap (5000-segment-style bound; currently
