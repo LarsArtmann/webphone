@@ -115,6 +115,11 @@ globalThis.window.location = {
   },
 };
 
+// The login page's submit requests notification permission under its own
+// gesture; the boot states the RESULT in #log (the stub answers
+// "granted" — the assertion pins the line's presence, not the verdict).
+globalThis.Notification = { permission: "granted" };
+
 const phoneHidden = () => doc.getElementById("phone-view").hidden;
 const bannerHidden = () => doc.getElementById("offline-banner").hidden;
 const logTexts = () => doc.getElementById("log").children.map((li) => li.textContent);
@@ -135,6 +140,10 @@ test("resume over a dead transport KEEPS the session and shows the offline phone
   assert.ok(
     logTexts().some((line) => line.includes("SIP unreachable")),
     "the kept-session reason is logged",
+  );
+  assert.ok(
+    logTexts().some((line) => line.includes("notifications: granted")),
+    "the boot states the notification-permission result in #log",
   );
   assert.equal(
     calls.replaces.length,

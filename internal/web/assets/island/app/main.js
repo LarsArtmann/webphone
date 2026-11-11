@@ -133,6 +133,12 @@ async function resumeSession() {
   renderLineSwitcher(session);
   els.phoneView.hidden = false;
   connectLiveUpdates();
+  // The notification-permission state line: the login page's submit
+  // requested the prompt under its own user gesture; the boot states
+  // the RESULT where the operator trail lives (#log, English).
+  if (typeof Notification !== "undefined") {
+    log(`notifications: ${Notification.permission}`);
+  }
   // The wp:session-opened listener appends the did and refreshes the
   // session-gated panels — the exact post-login wiring, reused. The
   // agent_mode* fields feed the shell's drafts pill (M13).

@@ -66,9 +66,18 @@ test("a 201 signs in and sends the browser home (the boot probe resumes)", async
   extEl().value = " 1001 ";
   passEl().value = "pw";
   rememberEl().checked = true;
+  let permissionAsked = false;
+  globalThis.Notification = {
+    permission: "default",
+    requestPermission: async () => {
+      permissionAsked = true;
+      return "granted";
+    },
+  };
   await submit();
   assert.equal(posts.length, 1, "exactly one POST /api/session");
   assert.deepEqual(JSON.parse(posts[0].body), { extension: "1001", password: "pw" }, "the extension is trimmed, the password is not");
+  assert.equal(permissionAsked, true, "the submit click is the notification-permission gesture (the old island login's behavior)");
   assert.equal(
     localStorage.getItem("pbx-extension"),
     "1001",

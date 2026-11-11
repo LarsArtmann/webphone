@@ -58,6 +58,16 @@ async function signIn() {
       showError("Enter your extension and password.");
       return;
     }
+    // The user gesture IS this click: ask for notification permission
+    // now, the way the old island login did — the island's boot logs
+    // the resulting state after the redirect.
+    try {
+      if (typeof Notification !== "undefined") {
+        void Notification.requestPermission();
+      }
+    } catch {
+      // A browser without the API must not block the sign-in.
+    }
     const res = await fetch("/api/session", {
       method: "POST",
       headers: {

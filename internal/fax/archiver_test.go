@@ -12,10 +12,10 @@ import (
 
 	"github.com/larsartmann/webphone/internal/blob"
 	"github.com/larsartmann/webphone/internal/config"
+	"github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/fax"
 	"github.com/larsartmann/webphone/internal/gateway"
-	"github.com/larsartmann/webphone/internal/readmodels"
 )
 
 // archivedFax is what the fake records per offer.
@@ -38,7 +38,7 @@ func (a *recordingArchiver) ArchiveFax(_ context.Context, job domain.FaxJob, pdf
 	return nil
 }
 
-func newArchiveFaxService(t *testing.T, archiver fax.Archiver) (*fax.Service, *readmodels.Faxes) {
+func newArchiveFaxService(t *testing.T, archiver fax.Archiver) (*fax.Service, *cqrs.Faxes) {
 	t.Helper()
 	blobs, err := blob.New(t.TempDir())
 	if err != nil {

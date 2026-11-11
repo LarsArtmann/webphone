@@ -341,10 +341,14 @@
       var phoneView = document.getElementById("phone-view");
       if (!dest || !form) return;
       if (phoneView && phoneView.hidden) {
-        var ext = document.getElementById("ext");
-        if (ext) ext.focus();
+        // The login field lives on the /login front door now; when this
+        // page has the anonymous door's sign-in link (a deep link), that
+        // link is the actionable element — focus it. The toast names the
+        // state either way.
+        var signinLink = document.querySelector(".wp-welcome-signin");
+        if (signinLink) signinLink.focus();
         shellToast(
-          "Phone is signed out — sign in on the phone panel to call.",
+          "Phone is signed out — use the sign-in link to continue.",
           "warn",
         );
         return;
