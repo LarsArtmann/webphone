@@ -201,6 +201,26 @@ New open items from the legs session, not homed elsewhere yet.
       floor stays decision-pinned (TestTranscriptPerCallFloorEvictsOldest).
       Registry regen'd (−8 `readmodels.transcript_*` codes); art-dupl:
       0 clones reference the deleted file.
+- [x] ~~**Storage-ladder train B: delete the prod-dead readmodels
+      notes + reviews stores** (the plan's M03; prod has answered both
+      from the cqrs journal since Phase 4 — the engine-backed twins had
+      zero non-test callers beyond the server harness)~~ → done
+      2026-11-11 — callnotes.go/callreviews.go DELETED; the surviving
+      surface moved to notesgate.go/reviewsgate.go (NotesGate/
+      CallNoteView, ReviewsGate/CallReviewView, the 2000-cap constants
+      and sentinels with their family classifications); Engine lost the
+      notes/reviews fields/accessors/Plan entries. The server test
+      harness rides `cqrs.NewNotes(coreSys)`/`cqrs.NewReviews(coreSys)`
+      (NewCoreSystem grew the two decls per its one-journal charter).
+      The two missing slot-shape pins ported (verdict-first slot
+      creation, empty-body-clears-still-a-slot — cqrs
+      TestNoteVerdictFirstAndClearedBody); the cap/merge/scoping/
+      restart pins already lived at the cqrs decision. BOTH backends'
+      write doors now carry the D7 awaitOwnWrite beat (the engine
+      store's synchronous fold used to provide it; the History panel
+      re-fetches right behind the SSE nudge — the aggregate header's
+      old "no D7 await" premise retired with the twin). Registry regen'd
+      (−7 note/review/disposition codes).
 - [x] **fleet-libs `go-cqrs-lite.md` re-score (B159) + ROADMAP ES
       annotation (B160)** — the A46 leftovers: SUPERB made webphone the
       library's deepest consumer (threads/faxes aggregates, system
