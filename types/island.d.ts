@@ -285,6 +285,19 @@ interface IslandEnrollVerifyBody {
   user_id: string;
 }
 
+// The dedicated login page's extension+password section (served at /login,
+// hosted inside the cqrs-htmx loginpage card by views.LoginPageExtra; its
+// behavior is login/login-page.js, no island runtime). Every mode renders
+// the form; #sso-login renders only when the OIDC seam is configured.
+interface LoginPageDomIds {
+  "login-form": HTMLFormElement;
+  "ext": HTMLInputElement;
+  "pass": HTMLInputElement;
+  "remember": HTMLInputElement;
+  "login-error": HTMLElement;
+  "sso-login": HTMLAnchorElement;
+}
+
 /** The begin endpoint's answer: the ceremony options plus the session key
  * the finish call must echo back. */
 interface IslandEnrollBeginBody {
