@@ -206,8 +206,8 @@ New open items from the legs session, not homed elsewhere yet.
 - [ ] **Hub ALERT_WEBHOOK_URL decision** — the failure log says
       channel decision pending (ntfy / email / Forgejo webhook); pick
       the channel and set the secret so hub failures alert.
-- [ ] **Verify catalog.home.lan serves run #240's publish** (the
-      hourly sync half) and the site freshness WARN cleared.
+- ~~**Verify catalog.home.lan serves run #240's publish** (the
+      hourly sync half) and the site freshness WARN cleared.~~ → done 2026-11-11 (the observable half) — the site serves a coherent publish: root 200 with generation stamp 2026-11-10T22:59:53 (run #240's window), and `/docs/domains/telephony/1.0.0` server-renders webphone's CURRENT event vocabulary (Fax Advanced / Message Received / Thread Flag Changed, 34 webphone mentions) — the freshness proof that does not need hub access. The hub-side WARN log line itself stays deployment-access territory (forgejo.home.lan host); if a newer publish lands and the WARN recurs, that read belongs to the hub session
 - [ ] **Ringhook operator docs + typed mirror**: the stack's deploy
       docs gain the enable recipe (config keys, secret slot, expected
       dialplan arms); consider a typed ringhook front in webphone's own

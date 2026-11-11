@@ -1,0 +1,13 @@
+{
+  "type": "object",
+  "properties": {
+    "owner": {
+      "type": "string",
+      "nullable": false,
+      "deprecated": false
+    }
+  },
+  "required": [
+    "owner"
+  ]
+}

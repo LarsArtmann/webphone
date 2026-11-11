@@ -1,0 +1,19 @@
+# Webphone
+
+> Auto-generated catalog summary for LLM consumption.
+
+## Webphone (webphone)
+Single-binary unified-communications web app for pbx.artmann.tech: SIP calls (SIP.js island), SMS/MMS threads, fax, voicemail, history and contacts behind one login against the PBX directory.
+
+### Events
+- Message Received (v1.0.0) [sends]: An inbound message landed in an owner's thread.
+- Message Delivery Advanced (v1.0.0) [sends]: An outbound message's delivery state moved: send accepted or refused, provider verdict landed.
+- Thread Flag Changed (v1.0.0) [sends]: The user toggled a thread organization flag; list-only by design, so an open transcript is never wiped.
+- Fax Advanced (v1.0.0) [sends]: A fax job moved through its lifecycle: submit, settle, verdict, or receive.
+
+## User: Lars Artmann (lars)
+
+## Domain: Telephony (telephony)
+User-facing telephony for pbx.artmann.tech: calls, message threads, and fax per extension, live over SSE.
+Services: webphone
+
