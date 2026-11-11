@@ -129,7 +129,8 @@ func (s *Threads) SearchThreads(ctx context.Context, owner domain.Extension, nee
 		return nil, err
 	}
 	msgs, err := s.messages.Scan(ctx,
-		metaengine.WithFilter("owner", metaengine.FilterEq, owner.String()))
+		metaengine.WithFilter("owner", metaengine.FilterEq, owner.String()),
+		metaengine.WithLimit(0)) // the search walks the owner's WHOLE message corpus (the legacy LIKE contract); the engine's silent 100-row ceiling would miss hits beyond it
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.thread_search", "search messages of %s", owner)
 	}
