@@ -60,6 +60,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   /version matches) now has an owner. Prod unreachable stays the
   trunk-watch's signal, not this one's.
 
+### Removed
+
+- The prod-dead `readmodels` fax store and enrollment-token store: the
+  engine-backed `Faxes` (prod has answered faxes from the cqrs journal
+  since P7) and `EnrollTokens` (the CLI journal swap made them
+  test-only twins) are deleted; the fax tests drive the journal-backed
+  backend directly and `readmodels` keeps only the shared fold types
+  (`FaxView`, `FaxesProjection`, `FaxJobOfView`) and the gate
+  interfaces (`FaxGate`, `EnrollGate`). 14 retired `readmodels.fax_*` /
+  `readmodels.enroll_*` error codes leave the contract table.
+
 ### Changed
 
 - Every outbound HTTP seam (pbx proxy, ASR providers, matrix, push

@@ -159,7 +159,7 @@ New open items from the legs session, not homed elsewhere yet.
       tests (fax-feed + messaging, modernized to the journal world);
       tag re-pointed onto the green fix commit; aarch64 b700 PASS; gh
       release published 04:20Z as Latest.
-- [ ] **Delete the prod-dead readmodels faxes store** — the
+- ~~**Delete the prod-dead readmodels faxes store** — the
       engine-backed `Faxes` in internal/readmodels/faxes.go lost its
       prod wiring at P7 (app.go wires only `cqrs.NewFaxes`); it
       survives as the fax service's test double
@@ -173,7 +173,7 @@ New open items from the legs session, not homed elsewhere yet.
       composition root wires `CqrsService.EnrollSvc()`; the
       engine-backed store has zero non-test callers — same
       test-double pattern; readmodels/enroll.go + the engine field in
-      readmodels.go).
+      readmodels.go).~~ → done 2026-11-11 — faxes.go DELETED (FaxView/faxInput moved into faxesgate.go; FaxesProjection/FaxJobOfView/FaxGate kept); enroll.go slimmed to EnrollGate + EnrollTokenView (the live cqrs seams); Engine lost the faxes/enroll fields + accessors + Plan entries. Tests moved: fax/teststore_test.go boots the journal backend (`cqrs.FaxesDomainDecl` + `NewFaxes`), userauth/session_switch/passkey_api tests boot `cqrs.NewEnrollSystem`+`NewEnrollTokens`; the dying readmodels coverage PORTED (ListAll newest-first + ref guards + the 11-row faxMoves mirror + idempotent-second-key, now cqrs tests); admin_reads fax pins moved to cqrs/faxes_test.go (transcripts pin stays). Registry regen'd (-14 codes); art-dupl scan: 0 clones reference readmodels/faxes.go (3 twin groups dissolved — registry row updated); full `go test -count=1 ./...` green.
 - [x] **fleet-libs `go-cqrs-lite.md` re-score (B159) + ROADMAP ES
       annotation (B160)** — the A46 leftovers: SUPERB made webphone the
       library's deepest consumer (threads/faxes aggregates, system
