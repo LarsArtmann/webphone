@@ -91,18 +91,18 @@ from `gh run list` minutes ago.
 
 ## f) WHAT WE SHOULD GET DONE NEXT (consolidated — the 50-row table lives in the 00-45 report §f; these are the live deltas)
 
-| # | Item |
-|---|------|
-| 1 | Answer the remaining §g operator questions: B5 switch timing/authority, E3 budget number |
-| 2 | Execute the B5 prod switch when Q1 lands; then the full post-switch battery |
-| 3 | pbx-artmann telephony bump to stack main AFTER the switch, `lock-drift-probe` re-run |
-| 4 | Post-refactor attribution pass on the cqrs split (art-dupl check, arch tests, fleet-libs reopen triggers) |
-| 5 | 18-08 report drain train before ~2026-12-07 |
-| 6 | `scripts/cadence-candidates.sh` — script the archive-candidate scan |
-| 7 | Runbook: the four additions (check-mode battery, HEAD-assert push, archive-when-filing, logs-home-at-creation) |
-| 8 | erraudit tier re-measure (overdue) |
-| 9 | Red-main watcher dedup check (four tips red, no issues visible) |
-| 10 | Quiet-host window for the heavy suites (VM/E2E) |
+| #  | Item                                                                                                           |
+| -- | -------------------------------------------------------------------------------------------------------------- |
+| 1  | Answer the remaining §g operator questions: B5 switch timing/authority, E3 budget number                       |
+| 2  | Execute the B5 prod switch when Q1 lands; then the full post-switch battery                                    |
+| 3  | pbx-artmann telephony bump to stack main AFTER the switch, `lock-drift-probe` re-run                           |
+| 4  | Post-refactor attribution pass on the cqrs split (art-dupl check, arch tests, fleet-libs reopen triggers)      |
+| 5  | 18-08 report drain train before ~2026-12-07                                                                    |
+| 6  | `scripts/cadence-candidates.sh` — script the archive-candidate scan                                            |
+| 7  | Runbook: the four additions (check-mode battery, HEAD-assert push, archive-when-filing, logs-home-at-creation) |
+| 8  | erraudit tier re-measure (overdue)                                                                             |
+| 9  | Red-main watcher dedup check (four tips red, no issues visible)                                                |
+| 10 | Quiet-host window for the heavy suites (VM/E2E)                                                                |
 
 ## g) QUESTIONS (the two still open)
 

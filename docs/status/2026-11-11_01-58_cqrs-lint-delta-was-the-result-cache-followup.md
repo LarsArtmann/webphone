@@ -98,7 +98,7 @@ the full buildflow run passed (73 steps, exit 0).
 
 13. **docs-gates healed to full PASS** — and both red gates were MY OWN
     residue: (i) my multiedit had mangled the report's verdict paragraph into
-    ``` ``.buildflow.yml`. The` ``` (a broken code span) — restored; (ii) my
+    `` .buildflow.yml`. The` `` (a broken code span) — restored; (ii) my
     §g Q1 strike used "ANSWERED 2026-11-11 00:55:" as its verdict, which the
     scanner reads as a struck item with NO verdict marker — rewritten into the
     house grammar `done (answered 2026-11-11 00:55: …)`. Battery verdict:
@@ -184,7 +184,7 @@ the full buildflow run passed (73 steps, exit 0).
    verdict bulletproof), but the ORDER was wrong and the cost was real.
 2. **My multiedit shipped a typo into a committed, pushed file.** The
    four-edit batch on the 00-36 report mangled the verdict paragraph into
-   ``` ``.buildflow.yml`. The` ``` — a broken code span sitting in main for
+   `` .buildflow.yml`. The` `` — a broken code span sitting in main for
    one daemon-commit cycle. I verified "edit succeeded" and never re-read the
    rendered span. The annotate gate caught it (F/spacing), which is the system
    working, but the class is mine: batch edits without proofreading.
