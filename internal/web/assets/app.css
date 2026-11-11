@@ -42,8 +42,7 @@
   --danger-soft: rgb(239 106 95 / 14%);
   --warn: #e0a63e;
   --ok: #3fd694;
-  --shadow:
-    0 1px 2px rgb(0 0 0 / 50%), 0 18px 44px -14px rgb(0 0 0 / 55%);
+  --shadow: 0 1px 2px rgb(0 0 0 / 50%), 0 18px 44px -14px rgb(0 0 0 / 55%);
   --hairline: 1px solid var(--border);
   --radius-sm: 8px;
   --radius: 10px;

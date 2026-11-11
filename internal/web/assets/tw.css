@@ -91,8 +91,8 @@
     --font-weight-semibold: 600;
     --tracking-wide: 0.025em;
     --radius-sm: 0.25rem;
-    --radius-md: 9px;
-    --radius-lg: 12px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
     --ease-out: cubic-bezier(0, 0, 0.2, 1);
     --animate-spin: spin 1s linear infinite;
     --animate-pulse: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -644,10 +644,10 @@
     border-radius: calc(infinity * 1px);
   }
   .rounded-lg {
-    border-radius: 12px;
+    border-radius: 16px;
   }
   .rounded-md {
-    border-radius: 9px;
+    border-radius: 10px;
   }
   .border {
     border-style: var(--tw-border-style);
@@ -1093,7 +1093,7 @@
     z-index: 50;
   }
   .focus\:rounded-md:focus {
-    border-radius: 9px;
+    border-radius: 10px;
   }
   .focus\:bg-blue-600:focus {
     background-color: var(--accent);

@@ -56,6 +56,10 @@ interface Window {
       },
     ): Promise<unknown>;
     process(element: Element): void;
+    /** Runtime configuration (htmx.config); only the keys the shell sets. */
+    config?: {
+      globalViewTransitions?: boolean;
+    };
   };
   /** The E2E diagnostics handle: call id → the live peer connection. */
   __pcs?: Map<string, RTCPeerConnection>;

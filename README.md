@@ -362,25 +362,39 @@ failed job carrying the provider's own reason, never as a fake success
 (only the `loopback` dev gateway resolves instantly, and that mode is
 documented as a demo).
 
+### Signing in
+
+**`/login` is the front door in every mode.** An anonymous visit to the
+app root redirects there (303); the page carries the extension +
+password form in EVERY deployment — bare when the passkey identity
+layer is off (the primary method), one "Use extension and password
+instead" disclosure down when it is on (the break-glass lifeline: the
+phone never depends on the IdP or on a passkey being present) — plus a
+"Continue to Pocket ID" door when the OIDC seam is configured. The
+form POSTs `/api/session` (which directory-verifies before minting;
+loopback dev skips the verification) and lands back on the app, where
+the phone REGISTERs — the same resume path every sign-in method takes.
+The remembered extension (`remember extension on this device`) stores
+the extension under localStorage — never the password. A live session
+visiting `/login` bounces home (`303 /`). The page renders styled
+without the shell (its own Tailwind build, `/assets/login.css`) and is
+the single HTML surface with a per-request nonce CSP; everything else
+keeps the strict no-inline-scripts policy.
+
 ### Passkey sign-in (optional)
 
-With `auth.passkey.*` configured (OFF by default — zero config keeps
-the login card byte-identical), the webphone embeds the
+With `auth.passkey.*` configured (OFF by default — the ceremony UI
+joins the `/login` front door only when on), the webphone embeds the
 cqrs-htmx/usermgmt identity layer in-process and offers email + passkey
-logins next to the extension form. The passkey front door is the
-cqrs-htmx `loginpage` library page at **`/login`** (published tag
-v4.13.0, chosen so it rides the exact library versions webphone
-already pins): the island login card renders a "Sign in with passkey"
-link to it, and a live session visiting `/login` bounces home (`303
-/`). The page carries the ceremony UI only — no registration
-(enrollment stays CLI-token-gated at `/enroll`) and no OAuth2 buttons
-(the card's Pocket ID link stays the one SSO door). It is the single
-HTML surface with a per-request nonce CSP (`script-src 'self'
-'nonce-…'`; every other surface keeps the strict no-inline-scripts
-policy) and links its own standalone Tailwind build
-(`/assets/login.css`), so it renders styled without the shell. Its
-theme script follows the OS `prefers-color-scheme` — a user who forced
-a theme in the shell may see the OS theme on `/login`.
+sign-in on **`/login`** (the cqrs-htmx `loginpage` library page, pin
+`loginpage/v4 v4.18.0` — the release that made `Service` optional and
+added the consumer sign-in section webphone hosts the extension form
+in). The page carries the ceremony UI only — no registration
+(enrollment stays CLI-token-gated at `/enroll`) and no library OAuth2
+buttons (the Pocket ID door inside the same page's sign-in section is
+the one SSO entry). Its theme script follows the OS
+`prefers-color-scheme` — a user who forced a theme in the shell may see
+the OS theme on `/login`.
 
 - **Login order is inverted**: `POST /api/auth/webauthn/login/finish`
   (the usermgmt-canonical path the library's embedded JS posts to;
@@ -420,9 +434,9 @@ a theme in the shell may see the OS theme on `/login`.
 
 ### OIDC / SSO sign-in (optional)
 
-With `auth.oauth2.*` configured (OFF by default — zero config keeps the
-login card byte-identical), the card gains a "Sign in with Pocket ID"
-entry: `GET /api/auth/oauth2/begin` mints state + nonce + PKCE verifier
+With `auth.oauth2.*` configured (OFF by default — the Pocket ID door on
+the login page appears only when on), `GET /api/auth/oauth2/begin`
+mints state + nonce + PKCE verifier
 into short-lived path-scoped cookies and redirects to the IdP;
 `GET /api/auth/oauth2/callback` verifies them, exchanges the code,
 verifies the ID token (signature, issuer, audience, expiry, nonce), maps
@@ -430,9 +444,10 @@ the verified email through the SAME `auth.users` mapping the passkey
 mode uses, verifies the sourced SIP directory password against the PBX
 and mints the one webphone session. OIDC tokens are used once and never
 reach the browser; discovery is lazy inside the app, so a dead IdP costs
-a login (with an honest reason code on the card) and never the boot.
-The extension login stays available, so the phone is never locked by an
-IdP outage.
+a login (the callback redirects to `/login?sso_error=<code>` and the
+login page renders the honest sentence in its alert) and never the boot.
+The extension login stays one disclosure away on the same page, so the
+phone is never locked by an IdP outage.
 
 **NixOS module:** `services.webphone.oauth2.*` is the typed front. The
 client secret is handed to systemd via `LoadCredential` — systemd copies
