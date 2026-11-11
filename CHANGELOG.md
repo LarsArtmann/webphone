@@ -5,6 +5,28 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed
+
+- **Visual craft pass (UI/UX destination Train 1, plan:
+  `docs/planning/2026-11-11_15-11_ui-ux-destination.md`).** The shell gets
+  an elevation ladder (`--shadow-1/2/3`: resting panels, raised chrome,
+  overlays — one meaning per level), motion tokens (`--dur-fast/--dur/
+  --ease`, the M3 emphasized curve) on every component transition, and a
+  control radius bump to 12px with PILL actions: primary/danger buttons,
+  row minis, the thread search field, and the island's keys all read as
+  the Google pill idiom (the dial-pad keys stay keycaps). List-row actions
+  become ghost text-buttons — the wall of outlined keys is gone, and on
+  phones the pin/mute/archive flags leave the row entirely (they stay on
+  the thread head), so the preview finally gets its width back and the
+  compose form stacks one field per line. Bubbles reshape to the
+  asymmetric 16px/6px scheme with a borderless inbound tint; empty states
+  trade their dashed boxes for tonal surfaces; Reports stat cards go
+  tonal; the island's status/language pills gain fills and the offline
+  banner loses its hard rail for a tonal container. tw.css/login.css
+  re-pinned to the 12px radius.
+
 ## [2.14.0] - 2026-11-11
 
 ### Changed
