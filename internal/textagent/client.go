@@ -16,6 +16,8 @@ import (
 	"time"
 
 	"github.com/larsartmann/go-error-family"
+
+	"github.com/larsartmann/webphone/internal/httpclient"
 )
 
 // Client talks to the review API: one base URL, one bearer secret.
@@ -44,7 +46,10 @@ func New(url, secretFile string) (*Client, error) { //nolint:branching-flow // c
 	return &Client{
 		base:   strings.TrimRight(url, "/"),
 		secret: secret,
-		http:   &http.Client{Timeout: 60 * time.Second},
+		// Own connection pool: never share (or contend over)
+		// http.DefaultTransport — the same isolation every other outbound
+		// seam rides (the 2026-11-08 per-client pool train).
+		http: httpclient.Isolated(60 * time.Second),
 	}, nil
 }
 

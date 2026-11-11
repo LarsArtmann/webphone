@@ -543,7 +543,7 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 		SharedContacts: len(h.deps.Shared),
 		Snippets:       snippets,
 		AgentAuditRows: h.agentAuditRows(r, sess),
-		Passkeys:       h.passkeySectionProps(sess.Extension),
+		Passkeys:       h.passkeySectionProps(sess),
 		Lang:           h.lang(r),
 	}), nil
 }

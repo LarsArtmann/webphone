@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -28,6 +29,16 @@ const summaryCallIDMax = 128
 // summarize answer never waits on push health, so the goroutine owns
 // its own budget (the transports' own timeouts sit under it).
 const draftPushTimeout = 15 * time.Second
+
+// agentStatusPassthrough is the allowlist of agent verdict codes this
+// browser surface forwards verbatim (see the passthrough arm in the
+// summarize handler).
+var agentStatusPassthrough = []int{
+	http.StatusConflict,             // a draft conflict the retry advice addresses
+	http.StatusUnprocessableEntity,  // a bad ask the composer can fix
+	http.StatusTooManyRequests,      // rate pressure: retry later is the fix
+	http.StatusServiceUnavailable,   // the agent's honest unavailable
+}
 
 // SummaryDraftRequest is the POST /api/calls/{id}/summary-draft wire
 // shape — the call id rides the path, the body is empty. Named (not
@@ -100,7 +111,19 @@ func (h *Handlers) SummaryDraft(w http.ResponseWriter, r *http.Request) {
 		if isAgentErr {
 			slog.Warn("summary: agent refused the draft",
 				"status", agentErr.Status, "detail", agentErr.Message, "extension", sess.Extension.String())
-			http.Error(w, agentErr.Message, agentErr.Status)
+			// Status passthrough is an ALLOWLIST: only verdicts the
+			// browser can act on ride the agent's own code (a draft
+			// conflict, a bad ask, rate pressure, the agent's honest
+			// unavailable). Everything else — auth/404-shaped agent
+			// internals, gateway oddities — collapses to 502 exactly
+			// like the unreachable arm below (the transcribe seam's
+			// credential-collision ruling: the operator never debugs
+			// the agent's internals through this browser surface).
+			status := agentErr.Status
+			if !slices.Contains(agentStatusPassthrough, status) {
+				status = http.StatusBadGateway
+			}
+			http.Error(w, agentErr.Message, status)
 			h.recordReviewArtifact(sess.Extension, callID, domain.ReviewFailed, "", "", "", 0)
 			return
 		}

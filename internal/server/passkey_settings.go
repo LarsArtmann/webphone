@@ -3,26 +3,30 @@ package server
 import (
 	"net/http"
 
-	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/web/views"
 )
 
 // The Settings-tab passkey management surface (A2 slice): the signed-in
-// extension lists and revokes the passkeys of ITS OWN mapped account.
-// Owner-match is structural — the email comes from the session
-// extension's mapping (MappedByExtension), never from the request — so
-// an extension can only ever touch its own identity account. The
-// handlers ride the session gate + the protected mux's CSRF layer.
+// session lists and revokes the passkeys of ITS OWN mapped account.
+// Owner-match is structural — the email comes from the session's login
+// identity (MappedByLogin prefers it; the shared-extension fallback is
+// deterministic but cannot know which human a line-password session is),
+// never from the request. A classic extension login authenticated the
+// LINE, not a human: it has no own passkeys, so the section stays
+// hidden and revocation answers 404 — a line-password session must not
+// manage the sorted-first human's credentials on a shared extension.
 
 // passkeySectionProps shapes the Settings passkeys section. Available is
-// false when the identity layer is off or the extension has no mapped
-// account (the section renders nothing); Empty marks a mapped account
-// with zero enrolled passkeys.
-func (h *handlers) passkeySectionProps(extension domain.Extension) views.PasskeysSectionProps {
-	if h.deps.UserAuth == nil {
+// false when the identity layer is off, the session carries no login
+// identity (extension login), or the account has no mapped extension
+// (the section renders nothing); Empty marks a mapped account with zero
+// enrolled passkeys.
+func (h *handlers) passkeySectionProps(sess session.Session) views.PasskeysSectionProps {
+	if h.deps.UserAuth == nil || sess.LoginEmail == "" {
 		return views.PasskeysSectionProps{}
 	}
-	mapped, ok := h.deps.UserAuth.MappedByExtension(extension)
+	mapped, ok := h.deps.UserAuth.MappedByLogin(sess.Extension, sess.LoginEmail)
 	if !ok {
 		return views.PasskeysSectionProps{}
 	}
@@ -42,12 +46,18 @@ func (h *handlers) passkeySectionProps(extension domain.Extension) views.Passkey
 // and re-renders the settings partial with a toast (HX-Trigger
 // showMessage — the island's one toast listener); the same whole-panel
 // swap the snippets section uses, so the list always shows store truth.
+// An extension login (no identity) has no own passkeys to revoke — the
+// uniform 404 is the anti-enumeration answer, not an error shape.
 func (h *handlers) revokePasskey(w http.ResponseWriter, r *http.Request) {
 	sess, ok := h.RequireSession(w, r)
 	if !ok {
 		return
 	}
-	mapped, ok := h.deps.UserAuth.MappedByExtension(sess.Extension)
+	if sess.LoginEmail == "" {
+		http.Error(w, "no passkey account", http.StatusNotFound)
+		return
+	}
+	mapped, ok := h.deps.UserAuth.MappedByLogin(sess.Extension, sess.LoginEmail)
 	if !ok {
 		http.Error(w, "no passkey account", http.StatusNotFound)
 		return

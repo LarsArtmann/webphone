@@ -573,8 +573,10 @@ func New(deps Deps) http.Handler {
 	// transaction per dial attempt, consulted BEFORE the SIP invite.
 	// A disabled cooldown answers 404 (the island dials without
 	// asking); a store failure answers 502 and the island dials anyway
-	// (the gate advises, it never traps).
-	protected.Handle("POST /api/dials", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.DialGate)))
+	// (the gate advises, it never traps). The body cap rides the same
+	// JSON mount discipline as every other /api surface — a hostile
+	// POST cannot stream an unbounded body into the decoder.
+	protected.Handle("POST /api/dials", h.contactsLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(apiHandlers.DialGate))))
 	// The typeahead's row decoration (issue #7): the owner's ACTIVE
 	// cooldown windows, newest first. Same disabled-seam 404; the
 	// island hides the decoration when this fails.
