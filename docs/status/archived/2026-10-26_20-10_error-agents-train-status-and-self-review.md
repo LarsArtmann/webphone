@@ -1,3 +1,19 @@
+> **Live remainder** (archived 2026-11-11, docs-health cadence gate): the
+> observers still draft rows WITHOUT routing through `error-context.py`
+> (re-grepped 2026-11-11: zero router references in `main-red-watch.sh` /
+> `daemon-audit.sh` — b3 open), `bump-preflight --self-test` still rides the
+> no-op v0.5.0→v0.5.1 fixture (b5 open), `docs/lessons.md` still carries no
+> war-story row for this train's three lessons (b6 open), and §c's owner-gated
+> items stand: the pma hook-override fix (fleet-wide policy call, documented
+> live in AGENTS.md §Conventions), the reproduce-first advisory→blocking flip
+> (no clean-train counter exists), and the LLM prose gate + agent-dispatch
+> sketches (owner GO owed). Everything else — the shipped machinery's
+> existence and health (error-context self-test 37 checks, reproduce-first,
+> incident-bundle, error-drill VM test), the watch lane's now-thousands of
+> green scheduled runs, the 40301017699 red-main repair, the watch
+> permissions bugfix — is historically moot and re-verified live during the
+> 2026-11-11 red-main incident this banner's archive paid for.
+
 # Status — Error-Agents Train: Shipped, Self-Reviewed, and One Real Bug Found By Its Own Machinery
 
 **Snapshot: claims verified as of 2026-10-26 20:12 CET** at HEAD `c793a86`
