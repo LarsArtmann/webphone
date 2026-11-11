@@ -6,9 +6,9 @@
 
 ## Status
 
-|             |                                                  |
-| ----------- | ------------------------------------------------ |
-| Module      | `github.com/larsartmann/go-codec`                |
+|             |                                                                                                                                           |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| Module      | `github.com/larsartmann/go-codec`                                                                                                         |
 | In webphone | prod: indirect only, zero imports; **test: 1 import** (internal/cqrs/tombstone_wire_test.go — `codec.EncodingCBOR` / `codec.ForEncoding`) |
 
 ## What the library offers

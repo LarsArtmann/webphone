@@ -1803,6 +1803,142 @@ a:focus-visible {
   border-inline-start-color: var(--warn);
 }
 
+/* Train 2: the CDR list is a real TABLE (destination §6/§7) — sticky
+ * column heads, right-aligned tabular When/Duration columns, day groups
+ * as tbody sections. The wrapper is the scroll region (sticky heads
+ * need it); below the tab-column split the stack lane turns rows into
+ * labeled cards (thead hidden, td labels injected via data-label —
+ * i18n lives in the markup, CSP forbids nothing here). */
+.wp-table-wrap {
+  overflow: auto;
+  max-height: 70vh;
+  border-radius: var(--radius);
+}
+
+.wp-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.wp-table thead th {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  background: var(--surface);
+  padding: 8px 12px;
+  border-bottom: var(--hairline);
+  text-align: left;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.wp-table td {
+  padding: var(--row-pad);
+  border-bottom: var(--hairline);
+  vertical-align: middle;
+}
+
+.wp-table-remote {
+  min-width: 0;
+}
+
+.wp-table-num {
+  text-align: right;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+/* In the separate-borders model TR borders do not render — the missed
+ * row's danger edge rides the first cell instead. */
+.wp-table tr.wp-row-missed td:first-child {
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+
+/* The day head rides the SAME class as the transcript separator, but a
+ * table th must keep its table-cell display (the transcript rule makes
+ * .wp-day-head a flex row — that would collapse the table row). */
+.wp-table .wp-day-head th {
+  display: table-cell;
+  padding: 14px 12px 6px;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.wp-table .wp-day-head .wp-day-count {
+  margin-inline-start: 8px;
+}
+
+@container tabcol (max-width: 560px) {
+  .wp-table thead {
+    display: none;
+  }
+
+  .wp-table,
+  .wp-table tbody,
+  .wp-table tr {
+    display: block;
+  }
+
+  .wp-table tr {
+    padding: 10px 0;
+    border-bottom: var(--hairline);
+  }
+
+  .wp-table td,
+  .wp-table .wp-day-head th {
+    display: block;
+    padding: 0;
+    border-bottom: none;
+    box-shadow: none;
+  }
+
+  .wp-table .wp-day-head th {
+    padding: 12px 0 2px;
+  }
+
+  .wp-table-dir {
+    display: inline-block;
+    margin-inline-end: 8px;
+    vertical-align: middle;
+  }
+
+  .wp-table-remote {
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  .wp-table-num {
+    text-align: left;
+    margin-top: 2px;
+  }
+
+  .wp-table-num::before {
+    content: attr(data-label) ": ";
+    color: var(--muted);
+    font-size: var(--text-xs);
+  }
+
+  .wp-table-actions {
+    margin-top: 6px;
+  }
+
+  .wp-table-actions .wp-row-actions {
+    justify-content: flex-start;
+  }
+
+  .wp-table tr.wp-row-missed {
+    border-inline-start: 3px solid var(--danger);
+    padding-inline-start: 8px;
+  }
+}
+
 .wp-fax-in {
   border-inline-start-color: var(--accent);
 }
@@ -3113,7 +3249,45 @@ dialog.wp-lightbox img {
   border: var(--hairline);
   border-radius: var(--radius);
   background: var(--surface-2);
-  margin-bottom: 14px;
+  margin-bottom: 0;
+}
+
+/* Train 2 dashboard arrangement: the sections form two columns once the
+ * tab column is wide enough — hero + totals full-width, the day/hour
+ * ladders side by side, contacts across the bottom. */
+.wp-reports-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.wp-reports-grid > .wp-reports-week,
+.wp-reports-grid > .wp-reports-totals {
+  margin-bottom: 0;
+}
+
+@container tabcol (min-width: 1000px) {
+  .wp-reports-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .wp-reports-grid > .wp-reports-week,
+  .wp-reports-grid > .wp-reports-totals,
+  .wp-reports-grid > .wp-reports-undated,
+  .wp-reports-grid > .wp-reports-top {
+    grid-column: 1 / -1;
+  }
+
+  .wp-reports-grid > .wp-reports-days {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .wp-reports-grid > .wp-reports-hours {
+    grid-column: 2;
+    grid-row: 3;
+  }
 }
 
 .wp-reports-head {

@@ -20,13 +20,13 @@
 
 ## Round-3 verdicts — re-verified in this tree
 
-| Round-3 finding                                     | Status in this tree  | Evidence                                                                                                                                                                                                                       |
-| --------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| ProjectionReadinessCheck + OnProjectionFailed wired | ✅                   | internal/server/server.go:585 (`ProjectionReadinessCheck` in the /healthz checks); internal/userauth/userauth.go:131-133 (`OnProjectionFailed` WARN hook)                                                                      |
+| Round-3 finding                                     | Status in this tree  | Evidence                                                                                                                                                                                                             |
+| --------------------------------------------------- | -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ProjectionReadinessCheck + OnProjectionFailed wired | ✅                   | internal/server/server.go:585 (`ProjectionReadinessCheck` in the /healthz checks); internal/userauth/userauth.go:131-133 (`OnProjectionFailed` WARN hook)                                                            |
 | Identity train fully landed (usermgmt v4.16+ then)  | ✅ + bumped          | pins now usermgmt v4.20.0 / identity-model v4.17.0 / loginpage v4.18.0 (2026-11-07..11 trains); clone detection pinned by test; durable auth-audit journal verified queryable in a live boot (AGENTS.md, 2026-10-25) |
-| `ExtensionHubs.Shutdown` pre-drain                  | ✅                   | internal/server/sse.go:116 (releases live /events streams before the 30s HTTP drain; cmd/webphone/main.go:196)                                                                                                                 |
-| `setup` bundle stays REJECTED                       | ✅ unchanged         | cmd/webphone/main.go:189-193 records the measured +68% binary delta go/no-go; lifecycle rides `httputil.NewServer`                                                                                                             |
-| Remaining gap: memory-only AuditLog read projection | ✅ still the one gap | UPSTREAM (usermgmt audit_log.go, DefaultAuditLogLimit=10_000, memory-only); webphone's durable alternative is its own auth-audit journal + `agent_audit` store                                                                 |
+| `ExtensionHubs.Shutdown` pre-drain                  | ✅                   | internal/server/sse.go:116 (releases live /events streams before the 30s HTTP drain; cmd/webphone/main.go:196)                                                                                                       |
+| `setup` bundle stays REJECTED                       | ✅ unchanged         | cmd/webphone/main.go:189-193 records the measured +68% binary delta go/no-go; lifecycle rides `httputil.NewServer`                                                                                                   |
+| Remaining gap: memory-only AuditLog read projection | ✅ still the one gap | UPSTREAM (usermgmt audit_log.go, DefaultAuditLogLimit=10_000, memory-only); webphone's durable alternative is its own auth-audit journal + `agent_audit` store                                                       |
 
 ## How webphone uses it (surface summary)
 
@@ -45,7 +45,7 @@
 | usermgmt `AuditLog` projection                                                                                                       | memory-only upstream projection; webphone reads its own journal instead — reconsider only when upstream ships a bounded projection                                                                      |
 | root `App`/`Command`/`Query` CQRS pipeline, `CSRFProtect`, `Response` builder, ACK protocol, Sync handlers, `JournalSSEStore` replay | webphone is not a CQRS HTTP app: tabs are server-rendered panels; CSRF/security/composition ride httputil + own middleware (round-3 ruling); SSE replay is the go-sse seam ([go-sse report](go-sse.md)) |
 | `adminui`, `dashboardui`, `auditlog`, `datastar`, `systemadapter`, `health/v4` modules                                               | health rides go-health/go-health-dashboard directly; datastar only ships via the dashboard bundle; admin/audit surfaces have no product home here                                                       |
-| root v4.18 HTTP QUERY ladder (`MethodOverrideMiddleware`, `AcceptQuery`, `ScriptHandler4`, `ETagResults`)                            | webphone is not a CQRS HTTP app (standing round-3 ruling); htmx stays on the 2.x default handler; conditional GETs ride go-etag/server on webphone's own documents ([go-etag report](go-etag.md)) |
+| root v4.18 HTTP QUERY ladder (`MethodOverrideMiddleware`, `AcceptQuery`, `ScriptHandler4`, `ETagResults`)                            | webphone is not a CQRS HTTP app (standing round-3 ruling); htmx stays on the 2.x default handler; conditional GETs ride go-etag/server on webphone's own documents ([go-etag report](go-etag.md))       |
 
 ## Score
 

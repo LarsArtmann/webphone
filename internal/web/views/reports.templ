@@ -61,24 +61,30 @@ templ ReportsPanel(props ReportsPanelProps) {
 			// unconditionally there (its temporal sections are absent) and
 			// only for surviving records otherwise.
 			{{ showTemporal := len(props.Report.Days) > 0 }}
-			if showTemporal {
-				@reportsWeek(props)
-			} else {
-				@display.EmptyState(display.EmptyStateProps{
-					Title:       T(props.Lang, "reports.undated.empty.title"),
-					Description: T(props.Lang, "reports.undated.empty.desc"),
-					Icon:        icons.Clock,
-				})
-			}
-			@reportsTotals(props)
-			if showTemporal {
-				@reportsDays(props)
-				@reportsBusiestHours(props)
-			}
-			if !showTemporal || props.Report.Undated > 0 {
-				@reportsUndatedNote(props.Lang, props.Report.Undated)
-			}
-			@reportsTopContacts(props)
+			// Train 2: the dashboard grid — the sections arrange into two
+			// columns at desktop width (the tab-column container decides),
+			// stack single-column below it.
+			<div class="wp-reports-grid">
+				if showTemporal {
+					@reportsWeek(props)
+				} else {
+					@display.EmptyState(display.EmptyStateProps{
+						Title:       T(props.Lang, "reports.undated.empty.title"),
+						Description: T(props.Lang, "reports.undated.empty.desc"),
+						Icon:        icons.Clock,
+						Class:       "wp-reports-empty",
+					})
+				}
+				@reportsTotals(props)
+				if showTemporal {
+					@reportsDays(props)
+					@reportsBusiestHours(props)
+				}
+				if !showTemporal || props.Report.Undated > 0 {
+					@reportsUndatedNote(props.Lang, props.Report.Undated)
+				}
+				@reportsTopContacts(props)
+			</div>
 		}
 	</section>
 }
@@ -177,7 +183,7 @@ templ reportsStat(value, label string, alert bool) {
 templ reportsDays(props ReportsPanelProps) {
 	{{ max := props.Report.MaxDayTalk() }}
 	if len(props.Report.Days) > 0 {
-		<section class="wp-reports-section">
+		<section class="wp-reports-section wp-reports-days">
 			<h3 class="wp-reports-head">{ T(props.Lang, "reports.days") }</h3>
 			for _, day := range props.Report.Days {
 				<div class="wp-reports-row">
@@ -197,7 +203,7 @@ templ reportsDays(props ReportsPanelProps) {
 templ reportsBusiestHours(props ReportsPanelProps) {
 	{{ busy := props.Report.BusiestHours() }}
 	if len(busy) > 0 {
-		<section class="wp-reports-section">
+		<section class="wp-reports-section wp-reports-hours">
 			<h3 class="wp-reports-head">{ T(props.Lang, "reports.hours") }</h3>
 			for i, hour := range busy {
 				if i < busiestHourRows {
@@ -217,7 +223,7 @@ templ reportsBusiestHours(props ReportsPanelProps) {
 // name it.
 templ reportsTopContacts(props ReportsPanelProps) {
 	if len(props.Report.Contacts) > 0 {
-		<section class="wp-reports-section">
+		<section class="wp-reports-section wp-reports-top">
 			<h3 class="wp-reports-head">{ T(props.Lang, "reports.contacts") }</h3>
 			for i, contact := range props.Report.Contacts {
 				if i < TopContactRows {
