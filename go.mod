@@ -46,7 +46,7 @@ require (
 	github.com/larsartmann/templ-components v1.27.0
 	github.com/larsartmann/templ-components/icons v1.27.0
 	github.com/larsartmann/templ-components/utils v1.27.0
-	github.com/onsi/ginkgo/v2 v2.33.1
+	github.com/onsi/ginkgo/v2 v2.34.0
 	github.com/onsi/gomega v1.44.0
 	github.com/samber/do/v2 v2.1.0
 	github.com/sixafter/nanoid v1.66.0
