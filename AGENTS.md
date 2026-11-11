@@ -88,6 +88,8 @@ WEBPHONE_ADDR=127.0.0.1:18099 WEBPHONE_DATA_DIR=/tmp/wp-data WEBPHONE_GATEWAY__W
 
 Passkey smoke boots need a HOSTNAME rp_id (WebAuthn rejects IP rp_id — "must be a domain"): bind 127.0.0.1 as usual and `curl --resolve webphone.test:18099:127.0.0.1 https://webphone.test:18099/...` (with `-k` for the self-signed cert).
 
+PORT TRAP (2026-11-11): on this host `127.0.0.1:18099` is held by local **dnsblockd**, which serves a "Domain Blocked · 127.0.0.1" page that looks deceptively like an app page — a manual boot on that port silently never happens and probes read the blocker's HTML. Manual boots pick a verified-free port (18102 works); `ss -tlnp | grep 18099` before binding.
+
 Host-nix-down fallback: run gates with STORE toolchains directly — `GOTOOLCHAIN=local /nix/store/*-go-1.27*/bin/go test -count=1 ./...`, the store nodejs for island tests, and `-ldflags "-X .../internal/server.buildVersion=vX.Y.Z"` for a version-stamped smoke binary (NOT `main.displayVersion`).
 
 ## The DOM + bundle contract (DO NOT BREAK CASUALLY)
