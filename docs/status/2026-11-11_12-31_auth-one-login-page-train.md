@@ -84,6 +84,7 @@ competing doors when it was on).
 
 `go test -count=1 ./internal/server/ ./internal/web/views/
 ./internal/web/assets/` → all three ok after rewriting:
+
 - `login_page_test.go`: the 404-when-off pin became
   `TestLoginPageServesTheExtensionFormWhenPasskeyIsOff` (200, form ids,
   CSRF meta, NO lp-* artifacts, linked CSS+JS actually serve); the
@@ -168,12 +169,12 @@ competing doors when it was on).
 
 ## Verification ledger (commands + verdicts, 12:00–12:28)
 
-| Command | Verdict |
-| --- | --- |
-| `GOWORK=off GOTOOLCHAIN=auto go test -count=1 ./...` (cqrs-htmx/loginpage) | ok |
-| `GOWORK=off GOTOOLCHAIN=auto go build ./...` (system-demo, systemadapter) | ok |
-| `go list -m github.com/larsartmann/cqrs-htmx/loginpage/v4@v4.18.0` | v4.18.0 |
-| `git ls-remote origin refs/tags/loginpage/v4.18.0` | present |
-| `go build ./...` (webphone) | ok |
-| `go test -count=1 ./internal/server/ ./internal/web/views/ ./internal/web/assets/` | ok ×3 |
-| `tsc -p . --noEmit` + island node:test | running at snapshot |
+| Command                                                                            | Verdict             |
+| ---------------------------------------------------------------------------------- | ------------------- |
+| `GOWORK=off GOTOOLCHAIN=auto go test -count=1 ./...` (cqrs-htmx/loginpage)         | ok                  |
+| `GOWORK=off GOTOOLCHAIN=auto go build ./...` (system-demo, systemadapter)          | ok                  |
+| `go list -m github.com/larsartmann/cqrs-htmx/loginpage/v4@v4.18.0`                 | v4.18.0             |
+| `git ls-remote origin refs/tags/loginpage/v4.18.0`                                 | present             |
+| `go build ./...` (webphone)                                                        | ok                  |
+| `go test -count=1 ./internal/server/ ./internal/web/views/ ./internal/web/assets/` | ok ×3               |
+| `tsc -p . --noEmit` + island node:test                                             | running at snapshot |

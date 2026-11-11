@@ -1,8 +1,11 @@
-// session.js under node:test — the server-session feedback map. A dead
-// server session is deliberately non-fatal (the island keeps calling),
-// but non-fatal must never mean invisible: every rejection class toasts
-// in the user's language, and a genuinely dead SSE feed is reported once
-// instead of after every reconnect attempt.
+// session.js under node:test — the server-session surface AFTER the
+// auth-front-door train: the island no longer owns a login POST (the
+// /login page's standalone module does that), so what remains here is
+// the resume probe, the CSRF-rotation adoption ladder, the quiet
+// sign-out, and the SSE feed's feedback map. A dead server session is
+// deliberately non-fatal (the island keeps calling), but non-fatal must
+// never mean invisible: the SSE feed reports one drop instead of a
+// flap, and a genuinely dead feed is announced once.
 import test from "node:test";
 import assert from "node:assert/strict";
 
@@ -25,8 +28,8 @@ const lastToast = () => {
 };
 const logTexts = () => doc.getElementById("log").children.map((li) => li.textContent);
 
-// fetch stub: createSession and adoptFreshCsrfToken are the only fetchers
-// on this path. handler(url) → {status, body} or throws.
+// fetch stub: adoptFreshCsrfToken and the probe are the only fetchers on
+// this path. handler(url) → {status, body} or throws.
 function useFetch(handler) {
   globalThis.fetch = async (url, opts) => {
     const out = handler(url, opts);
@@ -39,49 +42,12 @@ function useFetch(handler) {
   };
 }
 
-test("a 401 from the server login toasts the credential-specific advice", async () => {
-  resetToasts();
-  useFetch(() => ({ status: 401 }));
-  await session.createSession("1001", "pw");
-  const toast = lastToast();
-  assert.equal(toast.className, "toast toast-warn", "non-fatal: warn, not error");
-  assert.equal(toast.text, t("sessionFailed401"));
-  assert.ok(
-    logTexts().some((line) => line.includes("HTTP 401")),
-    "the operator-facing #log line must survive the toast addition",
-  );
-});
-
-test("a 429 from the server login toasts the throttle advice", async () => {
-  resetToasts();
-  useFetch(() => ({ status: 429 }));
-  await session.createSession("1001", "pw");
-  assert.equal(lastToast().text, t("sessionThrottled"));
-});
-
-test("other HTTP failures toast the generic status copy", async () => {
-  resetToasts();
-  useFetch(() => ({ status: 503 }));
-  await session.createSession("1001", "pw");
-  assert.equal(lastToast().text, t("sessionFailed")(503));
-});
-
-test("an unreachable server toasts the network copy", async () => {
-  resetToasts();
-  useFetch(() => new Error("ECONNREFUSED"));
-  await session.createSession("1001", "pw");
-  assert.equal(lastToast().text, t("sessionNetFailed"));
-});
-
-test("a successful login still toasts nothing (feedback stays quiet)", async () => {
-  resetToasts();
-  useFetch((url) =>
-    url === "/api/session"
-      ? { status: 201, body: { did: "+441632960961" } }
-      : { status: 200, body: { token: "fresh" } },
-  );
-  await session.createSession("1001", "pw");
-  assert.equal(lastToast(), null);
+// The auth-front-door contract, pinned from the other side: the island
+// exports NO login POST anymore — the extension+password submit lives on
+// the /login page's standalone module. A regression that reintroduces an
+// island-side login would split-brain the front door again.
+test("the island no longer owns a login POST (the /login page does)", () => {
+  assert.equal(session.createSession, undefined);
 });
 
 test("the SSE pill is a labeled, localized state indicator (not aria-hidden)", () => {
@@ -187,30 +153,6 @@ test("fetchLiveSession resumes on a sip_credential-only answer", async () => {
   );
 });
 
-test("createSession returns the derived credential from the 201 answer", async () => {
-  useFetch((url) => {
-    if (String(url).includes("/api/session")) {
-      return {
-        status: 201,
-        body: { extension: "1001", sip_credential: "derived-cred", did: "+44" },
-      };
-    }
-    return { status: 200, body: { token: "fresh-token" } };
-  });
-  const credential = await session.createSession("1001", "typed-password");
-  assert.equal(credential, "derived-cred");
-});
-
-test("createSession returns null on failure and quiet suppresses the toast", async () => {
-  resetToasts();
-  useFetch(() => ({ status: 401 }));
-  assert.equal(await session.createSession("1001", "pw", { quiet: true }), null);
-  assert.equal(toastsHost().children.length, 0, "quiet mode must not toast");
-  useFetch(() => ({ status: 401 }));
-  await session.createSession("1001", "pw");
-  assert.equal(toastsHost().children.length, 1, "loud mode toasts the 401");
-});
-
 test("fetchLiveSession maps every no-resume case to null", async () => {
   for (const status of [401, 429, 500]) {
     useFetch(() => ({ status }));
@@ -240,22 +182,23 @@ test("signOutQuiet drops the server session without a reload", async () => {
 });
 
 // --- CSRF adoption retry ladder (SUPERB T14a) -------------------------------
-// Login rotates the CSRF token, so the island must adopt the fresh one
-// before any POST. A transient failure of GET /api/csrf retries with
-// backoff (x3) and only the THIRD consecutive failure falls back to a
-// page reload (the cookie session survives; the served page then
-// carries a matching token again).
+// Every login lane (the /login page's form POST, a passkey finish, the
+// OIDC callback) rotates the CSRF token, so adoptServerSession must
+// adopt the fresh one before anything else POSTs. A transient failure of
+// GET /api/csrf retries with backoff (x3) and only the THIRD consecutive
+// failure falls back to a page reload (the cookie session survives; the
+// served page then carries a matching token again).
 
 test("csrf adoption recovers on the second try without a reload", async () => {
   resetToasts();
   let csrfCalls = 0;
   useFetch((url) => {
-    if (String(url).includes("/api/session")) {
-      return { status: 201, body: { extension: "1001", password: "pw" } };
+    if (String(url).includes("/api/csrf")) {
+      csrfCalls += 1;
+      if (csrfCalls < 2) return { status: 503 };
+      return { status: 200, body: { token: "fresh-token" } };
     }
-    csrfCalls += 1;
-    if (csrfCalls < 2) return { status: 503 };
-    return { status: 200, body: { token: "fresh-token" } };
+    return { status: 200, body: {} };
   });
   let reloads = 0;
   globalThis.window.location = {
@@ -264,7 +207,7 @@ test("csrf adoption recovers on the second try without a reload", async () => {
     },
   };
   try {
-    await session.createSession("1001", "pw");
+    await session.adoptServerSession({});
     assert.equal(csrfCalls, 2, "exactly one failed adoption then success");
     assert.equal(reloads, 0, "recovery on retry must never reload");
     assert.ok(
@@ -278,13 +221,9 @@ test("csrf adoption recovers on the second try without a reload", async () => {
 
 test("csrf adoption falls back to reload only after three failures", async () => {
   resetToasts();
-  let csrfCalls = 0;
   useFetch((url) => {
-    if (String(url).includes("/api/session")) {
-      return { status: 201, body: { extension: "1001", password: "pw" } };
-    }
-    csrfCalls += 1;
-    return { status: 503 };
+    if (String(url).includes("/api/csrf")) return { status: 503 };
+    return { status: 200, body: {} };
   });
   let reloads = 0;
   globalThis.window.location = {
@@ -293,8 +232,7 @@ test("csrf adoption falls back to reload only after three failures", async () =>
     },
   };
   try {
-    await session.createSession("1001", "pw");
-    assert.equal(csrfCalls, 3, "exactly three adoption attempts");
+    await session.adoptServerSession({});
     assert.equal(reloads, 1, "the third failure falls back to one reload");
     assert.ok(
       logTexts().some((line) => line.includes("csrf adoption failed")),
