@@ -2127,3 +2127,72 @@ test("the island toggle flips the root class, the stored preference and aria-exp
   assert.equal(localStorage.getItem("wp-island-collapsed"), "0");
   assert.equal(toggle.getAttribute("aria-expanded"), "true");
 });
+
+// Train 3 (mobile dialer): the Phone tab is a JS-created VIEW toggle in
+// the strip — it focuses the island (root class) and clears on a real
+// tab click. The fakes carry `selector` set to the full delegated
+// selector (the stub's exact-hit convention) so the document-level
+// cleanup listener finds the server tab.
+test("the Phone tab toggles the dialer focus and a real tab click leaves it", () => {
+  const nav = doc.getElementById("wp-nav");
+  nav.className = "wp-nav";
+  nav.selector = ".wp-nav";
+  // The stub's querySelector walks registry-root SUBTREES only, so the
+  // strip must hang under the body root for installPhoneTab's document
+  // lookup to find it.
+  doc.body.append(nav);
+  const serverTab = doc.createElement("");
+  serverTab.className = "wp-nav-link";
+  serverTab.selector = ".wp-nav-link[data-tab]";
+  serverTab.dataset = { tab: "messages" };
+  nav.append(serverTab);
+
+  const phone = shellApi.installPhoneTab();
+  assert.ok(phone, "the tab installs into the strip");
+  assert.match(phone.className, /wp-nav-phone/);
+  assert.equal(phone.getAttribute("aria-pressed"), "false");
+
+  phone.listeners.click[0]();
+  assert.equal(
+    doc.documentElement.classList.contains("wp-phone-focus"),
+    true,
+    "tapping Phone focuses the dialer",
+  );
+  assert.equal(phone.getAttribute("aria-pressed"), "true");
+  assert.equal(
+    serverTab.classList.contains("wp-active"),
+    false,
+    "the server tab yields the active pill",
+  );
+
+  phone.listeners.click[0]();
+  assert.equal(
+    doc.documentElement.classList.contains("wp-phone-focus"),
+    false,
+    "tapping Phone again returns to the content",
+  );
+  assert.equal(phone.getAttribute("aria-pressed"), "false");
+
+  phone.listeners.click[0]();
+  doc.dispatch("click", { target: serverTab });
+  assert.equal(
+    doc.documentElement.classList.contains("wp-phone-focus"),
+    false,
+    "a real tab tap leaves the dialer focus",
+  );
+});
+
+test("installPhoneTab is idempotent and restores the focus state on recreate", () => {
+  const nav = doc.getElementById("wp-nav");
+  const before = nav.querySelectorAll(".wp-nav-phone").length;
+  shellApi.setPhonePressed(true);
+  shellApi.installPhoneTab();
+  assert.equal(
+    nav.querySelectorAll(".wp-nav-phone").length,
+    before,
+    "no duplicate tab",
+  );
+  const recreated = shellApi.installPhoneTab();
+  assert.equal(recreated, undefined, "an existing tab blocks the install");
+  shellApi.setPhonePressed(false);
+});
