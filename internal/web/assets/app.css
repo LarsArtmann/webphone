@@ -2438,6 +2438,22 @@ a:focus-visible {
     justify-content: flex-start;
   }
 
+  /* Phone rows keep the two essentials only (destination §6): the call
+   * affordance stays; the pin/mute/archive flags drop off the ROW —
+   * they remain one tap away on the open thread's head, exactly the
+   * Google-apps trade (row = scan, detail = act). Four 44px targets
+   * were eating the preview's width and strangling it to a stub. */
+  .wp-thread-rowwrap .wp-thread-flag {
+    display: none;
+  }
+
+  /* The compose stacks on a phone: the address gets its own full-width
+   * line, message + send share the next — the two-across row clipped
+   * its own placeholder at 390px. */
+  .wp-compose > input {
+    flex-basis: 100%;
+  }
+
   /* The settings definition grid collapses to one column: the desktop
    * `auto 1fr` pair sizes the label column to its content, and a long
    * German label ("Anrufe werden auf diesem Server transkribiert") is
