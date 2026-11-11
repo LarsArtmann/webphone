@@ -39,10 +39,12 @@ func (h *handlers) assets() http.Handler {
 	// main.js's import graph, and this entry would waste a preload on
 	// every shell render).
 	mux.Handle("/assets/enroll/", http.StripPrefix("/assets/", vendorServer))
-	// /assets/login/... → the login page's standalone module (the
-	// extension + password form's submit on the /login page — same
-	// reasoning as /assets/enroll/: not in the island's import closure).
-	mux.Handle("/assets/login/", http.StripPrefix("/assets/", vendorServer))
+	// /assets/login-page.js → the login page's standalone module (the
+	// extension + password form's submit on /login — same reasoning as
+	// /assets/enroll/: not in the island's import closure).
+	mux.HandleFunc("GET /assets/login-page.js", func(w http.ResponseWriter, r *http.Request) {
+		serveEmbedded(w, r, "login/login-page.js", "application/javascript; charset=utf-8")
+	})
 	// /assets/app.css, /assets/shell.js, /assets/theme-preload.js → shell files
 	mux.HandleFunc("GET /assets/app.css", func(w http.ResponseWriter, r *http.Request) {
 		serveEmbedded(w, r, "app.css", "text/css; charset=utf-8")
