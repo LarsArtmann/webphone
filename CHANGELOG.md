@@ -9,20 +9,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Visible redesign: indigo identity, icon navigation, content-first
+- **Visible redesign: green identity kept, icon navigation, content-first
   mobile.** The 2026-11-07 UX review validated the design against its own
   craft bar while the owner kept asking for a different look — this train
-  changes what you see, not just what audits green. The accent family is
-  indigo (dark fills `#5b7cfa` with dark ink, light `#3b5bdb` with white —
-  every pair measured WCAG AA, the numbers live in app.css comments); the
-  tab strip is a segmented pill bar with per-tab icons (inbox, printer,
-  microphone, clock, chart, users, settings, shield); the mobile bottom
-  bar stacks icon-over-label so eight tabs fit a 390px screen; phones put
-  tab content BEFORE the dialer island (a live call still jumps to the
-  front); page titles carry real display weight; the shell gets a faint
-  accent wash behind the header; and tab swaps cross-fade via View
-  Transitions (`htmx.config.globalViewTransitions`, reduced motion removes
-  them entirely). tw.css/login.css radii re-pinned to the new scale.
+  changes what you see, not just what audits green. The GREEN accent
+  family stays (owner ruling 2026-11-11: green is the brand; the train's
+  first indigo draft was vetoed same-day and reverted before release);
+  what changed is structure and presence: the tab strip is a segmented
+  pill bar with per-tab icons (inbox, printer, microphone, clock, chart,
+  users, settings, shield); the mobile bottom bar stacks icon-over-label
+  so eight tabs fit a 390px screen; phones put tab content BEFORE the
+  dialer island (a live call still jumps to the front); page titles carry
+  real display weight (1.5rem/700); the shell gets a faint accent wash
+  behind the header; panels get deeper elevation (radius 16, layered
+  shadows); and tab swaps cross-fade via View Transitions
+  (`htmx.config.globalViewTransitions`, reduced motion removes them
+  entirely). tw.css/login.css radii re-pinned to the new scale.
 - **Auth is ONE dedicated page.** `/login` — the cqrs-htmx loginpage
   library page (v4.18.0, new `Config.ExtraSection` seam) — is now the
   front door in EVERY deployment mode: it carries the extension +

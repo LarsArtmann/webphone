@@ -1,6 +1,6 @@
 # UI/UX destination — "CCAI + Google Voice, but really good"
 
-**Status:** DESTINATION (owner-ratified direction, 2026-11-11) · **Author:** session with owner direction calls · **Execution:** Train 1 begins this session; Trains 2–3 are queued.
+**Status:** DESTINATION (owner-ratified direction, 2026-11-11) · **Amended same day ~15:25:** the accent is GREEN (owner veto 15:15 — "my app is green, not Tailwind default"; indigo read as default-SaaS and is wrong for this product). Wherever an earlier draft of this file said indigo, green is the ruling. · **Author:** session with owner direction calls · **Execution:** Train 1 begins this session; Trains 2–3 are queued.
 
 The bar is the OWNER'S EYES (owner ruling 2026-11-11): a train that leaves the look unchanged is a failed train, no matter what a compliance review says. Every shipped train on this file must pass one test — *side-by-side screenshots where anyone can point at the difference in under five seconds.*
 
@@ -36,8 +36,8 @@ The bar is the OWNER'S EYES (owner ruling 2026-11-11): a train that leaves the l
 ## 4. Design pillars (permanent rules for every future train)
 
 1. **Quiet chrome, loud content.** The shell (header, nav, island frame) recedes: neutral surfaces, hairlines, no decoration. Color belongs to content: bubbles, badges, state.
-2. **One accent, tonal depth.** Indigo stays the accent (2026-11-11 baseline ruling — evolve, never revert). Depth comes from surface tiers (`--surface` → `--surface-2` → `--surface-3`) and translucent state layers, never from new hues.
-3. **Type is the hierarchy.** A real ramp (see §5); every heading pairs size with weight AND tracking; all data that ticks (timestamps, counts, durations) renders in tabular numerals; sentence case everywhere, no all-caps eyebrows.
+2. **One accent, tonal depth.** GREEN is the accent (the brand — owner veto 2026-11-11 15:15, same-day against the restyle's first indigo draft; indigo/blue reads as default-SaaS). Depth comes from surface tiers (`--surface` → `--surface-2` → `--surface-3`) and translucent state layers, never from new hues.
+3. **Type is the hierarchy.** A real ramp (see §5); every heading pairs size with weight AND tracking; all data that ticks (timestamps, counts, durations) renders in tabular numerals; sentence case everywhere. The tiny small-caps section labels (CALL TRANSCRIPTS, Settings group heads) are functional dividers in the Google idiom and stay — the ban is on decorative eyebrows above content headings.
 4. **The phone is an object.** The island is the product's hero: a crafted device card with a status identity (registration dot, live-call state), consistent controls, its own header strip — recognizably "the phone", not "another form panel".
 5. **Density where the pro lives.** History, Reports, Admin and live-call context optimize for scanning: tighter rows, tabular numbers, aligned columns, more information per pixel — while Messages, Voicemail playback and the island stay calm.
 6. **Motion answers action.** Transitions confirm state changes (tab cross-fades exist; control state layers get 150ms; panels get 250ms emphasized easing). Nothing moves that the user didn't cause; `prefers-reduced-motion` stays honored globally.

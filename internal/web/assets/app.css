@@ -1,9 +1,10 @@
 /* WebPhone shell + tabs — the operator desk around the phone island.
  *
- * Design system (2026-11-11 restyle): one accent (indigo), one surface
- * family, two themes. The island stylesheet (loaded after this file)
- * shares the token block below; the tokens are mirrored in
- * island/style.css — keep them in sync.
+ * Design system (2026-11-11 restyle, hue corrected same day): one
+ * accent (GREEN — the product's brand, owner ruling), one surface family,
+ * two themes. The island stylesheet (loaded after this file) shares the
+ * token block below; the tokens are mirrored in island/style.css — keep
+ * them in sync.
  *
  * Hierarchy model: the page background is quiet with a faint accent wash
  * at the top, panels are elevated (surface + hairline + soft shadow), and
@@ -11,32 +12,32 @@
  * Rows earn a border only on hover/focus.
  *
  * Ink discipline (measured 2026-11-11, WCAG AA): the dark theme fills
- * with a BRIGHT accent and paints DARK ink on it (--on-accent #0c0f16:
- * 5.2:1 on --accent #5b7cfa, 6.9:1 on hover #7d95ff, 6.3:1 on --danger
+ * with a BRIGHT green and paints DARK ink on it (--on-accent #0b0d11:
+ * 6.0:1 on --accent #17a467, 10.1:1 on hover #3fd694, 6.3:1 on --danger
  * #ef6a5f — one token serves every fill). The light theme fills with a
- * DEEP accent and paints white (5.7:1 on #3b5bdb, 7.6:1 on hover
- * #2f49b8). Never point a fill at the other theme's ink. */
+ * DEEP green and paints white (4.6:1 on #0e8752, better on hover
+ * #0a6e42). Never point a fill at the other theme's ink. */
 
 :root,
 :root[data-theme="dark"] {
   color-scheme: dark light;
-  --bg: #0c0f16;
-  --surface: #131824;
-  --surface-2: #1a2130;
-  --surface-3: #232c40;
-  --border: #273044;
-  --border-strong: #3b4666;
-  --text: #e8ebf5;
-  --muted: #98a2b8;
-  --accent: #5b7cfa;
-  --accent-strong: #7d95ff;
-  --accent-soft: rgb(91 124 250 / 14%);
+  --bg: #0b0d11;
+  --surface: #14171d;
+  --surface-2: #1a1f27;
+  --surface-3: #232a35;
+  --border: #272e3b;
+  --border-strong: #3c4557;
+  --text: #e7ebf1;
+  --muted: #97a1b2;
+  --accent: #17a467;
+  --accent-strong: #3fd694;
+  --accent-soft: rgb(63 214 148 / 13%);
   /* Dark ink on the bright dark-theme fills: white ink measured 3.2:1 on
    * --accent and worse on hover — the fill family is bright by design, so
    * the ink goes dark instead (see the ink-discipline note above). The
    * light theme keeps white ink on its deeper accent (declared in the
    * light blocks below). */
-  --on-accent: #0c0f16;
+  --on-accent: #0b0d11;
   --scrim: rgb(4 6 10 / 62%);
   --danger: #ef6a5f;
   --danger-soft: rgb(239 106 95 / 14%);
@@ -80,24 +81,24 @@
 
 @media (prefers-color-scheme: light) {
   :root:not([data-theme]) {
-    --bg: #eef0f5;
+    --bg: #eef1f5;
     --surface: #ffffff;
-    --surface-2: #f4f5f9;
-    --surface-3: #e8eaf1;
-    --border: #dde1ea;
-    --border-strong: #c3cad8;
-    --text: #131722;
-    --muted: #5b6577;
-    --accent: #3b5bdb;
-    --accent-strong: #2f49b8;
-    --accent-soft: rgb(59 91 219 / 9%);
+    --surface-2: #f4f6f9;
+    --surface-3: #e9edf2;
+    --border: #dee4eb;
+    --border-strong: #c6cfd9;
+    --text: #121820;
+    --muted: #5a6674;
+    --accent: #0e8752;
+    --accent-strong: #0a6e42;
+    --accent-soft: rgb(14 135 82 / 10%);
     --danger: #d3382c;
     --danger-soft: rgb(211 56 44 / 10%);
     --warn: #9a5b0a;
     --ok: #0e8752;
     --on-accent: #ffffff;
     --shadow:
-      0 1px 2px rgb(18 22 40 / 7%), 0 16px 36px -10px rgb(18 22 40 / 14%);
+      0 1px 2px rgb(16 24 32 / 7%), 0 16px 36px -10px rgb(16 24 32 / 13%);
   }
 }
 
@@ -107,23 +108,23 @@
  * nothing inline ever fights it, so no !important is needed. */
 :root[data-theme="light"] {
   color-scheme: light;
-  --bg: #eef0f5;
+  --bg: #eef1f5;
   --surface: #ffffff;
-  --surface-2: #f4f5f9;
-  --surface-3: #e8eaf1;
-  --border: #dde1ea;
-  --border-strong: #c3cad8;
-  --text: #131722;
-  --muted: #5b6577;
-  --accent: #3b5bdb;
-  --accent-strong: #2f49b8;
-  --accent-soft: rgb(59 91 219 / 9%);
+  --surface-2: #f4f6f9;
+  --surface-3: #e9edf2;
+  --border: #dee4eb;
+  --border-strong: #c6cfd9;
+  --text: #121820;
+  --muted: #5a6674;
+  --accent: #0e8752;
+  --accent-strong: #0a6e42;
+  --accent-soft: rgb(14 135 82 / 10%);
   --danger: #d3382c;
   --danger-soft: rgb(211 56 44 / 10%);
   --warn: #9a5b0a;
   --ok: #0e8752;
   --on-accent: #ffffff;
-  --shadow: 0 1px 2px rgb(18 22 40 / 7%), 0 16px 36px -10px rgb(18 22 40 / 14%);
+  --shadow: 0 1px 2px rgb(16 24 32 / 7%), 0 16px 36px -10px rgb(16 24 32 / 13%);
 }
 
 * {
