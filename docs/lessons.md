@@ -1126,3 +1126,35 @@ recording keeps one toast") and docs/error-contract.md.
   attempt 1 is the tag attempt. Corollary: a re-run needs
   `WEBPHONE_RELEASE_SKIP_VERSION_GUARD=1` only while the version-bump
   commit is untagged — after the tag is up, the guard passes on its own.
+- **The scoped BuildFlow verdict can be a cached finding set, not a
+  scan (2026-11-11, the cqrs-lint delta).** `buildflow -s cqrs-lint`
+  read 18 findings for an hour while the real CLI, the toolspec chain,
+  and even the PATH binary all read 12. Three hypotheses were
+  falsified with elaborate probes (stale binary predating the
+  comma-parsing era; a suppression-parsing gap; a bridge delta) before
+  the cache check landed: the result cache answers from the last
+  matching TREE STATE, not from disk. Bypass with
+  `BUILDFLOW_NO_RESULT_CACHE=1`. Corollary learned in the same hour:
+  the house gotchas had documented the bypass all along — read the
+  pins BEFORE debugging tool behavior; three of the four probe hours
+  were spent re-deriving a documented answer.
+- **A verifier scoped to tool A cannot adjudicate tool B's accepted
+  noise (2026-11-11 near-miss).** The scoped cqrs-lint run carried a
+  baseline-staleness alarm (its counts disagreed with the baseline
+  file that `.buildflow.yml` records for BRANCHING-FLOW), and the
+  reflex answer — regenerate the baseline — would have DELETED a live,
+  healthy baseline on a false signal from a tool that cannot see the
+  corpus the baseline governs. Adjudicate a baseline only with the
+  detector that wrote it (art-dupl at its pinned version), never with
+  a scoped verifier's side-channel counts.
+- **A module-graph delta without its vendorHash tail reds main at
+  the next push (2026-11-11, the loginpage v4.18.0 sweep).** The bump
+  rode a daemon commit (go.mod 4 lines) with no re-pin; the next CI
+  run failed nix build, webphone-smoke, go test -race and the
+  CHANGELOG gate downstream of one hash mismatch. The cheapest repair
+  is CI's own error line: the mismatch message prints the exact
+  expected hash — apply it to `nix/packages.nix` verbatim, build
+  `.#webphone.goModules` locally to confirm, push. The standing rule
+  (dependency bumps ride `buildflow update`, never the daemon) exists
+  for exactly this; the daemon's hookless commits remain the open
+  guard hole.

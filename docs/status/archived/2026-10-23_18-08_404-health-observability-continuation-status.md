@@ -13,10 +13,10 @@ Push/CI statements rot fastest; treat them as timestamped, not timeless.
 
 | Fact                                                                                                                                                                                    | Consequence                                                                                                                                |
 | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
-| Go 1.27.2 in the devshell, host Go 1.26.8                                                                                                                                               | every `go` command ran via `nix develop -c` **→ resolved at this run |** |
-| An auto-commit daemon commits **and pushes** every ~2 min                                                                                                                               | all of my work landed as `chore: auto-commit N changed file(s)` **→ resolved at this run |** |
-| A second Crush session was editing the same tree the whole time (`internal/push`, `internal/matrix`, `internal/server/hooks/ring.go`, `internal/server/api/push_api.go`, chat networks) | shared files (`server.go`, `AGENTS.md`, `CHANGELOG.md`) were re-read before every edit; one foreign build break blocked my test runs twice **→ resolved at this run |** |
-| `GOCACHE` is at `/mnt/buildcache` (shared)                                                                                                                                              | no cache-clear needed this run **→ resolved at this run |** |
+| Go 1.27.2 in the devshell, host Go 1.26.8                                                                                                                                               | every `go` command ran via `nix develop -c` **→ resolved at this run** |
+| An auto-commit daemon commits **and pushes** every ~2 min                                                                                                                               | all of my work landed as `chore: auto-commit N changed file(s)` **→ resolved at this run** |
+| A second Crush session was editing the same tree the whole time (`internal/push`, `internal/matrix`, `internal/server/hooks/ring.go`, `internal/server/api/push_api.go`, chat networks) | shared files (`server.go`, `AGENTS.md`, `CHANGELOG.md`) were re-read before every edit; one foreign build break blocked my test runs twice **→ resolved at this run** |
+| `GOCACHE` is at `/mnt/buildcache` (shared)                                                                                                                                              | no cache-clear needed this run **→ resolved at this run** |
 
 ---
 
@@ -26,13 +26,13 @@ Push/CI statements rot fastest; treat them as timestamped, not timeless.
 
 | Plan task                                                | Verdict                   | Evidence                                                                                                                    |
 | -------------------------------------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| **C6** Convert the reachable action 404s                 | **DONE**                  | 15 `http.NotFound` → `h.notFound` in `actions.go`, 1 in `panels.go` (`partialThread`), 6 in `textagent_api.go`; 5 new tests **→ resolved at this run |** |
-| **C7** One home for 404/405 knowledge                    | **DONE**                  | `docs/error-contract.md` § "404 — one home, two shapes"; AGENTS 404 bullet reduced to a pointer; duplicate test deleted **→ resolved at this run |** |
-| **C8** Every HTML route family answers through the shell | **DONE**                  | `TestEveryHTMLRouteFamilyAnswersTheStyledPage` (11 representative misses) **→ resolved at this run |** |
-| **C9** Flight-recorder seam (default off)                | **DONE (code)**           | `internal/server/trace.go`, `internal/app/flightrecorder.go`, `/internal/flightrecorder`, 6 tests **→ resolved at this run |** |
-| **C10** Latency histograms on `/metrics`                 | **DONE**                  | `internal/server/latency.go` + `httputil.Metrics` in the chain, 2 tests **→ resolved at this run |** |
-| **C11** JSON error-contract decision for `/api`          | **DONE (ruling)**         | `docs/error-contract.md` § "`/api` error bodies — plain text, RULED" **→ resolved at this run |** |
-| **C3** Pin the 404 contract end to end                   | **DONE (completed here)** | the last duplicate pin removed; every claim in the row now has its test named **→ resolved at this run |** |
+| **C6** Convert the reachable action 404s                 | **DONE**                  | 15 `http.NotFound` → `h.notFound` in `actions.go`, 1 in `panels.go` (`partialThread`), 6 in `textagent_api.go`; 5 new tests **→ resolved at this run** |
+| **C7** One home for 404/405 knowledge                    | **DONE**                  | `docs/error-contract.md` § "404 — one home, two shapes"; AGENTS 404 bullet reduced to a pointer; duplicate test deleted **→ resolved at this run** |
+| **C8** Every HTML route family answers through the shell | **DONE**                  | `TestEveryHTMLRouteFamilyAnswersTheStyledPage` (11 representative misses) **→ resolved at this run** |
+| **C9** Flight-recorder seam (default off)                | **DONE (code)**           | `internal/server/trace.go`, `internal/app/flightrecorder.go`, `/internal/flightrecorder`, 6 tests **→ resolved at this run** |
+| **C10** Latency histograms on `/metrics`                 | **DONE**                  | `internal/server/latency.go` + `httputil.Metrics` in the chain, 2 tests **→ resolved at this run** |
+| **C11** JSON error-contract decision for `/api`          | **DONE (ruling)**         | `docs/error-contract.md` § "`/api` error bodies — plain text, RULED" **→ resolved at this run** |
+| **C3** Pin the 404 contract end to end                   | **DONE (completed here)** | the last duplicate pin removed; every claim in the row now has its test named **→ resolved at this run** |
 
 ### a2. The 404 shape rule (the core of C6/C7)
 
@@ -42,9 +42,9 @@ misses and chooses by **what the caller can consume**:
 
 | Request shape                                                                 | Answer                                          | Why                                                                                          |
 | ----------------------------------------------------------------------------- | ----------------------------------------------- | -------------------------------------------------------------------------------------------- |
-| Document (no `HX-Request`) — a stale link, a partial URL pasted from devtools | the styled page (`notFoundPage`)                | a human is looking at it **→ resolved at this run |** |
-| HTMX (`HX-Request: true`) — a button, a form, a poll                          | a one-line `.wp-error` notice, status stays 404 | htmx discards non-2xx bodies and fires its own toast; a shell would be ~14 KB nobody renders **→ resolved at this run |** |
-| Machine (JSON APIs, webhooks, byte streams)                                   | unchanged terse writers                         | a browser is not their client **→ resolved at this run |** |
+| Document (no `HX-Request`) — a stale link, a partial URL pasted from devtools | the styled page (`notFoundPage`)                | a human is looking at it **→ resolved at this run** |
+| HTMX (`HX-Request: true`) — a button, a form, a poll                          | a one-line `.wp-error` notice, status stays 404 | htmx discards non-2xx bodies and fires its own toast; a shell would be ~14 KB nobody renders **→ resolved at this run** |
+| Machine (JSON APIs, webhooks, byte streams)                                   | unchanged terse writers                         | a browser is not their client **→ resolved at this run** |
 
 Ruled **exclusions**, deliberate and pinned by a test: `/attachments/{id}`
 (`<img src>` / `<audio src>`) and `markThreadRead` (island fetch) keep the bare
@@ -54,30 +54,30 @@ answer; a fax document link (`<a download>`) **does** route through the helper.
 
 | File                                      | Change                                                                                                        |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `internal/server/pages.go`                | new `notFound` helper + `latency` field on `handlers` **→ resolved at this run |** |
-| `internal/server/actions.go`              | 15 misses → `h.notFound`; 3 ruled exclusions left bare **→ resolved at this run |** |
-| `internal/server/panels.go`               | `partialThread` miss → `h.notFound` **→ resolved at this run |** |
-| `internal/server/textagent_api.go`        | all 6 seam-off/malformed-id misses → `h.notFound` **→ resolved at this run |** |
-| `internal/server/internal_directory.go`   | `internalDirectoryRequiredPeer` renamed `loopbackPeer` (now shared with the trace endpoint) **→ resolved at this run |** |
-| `internal/server/trace.go`                | **new** — `TraceRecorder` seam, `traceMiddleware`, `traceSnapshot` handler **→ resolved at this run |** |
-| `internal/server/latency.go`              | **new** — `latencyRecorder` (12 buckets, status classes, `/metrics` self-scrape excluded) **→ resolved at this run |** |
-| `internal/server/server.go`               | `Deps.Trace`, conditional trace middleware, `httputil.Metrics` in the chain, `/internal/flightrecorder` route **→ resolved at this run |** |
-| `internal/server/metrics.go`              | writes the histogram + status-class counter **→ resolved at this run |** |
-| `internal/app/flightrecorder.go`          | **new** — `go-flightrecorder` adapter, env opt-in, retention, `Close` **→ resolved at this run |** |
-| `internal/app/app.go`                     | `App.Trace`, recorder built beside the probe, drained last in `Shutdown`, `Deps.Trace` wiring **→ resolved at this run |** |
-| `internal/server/notfound_shapes_test.go` | **new** — 5 tests (htmx notice, document page, action split, fax link, attachment exclusion) **→ resolved at this run |** |
-| `internal/server/latency_test.go`         | **new** — 2 tests (cumulative buckets, no path/identifier leak) **→ resolved at this run |** |
-| `internal/server/trace_test.go`           | **new** — 3 tests (404 when off, path when on, observation per request) **→ resolved at this run |** |
-| `internal/app/flightrecorder_test.go`     | **new** — 3 tests (nil seam, env parsing, real capture + close) **→ resolved at this run |** |
-| `internal/server/notfound_test.go`        | route-family test + the island-shell assertion folded in from the deleted duplicate **→ resolved at this run |** |
-| `internal/server/server_test.go`          | deleted `TestNotFoundRendersTheShell` (duplicate home) **→ resolved at this run |** |
-| `go.mod` / `go.sum`                       | `go-flightrecorder` promoted indirect → direct (`go mod tidy`) **→ resolved at this run |** |
-| `AGENTS.md`                               | middleware-chain order, flight-recorder seam, latency-metrics seam, 404 pointer, 20-shot count **→ resolved at this run |** |
-| `README.md`                               | flight-recorder section; `/metrics` wording now names the histogram **→ resolved at this run |** |
-| `CHANGELOG.md`                            | 404 shape rule; latency metrics; flight recorder **→ resolved at this run |** |
-| `docs/error-contract.md`                  | 404 row rewritten, "one home, two shapes" section, `/api` ruling, flight-recorder row **→ resolved at this run |** |
-| `TODO_LIST.md`                            | visual-harness row refreshed to 20 shots **→ resolved at this run |** |
-| `scripts/ui-capture.py`                   | 10th surface `not-found` (`/nope`), marker + copy pin, docstring **→ resolved at this run |** |
+| `internal/server/pages.go`                | new `notFound` helper + `latency` field on `handlers` **→ resolved at this run** |
+| `internal/server/actions.go`              | 15 misses → `h.notFound`; 3 ruled exclusions left bare **→ resolved at this run** |
+| `internal/server/panels.go`               | `partialThread` miss → `h.notFound` **→ resolved at this run** |
+| `internal/server/textagent_api.go`        | all 6 seam-off/malformed-id misses → `h.notFound` **→ resolved at this run** |
+| `internal/server/internal_directory.go`   | `internalDirectoryRequiredPeer` renamed `loopbackPeer` (now shared with the trace endpoint) **→ resolved at this run** |
+| `internal/server/trace.go`                | **new** — `TraceRecorder` seam, `traceMiddleware`, `traceSnapshot` handler **→ resolved at this run** |
+| `internal/server/latency.go`              | **new** — `latencyRecorder` (12 buckets, status classes, `/metrics` self-scrape excluded) **→ resolved at this run** |
+| `internal/server/server.go`               | `Deps.Trace`, conditional trace middleware, `httputil.Metrics` in the chain, `/internal/flightrecorder` route **→ resolved at this run** |
+| `internal/server/metrics.go`              | writes the histogram + status-class counter **→ resolved at this run** |
+| `internal/app/flightrecorder.go`          | **new** — `go-flightrecorder` adapter, env opt-in, retention, `Close` **→ resolved at this run** |
+| `internal/app/app.go`                     | `App.Trace`, recorder built beside the probe, drained last in `Shutdown`, `Deps.Trace` wiring **→ resolved at this run** |
+| `internal/server/notfound_shapes_test.go` | **new** — 5 tests (htmx notice, document page, action split, fax link, attachment exclusion) **→ resolved at this run** |
+| `internal/server/latency_test.go`         | **new** — 2 tests (cumulative buckets, no path/identifier leak) **→ resolved at this run** |
+| `internal/server/trace_test.go`           | **new** — 3 tests (404 when off, path when on, observation per request) **→ resolved at this run** |
+| `internal/app/flightrecorder_test.go`     | **new** — 3 tests (nil seam, env parsing, real capture + close) **→ resolved at this run** |
+| `internal/server/notfound_test.go`        | route-family test + the island-shell assertion folded in from the deleted duplicate **→ resolved at this run** |
+| `internal/server/server_test.go`          | deleted `TestNotFoundRendersTheShell` (duplicate home) **→ resolved at this run** |
+| `go.mod` / `go.sum`                       | `go-flightrecorder` promoted indirect → direct (`go mod tidy`) **→ resolved at this run** |
+| `AGENTS.md`                               | middleware-chain order, flight-recorder seam, latency-metrics seam, 404 pointer, 20-shot count **→ resolved at this run** |
+| `README.md`                               | flight-recorder section; `/metrics` wording now names the histogram **→ resolved at this run** |
+| `CHANGELOG.md`                            | 404 shape rule; latency metrics; flight recorder **→ resolved at this run** |
+| `docs/error-contract.md`                  | 404 row rewritten, "one home, two shapes" section, `/api` ruling, flight-recorder row **→ resolved at this run** |
+| `TODO_LIST.md`                            | visual-harness row refreshed to 20 shots **→ resolved at this run** |
+| `scripts/ui-capture.py`                   | 10th surface `not-found` (`/nope`), marker + copy pin, docstring **→ resolved at this run** |
 
 ### a4. Verification actually run (not assumed)
 
@@ -109,11 +109,11 @@ Test totals added this run: **13 functions** across 4 files.
 
 | Item                       | What exists                                                                   | What is missing                                                                                                                        |
 | -------------------------- | ----------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- |
-| **C12 visual matrix**      | the `not-found` surface, its DOM marker, its copy pin, doc counts             | **the matrix was never run** — the new shot is unproven **→ resolved since — the styled-404 surface is a pinned ui-capture shot (the 24-shot T23 harness) |** |
-| **C13 gates**              | targeted `go test` green in every package I touched; `gofmt` on touched files | `nix fmt`, `buildflow`, `nix flake check`, `nix run .#vulnix`, `webphone-smoke.py`, `ui-capture` — **none ran after these changes** **→ resolved since — the standing train-start/train-end buildflow battery owns the gates (row 3's strike carries the latest green) |** |
-| **C14 closure**            | plan state understood, docs updated as part of each task                      | no plan-vs-shipped reconciliation pass, no FEATURES/ROADMAP delta, no narrative commit (the daemon's `chore:` commits own the history) **→ NOT-DO — superseded by the ratified daemon reality (narrative commits land per phase boundary; the runbook owns the rule) |** |
-| **C9 in production terms** | seam, endpoint, retention, shutdown drain, env opt-in                         | never exercised on a real host; `<dataDir>/traces` sits inside the **backup** path (size risk, see d4) **→ resolved since — shipped as the documented env opt-in (AGENTS flight-recorder bullet); the backup question moved to the traces-in-backup TODO row |** |
-| **C4 stack VM test**       | I read `tests/webphone.nix`, located the `/metrics` fence pattern to copy     | **not written** **→ routed to TODO_LIST (stack residues: the dashboard-on VM test leg) |** |
+| **C12 visual matrix**      | the `not-found` surface, its DOM marker, its copy pin, doc counts             | **the matrix was never run** — the new shot is unproven **→ resolved since — the styled-404 surface is a pinned ui-capture shot (the 24-shot T23 harness)** |
+| **C13 gates**              | targeted `go test` green in every package I touched; `gofmt` on touched files | `nix fmt`, `buildflow`, `nix flake check`, `nix run .#vulnix`, `webphone-smoke.py`, `ui-capture` — **none ran after these changes** **→ resolved since — the standing train-start/train-end buildflow battery owns the gates (row 3's strike carries the latest green)** |
+| **C14 closure**            | plan state understood, docs updated as part of each task                      | no plan-vs-shipped reconciliation pass, no FEATURES/ROADMAP delta, no narrative commit (the daemon's `chore:` commits own the history) **→ NOT-DO — superseded by the ratified daemon reality (narrative commits land per phase boundary; the runbook owns the rule)** |
+| **C9 in production terms** | seam, endpoint, retention, shutdown drain, env opt-in                         | never exercised on a real host; `<dataDir>/traces` sits inside the **backup** path (size risk, see d4) **→ resolved since — shipped as the documented env opt-in (AGENTS flight-recorder bullet); the backup question moved to the traces-in-backup TODO row** |
+| **C4 stack VM test**       | I read `tests/webphone.nix`, located the `/metrics` fence pattern to copy     | **not written** **→ routed to TODO_LIST (stack residues: the dashboard-on VM test leg)** |
 
 ---
 
@@ -215,14 +215,14 @@ Test totals added this run: **13 functions** across 4 files.
 
 | #     | Task                                                                                                                                                                                                       |
 | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1     | Fix or attribute `internal/matrix/matrix_test.go` (foreign, reds `go test ./...`) **→ resolved — healed same-day by the owning session; suite green since |** |
-| 2     | `nix fmt` (explicit paths only — a concurrent session is live) **→ resolved since — nix fmt is the standing post-edit step |** |
+| 1     | Fix or attribute `internal/matrix/matrix_test.go` (foreign, reds `go test ./...`) **→ resolved — healed same-day by the owning session; suite green since** |
+| 2     | `nix fmt` (explicit paths only — a concurrent session is live) **→ resolved since — nix fmt is the standing post-edit step** |
 | ~~3~~ | ~~`buildflow` full run~~ — done repeatedly since (the standing train-start + train-end buildflow discipline; latest documented: 74/74 green 2026-11-07, evidence in TODO_LIST's UX-fix-train residue rows) |
-| 4     | `nix flake check` (package + tests + treefmt + island-lint + island-js + module check) **→ resolved since — the standing release gate (all seven v2.13.0 attempts; green at release) |** |
-| 5     | `nix run .#vulnix` (a real scan, not the 0 ms cache hit) **→ resolved since — release.sh gates on nix run .#vulnix |** |
-| 6     | `python3 scripts/webphone-smoke.py --bin <fresh build>` **→ resolved since — a CI job runs webphone-smoke on every push |** |
-| 7     | Run `scripts/ui-capture.py` and eyeball the new 20th shot **→ resolved since — the T23 harness (24 shots) pins the 404 surface |** |
-| 8     | Commit the whole train with a narrative message before the daemon does **→ NOT-DO — the train's history stayed daemon chore commits; the lesson landed in docs/lessons.md |** |
+| 4     | `nix flake check` (package + tests + treefmt + island-lint + island-js + module check) **→ resolved since — the standing release gate (all seven v2.13.0 attempts; green at release)** |
+| 5     | `nix run .#vulnix` (a real scan, not the 0 ms cache hit) **→ resolved since — release.sh gates on nix run .#vulnix** |
+| 6     | `python3 scripts/webphone-smoke.py --bin <fresh build>` **→ resolved since — a CI job runs webphone-smoke on every push** |
+| 7     | Run `scripts/ui-capture.py` and eyeball the new 20th shot **→ resolved since — the T23 harness (24 shots) pins the 404 surface** |
+| 8     | Commit the whole train with a narrative message before the daemon does **→ NOT-DO — the train's history stayed daemon chore commits; the lesson landed in docs/lessons.md** |
 | ~~9~~ | ~~Push and watch CI to green (`gh run list`)~~ — done by every subsequent train (the standing "check CI after EVERY push" rule; latest green docs pushes: runs 42492544577/42493268358, 2026-11-08)        |
 
 **Deploy (owner/SSH gated)**
@@ -230,66 +230,66 @@ Test totals added this run: **13 functions** across 4 files.
 | #      | Task                                                                                                                                                                                                                                                            |
 | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ~~10~~ | ~~`nixos-rebuild switch --flake …#pbx` on the host~~ — done at the v2.9.0 release (deploy fired and verified; the release-2.9.0 hold-and-watch report's rows, archived 2026-11-08); subsequent host deploys ride the release trains per docs/release-runbook.md |
-| 11     | Logged-out `curl -sI https://pbx.artmann.tech/health` → 302 to the SSO sign-in **→ routed to TODO_LIST (stack residues: the fence legs) |** |
-| 12     | Signed-in `/health` renders cards; `/health/sse` streams **→ routed to TODO_LIST (stack residues: the fence legs) |** |
-| 13     | `/health/livez` returns `"status":"pass"` through the vhost **→ routed to TODO_LIST (stack residues: the fence legs) |** |
-| 14     | Confirm `/healthz`, `/livez`, `/startupz` still 200 **→ routed to TODO_LIST (stack residues: the fence legs) |** |
-| 15     | Decide whether the stack's uncommitted `flake.lock` bump is intended **→ resolved — the stack tree is clean; lock moves are governed by the guard + CHANGELOG ritual |** |
+| 11     | Logged-out `curl -sI https://pbx.artmann.tech/health` → 302 to the SSO sign-in **→ routed to TODO_LIST (stack residues: the fence legs)** |
+| 12     | Signed-in `/health` renders cards; `/health/sse` streams **→ routed to TODO_LIST (stack residues: the fence legs)** |
+| 13     | `/health/livez` returns `"status":"pass"` through the vhost **→ routed to TODO_LIST (stack residues: the fence legs)** |
+| 14     | Confirm `/healthz`, `/livez`, `/startupz` still 200 **→ routed to TODO_LIST (stack residues: the fence legs)** |
+| 15     | Decide whether the stack's uncommitted `flake.lock` bump is intended **→ resolved — the stack tree is clean; lock moves are governed by the guard + CHANGELOG ritual** |
 
 **C4 — stack VM test**
 
 | #  | Task                                                                       |
 | -- | -------------------------------------------------------------------------- |
-| 16 | Add `dashboard.enable = true` to `tests/webphone.nix`'s fixture **→ routed to TODO_LIST (stack residues: the dashboard-on leg) |** |
-| 17 | Assert external `/health` → 403 (the fence) **→ routed to TODO_LIST (stack residues: the dashboard-on leg) |** |
-| 18 | Assert loopback `https://localhost/health` → 200 with the dashboard marker **→ routed to TODO_LIST (stack residues: the dashboard-on leg) |** |
-| 19 | Assert `/health/` → 301 → `/health` **→ routed to TODO_LIST (stack residues: the dashboard-on leg) |** |
-| 20 | Assert the app port answers `/health` directly (the source) **→ routed to TODO_LIST (stack residues: the dashboard-on leg) |** |
-| 21 | Wire it into `checks` and document it in the stack README **→ routed to TODO_LIST (stack residues: the dashboard-on leg) |** |
+| 16 | Add `dashboard.enable = true` to `tests/webphone.nix`'s fixture **→ routed to TODO_LIST (stack residues: the dashboard-on leg)** |
+| 17 | Assert external `/health` → 403 (the fence) **→ routed to TODO_LIST (stack residues: the dashboard-on leg)** |
+| 18 | Assert loopback `https://localhost/health` → 200 with the dashboard marker **→ routed to TODO_LIST (stack residues: the dashboard-on leg)** |
+| 19 | Assert `/health/` → 301 → `/health` **→ routed to TODO_LIST (stack residues: the dashboard-on leg)** |
+| 20 | Assert the app port answers `/health` directly (the source) **→ routed to TODO_LIST (stack residues: the dashboard-on leg)** |
+| 21 | Wire it into `checks` and document it in the stack README **→ routed to TODO_LIST (stack residues: the dashboard-on leg)** |
 
 **Newly introduced surfaces**
 
 | #  | Task                                                                                       |
 | -- | ------------------------------------------------------------------------------------------ |
-| 22 | Ruling: should `<dataDir>/traces` ride the backup, or be excluded? **→ routed to TODO_LIST (traces-in-backup ruling, owner) |** |
-| 23 | If excluded: add the exclusion to the module's backup unit and document it **→ routed to TODO_LIST (traces-in-backup ruling, owner) |** |
-| 24 | Decide config-knob vs env-var for the flight recorder (deviation in d7) **→ resolved by owner ratification — env-only is the shipped shape (AGENTS) |** |
-| 25 | Consider making the latency buckets a named constant table with a comment per bucket **→ wont-implement (the ladder is pinned by latency_test.go) |** |
-| 26 | Align trace observation with the `/metrics` exclusion **→ routed to TODO_LIST (cluster: observation alignment) |** |
-| 27 | Document `go tool trace` usage with the gzip step in README (done) → add it to the runbook **→ resolved by re-homing — the usage lives in AGENTS's flight-recorder bullet (the rules one-home) |** |
-| 28 | Add a `/health`-style "is the recorder on?" line to Settings (optional) **→ wont-implement (debug-only opt-in; no Settings surface was ever requested again) |** |
+| 22 | Ruling: should `<dataDir>/traces` ride the backup, or be excluded? **→ routed to TODO_LIST (traces-in-backup ruling, owner)** |
+| 23 | If excluded: add the exclusion to the module's backup unit and document it **→ routed to TODO_LIST (traces-in-backup ruling, owner)** |
+| 24 | Decide config-knob vs env-var for the flight recorder (deviation in d7) **→ resolved by owner ratification — env-only is the shipped shape (AGENTS)** |
+| 25 | Consider making the latency buckets a named constant table with a comment per bucket **→ wont-implement (the ladder is pinned by latency_test.go)** |
+| 26 | Align trace observation with the `/metrics` exclusion **→ routed to TODO_LIST (cluster: observation alignment)** |
+| 27 | Document `go tool trace` usage with the gzip step in README (done) → add it to the runbook **→ resolved by re-homing — the usage lives in AGENTS's flight-recorder bullet (the rules one-home)** |
+| 28 | Add a `/health`-style "is the recorder on?" line to Settings (optional) **→ wont-implement (debug-only opt-in; no Settings surface was ever requested again)** |
 
 **Docs / plan hygiene**
 
 | #      | Task                                                                                                                                                                                                                                                                                                                     |
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| 29     | Amend the plan's C6 wording to match the shape rule (not "styled panel" for htmx) **→ superseded — the plan file is closed history (row 31) |** |
-| 30     | Amend the plan's C9 wording to the env-var reality **→ superseded — same ruling |** |
+| 29     | Amend the plan's C6 wording to match the shape rule (not "styled panel" for htmx) **→ superseded — the plan file is closed history (row 31)** |
+| 30     | Amend the plan's C9 wording to the env-var reality **→ superseded — same ruling** |
 | ~~31~~ | ~~Mark C4/C13/C14 status in the plan file~~ — SUPERSEDED by the ONE home: the standing stack legs (C4 = the dashboard-on VM test) now live in TODO_LIST § the stack-E2E/handover section with the 2026-11-08 cross-repo handover pack; the old plan file is closed history, its checkboxes do not get retro-active marks |
-| 32     | FEATURES.md: latency metrics + flight recorder rows **→ routed to TODO_LIST (observability docs rows) |** |
-| 33     | ROADMAP.md: observability depth entry **→ routed to TODO_LIST (observability docs rows) |** |
-| 34     | `docs/lessons.md`: the daemon-commit attribution lesson **→ resolved — the lesson landed (docs/lessons.md daemon-commit attribution) |** |
-| 35     | `docs/lessons.md`: the "plan says X, code pins Y" lesson **→ routed to TODO_LIST (lessons candidates) |** |
-| 36     | TODO_LIST: harvest from this report (§d + §f) **→ resolved 2026-11-11 — this drain is the harvest; open residues live in the TODO_LIST rows above |** |
-| 37     | Reconcile the go-appkit report against the now-direct `go-flightrecorder` dep **→ routed to TODO_LIST (go-appkit report refresh: the direct-dep fact) |** |
-| 38     | Note the flight recorder in the module's option docs (it is env-only, so the NixOS module needs a `settings`/env surface if it should be declarative) **→ routed to TODO_LIST (cluster: the declared recorder surface) |** |
+| 32     | FEATURES.md: latency metrics + flight recorder rows **→ routed to TODO_LIST (observability docs rows)** |
+| 33     | ROADMAP.md: observability depth entry **→ routed to TODO_LIST (observability docs rows)** |
+| 34     | `docs/lessons.md`: the daemon-commit attribution lesson **→ resolved — the lesson landed (docs/lessons.md daemon-commit attribution)** |
+| 35     | `docs/lessons.md`: the "plan says X, code pins Y" lesson **→ routed to TODO_LIST (lessons candidates)** |
+| 36     | TODO_LIST: harvest from this report (§d + §f) **→ resolved 2026-11-11 — this drain is the harvest; open residues live in the TODO_LIST rows above** |
+| 37     | Reconcile the go-appkit report against the now-direct `go-flightrecorder` dep **→ routed to TODO_LIST (go-appkit report refresh: the direct-dep fact)** |
+| 38     | Note the flight recorder in the module's option docs (it is env-only, so the NixOS module needs a `settings`/env surface if it should be declarative) **→ routed to TODO_LIST (cluster: the declared recorder surface)** |
 
 **Hardening ideas (owner-gated)**
 
 | #      | Task                                                                                                                                                                                                                                                          |
 | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 39     | Add a rate limit to `/internal/flightrecorder` (loopback-only today, but a runaway script could fill the directory) **→ routed to TODO_LIST (cluster: rate limit) |** |
-| 40     | Emit a metric for snapshots taken (count + bytes) instead of only logging **→ routed to TODO_LIST (cluster: snapshot metric) |** |
-| 41     | Add a startup log line when the recorder is on (operators forget) **→ routed to TODO_LIST (cluster: startup line) |** |
-| 42     | Guard `maxBytes` by available disk instead of the fixed default **→ routed to TODO_LIST (cluster: disk-aware maxBytes) |** |
-| 43     | Consider `Ptrace`/`perf`-free alternatives before growing this further **→ wont-implement (owner-gated consideration; no reopen pressure) |** |
-| 44     | Pin the histogram bucket set with a test so a refactor cannot silently re-bucket **→ resolved — latency_test.go pins the cumulative bucket set byte-exactly |** |
-| 45     | Add a `/metrics` self-test to the smoke suite (shape only) **→ resolved since — the smoke carries a metrics scenario |** |
+| 39     | Add a rate limit to `/internal/flightrecorder` (loopback-only today, but a runaway script could fill the directory) **→ routed to TODO_LIST (cluster: rate limit)** |
+| 40     | Emit a metric for snapshots taken (count + bytes) instead of only logging **→ routed to TODO_LIST (cluster: snapshot metric)** |
+| 41     | Add a startup log line when the recorder is on (operators forget) **→ routed to TODO_LIST (cluster: startup line)** |
+| 42     | Guard `maxBytes` by available disk instead of the fixed default **→ routed to TODO_LIST (cluster: disk-aware maxBytes)** |
+| 43     | Consider `Ptrace`/`perf`-free alternatives before growing this further **→ wont-implement (owner-gated consideration; no reopen pressure)** |
+| 44     | Pin the histogram bucket set with a test so a refactor cannot silently re-bucket **→ resolved — latency_test.go pins the cumulative bucket set byte-exactly** |
+| 45     | Add a `/metrics` self-test to the smoke suite (shape only) **→ resolved since — the smoke carries a metrics scenario** |
 | ~~46~~ | ~~Add the 404 shape rule to the stack's browser E2E expectations~~ — OPEN, harvested: lives in TODO_LIST § the standing stack legs (the 2026-10-23 404-health stack residues row, added 2026-11-08; grep-verified absent in the stack's tests/browser-e2e.py) |
-| 47     | Consider an arch test that `h.notFound` is the only HTML-router 404 writer **→ routed to TODO_LIST (cluster: notFound arch test) |** |
-| 48     | Re-check the art-dupl baseline now that the concurrent session's code landed **→ resolved 2026-11-11 — ran today: 2 new groups, both the active train's in-flight templ files |** |
-| 49     | Quarterly-style audit: enumerate the 24 remaining `http.NotFound` sites and re-rule them **→ routed to TODO_LIST (cluster: quarterly NotFound re-rule) |** |
-| 50     | Re-measure the errorfamily tiers (tier 2 must stay 0) after these changes **→ resolved 2026-11-11 — BuildFlow erraudit step 1/1 green (RC=0); next calendar 2026-12-08 |** |
+| 47     | Consider an arch test that `h.notFound` is the only HTML-router 404 writer **→ routed to TODO_LIST (cluster: notFound arch test)** |
+| 48     | Re-check the art-dupl baseline now that the concurrent session's code landed **→ resolved 2026-11-11 — ran today: 2 new groups, both the active train's in-flight templ files** |
+| 49     | Quarterly-style audit: enumerate the 24 remaining `http.NotFound` sites and re-rule them **→ routed to TODO_LIST (cluster: quarterly NotFound re-rule)** |
+| 50     | Re-measure the errorfamily tiers (tier 2 must stay 0) after these changes **→ resolved 2026-11-11 — BuildFlow erraudit step 1/1 green (RC=0); next calendar 2026-12-08** |
 
 ---
 
@@ -319,17 +319,17 @@ Test totals added this run: **13 functions** across 4 files.
 
 | Task | One line                                                |
 | ---- | ------------------------------------------------------- |
-| C1   | Live in config, not yet on the host **→ resolved at this run |** |
-| C2   | Pinned **→ resolved at this run |** |
-| C3   | Pinned, and de-duplicated **→ resolved at this run |** |
-| C4   | Not written **→ routed to TODO_LIST (stack residues: the dashboard-on leg) |** |
-| C5   | Written (README/AGENTS/CHANGELOG/error-contract) **→ resolved at this run |** |
-| C6   | Done, with the shape rule instead of blanket conversion **→ resolved at this run |** |
-| C7   | One home established **→ resolved at this run |** |
-| C8   | Route-family test in place **→ resolved at this run |** |
-| C9   | Built, tested, never exercised on a host **→ resolved at this run |** |
-| C10  | Live in `/metrics`, aggregates only **→ resolved at this run |** |
-| C11  | Ruled: plain text stays, with a named reopen trigger **→ resolved at this run |** |
-| C12  | Surface added, matrix unrun **→ resolved at this run |** |
-| C13  | Not run **→ resolved since (the harness shot) |** |
-| C14  | Not reconciled, commits unattributed **→ resolved since (the standing battery) |** |
+| C1   | Live in config, not yet on the host **→ resolved at this run** |
+| C2   | Pinned **→ resolved at this run** |
+| C3   | Pinned, and de-duplicated **→ resolved at this run** |
+| C4   | Not written **→ routed to TODO_LIST (stack residues: the dashboard-on leg)** |
+| C5   | Written (README/AGENTS/CHANGELOG/error-contract) **→ resolved at this run** |
+| C6   | Done, with the shape rule instead of blanket conversion **→ resolved at this run** |
+| C7   | One home established **→ resolved at this run** |
+| C8   | Route-family test in place **→ resolved at this run** |
+| C9   | Built, tested, never exercised on a host **→ resolved at this run** |
+| C10  | Live in `/metrics`, aggregates only **→ resolved at this run** |
+| C11  | Ruled: plain text stays, with a named reopen trigger **→ resolved at this run** |
+| C12  | Surface added, matrix unrun **→ resolved at this run** |
+| C13  | Not run **→ resolved since (the harness shot)** |
+| C14  | Not reconciled, commits unattributed **→ resolved since (the standing battery)** |
