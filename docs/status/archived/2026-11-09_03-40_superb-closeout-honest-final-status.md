@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-11 (cadence sweep, this session): gate-clean (check-rows complete + bare-rows clean before the mv). SUPERB's closeout verdicts stand; the train ships in v2.13.0.
+
 # SUPERB closeout — brutally honest final status (self-review + full inventory)
 
 > **Date:** 2026-11-09 03:40 CET (verified via `date`)

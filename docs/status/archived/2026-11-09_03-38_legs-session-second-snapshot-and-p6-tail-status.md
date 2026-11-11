@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-11 (cadence sweep, this session): gate-clean (check-rows complete + bare-rows clean before the mv). The P6 tail it tracks shipped in the 2026-11-09 release chain and rides v2.13.0.
+
 # Status: the legs session through its report and the Phase-6 tail — second snapshot
 
 Snapshot-rot header: claims verified as of **2026-11-09 03:38 CET**

@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-11 (cadence sweep, this session): gate-clean (check-rows complete + bare-rows clean before the mv). The release chain it completed produced v2.13.0 (released 2026-11-10).
+
 # SUPERB closeout, round 2 — reds healed, the enroll split-brain found and fixed, v2.12.0 completed
 
 > **Date:** 2026-11-09 05:xx CET (verify via `date`)
