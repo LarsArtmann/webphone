@@ -56,9 +56,10 @@ const toBytes = (value) =>
 // a {"publicKey": {...}} key (the WebAuthn API's own parameter shape).
 // navigator.credentials.create takes the INNER dictionary — unwrap here, at
 // the wire boundary; a bare dictionary keeps working for other callers.
-/** @param {IslandRegistrationOptionsWire | Record<string, unknown>} options */
+/** @param {IslandRegistrationOptionsWire | { publicKey?: unknown }} options @returns {IslandRegistrationOptionsWire} */
 const unwrapPublicKeyEnvelope = (options) =>
   options != null &&
+  "publicKey" in options &&
   typeof options.publicKey === "object" &&
   options.publicKey !== null
     ? /** @type {IslandRegistrationOptionsWire} */ (options.publicKey)
