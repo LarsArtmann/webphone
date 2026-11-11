@@ -1336,20 +1336,25 @@ def run_checks(
         status == 200 and "javascript" in ctype.lower() and b"data-theme" in body,
         f"{status} {ctype!r}",
     )
-    inline = re.search(r"<script(?![^>]*\bsrc=)[^>]*>.{0,120}", page, re.DOTALL)
-    c.ok(
-        "shell has zero inline scripts",
-        inline is None,
-        f"inline <script> without src found: {inline.group(0)[:140]!r}"
-        if inline
-        else "",
-    )
-
     # 4b. /partials/nav contract (F19): a signed-out session gets ZERO
     # links — the desk's tab row is for sessions that can use it; the
     # signed-in re-fetch below is the only badge source. A fresh Smoke
     # keeps it session-free even mid-suite.
     anon_nav = Smoke(s.base)
+    # 4a-bis. The zero-inline-script contract belongs to the SHELL: an
+    # anonymous deep link renders it session-free (the login page is the
+    # nonce'd inline-script surface by design, so `page` above must not
+    # be the probe).
+    status, shell_anon, _ = anon_nav.request("GET", "/messages")
+    shell_page = shell_anon.decode("utf-8", "replace")
+    inline = re.search(r"<script(?![^>]*\bsrc=)[^>]*>.{0,120}", shell_page, re.DOTALL)
+    c.ok(
+        "shell has zero inline scripts",
+        status == 200 and inline is None and b'id="reg-status"' in shell_anon,
+        f"{status} inline <script> without src found: {inline.group(0)[:140]!r}"
+        if inline
+        else f"{status} not the shell",
+    )
     status, body, _ = anon_nav.request("GET", "/partials/nav")
     nav_anon = body.decode("utf-8", "replace")
     c.ok(
@@ -1361,7 +1366,8 @@ def run_checks(
     # 4c. Unknown paths render the STYLED 404: shell chrome around the
     # not-found panel (literal 404, the requested path echoed back, a way
     # home, NO reload button), status stays 404. Works in --base foreign
-    # mode too, so the post-deploy probe validates prod.
+    # mode too, so the post-deploy probe validates prod. The island fact
+    # is #phone-view — the login card left the island (front-door train).
     status, body, _ = anon_nav.request("GET", "/definitely/not/a/path")
     nf = body.decode("utf-8", "replace")
     c.ok(
@@ -1370,7 +1376,7 @@ def run_checks(
         and 'class="wp-panel wp-notfound"' in nf
         and "/definitely/not/a/path" in nf
         and "Back to Messages" in nf
-        and 'id="login-view"' in nf,
+        and 'id="phone-view"' in nf,
         f"{status} bare-or-unstyled: {nf[:80]!r}",
     )
 

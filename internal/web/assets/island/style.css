@@ -1,53 +1,54 @@
-/* WebPhone — desk-phone vernacular: a quiet, hardware-true surface with
+/* WebPhone — handset vernacular: a quiet, hardware-true surface with
  * one line light (the status pill) and keys that answer the hand.
  * Everything is driven by the token block below; light and dark are
  * first-class themes (prefers-color-scheme), the brand mark picks up
- * its colors from the same tokens. */
+ * its colors from the same tokens. Tokens are MIRRORED with app.css
+ * (2026-11-11 indigo restyle) — keep both in sync. */
 
 :root {
   color-scheme: dark light;
-  --bg: #0b0d11;
-  --surface: #14171d;
-  --surface-2: #1a1f27;
-  --surface-3: #232a35;
-  --border: #272e3b;
-  --border-strong: #3c4557;
-  --text: #e7ebf1;
-  --muted: #97a1b2;
-  --accent: #17a467;
-  --accent-strong: #3fd694;
-  --accent-soft: rgb(63 214 148 / 13%);
+  --bg: #0c0f16;
+  --surface: #131824;
+  --surface-2: #1a2130;
+  --surface-3: #232c40;
+  --border: #273044;
+  --border-strong: #3b4666;
+  --text: #e8ebf5;
+  --muted: #98a2b8;
+  --accent: #5b7cfa;
+  --accent-strong: #7d95ff;
+  --accent-soft: rgb(91 124 250 / 14%);
   /* Dark ink on the bright dark-theme fills (mirror of the app.css token;
-   * white ink measured 3.21:1 on --accent, 1.87:1 on hover). Light keeps
-   * white ink on its darker accent (declared in the light block below). */
-  --on-accent: #0b0d11;
+   * white ink measured 3.2:1 on --accent, worse on hover). Light keeps
+   * white ink on its deeper accent (declared in the light block below). */
+  --on-accent: #0c0f16;
   --scrim: rgb(4 6 10 / 62%);
   --danger: #ef6a5f;
   --danger-strong: #f6837b;
   --warn: #e0a63e;
   --ok: #3fd694;
   --led: #4a5361;
-  --radius-sm: 6px;
-  --radius: 9px;
-  --radius-lg: 12px;
-  --shadow: 0 1px 2px rgb(0 0 0 / 44%), 0 10px 30px rgb(0 0 0 / 32%);
-  --key: #202632;
-  --key-down: #2a3242;
+  --radius-sm: 8px;
+  --radius: 10px;
+  --radius-lg: 16px;
+  --shadow: 0 1px 2px rgb(0 0 0 / 50%), 0 18px 44px -14px rgb(0 0 0 / 55%);
+  --key: #1c2438;
+  --key-down: #26304a;
 }
 
 @media (prefers-color-scheme: light) {
   :root {
-    --bg: #eef1f5;
+    --bg: #eef0f5;
     --surface: #ffffff;
-    --surface-2: #f4f6f9;
-    --surface-3: #e9edf2;
-    --border: #dee4eb;
-    --border-strong: #c6cfd9;
-    --text: #121820;
-    --muted: #5a6674;
-    --accent: #0e8752;
-    --accent-strong: #0a6e42;
-    --accent-soft: rgb(14 135 82 / 10%);
+    --surface-2: #f4f5f9;
+    --surface-3: #e8eaf1;
+    --border: #dde1ea;
+    --border-strong: #c3cad8;
+    --text: #131722;
+    --muted: #5b6577;
+    --accent: #3b5bdb;
+    --accent-strong: #2f49b8;
+    --accent-soft: rgb(59 91 219 / 9%);
     --danger: #d3382c;
     --danger-strong: #b52f24;
     --warn: #9a5b0a;
@@ -55,9 +56,9 @@
     --on-accent: #ffffff;
     --led: #a6b2bd;
     --shadow:
-      0 1px 2px rgb(16 24 32 / 6%), 0 12px 28px -6px rgb(16 24 32 / 10%);
+      0 1px 2px rgb(18 22 40 / 7%), 0 16px 36px -10px rgb(18 22 40 / 14%);
     --key: #ffffff;
-    --key-down: #e7ecf1;
+    --key-down: #e7eaf2;
   }
 }
 

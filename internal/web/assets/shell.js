@@ -184,6 +184,17 @@
   // even when the island itself failed) and rethrow to the console —
   // never a silent half-wired shell.
   try {
+    // 0. Page-change feel for tab navigation (2026-11-11 restyle): htmx
+    //    wraps every swap in document.startViewTransition when the
+    //    browser has the API, so switching tabs cross-fades like a page
+    //    change instead of a hard content snap. Progressive enhancement
+    //    only — no API, no config change. Reduced motion is handled in
+    //    CSS (the ::view-transition pseudos live outside the document
+    //    tree, so JS cannot reach them and must not try).
+    if (window.htmx && window.htmx.config) {
+      window.htmx.config.globalViewTransitions = true;
+    }
+
     // 1. Nav active state across HTMX partial swaps: the server marks the
     //    active link on full renders; after a partial swap only the clicked
     //    link knows. htmx:afterRequest fires on the link that issued it.
