@@ -378,7 +378,9 @@ func TestServedPageHoldsTheDomContract(t *testing.T) {
 	// renders only for a session that can use it. The anonymous shell
 	// (deep links keep the door; / redirects to the login page) keeps the
 	// #wp-nav region (the post-login re-fetch target) with zero links.
-	anonResp, anonBody := c.do(http.MethodGet, "/messages", nil, "")
+	// A FRESH client: this test's own cookie jar holds the session above.
+	anon := newClient(t)
+	anonResp, anonBody := anon.do(http.MethodGet, "/messages", nil, "")
 	if anonResp.StatusCode != http.StatusOK {
 		t.Fatalf("anonymous deep link status %d", anonResp.StatusCode)
 	}

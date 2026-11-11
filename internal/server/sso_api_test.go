@@ -226,11 +226,11 @@ func TestSSOCallbackFailuresMapOntoTheLoginCardVocabulary(t *testing.T) {
 		err  error
 		want string
 	}{
-		{"unmapped email", errorfamily.NewRejection("sso.unmapped_email", "no mapping"), "/?sso_error=unmapped"},
-		{"unverified email", errorfamily.NewRejection("sso.email_unverified", "unverified"), "/?sso_error=unverified"},
-		{"bad secret", errorfamily.NewRejection("sso.client_secret.read", "gone"), "/?sso_error=config"},
-		{"idp down", errorfamily.NewRejection("sso.discovery", "unreachable"), "/?sso_error=unavailable"},
-		{"anything else", errorfamily.NewRejection("sso.code", "no code"), "/?sso_error=failed"},
+		{"unmapped email", errorfamily.NewRejection("sso.unmapped_email", "no mapping"), "/login?sso_error=unmapped"},
+		{"unverified email", errorfamily.NewRejection("sso.email_unverified", "unverified"), "/login?sso_error=unverified"},
+		{"bad secret", errorfamily.NewRejection("sso.client_secret.read", "gone"), "/login?sso_error=config"},
+		{"idp down", errorfamily.NewRejection("sso.discovery", "unreachable"), "/login?sso_error=unavailable"},
+		{"anything else", errorfamily.NewRejection("sso.code", "no code"), "/login?sso_error=failed"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			stub := happySSOStub()
