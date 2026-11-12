@@ -23,6 +23,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Reports gains a dashboard grid (day/hour ladders side by side at
   wide tab columns); Contacts lays out in a fitted grid (two-up on
   desktop, one column narrow).
+- **Capture harness per-surface controls.** `--hover-map SURFACE=SELECTOR`
+  varies the hover lane per shot, `--seed-class SELECTOR=CLASS` pre-seeds
+  a class (the dialer-focus layout is capturable without taps),
+  `--lang de|en` shoots localized surfaces, and `--tap-through` proves
+  the mobile Phone→island→tab-return flow (asserts all three states in
+  the DOM before each shot, exits non-zero on a miss). The History
+  day-head row class split (`wp-table-day-head`) separates the CDR
+  table lane from the transcript lane that keeps `wp-day-head`.
+- **The scrollable table wrapper answers keyboard focus** with a
+  visible ring (`:focus-visible`, offset inside the sticky-head clip),
+  and the app's z-index ladder is commented at the sticky-head rule.
 
 ### Added
 
@@ -35,6 +46,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The mobile Phone focus no longer traps navigation.** The
+  dialer-focus rule hid `.wp-main-col` — which contains the tab nav,
+  the only way back out of island focus. It now hides `#tab-content`
+  and `#wp-tab-error` only; the nav stays reachable and the
+  `--tap-through` capture proves the return (found by that proof
+  2026-11-12).
 - **Passkey Settings is the session's OWN account.** The Settings passkey
   list/revoke resolved the owner through the shared-extension fallback
   (MappedByExtension), so on a shared line a classic extension-password

@@ -30,26 +30,26 @@ var depthBudgetNames = map[string]depthCeiling{
 	// The journal world: deciders + projections + machine tables. ONE
 	// home by ratified ruling (the single go.mod + ONE journal world);
 	// its size is the product of that ruling, not neglect.
-	"internal/cqrs": {loc: 6000, exports: 100},
+	"cqrs": {loc: 6000, exports: 100},
 	// The domain vocabulary: exported types ARE the product here (every
 	// branded id, event and machine table lives in this package).
-	"internal/domain": {loc: 2500, exports: 180},
+	"domain": {loc: 2500, exports: 180},
 	// The html residual (the hub pages.go/panels.go/actions.go + the
 	// non-carved surfaces). The 2026-11-12 carve train already split
 	// auth+platform out; the TODO_LIST carve row owns the html question
 	// (ruled: only a real architecture change reopens it, never a
 	// mechanical move).
-	"internal/server": {loc: 5200, exports: 60},
+	"server": {loc: 5200, exports: 60},
 	// The carved island JSON surface: fixture-heavy (wire DTOs + fuzz
 	// corpora) but the ceiling still pins today's shape.
-	"internal/server/api": {loc: 1900, exports: 60},
+	"server/api": {loc: 1900, exports: 60},
 	// The SQL ladder is FROZEN (store/db.go header): sessions stay SQL,
 	// everything else is import-only history the retention sweep
 	// empties — the package only shrinks from here.
-	"internal/store": {loc: 1900, exports: 60},
+	"store": {loc: 1900, exports: 60},
 	// The composition root: one field per optional seam (the DI
 	// surface's documented shape) plus the adapters.
-	"internal/app": {loc: 1650, exports: 40},
+	"app": {loc: 1650, exports: 40},
 }
 
 const (
@@ -66,15 +66,15 @@ type depthCeiling struct {
 // ceilings. Generated and test files are excluded; testdata is not a
 // package.
 func TestPackageDepthBudget(t *testing.T) {
-	roots, err := os.ReadDir("internal")
+	roots, err := os.ReadDir("..")
 	if err != nil {
 		t.Fatalf("read internal/: %v", err)
 	}
 	for _, root := range roots {
-		if !root.IsDir() || root.Name() == "testdata" {
+		if !root.IsDir() || root.Name() == "arch" || root.Name() == "testdata" {
 			continue
 		}
-		base := filepath.Join("internal", root.Name())
+		base := filepath.Join("..", root.Name())
 		pkgs, err := os.ReadDir(base)
 		if err != nil {
 			t.Fatalf("read %s: %v", base, err)
@@ -138,11 +138,12 @@ func measureDepth(t *testing.T, dir string) {
 		return // a grouping directory (internal/ itself), not a package
 	}
 
-	ceiling, exempt := depthBudgetNames[dir]
+	key := strings.TrimPrefix(dir, "../")
+	ceiling, exempt := depthBudgetNames[key]
 	if !exempt {
 		ceiling = depthCeiling{loc: defaultMaxLOC, exports: defaultMaxExports}
 	}
-	rel := strings.TrimPrefix(dir, "internal/")
+	rel := key
 	if loc > ceiling.loc {
 		t.Errorf("%s: %d hand-written LOC exceeds the %d ceiling%s — split the package (the carve precedent: api/hooks/auth/platform) or lower its depth; raising the pin needs a reason in the exemption table's same commit",
 			rel, loc, ceiling.loc, exemptionNote(exempt))
