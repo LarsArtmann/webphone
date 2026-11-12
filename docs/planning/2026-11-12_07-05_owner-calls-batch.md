@@ -49,11 +49,38 @@ _Default if unanswered:_ archived at the next sweep as a zombie draft.
 
 ## Executed-by-default (ratify or reverse)
 
-**E1 — Bump timing** (04-10 report, question 2): go-paperless v0.5.2 and
-catalog/v4 v4.15.0 bumps were dispatched NOW (the 06-17 plan's M14/M15,
-under the owner's blanket "execute the whole list" GO) instead of riding the
-next fleet train. Neither changes a consumed surface. Ratify the precedent or
-revert to bump-only-on-trains.
+**E1 — Bump timing** (04-10 report, question 2): go-paperless v0.5.2 was
+EXECUTED 2026-11-12 (the 06-17 plan's M14, under the blanket GO; landed
+585f630a, vendorHash re-pinned, suites green) — ratify the precedent or
+revert to bump-only-on-trains. The catalog half of E1 DISSOLVED: F045's
+resolvability check found NO v4.15.0 published (latest = v4.14.0 = our
+pin); there was nothing to bump and the stale v4.9.0→v4.10.0 owner-gate
+row is struck as superseded.
+
+## Gated rows — staged recipes (run when un-gated)
+
+**M18 — stack redeploy + voicemail verdict** (owner-gated; ~60m):
+
+1. In the stack repo: bump the webphone pin to current main, `nix flake check`, deploy (`nixos-rebuild switch`).
+2. On prod, click play on a voicemail with a DEAD recording (the standing live defect).
+3. RECORD: the toast text shown (the live trigger's name), whether it repeats per attempt, and — if accessible — `journalctl -u webphone | grep -i voicemail` around the click.
+4. Verdict line lands in the TODO_LIST voicemail row; the toast contract was fixed 2026-11-10 (one honest toast per episode) — prod confirms the fix rode the deploy.
+
+**M19 — authenticated prod capture** (owner-gated on CREDS; ~60m):
+
+- Needs `WEBPHONE_CAPTURE_EXTENSION` + `WEBPHONE_CAPTURE_PASSWORD` for pbx.artmann.tech (third ask — see Q6 below), OR the stack-redeploy-first order (M18 before M19).
+- Command: `WEBPHONE_CAPTURE_EXTENSION=1001 WEBPHONE_CAPTURE_PASSWORD=<sip-dir-password> nix shell nixpkgs#chromium nixpkgs#chromedriver nixpkgs#python312.withPackages(ps: [ ps.selenium ps.pillow ]) --command python3 scripts/ui-capture.py --base-url https://pbx.artmann.tech --track`
+- Then `--open` the gallery for the owner walkthrough. Run dir: `ui-shots/pbx.artmann.tech/<UTC-stamp>/`.
+
+**M20 — night-run stability pair** (owner-gated on WINDOW; calendar note):
+
+- Two tracked runs ≥8h apart in the quiet window (e.g. 02:00 + 11:00 CET) against the SAME deployment; diff the noise floor, calibrate the badge threshold (currently `--badge-bar` default), record values in the tracking plan. First leg can piggyback on M19's first tracked run.
+
+**M21 — ring-guard positive path** (owner-gated on a REAL inbound call):
+
+- During a tracked run, place a real inbound call to the captured extension; the harness re-shoots `#incoming-call:not([hidden])`; the re-shot frame lands in the run dir. Pair with M19/M20 runs to avoid a dedicated session.
+
+**Q6 — M19 credentials (third ask)**: provide the prod capture creds (or order M18 first so the session mints its own).
 
 ## Stub: the sibling plan's batch (05-25 T21 appends here)
 

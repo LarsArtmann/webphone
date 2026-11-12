@@ -1202,14 +1202,14 @@ CQRS write model), the `catalog` CLI subcommand, export tests, and
 `46cc6db` is on origin/main. **The cross-repo leg EXECUTED 2026-11-08 (P4-10):**
 the hub rides `branch: main` (no sha pin to bump — the "re-pin" is the
 mirror-sync build), the Forgejo webphone mirror was force-synced to the GitHub tip
-  (`mirror-sync-sources.sh webphone` → ✓ at tip), and hub run #240 is **GREEN
-  end-to-end** (export, merge, governance lint, site build, publish) — reached
-  through three real repairs: the CI host's runner state-root ownership (a
-  NixOS switch renumbered the DynamicUser; chown + a durable-fix row in the
-  hub's TODO), the crm source's stale go-modules vendorHash (re-pinned at the
-  66f37f3 tip in the crm repo, `37a1957`), and a hub workflow step-scoping bug
-  (`current_contract` derived in the build step but read in the verify step —
-  `7551d4a`). The site published; the hourly sync pulls it to catalog.home.lan.
+(`mirror-sync-sources.sh webphone` → ✓ at tip), and hub run #240 is **GREEN
+end-to-end** (export, merge, governance lint, site build, publish) — reached
+through three real repairs: the CI host's runner state-root ownership (a
+NixOS switch renumbered the DynamicUser; chown + a durable-fix row in the
+hub's TODO), the crm source's stale go-modules vendorHash (re-pinned at the
+66f37f3 tip in the crm repo, `37a1957`), and a hub workflow step-scoping bug
+(`current_contract` derived in the build step but read in the verify step —
+`7551d4a`). The site published; the hourly sync pulls it to catalog.home.lan.
 
 ### Wire contracts (2026-10-24 — SHIPPED; three open rows)
 
@@ -1219,15 +1219,15 @@ rule lives in [docs/contracts/README.md](docs/contracts/README.md); generation
 evidence in the 16-50 plan + its execution status). Open rows:
 
 - ~~**OWNER-GATED: catalog v4.9.0→v4.10.0 bump** — 213 commits
-      (architecture-reference + export-selection features webphone does
-      not use; the seven upstream candidates are NOT obviously fixed).
-      Lean: ride the next natural train. Same notes file. **Priority:**
-      Low · **Effort:** S (decision) / M (bump).~~ →
-      superseded 2026-11-12 — the pin is ALREADY v4.14.0 (go.mod; later
-      natural trains rode it well past v4.10.0), and the plan's M15
-      resolvability check (F045) found NO v4.15.0 published upstream —
-      the pin is CURRENT, this row is moot; a future bump needs an
-      upstream release first.
+  (architecture-reference + export-selection features webphone does
+  not use; the seven upstream candidates are NOT obviously fixed).
+  Lean: ride the next natural train. Same notes file. **Priority:**
+  Low · **Effort:** S (decision) / M (bump).~~ →
+  superseded 2026-11-12 — the pin is ALREADY v4.14.0 (go.mod; later
+  natural trains rode it well past v4.10.0), and the plan's M15
+  resolvability check (F045) found NO v4.15.0 published upstream —
+  the pin is CURRENT, this row is moot; a future bump needs an
+  upstream release first.
 - [ ] **webphone-android consumes the specs** — REMAINING HALF is the
       runtime digest handshake: fetch a contract digest of exactly the
       paths/shapes the app uses at origin-config time (the 304 ETag
