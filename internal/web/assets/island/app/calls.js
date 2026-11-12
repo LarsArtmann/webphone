@@ -23,7 +23,6 @@ import {
   metricsBeacon,
   sipDomain,
 } from "./config.js";
-import { authedFetch } from "./auth.js";
 import {
   agoLabel,
   consultDialGate,

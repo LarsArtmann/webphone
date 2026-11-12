@@ -278,14 +278,14 @@ a deliberate code change, regenerate:
 | admin.password_file.missing                  | Rejection                 | internal/admin/admin.go           |
 | agent.summarize                              | Transient                 | internal/server/api/review_api.go |
 | api.note_save                                | Infrastructure            | internal/server/api/note_api.go   |
-| asr.decode                                   | Transient                 | internal/asr/asr.go               |
-| asr.empty                                    | Rejection                 | internal/asr/asr.go               |
-| asr.encode                                   | Infrastructure            | internal/asr/asr.go               |
-| asr.http                                     | Transient, runtime-split  | internal/asr/asr.go               |
-| asr.read                                     | Transient                 | internal/asr/asr.go               |
-| asr.request                                  | Infrastructure            | internal/asr/asr.go               |
-| asr.transport                                | Transient                 | internal/asr/asr.go               |
-| asr.url                                      | Rejection                 | internal/asr/asr.go               |
+| asr.decode                                   | Transient                 | internal/asr/google.go            |
+| asr.empty                                    | Rejection                 | internal/asr/client.go            |
+| asr.encode                                   | Infrastructure            | internal/asr/google.go            |
+| asr.http                                     | Transient, runtime-split  | internal/asr/transport.go         |
+| asr.read                                     | Transient                 | internal/asr/google.go            |
+| asr.request                                  | Infrastructure            | internal/asr/client.go            |
+| asr.transport                                | Transient                 | internal/asr/transport.go         |
+| asr.url                                      | Rejection                 | internal/asr/client.go            |
 | authmap.password_file.empty                  | Rejection                 | internal/authmap/authmap.go       |
 | authmap.password_file.missing                | Rejection                 | internal/authmap/authmap.go       |
 | authmap.password_file.read                   | Rejection                 | internal/authmap/authmap.go       |
