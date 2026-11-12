@@ -531,6 +531,7 @@ a deliberate code change, regenerate:
 | push.ntfy_send                               | Infrastructure, Rejection | internal/push/ntfy.go             |
 | push.registry                                | Rejection                 | internal/push/push.go             |
 | push.transport                               | Rejection                 | internal/push/push.go             |
+| push.transport_parse                         | Rejection                 | internal/push/push.go             |
 | session.insert                               | Infrastructure            | internal/session/sqlite.go        |
 | session.migrate                              | Infrastructure            | internal/session/sqlite.go        |
 | session.migrate_login_email                  | Infrastructure            | internal/session/sqlite.go        |
