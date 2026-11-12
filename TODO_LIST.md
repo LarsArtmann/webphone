@@ -1518,3 +1518,4 @@ T01–T16 are done (strikes live in the plan file + the 2026-11-12 status report
 6. **T22** — erraudit nolint-audit (carve trains moved directive sites) + standing-calendar sweep (F56/F61).
 7. **T23** — cqrs-lint upstream drafts (suppression state machine + D005), owner-tick gated (F57).
 8. **T24 release tails** (F58–F60): the 18-08 archived-corpus drain train (the annotate pin's way back DOWN), flight-recorder/docs rows, release-log archival policy row.
+9. **Island small-hardening residue** (harvested from the 05-22 trains report): note-textarea bytes-vs-chars cap alignment for multibyte; login-page.js localStorage try/catch; dial-form double-submit guard; `htmx.ajax` unhandled-rejection catches in restoreLastTab/live-context paths.

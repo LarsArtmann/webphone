@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-12 (docs-health v11 sweep): closeout complete — the near-miss fix + guard landed (M05 train closed)
+
 # Session status — M05 storage-ladder closeout, the driver-registration near-miss, and the flake hunt (2026-11-12, 06:4x CET)
 
 > Claims verified as of 06:45 CET · main `f3fd6cd7`, CI GREEN (run 43160641817) · this

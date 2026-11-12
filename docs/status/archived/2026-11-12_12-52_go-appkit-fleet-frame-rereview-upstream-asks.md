@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-12 (docs-health v11 sweep): superseded by AGENTS.md's go-appkit fleet-frame section — the three asks are filed (#59/#60/#61) and the ruling lives there
+
 # go-appkit fleet-frame re-review + upstream asks — session status
 
 **Claims verified as of 12:52 CET 2026-11-12 · session window ~07:00–12:52 (this

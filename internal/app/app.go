@@ -216,9 +216,11 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	do.Provide(injector, func(i do.Injector) (*pbx.Client, error) {
 		return pbx.NewClient(cfg.PhoneAPIURL)
 	})
+	//samber-linter:allow hw-4 resolved eagerly via the named "crm" alias below when the seam is on; off = no crm leg anywhere
 	do.Provide(injector, func(i do.Injector) (*crm.Client, error) {
 		return crm.NewClient(cfg.CRM.URL, cfg.CRM.Token, cfg.CRM.CAFile)
 	})
+	//samber-linter:allow hw-4 resolved eagerly via the named "crm" alias below when the seam is on (probe discovery)
 	do.Provide(injector, func(i do.Injector) (*crm.Resolver, error) {
 		return crm.NewResolver(do.MustInvoke[*crm.Client](i), cfg.CRM.ContactURL, log), nil
 	})
@@ -352,6 +354,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	do.Provide(injector, func(i do.Injector) (*session.SQLiteStore, error) {
 		return session.NewSQLiteStore(do.MustInvokeNamed[*store.Database](i, "sqlite").SQL(), cfg.SessionTTL)
 	})
+	//samber-linter:allow hw-1 health is the hand-assembled go-health probe (per-surface grading); the hub's liveness is the /events surface, never a do-healthcheck row
 	do.Provide(injector, func(i do.Injector) (*server.ExtensionHubs, error) {
 		return server.NewHubs(), nil
 	})

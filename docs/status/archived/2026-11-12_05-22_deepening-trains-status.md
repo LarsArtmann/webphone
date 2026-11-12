@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-12 (docs-health v11 sweep): fully struck; open P1 residue routed to TODO_LIST (island small-hardening row); superseded by the 05-25 deepening plan + the 13-15/14-20 execution reports
+
 # Deepening trains + review series — session status
 
 **Snapshot:** 2026-11-12 05:22 · claims verified against source/tree at write time ·
@@ -170,7 +172,7 @@ re-point the webhook switch.
 21. Note textarea cap is bytes-vs-chars mismatched for multibyte — align.
 22. login-page.js localStorage try/catch.
 23. Dial-form double-submit guard.
-24. `htmx.ajax` unhandled-rejection catches (restoreLastTab/live-context).
+24. ~~`htmx.ajax` unhandled-rejection catches (restoreLastTab/live-context).~~ → routed 2026-11-12: TODO_LIST island small-hardening row (with its 21–23 siblings).
 
 **Docs/ritual (P2):**
 25. Run the docs-gates battery; measure the ratchets after this session's volume.
