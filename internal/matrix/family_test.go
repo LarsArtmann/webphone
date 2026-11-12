@@ -1,10 +1,10 @@
 package matrix
 
 import (
-	"strings"
-	"net/http/httptest"
-	"net/http"
 	"io"
+	"net/http"
+	"net/http/httptest"
+	"strings"
 	"testing"
 
 	errorfamilytest "github.com/larsartmann/go-error-family/errorfamilytest"

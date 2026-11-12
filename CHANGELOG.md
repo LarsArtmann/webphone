@@ -53,6 +53,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **The matrix receiver self-heals a poisoned or oversized sync
+  instead of wedging.** A saved sync cursor the homeserver refuses
+  (400 M_UNKNOWN) used to stop the loop loudly on a self-inflicted
+  Rejection, and a resumed backlog beyond the 1 MiB answer cap used to
+  fail forever as a confusing decode error; the cap now sits at 16 MiB
+  with its own `matrix.too_large` verdict, and both arms reset the
+  cursor and re-sync fresh (bounded by the backoff ladder).
+- **The FCM sender no longer replays a refused access token.** A 401/403
+  on `messages:send` now drops the cached OAuth grant, so the next ring
+  mints a fresh one instead of failing until the nominal expiry.
+- **The CRM lookup and context reads are capped** (1 MiB, a distinct
+  `crm.too_large` Transient) — a broken or hostile CRM can no longer
+  balloon the process through the render-time enrichment path.
 - **The mobile Phone focus no longer traps navigation.** The
   dialer-focus rule hid `.wp-main-col` — which contains the tab nav,
   the only way back out of island focus. It now hides `#tab-content`

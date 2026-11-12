@@ -1,8 +1,6 @@
 package push
 
 import (
-	"sync/atomic"
-	"fmt"
 	"context"
 	"crypto"
 	"crypto/rand"
@@ -13,12 +11,14 @@ import (
 	"encoding/json/v2"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/larsartmann/go-error-family"

@@ -6,11 +6,11 @@
 package crm_test
 
 import (
-	"strings"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/larsartmann/go-error-family"
