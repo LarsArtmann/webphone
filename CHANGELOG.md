@@ -72,6 +72,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   4000-char maxlength; five comment sites stop describing the retired
   readmodels.db world as live.
 
+### Changed
+
+- **One credential-answer policy (`sessionAnswer`).** The passkey
+  finish and resume mint paths built their post-mint credential
+  responses by hand; both now answer through one home that owns the
+  SIP derived-credential + identity shape, so a policy change cannot
+  fork between the login lanes.
+- **One push delivery policy (`push.Fanout.Fan`).** Ring hooks and
+  draft notifications each hand-rolled their detach-and-budget
+  goroutine; `Fan(ctx, owner, fact)` is now the single fire path
+  (`context.WithoutCancel` + 15s budget + prune-on-unregistered), and
+  the per-site loops are deleted.
+- **Thread vocabulary lives in readmodels.** `ThreadSummary`/`ThreadFlag`
+  — the row shapes the UI actually renders — moved next to their
+  projection; the store's SQL-ladder spellings are unexported with a
+  dated retirement note, ending the two-sources-of-truth for the
+  thread-list shape.
+
+### Fixed
+
+- **Hold settles on the far-end verdict, not the send.** The hold/resume
+  toggle committed `held` when the re-INVITE left the browser; a dead
+  link now shows the truth. `sipverdict.js` (`inviteVerdict`) wraps the
+  re-INVITE in a requestDelegate and settles on onAccept/onReject
+  (accepted/rejected/send-failed/timeout, 30s cap); failed toggles
+  return the SETTLED prior state.
+
 ## [2.14.0] - 2026-11-11
 
 ### Changed
