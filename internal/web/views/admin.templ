@@ -6,7 +6,6 @@ import (
 	"github.com/larsartmann/templ-components/display"
 	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/readmodels"
 )
 
@@ -77,7 +76,7 @@ type AdminCallRow struct {
 
 // AdminCDRRow is one call record with the line it belongs to.
 type AdminCDRRow struct {
-	CDR       pbx.CDR
+	CDR       CDREntry
 	Extension string
 }
 

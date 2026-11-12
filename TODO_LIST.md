@@ -427,16 +427,19 @@ The full client-side adoption question is CLOSED (NO-GO, posture 78/100,
 docs/research/2026-11-07_datastar-deep-dive.html — supersedes the 2026-11-04
 go-datastar adjacent ruling's trigger paragraph). One actionable item fell out:
 
-- [ ] Retire `/health` `'unsafe-eval'`: go-health-dashboard upstream adopts the
+- ~~Retire `/health` `'unsafe-eval'`: go-health-dashboard upstream adopts the
       embedded Datastar v1.0.3 nonce + Trusted Types lane (emit `data-nonce` on its
       page, grant `'nonce-…'` instead of `'unsafe-eval'` in its csp.go), then
       re-pin `TestAppDashboardMountsHealthSubtree` (app_test.go:135) to assert the
-      nonce form. Evidence: report F4.
-- [ ] **Implement the dashboard lane in the library repo** (go-health-dashboard):
+      nonce form. Evidence: report F4.~~ →
+      adjudicated 2026-11-12 — the "nonce INSTEAD OF unsafe-eval" premise is unsatisfiable: the shipped csp.go (v0.13.1, commit 449aeb3) adds the nonce BESIDE `'unsafe-eval'` because the Datastar SDK compiles its data-* expressions with the Function constructor regardless of nonces (library comment + webphone dashboard.go + deep-dive F4 agree). The ACHIEVABLE half already landed and is pinned: per-request nonce'd inline scripts + the nonce'd CSP are asserted by TestAppDashboardMountsHealthSubtree (both tokens + rotation). The eval-free re-open trigger lives with Datastar upstream (expression compilation without eval) or a dashboard drop of Datastar — not this repo.
+- ~~**Implement the dashboard lane in the library repo** (go-health-dashboard):
       the nonce emit + CSP grant above, then run ITS gates there — this repo cannot
-      ship the change and must not fake it locally.
-- [ ] **Release the dashboard version** (tag) once the lane lands — owner call per
-      the report's §g1; only then can webphone bump and re-pin the CSP assertion.
+      ship the change and must not fake it locally.~~ →
+      done (by train) — the library shipped cspPolicy(nonce, hardened) + strict variant (go-health-dashboard 449aeb3, first released v0.13.1); local checkout verified 2026-11-12
+- ~~**Release the dashboard version** (tag) once the lane lands — owner call per
+      the report's §g1; only then can webphone bump and re-pin the CSP assertion.~~ →
+      done — v0.13.1/2/3 tagged; webphone pins v0.13.2 and the CSP assertion already asserts the nonce form (app_test.go TestAppDashboardMountsHealthSubtree)
 
 ### 2026-11-06 GitHub-issue train residue (harvest from the 10:45 report)
 

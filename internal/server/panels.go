@@ -238,6 +238,24 @@ func agentReviewsOf(reviews *textagent.Reviews) *views.AgentReviews {
 	return out
 }
 
+// cdrEntries converts the PBX CDR feed into the view-owned rows — the
+// ONE boundary conversion for the history/admin call records.
+func cdrEntries(rows []pbx.CDR) []views.CDREntry {
+	out := make([]views.CDREntry, 0, len(rows))
+	for _, cdr := range rows {
+		out = append(out, views.CDREntry{
+			Context:           cdr.Context,
+			CallerIDNumber:    cdr.CallerIDNumber,
+			CallerIDName:      cdr.CallerIDName,
+			DestinationNumber: cdr.DestinationNumber,
+			Start:             cdr.Start,
+			Billsec:           cdr.Billsec,
+			HangupCause:       cdr.HangupCause,
+		})
+	}
+	return out
+}
+
 // voicemailItems converts the PBX voicemail feed into the panel's view
 // shapes — the ONE boundary conversion for the voicemail surface.
 func voicemailItems(summary pbx.VoicemailSummary, messages []pbx.VoicemailMessage) (views.VoicemailSummary, []views.VoicemailItem) {
@@ -337,10 +355,11 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 			AgentEnabled: h.textAgentOn(),
 		}), nil
 	}
-	entries := filterCDRs(page.Entries, query, dir, outcome)
-	if len(entries) > historyPageSize {
-		entries = entries[:historyPageSize]
+	filtered := filterCDRs(page.Entries, query, dir, outcome)
+	if len(filtered) > historyPageSize {
+		filtered = filtered[:historyPageSize]
 	}
+	entries := cdrEntries(filtered)
 	numbers := crmNumbers(entries, views.CDRDialTarget)
 	numbers = append(numbers, transcriptNumbers...)
 	return views.HistoryPanel(views.HistoryPanelProps{

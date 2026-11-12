@@ -304,7 +304,7 @@ func (h *handlers) fillAdminCalls(r *http.Request, props *views.AdminPanelProps)
 			props.CDRFailed = append(props.CDRFailed, ext.String())
 			continue
 		}
-		for _, cdr := range page.Entries {
+		for _, cdr := range cdrEntries(page.Entries) {
 			rows = append(rows, views.AdminCDRRow{CDR: cdr, Extension: ext.String()})
 		}
 	}

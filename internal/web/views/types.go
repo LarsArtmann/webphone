@@ -65,3 +65,16 @@ type AgentReviews struct {
 	DefaultMode string
 	Modes       []string
 }
+
+// CDREntry is one call-detail row: the fields History, Admin and the
+// dial-target helper render, converted at the server boundary from the
+// PBX CDR feed (pbx.CDR).
+type CDREntry struct {
+	Context           string
+	CallerIDNumber    string
+	CallerIDName      string
+	DestinationNumber string
+	Start             string
+	Billsec           int
+	HangupCause       string
+}

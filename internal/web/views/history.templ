@@ -8,7 +8,6 @@ import (
 	"github.com/larsartmann/templ-components/display"
 	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/pbx"
 )
 
 // HistoryPanel shows the extension's server-side call records (CDR) from
@@ -16,7 +15,7 @@ import (
 // phone panel — this tab is the operator's view.
 type HistoryPanelProps struct {
 	Enabled bool
-	Entries []pbx.CDR
+	Entries []CDREntry
 	Error   string
 	// Current filters (echoed back into the form after a re-render).
 	Query   string
@@ -310,14 +309,14 @@ type cdrDayGroup struct {
 	// under a wrong label).
 	Key  string
 	Day  time.Time
-	Rows []pbx.CDR
+	Rows []CDREntry
 }
 
 // groupCDRsByDay buckets consecutive records by their Start date. The
 // phone API's start is "YYYY-MM-DD HH:MM", so the bucket key is the
 // 10-byte prefix; a short or unparsable start lands in the headless
 // group keyed "".
-func groupCDRsByDay(entries []pbx.CDR) []cdrDayGroup {
+func groupCDRsByDay(entries []CDREntry) []cdrDayGroup {
 	groups := make([]cdrDayGroup, 0, len(entries))
 	for _, cdr := range entries {
 		key := ""
@@ -332,12 +331,12 @@ func groupCDRsByDay(entries []pbx.CDR) []cdrDayGroup {
 			groups[len(groups)-1].Rows = append(groups[len(groups)-1].Rows, cdr)
 			continue
 		}
-		groups = append(groups, cdrDayGroup{Key: key, Day: day, Rows: []pbx.CDR{cdr}})
+		groups = append(groups, cdrDayGroup{Key: key, Day: day, Rows: []CDREntry{cdr}})
 	}
 	return groups
 }
 
-templ CDRRow(cdr pbx.CDR, contacts CRMContacts, lang Lang) {
+templ CDRRow(cdr CDREntry, contacts CRMContacts, lang Lang) {
 	<tr class={ templ.KV("wp-row-missed", cdrMissed(cdr)) }>
 		<td class="wp-table-dir">
 			<span
@@ -389,7 +388,7 @@ func dispositionConfirmed(raw string) bool {
 	return err == nil && disposition != domain.DispositionUnknown
 }
 
-func cdrDirGlyph(cdr pbx.CDR) icons.Name {
+func cdrDirGlyph(cdr CDREntry) icons.Name {
 	if cdrMissed(cdr) {
 		return icons.XCircle
 	}
@@ -399,7 +398,7 @@ func cdrDirGlyph(cdr pbx.CDR) icons.Name {
 	return icons.ArrowUp
 }
 
-func cdrDirLabel(cdr pbx.CDR, lang Lang) string {
+func cdrDirLabel(cdr CDREntry, lang Lang) string {
 	if cdrMissed(cdr) {
 		return T(lang, "history.missed")
 	}
@@ -411,11 +410,11 @@ func cdrDirLabel(cdr pbx.CDR, lang Lang) string {
 
 // cdrMissed: an inbound leg that never carried media (billsec 0) — the
 // caller rang, nobody answered.
-func cdrMissed(cdr pbx.CDR) bool {
+func cdrMissed(cdr CDREntry) bool {
 	return cdr.Context == "public" && cdr.Billsec == 0
 }
 
-func cdrTarget(cdr pbx.CDR) string {
+func cdrTarget(cdr CDREntry) string {
 	if cdr.Context == "public" {
 		return firstNonEmpty(cdr.CallerIDNumber, cdr.CallerIDName, "unknown")
 	}
@@ -427,7 +426,7 @@ func cdrTarget(cdr pbx.CDR) string {
 // outbound legs) or "" when the record carries none — the dial button
 // renders only when a real number exists. Exported: the history panel
 // collects the same numbers for CRM name resolution.
-func CDRDialTarget(cdr pbx.CDR) string {
+func CDRDialTarget(cdr CDREntry) string {
 	if cdr.Context == "public" {
 		return cdr.CallerIDNumber
 	}
