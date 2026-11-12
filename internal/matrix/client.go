@@ -395,11 +395,16 @@ func classify(resp *http.Response, code string) error {
 		detail = shape.ErrCode + ": " + detail
 	}
 	cause := &homeserverError{Status: resp.StatusCode, ErrCode: shape.ErrCode}
+	// verbatim keeps the registry scanner's first-literal-is-the-code
+	// assumption intact: the code rides the `code` variable and the
+	// message is pre-built, so the constructor args carry no string
+	// literal that could be mis-read as a code.
+	const verbatim = "%s"
 	// The message rides a variable so the registry scanner reads the
 	// CODE argument, not the seam prefix inside the message literal.
 	message := "matrix: " + detail
 	if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500 {
-		return errorfamily.WrapTransientf(cause, code, "%s", message)
+		return errorfamily.WrapTransientf(cause, code, verbatim, message)
 	}
-	return errorfamily.WrapRejectionf(cause, code, "%s", message)
+	return errorfamily.WrapRejectionf(cause, code, verbatim, message)
 }

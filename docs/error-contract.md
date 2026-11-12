@@ -487,6 +487,7 @@ a deliberate code change, regenerate:
 | crm.http                                     | runtime-split             | internal/crm/client.go            |
 | crm.read                                     | Transient                 | internal/crm/client.go            |
 | crm.request                                  | Infrastructure            | internal/crm/client.go            |
+| crm.too_large                                | Transient                 | internal/crm/client.go            |
 | crm.transport                                | Transient                 | internal/crm/client.go            |
 | crm.url                                      | Rejection                 | internal/crm/client.go            |
 | domain.address                               | Rejection                 | internal/domain/network.go        |
@@ -516,6 +517,7 @@ a deliberate code change, regenerate:
 | matrix.request                               | Infrastructure, Transient | internal/matrix/client.go         |
 | matrix.send                                  | Infrastructure            | internal/matrix/client.go         |
 | matrix.token                                 | Rejection                 | internal/matrix/client.go         |
+| matrix.too_large                             | Transient                 | internal/matrix/client.go         |
 | matrix.upload                                | Infrastructure, Transient | internal/matrix/client.go         |
 | messaging.sender_register                    | Rejection                 | internal/messaging/service.go     |
 | messaging.verdict                            | Rejection                 | internal/messaging/service.go     |
