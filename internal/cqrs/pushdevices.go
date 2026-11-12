@@ -175,13 +175,12 @@ func pushDevicesProjection() metaengine.QueryDecl[pushDevicesKeyInput, readmodel
 	)
 }
 
-// pushDevicesCollection names the system engine's projection (the
-// same name the readmodels engine declares — different databases, one
-// shape).
+// pushDevicesCollection names the journal projection (the name
+// readmodels declares — one shape, one store).
 const pushDevicesCollection = "push_devices"
 
 // pushDevicesKeyInput is the projection's key-extraction input (the
-// same shape the readmodels engine declares).
+// shape readmodels declares).
 type pushDevicesKeyInput struct {
 	Owner    string
 	DeviceID string
@@ -205,7 +204,7 @@ func PushDevicesDomainDecl() system.DomainConfig {
 // ─── the backend the server keeps calling ──────────────────────────
 
 // PushDevices is the dispatch-backed registered-device store: the
-// same contract the engine-backed store exposed (cap-bounded upsert
+// contract readmodels' gate declares (cap-bounded upsert
 // with rotation-replaces, newest-first List, inert Remove).
 type PushDevices struct {
 	sys    *system.System
@@ -225,7 +224,7 @@ func NewPushDevices(sys *system.System) *PushDevices {
 // known id replaces its transport/token row (rotation, cap-free); a
 // NEW id past the per-owner cap answers the ErrListFull rejection.
 //
-// brandid-lint:ignore(BD003) store-seam transport: the client-generated device id keys engine rows (strong-id wire ruling)
+// brandid-lint:ignore(BD003) store-seam transport: the client-generated device id keys journal rows (strong-id wire ruling)
 func (s *PushDevices) Upsert(ctx context.Context, owner domain.Extension, deviceID, transport, token string) error { //nolint:branching-flow // verbatim port of the retired engine store's Upsert signature (parity rule)
 	s.mu.Lock()
 	defer s.mu.Unlock()
@@ -267,7 +266,7 @@ func (s *PushDevices) List(ctx context.Context, owner domain.Extension) ([]readm
 // Remove drops one device scoped to its owner; removing an unknown id
 // is inert (the deregistration outcome is the same).
 //
-// brandid-lint:ignore(BD003) store-seam transport: the client-generated device id keys engine rows (strong-id wire ruling)
+// brandid-lint:ignore(BD003) store-seam transport: the client-generated device id keys journal rows (strong-id wire ruling)
 func (s *PushDevices) Remove(ctx context.Context, owner domain.Extension, deviceID string) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()

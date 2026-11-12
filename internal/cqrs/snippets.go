@@ -174,8 +174,8 @@ func snippetsProjection() metaengine.QueryDecl[snippetKeyInput, readmodels.Snipp
 	)
 }
 
-// snippetKeyInput is the projection's key-extraction input (the same
-// shape the readmodels engine declares).
+// snippetKeyInput is the projection's key-extraction input (the
+// shape readmodels declares).
 type snippetKeyInput struct{ ID string }
 
 // SnippetsDomainDecl is the snippets aggregate's share of the system's
@@ -195,8 +195,8 @@ func SnippetsDomainDecl() system.DomainConfig {
 
 // ─── the backend the server keeps calling ──────────────────────────
 
-// Snippets is the dispatch-backed reply-snippet service: the same
-// contract the engine-backed store exposed (Save/List/Delete; the cap
+// Snippets is the dispatch-backed reply-snippet service: the
+// contract readmodels' gate declares (Save/List/Delete; the cap
 // and replace-keeps-stamp semantics answer from the decision).
 type Snippets struct {
 	sys    *system.System

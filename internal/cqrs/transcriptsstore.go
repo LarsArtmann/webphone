@@ -97,7 +97,7 @@ func (s *Transcripts) Append(ctx context.Context, seg domain.CallTranscriptSegme
 	}
 	// Enforce the per-owner cap only once the projection worker has
 	// folded this append: the EnforceCaps write path and the worker's
-	// fold path take the store's fold lock and the engine's connection
+	// fold path take the store's fold lock and the system engine's connection
 	// pool in OPPOSITE orders, so running them concurrently can
 	// deadlock (pinned by the Phase-4 battery as an order-dependent
 	// hang). After the await the worker is idle past our event; the
@@ -255,7 +255,7 @@ func (s *Transcripts) DeleteCall(ctx context.Context, owner domain.Extension, ca
 }
 
 // Count reports the total stored transcript segments across all owners
-// (webphone_transcripts_total) via the engine's native COUNT.
+// (webphone_transcripts_total) via the system engine's COUNT.
 func (s *Transcripts) Count(ctx context.Context) (int64, error) {
 	n, err := engineCount(ctx, s.sys, transcriptsCollection)
 	if err != nil {

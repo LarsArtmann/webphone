@@ -200,13 +200,12 @@ func agentAuditProjection() metaengine.QueryDecl[agentAuditInput, readmodels.Age
 	)
 }
 
-// agentAuditCollection names the system engine's projection (the same
-// name the readmodels engine declares — different databases, one
-// shape).
+// agentAuditCollection names the journal projection (the name
+// readmodels declares — one shape, one store).
 const agentAuditCollection = "agent_audit"
 
-// agentAuditInput is the projection's key-extraction input (the same
-// shape the readmodels engine declares).
+// agentAuditInput is the projection's key-extraction input (the
+// shape readmodels declares).
 type agentAuditInput struct{ Key domain.AgentAuditKey }
 
 // AgentAuditDomainDecl is the agent-audit aggregate's share of the
@@ -227,7 +226,7 @@ func AgentAuditDomainDecl() system.DomainConfig {
 // ─── the backend the server keeps calling ──────────────────────────
 
 // AgentAudit is the dispatch-backed agent-action audit store: the
-// same contract the engine-backed store exposed (append with the cap
+// contract readmodels' gate declares (append with the cap
 // trim, newest-first Recent window).
 type AgentAudit struct {
 	sys    *system.System

@@ -162,8 +162,8 @@ func RegisterContacts(sys *system.System) error {
 	return nil
 }
 
-// contactsKeyInput is the projection's key-extraction input (the same
-// shape the readmodels engine declares).
+// contactsKeyInput is the projection's key-extraction input (the
+// shape readmodels declares).
 type contactsKeyInput struct {
 	Owner string
 	Phone string
@@ -190,9 +190,8 @@ func contactsProjection() metaengine.QueryDecl[contactsKeyInput, readmodels.Cont
 	)
 }
 
-// contactsCollection names the system engine's projection (the same
-// name the readmodels engine declares — different databases, one
-// shape).
+// contactsCollection names the journal projection (the name
+// readmodels declares — one shape, one store).
 const contactsCollection = "contacts"
 
 // ContactsDomainDecl is the contacts aggregate's share of the system's
@@ -212,10 +211,10 @@ func ContactsDomainDecl() system.DomainConfig {
 
 // ─── the backend the server keeps calling ──────────────────────────
 
-// Contacts is the dispatch-backed personal-contacts store: the same
-// contract the engine-backed store exposed (Save upsert keeping id and
+// Contacts is the dispatch-backed personal-contacts store: the
+// contract readmodels' gate declares (Save upsert keeping id and
 // age on rename, newest-first owner-scoped List, owner-scoped Delete
-// by id with the missing rejection, engine-native Count).
+// by id with the missing rejection, cross-owner Count).
 type Contacts struct {
 	sys    *system.System
 	reader *metaengine.TypedReader[readmodels.ContactView]
@@ -284,7 +283,7 @@ func (s *Contacts) List(ctx context.Context, owner domain.Extension) ([]domain.C
 }
 
 // Count reports the total stored contacts across all owners (the
-// metrics surface's webphone_contacts_total) via the engine's native
+// metrics surface's webphone_contacts_total) via the system engine's
 // COUNT aggregate.
 func (s *Contacts) Count(ctx context.Context) (int64, error) {
 	n, err := engineCount(ctx, s.sys, contactsCollection)
