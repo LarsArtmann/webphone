@@ -8,9 +8,7 @@ import (
 	"github.com/larsartmann/templ-components/display"
 	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/messaging"
 	"github.com/larsartmann/webphone/internal/readmodels"
-	"github.com/larsartmann/webphone/internal/textagent"
 )
 
 // ThreadsPanel is the Messages tab's landing view: the thread list plus a
@@ -39,7 +37,7 @@ type ThreadsPanelProps struct {
 	// Drafts is the review-list payload rendered into the drafts panel;
 	// nil with DraftsError empty means the seam is off, nil with a
 	// non-empty DraftsError is an unreachable agent (honest degrade).
-	Drafts      *textagent.Reviews
+	Drafts      *AgentReviews
 	DraftsError string
 	// PrefillBody carries an AI-drafted reply into the new-conversation
 	// composer (the ai-draft round trip re-renders this panel).
@@ -354,7 +352,7 @@ templ composeBody(lang Lang, placeholderKey string, prefill string) {
 		name="body"
 		class="wp-compose-body"
 		rows="1"
-		maxlength={ strconv.Itoa(messaging.MaxBodyLength) }
+		maxlength={ strconv.Itoa(domain.MaxBodyLength) }
 		placeholder={ T(lang, placeholderKey) }
 		aria-label={ T(lang, "compose.body.label") }
 	>
@@ -881,7 +879,7 @@ func dayHeadLabel(lang Lang, t time.Time) string {
 // conversations and opt-outs (compact, honest), or the unreachable
 // state.
 type DraftsPanelProps struct {
-	Drafts *textagent.Reviews
+	Drafts *AgentReviews
 	Error  string
 	// CRM carries the optional CRM integration's answers (same feed as the
 	// thread rows); unresolved numbers render verbatim.
@@ -916,7 +914,7 @@ type draftNoteItem struct {
 	tail    string
 }
 
-func draftNotes(reviews *textagent.Reviews, lang Lang) []draftNoteItem {
+func draftNotes(reviews *AgentReviews, lang Lang) []draftNoteItem {
 	if reviews == nil {
 		return nil
 	}
@@ -949,7 +947,7 @@ func draftNotes(reviews *textagent.Reviews, lang Lang) []draftNoteItem {
 // draftModeOptions turns the agent's supported modes into picker rows.
 // The rows render through the shared filterOptions component; this
 // function only maps the agent's vocabulary onto it.
-func draftModeOptions(reviews *textagent.Reviews) []filterOption {
+func draftModeOptions(reviews *AgentReviews) []filterOption {
 	options := make([]filterOption, 0, len(reviews.Modes))
 	for _, mode := range reviews.Modes {
 		options = append(options, filterOption{Value: mode, Label: mode, Selected: mode == reviews.Mode})

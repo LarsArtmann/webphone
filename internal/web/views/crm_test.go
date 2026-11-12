@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/dustin/go-humanize"
-	"github.com/larsartmann/webphone/internal/pbx"
 )
 
 // TestCRMNameLinkIsTheOneLinkHome pins the deep-link contract from both
@@ -209,7 +208,7 @@ func TestVoicemailRowLinksTheKnownCRMContact(t *testing.T) {
 		URL:  "https://crm.example/contacts/01M",
 	}}
 
-	msg := pbx.VoicemailMessage{UUID: "u1", CIDNumber: "+441632960961", CIDName: "Alice", Seconds: 12,
+	msg := VoicemailItem{UUID: "u1", CIDNumber: "+441632960961", CIDName: "Alice", Seconds: 12,
 		AudioURL: "/phone-api/voicemail/1001/messages/u1/audio"}
 
 	page := renderComponent(t, VoicemailRow(msg, linked, LangEN, false))
@@ -231,7 +230,7 @@ func TestVoicemailRowLinksTheKnownCRMContact(t *testing.T) {
 		t.Errorf("CRM miss must keep the vmCaller ladder without a link:\n%s", miss)
 	}
 
-	anonymous := pbx.VoicemailMessage{UUID: "u2", CIDName: "Withheld", Seconds: 8,
+	anonymous := VoicemailItem{UUID: "u2", CIDName: "Withheld", Seconds: 8,
 		AudioURL: "/phone-api/voicemail/1001/messages/u2/audio"}
 	anon := renderComponent(t, VoicemailRow(anonymous, linked, LangEN, false))
 	if strings.Contains(anon, "<a class") || !strings.Contains(anon, "Withheld") || strings.Contains(anon, "Withheld ()") {

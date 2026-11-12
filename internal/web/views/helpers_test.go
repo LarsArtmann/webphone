@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/textagent"
 )
 
 func TestAvatarForNumberTailDigits(t *testing.T) {
@@ -153,7 +152,7 @@ func TestDraftMetaShape(t *testing.T) {
 		"garbage": "pl · 80%",
 	}
 	for created, want := range cases {
-		draft := textagent.Draft{Language: "pl", Confidence: 80, CreatedAt: created}
+		draft := AgentDraft{Language: "pl", Confidence: 80, CreatedAt: created}
 		if got := draftMeta(draft, now); got != want {
 			t.Errorf("draftMeta(CreatedAt=%q) = %q, want %q", created, got, want)
 		}

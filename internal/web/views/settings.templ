@@ -8,7 +8,6 @@ import (
 	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/templ-components/utils"
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/messaging"
 )
 
 // SettingsPanel is read-only runtime facts about this deployment: what the
@@ -475,7 +474,7 @@ templ SnippetsSection(snippets []domain.Snippet, lang Lang) {
 			},
 			Name:        "body",
 			Rows:        2,
-			MaxLength:   messaging.MaxBodyLength,
+			MaxLength:   domain.MaxBodyLength,
 			Placeholder: T(lang, "snippets.body"),
 		})
 		<label class="wp-snippet-quick-label">

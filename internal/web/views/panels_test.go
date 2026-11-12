@@ -9,9 +9,7 @@ import (
 
 	"github.com/a-h/templ"
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/readmodels"
-	"github.com/larsartmann/webphone/internal/textagent"
 )
 
 // hostile doubles as content and escaping probe: every panel must render
@@ -540,7 +538,7 @@ var idAttrRe = regexp.MustCompile(`id="(att-transcript-[^"]+)"`)
 // TestVoicemailRowTranscribeButtonGatedOnASR mirrors the attachment gate
 // for the voicemail player row.
 func TestVoicemailRowTranscribeButtonGatedOnASR(t *testing.T) {
-	msg := pbx.VoicemailMessage{UUID: "u1", Seconds: 12, AudioURL: "/phone-api/voicemail/1001/messages/u1/audio"}
+	msg := VoicemailItem{UUID: "u1", Seconds: 12, AudioURL: "/phone-api/voicemail/1001/messages/u1/audio"}
 	on := renderComponent(t, VoicemailRow(msg, nil, LangEN, true))
 	if !strings.Contains(on, "data-transcribe-src") || !strings.Contains(on, "vm-transcript-u1") {
 		t.Errorf("asr on: voicemail transcribe affordance missing: %s", on)
@@ -616,8 +614,8 @@ func TestHistoryTranscriptDispositionBadgeGuard(t *testing.T) {
 // CreatedAt omits the age without breaking the panel (foreign-wire
 // tolerance).
 func TestDraftsPanelShowsPendingAge(t *testing.T) {
-	reviews := func(created string) *textagent.Reviews {
-		return &textagent.Reviews{Drafts: []textagent.Draft{{
+	reviews := func(created string) *AgentReviews {
+		return &AgentReviews{Drafts: []AgentDraft{{
 			ID: "d-1", Contact: "4989123456", Text: "Guten Morgen", Language: "de",
 			Confidence: 90, CreatedAt: created,
 		}}}

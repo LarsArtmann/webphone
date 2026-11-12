@@ -97,7 +97,7 @@ func (h *handlers) partialDrafts(w http.ResponseWriter, r *http.Request) {
 // session's owner (personal contacts first, CRM fallback) so the review
 // list shows names like the thread rows do. Nil-safe on every leg (no
 // drafts, no gate, no resolver).
-func (h *handlers) draftCRMContacts(r *http.Request, owner domain.Extension, reviews *textagent.Reviews) views.CRMContacts {
+func (h *handlers) draftCRMContacts(r *http.Request, owner domain.Extension, reviews *views.AgentReviews) views.CRMContacts {
 	if reviews == nil || len(reviews.Drafts) == 0 {
 		return nil
 	}
@@ -112,9 +112,10 @@ func (h *handlers) draftCRMContacts(r *http.Request, owner domain.Extension, rev
 // both swap #wp-drafts outerHTML with the fresh list).
 func (h *handlers) draftPanel(w http.ResponseWriter, r *http.Request, sess session.Session) {
 	reviews, fetchErr := h.textAgentReviews(r)
+	drafts := agentReviewsOf(reviews)
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	if err := views.DraftsPanel(views.DraftsPanelProps{
-		Drafts: reviews, Error: fetchErr, CRM: h.draftCRMContacts(r, sess.Extension, reviews), Lang: h.lang(r),
+		Drafts: drafts, Error: fetchErr, CRM: h.draftCRMContacts(r, sess.Extension, drafts), Lang: h.lang(r),
 	}).Render(r.Context(), w); err != nil {
 		http.Error(w, "render error", http.StatusInternalServerError)
 	}

@@ -108,6 +108,12 @@ func MustParseAddress(network Network, raw string) Address {
 // numbers, indistinguishable from sms by shape — a Signal conversation
 // starts from its inbound message and continues in that thread
 // (chat-networks plan, lane v2).
+// MaxBodyLength is the compose-form's character ceiling: the ONE home
+// of the user-facing limit — the messaging service validates against it
+// and the templates render it as the textarea maxlength, so a wire
+// change moves both sides in one edit.
+const MaxBodyLength = 1600
+
 func ParseComposedAddress(raw string) (Address, error) {
 	trimmed := strings.TrimSpace(raw)
 	if addr, err := ParseAddress(NetworkMatrix, trimmed); err == nil {

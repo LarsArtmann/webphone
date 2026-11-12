@@ -64,16 +64,17 @@ func (h *handlers) messagesPanelPrefilled(r *http.Request, sess session.Session,
 	}
 	numbers := crmNumbers(threads, func(summary readmodels.ThreadSummary) string { return crmNumberFor(summary.Thread.Remote) })
 	reviews, draftsErr := h.textAgentReviews(r)
+	drafts := agentReviewsOf(reviews)
 	// The drafts panel shares the thread rows' name feed: every pending
 	// draft's contact resolves through the same CRM map.
-	if reviews != nil {
-		numbers = append(numbers, crmNumbers(reviews.Drafts, func(draft textagent.Draft) string { return draft.Contact })...)
+	if drafts != nil {
+		numbers = append(numbers, crmNumbers(drafts.Drafts, func(draft views.AgentDraft) string { return draft.Contact })...)
 	}
 	contacts := h.crmDirectory(r.Context(), sess.Extension, numbers)
 	return views.ThreadsPanel(views.ThreadsPanelProps{
 		Threads: threads, Query: query, Archived: archived, ArchivedCount: archivedCount,
 		Identity: h.identityFor(sess.Extension), CRM: contacts, Lang: h.lang(r),
-		TextAgent: h.textAgentOn(), Drafts: reviews, DraftsError: draftsErr, PrefillBody: prefillBody,
+		TextAgent: h.textAgentOn(), Drafts: drafts, DraftsError: draftsErr, PrefillBody: prefillBody,
 	}), nil
 }
 
@@ -189,9 +190,10 @@ func (h *handlers) voicemailPanel(r *http.Request, sess session.Session) (templ.
 			Enabled: true, Error: h.T(r, "vm.unreachable"), Lang: h.lang(r), ASR: h.asrOn(),
 		}), nil
 	}
+	vSummary, vItems := voicemailItems(summary, messages)
 	return views.VoicemailPanel(views.VoicemailPanelProps{
-		Enabled: true, Summary: summary, Messages: messages,
-		CRM: h.crmDirectory(r.Context(), sess.Extension, crmNumbers(messages, func(msg pbx.VoicemailMessage) string { return msg.CIDNumber })), Lang: h.lang(r),
+		Enabled: true, Summary: vSummary, Messages: vItems,
+		CRM: h.crmDirectory(r.Context(), sess.Extension, crmNumbers(vItems, func(msg views.VoicemailItem) string { return msg.CIDNumber })), Lang: h.lang(r),
 		ASR: h.asrOn(),
 	}), nil
 }
@@ -207,6 +209,47 @@ func crmNumbers[T any](rows []T, number func(T) string) []string {
 		}
 	}
 	return numbers
+}
+
+// agentReviewsOf converts the textagent client's answer into the
+// view-owned drafts shape — the ONE boundary conversion (the templates
+// never speak the agent wire; the arch P2 ruling).
+func agentReviewsOf(reviews *textagent.Reviews) *views.AgentReviews {
+	if reviews == nil {
+		return nil
+	}
+	out := &views.AgentReviews{
+		Mode: reviews.Mode, ModeSource: reviews.ModeSource,
+		DefaultMode: reviews.DefaultMode, Modes: reviews.Modes,
+	}
+	for _, draft := range reviews.Drafts {
+		out.Drafts = append(out.Drafts, views.AgentDraft{
+			ID: draft.ID, Contact: draft.Contact, Trigger: draft.Trigger,
+			Text: draft.Text, EnGloss: draft.EnGloss, Language: draft.Language,
+			Confidence: draft.Confidence, CreatedAt: draft.CreatedAt,
+		})
+	}
+	for _, frozen := range reviews.Frozen {
+		out.Frozen = append(out.Frozen, views.AgentFrozen{Contact: frozen.Contact, Reason: frozen.Reason})
+	}
+	for _, suppressed := range reviews.Suppressed {
+		out.Suppressed = append(out.Suppressed, views.AgentSuppressed{Contact: suppressed.Contact, Keyword: suppressed.Keyword})
+	}
+	return out
+}
+
+// voicemailItems converts the PBX voicemail feed into the panel's view
+// shapes — the ONE boundary conversion for the voicemail surface.
+func voicemailItems(summary pbx.VoicemailSummary, messages []pbx.VoicemailMessage) (views.VoicemailSummary, []views.VoicemailItem) {
+	out := views.VoicemailSummary{New: summary.New, Old: summary.Old}
+	items := make([]views.VoicemailItem, 0, len(messages))
+	for _, msg := range messages {
+		items = append(items, views.VoicemailItem{
+			UUID: msg.UUID, CIDNumber: msg.CIDNumber, CIDName: msg.CIDName,
+			Seconds: msg.Seconds, Created: msg.Created, Read: msg.Read, AudioURL: msg.AudioURL,
+		})
+	}
+	return out, items
 }
 
 func (h *handlers) fetchVoicemail(r *http.Request, creds pbx.Credentials) (pbx.VoicemailSummary, []pbx.VoicemailMessage, error) {

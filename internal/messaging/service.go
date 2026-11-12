@@ -24,7 +24,7 @@ import (
 const (
 	MaxAttachments    = 5
 	MaxAttachmentSize = 10 << 20 // 10 MiB per attachment
-	MaxBodyLength     = 1600
+	MaxBodyLength     = domain.MaxBodyLength
 	// MessagePageSize is the transcript window shared by the thread view
 	// and its live SSE pushes.
 	MessagePageSize = 200

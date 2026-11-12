@@ -380,7 +380,7 @@ func (h *handlers) saveSnippet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "the snippet text is empty", http.StatusUnprocessableEntity)
 		return
 	}
-	if len(body) > messaging.MaxBodyLength {
+	if len(body) > domain.MaxBodyLength {
 		http.Error(w, "the snippet is too long", http.StatusUnprocessableEntity)
 		return
 	}
