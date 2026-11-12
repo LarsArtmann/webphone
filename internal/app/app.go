@@ -341,9 +341,6 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	}
 
 	// --- services --------------------------------------------------------
-	do.Provide(injector, func(i do.Injector) (*store.Messages, error) {
-		return store.NewMessages(do.MustInvokeNamed[*store.Database](i, "sqlite").SQL()), nil
-	})
 	do.Provide(injector, func(i do.Injector) (*session.SQLiteStore, error) {
 		return session.NewSQLiteStore(do.MustInvokeNamed[*store.Database](i, "sqlite").SQL(), cfg.SessionTTL)
 	})

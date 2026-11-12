@@ -16,7 +16,12 @@ import (
 // ErrNotFound is returned when a row the caller asked for does not exist.
 var ErrNotFound = errors.New("not found")
 
-// Messages is the thread/message persistence.
+// Messages is the SQL ladder's thread/message persistence — TEST-ONLY
+// since the journal swap (SUPERB A34): no production code constructs it
+// (the composition root stopped registering it 2026-11-12; the gates are
+// answered by the journal-backed backend). The tables themselves stay:
+// retention's sweep empties them and §5's DROP migration removes them
+// (docs/planning/2026-11-09_storage-ladder-retirement.md).
 type Messages struct {
 	db *sql.DB
 }
