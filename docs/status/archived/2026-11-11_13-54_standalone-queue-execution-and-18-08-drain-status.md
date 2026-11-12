@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-12 (docs-health v11 sweep): cadence drain — both annotate gates green before the move
+
 # Status — standalone queue execution: stack CI heal, 18-08 drain, cadence hygiene
 
 **Written:** 2026-11-11 13:54 CET

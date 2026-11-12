@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-12 (docs-health v11 sweep): cadence drain — both annotate gates green before the move
+
 # Standalone continuation — measurements, instrumentation, surgery — 14-02 snapshot
 
 Claims verified as of **14:02 CET**. This report continues the 12-27 whole-TODO-list execution report: after its delivery the execution mandate was re-issued, and the session ran the instrumentation train, the measurements, the docs/config train, and the TODO_LIST surgery — while a concurrent login-page train (the sibling session) shipped its own wave and left four CI legs red in flight. Repo at `13a49e05` + their uncommitted login.css edits on the working tree (theirs — untouched).
