@@ -17,8 +17,8 @@ import (
 	"encoding/json/v2"
 
 	"github.com/larsartmann/webphone/internal/push"
-	"github.com/larsartmann/webphone/internal/server/auth"
 	"github.com/larsartmann/webphone/internal/server/api"
+	"github.com/larsartmann/webphone/internal/server/auth"
 )
 
 // Fixture example values — the session/push-device seam's share of the

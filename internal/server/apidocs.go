@@ -40,8 +40,8 @@ import (
 	errorfamily "github.com/larsartmann/go-error-family"
 
 	"github.com/larsartmann/webphone/internal/server/api"
-	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/server/auth"
+	"github.com/larsartmann/webphone/internal/session"
 )
 
 const (

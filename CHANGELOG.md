@@ -89,6 +89,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   projection; the store's SQL-ladder spellings are unexported with a
   dated retirement note, ending the two-sources-of-truth for the
   thread-list shape.
+- **The auth surface is its own package (`internal/server/auth`).** Both
+  login lanes (extension+password, passkey ceremony+enrollment), the
+  OIDC dance, the library `/login` page and the session spine
+  (create/resume/destroy/switch) moved out of the server god-package
+  behind a narrow `auth.Shell` seam — the session gate and the render
+  helpers keep their one home in the server package. Wire behavior is
+  byte-identical (route table, flood budgets, nonce CSP lane untouched);
+  the error-code registry and the i18n key-scan now cover the new home.
+  (The 2026-10-17 carve adjudication's reopen trigger — the next
+  auth-surface change — fired with the login-page front-door train.)
 
 ### Fixed
 

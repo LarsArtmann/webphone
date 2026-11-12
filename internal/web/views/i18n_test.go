@@ -93,6 +93,21 @@ func TestNoUnusedDictionaryKeys(t *testing.T) {
 			}
 		}
 	}
+	// The carved server subpackages (api/, hooks/, auth/): their Go
+	// sources reference dictionary keys too (the auth package owns the
+	// passkey toasts), so the flat server glob alone would answer
+	// "unused" for keys its callers moved.
+	for _, dir := range []string{"api", "hooks", "auth"} {
+		matches, err := filepath.Glob(filepath.Join("..", "..", "server", dir, "*.go"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, match := range matches {
+			if !strings.HasSuffix(match, "_test.go") {
+				scans = append(scans, match)
+			}
+		}
+	}
 	sources := make([]string, 0, len(scans))
 	for _, name := range scans {
 		raw, err := os.ReadFile(name)
