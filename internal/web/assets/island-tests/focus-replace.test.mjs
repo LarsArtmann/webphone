@@ -21,7 +21,7 @@ globalThis.SIP = {
 
 globalThis.fetch = async () => ({ ok: true, status: 204, headers: new Headers() });
 
-const { noteRow } = await import("../island/app/calls.js?test=focus");
+const { noteRow } = await import("../island/app/postcall.js?test=focus");
 const { focusAfterReplace } = await import("../island/app/ui.js?test=focus");
 
 test("focus moves to the replacement when the departing subtree held it", () => {

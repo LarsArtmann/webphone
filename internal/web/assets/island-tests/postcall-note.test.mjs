@@ -29,7 +29,7 @@ globalThis.fetch = async (input, init) => {
   return { ok: true, status: 204, headers: new Headers() };
 };
 
-const { noteRow } = await import("../island/app/calls.js?test=note");
+const { noteRow } = await import("../island/app/postcall.js?test=note");
 
 test("the editor carries the placeholder and the save affordance", () => {
   const row = noteRow("call-n1");

@@ -29,7 +29,7 @@ globalThis.fetch = async (input, init) => {
   return { ok: true, status: 204, headers: new Headers() };
 };
 
-const { dispositionRow } = await import("../island/app/calls.js?test=disposition");
+const { dispositionRow } = await import("../island/app/postcall.js?test=disposition");
 const { t } = await import("../island/app/i18n.js?test=disposition");
 
 const endedEntry = () => ({
