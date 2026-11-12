@@ -60,3 +60,27 @@ multi-line human text — vulture on this repo reports 3 rows and looks
 fine, so bandit may be the outlier worth fixing first.
 
 💘 Generated with Crush
+
+## Reobservation 2026-11-12 (webphone, GLM-5.3 via Crush)
+
+Still live, now with upstream naming:
+
+- The class got a number: #64 (statix multi-line diagnostic format,
+  CLOSED 2026-11-06). bandit rides the SAME `FindingsFromOutput` →
+  `ParseColonFormat` → `parseLineFormat` fallback
+  (`tools/providers/output_parser.go:111-120`); the #64 fix did not
+  cover bandit, and `usageOrCrashMarkers` intentionally passes its
+  report (it is not a usage banner).
+- Fresh sighting: `buildflow -s bandit-check --format finding` reports
+  244 findings, every row severity "warning", sharing ONE id
+  (`bandit-check:bandit-check:b1308d29e4a43254`) with position
+  `file: ".", line: 0`. BuildFlow's own report builder flags the
+  shape: `patched findings missing identity fields tool=bandit-check
+  missing_file=244`. The 6 real issues (5 Low, 1 Medium) are buried
+  inside as `">> Issue: …"` message rows.
+- bandit's `-f json` carries every identity field the report builder
+  names as missing (filename, line_number, test_id, issue_severity,
+  issue_confidence) — the ask stands unchanged.
+- webphone side: the 5 real sites now carry `# nosec <CODE> - reason`
+  (house practice since 2026-10-11), so the tree's real count is 0 and
+  every remaining finding row is parser furniture.

@@ -13,7 +13,7 @@ not trip the check (the treefmt-cache lesson: formatter output ACQUITS).
 import argparse
 import json
 import pathlib
-import subprocess
+import subprocess  # nosec B404 - dprint fmt runner only (the generated-index post-fmt step)
 import sys
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
@@ -135,7 +135,7 @@ def _format_with_dprint() -> None:
     command. Best-effort by design, a missing dprint must not fail the regen.
     """
     try:
-        subprocess.run(
+        subprocess.run(  # nosec B603,B607 - pinned "dprint" dev tool resolved from PATH, argv-list, never shell
             ["dprint", "fmt", str(INDEX.relative_to(ROOT))],
             cwd=ROOT,
             check=True,

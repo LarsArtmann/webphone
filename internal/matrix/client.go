@@ -324,9 +324,18 @@ func (c *Client) do(ctx context.Context, method, path string, body any, out any)
 		return classify(resp, "matrix.request")
 	}
 	if out != nil {
-		answer, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20))
+		// answerCap is a generous abuse guard, not a functional cap: a
+		// real initial sync with a busy account legitimately exceeds the
+		// old 1 MiB read (which truncated the body and surfaced as a
+		// confusing Infrastructure decode error that the loop retried
+		// forever). Overflow is its own Transient verdict so the receiver
+		// can react deliberately (reset to a fresh sync).
+		answer, err := io.ReadAll(io.LimitReader(resp.Body, answerCap+1))
 		if err != nil {
 			return errorfamily.WrapTransientf(err, "matrix.decode", "matrix: read %s %s answer", method, path)
+		}
+		if len(answer) > answerCap {
+			return errorfamily.WrapTransientf(errAnswerTooLarge, "matrix.too_large", "matrix: %s %s answer exceeds the %d MiB cap", method, path, answerCap>>20)
 		}
 		if err := json.Unmarshal(answer, out); err != nil {
 			return errorfamily.WrapInfrastructuref(err, "matrix.decode", "matrix: decode %s %s answer", method, path)
@@ -335,13 +344,42 @@ func (c *Client) do(ctx context.Context, method, path string, body any, out any)
 	return nil
 }
 
+// answerCap bounds one JSON answer (16 MiB): big enough for any honest
+// sync snapshot, small enough that a hostile or broken homeserver
+// cannot balloon the process.
+const answerCap = 16 << 20
+
+// errAnswerTooLarge is the typed cause of the oversized-answer verdict:
+// the receiver keys its fresh-sync reset on it.
+var errAnswerTooLarge = oversizedError{}
+
+type oversizedError struct{}
+
+func (oversizedError) Error() string { return "matrix: answer exceeds the read cap" }
+
+// homeserverError carries the verdict details a caller may deliberately
+// react to (the HTTP status and the Matrix errcode) behind the family
+// wrapper — the receiver's poisoned-cursor self-heal keys on them.
+type homeserverError struct {
+	Status  int
+	ErrCode string
+}
+
+func (e *homeserverError) Error() string {
+	if e.ErrCode == "" {
+		return fmt.Sprintf("matrix: homeserver answered %d", e.Status)
+	}
+	return fmt.Sprintf("matrix: homeserver answered %d (%s)", e.Status, e.ErrCode)
+}
+
 func (c *Client) authorize(req *http.Request) {
 	req.Header.Set("Authorization", "Bearer "+c.token)
 }
 
 // classify turns a non-2xx homeserver answer into an error family:
 // auth/permission problems are Rejections (retrying changes nothing),
-// rate limits and server trouble are Transient.
+// rate limits and server trouble are Transient. The typed cause rides
+// inside so callers can distinguish verdicts by status/errcode.
 func classify(resp *http.Response, code string) error {
 	body, _ := io.ReadAll(io.LimitReader(resp.Body, 4096)) //nolint:erraudit // diagnostic context only; the status carries the verdict
 	var shape struct {
@@ -356,11 +394,12 @@ func classify(resp *http.Response, code string) error {
 	if shape.ErrCode != "" {
 		detail = shape.ErrCode + ": " + detail
 	}
+	cause := &homeserverError{Status: resp.StatusCode, ErrCode: shape.ErrCode}
 	// The message rides a variable so the registry scanner reads the
 	// CODE argument, not the seam prefix inside the message literal.
 	message := "matrix: " + detail
 	if resp.StatusCode == http.StatusTooManyRequests || resp.StatusCode >= 500 {
-		return errorfamily.NewTransient(code, message)
+		return errorfamily.WrapTransientf(cause, code, "%s", message)
 	}
-	return errorfamily.NewRejection(code, message)
+	return errorfamily.WrapRejectionf(cause, code, "%s", message)
 }

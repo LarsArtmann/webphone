@@ -233,6 +233,15 @@ func (s *FcmSender) post(ctx context.Context, payload []byte, accessToken string
 	}
 	switch {
 	case resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden:
+		// The minted access token was refused — Google may revoke a
+		// grant early (or the host clock drifts). Without invalidation
+		// every send until the nominal expiry would replay the same
+		// poisoned token, so drop the cache and let the next send mint
+		// a fresh grant.
+		s.mu.Lock()
+		s.tokenValue = ""
+		s.tokenExpiry = time.Time{}
+		s.mu.Unlock()
 		return errorfamily.WrapRejectionf(ErrUnauthorized, "push.fcm_send", "fcm rejected the access token (%d)", resp.StatusCode)
 	case resp.StatusCode == http.StatusNotFound || strings.Contains(string(errorBody), fcmUnregisteredMarker):
 		return errorfamily.WrapInfrastructuref(ErrUnregistered, "push.fcm_send", "fcm reports the device token dead (%d)", resp.StatusCode)

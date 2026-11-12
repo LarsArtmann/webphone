@@ -2214,7 +2214,7 @@ def main() -> int:
         return self_test()
     if args.insecure:
         global _ssl_context
-        _ssl_context = ssl._create_unverified_context()
+        _ssl_context = ssl._create_unverified_context()  # nosec B323 - --insecure is the documented LOCAL-ONLY TLS-front smoke lane, never pointed at prod (AGENTS.md)
         print("insecure: TLS verification OFF — local smoke lane only")
     _apply_host_maps(args.host_map)
 

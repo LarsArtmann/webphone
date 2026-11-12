@@ -49,6 +49,12 @@ var ErrNotFound = errors.New("crm has no contact for this number")
 // tab render hang.
 const requestTimeout = 3 * time.Second
 
+// readCap bounds one buffered CRM answer (1 MiB). The lookup and
+// context payloads are small JSON; anything bigger is an upstream
+// fault and answers crm.too_large (Transient) instead of buffering
+// without bound.
+const readCap = 1 << 20
+
 // Client talks to one Ledger CRM machine API (mounted with -api-token).
 // branching-flow COMPOSITION_mixin (baselined): the client-chokepoint
 // idiom (same shape as pbx/asr on purpose — the do() chokepoint
@@ -195,8 +201,16 @@ func (c *Client) LookupByPhone(ctx context.Context, number string) (Person, erro
 
 	var buf bytes.Buffer
 
-	if _, err := buf.ReadFrom(resp.Body); err != nil {
+	// readCap bounds the buffered answer (the same cap at both CRM read
+	// sites): the lookup/context payloads are small JSON, so anything
+	// bigger is an upstream fault — it must not balloon the process, and
+	// it gets its own Transient verdict (crm.too_large) rather than a
+	// confusing truncation-induced decode error.
+	if _, err := buf.ReadFrom(io.LimitReader(resp.Body, readCap+1)); err != nil {
 		return Person{}, errorfamily.WrapTransientf(err, "crm.read", "crm: read response")
+	}
+	if buf.Len() > readCap {
+		return Person{}, errorfamily.NewTransient("crm.too_large", "crm: lookup response exceeds the read cap")
 	}
 
 	var parsed lookupResponse

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json/v2"
 	"errors"
+	"io"
 	"net/http"
 	"time"
 
@@ -107,8 +108,14 @@ func (c *Client) ContactContext(ctx context.Context, ref ContactRef) (Context, e
 
 	var buf bytes.Buffer
 
-	if _, err := buf.ReadFrom(resp.Body); err != nil {
+	// The same readCap + crm.too_large verdict as the lookup read (the
+	// two CRM read sites are one fact: an oversized answer is an
+	// upstream fault, never a process balloon).
+	if _, err := buf.ReadFrom(io.LimitReader(resp.Body, readCap+1)); err != nil {
 		return Context{}, errorfamily.WrapTransientf(err, "crm.context_read", "crm: read context response")
+	}
+	if buf.Len() > readCap {
+		return Context{}, errorfamily.NewTransient("crm.too_large", "crm: context response exceeds the read cap")
 	}
 
 	var parsed contextWire

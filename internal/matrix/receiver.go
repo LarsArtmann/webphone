@@ -181,6 +181,24 @@ func (r *Receiver) Run(ctx context.Context) error {
 			if ctx.Err() != nil {
 				return nil
 			}
+			// Self-heal arms (both self-limiting: they only fire on a
+			// RESUMED sync — since != "" — so a poisoned cursor can force
+			// at most one reset, and a fresh sync that still fails falls
+			// through to the ordinary ladder):
+			//   poisoned cursor: the homeserver refused the saved token
+			//     (400 Rejection) — the resume point is corrupt, so drop
+			//     it and take the next sync fresh;
+			//   oversized answer: the backlog this cursor resumes blew
+			//     the read cap — the same resume point reproduces the
+			//     same overflow forever, so drop it and re-sync fresh.
+			if since != "" && (poisonedCursor(err) || isTooLarge(err)) {
+				r.log.Warn("matrix: discarding the saved sync cursor — resuming from a fresh sync", "error", err)
+				if saveErr := r.cursor.Save(ctx, ""); saveErr != nil {
+					r.log.Error("matrix: save empty cursor", "error", saveErr)
+				}
+				attempt = 1
+				continue
+			}
 			var alive bool
 			attempt, alive = chatloop.Backoff(ctx, r.log, "matrix: sync", err, attempt, 30*time.Second)
 			if !alive {
@@ -194,6 +212,24 @@ func (r *Receiver) Run(ctx context.Context) error {
 			r.log.Error("matrix: save sync cursor", "error", err)
 		}
 	}
+}
+
+// poisonedCursor reports a sync Rejection that names the CURSOR as the
+// problem: the homeserver refused a resumed sync with M_UNKNOWN over a
+// 400 (an unknown since-token). An auth failure (401 M_UNKNOWN_TOKEN)
+// is NOT a poisoned cursor — resetting cannot fix a bad token, and the
+// ordinary ladder must stop loudly on it.
+func poisonedCursor(err error) bool {
+	hs, ok := errors.AsType[*homeserverError](err)
+	return ok && hs.Status == http.StatusBadRequest && hs.ErrCode == "M_UNKNOWN"
+}
+
+// isTooLarge reports the oversized-answer verdict (matrix.too_large,
+// Transient): the resumed backlog is beyond the read cap and will
+// reproduce the overflow on every retry until the cursor resets.
+func isTooLarge(err error) bool {
+	_, ok := errors.AsType[oversizedError](err)
+	return ok
 }
 
 // ingest turns one sync response into inbound messages.
