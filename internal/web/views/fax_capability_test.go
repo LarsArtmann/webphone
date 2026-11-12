@@ -141,7 +141,7 @@ func TestFaxRowRendersWithoutCapability(t *testing.T) {
 		Direction:    domain.FaxOutbound,
 		Status:       domain.FaxTransmitted,
 		Remote:       domain.MustParsePhone("+491512345678"),
-		DocumentPath: "blob/fax.pdf",
+		DocumentPath: domain.MustParseRelPath("blob/fax.pdf"),
 	}
 	panel := renderComponent(t, FaxPanel(FaxPanelProps{Jobs: []domain.FaxJob{job}, Capability: FaxCapability{}, Lang: LangEN}))
 
@@ -202,7 +202,7 @@ func TestReceiveOnlyPanelKeepsStoredInboundFaxes(t *testing.T) {
 		Direction:    domain.FaxInbound,
 		Status:       domain.FaxReceived,
 		Remote:       domain.MustParsePhone("+491512345678"),
-		DocumentPath: "blob/inbound-fax.pdf",
+		DocumentPath: domain.MustParseRelPath("blob/inbound-fax.pdf"),
 	}
 	panel := renderComponent(t, FaxPanel(FaxPanelProps{
 		Jobs:       []domain.FaxJob{job},

@@ -203,7 +203,7 @@ templ AdminPanel(props AdminPanelProps) {
 					</span>
 				</span>
 				<span class="wp-row-actions">
-					if job.DocumentPath != "" {
+					if !job.DocumentPath.Empty() {
 						<a class="wp-mini" href={ "/fax/" + job.ID.String() + "/document" } download>{ T(props.Lang, "fax.pdf") }</a>
 					}
 				</span>

@@ -66,7 +66,8 @@ func ParseFaxDirection(raw string) (FaxDirection, error) {
 func MustFaxDirection(raw string) FaxDirection { return must(ParseFaxDirection(raw)) }
 
 // FaxJob is one fax transmission attempt (outbound) or one received
-// document (inbound). The PDF lives on disk at DocumentPath.
+// document (inbound). The PDF lives on disk at DocumentPath — the
+// branded blob-relative path, parsed once at the constructors.
 //
 // branching-flow COMPOSITION_mixin (baselined): the aggregate mirrors
 // its storage row by the parity-port ruling — the SQL→engine swap
@@ -79,7 +80,7 @@ type FaxJob struct {
 	Direction    FaxDirection
 	Status       FaxStatus
 	Pages        int
-	DocumentPath string
+	DocumentPath RelPath
 	ProviderRef  string
 	Error        string
 	CreatedAt    time.Time
@@ -101,7 +102,7 @@ type InboundFax struct {
 // status are consequences of "outbound send", not parameters, so a
 // queued inbound job (or a received outbound one) has no construction
 // path.
-func NewOutboundFaxJob(id FaxID, owner Extension, remote Phone, documentPath string, at time.Time) FaxJob {
+func NewOutboundFaxJob(id FaxID, owner Extension, remote Phone, documentPath RelPath, at time.Time) FaxJob {
 	return FaxJob{
 		ID:           id,
 		Owner:        owner,
@@ -116,7 +117,7 @@ func NewOutboundFaxJob(id FaxID, owner Extension, remote Phone, documentPath str
 
 // NewInboundFaxJob builds the row Receive persists: the received FACT —
 // direction in, status received, no lifecycle, stamps equal at birth.
-func NewInboundFaxJob(id FaxID, owner Extension, remote Phone, documentPath, providerRef string, pages int, at time.Time) FaxJob { //nolint:branching-flow // DocumentPath->domain.RelPath is a recorded open-roadmap item (2026-10-25 review); providerRef is a foreign provider token
+func NewInboundFaxJob(id FaxID, owner Extension, remote Phone, documentPath RelPath, providerRef string, pages int, at time.Time) FaxJob { //nolint:branching-flow // providerRef is a foreign provider token (strong-id wire ruling)
 	return FaxJob{
 		ID:           id,
 		Owner:        owner,

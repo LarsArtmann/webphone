@@ -102,7 +102,7 @@ func (a *Archiver) ArchiveFax(ctx context.Context, job domain.FaxJob, pdf []byte
 	}
 
 	taskID, err := a.client.Upload(ctx, sdk.UploadRequest{
-		Filename:       path.Base(job.DocumentPath),
+		Filename:       path.Base(job.DocumentPath.String()),
 		Content:        pdf,
 		Title:          faxTitle(job),
 		Created:        job.CreatedAt,

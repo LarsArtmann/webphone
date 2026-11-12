@@ -183,7 +183,7 @@ templ FaxRow(job domain.FaxJob, contacts CRMContacts, lang Lang) {
 					hx-swap="innerHTML"
 				>{ T(lang, "fax.resend") }</button>
 			}
-			if job.DocumentPath != "" {
+			if !job.DocumentPath.Empty() {
 				<a class="wp-mini" href={ "/fax/" + job.ID.String() + "/document" } download>{ T(lang, "fax.pdf") }</a>
 			}
 		</span>

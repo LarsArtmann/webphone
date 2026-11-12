@@ -118,7 +118,7 @@ func archiveJob(t *testing.T) domain.FaxJob {
 		Remote:       domain.MustParsePhone("+4930123456"),
 		Direction:    domain.FaxInbound,
 		Status:       domain.FaxReceived,
-		DocumentPath: "faxes/abc123.pdf",
+		DocumentPath: domain.MustParseRelPath("faxes/abc123.pdf"),
 		CreatedAt:    received,
 		UpdatedAt:    received,
 	}

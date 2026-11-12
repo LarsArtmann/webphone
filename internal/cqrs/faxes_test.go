@@ -23,7 +23,7 @@ func faxBattery(t *testing.T) (*system.System, *Faxes) {
 
 func faxJob(t *testing.T, owner domain.Extension, remote string, id domain.FaxID, at time.Time) domain.FaxJob {
 	t.Helper()
-	return domain.NewOutboundFaxJob(id, owner, domain.MustParsePhone(remote), "faxes/a.pdf", at)
+	return domain.NewOutboundFaxJob(id, owner, domain.MustParsePhone(remote), domain.MustParseRelPath("faxes/a.pdf"), at)
 }
 
 // TestFaxRecordAdvanceAndRefresh pins the lifecycle lane: birth queued,
@@ -92,7 +92,7 @@ func TestFaxInboundFactHasNoLifecycle(t *testing.T) {
 	owner := mustExt(t, "100")
 	at := time.Now()
 	job := domain.NewInboundFaxJob(domain.GenerateFaxID(), owner, domain.MustParsePhone("+491703"),
-		"faxes/in.pdf", "in-ref-9", 3, at)
+		domain.MustParseRelPath("faxes/in.pdf"), "in-ref-9", 3, at)
 	if err := faxes.Create(ctx, job); err != nil {
 		t.Fatalf("Create inbound: %v", err)
 	}

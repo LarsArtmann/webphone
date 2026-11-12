@@ -125,7 +125,7 @@ func mustFaxJob(t *testing.T, owner domain.Extension, remote string, at time.Tim
 		CreatedAt: at, UpdatedAt: at,
 	}
 	if docRel != "" {
-		job.DocumentPath = docRel
+		job.DocumentPath = domain.MustParseRelPath(docRel)
 	}
 	return job
 }

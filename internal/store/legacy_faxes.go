@@ -85,7 +85,7 @@ func (f LegacyFax) ToFax() (domain.FaxJob, bool) {
 		Direction:    direction,
 		Status:       status,
 		Pages:        f.Pages,
-		DocumentPath: f.DocumentPath,
+		DocumentPath: domain.RelPathFromRow(f.DocumentPath),
 		ProviderRef:  f.ProviderRef,
 		Error:        f.Error,
 		CreatedAt:    time.Unix(f.CreatedAt, 0),

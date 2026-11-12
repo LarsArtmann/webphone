@@ -90,7 +90,7 @@ func TestReceiveArchivesInbound(t *testing.T) {
 		if string(got.pdf) != string(testPDF) {
 			t.Errorf("archived bytes differ from the spooled pdf (%d vs %d)", len(got.pdf), len(testPDF))
 		}
-		if filepath.Base(got.job.DocumentPath) == "" {
+		if filepath.Base(got.job.DocumentPath.String()) == "" {
 			t.Error("archived job carries no document path")
 		}
 

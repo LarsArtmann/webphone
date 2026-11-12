@@ -70,7 +70,7 @@ func FaxJobOfView(v FaxView) domain.FaxJob {
 		Direction:    v.Direction,
 		Status:       v.Status,
 		Pages:        v.Pages,
-		DocumentPath: v.DocumentPath,
+		DocumentPath: domain.RelPathFromRow(v.DocumentPath),
 		ProviderRef:  v.ProviderRef,
 		Error:        v.Error,
 		CreatedAt:    time.Unix(0, v.CreatedAt),

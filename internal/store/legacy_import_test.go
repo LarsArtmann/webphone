@@ -140,7 +140,7 @@ func TestReadLegacyFaxesAndToFaxRefusesUnknownLifecycle(t *testing.T) {
 	if !ok {
 		t.Fatal("a queued fax must translate")
 	}
-	if fax.Status != domain.FaxQueued || fax.Pages != 2 || fax.DocumentPath != "fax/probe.pdf" {
+	if fax.Status != domain.FaxQueued || fax.Pages != 2 || fax.DocumentPath.String() != "fax/probe.pdf" {
 		t.Errorf("fax = %+v, want the row's own values", fax)
 	}
 	// An unknown lifecycle value must not reach the projection: it would
