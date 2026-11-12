@@ -702,7 +702,7 @@ templ dayHead(lang Lang, at time.Time, count int) {
 }
 
 templ unreadDivider(lang Lang, unread int) {
-	<div class="wp-unread-divider" role="separator" aria-label={ fmtInt(unread) + T(lang, "thread.unread.post") }>
+	<div class="wp-unread-divider" role="separator" aria-label={ fmtInt(unread) + " " + T(lang, "thread.unread.aria") }>
 		{ T(lang, "thread.unread.pre") + fmtInt(unread) + T(lang, "thread.unread.post") }
 	</div>
 }

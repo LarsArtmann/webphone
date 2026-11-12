@@ -117,5 +117,8 @@ func crmTaskDue(ctx CRMContext, lang Lang) string {
 		return ""
 	}
 
+	if lang == LangDE {
+		return T(lang, "crm.duePrefix") + " " + fmtInt(ctx.NextTaskDue.Day()) + ". " + monthLabel(lang, ctx.NextTaskDue)
+	}
 	return T(lang, "crm.duePrefix") + " " + ctx.NextTaskDue.Format("2 Jan")
 }

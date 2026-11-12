@@ -174,6 +174,17 @@ func formatFor(lang Lang, t time.Time, de, en string) string {
 	return t.Local().Format(en)
 }
 
+// monthLabel renders a month abbreviation for the UI language — the
+// same posture as the transcripts' weekdayLabel (Go's Format spells
+// English in both UI languages): the CRM due phrase ("2 Jan") would
+// name the English month on a German desk.
+func monthLabel(lang Lang, t time.Time) string {
+	if lang != LangDE {
+		return t.Format("Jan")
+	}
+	return [...]string{"Jan.", "Feb.", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"}[int(t.Month())-1]
+}
+
 // formatClock renders a wall-clock time for bubble meta: German gets
 // the 24h convention ("16:09"), English the meridiem form
 // ("4:09PM") it has always shown.

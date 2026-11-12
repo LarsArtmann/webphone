@@ -664,9 +664,9 @@ func reportsDays(props ReportsPanelProps) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var28 string
-				templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(formatFor(props.Lang, day.Date, "Mon 02.01.", "Mon, Jan 2"))
+				templ_7745c5c3_Var28, templ_7745c5c3_Err = templ.JoinStringErrs(reportDayLabel(props.Lang, day.Date))
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/reports.templ`, Line: 190, Col: 95}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/reports.templ`, Line: 190, Col: 72}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var28))
 				if templ_7745c5c3_Err != nil {
@@ -939,6 +939,16 @@ func talkTimeLabel(talk time.Duration) string {
 
 // dayScaleMax is the bar ladder's denominator: the busiest day's talk
 // time in seconds, never zero (an <meter> with max 0 has no scale).
+// reportDayLabel renders a day-ladder row head: the transcripts'
+// weekdayLabel vocabulary (one weekday home, REUSED here per the DE
+// locale ruling) over the language's numeric date convention.
+func reportDayLabel(lang Lang, day time.Time) string {
+	if lang == LangDE {
+		return weekdayLabel(lang, day.Weekday()) + " " + day.Format("02.01.")
+	}
+	return weekdayLabel(lang, day.Weekday()) + ", " + day.Format("Jan 2")
+}
+
 func dayScaleMax(max time.Duration) int {
 	seconds := secondsOf(max)
 	if seconds <= 0 {

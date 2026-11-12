@@ -187,7 +187,7 @@ templ reportsDays(props ReportsPanelProps) {
 			<h3 class="wp-reports-head">{ T(props.Lang, "reports.days") }</h3>
 			for _, day := range props.Report.Days {
 				<div class="wp-reports-row">
-					<span class="wp-reports-day">{ formatFor(props.Lang, day.Date, "Mon 02.01.", "Mon, Jan 2") }</span>
+					<span class="wp-reports-day">{ reportDayLabel(props.Lang, day.Date) }</span>
 					<span class="wp-muted wp-reports-day-meta">
 						{ fmtInt(day.Calls) } · { talkTimeLabel(day.Talk) }
 					</span>
@@ -258,6 +258,16 @@ func talkTimeLabel(talk time.Duration) string {
 
 // dayScaleMax is the bar ladder's denominator: the busiest day's talk
 // time in seconds, never zero (an <meter> with max 0 has no scale).
+// reportDayLabel renders a day-ladder row head: the transcripts'
+// weekdayLabel vocabulary (one weekday home, REUSED here per the DE
+// locale ruling) over the language's numeric date convention.
+func reportDayLabel(lang Lang, day time.Time) string {
+	if lang == LangDE {
+		return weekdayLabel(lang, day.Weekday()) + " " + day.Format("02.01.")
+	}
+	return weekdayLabel(lang, day.Weekday()) + ", " + day.Format("Jan 2")
+}
+
 func dayScaleMax(max time.Duration) int {
 	seconds := secondsOf(max)
 	if seconds <= 0 {
