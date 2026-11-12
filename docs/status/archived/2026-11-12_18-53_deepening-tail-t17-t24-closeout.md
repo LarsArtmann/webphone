@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-12 (docs-health v11 sweep): superseded same-evening by the 22-05 self-review, which carries the same close-out plus the honest accounting sections
+
 # Deepening plan T17–T24 execution — session close-out
 
 > Claims verified as of 18:53 local, 2026-11-12. Push/CI statements rot
