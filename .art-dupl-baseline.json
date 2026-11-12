@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "threshold": 1,
-  "recordedAt": "2026-11-12T03:07:21.016991453Z",
+  "recordedAt": "2026-11-12T12:02:21.959439393Z",
   "entries": [
     {
       "hash": "0074763f10c77d08",
@@ -20,6 +20,14 @@
         "internal/web/views/reports.templ",
         "internal/web/views/reports.templ",
         "internal/web/views/reports.templ"
+      ],
+      "tokens": 6
+    },
+    {
+      "hash": "08b0209abb1b8afa",
+      "files": [
+        "internal/server/auth/auth.go",
+        "internal/server/platform/internal_directory.go"
       ],
       "tokens": 6
     },
@@ -74,14 +82,6 @@
       "files": [
         "internal/matrix/receiver.go",
         "internal/matrix/receiver.go"
-      ],
-      "tokens": 8
-    },
-    {
-      "hash": "0f6a4a6fb502b789",
-      "files": [
-        "internal/readmodels/dialwindows.go",
-        "internal/cqrs/dialwindows.go"
       ],
       "tokens": 8
     },
@@ -145,14 +145,6 @@
       "files": [
         "internal/web/views/messages.templ",
         "internal/web/views/messages.templ"
-      ],
-      "tokens": 4
-    },
-    {
-      "hash": "20f6cbc572c6baaa",
-      "files": [
-        "internal/readmodels/agentaudit.go",
-        "internal/cqrs/agentaudit.go"
       ],
       "tokens": 4
     },
@@ -243,8 +235,8 @@
       "hash": "31917f0ef6a0ac3a",
       "files": [
         "internal/cqrs/threadsregister.go",
-        "internal/cqrs/faxesstore.go",
-        "internal/cqrs/threadsregister.go"
+        "internal/cqrs/threadsregister.go",
+        "internal/cqrs/faxesstore.go"
       ],
       "tokens": 15
     },
@@ -301,14 +293,6 @@
       "tokens": 6
     },
     {
-      "hash": "3b6f94d565914976",
-      "files": [
-        "internal/store/db.go",
-        "internal/readmodels/readmodels.go"
-      ],
-      "tokens": 4
-    },
-    {
       "hash": "3b9c70936be4d51d",
       "files": [
         "internal/push/ntfy.go",
@@ -347,7 +331,7 @@
       "hash": "4ebddc0af69e86e9",
       "files": [
         "internal/server/actions.go",
-        "internal/server/passkey_api.go",
+        "internal/server/auth/passkey_api.go",
         "internal/server/actions.go",
         "internal/server/api/push_api.go"
       ],
@@ -371,14 +355,6 @@
         "internal/web/views/layout.templ"
       ],
       "tokens": 5
-    },
-    {
-      "hash": "5925348b73cc2098",
-      "files": [
-        "internal/cqrs/pushdevices.go",
-        "internal/readmodels/push.go"
-      ],
-      "tokens": 6
     },
     {
       "hash": "5949191fb0191d56",
@@ -552,14 +528,6 @@
         "internal/web/views/messages.templ"
       ],
       "tokens": 2
-    },
-    {
-      "hash": "7b659ca475ff3934",
-      "files": [
-        "internal/cqrs/dialwindows.go",
-        "internal/readmodels/dialwindows.go"
-      ],
-      "tokens": 4
     },
     {
       "hash": "812e8487da80c339",
@@ -746,10 +714,9 @@
       "hash": "abccd11e3c3dd606",
       "files": [
         "internal/app/app.go",
-        "internal/readmodels/notfound.go",
         "cmd/webphone/main.go"
       ],
-      "tokens": 12
+      "tokens": 8
     },
     {
       "hash": "acdb80cd30912b72",
@@ -799,14 +766,6 @@
       "tokens": 4
     },
     {
-      "hash": "bcb1b6a4557daa96",
-      "files": [
-        "internal/readmodels/dialwindows.go",
-        "internal/cqrs/dialprojections.go"
-      ],
-      "tokens": 6
-    },
-    {
       "hash": "bef8beaf0e43f74d",
       "files": [
         "internal/web/views/admin.templ",
@@ -841,7 +800,7 @@
     {
       "hash": "c71fd9f0df248ec5",
       "files": [
-        "internal/server/session_api.go",
+        "internal/server/auth/session_api.go",
         "internal/server/panels.go"
       ],
       "tokens": 4
@@ -893,14 +852,6 @@
         "internal/web/views/voicemail.templ"
       ],
       "tokens": 2
-    },
-    {
-      "hash": "d101c34bca0aa1de",
-      "files": [
-        "internal/cqrs/agentaudit.go",
-        "internal/readmodels/agentaudit.go"
-      ],
-      "tokens": 10
     },
     {
       "hash": "d48c1eb9a13718e2",
@@ -962,14 +913,6 @@
         "internal/web/views/voicemail.templ"
       ],
       "tokens": 12
-    },
-    {
-      "hash": "e2778d72c1e083b0",
-      "files": [
-        "internal/readmodels/readmodels.go",
-        "internal/readmodels/readmodels.go"
-      ],
-      "tokens": 2
     },
     {
       "hash": "e6714ae6d67509f0",

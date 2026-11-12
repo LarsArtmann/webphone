@@ -131,11 +131,3 @@ func hasTurnURL(server config.ICEServer) bool {
 	}
 	return false
 }
-
-// verifyTURNPair recomputes the coturn HMAC for username and reports
-// whether credential matches — the test-side oracle for the derivation.
-func verifyTURNPair(secret, username, credential string) bool {
-	mac := hmac.New(sha1.New, []byte(secret))
-	mac.Write([]byte(username))
-	return hmac.Equal([]byte(credential), []byte(base64.StdEncoding.EncodeToString(mac.Sum(nil))))
-}
