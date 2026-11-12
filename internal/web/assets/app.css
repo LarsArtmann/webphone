@@ -882,7 +882,7 @@ h3 {
  * rhythm (destination §6). Scoped via the component's Class prop —
  * the library markup itself stays stock. */
 .wp-empty-state {
-  text-align: left;
+  text-align: start;
 }
 
 .wp-empty-state > div {
@@ -1852,7 +1852,7 @@ a:focus-visible {
   background: var(--surface);
   padding: 8px 12px;
   border-bottom: var(--hairline);
-  text-align: left;
+  text-align: start;
   font-size: 0.72rem;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -1872,7 +1872,7 @@ a:focus-visible {
 }
 
 .wp-table-num {
-  text-align: right;
+  text-align: end;
   white-space: nowrap;
   color: var(--muted);
   font-size: var(--text-sm);
@@ -1891,7 +1891,7 @@ a:focus-visible {
 .wp-table .wp-day-head th {
   display: table-cell;
   padding: 14px 12px 6px;
-  text-align: left;
+  text-align: start;
   white-space: nowrap;
 }
 
@@ -1939,7 +1939,7 @@ a:focus-visible {
   }
 
   .wp-table-num {
-    text-align: left;
+    text-align: start;
     margin-top: 2px;
   }
 

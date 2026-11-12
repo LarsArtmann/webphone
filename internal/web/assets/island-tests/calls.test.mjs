@@ -149,14 +149,14 @@ test("hold UI shows the pending truth until the re-INVITE settles", async () => 
       if (opts?.requestDelegate) {
         if (holdMode === "resolve") {
           const sent = Promise.resolve();
-          sent.then(() => opts.requestDelegate.onAccept());
+          sent.then(() => opts.requestDelegate.onAccept?.());
           return sent;
         }
         return new Promise((resolve, reject) =>
           gates.push({
             resolve,
             reject,
-            accept: () => opts.requestDelegate.onAccept(),
+            accept: () => opts.requestDelegate.onAccept?.(),
             refuse: () => opts.requestDelegate.onReject(),
           }),
         );
@@ -271,14 +271,14 @@ test("a failed hold announces the hold direction", async () => {
       if (opts?.requestDelegate) {
         if (holdMode === "resolve") {
           const sent = Promise.resolve();
-          sent.then(() => opts.requestDelegate.onAccept());
+          sent.then(() => opts.requestDelegate.onAccept?.());
           return sent;
         }
         return new Promise((resolve, reject) =>
           gates.push({
             resolve,
             reject,
-            accept: () => opts.requestDelegate.onAccept(),
+            accept: () => opts.requestDelegate.onAccept?.(),
             refuse: () => opts.requestDelegate.onReject(),
           }),
         );
@@ -445,14 +445,14 @@ test("a wish queued mid-flight replays after the in-flight toggle settles", asyn
       if (opts?.requestDelegate) {
         if (holdMode === "resolve") {
           const sent = Promise.resolve();
-          sent.then(() => opts.requestDelegate.onAccept());
+          sent.then(() => opts.requestDelegate.onAccept?.());
           return sent;
         }
         return new Promise((resolve, reject) =>
           gates.push({
             resolve,
             reject,
-            accept: () => opts.requestDelegate.onAccept(),
+            accept: () => opts.requestDelegate.onAccept?.(),
             refuse: () => opts.requestDelegate.onReject(),
           }),
         );
@@ -488,13 +488,13 @@ test("a wish queued mid-flight replays after the in-flight toggle settles", asyn
 
   // The hold settles: held becomes true, and the queued resume REPLAYS
   // as a second re-INVITE (not silently dropped, not lost).
-  gates.shift().resolve();
+  gates.shift().accept();
   await settle();
   assert.equal(entry.held, true, "the in-flight hold settled first");
   assert.equal(entry.holdPending, "resuming", "the queued wish took over");
   assert.equal(gates.length, 1, "the replay issued its own re-INVITE");
 
-  gates.shift().resolve();
+  gates.shift().accept();
   await settle();
   assert.equal(entry.held, false, "the replayed resume settled");
   assert.equal(entry.holdPending, null);
