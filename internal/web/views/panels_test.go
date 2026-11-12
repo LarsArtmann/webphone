@@ -770,14 +770,19 @@ func TestUnreadDividerAriaNamesTheCountWithoutTheDashes(t *testing.T) {
 		if !strings.Contains(rendered, want) {
 			t.Errorf("%s: divider aria missing %q; rendered:\n%.600s", lang, want, rendered)
 		}
-		// The LEAK check: the aria VALUE itself (between the quotes) —
-		// the visible text right after the tag keeps its em-dashes on
-		// purpose; only the announcement must be clean.
+		// The LEAK check: the aria VALUE itself — the visible text
+		// keeps its em-dashes on purpose; only the announcement must be
+		// clean. The divider's aria is the FIRST aria-label from the
+		// divider tag onward.
 		if at := strings.Index(rendered, "wp-unread-divider"); at >= 0 {
 			segment := rendered[at:]
 			open := strings.Index(segment, `aria-label="`)
-			close := strings.Index(segment[open:], `"`)
-			aria := segment[open+12 : open+close]
+			if open < 0 {
+				t.Fatalf("%s: divider carries no aria-label:\n%.600s", lang, segment)
+			}
+			valueAt := open + len(`aria-label="`)
+			end := strings.Index(segment[valueAt:], `"`)
+			aria := segment[valueAt : valueAt+end]
 			if strings.Contains(aria, "\u2014") {
 				t.Errorf("%s: the aria label carries the em-dash leak: %q", lang, aria)
 			}
