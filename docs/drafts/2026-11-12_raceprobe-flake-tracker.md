@@ -14,13 +14,13 @@ raceprobe_test.go:113: after re-delivery: 1 threads, unread 3 — want 1 thread,
 
 Reproduction, observed 2026-11-12 (all runs `env -u GOEXPERIMENT go test`):
 
-| probe | verdict |
-| --- | --- |
-| `-count=8 -run TestConcurrentFirstSightYieldsOneThread` at `b1b01b87` (pre-session HEAD, detached worktree) | FAIL |
-| `-count=5`, same test at then-HEAD | FAIL (≥1 of 5) |
-| single run, same test | ok (multiple) |
-| package alone, `-count=1`, 3× | ok 3/3 |
-| full `go test ./...` | FAIL observed twice, ok once |
+| probe                                                                                                       | verdict                      |
+| ----------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| `-count=8 -run TestConcurrentFirstSightYieldsOneThread` at `b1b01b87` (pre-session HEAD, detached worktree) | FAIL                         |
+| `-count=5`, same test at then-HEAD                                                                          | FAIL (≥1 of 5)               |
+| single run, same test                                                                                       | ok (multiple)                |
+| package alone, `-count=1`, 3×                                                                               | ok 3/3                       |
+| full `go test ./...`                                                                                        | FAIL observed twice, ok once |
 
 The test is pre-existing flaky, not a regression: it reproduces at a
 commit that predates every working-tree change of the reporting session.
