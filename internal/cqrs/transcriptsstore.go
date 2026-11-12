@@ -178,8 +178,9 @@ func (s *Transcripts) Export(ctx context.Context, owner domain.Extension, maxCal
 // options — the ONE home for the transcript read so Recent, RecentAll,
 // Search and Export cannot drift apart. scope names the read's reach
 // in the failure message (one owner, or all owners for the admin
-//   seam); the owner FILTER is an explicit scan option each caller
-//   passes (or omits, deliberately, on the admin path).
+//
+//	seam); the owner FILTER is an explicit scan option each caller
+//	passes (or omits, deliberately, on the admin path).
 func (s *Transcripts) fetchSegments(ctx context.Context, scope string, opts ...metaengine.ScanOption) ([]domain.CallTranscriptSegment, error) {
 	//cqrs-lint:ignore(F031) every caller passes an explicit metaengine.WithLimit; the variadic forwarding hides it (2026-11-11 triage; re-placed after the ladder re-home)
 	views, err := s.reader.Scan(ctx, opts...)
