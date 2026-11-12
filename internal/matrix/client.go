@@ -351,7 +351,7 @@ const answerCap = 16 << 20
 
 // errAnswerTooLarge is the typed cause of the oversized-answer verdict:
 // the receiver keys its fresh-sync reset on it.
-var errAnswerTooLarge = oversizedError{}
+var errAnswerTooLarge error = oversizedError{}
 
 type oversizedError struct{}
 
