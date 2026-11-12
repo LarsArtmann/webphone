@@ -34,6 +34,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **The scrollable table wrapper answers keyboard focus** with a
   visible ring (`:focus-visible`, offset inside the sticky-head clip),
   and the app's z-index ladder is commented at the sticky-head rule.
+- **go-paperless bumped to v0.5.2** (fleet-currency train; the consumed
+  adapter surface is unchanged — fire-and-forget archiving reads
+  nothing the two minors touched).
 
 ### Added
 
