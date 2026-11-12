@@ -25,9 +25,10 @@ front matter does not carry their history (one home per fact, per the rule above
   `refreshNav`'s `[data-tab]` walk is safe by construction — confirm the stack's
   `tests/browser-e2e.py` never assumes a strip child count.~~ →
   done 2026-11-12 — verified: the stack E2E touches the nav ONLY via `[data-tab='{tab}']` exact selectors (line 680), no child-count walks; the JS-created Phone tab carries NO data-tab attribute — safe by construction
-- [ ] **German stacked-table lane** (§f-12): the mobile History stack renders
-      `td[data-label]` copy from markup — verify the longest DE labels ("Zeit"/"Dauer")
-      fit their cells at 390px (the lane was verified EN-only).
+- ~~**German stacked-table lane** (§f-12): the mobile History stack renders
+  `td[data-label]` copy from markup — verify the longest DE labels ("Zeit"/"Dauer")
+  fit their cells at 390px (the lane was verified EN-only).~~ →
+  done 2026-11-12 — measured GREEN at a TRUE 390px viewport (WebDriver `set_window_size`; the `--window-size` flag silently clamps at 500): a fake PBX (`/phone-api/history` + the voicemail-summary credential verify) served 3 CDR rows and every Zeit/Dauer stacked cell fits (scrollW == clientW, no lane-wrapper overflow); gotcha recorded — a harness `--window-size 390x844` boot measures 500px wide unless the WebDriver API resizes
 - ~~**Phone label i18n** (§f-15): the label is English-only by the D3 shell rule while
   the localized tabs sit beside it — owner eyes or an owner exception.~~ →
   done 2026-11-12 — batched as Q1 of docs/planning/2026-11-12_07-05_owner-calls-batch.md (default stands: D3 keeps the label English)
@@ -38,8 +39,9 @@ front matter does not carry their history (one home per fact, per the rule above
 
 ### UI token/craft + Train 2/3 residue (2026-11-12, harvested from the 04-09 report §f)
 
-- [ ] **Hover matrix per surface** (§f-18): `--hover SURFACE=SELECTOR` pairs so the
-      hover lane can vary per shot instead of one global selector.
+- ~~**Hover matrix per surface** (§f-18): `--hover SURFACE=SELECTOR` pairs so the
+  hover lane can vary per shot instead of one global selector.~~ →
+  done 2026-11-12 — `--hover-map` shipped (repeatable SURFACE=SELECTOR, last-wins parse) and proven live: messages/history/settings × light/dark at 390x844 = exactly 6 shots
 - ~~**Fixed-element caveat print** (§f-19): full-page CDP captures render
   `position: fixed` at the original viewport's bottom — one harness print
   prevents the next "the bar is mid-image" misread (cost a §d scare once).~~ →
@@ -68,8 +70,9 @@ front matter does not carry their history (one home per fact, per the rule above
 - ~~**whitespace-drift CSS-indent verification** (§f-31): confirm the formatter
   adjudication would catch a 1-space-indent CSS commit (the §d-3 incident class).~~ →
   done 2026-11-12 — planted probe: treefmt re-indents the 1-space CSS ("1 changed") and `--ci` mode exits 1 on the non-canonical bytes; canonical file passes
-- [ ] **`wp-phone-focus` seeded capture** (§f-32): a 390-wide pass with the focus class
-      pre-seeded via script — the dialer-focus LAYOUT is captureable without taps.
+- ~~**`wp-phone-focus` seeded capture** (§f-32): a 390-wide pass with the focus class
+  pre-seeded via script — the dialer-focus LAYOUT is captureable without taps.~~ →
+  done 2026-11-12 — `--seed-class html=wp-phone-focus` run captured the dialer-focus layout (2 shots, 390x844) without taps
 - ~~**Sticky-head stacking** (§f-35): table thead z-index (1, inside the wrapper)
   vs palette (200) and toasts (100) — confirm no bleed when a toast crosses a
   scrolled table.~~ →
