@@ -343,3 +343,16 @@ func TestCRMTaskDue(t *testing.T) {
 		t.Errorf("an undated task must render no due phrase, got %q", got)
 	}
 }
+
+// TestCrmDueLabelLocalizesTheMonth pins the DE-locale fix: the due
+// phrase names the month in the PANEL language ("2 Jan" spells the
+// English month in Go regardless of the desk).
+func TestCrmDueLabelLocalizesTheMonth(t *testing.T) {
+	due := CRMContext{NextTask: "Follow up", NextTaskDue: time.Date(2026, 11, 4, 9, 0, 0, 0, time.UTC)}
+	if got := crmTaskDue(due, LangDE); got != "fällig 4. Nov" {
+		t.Fatalf("DE due = %q, want %q", got, "fällig 4. Nov")
+	}
+	if got := crmTaskDue(due, LangEN); got != "due 4 Nov" {
+		t.Fatalf("EN due = %q, want %q", got, "due 4 Nov")
+	}
+}

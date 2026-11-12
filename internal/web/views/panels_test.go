@@ -747,3 +747,40 @@ func TestHistoryVerdictFilterRendersEveryOption(t *testing.T) {
 		t.Errorf("the verdict filter must not offer the unknown disposition; rendered:\n%s", rendered)
 	}
 }
+
+// TestUnreadDividerAriaNamesTheCountWithoutTheDashes pins the DE-locale
+// honesty fix: the divider's aria-label announces the count through the
+// dedicated vocabulary — no em-dashes (a separator role reading "dash
+// 3 unread dash" is noise), and the same clean sentence in both
+// languages.
+func TestUnreadDividerAriaNamesTheCountWithoutTheDashes(t *testing.T) {
+	msgs := []domain.Message{}
+	for i := range 3 {
+		msgs = append(msgs, domain.NewInboundMessage(
+			domain.GenerateMessageID(), domain.ThreadID{}, domain.MustParseExtension("1001"),
+			domain.MustParseAddress(domain.NetworkSMS, "+491711"), "m", 0,
+			time.Now().Add(time.Duration(i)*time.Minute),
+		))
+	}
+	for lang, want := range map[Lang]string{
+		LangEN: `aria-label="2 unread messages"`,
+		LangDE: `aria-label="2 ungelesene Nachrichten"`,
+	} {
+		rendered := renderComponent(t, TranscriptAt(msgs, lang, 2, false))
+		if !strings.Contains(rendered, want) {
+			t.Errorf("%s: divider aria missing %q; rendered:\n%.600s", lang, want, rendered)
+		}
+		// The LEAK check: the aria VALUE itself (between the quotes) —
+		// the visible text right after the tag keeps its em-dashes on
+		// purpose; only the announcement must be clean.
+		if at := strings.Index(rendered, "wp-unread-divider"); at >= 0 {
+			segment := rendered[at:]
+			open := strings.Index(segment, `aria-label="`)
+			close := strings.Index(segment[open:], `"`)
+			aria := segment[open+12 : open+close]
+			if strings.Contains(aria, "\u2014") {
+				t.Errorf("%s: the aria label carries the em-dash leak: %q", lang, aria)
+			}
+		}
+	}
+}

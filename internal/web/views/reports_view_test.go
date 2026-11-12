@@ -239,3 +239,22 @@ func TestReportsDaysSkipsEmptyLadder(t *testing.T) {
 		t.Errorf("week above an undatable window rendered:\n%s", rendered)
 	}
 }
+
+// TestReportsDayLabelLocalizesTheWeekday pins the DE-locale fix: the
+// day ladder's row head names the weekday in the PANEL language (Go's
+// "Mon" layout spells English in both) — Mo. over the 02.01. numeric
+// convention for German, the English form unchanged.
+func TestReportsDayLabelLocalizesTheWeekday(t *testing.T) {
+	berlin, err := time.LoadLocation("Europe/Berlin")
+	if err != nil {
+		t.Fatal(err)
+	}
+	day := time.Date(2026, 11, 4, 9, 0, 0, 0, berlin) // a Wednesday
+
+	if got := reportDayLabel(LangDE, day); got != "Mi 04.11." {
+		t.Fatalf("DE day label = %q, want %q", got, "Mi 04.11.")
+	}
+	if got := reportDayLabel(LangEN, day); got != "Wed, Nov 4" {
+		t.Fatalf("EN day label = %q, want %q", got, "Wed, Nov 4")
+	}
+}
