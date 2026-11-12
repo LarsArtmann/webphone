@@ -279,9 +279,9 @@ New open items from the legs session, not homed elsewhere yet.
       (−7 note/review/disposition codes).
 - [x] ~~**Storage-ladder train C: delete the prod-dead readmodels
       contacts + snippets + dialwindows stores** (the plan's M04; all
-      three answered from the cqrs journal since the SUPERB swaps â
+      three answered from the cqrs journal since the SUPERB swaps —
       the engine twins had zero non-test callers beyond the server
-      harness and the fuzz/cap pins)~~ â done 2026-11-12 â
+      harness and the fuzz/cap pins)~~ → done 2026-11-12 —
       contacts.go/snippets.go/dialwindows.go DELETED (plus the
       engine-store dial_bench and the now-userless notFound envelope +
       its test); the gate/view surface moved to contactsgate.go/
@@ -294,7 +294,7 @@ New open items from the legs session, not homed elsewhere yet.
       the API cap pin, and the store-failure lanes boot the journal
       through one newCoreSystem helper; the 500-contact API cap test
       seeds through the backend (dispatch+await, ~2s). The live-engine
-      delete-miss envelope pins retired with the stores â the cqrs
+      delete-miss envelope pins retired with the stores — the cqrs
       delete tests carry the contract. Registry regen'd (readmodels
       contact/snippet/dial codes out; the regen also caught the
       concurrent train's uncommitted codes). Engine = push devices +
@@ -302,20 +302,20 @@ New open items from the legs session, not homed elsewhere yet.
 - [x] ~~**Storage-ladder closeout (the plan's M05): delete the last
       two prod-dead readmodels stores (push devices + agent audit)**
       (both answered from the cqrs journal since the SUPERB Phase 3
-      swaps; zero prod callers)~~ â done 2026-11-12 â
+      swaps; zero prod callers)~~ → done 2026-11-12 —
       push.go/agentaudit.go + their tests + export.go + readmodels.go
       (the Engine itself) DELETED; the gate/view surface moved to
       pushgate.go/agentauditgate.go (gates, views, cap constants) and
       doc.go now carries the doctrine-complete package header. A new
       arch test (`TestReadmodelsStaysGatesAndViewsOnly`) pins the
-      purity: no sqliteengine import, no `func Open(` â the
+      purity: no sqliteengine import, no `func Open(` — the
       second storage brain can never grow back. The five consumer test
       sites (hooks ring + idempotency contract, auth-audit, push-api,
       summary-push) boot the journal backends through the core system;
       both write doors carry the D7 `awaitOwnWrite` (the engine folded
       synchronously; the ring prune flaked 1/5 without the await).
       LOAD-BEARING SIDE-FIND: readmodels.go silently carried the
-      sqlite engine-driver registration for every boot â
+      sqlite engine-driver registration for every boot —
       internal/cqrs is now the ONE home (blank import in
       threadsregister.go; without it every `system.New`, prod
       included, dies unknown-driver). NewCoreSystem grew the two decls;
@@ -428,18 +428,18 @@ docs/research/2026-11-07_datastar-deep-dive.html — supersedes the 2026-11-04
 go-datastar adjacent ruling's trigger paragraph). One actionable item fell out:
 
 - ~~Retire `/health` `'unsafe-eval'`: go-health-dashboard upstream adopts the
-      embedded Datastar v1.0.3 nonce + Trusted Types lane (emit `data-nonce` on its
-      page, grant `'nonce-…'` instead of `'unsafe-eval'` in its csp.go), then
-      re-pin `TestAppDashboardMountsHealthSubtree` (app_test.go:135) to assert the
-      nonce form. Evidence: report F4.~~ →
-      adjudicated 2026-11-12 — the "nonce INSTEAD OF unsafe-eval" premise is unsatisfiable: the shipped csp.go (v0.13.1, commit 449aeb3) adds the nonce BESIDE `'unsafe-eval'` because the Datastar SDK compiles its data-* expressions with the Function constructor regardless of nonces (library comment + webphone dashboard.go + deep-dive F4 agree). The ACHIEVABLE half already landed and is pinned: per-request nonce'd inline scripts + the nonce'd CSP are asserted by TestAppDashboardMountsHealthSubtree (both tokens + rotation). The eval-free re-open trigger lives with Datastar upstream (expression compilation without eval) or a dashboard drop of Datastar — not this repo.
+  embedded Datastar v1.0.3 nonce + Trusted Types lane (emit `data-nonce` on its
+  page, grant `'nonce-…'` instead of `'unsafe-eval'` in its csp.go), then
+  re-pin `TestAppDashboardMountsHealthSubtree` (app_test.go:135) to assert the
+  nonce form. Evidence: report F4.~~ →
+  adjudicated 2026-11-12 — the "nonce INSTEAD OF unsafe-eval" premise is unsatisfiable: the shipped csp.go (v0.13.1, commit 449aeb3) adds the nonce BESIDE `'unsafe-eval'` because the Datastar SDK compiles its data-* expressions with the Function constructor regardless of nonces (library comment + webphone dashboard.go + deep-dive F4 agree). The ACHIEVABLE half already landed and is pinned: per-request nonce'd inline scripts + the nonce'd CSP are asserted by TestAppDashboardMountsHealthSubtree (both tokens + rotation). The eval-free re-open trigger lives with Datastar upstream (expression compilation without eval) or a dashboard drop of Datastar — not this repo.
 - ~~**Implement the dashboard lane in the library repo** (go-health-dashboard):
-      the nonce emit + CSP grant above, then run ITS gates there — this repo cannot
-      ship the change and must not fake it locally.~~ →
-      done (by train) — the library shipped cspPolicy(nonce, hardened) + strict variant (go-health-dashboard 449aeb3, first released v0.13.1); local checkout verified 2026-11-12
+  the nonce emit + CSP grant above, then run ITS gates there — this repo cannot
+  ship the change and must not fake it locally.~~ →
+  done (by train) — the library shipped cspPolicy(nonce, hardened) + strict variant (go-health-dashboard 449aeb3, first released v0.13.1); local checkout verified 2026-11-12
 - ~~**Release the dashboard version** (tag) once the lane lands — owner call per
-      the report's §g1; only then can webphone bump and re-pin the CSP assertion.~~ →
-      done — v0.13.1/2/3 tagged; webphone pins v0.13.2 and the CSP assertion already asserts the nonce form (app_test.go TestAppDashboardMountsHealthSubtree)
+  the report's §g1; only then can webphone bump and re-pin the CSP assertion.~~ →
+  done — v0.13.1/2/3 tagged; webphone pins v0.13.2 and the CSP assertion already asserts the nonce form (app_test.go TestAppDashboardMountsHealthSubtree)
 
 ### 2026-11-06 GitHub-issue train residue (harvest from the 10:45 report)
 

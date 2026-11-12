@@ -116,6 +116,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the error-code registry and the i18n key-scan now cover the new home.
   (The 2026-10-17 carve adjudication's reopen trigger — the next
   auth-surface change — fired with the login-page front-door train.)
+- **The machine surfaces are their own package (`internal/server/platform`).**
+  The asset tree, /metrics and its recorders, the CSP report intake, the
+  flight-recorder seam (+ `platform.TraceRecorder`'s new home), the
+  /phone-api proxy, the directory bridge, /config.js and the data export
+  moved out of the server god-package behind a narrow `platform.Shell`
+  seam; the voicemail SSE nudge and the directory bearer gate keep their
+  one home in the server package. Same byte-identical wire contract.
+- **The templates speak view-owned shapes.** The voicemail feed
+  (`VoicemailItem`/`VoicemailSummary`), the agent review queue
+  (`AgentReviews`/`AgentDraft` + frozen/suppressed mirrors) and the call
+  records (`CDREntry`) convert once at the server boundary
+  (`voicemailItems`/`agentReviewsOf`/`cdrEntries` — the arch review's
+  P2 reach-through resolved), and the compose cap moved to
+  `domain.MaxBodyLength` (one home for the validation rule and the
+  rendered maxlength). views now imports only domain, readmodels and
+  reports — the two ratified shape homes.
+- **Package depth is a budget, not a narrative** (`depthbudget_test.go`):
+  every `internal/` package fits 1 500 hand-written LOC / 60 exports or
+  carries a named, measured pin (cqrs/domain/server/api/store/app);
+  raising a pin is a ratchet act with its reason in the same commit.
+  Mutation-proven on a planted 170-export package.
 
 ### Fixed
 
