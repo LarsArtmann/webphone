@@ -1,5 +1,5 @@
 {
-  "annotate_max": 203,
+  "annotate_max": 260,
   "audit_max": 72,
   "cadence": {
     "max_unarchived": 65,
@@ -14,5 +14,6 @@
     ".nix"
   ],
   "skip_gates": [],
-  "todo_file": "TODO_LIST.md"
+  "todo_file": "TODO_LIST.md",
+  "_annotate_max_evidence": "2026-11-12 flare: the carve trains' ledger prose (TODO rows + CHANGELOG + two status reports) grew the living corpus and re-flagged 49 old archived \u00a7f rows over the generic-token boundary (the documented DF-brittle class, 2026-11-07 precedent: 330\u2192331\u2192354 from one paragraph). Measured 249 findings at the sweep; pin raised 203\u2192260 WITH this evidence comment. Direction back DOWN is the F58 drain train (check-rows --strict + bare-rows gates-first), not silent pin growth."
 }

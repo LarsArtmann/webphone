@@ -9,13 +9,13 @@ attachments, faxes, dial windows, contacts, snippets, transcripts,
 notes, reviews, enroll tokens, agent audit, push devices, dedup
 windows). What still writes `webphone.db`:
 
-| Surface                                                   | Why it is still SQL               | Verdict                                  |
-| --------------------------------------------------------- | --------------------------------- | ---------------------------------------- |
-| `sessions` table                                          | D2's open ruling                  | **STAYS SQL — the ruling below**         |
-| `app_flags` markers + matrix.sync_cursor                   | import bookkeeping + the LIVE chat-loop cursors | the import markers die with §4; the cursor keys are LIVE (store.FlagValue/SetFlag — app/chat.go) and move before any DROP |
-| `threads`/`messages`/`attachments`                        | import-only history since v2.10.0 | frozen; the retention sweep empties them |
-| `fax_jobs` (retired)                                      | untouched since the T11 swap      | frozen                                   |
-| contacts/snippets/transcripts/notes/reviews legacy tables | untouched since their swaps       | frozen                                   |
+| Surface                                                   | Why it is still SQL                             | Verdict                                                                                                                   |
+| --------------------------------------------------------- | ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `sessions` table                                          | D2's open ruling                                | **STAYS SQL — the ruling below**                                                                                          |
+| `app_flags` markers + matrix.sync_cursor                  | import bookkeeping + the LIVE chat-loop cursors | the import markers die with §4; the cursor keys are LIVE (store.FlagValue/SetFlag — app/chat.go) and move before any DROP |
+| `threads`/`messages`/`attachments`                        | import-only history since v2.10.0               | frozen; the retention sweep empties them                                                                                  |
+| `fax_jobs` (retired)                                      | untouched since the T11 swap                    | frozen                                                                                                                    |
+| contacts/snippets/transcripts/notes/reviews legacy tables | untouched since their swaps                     | frozen                                                                                                                    |
 
 `readmodels.db` is RETIRED (A43): the composition root stopped opening
 it, the backup set dropped it, and its dedup window moved to
@@ -49,13 +49,13 @@ aggregate, never into a new SQL table.
 
 ## 4. The death map (table → release)
 
-| Table family                                                  | Dies at           | Mechanism                                                                                                             |
-| ------------------------------------------------------------- | ----------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `readmodels.db` (whole file)                                  | **v2.12.0 (A43)** | already done: boot stops opening it, backup drops it                                                                  |
-| threads/messages/attachments legacy rows                      | v2.13+ (operator) | the retention sweep empties them per `retention_days`; then the tables are DROP-candidates in a coordinated migration |
+| Table family                                                  | Dies at                                            | Mechanism                                                                                                                                                                                                                    |
+| ------------------------------------------------------------- | -------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `readmodels.db` (whole file)                                  | **v2.12.0 (A43)**                                  | already done: boot stops opening it, backup drops it                                                                                                                                                                         |
+| threads/messages/attachments legacy rows                      | v2.13+ (operator)                                  | the retention sweep empties them per `retention_days`; then the tables are DROP-candidates in a coordinated migration                                                                                                        |
 | `app_flags` (import markers)                                  | §4 rows with §5, cursor keys ONLY after their move | the import markers have no reader since v2.12.0, BUT the table is NOT inert: the matrix/signal sync cursors persist here (app/chat.go, store.FlagValue/SetFlag) — corrected 2026-11-12, the 2026-11-09 row missed the cursor |
-| fax/contacts/snippets/transcripts/notes/reviews legacy tables | v2.13+ (operator) | same retention-empty-then-drop posture                                                                                |
-| `sessions`                                                    | never (this doc)  | stays SQL per §2 — the one deliberate hand-ladder survivor                                                            |
+| fax/contacts/snippets/transcripts/notes/reviews legacy tables | v2.13+ (operator)                                  | same retention-empty-then-drop posture                                                                                                                                                                                       |
+| `sessions`                                                    | never (this doc)                                   | stays SQL per §2 — the one deliberate hand-ladder survivor                                                                                                                                                                   |
 
 Upgrade chain obligation: **v2.12.0 requires passing through v2.10.0 or
 v2.11.0 first** on deployments with pre-SUPERB data — the one-time
