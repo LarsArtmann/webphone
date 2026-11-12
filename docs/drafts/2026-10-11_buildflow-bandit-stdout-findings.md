@@ -84,3 +84,22 @@ Still live, now with upstream naming:
 - webphone side: the 5 real sites now carry `# nosec <CODE> - reason`
   (house practice since 2026-10-11), so the tree's real count is 0 and
   every remaining finding row is parser furniture.
+
+### Reobservation addendum 2 (2026-11-12 16:3x): count reconciled to zero, locally reproducible
+
+- Local runner: `nix run nixpkgs#python312Packages.bandit -- -r .`
+  (bandit 1.9.4, same minor as the More-Info links). Fresh full-tree
+  scan: **0 issues, 63 nosec'd sites** — the 15:57 sighting's six real
+  issues are all suppressed at source with reasoned `# nosec`.
+- The 6-vs-5 discrepancy is EXPLAINED: bandit's own metric block
+  (Low 5 + Medium 1) was right; the sixth issue was B603 at
+  `scripts/status-index.py:138` (B607 fires at the same line), and the
+  BuildFlow report log carried only one of the two headers for that
+  line (the #64-class line folding). Count the metric block, not the
+  recovered headers, when triaging through the mangled output.
+- New gotcha for the fix review: bandit's line-anchored `# nosec`
+  accepts SPACE-separated ids (`# nosec B603 B607`). The COMMA form
+  (`# nosec B603,B607`) left B603 firing while B607 went quiet
+  (mechanism unclear — possibly per-test line attribution); switching
+  to the space form suppressed both and took the tree to 0. Worth a
+  line in the bandit docs or the BuildFlow fix's tests.

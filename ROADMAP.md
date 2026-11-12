@@ -686,3 +686,23 @@ verdict with the threat model at
 `docs/planning/archived/2026-09-22_14-45_csrf-rotation-on-slide-verdict.md`
 (double-submit makes token-only leaks inert; both-halves theft is bounded
 by the absolute cap, not by rotation).
+
+## BuildFlow host-tooling hygiene (owner infra, harvested 2026-11-12 from the five-scoped-run triage)
+
+Owner-infrastructure actions — none executable from a webphone session while
+concurrent sessions hold in-flight files; each is bounded, with its trigger
+already firing:
+
+- **Rebuild + reinstall the BuildFlow binary** (`8936ca0` → `39c4789`; the
+  freshness advisory fires on every run; after reinstall check PATH precedence
+  — a stale `~/go/bin/buildflow` shadowing the profile binary is BuildFlow#81).
+- **BuildFlow state-DB purge decision** (0.90 GB state + 0.48 GB cache; the
+  cache VACUUM ran 2026-11-12; the state DB wants the post-purge GC or an
+  explicit call).
+- **io-history-ratchet `--profile-io` pass** (scoped runs hash wide file sets
+  by construction; confirm the memo layer is not regressed).
+- **dprint remote plugins → nix-store pin** (`nix build .#dprint-plugins` +
+  `BUILDFLOW_DPRINT_PLUGINS`; kills the cold-run fetch-hang class and the
+  recurring advisory).
+
+(repo: BuildFlow) — the fixes land in the BuildFlow repo/host, not here.

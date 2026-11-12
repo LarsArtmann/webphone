@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Five oversized Go files split along their natural seams** (the
+  file-size gate's 350-line cap): the session API becomes login /
+  switch / identity+mint files, the ASR seam separates its contract,
+  OpenAI-compatible client and shared transport tail, the server shell
+  moves the 404 pair and the auth seam wrappers into their own files,
+  and the transcript and CRM-view test suites split by concern.
+  Served behavior, wire bytes and error-code vocabulary are unchanged;
+  the error registry's seam-file column was regenerated for the moved
+  ASR code sites.
 - **The island's inline-row icons are SVG, not platform glyphs.** The
   history row's redial/save buttons and the contacts row's call/remove
   buttons render the same `wp-icon` SVG vocabulary as the rest of the
@@ -175,6 +184,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   re-INVITE in a requestDelegate and settles on onAccept/onReject
   (accepted/rejected/send-failed/timeout, 30s cap); failed toggles
   return the SETTLED prior state.
+- **Admin call-record rows prefer the caller's name.** The admin CDR
+  rows rendered only the raw caller number even when the PBX carried a
+  CallerIDName, so named callers read as bare numbers where the History
+  tab already showed the name. `cdrParty` (name → number → unknown) is
+  now the one fallback home, and a structural view test pins the whole
+  section ladder: phone-API-off explains itself, a failed line is named
+  while surviving lines still render, and an empty page gets the honest
+  empty state.
 
 ## [2.14.0] - 2026-11-11
 

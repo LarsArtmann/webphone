@@ -274,12 +274,14 @@ watch`, not a glance at the last lines.
   archiving spends a slot you may not have, and the slot is only
   refilled by a gates-first archive (`annotate check-rows --strict` +
   `annotate bare-rows` BEFORE the `git mv`).
-- **Copy release attempt logs into the evidence home AT attempt
-  completion — never "later".** All seven `/tmp/release-2.13.0-*.log`
-  files were purged by tmpfiles while the session idled overnight; the
-  verdicts survived only because the CHANGELOG + status docs carried
-  them. `cp` into `docs/status/` evidence or a committed log dir before
-  starting the next attempt.
+- **Release logs are ephemeral by contract; the verdict is the
+  evidence.** POLICY (2026-11-12, after all seven
+  `/tmp/release-2.13.0-*.log` files were purged by tmpfiles while the
+  session idled overnight): raw attempt logs stay OUT of git; at each
+  attempt's completion, copy the verdict TAIL (the step matrix +
+  failure lines, ≤40 lines) into the release's filing status report
+  under `docs/status/`, and record the verdict line in the CHANGELOG.
+  Never plan to "archive the log later" — `/tmp` will not keep it.
 - **A partial fix is not a pushable fix.** When the red tip's repair is
   entangled with another session's unpushed commits (2026-11-11: the
   island-js red needed BOTH the shell.js guard change and a test-file
