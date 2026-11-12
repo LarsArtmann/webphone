@@ -461,7 +461,7 @@ func HistoryPanel(props HistoryPanelProps) templ.Component {
 					return templ_7745c5c3_Err
 				}
 				if group.Key != "" {
-					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "<tr class=\"wp-day-head\"><th colspan=\"5\" scope=\"colgroup\"><span>")
+					templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 41, "<tr class=\"wp-table-day-head\"><th colspan=\"5\" scope=\"colgroup\"><span>")
 					if templ_7745c5c3_Err != nil {
 						return templ_7745c5c3_Err
 					}

@@ -222,10 +222,15 @@ export function installBrowserGlobals() {
       }
       return found;
     },
-    // Scans the registered roots' subtrees (makeEl.querySelector answers
+    // Scans the registered roots' SUBTREES (makeEl.querySelector answers
     // exact-selector hits), so tests that plant nodes under registry
     // elements can exercise document-level lookups like the drafts
-    // panel's open-edit guard.
+    // panel's open-edit guard. Registry-root semantics (cost a debug
+    // session once, §f-20): a root NEVER matches itself — only its
+    // descendants do; `html` and `body` are ordinary roots here, so a
+    // selector aimed at the body element itself answers null, and a node
+    // planted directly on a root still counts as "under" it only when the
+    // root's own subtree walk reaches it.
     querySelector(selector) {
       for (const root of registry.values()) {
         const found = root.querySelector(selector);
