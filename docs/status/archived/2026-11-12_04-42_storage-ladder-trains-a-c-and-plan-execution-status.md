@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-12 (docs-health v11 sweep): superseded by the ladder CLOSEOUT landing (2026-11-12, M05) — its §g-1 lane owned by the sibling's deepening plan
+
 # SUPERB plan execution, trains A–C: the storage-ladder completion session — status at 2026-11-12 04:42 CET
 
 > Claims verified as of **04:42 CET** (push/CI statements rot fastest; every verdict below was

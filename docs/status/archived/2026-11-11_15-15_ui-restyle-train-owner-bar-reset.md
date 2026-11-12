@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-12 (docs-health v11 sweep): superseded by the owner's later UI trains (04-09 token-craft, 05-55 completion) — the owner-bar reset it recorded is standing doctrine
+
 # UI restyle train + the owner-bar reset (and the same-day indigo veto)
 
 > Claims verified as of 15:15–15:40 local, 2026-11-11. Push/CI statements rot

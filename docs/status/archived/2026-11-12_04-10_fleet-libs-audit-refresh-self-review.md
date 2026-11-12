@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-12 (docs-health v11 sweep): currency claims re-verified into AGENTS 2026-11-11; the refresh is the snapshot
+
 # Fleet-libs audit — 2026-11-11 currency refresh + cmdguard: status & self-review
 
 > Claims verified as of 2026-11-12 04:10 CET (`scripts/audit-verify.sh` = **99/99 green** at HEAD 0131bd0a; pins from go.mod; "latest" from remote tags fetched 2026-11-11). Scope: THIS session only — the fleet-libs utilization-audit refresh the owner requested ("all reports latest versions and superb").
