@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The island's post-call card family moved to its own module**
+  (`postcall.js`: the ended-reason line, note editor, disposition
+  chips, and AI-draft affordances) — calls.js sheds ~340 lines and
+  keeps the settle machinery; served behavior is unchanged (the
+  import closure and the 336-spec island suite pin it).
 - **Admin call records show the caller's name when the PBX carried
   one** (the raw number stays the fallback), matching the History row's
   party vocabulary; the section's three-state ladder (phone API off /
