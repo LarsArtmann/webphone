@@ -25,8 +25,10 @@ alone.
 
 The split is deliberately NOT landed from the reporting session: the file
 belongs to a concurrent session's active train, and the fix-forward
-protocol says patch their files never. The natural seam I saw while
-reading it — the cursor-reset arms vs the ingest loop — is recorded here
-so the owning train (or a later session) can move fast.
+protocol says patch their files never. This session never read the file
+closely (line count and commit history only), so no split seam is
+proposed here — the owning train picks the real one.
 
 💘 Generated with Crush
+
+
