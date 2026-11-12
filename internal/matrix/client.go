@@ -61,10 +61,10 @@ var _ gateway.MessageGateway = (*Client)(nil)
 
 // New builds the client. Config validation has already failed closed on
 // half configurations; the constructor stays mechanical.
-// brandid-lint:ignore(BD003) the bot MXID arrives pre-validated from config; foreign matrix vocabulary (strong-id ruling)
 // ClientConfig is the matrix client's wiring struct: the three
 // primitives travel together, so a constructor-order swap cannot
 // compile (the 2026-10-25 wiring-struct roadmap item).
+// brandid-lint:ignore(BD003) the bot MXID arrives pre-validated from config; foreign matrix vocabulary (strong-id ruling)
 type ClientConfig struct {
 	Homeserver string
 	UserID     string
