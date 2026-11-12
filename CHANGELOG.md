@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Visual craft + token pass across the shell and the island.** A typed
+  token ramp (`--text-lg/xl/2xl`, hover/pressed state layers, visible
+  focus rings, press duration, one easing vocabulary) now drives both
+  stylesheets; nav links compact fluidly instead of wrapping, message
+  bubbles group into bursts, the rail preview clamps to two lines, list
+  empty states carry the brand accent, toasts slide in, and the
+  lightbox backdrop blurs. Reduced motion hardens
+  (`animation-iteration-count: 1`).
+- **History, Reports and Contacts restructure.** History renders as a
+  real table (sticky column heads, right-aligned tabular When/Duration,
+  day sections; on narrow columns it stacks via `data-label` cells);
+  Reports gains a dashboard grid (day/hour ladders side by side at
+  wide tab columns); Contacts lays out in a fitted grid (two-up on
+  desktop, one column narrow).
+
+### Added
+
+- **The Phone tab (mobile):** a strip button that focuses the island as
+  the one body column for dialing — clears on any real tab tap,
+  re-installs after nav morphs, `aria-pressed` carries the state.
+- **Capture harness `--hover SELECTOR`** (interactive states are now
+  capturable) and a **pre-commit Python syntax gate** (`py_compile`
+  over staged `scripts/*.py` blobs).
+
 ### Fixed
 
 - **Passkey Settings is the session's OWN account.** The Settings passkey
