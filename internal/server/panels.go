@@ -452,6 +452,12 @@ const (
 // posture at a tighter budget: the CRM is a loopback/LAN service).
 const crmSettingsProbeTimeout = 2 * time.Second
 
+// agentPanelProbeTimeout bounds the Settings agent row's mode ask — the
+// same 3s fail-open budget the login lane's identity decoration rides
+// (the login lane's const moved with the auth package; this panel keeps
+// its own name so neither surface reaches across the seam).
+const agentPanelProbeTimeout = 3 * time.Second
+
 func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.Component, error) {
 	websocketURL := "wss://<this-host>" + h.deps.Config.WebsocketPath
 	// The snippets section is the tab's one managed list (M21); nil-safe
@@ -471,10 +477,12 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 	}
 	// The agent row (M17) renders only when the textagent seam is wired;
 	// the mode probe is the identity lane's bounded, fail-open ask — an
-	// unreachable agent still shows the row naming its home.
+	// unreachable agent still shows the row naming its home. The budget
+	// mirrors the login lane's probe (3s, fail-open) — a separate const
+	// per the one-home-per-fact rule: this is the SETTINGS panel's ask.
 	agentOn, agentMode := h.deps.TextAgent != nil, ""
 	if agentOn {
-		ctx, cancel := context.WithTimeout(r.Context(), agentModeProbeTimeout)
+		ctx, cancel := context.WithTimeout(r.Context(), agentPanelProbeTimeout)
 		if reviews, err := h.deps.TextAgent.Reviews(ctx); err == nil {
 			agentMode = reviews.Mode
 		}
@@ -544,7 +552,7 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 		SharedContacts: len(h.deps.Shared),
 		Snippets:       snippets,
 		AgentAuditRows: h.agentAuditRows(r, sess),
-		Passkeys:       h.passkeySectionProps(sess),
+		Passkeys:       h.authHub.PasskeySectionProps(sess),
 		Lang:           h.lang(r),
 	}), nil
 }

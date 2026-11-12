@@ -17,6 +17,7 @@ import (
 	"encoding/json/v2"
 
 	"github.com/larsartmann/webphone/internal/push"
+	"github.com/larsartmann/webphone/internal/server/auth"
 	"github.com/larsartmann/webphone/internal/server/api"
 )
 
@@ -36,13 +37,13 @@ const (
 // of these structs cannot fail; a stub keeps the render path
 // panic-free (mustMarshalRing's doctrine).
 func RenderWireFixtureFiles() map[string][]byte {
-	legacy := sessionIdentity{
+	legacy := auth.SessionIdentity{
 		Extension: fixtureExtension,
 		DID:       fixtureDID,
 		//cqrs-lint:ignore(S001) a wire FIXTURE value pinning the sessionIdentity shape for the Android shell's JVM tests — not a credential, nothing it unlocks
 		Password: "fixture-directory-password",
 	}
-	brokered := sessionIdentity{
+	brokered := auth.SessionIdentity{
 		Extension:     fixtureExtension,
 		DID:           fixtureDID,
 		DisplayName:   fixtureDisplayName,

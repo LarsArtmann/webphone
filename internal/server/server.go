@@ -39,6 +39,7 @@ import (
 	"github.com/larsartmann/webphone/internal/push"
 	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/server/api"
+	"github.com/larsartmann/webphone/internal/server/auth"
 	"github.com/larsartmann/webphone/internal/server/hooks"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/textagent"
@@ -286,7 +287,7 @@ type Deps struct {
 	// SSO is the OPTIONAL OpenID Connect login seam (config-gated). Nil:
 	// the OIDC mode is off — the begin/callback routes 404 and the login
 	// card renders no SSO entry.
-	SSO SSOClient
+	SSO auth.SSOClient
 	// Trace is the OPTIONAL flight-recorder seam (operator opt-in, default
 	// off). Nil: no request observation and no snapshot endpoint. Non-nil:
 	// every request is reported and GET /internal/flightrecorder writes a
@@ -346,7 +347,14 @@ func New(deps Deps) http.Handler {
 	// the handler nil — /login then answers the styled 404 instead of a
 	// half-built login surface.
 	var loginPage *loginpage.Handler
-	if lp, err := newLoginPage(deps); err != nil {
+	if lp, err := auth.NewLoginPage(auth.Deps{
+		Config:    deps.Config,
+		Sessions:  deps.Sessions,
+		UserAuth:  deps.UserAuth,
+		SSO:       deps.SSO,
+		PhoneAPI:  deps.PhoneAPI,
+		TextAgent: deps.TextAgent,
+	}); err != nil {
 		slog.Error("webphone: login page build failed; /login answers the styled 404", "error", err)
 	} else {
 		loginPage = lp
@@ -378,13 +386,26 @@ func New(deps Deps) http.Handler {
 		stateTemplLimiter:    newTemplRateLimiter(hookLimit, hookBurst),
 		transcribeLimiter:    newKeyedRateLimiter(hookLimit, hookBurst),
 		passkeyLimiter:       newKeyedRateLimiter(hookLimit, hookBurst),
-		loginPageHandler:     loginPage,
 		cookies:              cookies,
 		csrfCfg:              csrfCfg,
 		unread:               newUnreadCache(5 * time.Second),
 		latency:              newLatencyRecorder(),
 		island:               islandRecorder,
 	}
+	// The carved auth surface (internal/server/auth): BOTH login modes,
+	// the ceremonies, the session spine and the library login page. The
+	// hub reaches the session gate and the render plumbing back through
+	// h (the auth.Shell seam), so the 401 wording and the render helpers
+	// keep their one home in this package.
+	authHub := auth.New(auth.Deps{
+		Config:    deps.Config,
+		Sessions:  deps.Sessions,
+		UserAuth:  deps.UserAuth,
+		SSO:       deps.SSO,
+		PhoneAPI:  deps.PhoneAPI,
+		TextAgent: deps.TextAgent,
+	}, h, cookies, csrfCfg, loginPage)
+	h.authHub = authHub
 	hooksHandlers := hooks.New(hooks.Deps{
 		Secret:    deps.Config.Gateway.WebhookSecret,
 		Messaging: deps.Messaging,
@@ -474,7 +495,7 @@ func New(deps Deps) http.Handler {
 	protected.Handle("POST /contacts/import", h.contactsTemplLimiter.Middleware()(http.HandlerFunc(h.importContacts)))
 	protected.HandleFunc("GET /contacts/export", h.exportContacts)
 	protected.Handle("POST /api/session",
-		h.loginLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(h.createSession))))
+		h.loginLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(authHub.CreateSession))))
 	// The login page front door — THE auth surface in every mode (the
 	// library passkey page when the identity layer is wired, webphone's
 	// extension form + OIDC door in its ExtraSection always). The nonce
@@ -483,7 +504,7 @@ func New(deps Deps) http.Handler {
 	// ceremony scripts carry the nonce). Anonymous surface: the handler
 	// redirects a live session to the shell.
 	protected.Handle("GET /login",
-		httputil.Nonce(httputil.NonceConfig{})(http.HandlerFunc(h.loginPage)))
+		httputil.Nonce(httputil.NonceConfig{})(http.HandlerFunc(authHub.LoginPage)))
 	// The passkey (WebAuthn) login + enrollment ceremonies: registered ONLY
 	// when the identity layer is wired (config-gated in the composition
 	// root) — a disabled deployment keeps answering the styled 404.
@@ -500,26 +521,26 @@ func New(deps Deps) http.Handler {
 		// (the one-time token is the real gate, the bucket only fences
 		// runaway clients).
 		protected.Handle("POST /api/auth/webauthn/login/begin",
-			h.loginLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(h.passkeyBeginLogin))))
+			h.loginLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(authHub.PasskeyBeginLogin))))
 		protected.Handle("POST /api/auth/webauthn/login/finish",
-			h.loginLimiter.Middleware()(httputil.MaxBodySize(maxPasskeyBodySize)(http.HandlerFunc(h.passkeyFinishLogin))))
+			h.loginLimiter.Middleware()(httputil.MaxBodySize(auth.MaxPasskeyBodySize)(http.HandlerFunc(authHub.PasskeyFinishLogin))))
 		protected.Handle("POST /api/auth/passkey/enroll/verify",
-			h.passkeyLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(h.passkeyEnrollVerify))))
+			h.passkeyLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(authHub.PasskeyEnrollVerify))))
 		protected.Handle("POST /api/auth/passkey/enroll/begin",
-			h.passkeyLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(h.passkeyEnrollBegin))))
+			h.passkeyLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(authHub.PasskeyEnrollBegin))))
 		protected.Handle("POST /api/auth/passkey/enroll/finish",
-			h.passkeyLimiter.Middleware()(httputil.MaxBodySize(maxPasskeyBodySize)(http.HandlerFunc(h.passkeyEnrollFinish))))
-		protected.HandleFunc("GET /enroll", h.enrollPage)
+			h.passkeyLimiter.Middleware()(httputil.MaxBodySize(auth.MaxPasskeyBodySize)(http.HandlerFunc(authHub.PasskeyEnrollFinish))))
+		protected.HandleFunc("GET /enroll", authHub.EnrollPage)
 		// The line switcher (D1): re-mints the session for another
 		// extension mapped to the signed-in user. Registered with the
 		// identity layer — a deployment without mapped logins has no
 		// session that could switch (the handler still self-gates).
 		protected.Handle("POST /api/session/switch",
-			h.switchLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(h.switchExtension))))
+			h.switchLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(authHub.SwitchExtension))))
 		// Settings-tab passkey management (A2): list lives in the
 		// settings partial; revoke is session-gated + CSRF-protected and
 		// owner-matched against the session extension's mapping.
-		protected.HandleFunc("DELETE /api/passkeys/{id}", h.revokePasskey)
+		protected.HandleFunc("DELETE /api/passkeys/{id}", authHub.RevokePasskey)
 	}
 	// The OIDC/SSO login surface (Pocket ID): registered ONLY when the
 	// seam is wired. GET-only navigations (the island's SSO link and the
@@ -527,15 +548,15 @@ func New(deps Deps) http.Handler {
 	// CSRF wrapper's safe-method pass-through — no form, no token.
 	if deps.SSO != nil {
 		protected.Handle("GET /api/auth/oauth2/begin",
-			h.loginLimiter.Middleware()(http.HandlerFunc(h.ssoBegin)))
+			h.loginLimiter.Middleware()(http.HandlerFunc(authHub.SSOBegin)))
 		protected.Handle("GET /api/auth/oauth2/callback",
-			h.loginLimiter.Middleware()(http.HandlerFunc(h.ssoCallback)))
+			h.loginLimiter.Middleware()(http.HandlerFunc(authHub.SSOCallback)))
 	}
 	// GET is the island's boot resume: a live cookie gets its SIP
 	// credentials back and the page opens signed-in, no form. Read-only
 	// (no CSRF surface), self-gated through RequireSession.
-	protected.HandleFunc("GET /api/session", h.getSession)
-	protected.HandleFunc("DELETE /api/session", h.destroySession)
+	protected.HandleFunc("GET /api/session", authHub.GetSession)
+	protected.HandleFunc("DELETE /api/session", authHub.DestroySession)
 	// JSON surface for the island's contact panel (same store as the
 	// Contacts tab; the island migrated off localStorage onto this).
 	protected.HandleFunc("GET /api/contacts", apiHandlers.ListContacts)

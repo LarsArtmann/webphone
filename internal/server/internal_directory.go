@@ -1,6 +1,7 @@
 package server
 
 import (
+	"encoding/json/v2"
 	"net"
 	"net/http"
 
@@ -68,4 +69,14 @@ func (h *handlers) internalDirectory(w http.ResponseWriter, r *http.Request) {
 	// bridge's static-password fallback owns the decision for anyone the
 	// webphone has no live session for.
 	writeJSON(w, http.StatusOK, map[string]any{"credentials": credentials})
+}
+
+// writeJSON is the server package's JSON writer (the auth and api
+// packages carry the same one-liner as their own writers; the carve
+// precedent accepts the per-package writer so no cross-package
+// unexported call survives).
+func writeJSON(w http.ResponseWriter, status int, payload any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.MarshalWrite(w, payload) //nolint:erraudit // best-effort write; the response is already committed
 }

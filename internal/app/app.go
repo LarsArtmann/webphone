@@ -52,6 +52,7 @@ import (
 	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/retention"
 	"github.com/larsartmann/webphone/internal/server"
+	serverauth "github.com/larsartmann/webphone/internal/server/auth"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/sso"
 	"github.com/larsartmann/webphone/internal/store"
@@ -430,7 +431,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		// begin would panic on the nil receiver (the 2026-10-23
 		// browser-suite M11 break, proven against the config-less
 		// binary).
-		var ssoClient server.SSOClient
+		var ssoClient serverauth.SSOClient
 		if cfg.Auth.OAuth2.Enabled() {
 			ssoClient = do.MustInvokeNamed[*sso.Client](i, "sso")
 		}

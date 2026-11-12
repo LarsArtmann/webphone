@@ -16,6 +16,7 @@ import (
 
 	"github.com/larsartmann/webphone/internal/authmap"
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/server/auth"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/sso"
 )
@@ -65,7 +66,7 @@ func happySSOStub() *ssoStub {
 }
 
 func cookieFor(name, value string) *http.Cookie {
-	return &http.Cookie{Name: name, Value: value, Path: ssoCookiePath}
+	return &http.Cookie{Name: name, Value: value, Path: auth.SSOCallbackPath}
 }
 
 func TestSSOOffAnswersTheStyled404(t *testing.T) {
@@ -117,9 +118,9 @@ func TestSSOBeginParksTheAttemptAndRedirects(t *testing.T) {
 		cookies[cookie.Name] = cookie
 	}
 	for name, want := range map[string]string{
-		ssoStateCookie:    stub.challenge.State,
-		ssoNonceCookie:    stub.challenge.Nonce,
-		ssoVerifierCookie: stub.challenge.Verifier,
+		auth.SSOStateCookie:    stub.challenge.State,
+		auth.SSONonceCookie:    stub.challenge.Nonce,
+		auth.SSOVerifierCookie: stub.challenge.Verifier,
 	} {
 		cookie, ok := cookies[name]
 		if !ok {
@@ -128,7 +129,7 @@ func TestSSOBeginParksTheAttemptAndRedirects(t *testing.T) {
 		if cookie.Value != want {
 			t.Errorf("%s = %q, want %q", name, cookie.Value, want)
 		}
-		if !cookie.HttpOnly || cookie.MaxAge <= 0 || cookie.Path != ssoCookiePath {
+		if !cookie.HttpOnly || cookie.MaxAge <= 0 || cookie.Path != auth.SSOCallbackPath {
 			t.Errorf("%s cookie attributes = %+v", name, cookie)
 		}
 	}
@@ -153,9 +154,9 @@ func TestSSOCallbackMintsTheSession(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	request.AddCookie(cookieFor(ssoStateCookie, stub.challenge.State))
-	request.AddCookie(cookieFor(ssoNonceCookie, stub.challenge.Nonce))
-	request.AddCookie(cookieFor(ssoVerifierCookie, stub.challenge.Verifier))
+	request.AddCookie(cookieFor(auth.SSOStateCookie, stub.challenge.State))
+	request.AddCookie(cookieFor(auth.SSONonceCookie, stub.challenge.Nonce))
+	request.AddCookie(cookieFor(auth.SSOVerifierCookie, stub.challenge.Verifier))
 
 	resp, err := client.Do(request)
 	if err != nil {
@@ -184,7 +185,7 @@ func TestSSOCallbackMintsTheSession(t *testing.T) {
 	// The 303 clears the attempt cookies so a replay has nothing to use.
 	for _, cookie := range resp.Cookies() {
 		switch cookie.Name {
-		case ssoStateCookie, ssoNonceCookie, ssoVerifierCookie:
+		case auth.SSOStateCookie, auth.SSONonceCookie, auth.SSOVerifierCookie:
 			if cookie.MaxAge >= 0 {
 				t.Errorf("%s must be expired on the callback, got MaxAge=%d", cookie.Name, cookie.MaxAge)
 			}
@@ -203,9 +204,9 @@ func TestSSOCallbackStateMismatchReturnsToTheLoginCard(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	request.AddCookie(cookieFor(ssoStateCookie, stub.challenge.State))
-	request.AddCookie(cookieFor(ssoNonceCookie, stub.challenge.Nonce))
-	request.AddCookie(cookieFor(ssoVerifierCookie, stub.challenge.Verifier))
+	request.AddCookie(cookieFor(auth.SSOStateCookie, stub.challenge.State))
+	request.AddCookie(cookieFor(auth.SSONonceCookie, stub.challenge.Nonce))
+	request.AddCookie(cookieFor(auth.SSOVerifierCookie, stub.challenge.Verifier))
 
 	resp, err := client.Do(request)
 	if err != nil {
@@ -244,9 +245,9 @@ func TestSSOCallbackFailuresMapOntoTheLoginCardVocabulary(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			request.AddCookie(cookieFor(ssoStateCookie, stub.challenge.State))
-			request.AddCookie(cookieFor(ssoNonceCookie, stub.challenge.Nonce))
-			request.AddCookie(cookieFor(ssoVerifierCookie, stub.challenge.Verifier))
+			request.AddCookie(cookieFor(auth.SSOStateCookie, stub.challenge.State))
+			request.AddCookie(cookieFor(auth.SSONonceCookie, stub.challenge.Nonce))
+			request.AddCookie(cookieFor(auth.SSOVerifierCookie, stub.challenge.Verifier))
 			resp, err := client.Do(request)
 			if err != nil {
 				t.Fatalf("callback: %v", err)
@@ -293,8 +294,8 @@ func TestSSOErrorCodeVocabulary(t *testing.T) {
 		"sso.id_token.verify":           "unavailable",
 		"sso.something.unclassified":    "failed",
 	} {
-		if got := ssoErrorCode(errorfamily.NewRejection(code, "x")); got != want {
-			t.Errorf("ssoErrorCode(%q) = %q, want %q", code, got, want)
+		if got := auth.SSOErrorCode(errorfamily.NewRejection(code, "x")); got != want {
+			t.Errorf("auth.SSOErrorCode(%q) = %q, want %q", code, got, want)
 		}
 	}
 }

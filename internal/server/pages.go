@@ -7,12 +7,12 @@ import (
 	"strings"
 
 	"github.com/a-h/templ"
-	loginpage "github.com/larsartmann/cqrs-htmx/loginpage/v4"
 	"github.com/larsartmann/cqrs-htmx/v4/httperr"
 	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/httputil"
 
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/server/auth"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/web/views"
 )
@@ -51,11 +51,12 @@ type handlers struct {
 	composeLimiter       *httputil.KeyedRateLimiter
 	contactsTemplLimiter *httputil.KeyedRateLimiter
 	stateTemplLimiter    *httputil.KeyedRateLimiter
-	// loginPageHandler is the library-owned passkey login page
-	// (cqrs-htmx/loginpage), built ONLY when the identity layer is wired;
-	// nil keeps /login on the styled 404 (mode off, or the page build
-	// failed loudly at boot).
-	loginPageHandler *loginpage.Handler
+	// authHub is the carved auth surface (internal/server/auth): BOTH
+	// login modes, the ceremonies, the session spine and the library
+	// login page. The hub reaches the session gate and the render
+	// plumbing back through this handlers value (the auth.Shell seam —
+	// the 401 wording and the render helpers keep their one home here).
+	authHub *auth.Handlers
 	// cookies is the wired session-cookie policy (Secure mirrors the
 	// TLS-fronted deployment; r.TLS is nil behind the proxy).
 	cookies session.CookiePolicy
@@ -143,6 +144,35 @@ func (h *handlers) renderShell(w http.ResponseWriter, r *http.Request, tab views
 // by the signed-in extension cannot silently miss.
 func (h *handlers) identityFor(ext domain.Extension) string {
 	return h.deps.Config.Identities[ext.String()]
+}
+
+// The auth.Shell seam (the carved auth package rides on this hub):
+// exported wrappers so internal/server/auth can borrow the session
+// gate and the render plumbing without reaching into unexported
+// methods — the wording and helpers keep their one home here.
+
+// IdentityFor is the auth seam's identity read.
+func (h *handlers) IdentityFor(ext domain.Extension) string { return h.identityFor(ext) }
+
+// SafeDetail is the auth seam's honest-detail log-and-return.
+func (h *handlers) SafeDetail(r *http.Request, op string, err error) string {
+	return h.safeDetail(r, op, err)
+}
+
+// Partial is the auth seam's tab-partial re-render.
+func (h *handlers) Partial(w http.ResponseWriter, r *http.Request, tab views.Tab) {
+	h.partial(w, r, tab)
+}
+
+// Lang is the auth seam's language resolution.
+func (h *handlers) Lang(r *http.Request) views.Lang { return h.lang(r) }
+
+// NotFound is the auth seam's styled 404.
+func (h *handlers) NotFound(w http.ResponseWriter, r *http.Request) { h.notFound(w, r) }
+
+// NotifyToast is the auth seam's toast push.
+func (h *handlers) NotifyToast(w http.ResponseWriter, kind, msg string) {
+	notifyToast(w, kind, msg)
 }
 
 // safeDetail logs the full error for the operator (English op text,

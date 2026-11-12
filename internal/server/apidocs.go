@@ -41,6 +41,7 @@ import (
 
 	"github.com/larsartmann/webphone/internal/server/api"
 	"github.com/larsartmann/webphone/internal/session"
+	"github.com/larsartmann/webphone/internal/server/auth"
 )
 
 const (
@@ -73,12 +74,12 @@ func apiCatalog() *catalog.Catalog {
 			"personal contacts, and the CRM call journal. Credentials are "+
 			"verified against the PBX directory before a session is minted.",
 		// --- session ---
-		catalog.Command[loginRequest]("session.create",
+		catalog.Command[auth.LoginRequest]("session.create",
 			catalog.MsgOperation(http.MethodPost, "/api/session"),
 			catalog.WithName("Create Session"),
 			catalog.WithSummary("Verify the credentials against the PBX directory and mint the tab session (sets the HttpOnly cookie, rotates CSRF)."),
 			catalog.MsgSecurity("cookieAuth"),
-			catalog.Response[sessionIdentity]("201", "Session created. Credential brokering on answers the session-derived REGISTER credential instead of the password; no-store keeps either credential out of caches."),
+			catalog.Response[auth.SessionIdentity]("201", "Session created. Credential brokering on answers the session-derived REGISTER credential instead of the password; no-store keeps either credential out of caches."),
 			catalog.WithResponse("400", "Invalid extension or request body."),
 			catalog.WithResponse("401", "Credentials rejected by the PBX directory."),
 			catalog.WithResponse("403", csrfClause+"."),
@@ -92,7 +93,7 @@ func apiCatalog() *catalog.Catalog {
 			catalog.WithName("Resume Session"),
 			catalog.WithSummary("Island boot probe: a live cookie gets the SIP credentials back so the browser re-registers without the login form. no-store."),
 			catalog.MsgSecurity("cookieAuth"),
-			catalog.Response[sessionIdentity]("200", "The cookie's live session. Exactly one credential field rides: sip_credential (session-derived, credential brokering on) or password (legacy wire)."),
+			catalog.Response[auth.SessionIdentity]("200", "The cookie's live session. Exactly one credential field rides: sip_credential (session-derived, credential brokering on) or password (legacy wire)."),
 			catalog.WithResponse("401", "No live session — the island shows the login form."),
 		),
 		catalog.Query[struct{}]("session.destroy",
@@ -103,12 +104,12 @@ func apiCatalog() *catalog.Catalog {
 			catalog.Response[struct{}]("204", "No response body. Session destroyed (any live session deleted, cookies cleared)."),
 			catalog.WithResponse("403", csrfClause+"."),
 		),
-		catalog.Command[switchRequest]("session.switch",
+		catalog.Command[auth.SwitchRequest]("session.switch",
 			catalog.MsgOperation(http.MethodPost, "/api/session/switch"),
 			catalog.WithName("Switch Line"),
 			catalog.WithSummary("Re-mint the session for another extension mapped to the signed-in user (mapped logins only): directory-verifies the target line, rotates CSRF, deletes the old session row. The client reloads; the boot probe re-registers."),
 			catalog.MsgSecurity("cookieAuth"),
-			catalog.Response[sessionIdentity]("200", "The re-minted session's identity (same login email, new extension). Switching to the session's own extension is an idempotent no-op answer without a mint."),
+			catalog.Response[auth.SessionIdentity]("200", "The re-minted session's identity (same login email, new extension). Switching to the session's own extension is an idempotent no-op answer without a mint."),
 			catalog.WithResponse("400", "Invalid extension or request body."),
 			catalog.WithResponse("401", "No live session, or the PBX directory rejected the target line's credentials."),
 			catalog.WithResponse("403", csrfClause+", an unmapped login, or an extension not mapped to this account."),
