@@ -211,13 +211,14 @@ type PushDevices struct {
 	sys    *system.System
 	reader *metaengine.TypedReader[readmodels.PushDeviceView]
 	mu     sync.Mutex
+	vers   streamVersions
 }
 
 var _ readmodels.PushDeviceGate = (*PushDevices)(nil)
 
 // NewPushDevices builds the backend over a System.
 func NewPushDevices(sys *system.System) *PushDevices {
-	return &PushDevices{sys: sys, reader: metaengine.NewReader[readmodels.PushDeviceView](sys.MetaEngine(), pushDevicesCollection)}
+	return &PushDevices{sys: sys, reader: metaengine.NewReader[readmodels.PushDeviceView](sys.MetaEngine(), pushDevicesCollection), vers: streamVersions{}}
 }
 
 // Upsert registers (or re-registers) one device for the owner: a
@@ -245,6 +246,7 @@ func (s *PushDevices) Upsert(ctx context.Context, owner domain.Extension, device
 		}
 		return errorfamily.WrapInfrastructuref(err, "cqrs.push_device_save", "dispatch push_device.save")
 	}
+	awaitOwnWrite(ctx, s.sys, PushDevicesStreamType, owner.String(), pushDevicesCollection, s.vers)
 	return nil
 }
 
@@ -276,5 +278,6 @@ func (s *PushDevices) Remove(ctx context.Context, owner domain.Extension, device
 		}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.push_device_remove", "dispatch push_device.remove")
 	}
+	awaitOwnWrite(ctx, s.sys, PushDevicesStreamType, owner.String(), pushDevicesCollection, s.vers)
 	return nil
 }

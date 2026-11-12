@@ -6,8 +6,6 @@ import (
 	"testing"
 	"time"
 
-	_ "modernc.org/sqlite" // registers the "sqlite" driver for the journal boot
-
 	metaengine "github.com/larsartmann/go-cqrs-lite/metaengine/v4"
 	idempotency "github.com/larsartmann/go-idempotency"
 	"github.com/larsartmann/go-idempotency/contract"

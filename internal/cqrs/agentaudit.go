@@ -233,13 +233,14 @@ type AgentAudit struct {
 	sys    *system.System
 	reader *metaengine.TypedReader[readmodels.AgentAuditView]
 	mu     sync.Mutex
+	vers   streamVersions
 }
 
 var _ readmodels.AgentAuditGate = (*AgentAudit)(nil)
 
 // NewAgentAudit builds the backend over a System.
 func NewAgentAudit(sys *system.System) *AgentAudit {
-	return &AgentAudit{sys: sys, reader: metaengine.NewReader[readmodels.AgentAuditView](sys.MetaEngine(), agentAuditCollection)}
+	return &AgentAudit{sys: sys, reader: metaengine.NewReader[readmodels.AgentAuditView](sys.MetaEngine(), agentAuditCollection), vers: streamVersions{}}
 }
 
 // Append stores one audit row; the decision trims the owner's oldest
@@ -265,6 +266,7 @@ func (s *AgentAudit) Append(ctx context.Context, owner domain.Extension, actor, 
 		}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.agent_audit_append", "dispatch %s", agentAuditCommand)
 	}
+	awaitOwnWrite(ctx, s.sys, AgentAuditStreamType, owner.String(), agentAuditCollection, s.vers)
 	return nil
 }
 
