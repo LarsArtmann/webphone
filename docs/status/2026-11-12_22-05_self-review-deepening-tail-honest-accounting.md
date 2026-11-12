@@ -292,8 +292,9 @@
     AGENTS b5 one-liner (owner call).
 32. File the two cqrs-lint upstream drafts when the owner ticks the
     banners (state machine + D005).
-33. F005-adjacent: the `.cqrs-lint.json` reason audit after the next
-    event-shape change (the upcaster trigger).
+33. ~~F005-adjacent: the `.cqrs-lint.json` reason audit after the next
+    event-shape change (the upcaster trigger).~~ → routed: duplicate of
+    item 22; the standing row is the 00-36 triage report's F005 entry.
 34. The Q17 default, once ratified: write the race-probe re-run
     protocol (full `-v` capture before any re-run) into the probe's
     header comment.

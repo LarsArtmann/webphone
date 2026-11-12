@@ -120,3 +120,29 @@ closeout; nothing here re-dispatches them).
 3. **Narrative commits vs the daemon:** my closeout files landed as heuristic `chore:` chunks twice this session because the daemon's 2-minute cadence beat my commit chains. Do you want own-work commits staged+committed IMMEDIATELY after the last edit of each unit (accepting more, smaller commits), or is heuristic-chunk history acceptable for doc/config residue? I tried both orders this session; the daemon wins whenever I batch.
 
 Waiting for instructions.
+
+## Post-report gate state (observed 22:1x — live corpus dynamics)
+
+`scripts/docs-gates.sh` after this report landed reads **freshness FAIL +
+cadence FAIL**, and the attribution is precise:
+
+- **freshness** — the unharvested item belongs to the concurrent session's
+  brand-new `2026-11-12_22-05_self-review-deepening-tail-honest-accounting.md`
+  (its §f item 33, the `.cqrs-lint.json` reason-audit trigger). That session
+  is editing the file RIGHT NOW (uncommitted mod at 22:1x) — its harvest is
+  in flight; per the fix-forward protocol I did not touch it. This report
+  itself reads **0 unharvested**.
+- **cadence** — the corpus tapped its ceiling: **66 unarchived reports
+  (threshold 65)**; this report was #66. The oldest is 19 days (threshold 45),
+  so the drain ritual is what the planned **T24 release-tails row** ("the
+  18-08 archived-corpus drain train") already owns — check-rows + bare-rows
+  before each `git mv`, banner, re-run gates. Deliberately NOT started here:
+  it is a named planned train, and the annotate toolchain's ratchet re-measure
+  belongs to it, not to a status-report session.
+- audit-all (54 ≤ 72) and annotate (204 ≤ 260) hold under their ratchets.
+- CI was GREEN on `3d9515cc` at ~19:08; the corpus state above rides the
+  NEXT push (tip moved to `3b56e3b4` with this report).
+
+Net: nothing in this session's deliverables is unharvested or unrouted; the
+two red gates are (a) a concurrent session's minutes-old harvest window and
+(b) the already-planned drain train's trigger having fired.

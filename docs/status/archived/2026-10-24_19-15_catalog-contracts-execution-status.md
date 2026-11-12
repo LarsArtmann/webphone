@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-12 (docs-health v11 sweep): the catalog-contracts train shipped in v3.1.0 and the machine-contract surfaces are GENERATED doctrine (AGENTS.md); the §a ledger table adjudicated; the §b/c residues long since landed or superseded by the contracts README
+
 # Status — SUPERB catalog-contracts plan execution (openapi + asyncapi lanes)
 
 **Claims verified as of 19:15 CEST, 2026-10-24.** Push/CI statements rot
@@ -64,6 +66,8 @@ lanes: `internal/server`, `internal/server/api`, `internal/server/hooks`,
 ---
 
 ## a) FULLY DONE
+
+<!-- check-rows:ledger -->
 
 | #  | Item                                                                                                                                                                                                                                                                                                                                                                                                                                         | Evidence                                                                                                                                     |
 | -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
