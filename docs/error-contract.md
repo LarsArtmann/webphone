@@ -546,7 +546,7 @@ a deliberate code change, regenerate:
 | signal.rpc                                   | Rejection                 | internal/signal/client.go         |
 | signal.send                                  | Infrastructure            | internal/signal/client.go         |
 | signal.write                                 | Infrastructure, Transient | internal/signal/client.go         |
-| sso.attempt.missing                          | Rejection                 | internal/server/sso_api.go        |
+| sso.attempt.missing                          | Rejection                 | internal/server/auth/sso_api.go   |
 | sso.claims                                   | Rejection                 | internal/sso/sso.go               |
 | sso.client_id                                | Rejection                 | internal/sso/sso.go               |
 | sso.client_secret.empty                      | Rejection                 | internal/sso/sso.go               |
@@ -560,7 +560,7 @@ a deliberate code change, regenerate:
 | sso.groups_denied                            | Rejection                 | internal/sso/sso.go               |
 | sso.id_token                                 | Rejection                 | internal/sso/sso.go               |
 | sso.id_token.verify                          | Rejection                 | internal/sso/sso.go               |
-| sso.idp_error                                | Rejection                 | internal/server/sso_api.go        |
+| sso.idp_error                                | Rejection                 | internal/server/auth/sso_api.go   |
 | sso.issuer                                   | Rejection                 | internal/sso/sso.go               |
 | sso.mapping                                  | Rejection                 | internal/sso/sso.go               |
 | sso.nonce                                    | Infrastructure            | internal/sso/sso.go               |
@@ -568,7 +568,7 @@ a deliberate code change, regenerate:
 | sso.random_token                             | Infrastructure            | internal/sso/sso.go               |
 | sso.redirect_url                             | Rejection                 | internal/sso/sso.go               |
 | sso.state                                    | Infrastructure            | internal/sso/sso.go               |
-| sso.state.mismatch                           | Rejection                 | internal/server/sso_api.go        |
+| sso.state.mismatch                           | Rejection                 | internal/server/auth/sso_api.go   |
 | sso.unmapped_email                           | Rejection                 | internal/sso/sso.go               |
 | sso.userinfo                                 | Rejection                 | internal/sso/sso.go               |
 | sso.userinfo.claims                          | Rejection                 | internal/sso/sso.go               |
