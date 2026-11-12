@@ -2661,6 +2661,11 @@ a:focus-visible {
   .wp-nav-link {
     position: relative;
     flex: 1;
+    /* Release the automatic minimum: without it the label's min-content
+     * floors each slot (~43-63px, 435px total) and eight tabs overflow a
+     * 375px bar — the Phone tab lands off-screen (probe: scrollW 435 vs
+     * nav 360). The inner span's ellipsis carries the shrink. */
+    min-width: 0;
     flex-direction: column;
     justify-content: center;
     gap: 3px;
