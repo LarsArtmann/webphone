@@ -166,3 +166,32 @@ flowchart TD
 - No Datastar, no session protocol, no Flutter (ruled NO-GO).
 - No AuditLog projection wiring (owner call, refresh trigger armed).
 - No corpus-wide markdown reflow (formatter-unowned by ruling).
+
+## Execution amendments (2026-11-12, same-session — the "plan says X, code says Y" rule)
+
+- **T05 (server/html carve) RULED OUT structurally.** pages.go holds the
+  `handlers` hub itself; panels/actions reference admin/crm/unread/auth-audit
+  in both directions. Moving the five files renames the package rather than
+  splitting it. The god-package's honest end state: the FOUR surface carves
+  (api/hooks/auth/platform — auth + platform landed this session) plus the
+  T07 depth budget, which pins the html residual (server 5 200 LOC ceiling)
+  as the named, measured exemption. Reopen ONLY on a real architecture
+  change (per-tab render packages over a shared render kernel). Evidence:
+  TODO_LIST carve section, `1dbc1bd5`.
+- **T08's scope shrank before execution**: readmodels.ThreadSummary (the
+  vocabulary move) and reports.* (the pure-projection ruling) are RATIFIED
+  homes, not leaks — the real edges were pbx.VoicemailMessage/VoicemailSummary,
+  textagent.Draft/Reviews/Frozen/Suppressed, pbx.CDR and the
+  messaging.MaxBodyLength scalar (moved to domain). All swapped 2026-11-12
+  (`190a8c2e`); views' census = domain + readmodels + reports only.
+- **Measured export reality vs F23's framing**: the "342 exports" figure
+  came from a method-counting grep. The honest instrument is top-level
+  exported declarations: server 13, auth 27, platform 29, api 33, hooks 21.
+  The depth budget's export axis uses that instrument.
+- **T09 found a real instrument bug**: `gh run list --commit` answers empty
+  on this repo; ci-verdict.sh now queries the API's head_sha filter
+  (`9529ca64`), exit contract + self-test unchanged. One real red surfaced
+  and was repaired the same session (art-dupl: dead TURN oracle deleted,
+  writeJSON twins baselined 117→110, CI green on `a960d19c`).
+- **T14 note**: machineSurface moved to `internal/server/platform` with the
+  carve — F42's bool-last reorder now targets the platform home.
