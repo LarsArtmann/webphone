@@ -95,9 +95,9 @@ func TestFailedReceiveLeavesNoOrphanedBlobs(t *testing.T) {
 	svc := messaging.New(gate, blobs, nil, nil, nil)
 
 	_, err = svc.Receive(context.Background(), domain.InboundMessage{
-		Owner:     domain.MustParseExtension("100"),
-		From:      domain.MustParseAddress(domain.NetworkSMS, "+491712"),
-		Body:      "inbound with media",
+		Owner:      domain.MustParseExtension("100"),
+		From:       domain.MustParseAddress(domain.NetworkSMS, "+491712"),
+		Body:       "inbound with media",
 		ReceivedAt: time.Now(),
 		Attachments: []domain.AttachmentContent{
 			{Name: "pic.jpg", MimeType: "image/jpeg", Bytes: []byte("jpeg-bytes")},
