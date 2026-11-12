@@ -789,3 +789,46 @@ func TestUnreadDividerAriaNamesTheCountWithoutTheDashes(t *testing.T) {
 		}
 	}
 }
+
+// T17 (F48): the admin CDR row prefers the CallerIDName over the raw
+// number (cdrParty is the ONE fallback home; the History row's
+// vocabulary), so a named caller is never rendered as a bare number.
+func TestAdminCDRRowViewPrefersThePartyName(t *testing.T) {
+	named := renderComponent(t, AdminCDRRowView(AdminCDRRow{
+		CDR:       CDREntry{Context: "public", CallerIDNumber: "+4989123456", CallerIDName: "Acme GmbH", DestinationNumber: "+491512345678", Start: "2026-11-12 10:00:00", Billsec: 42},
+		Extension: "1001",
+	}, LangEN))
+	if !strings.Contains(named, "Acme GmbH") || !strings.Contains(named, "+4989123456 →") {
+		t.Errorf("a named party must lead and the number must stay visible; rendered:\n%s", named)
+	}
+	bare := renderComponent(t, AdminCDRRowView(AdminCDRRow{
+		CDR:       CDREntry{Context: "public", CallerIDNumber: "+4989123456", DestinationNumber: "+491512345678", Start: "2026-11-12 10:00:00", Billsec: 42},
+		Extension: "1001",
+	}, LangEN))
+	if !strings.Contains(bare, ">+4989123456 → +491512345678<") {
+		t.Errorf("a nameless party falls back to the raw number; rendered:\n%s", bare)
+	}
+}
+
+// T17 (F48): the admin CDR ladder is structural — a disabled phone API
+// explains the missing section and renders no rows; a failed line is
+// NAMED while surviving lines still render; an empty healthy page gets
+// the honest empty state.
+func TestAdminCDRSectionLadderIsStructural(t *testing.T) {
+	row := AdminCDRRow{CDR: CDREntry{Context: "public", CallerIDNumber: "+4989123456", DestinationNumber: "+491512345678", Billsec: 42}, Extension: "1001"}
+
+	off := renderComponent(t, AdminPanel(AdminPanelProps{CDROff: true, Lang: LangEN}))
+	if !strings.Contains(off, "Call records need the phone API") || strings.Contains(off, "wp-admin-cdr-row") {
+		t.Errorf("a disabled phone API must explain itself and render no CDR rows; rendered:\n%s", off)
+	}
+
+	failed := renderComponent(t, AdminPanel(AdminPanelProps{CDRFailed: []string{"1002"}, CDRs: []AdminCDRRow{row}, Lang: LangEN}))
+	if !strings.Contains(failed, "Call records unavailable") || !strings.Contains(failed, "1002") || !strings.Contains(failed, "wp-admin-cdr-row") {
+		t.Errorf("a failed line must be named while surviving lines still render; rendered:\n%s", failed)
+	}
+
+	none := renderComponent(t, AdminPanel(AdminPanelProps{Lang: LangEN}))
+	if !strings.Contains(none, "No call records.") || strings.Contains(none, "wp-admin-cdr-row") {
+		t.Errorf("an empty healthy page gets the empty state and no rows; rendered:\n%s", none)
+	}
+}

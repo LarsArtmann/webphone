@@ -1168,9 +1168,9 @@ func AdminCDRRowView(row AdminCDRRow, lang Lang) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		var templ_7745c5c3_Var61 string
-		templ_7745c5c3_Var61, templ_7745c5c3_Err = templ.JoinStringErrs(row.CDR.CallerIDNumber + " → " + row.CDR.DestinationNumber)
+		templ_7745c5c3_Var61, templ_7745c5c3_Err = templ.JoinStringErrs(cdrParty(row.CDR) + " → " + row.CDR.DestinationNumber)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/admin.templ`, Line: 260, Col: 65}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/admin.templ`, Line: 260, Col: 60}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var61))
 		if templ_7745c5c3_Err != nil {

@@ -257,7 +257,7 @@ templ AdminCDRRowView(row AdminCDRRow, lang Lang) {
 			aria-label={ cdrDirLabel(row.CDR, lang) }
 		>@icons.Icon(cdrDirGlyph(row.CDR), "wp-icon")</span>
 		<span class="wp-thread-text">
-			{ row.CDR.CallerIDNumber + " → " + row.CDR.DestinationNumber }
+			{ cdrParty(row.CDR) + " → " + row.CDR.DestinationNumber }
 			<span class="wp-muted">{ row.CDR.Start + " · " + durationLabel(row.CDR.Billsec) }</span>
 		</span>
 		<span class="wp-row-actions">

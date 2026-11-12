@@ -170,6 +170,14 @@ exclude:
 #   visibility poll time.After (the in-process D7 read-your-writes
 #   budget, not a durable timer), F021 fold-count advisories (deliberate
 #   view decomposition).
+# - io-surface: 6 findings, all info (2026-11-12 scoped sighting, was 6
+#   at earlier sightings): the io-in-loop heuristic over attachment
+#   fan-out — every flagged loop reads a DISTINCT file per iteration
+#   (gateway multipart assembly webhook.go, matrix Upload client.go,
+#   signal inbox scan receiver.go, the send-form upload funnel
+#   actions.go); N distinct files ARE the work, nothing to hoist or
+#   batch. ACCEPT (inherent per-item I/O); re-litigate only if a loop
+#   ever re-reads the SAME path per iteration.
 # - nix-hash-fix: UNSKIPPED 2026-10-15 (owner decision). Its 10/10
 #   chronic failure is POST-BUMP-ONLY: the step computes the right
 #   vendorHash but never writes it in this repo layout, so with the pin

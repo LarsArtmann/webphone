@@ -1560,6 +1560,13 @@ func cdrTarget(cdr CDREntry) string {
 	return firstNonEmpty(cdr.DestinationNumber, "unknown")
 }
 
+// cdrParty is the display name of the REMOTE party: the CallerIDName
+// when the PBX carried one, the raw number otherwise — the admin CDR
+// rows and the History rows read identically.
+func cdrParty(cdr CDREntry) string {
+	return firstNonEmpty(cdr.CallerIDName, cdr.CallerIDNumber, "unknown")
+}
+
 // CDRDialTarget returns the dialable number for a call record (the CID
 // number of the caller for inbound legs, the dialled destination for
 // outbound legs) or "" when the record carries none — the dial button
