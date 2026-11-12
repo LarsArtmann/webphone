@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The island's inline-row icons are SVG, not platform glyphs.** The
+  history row's redial/save buttons and the contacts row's call/remove
+  buttons render the same `wp-icon` SVG vocabulary as the rest of the
+  island, so they stop reading as OS-dependent decoration.
 - **The island's post-call card family moved to its own module**
   (`postcall.js`: the ended-reason line, note editor, disposition
   chips, and AI-draft affordances) — calls.js sheds ~340 lines and

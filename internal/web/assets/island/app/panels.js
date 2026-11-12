@@ -32,6 +32,20 @@ const trashIcon = () =>
   iconSvg(
     "M9 3a1 1 0 0 0-1 1H5.5a1 1 0 0 0 0 2H6l.8 12.1A2 2 0 0 0 8.8 20h6.4a2 2 0 0 0 2-1.9L18 6h.5a1 1 0 1 0 0-2H16a1 1 0 0 0-1-1H9zm0 5a1 1 0 0 1 2 0v7a1 1 0 1 1-2 0V8zm4 0a1 1 0 1 1 2 0v7a1 1 0 1 1-2 0V8z",
   );
+const redialIcon = () =>
+  iconSvg("M12 5V2L8 6l4 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z");
+const saveContactIcon = () =>
+  iconSvg(
+    "M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27zm0-2.67-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 5.5l1.71 4.61 4.38.38-3.32 2.88 1 4.28L12 14.6z",
+  );
+const callIcon = () =>
+  iconSvg(
+    "M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z",
+  );
+const removeIcon = () =>
+  iconSvg(
+    "M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 19 17.59 13.41 12z",
+  );
 
 // --- call history ----------------------------------------------------------
 
@@ -142,12 +156,12 @@ function makeHistoryRow({ dir, target, whenText, durText, number }) {
   // Redial + save-as-contact: dialing gets fast, contacts stay local.
   const redial = document.createElement("button");
   redial.className = "ghost small redial";
-  redial.textContent = "↻";
+  redial.innerHTML = redialIcon();
   redial.title = number;
   redial.addEventListener("click", () => dialFromUi(number));
   const save = document.createElement("button");
   save.className = "ghost small save";
-  save.textContent = "☆";
+  save.innerHTML = saveContactIcon();
   save.title = t("contactSave");
   save.addEventListener("click", () => {
     // saveContact re-renders when the server answers (async now).
@@ -403,7 +417,7 @@ export function renderContacts() {
     origin.textContent = shared ? t("contactShared") : "";
     const call = document.createElement("button");
     call.className = "ghost small call";
-    call.textContent = "☎";
+    call.innerHTML = callIcon();
     call.addEventListener("click", () => dialFromUi(contact.number));
     li.append(name, number, origin);
     if (shared) {
@@ -411,7 +425,7 @@ export function renderContacts() {
     } else {
       const remove = document.createElement("button");
       remove.className = "ghost small";
-      remove.textContent = "✕";
+      remove.innerHTML = removeIcon();
       remove.title = t("contactRemove");
       remove.addEventListener("click", () => {
         if (contact.id) removeServerContact(contact);
