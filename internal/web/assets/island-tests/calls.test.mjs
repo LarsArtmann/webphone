@@ -508,7 +508,7 @@ test("a wish queued mid-flight replays after the in-flight toggle settles", asyn
   await settle();
   assert.equal(entry.holdPending, "holding");
   entry.holdQueued = true;
-  gates.shift().resolve();
+  gates.shift().accept();
   await settle();
   assert.equal(entry.held, true);
   assert.equal(entry.holdPending, null, "a matching wish never replays");

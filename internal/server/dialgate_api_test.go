@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	cqrs "github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/config"
 )
 
@@ -162,10 +163,10 @@ func TestDialGateBadInput(t *testing.T) {
 // honest 502 — the island dials anyway (the gate is advisory), but the
 // failure is visible, not swallowed into a fake allow.
 func TestDialGateStoreFailureIs502(t *testing.T) {
-	dead := newTestEngine(t)
-	closed := dead.DialWindows()
-	if err := dead.Shutdown(); err != nil {
-		t.Fatalf("close engine: %v", err)
+	deadSys := newCoreSystem(t)
+	closed := cqrs.NewDialWindows(deadSys)
+	if err := deadSys.Close(); err != nil {
+		t.Fatalf("close system: %v", err)
 	}
 	srv := dialServer(t, time.Hour, func(d *Deps) { d.Dials = closed })
 	c := clientFor(t, srv)
@@ -243,10 +244,10 @@ func TestDialGateSlotsListing(t *testing.T) {
 	}
 
 	// A dead store is the honest 502.
-	dead := newTestEngine(t)
-	closed := dead.DialWindows()
-	if err := dead.Shutdown(); err != nil {
-		t.Fatalf("close engine: %v", err)
+	deadSys := newCoreSystem(t)
+	closed := cqrs.NewDialWindows(deadSys)
+	if err := deadSys.Close(); err != nil {
+		t.Fatalf("close system: %v", err)
 	}
 	deadSrv := dialServer(t, time.Hour, func(d *Deps) { d.Dials = closed })
 	deadClient := clientFor(t, deadSrv)

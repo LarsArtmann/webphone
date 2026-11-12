@@ -47,17 +47,13 @@ const humanScaleVolume = 1
 // "metaengine"), eagerly invoked, closed on the container shutdown
 // cascade.
 type Engine struct {
-	eng      metaengine.Engine
-	dedup    metaengine.DedupStore
-	agg      metaengine.AggregateReader
-	models   *metaengine.Store
-	contacts *Contacts
-	snippets *Snippets
-	dials    *DialWindows
-	devices  *PushDevices
-	agents   *AgentAudit
-	db       *sql.DB
-	closed   bool
+	eng     metaengine.Engine
+	dedup   metaengine.DedupStore
+	models  *metaengine.Store
+	devices *PushDevices
+	agents  *AgentAudit
+	db      *sql.DB
+	closed  bool
 }
 
 // Open creates (or opens) the read-model database inside dataDir,
@@ -78,29 +74,18 @@ func Open(dataDir string) (*Engine, error) {
 		_ = db.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
 		return nil, errorfamily.Newf(errorfamily.Infrastructure, "readmodels.open", "engine %T lacks the dedup capability", eng)
 	}
-	// Same doctrine for the aggregate reader: the metrics surface counts
-	// contacts through it, so a swap that dropped it fails the boot.
-	agg, ok := eng.(metaengine.AggregateReader)
-	if !ok {
-		_ = db.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
-		return nil, errorfamily.Newf(errorfamily.Infrastructure, "readmodels.open", "engine %T lacks the aggregate capability", eng)
-	}
-	models, err := metaengine.Plan([]metaengine.Engine{eng}, contactsQuery, snippetsQuery, dialWindowsQuery, dialOverridesQuery, pushDevicesQuery, agentAuditQuery)
+	models, err := metaengine.Plan([]metaengine.Engine{eng}, pushDevicesQuery, agentAuditQuery)
 	if err != nil {
 		_ = db.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
 		return nil, errorfamily.WrapInfrastructuref(err, "readmodels.open", "plan read models")
 	}
 	return &Engine{
-		eng:      eng,
-		dedup:    dedup,
-		agg:      agg,
-		models:   models,
-		contacts: newContacts(models, agg),
-		snippets: newSnippets(models),
-		dials:    newDialWindows(models),
-		devices:  newPushDevices(models),
-		agents:   newAgentAudit(models),
-		db:       db,
+		eng:     eng,
+		dedup:   dedup,
+		models:  models,
+		devices: newPushDevices(models),
+		agents:  newAgentAudit(models),
+		db:      db,
 	}, nil
 }
 
@@ -115,21 +100,9 @@ func (e *Engine) Engine() metaengine.Engine { return e.eng }
 // port — readmodels itself never imports server.
 func (e *Engine) DedupStore() metaengine.DedupStore { return e.dedup }
 
-// Contacts returns the engine-backed personal-contacts store (the
-// SQL store's replacement behind the same method contract).
-func (e *Engine) Contacts() *Contacts { return e.contacts }
-
-// Snippets returns the engine-backed reply-snippet store (the SQL
-// store's replacement behind the same method contract).
-func (e *Engine) Snippets() *Snippets { return e.snippets }
-
 // AgentAudit returns the engine-backed agent-action audit store (D5,
 // the durable read model behind the journal line).
 func (e *Engine) AgentAudit() *AgentAudit { return e.agents }
-
-// DialWindows returns the engine-backed dial-cooldown store (issue #7:
-// the (owner, remote) window plus one-shot overrides).
-func (e *Engine) DialWindows() *DialWindows { return e.dials }
 
 // PushDevices returns the engine-backed registered-device store (the
 // push seam's ring fan-out source; owner-scoped everywhere).

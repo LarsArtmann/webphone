@@ -120,3 +120,15 @@ func TestShutdownIsIdempotent(t *testing.T) {
 		t.Fatalf("second shutdown: %v", err)
 	}
 }
+
+// openTestEngine opens the throwaway engine for the remaining engine
+// store suites (push/agentaudit until their journal flip lands).
+func openTestEngine(t *testing.T) *Engine {
+	t.Helper()
+	engine, err := Open(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = engine.Shutdown() })
+	return engine
+}

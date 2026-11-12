@@ -24,7 +24,6 @@ import (
 	"github.com/larsartmann/webphone/internal/gateway"
 	"github.com/larsartmann/webphone/internal/messaging"
 	"github.com/larsartmann/webphone/internal/pbx"
-	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/server"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/store"
@@ -57,9 +56,6 @@ func start(t GinkgoTInterface, phoneAPIURL string, mutate ...func(*config.Config
 	Expect(err).NotTo(HaveOccurred())
 
 	hubs := server.NewHubs()
-	engine, err := readmodels.Open(t.TempDir())
-	Expect(err).NotTo(HaveOccurred())
-	t.Cleanup(func() { _ = engine.Shutdown() })
 	coreSys, err := cqrs.NewCoreSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
 	Expect(err).NotTo(HaveOccurred())
 	t.Cleanup(func() { _ = coreSys.Close() })
@@ -83,7 +79,7 @@ func start(t GinkgoTInterface, phoneAPIURL string, mutate ...func(*config.Config
 		Config:    cfg,
 		Messages:  messages,
 		Faxes:     faxes,
-		Contacts:  engine.Contacts(),
+		Contacts:  cqrs.NewContacts(coreSys),
 		Messaging: messaging.New(messages, blobs, gateway.NewMessageGateway(cfg.Gateway, gateway.DefaultClient()), notifier.Project, cfg.Identities),
 		Fax:       fax.New(faxes, blobs, gateway.NewFaxGateway(cfg.Gateway, gateway.DefaultClient()), notifier.Project, cfg.Identities, nil),
 		PhoneAPI:  phoneAPI,

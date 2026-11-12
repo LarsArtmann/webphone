@@ -60,8 +60,8 @@ The thin-but-deep pattern is right for a domain-specific phone shell — do NOT 
 All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
 
 ```console
-rg -o "icons\.Icon" -N -g '*.templ' internal/ | wc -l                    # expect 29 (24 at audit; the admin layout rewrite removed nav icons → 12; the Reports + live-context + SUPERB panel trains added 16 back 2026-11-06..09; +1 nav tabIcon site 2026-11-11 segmented pill nav — icons.Icon stays the one icon home)
+rg -o "icons\.Icon" -N -g '*.templ' internal/ | wc -l                    # expect >= 29 (24 at audit; admin rewrite -> 12; Reports + live-context + SUPERB panel trains +16 2026-11-06..09; +1 nav tabIcon 2026-11-11 — floor-pinned 2026-11-12: craft trains keep adding; the drift direction that matters is the one-home icon shrinking)
 rg -n "RelativeTime|CountBadge|errorpage" -g '*.templ' --type go internal/ | wc -l   # expect 0
-rg -n "wp-empty" -g '*.templ' internal/ | wc -l                          # expect 22 (9 at audit; admin panels +7 2026-11-04; SUPERB panels +1 2026-11-09; +5 the 2026-11-11 panel/craft trains — swap candidates only, not adoption gaps)
+rg -n "wp-empty" -g '*.templ' internal/ | wc -l                          # expect >= 22 (9 at audit; admin panels +7 2026-11-04; SUPERB panels +1 2026-11-09; +5 the 2026-11-11 panel/craft trains — floor-pinned 2026-11-12 after a concurrent session moved it 17->22 mid-sweep; swap candidates only, not adoption gaps)
 rg -c "display\.StatusBadge|feedback\.Alert" -g '*.templ' internal/ | wc -l   # expect 0 (the DECLINED components stay unused; SimpleEmptyState rides the two T12 swaps)
 ```

@@ -30,6 +30,7 @@ import (
 	"github.com/larsartmann/webphone/internal/web/views"
 
 	cqrs "github.com/larsartmann/webphone/internal/cqrs"
+	"github.com/larsartmann/go-cqrs-lite/system/v4"
 )
 
 // domContractIDs loads the island DOM-contract id list from
@@ -103,10 +104,24 @@ func newTestEngine(t testing.TB) *readmodels.Engine {
 	return engine
 }
 
-// newTestReadmodels returns the throwaway engine's contacts read model
-// (the seam most tests exercise).
-func newTestReadmodels(t testing.TB) *readmodels.Contacts {
-	return newTestEngine(t).Contacts()
+// newCoreSystem boots the throwaway journal system (every gate decl
+// registered) — the store-failure and direct-backend tests' helper.
+func newCoreSystem(t testing.TB) *system.System {
+	t.Helper()
+	sys, err := cqrs.NewCoreSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = sys.Close() })
+	return sys
+}
+
+// newTestReadmodels boots the throwaway journal system's contacts
+// backend (the cqrs backend is the one contacts implementation since
+// the engine store retired — 2026-11-11 ladder train C).
+func newTestReadmodels(t testing.TB) *cqrs.Contacts {
+	t.Helper()
+	return cqrs.NewContacts(newCoreSystem(t))
 }
 
 // newTestServerWithConfig additionally tweaks the config BEFORE the deps
@@ -132,7 +147,6 @@ func newTestServerWithConfig(
 	}
 
 	hubs := NewHubs()
-	engine := newTestEngine(t)
 	cfg := config.Config{
 		Addr: ":0", DataDir: t.TempDir(), WebsocketPath: "/sip",
 		SessionTTL: time.Hour,
@@ -171,12 +185,12 @@ func newTestServerWithConfig(
 		Sessions:    sessions,
 		Messages:    messages,
 		Faxes:       faxes,
-		Contacts:    engine.Contacts(),
-		Snippets:    engine.Snippets(),
+		Contacts:    cqrs.NewContacts(coreSys),
+		Snippets:    cqrs.NewSnippets(coreSys),
 		Transcripts: transcripts,
 		Notes:       cqrs.NewNotes(coreSys),
 		Reviews:     cqrs.NewReviews(coreSys),
-		Dials:       engine.DialWindows(),
+		Dials:       cqrs.NewDialWindows(coreSys),
 		Messaging:   messaging.New(messages, blobs, gateway.NewMessageGateway(cfg.Gateway, gateway.DefaultClient()), notifier.Project, cfg.Identities),
 		Fax:         fax.New(faxes, blobs, gateway.NewFaxGateway(cfg.Gateway, gateway.DefaultClient()), notifier.Project, cfg.Identities, nil),
 		PhoneAPI:    phoneAPI,

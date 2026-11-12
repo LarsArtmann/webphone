@@ -6,10 +6,12 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	cqrs "github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/server/api"
@@ -69,12 +71,12 @@ func TestInternalErrorRedactsDetail(t *testing.T) {
 // down) surfaces as the shared 500 (save) and a plain 404 (delete never
 // leaks store detail).
 func TestContactsAPIStoreFailureRoutesThroughContactSaveFailed(t *testing.T) {
-	engine, err := readmodels.Open(t.TempDir())
+	sys, err := cqrs.NewCoreSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	contacts := engine.Contacts()
-	if err := engine.Shutdown(); err != nil {
+	contacts := cqrs.NewContacts(sys)
+	if err := sys.Close(); err != nil {
 		t.Fatal(err)
 	}
 	server := newTestServerWithPhoneAPI(t, "", func(d *Deps) {

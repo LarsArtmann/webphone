@@ -60,7 +60,7 @@ Adoption is deep where the doctrine lives (seams, codes, pins, registry) and thi
 All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
 
 ```console
-rg -l "larsartmann/go-error-family" --type go -g '!*_templ.go' internal/ cmd/ | wc -l   # expect 131 (97 at audit; +7 admin train 2026-11-04; +30 SUPERB cqrs/threads/faxes trains 2026-11-08/09; -3 storage-ladder consolidation 2026-11-09..11 folded readmodels read-sides into internal/cqrs)
+rg -l "larsartmann/go-error-family" --type go -g '!*_templ.go' internal/ cmd/ | wc -l   # expect >= 125 (97 at audit; +7 admin 2026-11-04; +30 SUPERB trains 2026-11-08/09; the 2026-11-09..12 storage-ladder + readmodels gate refactors move the POINT count 129..133 while they land — floor sits below that transient band on purpose: the drift direction that matters is adoption collapsing toward double digits)
 rg -c "NewConflict|WrapConflict|errorfamily.Conflict" --type go internal/ | wc -l   # expect > 0 (adopted 2026-11-04)
 go test ./internal/arch -run TestErrorCodeRegistryIsFresh               # registry freshness
 rg -o "errorfamily\.[A-Za-z]+" -N --type go internal/ cmd/ | sed 's/.*errorfamily\.//' | sort | uniq -c | sort -rn | head -15
