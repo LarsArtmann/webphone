@@ -226,8 +226,8 @@ func NotesDomainDecl() system.DomainConfig {
 
 // ─── the backend the server keeps calling ──────────────────────────
 
-// Notes is the dispatch-backed post-call-note store: the same contract
-// the engine-backed store exposed (nil-when-absent owner-scoped Get,
+// Notes is the dispatch-backed post-call-note store: the contract
+// readmodels' gate declares (nil-when-absent owner-scoped Get,
 // body upsert merging the verdict, disposition upsert merging the
 // prose, per-owner cap for NEW calls as the 409 Conflict).
 type Notes struct {

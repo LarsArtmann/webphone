@@ -21,7 +21,7 @@ const (
 )
 
 // dialWindowKeyInput is the key-extraction input for the journal
-// projections (same shape the readmodels engine declares).
+// projections (the shape readmodels declares).
 type dialWindowKeyInput struct{ Key domain.DialWindowKey }
 
 // dialWindowsProjection folds DialAttempted facts into the SAME view

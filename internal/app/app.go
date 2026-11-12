@@ -129,7 +129,7 @@ type App struct {
 	Push *push.Fanout
 }
 
-// pushRegistryAdapter adapts the engine-backed push-devices store to
+// pushRegistryAdapter adapts the journal-backed push-devices store to
 // the fanout's prune seam: the fanout stays dependency-light (domain
 // types only), and the conversion is the adapter's whole job.
 type pushRegistryAdapter struct {
@@ -448,21 +448,22 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			Sessions: do.MustInvoke[*session.SQLiteStore](i),
 			Messages: do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).ThreadsSvc(),
 			Faxes:    do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).FaxesSvc(), //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service's fax backend (SUPERB Phase 6)
-			// The four Phase-4 seams answer from the journal's decisions
-			// (SUPERB): the engine-backed stores stay as the import sources
-			// and rollback lanes behind their gate interfaces.
+			// The Phase-4 seams answer from the journal's decisions
+			// (SUPERB): the journal is the one implementation behind their
+			// readmodels gate interfaces (the engine stores retired with
+			// the 2026-11-11 storage-ladder closeout).
 			Contacts:    do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).ContactsSvc(),
 			Snippets:    do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).SnippetsSvc(), //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service's snippet backend (SUPERB Phase 3)
 			Transcripts: do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).TranscriptsSvc(),
 			Notes:       do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).NotesSvc(),
 			Reviews:     do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).ReviewsSvc(),
 			// The dial gate answers from the journal's decisions since the
-			// SUPERB Phase 2 swap (the engine-backed store stays as the
-			// import source and rollback lane behind the DialGate seam).
+			// SUPERB Phase 2 swap (the DialGate seam's one home is the
+			// journal backend; the engine store retired).
 			Dials: do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).Dials(),
 			// The agent-audit store answers from the journal since the
-			// SUPERB Phase 3 swap (the engine-backed store stays as the
-			// import source behind the AgentAuditGate seam).
+			// SUPERB Phase 3 swap (the AgentAuditGate seam's one home is
+			// the journal backend; the engine store retired).
 			AgentAudit:  do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).AgentAuditSvc(),
 			Messaging:   do.MustInvoke[*messaging.Service](i),
 			Fax:         do.MustInvoke[*fax.Service](i),
@@ -487,8 +488,8 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			Dedup: engineDedupWindow{store: systemDedup(i)},
 			Push:  pushFanout,
 			// The device registry answers from the journal since the SUPERB
-			// Phase 3 swap (the engine-backed store stays as the import
-			// source behind the PushDeviceGate seam).
+			// Phase 3 swap (the PushDeviceGate seam's one home is the
+			// journal backend; the engine store retired).
 			PushDevices: do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).PushDevicesSvc(),
 			Admin:       adminService,
 		}), nil

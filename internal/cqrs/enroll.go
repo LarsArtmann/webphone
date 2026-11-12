@@ -157,13 +157,12 @@ func enrollProjection() metaengine.QueryDecl[enrollKeyInput, readmodels.EnrollTo
 	)
 }
 
-// enrollCollection names the system engine's projection (the same
-// name the readmodels engine declares — different databases, one
-// shape).
+// enrollCollection names the journal projection (the name
+// readmodels declares — one shape, one store).
 const enrollCollection = "enroll_tokens"
 
-// enrollKeyInput is the projection's key-extraction input (the same
-// shape the readmodels engine declares).
+// enrollKeyInput is the projection's key-extraction input (the
+// shape readmodels declares).
 type enrollKeyInput struct{ TokenHash string }
 
 // EnrollDomainDecl is the enroll aggregate's share of the system's

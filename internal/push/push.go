@@ -1,5 +1,6 @@
 // Package push is the server-side push seam behind ring-while-closed:
-// the registered-device registry (readmodels.PushDevices) holds one
+// the registered-device registry (readmodels.PushDeviceGate, answered
+// by the journal backend) holds one
 // wake address per install, and this package ships the inbound-call
 // fact to it over every configured transport. Two transports exist by
 // owner decision (2026-10-23): ntfy (self-hosted, no Google, the

@@ -184,8 +184,8 @@ func ReviewsDomainDecl() system.DomainConfig {
 
 // ─── the backend the server keeps calling ──────────────────────────
 
-// Reviews is the dispatch-backed post-call-review store: the same
-// contract the engine-backed store exposed (nil-when-absent
+// Reviews is the dispatch-backed post-call-review store: the contract
+// readmodels' gate declares (nil-when-absent
 // owner-scoped Get, wholesale-replace Set, per-owner cap for NEW
 // calls as the Rejection).
 type Reviews struct {

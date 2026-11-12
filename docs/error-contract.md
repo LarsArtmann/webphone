@@ -531,16 +531,6 @@ a deliberate code change, regenerate:
 | push.ntfy_send                               | Infrastructure, Rejection | internal/push/ntfy.go             |
 | push.registry                                | Rejection                 | internal/push/push.go             |
 | push.transport                               | Rejection                 | internal/push/push.go             |
-| readmodels.agent_audit_append                | Infrastructure            | internal/readmodels/agentaudit.go |
-| readmodels.agent_audit_recent                | Infrastructure            | internal/readmodels/agentaudit.go |
-| readmodels.agent_audit_trim                  | Infrastructure            | internal/readmodels/agentaudit.go |
-| readmodels.close                             | Infrastructure            | internal/readmodels/readmodels.go |
-| readmodels.open                              | Infrastructure            | internal/readmodels/readmodels.go |
-| readmodels.ping                              | Infrastructure            | internal/readmodels/readmodels.go |
-| readmodels.push_list                         | Infrastructure            | internal/readmodels/push.go       |
-| readmodels.push_list_full                    | Rejection                 | internal/readmodels/push.go       |
-| readmodels.push_remove                       | Infrastructure            | internal/readmodels/push.go       |
-| readmodels.push_upsert                       | Infrastructure            | internal/readmodels/push.go       |
 | session.insert                               | Infrastructure            | internal/session/sqlite.go        |
 | session.migrate                              | Infrastructure            | internal/session/sqlite.go        |
 | session.migrate_login_email                  | Infrastructure            | internal/session/sqlite.go        |
