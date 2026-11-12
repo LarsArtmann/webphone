@@ -234,6 +234,13 @@ func (c *cursor) saveCount() int {
 	return len(c.saved)
 }
 
+// all snapshots the persisted-cursor sequence race-safely.
+func (c *cursor) all() []string {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return append([]string(nil), c.saved...)
+}
+
 func TestIngestDeliversDMTextAndSkipsEncrypted(t *testing.T) {
 	hs, server := newHomeserver(t)
 	_ = hs
@@ -360,5 +367,126 @@ func TestRunPersistsCursorAndExitsOnCancel(t *testing.T) {
 	case <-done:
 	case <-time.After(5 * time.Second):
 		t.Fatal("Run must exit on ctx cancel")
+	}
+}
+
+// sinceRecorder is a sync-only homeserver stub: it records every since
+// parameter and scripts the answers (the self-heal tests need a
+// first-call-then-different-behaviour server, which the shared fixture
+// cannot express).
+type sinceRecorder struct {
+	mu     sync.Mutex
+	sinces []string
+}
+
+func (s *sinceRecorder) record(since string) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.sinces = append(s.sinces, since)
+}
+
+func (s *sinceRecorder) all() []string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return append([]string(nil), s.sinces...)
+}
+
+// runBriefly starts the receiver and waits until the cursor has been
+// persisted wantSaves times, then cancels and waits for the exit.
+func runBriefly(t *testing.T, r *Receiver, cur *cursor, wantSaves int) {
+	t.Helper()
+	ctx, cancel := context.WithCancel(t.Context())
+	done := make(chan struct{})
+	go func() {
+		_ = r.Run(ctx)
+		close(done)
+	}()
+	deadline := time.After(8 * time.Second)
+	for cur.saveCount() < wantSaves {
+		select {
+		case <-deadline:
+			cancel()
+			t.Fatalf("receiver never persisted %d cursor saves (got %d)", wantSaves, cur.saveCount())
+		case <-time.After(5 * time.Millisecond):
+		}
+	}
+	cancel()
+	select {
+	case <-done:
+	case <-time.After(5 * time.Second):
+		t.Fatal("Run must exit on ctx cancel")
+	}
+}
+
+// TestRunSelfHealsAPoisonedCursorWithAFreshSync (T18 F50): a saved
+// cursor the homeserver refuses with 400 M_UNKNOWN is corrupt resume
+// state — the receiver drops it and takes the next sync fresh, instead
+// of stopping loudly on a self-inflicted Rejection.
+func TestRunSelfHealsAPoisonedCursorWithAFreshSync(t *testing.T) {
+	rec := &sinceRecorder{}
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/_matrix/client/v3/sync" {
+			http.Error(w, `{"errcode":"M_UNRECOGNIZED","error":"nope"}`, http.StatusNotFound)
+			return
+		}
+		since := r.URL.Query().Get("since")
+		rec.record(since)
+		if since == "s-dead" {
+			w.WriteHeader(http.StatusBadRequest)
+			_, _ = fmt.Fprint(w, `{"errcode":"M_UNKNOWN","error":"Unknown token"}`)
+			return
+		}
+		_, _ = fmt.Fprint(w, `{"next_batch":"s-ok"}`)
+	}))
+	t.Cleanup(server.Close)
+
+	cur := &cursor{token: "s-dead"}
+	r := NewReceiver(New(ClientConfig{Homeserver: server.URL, UserID: "@w:example.org", Token: "tok"}),
+		domain.MustParseExtension("1001"), &sink{}, cur, slog.Default())
+	runBriefly(t, r, cur, 2)
+
+	saved := cur.all()
+	if len(saved) < 2 || saved[0] != "" || saved[1] != "s-ok" {
+		t.Fatalf("the reset must land before the fresh batch, saved=%q", saved)
+	}
+	if got := rec.all(); len(got) < 2 || got[0] != "s-dead" || got[1] != "" {
+		t.Fatalf("the second sync must resume fresh, sinces=%q", got)
+	}
+}
+
+// TestRunSelfHealsAnOversizedSyncWithAFreshSync (T18 F49): a resumed
+// backlog beyond the read cap reproduces the overflow forever — the
+// receiver resets the cursor and re-syncs fresh, bounded by the backoff
+// ladder rather than hot-spinning.
+func TestRunSelfHealsAnOversizedSyncWithAFreshSync(t *testing.T) {
+	rec := &sinceRecorder{}
+	filler := strings.Repeat(" ", answerCap+1)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/_matrix/client/v3/sync" {
+			http.Error(w, `{"errcode":"M_UNRECOGNIZED","error":"nope"}`, http.StatusNotFound)
+			return
+		}
+		since := r.URL.Query().Get("since")
+		rec.record(since)
+		if since != "" {
+			// answerCap+1 bytes: the overflow verdict, before any decode.
+			_, _ = io.WriteString(w, filler)
+			return
+		}
+		_, _ = fmt.Fprint(w, `{"next_batch":"s-ok"}`)
+	}))
+	t.Cleanup(server.Close)
+
+	cur := &cursor{}
+	r := NewReceiver(New(ClientConfig{Homeserver: server.URL, UserID: "@w:example.org", Token: "tok"}),
+		domain.MustParseExtension("1001"), &sink{}, cur, slog.Default())
+	runBriefly(t, r, cur, 3)
+
+	saved := cur.all()
+	if len(saved) < 3 || saved[0] != "s-ok" || saved[1] != "" || saved[2] != "s-ok" {
+		t.Fatalf("the fresh batch must sandwich the reset, saved=%q", saved)
+	}
+	if got := rec.all(); len(got) < 3 || got[1] == "" || got[2] != "" {
+		t.Fatalf("the resumed sync must overflow and the third must resume fresh, sinces=%q", got)
 	}
 }

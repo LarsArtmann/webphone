@@ -6,6 +6,8 @@
 package crm_test
 
 import (
+	"strings"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
@@ -110,4 +112,28 @@ func TestCallLogStatusSplit(t *testing.T) {
 			errorfamilytest.AssertCode(t, err, tc.code)
 		})
 	}
+}
+
+// TestOversizedAnswersAreTheirOwnTransient (T18 F52): a CRM answer
+// beyond the read cap is its own Transient verdict (crm.too_large) at
+// both read sites — lookup and context — never a boundless buffer or a
+// truncation-induced decode surprise.
+func TestOversizedAnswersAreTheirOwnTransient(t *testing.T) {
+	filler := strings.Repeat(" ", (1<<20)+1) // readCap+1
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = io.WriteString(w, filler)
+	}))
+	defer srv.Close()
+
+	client, err := crm.NewClient(srv.URL, "token", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = client.LookupByPhone(t.Context(), "+441632960961")
+	errorfamilytest.AssertFamily(t, err, errorfamily.Transient)
+	errorfamilytest.AssertCode(t, err, "crm.too_large")
+
+	_, err = client.ContactContext(t.Context(), crm.NewContactRef("contact-1"))
+	errorfamilytest.AssertFamily(t, err, errorfamily.Transient)
+	errorfamilytest.AssertCode(t, err, "crm.too_large")
 }

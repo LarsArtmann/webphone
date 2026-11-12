@@ -1,6 +1,10 @@
 package matrix
 
 import (
+	"strings"
+	"net/http/httptest"
+	"net/http"
+	"io"
 	"testing"
 
 	errorfamilytest "github.com/larsartmann/go-error-family/errorfamilytest"
@@ -34,4 +38,21 @@ func TestFamilyPins(t *testing.T) {
 	_, _, mxcErr := c.Download(t.Context(), "https://example.org/not-mxc")
 	errorfamilytest.AssertFamily(t, mxcErr, errorfamily.Rejection)
 	errorfamilytest.AssertCode(t, mxcErr, "matrix.mxc")
+}
+
+// TestOversizedAnswerIsItsOwnTransient (T18 F49): a homeserver answer
+// beyond the read cap is its own Transient verdict (matrix.too_large),
+// never a truncation-induced Infrastructure decode error — the
+// receiver's fresh-sync reset keys on it.
+func TestOversizedAnswerIsItsOwnTransient(t *testing.T) {
+	filler := strings.Repeat(" ", answerCap+1)
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		_, _ = io.WriteString(w, filler)
+	}))
+	t.Cleanup(server.Close)
+
+	c := New(ClientConfig{Homeserver: server.URL, UserID: "@w:example.org", Token: "tok"})
+	_, err := c.Sync(t.Context(), "s1", 0)
+	errorfamilytest.AssertFamily(t, err, errorfamily.Transient)
+	errorfamilytest.AssertCode(t, err, "matrix.too_large")
 }

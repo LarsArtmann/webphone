@@ -187,16 +187,33 @@ func (r *Receiver) Run(ctx context.Context) error {
 			// through to the ordinary ladder):
 			//   poisoned cursor: the homeserver refused the saved token
 			//     (400 Rejection) — the resume point is corrupt, so drop
-			//     it and take the next sync fresh;
+			//     it and take the next sync fresh (an auth failure is
+			//     NOT this: resetting cannot fix a bad token, so the
+			//     ordinary ladder still stops loudly on it);
 			//   oversized answer: the backlog this cursor resumes blew
 			//     the read cap — the same resume point reproduces the
 			//     same overflow forever, so drop it and re-sync fresh.
-			if since != "" && (poisonedCursor(err) || isTooLarge(err)) {
-				r.log.Warn("matrix: discarding the saved sync cursor — resuming from a fresh sync", "error", err)
+			//     The reset rides the backoff ladder (a Transient) so a
+			//     pathological every-window-oversized homeserver cannot
+			//     hot-spin the loop.
+			if since != "" && poisonedCursor(err) {
+				r.log.Warn("matrix: the homeserver refused the saved sync cursor — resuming from a fresh sync", "error", err)
 				if saveErr := r.cursor.Save(ctx, ""); saveErr != nil {
 					r.log.Error("matrix: save empty cursor", "error", saveErr)
 				}
 				attempt = 1
+				continue
+			}
+			if since != "" && isTooLarge(err) {
+				r.log.Warn("matrix: the sync answer exceeded the read cap — resetting to a fresh sync", "error", err)
+				if saveErr := r.cursor.Save(ctx, ""); saveErr != nil {
+					r.log.Error("matrix: save empty cursor", "error", saveErr)
+				}
+				var alive bool
+				attempt, alive = chatloop.Backoff(ctx, r.log, "matrix: re-syncing fresh", err, attempt, 30*time.Second)
+				if !alive {
+					return nil
+				}
 				continue
 			}
 			var alive bool
