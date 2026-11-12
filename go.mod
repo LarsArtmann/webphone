@@ -37,7 +37,7 @@ require (
 	github.com/larsartmann/go-health v0.10.0
 	github.com/larsartmann/go-health-dashboard v0.13.2
 	github.com/larsartmann/go-idempotency v0.3.2
-	github.com/larsartmann/go-paperless v0.5.0
+	github.com/larsartmann/go-paperless v0.5.2
 	github.com/larsartmann/go-retry v0.9.0
 	github.com/larsartmann/go-sse v0.7.0
 	github.com/larsartmann/go-sse/ssetest v0.5.0

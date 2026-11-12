@@ -66,8 +66,8 @@ front matter does not carry their history (one home per fact, per the rule above
   use :active scale) or a gap? Decide, write the ruling.~~ →
   done 2026-11-12 — ruled DELIBERATE: island buttons own color-shift hovers (accent-strong/danger-strong/surface-2) + press-scale (reduced-motion-neutralized); the shell's 6% overlay sweep is a dense-row idiom, not an island obligation
 - ~~**art-dupl sweep** (§f-30): the table stack lane / reports grid / contacts grid
-      share grid idioms — adjudicate fresh clones against the pinned baseline.~~ →
-      done 2026-11-12 — pinned v0.7.2 `-t 1` sweep: the three grid lanes carry ZERO clone groups (CSS/templ idiom, not Go duplication); baseline 110 holds; the run's one new group is another session's in-flight VoicemailSummary twin (fix-forward; sweep-log row in docs/dedup-registry.md)
+  share grid idioms — adjudicate fresh clones against the pinned baseline.~~ →
+  done 2026-11-12 — pinned v0.7.2 `-t 1` sweep: the three grid lanes carry ZERO clone groups (CSS/templ idiom, not Go duplication); baseline 110 holds; the run's one new group is another session's in-flight VoicemailSummary twin (fix-forward; sweep-log row in docs/dedup-registry.md)
 - ~~**whitespace-drift CSS-indent verification** (§f-31): confirm the formatter
   adjudication would catch a 1-space-indent CSS commit (the §d-3 incident class).~~ →
   done 2026-11-12 — planted probe: treefmt re-indents the 1-space CSS ("1 changed") and `--ci` mode exits 1 on the non-canonical bytes; canonical file passes
