@@ -2357,7 +2357,8 @@ h3 {
   .wp-nav-phone {
     display: inline-flex;
   }
-  html.wp-phone-focus .wp-main-col {
+  html.wp-phone-focus #tab-content,
+  html.wp-phone-focus #wp-tab-error {
     display: none;
   }
 }
@@ -3275,6 +3276,10 @@ a:focus-visible {
   max-height: 70vh;
   border-radius: var(--radius);
 }
+.wp-table-wrap:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -2px;
+}
 .wp-table {
   width: 100%;
   border-collapse: separate;
@@ -3313,13 +3318,13 @@ a:focus-visible {
 .wp-table tr.wp-row-missed td:first-child {
   box-shadow: inset 3px 0 0 var(--danger);
 }
-.wp-table .wp-day-head th {
+.wp-table-day-head th {
   display: table-cell;
   padding: 14px 12px 6px;
   text-align: start;
   white-space: nowrap;
 }
-.wp-table .wp-day-head .wp-day-count {
+.wp-table-day-head .wp-day-count {
   margin-inline-start: 8px;
 }
 @container tabcol (max-width: 560px) {
@@ -3336,13 +3341,13 @@ a:focus-visible {
     border-bottom: var(--hairline);
   }
   .wp-table td,
-  .wp-table .wp-day-head th {
+  .wp-table-day-head th {
     display: block;
     padding: 0;
     border-bottom: none;
     box-shadow: none;
   }
-  .wp-table .wp-day-head th {
+  .wp-table-day-head th {
     padding: 12px 0 2px;
   }
   .wp-table-dir {
