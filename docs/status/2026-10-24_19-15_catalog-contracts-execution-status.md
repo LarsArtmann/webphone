@@ -235,7 +235,7 @@ consider a tiny `-render -o` debug flag instead of temp tests.
 test; note for future schema assertions (go-snaps candidate).
 45. Consider pinning the generated /openapi.json bytes as a golden
 fixture (drift test covers routes; bytes cover wording).
-46. Push c85aefb (daemon's AGENTS+CHANGELOG) — verify end state.
+46. ~~Push c85aefb (daemon's AGENTS+CHANGELOG) — verify end state.~~ → done — verified 2026-11-12: c85aefb is an ancestor of main (git branch --contains lists main), the pushed end state the row asked for.
 47. Record the concurrent-session handoff facts (eventcatalog lane) in
 TODO_LIST so the next session doesn't re-audit it.
 48. metaengine M13 outcome may gate the catalog bump (31) — sequence them.
