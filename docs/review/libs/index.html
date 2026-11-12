@@ -939,12 +939,14 @@
         <section id="summary">
           <h2><span class="num">00</span>Summary</h2>
           <p>
-            Webphone consumes the family deliberately: <strong>nine entries are direct
-            dependencies</strong> (error-family, httputil + server_timing, go-sse, go-health,
-            go-health-dashboard, templ-components, go-cqrs-lite, cqrs-htmx), <strong>four rode
-            indirect-only at audit time</strong> (idempotency, retry, codec, etag — each with a
-            written reason in its own report; retry and etag were ADOPTED the same day), and <strong>six are absent by decision</strong>
-            (atomic-write, filewatcher, daemon, output, credentials-store, appkit). The scored
+            Webphone consumes the family deliberately: <strong>nine families are scored
+            direct dependencies</strong> (error-family, httputil + server_timing, go-sse, go-health,
+            go-health-dashboard, templ-components, go-cqrs-lite, cqrs-htmx), the audit's
+            <strong>four indirect-only candidates all resolved</strong> (retry and etag ADOPTED
+            2026-11-04; idempotency stays out with its written reason; codec is a direct test-only
+            pin since D014), <strong>go-atomic-write joined as a direct dep the same day</strong>
+            (the blob-durability fix), and <strong>six are absent by decision</strong>
+            (filewatcher, daemon, output, credentials-store, appkit, cmdguard). The scored
             families averaged <strong>76/100</strong> at audit time (79 after the closeout adoptions landed the same day); the audit found <strong>one genuine
             correctness gap</strong> (blob durability, LANDED 2026-11-04), <strong>one standing finding from the
             2026-09-24 audit</strong> (MaxBodySize, LANDED 2026-11-04), and a handful of cheap wins.
@@ -966,13 +968,13 @@
             the first time: NO-GO (three ritual one-shots behind a 15-line dispatch; the boot
             report is the designed error surface).
           </p>
-          <div class="callout callout-amber">
-            <strong>The bottom line</strong>
-            Adopt <code>go-atomic-write</code> for <code>blob.Save</code> — it is the only
-            user-data durability hole found (attachments/fax PDFs written with bare
-            <code>os.WriteFile</code>, no fsync/rename) — and retire the hand-rolled
-            <code>MaxBytesReader</code> sites for <code>httputil.MaxBodySize</code> (open
-            since September). Both LANDED 2026-11-04 (see the per-library reports' ruling
+          <div class="callout callout-teal">
+            <strong>The bottom line — both top findings LANDED 2026-11-04</strong>
+            <code>blob.Save</code> rides <code>go-atomic-write</code> (the only user-data
+            durability hole found: attachments/fax PDFs were written with bare
+            <code>os.WriteFile</code>, no fsync/rename), and the hand-rolled
+            <code>MaxBytesReader</code> sites retired for <code>httputil.MaxBodySize</code>
+            (the finding open since September; see the per-library reports' ruling
             sections). Everything else is either at its deliberate boundary or a
             reasoned decline.
           </div>
@@ -1028,6 +1030,7 @@
                 <tr><th scope="row"><a href="templ-components.md">templ-components</a></th><td>direct ×3</td><td>v1.27.0 / v1.27.0</td><td>50</td><td>Deepening on deliberate boundaries; four cheap wins (StatusBadge, SimpleEmptyState, Alert, PageHeader); v1.27.0 landed 2026-11-05 with the templ-wave (tw.css rebuilt)</td></tr>
                 <tr><th scope="row"><a href="go-etag.md">go-etag</a></th><td>direct (entitytag + server)</td><td>v0.6.1 / v0.6.1</td><td class="yes">adopted</td><td>assets conditional-GET rides <code>entitytag</code> (RFC-weak comparison) AND the server middleware mounted on <code>/openapi.json</code> + <code>/manifest.webmanifest</code> (304s; the mount is the Skip set); root v0.7.0 tag excludes the submodule — drift filed upstream</td></tr>
                 <tr><th scope="row"><a href="go-retry.md">go-retry</a></th><td>direct</td><td>v0.9.0 / v0.9.0</td><td class="yes">adopted (fit half)</td><td>LANDED 2026-11-04: reconnect loops ride <code>ComputeDelay</code> jitter (hard-capped) + the Rejection-stops-loudly gate; <code>retry.Do</code> still declined (reconnect loops cannot exhaust)</td></tr>
+                <tr><th scope="row"><a href="go-atomic-write.md">go-atomic-write</a></th><td>direct</td><td>v0.6.2 / v0.6.2</td><td class="yes">adopted</td><td>LANDED 2026-11-04 (the audit's top finding): <code>blob.Save</code> rides <code>WriteWithPerm</code> (0o640, fsync + rename + dir-fsync; write ordering verified file-then-row at all four call sites) and the two CLI spec writers ride <code>WriteIfChanged</code></td></tr>
                 <tr><th scope="row"><a href="go-branded-id.md">go-branded-id</a></th><td>direct (adjacent)</td><td>v0.7.1 / v0.7.1</td><td class="yes">74</td><td>Adjacent audit 2026-11-04: six brands + raw-value JSON wire + linter clean; the 09-24 gaps re-ruled DELIBERATE (parseID owns prefix/shape/Corruption; Scan would mint ids from unvalidated strings)</td></tr>
                 <tr><th scope="row"><a href="go-flightrecorder.md">go-flightrecorder</a></th><td>direct (adjacent)</td><td>v0.2.1 / v0.2.1</td><td class="yes">88</td><td>Adjacent audit 2026-11-04: the opt-in trace seam rides the library exactly as designed (async snapshots off a detached context, OnErrorOrLatency trigger, Shutdowner drain); the server seam keeps the framework out of handlers</td></tr>
                 <tr><th scope="row"><a href="go-paperless.md">go-paperless</a></th><td>direct (adjacent)</td><td>v0.5.0 / v0.5.2</td><td class="yes">85</td><td>Adjacent audit 2026-11-04: the fax Archiver adapter rides the SDK&rsquo;s branded ids (no second brand layer); write-only provenance, blob store stays the storage truth; 2 minors behind 2026-11-11 with no consumed surface changed</td></tr>
@@ -1035,12 +1038,11 @@
                 <tr><th scope="row"><a href="go-sqlitestore.md">go-sqlitestore</a></th><td>indirect (adjacent)</td><td>v0.1.1 / v0.1.1</td><td class="no">NO-GO</td><td>Adjacent audit 2026-11-04: zero imports &mdash; rides in through cqrs-htmx and projectionhost; webphone&rsquo;s two sqlite homes (store ladder, metaengine engine) already own the fact</td></tr>
                 <tr><th scope="row"><a href="go-idempotency.md">go-idempotency</a></th><td>indirect</td><td>v0.3.2 / v0.3.2</td><td class="no">NO-GO</td><td>Semantics differ (check-first vs CheckAndRecord); metaengine DedupStore already IS the capability</td></tr>
                 <tr><th scope="row"><a href="go-codec.md">go-codec</a></th><td>direct (test-only)</td><td>v0.3.3 / v0.3.3</td><td class="no">NO-GO (prod)</td><td>Event-store payload codec; webphone benefits transitively, HTTP JSON is not codec territory — but the journal wire vocabulary is imported test-side (D014 tombstone replay pin, 2026-11-11)</td></tr>
-                <tr><th scope="row"><a href="go-atomic-write.md">go-atomic-write</a></th><td>absent</td><td>— / v0.6.2</td><td>fit: HIGH</td><td><strong>blob.Save writes user data with bare os.WriteFile — no fsync/rename (ordering verified file-then-row; window = row-committed-before-file-durable).</strong> Top finding</td></tr>
                 <tr><th scope="row"><a href="go-filewatcher.md">go-filewatcher</a></th><td>absent</td><td>— / v2.4.3</td><td class="no">NO-GO</td><td>Nothing to watch: boot-immutable config, per-use secret reads, rotation = restart</td></tr>
                 <tr><th scope="row"><a href="go-daemon.md">go-daemon</a></th><td>absent</td><td>— / v0.4.0</td><td class="no">NO-GO</td><td>Not daemonization; every slice (sockets, sd_notify, codecs, SSE parse) is owned elsewhere</td></tr>
                 <tr><th scope="row"><a href="go-output.md">go-output</a></th><td>absent</td><td>— / v0.38.x</td><td class="no">NO-GO</td><td>CLI prints one-liners; the boot report is a designed artifact, not tabular data</td></tr>
                 <tr><th scope="row"><a href="go-credentials-store.md">go-credentials-store</a></th><td>absent</td><td>— / v0.3.1</td><td class="no">NO-GO</td><td>Platform owns secrets (LoadCredential + NixOS); the library is a second stateful service</td></tr>
-                <tr><th scope="row"><a href="go-appkit.md">go-appkit</a></th><td>absent</td><td>— / health/v0.3.0</td><td class="no">NO-GO (affirmed)</td><td>2026-10-23 ruling stands: every module re-wraps what webphone composes directly</td></tr>
+                <tr><th scope="row"><a href="go-appkit.md">go-appkit</a></th><td>absent</td><td>— / root v0.12.0</td><td class="no">NO-GO (framework)</td><td>Re-ruled 2026-11-12 against v0.12.0 + 13 satellites: the &ldquo;every module re-wraps&rdquo; claim retired (httpx/config/flightrecorderhealth postdate it); framework stays out on expressiveness walls; flightrecorderhealth = first module-level adoption candidate (demand-gated)</td></tr>
                 <tr><th scope="row"><a href="cmdguard.md">cmdguard</a></th><td>absent</td><td>— / v5.1.0</td><td class="no">NO-GO</td><td>Audited 2026-11-11: three ritual one-shots behind a 15-line hand dispatch; the boot report owns the exit contract (1 designed / 2 panic); a CLI framework&rsquo;s DI scope would fork the one samber/do container; revisit on a second, human-driven binary</td></tr>
               </tbody>
             </table>
@@ -1092,25 +1094,24 @@
           <h2><span class="num">02</span>Findings — top opportunities (impact × ease)</h2>
           <p>Six actions, sorted by impact then ease. Each links to its evidence.</p>
 
-          <div class="issue issue-critical" id="issue-1">
-            <span class="severity severity-critical">High impact &middot; Low effort</span>
+          <div class="issue issue-critical issue-landed" id="issue-1">
+            <span class="severity severity-important">LANDED 2026-11-04 &middot; was High impact &middot; Low effort</span>
             <h3>Adopt go-atomic-write for blob persistence</h3>
-            <div class="where">internal/blob/store.go:50 &middot; cmd/webphone/catalog.go:56,64 &middot; cmd/webphone/contracts.go:36</div>
+            <div class="where">blob.Save &middot; the two CLI spec writers (catalog, contracts)</div>
             <p>
-              The blob store saves attachments and fax PDFs with a bare
-              <code>os.WriteFile(abs, content, 0o640)</code> — no fsync, no atomic rename.
-              Write ordering verified file-then-row at all four call sites (T01 errata), so the
-              precise window is row-committed-before-file-durable: a power loss after the
-              database row commits can leave a truncated blob behind a row that references
-              it: user data that 404s (inbound faxes: the only copy). This is the only
-              user-data durability hole found across all 25 libraries (LANDED 2026-11-04). The CLI spec writers
-              get <code>WriteIfChanged</code> (no torn diffs, no mtime churn) in the same
-              move. Ride the vendorHash re-pin ritual in the same commit.
+              The blob store saved attachments and fax PDFs with a bare
+              <code>os.WriteFile(abs, content, 0o640)</code> — no fsync, no atomic rename;
+              write ordering was verified file-then-row at all four call sites (T01 errata),
+              so the precise window was row-committed-before-file-durable: a power loss
+              after the database row commits could leave a truncated blob behind a row that
+              referenced it — user data that 404s (inbound faxes: the only copy). It was
+              the only user-data durability hole found across all 25 libraries.
             </p>
             <div class="callout callout-teal">
-              <strong>Fix</strong>
-              <code>atomicwrite.Write(abs, content)</code> in blob.Save (content is already
-              in memory), <code>WriteIfChanged</code> for the two CLI writers. Full analysis:
+              <strong>Fix (applied 2026-11-04)</strong>
+              <code>atomicwrite.WriteWithPerm</code> in blob.Save (0o640, fsync + rename +
+              dir-fsync; content is already in memory), <code>WriteIfChanged</code> for the
+              two CLI writers. Full analysis:
               <a href="go-atomic-write.md">go-atomic-write.md</a>
             </div>
           </div>
@@ -1202,8 +1203,10 @@ root webphone
 ├── errors          go-error-family (taxonomy, codes, registry pin)          [HTTP mapping per-handler]
 ├── UI kit          templ-components (layout, display, forms, icons, utils)  [domain panels hand-rolled templ]
 ├── recording       go-flightrecorder (direct)                               [not go-daemon&rsquo;s embedded variant]
-├── storage         modernc sqlite + go-sqlitestore                          [durability of FILES = the blob gap]
-└── declined        idempotency, retry (fit half), codec, etag, atomic-write, filewatcher, daemon, output, credentials-store, appkit, cmdguard
+├── storage         modernc sqlite + go-sqlitestore                          [file durability = go-atomic-write WriteWithPerm]
+├── conditional GET go-etag entitytag + server middleware                    [304 revalidation: /openapi.json + manifest]
+├── chat reconnect  go-retry ComputeDelay jitter ladder                      [retry.Do declined — loops cannot exhaust]
+└── declined        idempotency, codec (test-only pin), filewatcher, daemon, output, credentials-store, appkit, cmdguard
           </div>
         </section>
 
@@ -1218,8 +1221,23 @@ root webphone
             graded Fully=1 / Partially=0.5 / Missed=0, N/A rows excluded with a written
             reason; score = 100 × Σ / applicable.
           </p>
+          <p>
+            <strong>Headline mean derivation (the 80-vs-81 question, settled):</strong> the
+            scored nine sum to 727 (100+88+95+100+96+67+67+64+50); 727/9 = 80.8 and the
+            headline FLOORS to 80 — this corpus never rounds a mean up.
+            <strong>Adding a report:</strong> drop one .md in this directory carrying the
+            rubric result and a How-to-verify console block whose claims use the
+            machine-readable forms (<code># expect N</code>, <code># expect &gt;= N</code>,
+            <code># expect vX.Y.Z</code>) — scripts/audit-verify.sh replays them from the
+            repo root — then add the row to the full scorecard table and touch every count
+            the prose asserts (title, summary, footer).
+            <strong>Floor-vs-point pins:</strong> counts near live-refactor churn are
+            floor-pinned (<code># expect &gt;= N</code>, N below the transient band);
+            point counts (<code># expect N</code>) only where the value is structurally
+            stable (a single-file grep, a removed symbol).
+          </p>
           <pre><code># re-derive the headline numbers (current values 2026-11-11)
-rg -l "larsartmann/go-error-family" --type go -g '!*_templ.go' internal/ cmd/ | wc -l   # 131 import sites (97 at audit)
+rg -l "larsartmann/go-error-family" --type go -g '!*_templ.go' internal/ cmd/ | wc -l   # 124 import sites at the 2026-11-12 re-read (97 at audit); point counts walk under live refactors, so the reports pin floors >= 115
 rg -l "MaxBytesReader" --type go -g '!*_test.go' internal/ | wc -l           # 3 hand-rolled body-cap files left (the ruled one-home funnels)
 rg -n "os.WriteFile" internal/blob/store.go | wc -l                        # 0 — the durability finding LANDED on go-atomic-write
 rg -c "NewConflict|WrapConflict" --type go internal/ | wc -l               # Conflict family: adopted (note_list_full)
@@ -1240,6 +1258,7 @@ for m in go-sse go-health go-etag go-paperless; do git -C /home/lars/projects/$m
               <tr><td>cqrs-htmx round-3 + addendum</td><td>2026-10-25</td><td class="yes">Affirmed (100/100), not re-litigated</td></tr>
               <tr><td>templ-components deep-dive</td><td>2026-09-22</td><td class="yes">Adopt/reject boundaries re-verified; thin-adoption score superseded</td></tr>
               <tr><td>go-appkit deep-dive</td><td>2026-10-23</td><td class="yes">Non-adoption affirmed, absence re-verified</td></tr>
+              <tr><td>go-appkit re-review (trigger fired)</td><td>2026-11-12</td><td class="yes">Framework NO-GO re-ruled against v0.12.0 + 13 satellites; flightrecorderhealth promoted to module-level candidate</td></tr>
               <tr><td>catalog deep-dive</td><td>2026-10-24</td><td class="yes">Its gap closed same-day; go-cqrs-lite report supersedes</td></tr>
               <tr><td>fleet stack deep-dive</td><td>2026-09-24</td><td>Superseded per library; its MaxBodySize finding is credited — landed 2026-11-04</td></tr>
             </tbody>
@@ -1248,8 +1267,8 @@ for m in go-sse go-health go-etag go-paperless; do git -C /home/lars/projects/$m
 
         <footer class="footer">
           <p>
-            Generated 2026-11-04 &middot; updated 2026-11-11 (currency + tree re-verify, cmdguard added) &middot; 25 reports in docs/review/libs/ &middot; <a href="index-render.jpg">Rendered screenshot</a> &middot; Claims
-            verified against source; pins from go.mod; &ldquo;latest&rdquo; from remote tags (2026-11-11)
+            Generated 2026-11-04 &middot; updated 2026-11-12 (consistency pass: issue-1 + the dep-tree moved to the landed state, mean derivation written down) &middot; 25 reports in docs/review/libs/ &middot; <a href="index-render.jpg">Rendered screenshot</a> (the 2026-11-04 edition, pre-dating this pass; refresh is an owner call) &middot; Claims
+            verified against source; pins from go.mod; &ldquo;latest&rdquo; from remote tags (2026-11-11 tags, counts re-read 2026-11-12)
           </p>
         </footer>
       </main>

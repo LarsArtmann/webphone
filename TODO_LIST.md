@@ -26,11 +26,13 @@ front matter does not carry their history (one home per fact, per the rule above
 - [ ] **German stacked-table lane** (§f-12): the mobile History stack renders
       `td[data-label]` copy from markup — verify the longest DE labels ("Zeit"/"Dauer")
       fit their cells at 390px (the lane was verified EN-only).
-- [ ] **Phone label i18n** (§f-15): the label is English-only by the D3 shell rule while
-      the localized tabs sit beside it — owner eyes or an owner exception.
-- [ ] **Destination-doc wording** (§f-29): Train 3's acceptance line says
-      "ring-while-closed parity"; the shipped tab is navigation focus, not push —
-      align the plan wording with what shipped.
+- ~~**Phone label i18n** (§f-15): the label is English-only by the D3 shell rule while
+  the localized tabs sit beside it — owner eyes or an owner exception.~~ →
+  done 2026-11-12 — batched as Q1 of docs/planning/2026-11-12_07-05_owner-calls-batch.md (default stands: D3 keeps the label English)
+- ~~**Destination-doc wording** (§f-29): Train 3's acceptance line says
+  "ring-while-closed parity"; the shipped tab is navigation focus, not push —
+  align the plan wording with what shipped.~~ →
+  done 2026-11-12 — the acceptance line now reads navigation-focus parity (wording-only diff in docs/planning/2026-11-11_15-11_ui-ux-destination.md)
 
 ### UI token/craft + Train 2/3 residue (2026-11-12, harvested from the 04-09 report §f)
 
@@ -47,9 +49,10 @@ front matter does not carry their history (one home per fact, per the rule above
       next touch of either.
 - [ ] **Table region focus ring** (§f-22): the scroll wrapper's `tabindex="0"` needs a
       focus-visible check INSIDE the container — sticky heads clip the ring.
-- [ ] **Empty-state action buttons** (§f-23, owner eyes): rows point at the composer
-      ("add one above") but carry no button — the library supports ActionText;
-      ruled out as a duplicate affordance, owner may disagree.
+- ~~**Empty-state action buttons** (§f-23, owner eyes): rows point at the composer
+  ("add one above") but carry no button — the library supports ActionText;
+  ruled out as a duplicate affordance, owner may disagree.~~ →
+  done 2026-11-12 — batched as Q2 of docs/planning/2026-11-12_07-05_owner-calls-batch.md (the decline stands by default)
 - [ ] **Island state-layer mirror** (§f-25): `island/style.css` took the token
       additions but not the hover state-layer sweep — deliberate (island buttons
       use :active scale) or a gap? Decide, write the ruling.
@@ -621,6 +624,21 @@ swap, fax badge, 2 empty states) lives in CHANGELOG + the per-library reports �
    Filing awaits the owner's review tick (the pack's D-slot is unanswered, so the unsolicited
    banner stands and posting is not the agent's call). Evidence: docs/ci-flake-ledger.md row 42407471289.
 
+### go-appkit module candidate (2026-11-12 re-review — docs/review/libs/go-appkit.md)
+
+- [ ] **Adopt `appkit/flightrecorderhealth` (first go-appkit MODULE adoption; framework stays NO-GO)** —
+      wire `frhealth.NewTrigger(rec, WithCooldown, WithTriggerFunc(fr.OnError))` into
+      `health.New` via go-health's `WithHealthRecorder` (options.go:127 in the pinned
+      v0.10.0) where app.go already builds both the probe and the recorder: health-batch
+      failure auto-captures a trace snapshot (cooldown-hardened, non-blocking, race-safe
+      — all pinned by the module's own tests), covering wedges that never surface as a
+      traced request (the dashboard's 1s loop failing with nobody polling /healthz) and
+      adding the cooldown the un-cooled 5xx snapshot arm lacks. Both hard deps already
+      pinned (go-flightrecorder v0.2.1, go-health v0.10.0); standalone constructor — no
+      injector-doctrine conflict. Demand-gated: the first wedge incident the
+      request-trigger misses, or ride the next flight-recorder train. Evidence:
+      docs/review/libs/go-appkit.md § module table (2026-11-12).
+
 ### Fleet-libs reopen-trigger registry (2026-11-04, T25 — the ONE table)
 
 Every NO-GO/declined/keep-as-is ruling carries a written trigger in its report
@@ -628,29 +646,31 @@ Every NO-GO/declined/keep-as-is ruling carries a written trigger in its report
 sweep answers "is any trigger fired?" in one read; re-litigate a ruling ONLY when its
 trigger fires, never on a schedule.
 
-| Fires when                                                                                      | Library                | Then                                                                   |
-| ----------------------------------------------------------------------------------------------- | ---------------------- | ---------------------------------------------------------------------- |
-| metaengine grows NESTED group addressing (a per-call floor inside a per-owner group)            | go-cqrs-lite           | `trimCall` is the last hand loop; delete it for the declarative cap    |
-| usermgmt major bump, or a second identity consumer                                              | cqrs-htmx              | re-run the family audit (adminui re-check)                             |
-| `internal/domain` gains a second Go consumer                                                    | go-branded-id          | ratified modularization trigger — brands need their own module         |
-| A client-facing `Idempotency-Key` contract appears on a public API                              | go-idempotency         | re-run the adoption ruling (metaengine DedupStore vs the SDK)          |
-| A self-managed versioned blob format or event signing requirement                               | go-codec               | `DeterministicCodec` is the entry point                                |
-| A drop-folder/intake feature, or live-config-reload demand                                      | go-filewatcher         | re-run the NO-GO ruling                                                |
-| A `Type=notify` conversion, or a unix-socket machine surface                                    | go-daemon, go-appkit   | re-run both rulings together                                           |
-| A CLI subcommand outputs structured data                                                        | go-output              | adopt the renderer                                                     |
-| A non-systemd target, credential-compliance rule, mutable secrets                               | go-credentials-store   | re-run the NO-GO ruling                                                |
-| A new file-persisting feature (export, backup, rotation)                                        | go-atomic-write        | ride `WriteWithPerm`/`WriteIfChanged`                                  |
-| A latency investigation the histogram aggregates cannot localize                                | httputil/server_timing | instrument 2–3 named spans behind the same env gate                    |
-| User-visible missed-update reports on flaky mobile links                                        | go-sse                 | ssetest-pinned Last-Event-ID replay                                    |
-| A second retry-shaped loop (e.g. ASR uploads)                                                   | go-retry               | `retry.Do` is the natural home                                         |
-| A dashboard deployment without the Caddy front                                                  | go-health-dashboard    | re-decide the fence (see the 2026-11-04 fence memo)                    |
-| A read model crossing ~10k rows/owner, or a second engine                                       | go-cqrs-lite           | keyset pagination / failover audit                                     |
-| A second readiness consumer or multi-instance deployment                                        | go-health              | re-run the probe-topology ruling                                       |
-| A templ-components release with a new status/toast component; the subtitle/✓-chip taste rulings | templ-components       | owner-taste re-litigation, not adoption gaps                           |
-| The dashboard library swaps its embedded SDK version                                            | go-datastar            | re-verify the /health CSP scope                                        |
-| A product surface wants server-pushed reactive state (live Reports-shaped, not fragment morphs) | go-datastar            | re-run the client-side NO-GO (2026-11-07 deep-dive, posture 78/100)    |
-| The library ships a parse-with-rules hook or a new linter rule                                  | go-branded-id          | migrate the invariant INTO the seam / adopt the rule                   |
-| A second binary in this repo, or an interactive operator CLI beyond the three ritual one-shots  | cmdguard               | re-run as an adoption audit (docs/review/libs/cmdguard.md, 2026-11-11) |
+| Fires when                                                                                           | Library                | Then                                                                                                                   |
+| ---------------------------------------------------------------------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| metaengine grows NESTED group addressing (a per-call floor inside a per-owner group)                 | go-cqrs-lite           | `trimCall` is the last hand loop; delete it for the declarative cap                                                    |
+| usermgmt major bump, or a second identity consumer                                                   | cqrs-htmx              | re-run the family audit (adminui re-check)                                                                             |
+| `internal/domain` gains a second Go consumer                                                         | go-branded-id          | ratified modularization trigger — brands need their own module                                                         |
+| A client-facing `Idempotency-Key` contract appears on a public API                                   | go-idempotency         | re-run the adoption ruling (metaengine DedupStore vs the SDK)                                                          |
+| A self-managed versioned blob format or event signing requirement                                    | go-codec               | `DeterministicCodec` is the entry point                                                                                |
+| A drop-folder/intake feature, or live-config-reload demand                                           | go-filewatcher         | re-run the NO-GO ruling                                                                                                |
+| A `Type=notify` conversion, or a unix-socket machine surface                                         | go-daemon, go-appkit   | re-run both rulings together                                                                                           |
+| An appkit tag beyond v0.12.0 ships a new battery/module (httpx B6/B8, preset legs, W4 worker/polite) | go-appkit              | sweep the module table in docs/review/libs/go-appkit.md — the 2026-11-12 re-review proved the inventory drifts in days |
+| A wedge incident the request-triggered trace snapshots miss (loop failure with no traced request)    | go-appkit              | adopt `flightrecorderhealth` (the module-level candidate row above)                                                    |
+| A CLI subcommand outputs structured data                                                             | go-output              | adopt the renderer                                                                                                     |
+| A non-systemd target, credential-compliance rule, mutable secrets                                    | go-credentials-store   | re-run the NO-GO ruling                                                                                                |
+| A new file-persisting feature (export, backup, rotation)                                             | go-atomic-write        | ride `WriteWithPerm`/`WriteIfChanged`                                                                                  |
+| A latency investigation the histogram aggregates cannot localize                                     | httputil/server_timing | instrument 2–3 named spans behind the same env gate                                                                    |
+| User-visible missed-update reports on flaky mobile links                                             | go-sse                 | ssetest-pinned Last-Event-ID replay                                                                                    |
+| A second retry-shaped loop (e.g. ASR uploads)                                                        | go-retry               | `retry.Do` is the natural home                                                                                         |
+| A dashboard deployment without the Caddy front                                                       | go-health-dashboard    | re-decide the fence (see the 2026-11-04 fence memo)                                                                    |
+| A read model crossing ~10k rows/owner, or a second engine                                            | go-cqrs-lite           | keyset pagination / failover audit                                                                                     |
+| A second readiness consumer or multi-instance deployment                                             | go-health              | re-run the probe-topology ruling                                                                                       |
+| A templ-components release with a new status/toast component; the subtitle/✓-chip taste rulings      | templ-components       | owner-taste re-litigation, not adoption gaps                                                                           |
+| The dashboard library swaps its embedded SDK version                                                 | go-datastar            | re-verify the /health CSP scope                                                                                        |
+| A product surface wants server-pushed reactive state (live Reports-shaped, not fragment morphs)      | go-datastar            | re-run the client-side NO-GO (2026-11-07 deep-dive, posture 78/100)                                                    |
+| The library ships a parse-with-rules hook or a new linter rule                                       | go-branded-id          | migrate the invariant INTO the seam / adopt the rule                                                                   |
+| A second binary in this repo, or an interactive operator CLI beyond the three ritual one-shots       | cmdguard               | re-run as an adoption audit (docs/review/libs/cmdguard.md, 2026-11-11)                                                 |
 
 ### Fax enablement (owner + carrier action, 2026-10-30)
 
