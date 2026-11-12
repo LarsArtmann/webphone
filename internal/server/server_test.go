@@ -91,19 +91,6 @@ func newTestServerWithPhoneAPI(t testing.TB, phoneAPIURL string, mutate ...func(
 	return newTestServerWithConfig(t, phoneAPIURL, nil, mutate...)
 }
 
-// newTestEngine opens a throwaway read-model engine (the engine-side
-// read models live in readmodels.db since the T07/T09 swaps) and
-// registers its shutdown.
-func newTestEngine(t testing.TB) *readmodels.Engine {
-	t.Helper()
-	engine, err := readmodels.Open(t.TempDir())
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = engine.Shutdown() })
-	return engine
-}
-
 // newCoreSystem boots the throwaway journal system (every gate decl
 // registered) — the store-failure and direct-backend tests' helper.
 func newCoreSystem(t testing.TB) *system.System {

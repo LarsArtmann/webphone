@@ -88,6 +88,49 @@ func TestServicesNeverImportServerOrWeb(t *testing.T) {
 	}
 }
 
+// TestReadmodelsStaysGatesAndViewsOnly pins the storage-ladder end
+// state (2026-11-11 closeout): internal/readmodels is typed contracts
+// only — gate interfaces, projection row shapes, and the shared query
+// decls the journal backends consume. NOTHING there may open a
+// database again: no sqliteengine import, no Engine constructor, no
+// `func Open(`. The storage lives in internal/cqrs (ONE journal world
+// on system.db); a second storage engine in readmodels would split the
+// journal brain the SUPERB plan spent five trains closing.
+func TestReadmodelsStaysGatesAndViewsOnly(t *testing.T) {
+	const module = "github.com/larsartmann/webphone/internal/"
+	for _, pkg := range goListInternal(t) {
+		if pkg.ImportPath != module+"readmodels" {
+			continue
+		}
+		for _, imp := range pkg.Imports {
+			if strings.Contains(imp, "metaengine/sqliteengine") {
+				t.Errorf("internal/readmodels imports %s — the engine storage retired; readmodels stays contracts-only", imp)
+			}
+		}
+	}
+	_, thisFile, _, ok := runtime.Caller(0)
+	if !ok {
+		t.Fatal("cannot locate the module root")
+	}
+	dir := filepath.Join(filepath.Dir(thisFile), "..", "readmodels")
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		t.Fatalf("read readmodels dir: %v", err)
+	}
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".go") {
+			continue
+		}
+		src, err := os.ReadFile(filepath.Join(dir, entry.Name()))
+		if err != nil {
+			t.Fatalf("read %s: %v", entry.Name(), err)
+		}
+		if strings.Contains(string(src), "func Open(") {
+			t.Errorf("internal/readmodels/%s declares func Open( — the engine storage retired; readmodels stays contracts-only", entry.Name())
+		}
+	}
+}
+
 // TestMustInvokeStaysInTheCompositionRoot pins the DO-1 rule: samber/do
 // (the import and any MustInvoke*/Invoke* resolution) appears ONLY
 // inside internal/app — service packages stay framework-free and

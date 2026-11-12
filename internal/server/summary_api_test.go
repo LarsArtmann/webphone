@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/push"
 	"github.com/larsartmann/webphone/internal/readmodels"
@@ -225,13 +226,12 @@ func waitForDrafts(t *testing.T, transport *recordingTransport, n int) []push.Dr
 }
 
 // summaryServerWithPush wires the full summarize chain plus a push
-// seam over the engine's device registry; the registry handle comes
+// seam over the journal device registry; the registry handle comes
 // back so a test can register devices directly.
-func summaryServerWithPush(t *testing.T, transport push.Sender) (*testServer, *client, *readmodels.PushDevices) {
+func summaryServerWithPush(t *testing.T, transport push.Sender) (*testServer, *client, readmodels.PushDeviceGate) {
 	t.Helper()
 	stub := newStubReviewAPI(t)
-	engine := newTestEngine(t)
-	devices := engine.PushDevices()
+	devices := cqrs.NewPushDevices(newCoreSystem(t))
 	fanout := push.NewFanout(map[string]push.Sender{transport.Describe(): transport}, summaryFanRegistry{devices})
 	provider, _ := fakeProvider(t, http.StatusOK, "hi")
 	server := newTestServerWithPhoneAPI(t, "", func(deps *Deps) {
@@ -243,9 +243,9 @@ func summaryServerWithPush(t *testing.T, transport push.Sender) (*testServer, *c
 	return server, clientFor(t, server), devices
 }
 
-// summaryFanRegistry adapts the engine-backed device store to the
+// summaryFanRegistry adapts the journal-backed device store to the
 // fanout's prune seam (test-side twin of app's pushRegistryAdapter).
-type summaryFanRegistry struct{ devices *readmodels.PushDevices }
+type summaryFanRegistry struct{ devices readmodels.PushDeviceGate }
 
 func (r summaryFanRegistry) List(ctx context.Context, owner domain.Extension) ([]push.Device, error) {
 	views, err := r.devices.List(ctx, owner)

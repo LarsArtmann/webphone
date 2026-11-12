@@ -10,6 +10,12 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
+// humanScaleVolume is the Volume hint every query declaration carries:
+// per-owner row counts stay in the hundreds/thousands (one human's
+// lifetime of threads/faxes), never the millions system tuning
+// assumes.
+const humanScaleVolume = 1
+
 // FaxView is the fax projection row both backends fold into (the
 // journal-backed system.db projection reads/writes this exact shape;
 // Unix-nanos timestamps keep list ordering EXACTLY numeric — the

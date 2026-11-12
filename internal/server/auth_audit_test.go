@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
@@ -114,13 +115,13 @@ func TestAgentAuditNamesTheHumanActor(t *testing.T) {
 // the line alone (byte-parity for test compositions); a foreign
 // extension shape never reaches the store but still logs.
 func TestAgentAuditDualWritesTheDurableRow(t *testing.T) {
-	engine := newTestEngine(t)
-	h := &handlers{deps: Deps{AgentAudit: engine.AgentAudit()}}
+	audit := cqrs.NewAgentAudit(newCoreSystem(t))
+	h := &handlers{deps: Deps{AgentAudit: audit}}
 
 	h.agentAudit("approve", "lars@example.com", "1000", "d-9", "ok")
 	h.agentAudit("mode", "", "1000", "", "pinned")
 
-	rows, err := engine.AgentAudit().Recent(context.Background(), domain.MustParseExtension("1000"), 10)
+	rows, err := audit.Recent(context.Background(), domain.MustParseExtension("1000"), 10)
 	if err != nil {
 		t.Fatalf("recent: %v", err)
 	}
@@ -141,7 +142,7 @@ func TestAgentAuditDualWritesTheDurableRow(t *testing.T) {
 	// Undialable extension shape: logged, never stored (letters alone
 	// ARE dialable — they would store under their sanitized owner).
 	h.agentAudit("approve", "", "---", "d-2", "ok")
-	rows, err = engine.AgentAudit().Recent(context.Background(), domain.MustParseExtension("1000"), 10)
+	rows, err = audit.Recent(context.Background(), domain.MustParseExtension("1000"), 10)
 	if err != nil || len(rows) != 2 {
 		t.Errorf("foreign shape must not store (rows=%d err=%v)", len(rows), err)
 	}

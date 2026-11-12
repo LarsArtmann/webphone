@@ -160,7 +160,7 @@ func NewThreadsSystem(ctx context.Context, dsn string) (*system.System, error) {
 // every gate over it (a second system would split-brain pushes away
 // from writes).
 func NewCoreSystem(ctx context.Context, dsn string) (*system.System, error) {
-	decl := Domain(ThreadsDomainDecl(), FaxesDomainDecl(), TranscriptsDomainDecl(), NotesDomainDecl(), ReviewsDomainDecl(), ContactsDomainDecl(), SnippetsDomainDecl(), DialDomainDecl())
+	decl := Domain(ThreadsDomainDecl(), FaxesDomainDecl(), TranscriptsDomainDecl(), NotesDomainDecl(), ReviewsDomainDecl(), ContactsDomainDecl(), SnippetsDomainDecl(), DialDomainDecl(), PushDevicesDomainDecl(), AgentAuditDomainDecl())
 	decl.ProjectionHostOptions = append(decl.ProjectionHostOptions,
 		projectionhost.WithBackoff(time.Millisecond, 5*time.Millisecond))
 	sys, err := system.New(ctx, decl, system.DeploymentConfig{

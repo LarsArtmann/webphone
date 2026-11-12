@@ -4,11 +4,17 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"strings"
 	"sync"
 	"testing"
 	"time"
 
+	_ "modernc.org/sqlite" // registers the "sqlite" driver for the journal boot
+
+	"github.com/larsartmann/go-cqrs-lite/system/v4"
+
+	"github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/push"
 	"github.com/larsartmann/webphone/internal/readmodels"
@@ -50,10 +56,10 @@ func (f *fakeTransport) snapshot() []push.Ring {
 	return append([]push.Ring(nil), f.rings...)
 }
 
-// fanRegistry adapts the engine-backed device store to the fanout's
+// fanRegistry adapts the journal-backed device store to the fanout's
 // prune seam (the same conversion the composition root performs in
 // prod; push.DeviceRegistry's List flattens the view).
-type fanRegistry struct{ devices *readmodels.PushDevices }
+type fanRegistry struct{ devices readmodels.PushDeviceGate }
 
 func (r fanRegistry) List(ctx context.Context, owner domain.Extension) ([]push.Device, error) {
 	views, err := r.devices.List(ctx, owner)
@@ -71,14 +77,22 @@ func (r fanRegistry) Remove(ctx context.Context, owner domain.Extension, deviceI
 	return r.devices.Remove(ctx, owner, deviceID)
 }
 
-func newRingHandlers(t *testing.T, transport *fakeTransport) (*Handlers, *readmodels.PushDevices) {
+// newRingCoreSystem boots the throwaway journal system (every gate
+// decl registered) — hooks cannot reuse package server's newCoreSystem
+// (different package; server imports hooks, never the reverse).
+func newRingCoreSystem(t *testing.T) *system.System {
 	t.Helper()
-	engine, err := readmodels.Open(t.TempDir())
+	sys, err := cqrs.NewCoreSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = engine.Shutdown() })
-	devices := engine.PushDevices()
+	t.Cleanup(func() { _ = sys.Close() })
+	return sys
+}
+
+func newRingHandlers(t *testing.T, transport *fakeTransport) (*Handlers, readmodels.PushDeviceGate) {
+	t.Helper()
+	devices := cqrs.NewPushDevices(newRingCoreSystem(t))
 	fanout := push.NewFanout(map[string]push.Sender{push.TransportNtfy: transport}, fanRegistry{devices: devices})
 	handlers := New(Deps{
 		Secret: "hook-secret",

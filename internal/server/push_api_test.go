@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/push"
 	"github.com/larsartmann/webphone/internal/readmodels"
 )
@@ -23,14 +24,14 @@ func (pushStubTransport) SendDraft(context.Context, string, push.Draft) error { 
 
 func newPushServer(t *testing.T) *testServer {
 	t.Helper()
-	engine := newTestEngine(t)
+	devices := cqrs.NewPushDevices(newCoreSystem(t))
 	fanout := push.NewFanout(map[string]push.Sender{
 		push.TransportNtfy: pushStubTransport{},
 		push.TransportFcm:  pushStubTransport{},
 	}, nil)
 	return newTestServerWithPhoneAPI(t, "", func(d *Deps) {
 		d.Push = fanout
-		d.PushDevices = engine.PushDevices()
+		d.PushDevices = devices
 	})
 }
 
