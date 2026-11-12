@@ -22,7 +22,7 @@ Session scope: one instruction, "review ALL open GitHub issues and fix them". 15
 **Code: two commits, both verified on origin/main.**
 
 - `f92af69a` test: pin the SSO begin hop's no-referrer and no-store headers (#21). The redirect test had pinned status, Location and cookies but not the two headers the issue names. Test-only, so CHANGELOG-silent per convention.
-- `9ea90d06` island: post-call note editor on the ended card (#11). `noteRow` in calls.js renders a draft box over the SAME slot History renders (`PUT /api/calls/{id}/note`), appended unconditionally in morphToEndedCall so a call that never connected gets the identical editor (the dialer's PR #54 edge case). 204 collapses to a saved line; the 409 note-list-full and any failure keep the draft editable and announce. En + de i18n keys, island/style.css block, 3 new tests in `calls-note.test.mjs`, CHANGELOG Added entry, AGENTS.md post-call clause.
+- `9ea90d06` island: post-call note editor on the ended card (#11). `noteRow` in calls.js renders a draft box over the SAME slot History renders (`PUT /api/calls/{id}/note`), appended unconditionally in the ended-card settle path (named `settleEndedCall` since the 2026-11-08 error-surface train; this commit's site was `morphToEndedCall`) so a call that never connected gets the identical editor (the dialer's PR #54 edge case). 204 collapses to a saved line; the 409 note-list-full and any failure keep the draft editable and announce. En + de i18n keys, island/style.css block, 3 new tests in `calls-note.test.mjs`, CHANGELOG Added entry, AGENTS.md post-call clause.
 
 **Verification performed.**
 
@@ -52,7 +52,7 @@ Session scope: one instruction, "review ALL open GitHub issues and fix them". 15
 - #12's three trains (CDR ingestion readmodel, aggregation, Reports surface): scoped, zero code.
 - #9's stack-side provisioning: out of this repo.
 - Post-call card "beginning a new call replaces it" acceptance: closed #11 citing it as pre-existing behavior WITHOUT writing an explicit island test asserting the replacement. Unverified by me.
-- Browser-level (visual) verification of the note editor: island tests + tsc cover logic; no browser pass, no ui-capture shot (the ended card is not among the 24 surfaces).
+- Browser-level (visual) verification of the note editor: island tests + tsc cover logic; no browser pass, no ui-capture shot (the ended card was not among the surfaces the harness shot at report time — the matrix has grown since and follows the deployment).
 - Baseline/dedupe verdict on the matrix/signal receiver clone group the chatloop train introduced: their lane, their verdict.
 
 ## d) TOTALLY FUCKED UP
@@ -110,7 +110,7 @@ Ordered roughly by what this session made adjacent. Items 1-8 are direct descend
 31. `installBrowserGlobals()` could return nothing (or the tests could drop the binding) so the unused-variable hint class disappears at the source.
 32. Island maxLength (4000) vs server TrimSpace-then-check: whitespace-padded notes silently save shorter; harmless, but worth one line in the note API docs if anyone hits it.
 33. Smoke: the dialgate scenario exists; a smoke probe for the note PUT (409 path especially) would extend the live-boot coverage to the new lane.
-34. The ui-capture harness shoots 24 surfaces; an ended-call surface (with the card's post-call rows) would cover the newest island state visually.
+34. The ui-capture harness shot 24 surfaces at report time; an ended-call surface (with the card's post-call rows) would cover the newest island state visually. (Snapshot claim — the matrix follows the deployment and has grown since.)
 35. Stack browser E2E: no served-markup change this session (JS-created DOM only), so no fresh E2E was owed; the next .templ change should re-run it per the runbook.
 36. dom-contract.md: if the stack E2E ever drives the note editor, the card's runtime hooks (call-note-row etc.) belong in its Notes section.
 37. CI annotation noise: ubuntu-latest migration warnings on every job; cosmetic, worth a runner-label bump when convenient.
