@@ -626,6 +626,17 @@ swap, fax badge, 2 empty states) lives in CHANGELOG + the per-library reports �
 
 ### go-appkit module candidate (2026-11-12 re-review — docs/review/libs/go-appkit.md)
 
+- [ ] **File the webphone walls UPSTREAM as appkit asks (fleet frame, owner ruling
+      2026-11-12: the walls are extraction backlog, not waiting conditions — the owner
+      owns both repos)**: (1) appkit/health per-SURFACE criticality grading (the same
+      check leg 503s a strict readiness route but WARNs the dashboard — health_crm_test.go
+      is the spec); (2) an aggregates-only metrics mode (no `route`/`method` labels — the
+      /metrics leak-test privacy line); (3) httpx success-status override (202-class
+      lanes) + per-route family→status tables. Each benefits every fleet app, and each
+      one landed upstream removes a webphone adoption wall (config's tree-shaped
+      semantics stay a permanent charter mismatch). Adoption order: simpler apps ride
+      preset first (appkit's own battery-swap recipes); webphone migrates last.
+      Evidence: docs/review/libs/go-appkit.md § the open-mind pass.
 - [ ] **Adopt `appkit/flightrecorderhealth` (first go-appkit MODULE adoption; framework stays NO-GO)** —
       wire `frhealth.NewTrigger(rec, WithCooldown, WithTriggerFunc(fr.OnError))` into
       `health.New` via go-health's `WithHealthRecorder` (options.go:127 in the pinned

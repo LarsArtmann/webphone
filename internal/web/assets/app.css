@@ -664,7 +664,13 @@ h3 {
     display: inline-flex;
   }
 
-  html.wp-phone-focus .wp-main-col {
+  /* Dialer focus hides the CONTENT region only: the nav stays — it IS the
+   * return affordance (tapping a real tab, or Phone again, leaves focus;
+   * shell.js §Train-3). Hiding .wp-main-col wholesale would hide the nav
+   * with it and strand the user in the focus state (the tap-through proof
+   * caught exactly that: state 3 could never click a tab). */
+  html.wp-phone-focus #tab-content,
+  html.wp-phone-focus #wp-tab-error {
     display: none;
   }
 }
@@ -1839,12 +1845,28 @@ a:focus-visible {
   border-radius: var(--radius);
 }
 
+/* The scroll wrapper is keyboard-focusable (tabindex="0", §f-22): the
+ * sticky heads clip an outset ring, so the ring paints INSIDE the
+ * rounded wrapper. */
+.wp-table-wrap:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -2px;
+}
+
 .wp-table {
   width: 100%;
   border-collapse: separate;
   border-spacing: 0;
 }
 
+/* Sticky-head stacking ruling (§f-35, 2026-11-12): the root context ladder
+ * is thead 1 < header 10 < snippet picker 30 < mobile island 50 < mobile
+ * nav 90 < skip links + #toasts 100 < palette 200. The wrap below is
+ * overflow-only (no z-index/transform), so the head's 1 participates in
+ * the ROOT context — a toast (fixed, 100) or the palette (200) crossing a
+ * scrolled table always paints above it, and the head can never bleed into
+ * an overlay. The one equal pair (skip link vs toasts at 100) resolves by
+ * DOM order (toasts render last) and never overlaps in practice. */
 .wp-table thead th {
   position: sticky;
   inset-block-start: 0;
@@ -1885,17 +1907,18 @@ a:focus-visible {
   box-shadow: inset 3px 0 0 var(--danger);
 }
 
-/* The day head rides the SAME class as the transcript separator, but a
- * table th must keep its table-cell display (the transcript rule makes
- * .wp-day-head a flex row — that would collapse the table row). */
-.wp-table .wp-day-head th {
+/* The CDR table's day head carries its OWN class (wp-table-day-head): the
+ * transcript separator (.wp-day-head) is a flex row, and a table th must
+ * keep its table-cell display — one class, two semantics was a split
+ * brain (§f-21); the split is the fix, not the counter-rule. */
+.wp-table-day-head th {
   display: table-cell;
   padding: 14px 12px 6px;
   text-align: start;
   white-space: nowrap;
 }
 
-.wp-table .wp-day-head .wp-day-count {
+.wp-table-day-head .wp-day-count {
   margin-inline-start: 8px;
 }
 
@@ -1916,14 +1939,14 @@ a:focus-visible {
   }
 
   .wp-table td,
-  .wp-table .wp-day-head th {
+  .wp-table-day-head th {
     display: block;
     padding: 0;
     border-bottom: none;
     box-shadow: none;
   }
 
-  .wp-table .wp-day-head th {
+  .wp-table-day-head th {
     padding: 12px 0 2px;
   }
 

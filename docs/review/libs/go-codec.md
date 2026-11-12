@@ -42,7 +42,7 @@ All commands run from the **webphone checkout root** (repo-relative paths; `git 
 
 ```console
 rg -n "go-codec" go.mod                                   # DIRECT pin v0.3.3 (test import)
-rg -rn "go-codec" --type go internal/ cmd/ | wc -l        # expect 1 (tombstone_wire_test.go only)
+rg -n "go-codec" --type go internal/ cmd/ | wc -l        # expect 1 (tombstone_wire_test.go only)
 rg -n "ForEncoding|EncodingCBOR" internal/cqrs/tombstone_wire_test.go | head -2   # the wire pin
 rg -n "go-codec" /home/lars/projects/go-cqrs-lite/metaengine/encoded.go | head -1   # the transitive consumer
 ```

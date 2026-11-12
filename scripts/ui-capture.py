@@ -701,6 +701,27 @@ def apply_hover(driver, selector: str | None, where: str) -> None:
         print(f"warn: {where}: hover {selector!r} skipped ({exc.__class__.__name__})")
 
 
+def apply_seed_class(driver, selector: str, cls: str, where: str) -> None:
+    """Add cls to the first selector match so a JS-created state (e.g. the
+    phone-tab focus class) renders in the shot without driving taps
+    (--seed-class). The class must be re-applied per shot: every navigation
+    rebuilds the DOM. A missing match is a printed warning — seeds are
+    additive evidence like hovers, not assertions."""
+    try:
+        els = driver.find_elements("css selector", selector)
+        if not els:
+            print(f"warn: {where}: seed-class {selector!r} matched nothing")
+            return
+        driver.execute_script(
+            "arguments[0].classList.add(arguments[1]);", els[0], cls
+        )
+        time.sleep(0.1)  # settle: let the state's own transition start
+    except Exception as exc:  # noqa: BLE001 - harness-grade: seeds are best-effort
+        print(
+            f"warn: {where}: seed-class {selector!r} skipped ({exc.__class__.__name__})"
+        )
+
+
 def shoot(driver, target: str, full_page: bool) -> None:
     """Save a screenshot; full_page captures the ENTIRE document via CDP
     (captureBeyondViewport), not just the window — below-the-fold layout
@@ -1063,6 +1084,38 @@ def _parse_viewport(text: str) -> tuple[int, int]:
     return int(width), int(height)
 
 
+def _parse_hover_map(pairs: list[str]) -> dict[str, str]:
+    """`--hover-map SURFACE=SELECTOR` (repeatable) -> {surface: selector}.
+    Splits on the FIRST '=' so CSS selectors may carry their own '=';
+    a value without a surface key is a SystemExit — the key is the point.
+    Duplicate surfaces: last wins."""
+    mapping: dict[str, str] = {}
+    for pair in pairs:
+        surface, sep, selector = pair.partition("=")
+        if not sep or not surface or not selector:
+            raise SystemExit(
+                f"bad --hover-map {pair!r} (want SURFACE=SELECTOR, "
+                "e.g. 'messages=.wp-thread-rowwrap')"
+            )
+        mapping[surface] = selector
+    return mapping
+
+
+def _parse_class_seeds(pairs: list[str]) -> list[tuple[str, str]]:
+    """`--seed-class SELECTOR=CLASS` (repeatable) -> [(selector, class)] in
+    given order (order matters: later seeds can compose earlier states)."""
+    seeds: list[tuple[str, str]] = []
+    for pair in pairs:
+        selector, sep, cls = pair.partition("=")
+        if not sep or not selector or not cls:
+            raise SystemExit(
+                f"bad --seed-class {pair!r} (want SELECTOR=CLASS, "
+                "e.g. 'html=wp-phone-focus')"
+            )
+        seeds.append((selector, cls))
+    return seeds
+
+
 def _sanitize_dirname(base: str) -> str:
     return re.sub(
         r"[^A-Za-z0-9._-]+", "_", urllib.parse.urlsplit(base).netloc or "local"
@@ -1208,6 +1261,54 @@ def _apply_host_maps(mappings: list[str] | None) -> None:
     socket.getaddrinfo = patched  # type: ignore[assignment]
 
 
+def _make_driver(
+    insecure: bool = False,
+    host_maps: list[str] | None = None,
+    window: str = "1280x900",
+):
+    """One chromium options home for capture() and tap_through(): the NIX
+    chromium/chromedriver (Selenium Manager's downloaded driver is a
+    generic binary that cannot exec on nix; both come from the documented
+    nix shell, PATH discovery as fallback), fake media flags for the call
+    surfaces, and the TLS-smoke/host-map knobs."""
+    from selenium import webdriver
+    from selenium.webdriver.chrome.options import Options
+    from selenium.webdriver.chrome.service import Service
+
+    options = Options()
+    chrome = shutil.which("chromium")
+    if chrome:
+        options.binary_location = chrome
+    options.add_argument("--headless=new")
+    options.add_argument("--no-sandbox")
+    options.add_argument("--disable-dev-shm-usage")
+    options.add_argument("--use-fake-device-for-media-stream")
+    options.add_argument("--use-fake-ui-for-media-stream")
+    options.add_argument(f"--window-size={window}")
+    if insecure:
+        # The LOCAL TLS-front smoke only (self-signed cert): the W3C
+        # capability is what chromedriver honors — the switch form is
+        # silently ignored.
+        options.set_capability("acceptInsecureCerts", True)
+    for mapping in host_maps or []:
+        host, _, ip = mapping.partition("=")
+        if host and ip:
+            options.add_argument(f"--host-resolver-rules=MAP {host} {ip}")
+    driver_path = shutil.which("chromedriver")
+    service = Service(executable_path=driver_path) if driver_path else None
+    return webdriver.Chrome(service=service, options=options)
+
+
+def _inject_session(d, session: str, lang: str | None = None) -> None:
+    """The session cookie, injected (see seed()/login_remote()): the
+    server-rendered tabs ride it directly. The wp-lang cookie drives the
+    tab language (the same negotiation the island's switch writes) — the
+    DE stacked-table lane and localized captures ride it."""
+    d.add_cookie({"name": "webphone_session", "value": session})
+    if lang:
+        d.add_cookie({"name": "wp-lang", "value": lang})
+
+
 def capture(
     base: str,
     out_dir: str,
@@ -1222,6 +1323,9 @@ def capture(
     insecure: bool = False,
     host_maps: list[str] | None = None,
     hover: str | None = None,
+    hover_map: list[str] | None = None,
+    class_seeds: list[str] | None = None,
+    lang: str | None = None,
 ) -> list[dict[str, str]]:
     """Drive headless chromium through every (surface, theme, viewport)
     cell and screenshot it; returns the shot LEDGER (key, file, url per
@@ -1235,41 +1339,13 @@ def capture(
     """
     # Selenium lives only in the capture env (see the AGENTS run recipe
     # and mypy.ini) — never in the lint shell.
-    from selenium import webdriver
     from selenium.common.exceptions import WebDriverException
-    from selenium.webdriver.chrome.options import Options
     from selenium.webdriver.support.ui import WebDriverWait
 
     viewports = viewports or [(1280, 900)]
-    options = Options()
-    # The NIX chromium/chromedriver (Selenium Manager's downloaded driver
-    # is a generic binary that cannot exec on nix). Both come from the
-    # documented nix shell; fall back to PATH discovery.
-    chrome = shutil.which("chromium")
-    if chrome:
-        options.binary_location = chrome
-    options.add_argument("--headless=new")
-    options.add_argument("--no-sandbox")
-    options.add_argument("--disable-dev-shm-usage")
-    options.add_argument("--use-fake-device-for-media-stream")
-    options.add_argument("--use-fake-ui-for-media-stream")
-    options.add_argument("--window-size=1280,900")
-    if insecure:
-        # The LOCAL TLS-front smoke only (self-signed cert): the W3C
-        # capability is what chromedriver honors — the switch form is
-        # silently ignored.
-        options.set_capability("acceptInsecureCerts", True)
-    for mapping in host_maps or []:
-        host, _, ip = mapping.partition("=")
-        if host and ip:
-            options.add_argument(f"--host-resolver-rules=MAP {host} {ip}")
-    driver_path = shutil.which("chromedriver")
-    from selenium.webdriver.chrome.service import Service
-
-    driver_path = shutil.which("chromedriver")
-
-    service = Service(executable_path=driver_path) if driver_path else None
-    driver = webdriver.Chrome(service=service, options=options)
+    driver = _make_driver(insecure=insecure, host_maps=host_maps)
+    hover_by_surface = _parse_hover_map(hover_map) if hover_map else {}
+    seeds = _parse_class_seeds(class_seeds) if class_seeds else []
     shots = 0
     ledger: list[dict[str, str]] = []
     anonymous = (
@@ -1326,7 +1402,7 @@ def capture(
             # server-rendered tabs ride it directly. Anonymous runs inject
             # nothing (selenium rejects an empty cookie value).
             if session:
-                driver.add_cookie({"name": "webphone_session", "value": session})
+                _inject_session(driver, session, lang)
             for theme in ("light", "dark"):
                 # Theme pinned via the persisted key (theme-preload.js applies
                 # it pre-paint — no cycling the 3-state toggle from "auto").
@@ -1394,7 +1470,7 @@ def capture(
                     print(f"captured {target}")
                     shots += 1
                 if session:
-                    driver.add_cookie({"name": "webphone_session", "value": session})
+                    _inject_session(driver, session, lang)
                 for name, path in surfaces:
                     if only is not None and name not in only:
                         continue
@@ -1460,7 +1536,13 @@ def capture(
                             else:
                                 raise AssertionError(message + "; aborting")
                     target = _target(name, theme, vp)
-                    apply_hover(driver, hover, name)
+                    for seed_selector, seed_cls in seeds:
+                        apply_seed_class(driver, seed_selector, seed_cls, name)
+                    apply_hover(
+                        driver,
+                        hover_by_surface.get(name, hover),
+                        name,
+                    )
                     shoot(driver, target, full_page)
                     if driver.find_elements("css selector", RINGING_SELECTOR):
                         print(
@@ -1632,6 +1714,107 @@ def check_thread_layout(driver, base: str, thread_path: str, out_dir: str) -> No
     print("layout: PASS (collapse, persistence, split threshold)")
 
 
+def tap_through(
+    base: str,
+    out_dir: str,
+    session: str,
+    viewport: tuple[int, int],
+    full_page: bool,
+    insecure: bool = False,
+    host_maps: list[str] | None = None,
+    lang: str | None = None,
+) -> int:
+    """Train-3 tap-through proof: tap Phone -> the island goes full-screen
+    (wp-phone-focus on <html>, the bottom-bar entry aria-pressed) -> a real
+    tab returns. Every state is ASSERTED in the DOM before its shot; a
+    failed assertion aborts the run non-zero — a flow that cannot be
+    re-asserted did not happen, and a shot of it would prove a lie."""
+    from selenium.webdriver.support.ui import WebDriverWait
+
+    driver = _make_driver(
+        insecure=insecure,
+        host_maps=host_maps,
+        window=f"{viewport[0]}x{viewport[1]}",
+    )
+    problems: list[str] = []
+
+    def expect(desc: str, ok: bool) -> None:
+        print(f"  {'ok  ' if ok else 'FAIL'} {desc}")
+        if not ok:
+            problems.append(desc)
+
+    def shoot_state(name: str) -> None:
+        shoot(driver, os.path.join(out_dir, f"tapthrough-{name}.png"), full_page)
+
+    try:
+        driver.get(base + "/")
+        _inject_session(driver, session, lang)
+        driver.get(base + "/")
+        WebDriverWait(driver, 15).until(
+            lambda d: d.find_elements("css selector", ".wp-nav-link[data-tab]")
+        )
+
+        # State 1 — a real tab is active (the seeded session lands on /messages).
+        expect(
+            "state 1: a real tab carries wp-active",
+            bool(
+                driver.find_elements(
+                    "css selector", ".wp-nav-link[data-tab].wp-active"
+                )
+            ),
+        )
+        shoot_state("1-tab")
+
+        # State 2 — tap Phone: the focus class lands on <html>, the entry
+        # presses, the real tabs hand over their active class.
+        driver.find_element("css selector", ".wp-nav-phone").click()
+        WebDriverWait(driver, 8).until(
+            lambda d: d.execute_script(
+                "return document.documentElement"
+                ".classList.contains('wp-phone-focus')"
+            )
+        )
+        expect(
+            "state 2: html.wp-phone-focus and Phone aria-pressed",
+            driver.find_element("css selector", ".wp-nav-phone").get_attribute(
+                "aria-pressed"
+            )
+            == "true",
+        )
+        shoot_state("2-phone-focus")
+
+        # State 3 — tap a real tab: focus leaves AND the tab re-activates
+        # (the nav fragment re-render carries wp-active; wait for BOTH so a
+        # half-settled swap cannot pass as the returned state).
+        driver.find_element(
+            "css selector", '.wp-nav-link[data-tab="messages"]'
+        ).click()
+        WebDriverWait(driver, 8).until(
+            lambda d: (
+                not d.execute_script(
+                    "return document.documentElement"
+                    ".classList.contains('wp-phone-focus')"
+                )
+                and d.find_elements(
+                    "css selector",
+                    '.wp-nav-link[data-tab="messages"].wp-active',
+                )
+            )
+        )
+        expect("state 3: focus gone, messages re-activated", True)
+        shoot_state("3-returned")
+
+        if problems:
+            print(
+                f"tap-through: {len(problems)} FAILURE(S): {'; '.join(problems)}"
+            )
+            return 1
+        print("tap-through: 3 states captured")
+        return 0
+    finally:
+        driver.quit()
+
+
 def discard_empty_run(out_dir: str) -> None:
     """A crashed capture must not leave an EMPTY run dir in the history —
     the next run's compare would silently treat the empty dir as its
@@ -1681,6 +1864,30 @@ def self_test() -> int:
         check("viewport junk rejected", False, "no SystemExit")
     except SystemExit:
         check("viewport junk rejected", True)
+    check(
+        "hover map parse",
+        _parse_hover_map(["messages=.a", "phone=#b c"])
+        == {"messages": ".a", "phone": "#b c"},
+    )
+    check(
+        "hover map last wins",
+        _parse_hover_map(["a=.x", "a=.y"]) == {"a": ".y"},
+    )
+    try:
+        _parse_hover_map(["nosep"])
+        check("hover map junk rejected", False, "no SystemExit")
+    except SystemExit:
+        check("hover map junk rejected", True)
+    check(
+        "class seed parse",
+        _parse_class_seeds(["html=wp-phone-focus", ".island=island-x"])
+        == [("html", "wp-phone-focus"), (".island", "island-x")],
+    )
+    try:
+        _parse_class_seeds(["noclass"])
+        check("class seed junk rejected", False, "no SystemExit")
+    except SystemExit:
+        check("class seed junk rejected", True)
     check(
         "sanitize host",
         _sanitize_dirname("https://pbx.artmann.tech") == "pbx.artmann.tech",
@@ -1896,6 +2103,41 @@ def main() -> int:
         "match skip the hover silently",
     )
     parser.add_argument(
+        "--hover-map",
+        action="append",
+        default=None,
+        metavar="SURFACE=SELECTOR",
+        help="per-surface hover override (repeatable, wins over --hover "
+        "for that surface only; e.g. --hover-map messages=.wp-thread-rowwrap "
+        "--hover-map history=.wp-day-head)",
+    )
+    parser.add_argument(
+        "--seed-class",
+        action="append",
+        default=None,
+        metavar="SELECTOR=CLASS",
+        help="add a class to the first selector match before every shot "
+        "(repeatable, re-applied per shot because navigation rebuilds the "
+        "DOM; e.g. --seed-class html=wp-phone-focus seeds the dialer-focus "
+        "layout without taps)",
+    )
+    parser.add_argument(
+        "--tap-through",
+        action="store_true",
+        help="run ONLY the Train-3 tap-through proof (local boot + fixture): "
+        "tap Phone -> island full-screen -> a real tab returns, three "
+        "DOM-asserted shots (tapthrough-*.png); defaults to 390x844 unless "
+        "--viewport is given; non-zero exit on any failed assertion",
+    )
+    parser.add_argument(
+        "--lang",
+        choices=("de", "en"),
+        default=None,
+        help="inject the wp-lang cookie so the tabs render in that language "
+        "(e.g. --lang de exercises the German stacked-table lane); the "
+        "default keeps the server's own negotiation",
+    )
+    parser.add_argument(
         "--viewport-only",
         action="store_true",
         help="capture just the window instead of the full page height",
@@ -1989,6 +2231,8 @@ def main() -> int:
     viewports = (
         [_parse_viewport(v) for v in args.viewport] if args.viewport else [(1280, 900)]
     )
+    if args.tap_through and not args.viewport:
+        viewports = [(390, 844)]
     remote = args.base_url is not None
     base = (args.base_url or f"http://127.0.0.1:{args.port}").rstrip("/")
     only = set(args.surface) if args.surface else None
@@ -2095,6 +2339,9 @@ def main() -> int:
                 insecure=args.insecure,
                 host_maps=args.host_map,
                 hover=args.hover,
+                hover_map=args.hover_map,
+                class_seeds=args.seed_class,
+                lang=args.lang,
             )
         except Exception:
             if args.track:
@@ -2226,6 +2473,17 @@ def main() -> int:
                 print("  anonymous: " + ", ".join(n for n, _ in anonymous))
                 print("  session:   " + ", ".join(n for n, _ in surfaces))
                 return 0
+            if args.tap_through:
+                return tap_through(
+                    base,
+                    out_dir,
+                    session,
+                    viewports[0],
+                    full_page,
+                    insecure=args.insecure,
+                    host_maps=args.host_map,
+                    lang=args.lang,
+                )
             try:
                 ledger = capture(
                     base,
@@ -2240,6 +2498,9 @@ def main() -> int:
                     insecure=args.insecure,
                     host_maps=args.host_map,
                     hover=args.hover,
+                    hover_map=args.hover_map,
+                    class_seeds=args.seed_class,
+                    lang=args.lang,
                 )
             except Exception:
                 if args.track:

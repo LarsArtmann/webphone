@@ -138,7 +138,7 @@ templ HistoryPanel(props HistoryPanelProps) {
 				for _, group := range groupCDRsByDay(props.Entries) {
 					<tbody>
 						if group.Key != "" {
-							<tr class="wp-day-head">
+							<tr class="wp-table-day-head">
 								<th colspan="5" scope="colgroup">
 									<span>{ dayHeadLabel(props.Lang, group.Day) }</span>
 									<span class="wp-day-count">· { fmtInt(len(group.Rows)) }</span>
