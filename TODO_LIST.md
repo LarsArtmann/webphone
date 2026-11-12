@@ -323,6 +323,27 @@ New open items from the legs session, not homed elsewhere yet.
       registry regen'd (10 `readmodels.push_*`/`agent_audit_*` codes
       out); art-dupl 0 new (baseline holds 117); full suite + race
       green.
+- **Storage-ladder §5 DROP migration: owner date + precondition proof**
+      (F35, the deepening plan's T11). The frozen families
+      (threads/messages/attachments/fax_jobs/contacts/snippets/call_transcripts)
+      are reader-less in production (the legacy readers are test-only
+      since v2.12.0; the dead `*store.Messages` injector registration
+      deleted 2026-11-12); the retention sweep empties them at
+      `retention_days`. The precondition is provable per deployment with
+      ONE sqlite3 query against `webphone.db`:
+      `SELECT 'threads',COUNT(*) FROM threads UNION ALL SELECT
+      'messages',COUNT(*) FROM messages UNION ALL SELECT 'attachments',
+      COUNT(*) FROM attachments UNION ALL SELECT 'fax_jobs',COUNT(*) FROM
+      fax_jobs UNION ALL SELECT 'contacts',COUNT(*) FROM contacts UNION
+      ALL SELECT 'snippets',COUNT(*) FROM snippets UNION ALL SELECT
+      'call_transcripts',COUNT(*) FROM call_transcripts;` — all zeros ⇒
+      §5 is safe. **Owner proposal: schedule the DROP migration for the
+      first 2.15.x maintenance window after 2027-01-01** (gives every
+      deployment ≥30 days of default-retention sweep time past the
+      2026-11/12 releases). app_flags is NOT inert — the matrix/signal
+      sync cursors live there (doc corrected 2026-11-12); their move to
+      system.db (or their stated home) is §5's own precondition, listed
+      in the retirement doc now.
 - [x] **fleet-libs `go-cqrs-lite.md` re-score (B159) + ROADMAP ES
       annotation (B160)** — the A46 leftovers: SUPERB made webphone the
       library's deepest consumer (threads/faxes aggregates, system
