@@ -113,10 +113,20 @@ test("a timed-out re-INVITE keeps the settled state and names the verdict", asyn
   await toggle;
   await settle();
 
-  assert.equal(entry.dom.dataset.state, "established", "the un-held truth restored (the timed-out toggle was a HOLD)");
+  assert.equal(
+    entry.dom.dataset.state,
+    "established",
+    "the un-held truth restored (the timed-out toggle was a HOLD)",
+  );
   const toasts = [...doc.getElementById("toasts").children].map((el) => el.textContent);
-  assert.ok(toasts.some((txt) => /hold failed/i.test(txt)), "hold direction named");
-  assert.ok(toasts.some((txt) => /timeout/i.test(txt)), "verdict named");
+  assert.ok(
+    toasts.some((txt) => /hold failed/i.test(txt)),
+    "hold direction named",
+  );
+  assert.ok(
+    toasts.some((txt) => /timeout/i.test(txt)),
+    "verdict named",
+  );
   assert.equal(entry.dom.querySelector(".hold-btn").disabled, false);
 
   entry.session.state = globalThis.SIP.SessionState.Terminated;
@@ -134,8 +144,14 @@ test("a refused re-INVITE names the direction and the rejected verdict", async (
   // toast — the failure copy sits somewhere in the stack, not on top
   // (the same ordering calls.test.mjs documents).
   const toasts = [...doc.getElementById("toasts").children].map((el) => el.textContent);
-  assert.ok(toasts.some((txt) => /hold failed/i.test(txt)), "hold direction named");
-  assert.ok(toasts.some((txt) => /rejected/i.test(txt)), "verdict named");
+  assert.ok(
+    toasts.some((txt) => /hold failed/i.test(txt)),
+    "hold direction named",
+  );
+  assert.ok(
+    toasts.some((txt) => /rejected/i.test(txt)),
+    "verdict named",
+  );
   assert.equal(entry.held, false);
 
   entry.session.state = globalThis.SIP.SessionState.Terminated;
