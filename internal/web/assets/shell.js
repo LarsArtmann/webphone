@@ -2857,10 +2857,11 @@
         phone.classList.toggle("wp-active", pressed);
       }
     };
-    var installPhoneTab = function () {
-      var nav = /** @type {HTMLElement | null} */ (
-        document.querySelector(".wp-nav")
-      );
+    /** @param {HTMLElement | null} [navIn] the strip; defaults to the document lookup */
+    var installPhoneTab = function (navIn) {
+      var nav =
+        navIn ||
+        /** @type {HTMLElement | null} */ (document.querySelector(".wp-nav"));
       if (!nav || nav.querySelector(".wp-nav-phone")) return;
       var tab = document.createElement("button");
       tab.type = "button";

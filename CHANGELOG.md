@@ -123,6 +123,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- The prod-dead `readmodels` contacts, snippets and dial-cooldown
+  stores: the engine-backed twins (prod has answered all three from
+  the cqrs journal since the SUPERB swaps) are deleted; `readmodels`
+  keeps only the gate/view surface (`ContactGate`/`ContactView`,
+  `SnippetGate`/`SnippetView`, `DialGate`/`DialWindowView`/
+  `DialOverrideView`/`ActiveSlot` with the cap constants and
+  sentinels). The server test harness and the fuzz/cap/store-failure
+  pins drive the journal-backed backends (the throwaway journal boots
+  through one `newCoreSystem` helper); the live-engine delete-miss
+  envelope pins retire with the stores â the cqrs backends' own
+  delete tests carry the contract. Also retires the now-userless
+  `readmodels.notFound` envelope helper.
 - The prod-dead `readmodels` call-note and call-review stores: the
   engine-backed `Notes`/`Reviews` twins (prod has answered both from
   the cqrs journal since Phase 4) are deleted; `readmodels` keeps only

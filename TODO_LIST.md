@@ -221,6 +221,28 @@ New open items from the legs session, not homed elsewhere yet.
       re-fetches right behind the SSE nudge — the aggregate header's
       old "no D7 await" premise retired with the twin). Registry regen'd
       (−7 note/review/disposition codes).
+- [x] ~~**Storage-ladder train C: delete the prod-dead readmodels
+      contacts + snippets + dialwindows stores** (the plan's M04; all
+      three answered from the cqrs journal since the SUPERB swaps â
+      the engine twins had zero non-test callers beyond the server
+      harness and the fuzz/cap pins)~~ â done 2026-11-12 â
+      contacts.go/snippets.go/dialwindows.go DELETED (plus the
+      engine-store dial_bench and the now-userless notFound envelope +
+      its test); the gate/view surface moved to contactsgate.go/
+      snippetsgate.go/dialwindowsgate.go (gates, views, cap constants,
+      sentinels); Engine lost the contacts/snippets/dials fields/
+      accessors/Plan entries and the aggregate-reader assertion (its
+      last consumer was the contacts metrics count). The server harness
+      rides `cqrs.NewContacts`/`NewSnippets`/`NewDialWindows` over the
+      core journal (NewCoreSystem grew the three decls); the fuzz spec,
+      the API cap pin, and the store-failure lanes boot the journal
+      through one newCoreSystem helper; the 500-contact API cap test
+      seeds through the backend (dispatch+await, ~2s). The live-engine
+      delete-miss envelope pins retired with the stores â the cqrs
+      delete tests carry the contract. Registry regen'd (readmodels
+      contact/snippet/dial codes out; the regen also caught the
+      concurrent train's uncommitted codes). Engine = push devices +
+      agent audit ONLY (M05 empties it).
 - [x] **fleet-libs `go-cqrs-lite.md` re-score (B159) + ROADMAP ES
       annotation (B160)** — the A46 leftovers: SUPERB made webphone the
       library's deepest consumer (threads/faxes aggregates, system
