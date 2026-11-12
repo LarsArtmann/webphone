@@ -10,8 +10,6 @@ import (
 	"testing"
 	"time"
 
-	_ "modernc.org/sqlite" // registers the "sqlite" driver for the journal boot
-
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
 
 	"github.com/larsartmann/webphone/internal/cqrs"
