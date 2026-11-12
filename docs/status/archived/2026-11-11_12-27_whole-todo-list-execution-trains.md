@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-12 (docs-health v11 sweep): cadence drain — every row struck or routed at the gates (check-rows --strict + bare-rows green before the move)
+
 # Whole-TODO-List execution session — 12-27 snapshot
 
 Claims verified as of **12:27 CET**. The session mandate: "GET SHIT DONE. The WHOLE TODO LIST!" — a triage of TODO_LIST.md into actionable vs owner-gated, then train-by-train execution with verification. Seven commits landed this session; one concurrent SSO/login train owns a live island-test red that is NOT this session's.

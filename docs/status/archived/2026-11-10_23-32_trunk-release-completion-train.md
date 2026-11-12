@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-12 (docs-health v11 sweep): cadence drain — every row struck or routed at the gates (check-rows --strict + bare-rows green before the move)
+
 # Status: the v2.13.0 release-completion train — relock collision resolved, C1/E2/C2 landed, release at step 7 of attempt 11
 
 > **Snapshot rot:** claims verified as of **2026-11-10 23:32 CET**. Attempt 11 of `release.sh` was IN FLIGHT inside step 7 (the stack VM suites: telephony-browser and telephony-webphone built, telephony-ivr and telephony-lens building) — push/CI statements rot fastest; re-check `gh release list` (still `v2.12.0 Latest` at write time) and `gh run view` before relying on any verdict.

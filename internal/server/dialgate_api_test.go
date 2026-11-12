@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	cqrs "github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/config"
+	cqrs "github.com/larsartmann/webphone/internal/cqrs"
 )
 
 // dialServer builds a server with the dial gate enabled for cooldown.

@@ -11,8 +11,8 @@ import (
 	"testing"
 	"time"
 
-	cqrs "github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/config"
+	cqrs "github.com/larsartmann/webphone/internal/cqrs"
 )
 
 func newDialGateClient(t *testing.T) *client {

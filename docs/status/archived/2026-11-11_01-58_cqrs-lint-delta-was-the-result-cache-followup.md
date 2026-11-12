@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-12 (docs-health v11 sweep): cadence drain — every row struck or routed at the gates (check-rows --strict + bare-rows green before the move)
+
 # cqrs-lint delta resolved: it was the result cache — the follow-up session report
 
 > Claims verified as of 2026-11-11 01:58 CET. CI verdicts and push states rot

@@ -29,8 +29,8 @@ import (
 	"github.com/larsartmann/webphone/internal/web/assets"
 	"github.com/larsartmann/webphone/internal/web/views"
 
-	cqrs "github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/go-cqrs-lite/system/v4"
+	cqrs "github.com/larsartmann/webphone/internal/cqrs"
 )
 
 // domContractIDs loads the island DOM-contract id list from
