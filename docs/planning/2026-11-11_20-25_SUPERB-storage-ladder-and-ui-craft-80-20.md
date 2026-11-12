@@ -277,3 +277,26 @@ tokens.
   verdict depends on them (M24's lessons row, M02's test placement).
 - Every train keeps its existing pins and one-homes; nothing here moves a
   fact's home.
+
+## 9. Landing record (errata, 2026-11-12)
+
+- **M02 (train A, transcripts)** — landed 2026-11-11; the per-train
+  record lives in the CHANGELOG Removed entries + TODO strike rows.
+- **M03 (train B, notes/reviews + D7 awaits)** — landed 2026-11-11
+  (`dafb66c5` lineage).
+- **M04 (train C, contacts/snippets/dialwindows)** — landed
+  `0e231da0` (narrative refactor commit, pushed).
+- **M05 (closeout: push devices + agent audit; readmodels = gates +
+  views ONLY)** — landed 2026-11-12 as daemon blobs `fd2607a2` +
+  `d64d8f38` + `4c98e1fa` (the daemon ate the narrative split; per the
+  fix-forward protocol the blobs stand). Load-bearing side finds
+  recorded in the TODO closeout row: `internal/cqrs` is now the ONE
+  home of the sqlite engine-driver registration (readmodels.go carried
+  it silently), both new write doors carry the D7 `awaitOwnWrite`, and
+  `TestReadmodelsStaysGatesAndViewsOnly` pins the purity forever.
+  Ledger: `96823b04` + `929d7398`; cadence drain `6956a6b7`.
+- **M06–M08 + M13** — sibling trains (`37af2d80` lineage; v2.14.0
+  tagged, CI green; their closeout reports own the record).
+- **M09–M12** — sibling lane by ownership (their capture-matrix /
+  nav-overflow session is actively landing; this session did not
+  touch it).
