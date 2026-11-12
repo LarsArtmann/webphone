@@ -1333,15 +1333,24 @@ Standing watches live in ONE dated calendar now: [docs/watches/2026-11-08_standi
 
 **Evidence:** the calendar file itself (every date derived from a verified prior entry); prior prose list re-checked 2026-09-23/24 during the pareto cycle (C22/M22)
 
-### internal/server auth-package carve (dormant trigger)
+### ~~internal/server auth-package carve~~ → EXECUTED 2026-11-12, extended to platform; html carve RULED OUT with evidence
 
-The 2026-10-17 hooks/api carve is DONE and phase-3 adjudicated (session_api
-STAYS — it is the shared auth spine of both login modes; passkey_api reuses
-its three shared methods, and the handlers ride wiring-private state). The
-honest future move — BOTH login modes into an auth package — reopens on the
-next auth-surface change; the blueprint and dependency map live in
-`docs/modularization/2026-10-17_PROPOSAL.html`, the full adjudication in git
-history (the 2026-10-12 + 2026-10-17 entries).
+The trigger fired (the 2026-11-11 login-page front-door train) and the carve
+LANDED as `internal/server/auth` — both login modes, the ceremonies, the OIDC
+dance, the library /login page and the session spine, behind a narrow
+`auth.Shell` seam (the 2026-10-17 api/hooks pattern). Step 2 landed the same
+day: `internal/server/platform` — assets, /metrics + recorders, CSP intake,
+flight-recorder seam (+ TraceRecorder's new home), /phone-api proxy,
+directory bridge (+ machineSurface), /config.js, export. **The planned html
+carve (pages/panels/actions/notifier/sse) is RULED OUT structurally**:
+pages.go holds the `handlers` hub itself and panels/actions reference
+admin/crm/unread/auth-audit in both directions — moving them renames the
+package rather than splitting it. The god-package's honest end state is the
+four surface carves (api/hooks/auth/platform) + the depth-budget arch test
+(landed beside this row), with the html hub as the measured, named residual.
+Reopen the html question ONLY on a real architecture change (per-tab render
+packages over a shared kernel), never as a mechanical move. The 2026-10-17
+adjudication lives in git history (the 2026-10-12 + 2026-10-17 entries).
 
 ### Mic pre-warm live verification + gates
 
