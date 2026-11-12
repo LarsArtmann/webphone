@@ -178,6 +178,15 @@ exclude:
 #   actions.go); N distinct files ARE the work, nothing to hoist or
 #   batch. ACCEPT (inherent per-item I/O); re-litigate only if a loop
 #   ever re-reads the SAME path per iteration.
+#   EXPECTED SCOPED COUNTS (2026-11-12; a scoped run reading MORE than
+#   these means a lost directive or a new finding — diff before
+#   assuming anything; the F031 loss hid because the total coincidentally
+#   stayed 12): cqrs-lint 11 (C014x2, D006, E023x4, F009, F021x3 — the
+#   armed keep-visible set), samber-linter 0, io-surface 6, jscpd 16
+#   (island-test fixtures, ACCEPT row in docs/dedup-registry.md),
+#   bandit furniture-only (real issues 0 — all six sites nosec'd; the
+#   ~244 text rows are the upstream #64-class parser disease, draft at
+#   docs/drafts/2026-10-11_buildflow-bandit-stdout-findings.md).
 # - nix-hash-fix: UNSKIPPED 2026-10-15 (owner decision). Its 10/10
 #   chronic failure is POST-BUMP-ONLY: the step computes the right
 #   vendorHash but never writes it in this repo layout, so with the pin

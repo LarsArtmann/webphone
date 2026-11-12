@@ -135,7 +135,7 @@ def _format_with_dprint() -> None:
     command. Best-effort by design, a missing dprint must not fail the regen.
     """
     try:
-        subprocess.run(  # nosec B603,B607 - pinned "dprint" dev tool resolved from PATH, argv-list, never shell
+        subprocess.run(  # nosec B603 B607 - pinned "dprint" dev tool resolved from PATH, argv-list, never shell
             ["dprint", "fmt", str(INDEX.relative_to(ROOT))],
             cwd=ROOT,
             check=True,
