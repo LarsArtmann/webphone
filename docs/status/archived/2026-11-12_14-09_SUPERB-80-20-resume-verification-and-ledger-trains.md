@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-12 (docs-health v11 sweep): superseded snapshot — the session's active state moved to the 16-14 gate-setup plan + the 15-57 triage report, and its owner-gated recipes (M18-M21, Q6) live in the owner-calls batch doc
+
 # Status: SUPERB 80/20 resume — verification, ledger, dependency + prose trains (2026-11-12 14:09 CET)
 
 **Claims verified as of 14:09 CET.** Push/CI statements rot fastest; the concurrent-session
