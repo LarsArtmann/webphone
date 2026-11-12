@@ -148,9 +148,11 @@ test("hold UI shows the pending truth until the re-INVITE settles", async () => 
       // lane): the stub fires onAccept/onReject instead of resolving.
       if (opts?.requestDelegate) {
         if (holdMode === "resolve") {
-          const sent = Promise.resolve();
-          sent.then(() => opts.requestDelegate.onAccept?.());
-          return sent;
+          // Fire the delegate BEFORE the promise resolves: a post-resolve
+          // microtask can leak past this test's settle() into the next
+          // test file's DOM state (the shell dialer test caught it).
+          opts.requestDelegate.onAccept?.();
+          return Promise.resolve();
         }
         return new Promise((resolve, reject) =>
           gates.push({
@@ -270,9 +272,11 @@ test("a failed hold announces the hold direction", async () => {
       // lane): the stub fires onAccept/onReject instead of resolving.
       if (opts?.requestDelegate) {
         if (holdMode === "resolve") {
-          const sent = Promise.resolve();
-          sent.then(() => opts.requestDelegate.onAccept?.());
-          return sent;
+          // Fire the delegate BEFORE the promise resolves: a post-resolve
+          // microtask can leak past this test's settle() into the next
+          // test file's DOM state (the shell dialer test caught it).
+          opts.requestDelegate.onAccept?.();
+          return Promise.resolve();
         }
         return new Promise((resolve, reject) =>
           gates.push({
@@ -444,9 +448,11 @@ test("a wish queued mid-flight replays after the in-flight toggle settles", asyn
       // lane): the stub fires onAccept/onReject instead of resolving.
       if (opts?.requestDelegate) {
         if (holdMode === "resolve") {
-          const sent = Promise.resolve();
-          sent.then(() => opts.requestDelegate.onAccept?.());
-          return sent;
+          // Fire the delegate BEFORE the promise resolves: a post-resolve
+          // microtask can leak past this test's settle() into the next
+          // test file's DOM state (the shell dialer test caught it).
+          opts.requestDelegate.onAccept?.();
+          return Promise.resolve();
         }
         return new Promise((resolve, reject) =>
           gates.push({
