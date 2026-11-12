@@ -66,7 +66,7 @@ func (r fanRegistry) List(ctx context.Context, owner domain.Extension) ([]push.D
 	}
 	out := make([]push.Device, 0, len(views))
 	for _, v := range views {
-		out = append(out, push.Device{DeviceID: v.DeviceID, Transport: v.Transport, Token: v.Token})
+		out = append(out, push.Device{DeviceID: v.DeviceID, Transport: push.Transport(v.Transport), Token: v.Token})
 	}
 	return out, nil
 }
@@ -91,7 +91,7 @@ func newRingCoreSystem(t *testing.T) *system.System {
 func newRingHandlers(t *testing.T, transport *fakeTransport) (*Handlers, readmodels.PushDeviceGate) {
 	t.Helper()
 	devices := cqrs.NewPushDevices(newRingCoreSystem(t))
-	fanout := push.NewFanout(map[string]push.Sender{push.TransportNtfy: transport}, fanRegistry{devices: devices})
+	fanout := push.NewFanout(map[push.Transport]push.Sender{push.TransportNtfy: transport}, fanRegistry{devices: devices})
 	handlers := New(Deps{
 		Secret: "hook-secret",
 		Push:   fanout,
@@ -112,7 +112,7 @@ func TestHookRingFansOutToRegisteredDevices(t *testing.T) {
 	transport := &fakeTransport{enabled: true}
 	handlers, devices := newRingHandlers(t, transport)
 	owner := domain.MustParseExtension("1001")
-	if err := devices.Upsert(context.Background(), owner, "device-aaaa", push.TransportNtfy, "wp-topic"); err != nil {
+	if err := devices.Upsert(context.Background(), owner, "device-aaaa", string(push.TransportNtfy), "wp-topic"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -185,7 +185,7 @@ func TestHookRingPrunesDeadDevices(t *testing.T) {
 	transport := &fakeTransport{enabled: true, err: push.ErrUnregistered}
 	handlers, devices := newRingHandlers(t, transport)
 	owner := domain.MustParseExtension("1001")
-	if err := devices.Upsert(context.Background(), owner, "device-aaaa", push.TransportNtfy, "wp-topic"); err != nil {
+	if err := devices.Upsert(context.Background(), owner, "device-aaaa", string(push.TransportNtfy), "wp-topic"); err != nil {
 		t.Fatal(err)
 	}
 

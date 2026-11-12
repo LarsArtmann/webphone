@@ -37,10 +37,30 @@ func init() {
 // Transport names — the vocabulary the device registry and the fanout
 // route on. Foreign protocol vocabulary, deliberately raw strings on
 // the wire (the strong-id ruling's foreign-token carve-out).
+// Transport names one wake wire (the fanout's map key and the device
+// row's vocabulary). ParseTransport is the door — raw strings never
+// become Transport values, so a client typo dies at the registration
+// boundary instead of stranding a device behind a lookup that can
+// never hit.
+type Transport string
+
 const (
-	TransportNtfy = "ntfy"
-	TransportFcm  = "fcm"
+	TransportNtfy Transport = "ntfy"
+	TransportFcm  Transport = "fcm"
 )
+
+// ParseTransport resolves the wire vocabulary; anything outside it is a
+// Rejection (the registration API answers 400, the family test pins the
+// shape).
+func ParseTransport(raw string) (Transport, error) {
+	switch t := Transport(raw); t {
+	case TransportNtfy, TransportFcm:
+		return t, nil
+	default:
+		return "", errorfamily.Newf(errorfamily.Rejection, "push.transport_parse",
+			"%q is not a push transport (ntfy or fcm)", raw)
+	}
+}
 
 // statusOK reports a 2xx transport answer — the one success every push
 // provider promises (the bodies differ beyond that).
@@ -112,7 +132,7 @@ type Sender interface {
 // prune-on-unregistered. The zero Fanout (and a nil pointer) is the
 // disabled seam.
 type Fanout struct {
-	senders  map[string]Sender
+	senders  map[Transport]Sender
 	registry DeviceRegistry
 }
 
@@ -120,7 +140,7 @@ type Fanout struct {
 // read model's view carries owner/updatedAt the fanout never needs).
 type Device struct {
 	DeviceID  string
-	Transport string
+	Transport Transport
 	Token     string
 }
 
@@ -138,8 +158,8 @@ type DeviceRegistry interface {
 // receives traffic). The registry may be nil — Fan then refuses (a
 // fan without a registry has nothing to fan to); the composition root
 // arms it once the device store resolves.
-func NewFanout(senders map[string]Sender, registry DeviceRegistry) *Fanout {
-	live := make(map[string]Sender, len(senders))
+func NewFanout(senders map[Transport]Sender, registry DeviceRegistry) *Fanout {
+	live := make(map[Transport]Sender, len(senders))
 	for transport, sender := range senders {
 		if sender != nil && sender.Enabled() {
 			live[transport] = sender
@@ -162,7 +182,7 @@ func (f *Fanout) Enabled() bool { return f != nil && len(f.senders) > 0 }
 // Knows reports whether a transport would actually carry — the device
 // registration API's honest signal (registering a transport the server
 // cannot send to would strand the device).
-func (f *Fanout) Knows(transport string) bool {
+func (f *Fanout) Knows(transport Transport) bool {
 	return f != nil && f.senders[transport] != nil
 }
 
@@ -173,7 +193,7 @@ func (f *Fanout) Describe() string {
 	}
 	names := make([]string, 0, len(f.senders))
 	for name := range f.senders {
-		names = append(names, name)
+		names = append(names, string(name))
 	}
 	sort.Strings(names)
 	return strings.Join(names, "+")

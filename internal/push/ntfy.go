@@ -57,7 +57,7 @@ func NewNtfySender(baseURL, token string) (*NtfySender, error) { //nolint:branch
 func (s *NtfySender) Enabled() bool { return s != nil && s.base != nil }
 
 // Describe names the transport for logs.
-func (s *NtfySender) Describe() string { return TransportNtfy }
+func (s *NtfySender) Describe() string { return string(TransportNtfy) }
 
 // ntfyMessage is the JSON publish body. The message field carries the
 // ring fact as compact JSON — the shell's receiver parses it, while

@@ -53,7 +53,7 @@ func RenderWireFixtureFiles() map[string][]byte {
 	}
 	register := api.PushDeviceRegisterRequest{
 		DeviceID:  "fixture-device-0001",
-		Transport: push.TransportNtfy,
+		Transport: string(push.TransportNtfy),
 		Token:     push.FixtureNtfyTopic,
 	}
 

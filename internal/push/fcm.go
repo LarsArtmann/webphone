@@ -128,7 +128,7 @@ func NewFcmSender(credentialsFile string) (*FcmSender, error) {
 func (s *FcmSender) Enabled() bool { return s != nil && s.project != "" }
 
 // Describe names the transport for logs.
-func (s *FcmSender) Describe() string { return TransportFcm }
+func (s *FcmSender) Describe() string { return string(TransportFcm) }
 
 // fcmMessage is the messages:send body. Data (not notification) is
 // deliberate: the shell owns its CallStyle rendering; a stock FCM

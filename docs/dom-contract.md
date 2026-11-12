@@ -373,6 +373,8 @@ only behind capability checks.
   `aria-pressed` (not `aria-current`), clears `wp-active` from `[data-tab]`
   links when pressed, and is re-installed after every nav morph swap, so an
   E2E must not assume a stable strip child count.
-- `wp-phone-focus` — on `<html>` while the dialer focus is live: the main
-  column hides and the island is the one body column. Cleared by any real
+- `wp-phone-focus` — on `<html>` while the dialer focus is live: the tab
+  content region hides (`#tab-content` + `#wp-tab-error`) and the island
+  is the one body column; the NAV STAYS VISIBLE — it is the only way
+  back, never hidden (the 2026-11-12 trap fix). Cleared by any real
   tab click (the document-level cleanup listener) and on second Phone tap.

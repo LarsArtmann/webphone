@@ -144,7 +144,15 @@ func (a pushRegistryAdapter) List(ctx context.Context, owner domain.Extension) (
 	}
 	out := make([]push.Device, 0, len(views))
 	for _, v := range views {
-		out = append(out, push.Device{DeviceID: v.DeviceID, Transport: v.Transport, Token: v.Token})
+		// The row's transport string passed the registration door's
+		// ParseTransport at upsert; a row that predates the door (or a
+		// hand-seeded test row) parses or skips — never a fan-time
+		// lookup miss.
+		transport, err := push.ParseTransport(v.Transport)
+		if err != nil {
+			continue
+		}
+		out = append(out, push.Device{DeviceID: v.DeviceID, Transport: transport, Token: v.Token})
 	}
 	return out, nil
 }
@@ -269,7 +277,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	// FCM credentials file, unparseable ntfy URL) fails the boot here —
 	// the same doctrine as the passkey/Paperless seams.
 	pushFanout, err := func() (*push.Fanout, error) {
-		senders := map[string]push.Sender{}
+		senders := map[push.Transport]push.Sender{}
 		if cfg.Push.Ntfy.Enabled() {
 			sender, err := push.NewNtfySender(cfg.Push.Ntfy.URL, cfg.Push.Ntfy.Token)
 			if err != nil {

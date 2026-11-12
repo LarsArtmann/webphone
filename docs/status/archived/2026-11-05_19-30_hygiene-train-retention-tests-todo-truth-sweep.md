@@ -1,4 +1,5 @@
 > ARCHIVED 2026-11-08 (docs-health drain): gates clean (check-rows --strict + bare-rows green), live facts carried in AGENTS/TODO_LIST — cadence headroom for the SUPERB phase-closeout reports.
+> ERRATA 2026-11-12 (post-refactor prose sweep, M17): the retention/readmodels suite references are historical — the engine-backed stores those tests rode were deleted by the storage-ladder trains; the semantics live in the cqrs journal backends now. Verdicts untouched.
 
 # Status: hygiene train — retention pins, TODO truth sweep, status index (assistant session)
 

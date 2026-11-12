@@ -1,4 +1,5 @@
 > ARCHIVED 2026-11-08 (docs-health drain): gates clean (check-rows --strict + bare-rows green), citations repointed, supersedes nothing — the admin surface contract lives in AGENTS § Admin surface.
+> ERRATA 2026-11-12 (post-refactor prose sweep, M17): the readmodels engine-store references here (the Faxes store twin) are historical — the 2026-11-11/12 storage-ladder trains deleted the engine-backed stores; the surfaces live in internal/readmodels/*gate.go and internal/cqrs. Verdicts untouched.
 
 # Status: Admin visibility surface (read-only, all lines) — 2026-11-05
 

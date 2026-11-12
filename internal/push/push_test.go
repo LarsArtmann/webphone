@@ -103,7 +103,7 @@ func TestFanRoutesPerTransport(t *testing.T) {
 		{DeviceID: "d1", Transport: push.TransportNtfy, Token: "topic-a"},
 		{DeviceID: "d2", Transport: push.TransportFcm, Token: "reg-b"},
 	}}
-	fanout := push.NewFanout(map[string]push.Sender{
+	fanout := push.NewFanout(map[push.Transport]push.Sender{
 		push.TransportNtfy: ntfy,
 		push.TransportFcm:  fcm,
 	}, registry)
@@ -132,7 +132,7 @@ func TestFanRoutesTheDraftFact(t *testing.T) {
 	registry := &fakeRegistry{devices: []push.Device{
 		{DeviceID: "d1", Transport: push.TransportNtfy, Token: "topic-a"},
 	}}
-	fanout := push.NewFanout(map[string]push.Sender{push.TransportNtfy: ntfy}, registry)
+	fanout := push.NewFanout(map[push.Transport]push.Sender{push.TransportNtfy: ntfy}, registry)
 	draft := push.Draft{Event: push.EventDraftReady, Contact: "+15550000001", DraftID: "d-1"}
 	if err := fanout.Fan(context.Background(), owner, draft); err != nil {
 		t.Fatal(err)
@@ -152,7 +152,7 @@ func TestFanRoutesTheDraftFact(t *testing.T) {
 
 func TestFanoutDropsDeadSenders(t *testing.T) {
 	dead := &fakeSender{enabled: false}
-	fanout := push.NewFanout(map[string]push.Sender{push.TransportNtfy: dead}, nil)
+	fanout := push.NewFanout(map[push.Transport]push.Sender{push.TransportNtfy: dead}, nil)
 	if fanout.Enabled() {
 		t.Fatal("a fanout of dead senders is disabled")
 	}
@@ -172,7 +172,7 @@ func TestFanPrunesUnregisteredDevices(t *testing.T) {
 		{DeviceID: "dead-1", Transport: push.TransportNtfy, Token: "t1"},
 		{DeviceID: "live-1", Transport: push.TransportFcm, Token: "t2"},
 	}}
-	fanout := push.NewFanout(map[string]push.Sender{
+	fanout := push.NewFanout(map[push.Transport]push.Sender{
 		push.TransportNtfy: dead,
 		push.TransportFcm:  live,
 	}, registry)
@@ -187,7 +187,7 @@ func TestFanPrunesUnregisteredDevices(t *testing.T) {
 }
 
 func TestFanSyncErrorsAnswerImmediately(t *testing.T) {
-	enabled := push.NewFanout(map[string]push.Sender{push.TransportNtfy: &fakeSender{enabled: true}}, nil)
+	enabled := push.NewFanout(map[push.Transport]push.Sender{push.TransportNtfy: &fakeSender{enabled: true}}, nil)
 	err := enabled.Fan(context.Background(), owner, "not-a-fact")
 	if err == nil {
 		t.Fatal("an unsupported fact must reject synchronously")

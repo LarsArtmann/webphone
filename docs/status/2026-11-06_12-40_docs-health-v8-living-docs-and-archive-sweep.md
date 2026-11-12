@@ -27,7 +27,7 @@ instead of a re-derived ritual.
 1. **The `2026-0*` cohort, file by file (44 files), classified with a reason each.**
    Every markdown file was READ and judged; every HTML/D2/SVG snapshot was checked for
    obligations (the freshness gate flags un-scanned HTML reports). Result: 1 ARCHIVED
-   (`announcements/2026-09-24_v2-7-0_drafts.md` — superseded before posting, its
+   (`announcements/archived/2026-09-24_v2-7-0_drafts.md` — superseded before posting, its
    content shipped as v2.8.0), 5 KEEP-and-UPDATE (2 standing baselines refreshed with
    today's measurements, 4 executed plans banner-annotated with their verdict + the
    blocker, 1 owner command sheet refreshed against live prod), 38 KEEP (operative
@@ -205,4 +205,4 @@ TODO_LIST/ROADMAP/CHANGELOG — the freshness gate verifies that at each battery
 13. History nudge for the notes save path.
 14. `scripts/templ-generate.sh` wrapper pinning the regen compiler.
 15. Attended-transfer UI vs the NO-GO ruling.
-16. `reverseLines` → `slices.Reverse` in readmodels.
+16. `reverseLines` → `slices.Reverse` — DONE by a later train; the symbol (and the readmodels engine store it lived in) no longer exists in the tree — the storage-ladder closeout moved the backends to `internal/cqrs`.

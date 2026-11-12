@@ -1,4 +1,5 @@
 > ARCHIVED 2026-11-08 (docs-health drain): gates clean (check-rows --strict + bare-rows green), live facts carried in AGENTS/TODO_LIST — cadence headroom for the SUPERB phase-closeout reports.
+> ERRATA 2026-11-12 (post-refactor prose sweep, M17): the readmodels test-site references and the present-tense usermgmt pin (v4.18.0 at report time) are historical — the engine stores moved/deleted in the storage-ladder trains, and the current pin rides later (go.mod is the one pin source). Verdicts untouched.
 
 # Status: Fleet-Libs Closeout Tail (T16–T26) — resumed session, night of 2026-11-04 → morning 2026-11-05
 

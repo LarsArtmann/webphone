@@ -232,7 +232,7 @@ func summaryServerWithPush(t *testing.T, transport push.Sender) (*testServer, *c
 	t.Helper()
 	stub := newStubReviewAPI(t)
 	devices := cqrs.NewPushDevices(newCoreSystem(t))
-	fanout := push.NewFanout(map[string]push.Sender{transport.Describe(): transport}, summaryFanRegistry{devices})
+	fanout := push.NewFanout(map[push.Transport]push.Sender{push.Transport(transport.Describe()): transport}, summaryFanRegistry{devices})
 	provider, _ := fakeProvider(t, http.StatusOK, "hi")
 	server := newTestServerWithPhoneAPI(t, "", func(deps *Deps) {
 		deps.ASR = asrClientFor(t, provider.URL)
@@ -254,7 +254,7 @@ func (r summaryFanRegistry) List(ctx context.Context, owner domain.Extension) ([
 	}
 	out := make([]push.Device, 0, len(views))
 	for _, v := range views {
-		out = append(out, push.Device{DeviceID: v.DeviceID, Transport: v.Transport, Token: v.Token})
+		out = append(out, push.Device{DeviceID: v.DeviceID, Transport: push.Transport(v.Transport), Token: v.Token})
 	}
 	return out, nil
 }

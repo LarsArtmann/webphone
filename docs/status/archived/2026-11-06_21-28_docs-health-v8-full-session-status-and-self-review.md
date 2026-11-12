@@ -1,4 +1,5 @@
 > ARCHIVED 2026-11-08 (docs-health drain): gates clean (check-rows --strict + bare-rows green), live facts carried in AGENTS/TODO_LIST — cadence headroom for the SUPERB phase-closeout reports.
+> ERRATA 2026-11-12 (post-refactor prose sweep, M17): readmodels paths and the reverseLines/reverse-claims here are historical — the symbol was replaced by slices.Reverse and then the whole engine store went in the storage-ladder trains (backends now internal/cqrs). Verdicts untouched.
 
 # Status — docs-health v8: the full session, honest self-review, and what it left behind (2026-11-06 21:28)
 

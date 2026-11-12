@@ -121,7 +121,15 @@ func (h *Handlers) SavePushDevice(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "device_id must be 8-64 characters of letters, digits, hyphens or underscores", http.StatusUnprocessableEntity)
 		return
 	}
-	if !h.deps.Push.Knows(body.Transport) {
+	transport, err := push.ParseTransport(body.Transport)
+	if err != nil {
+		// The vocabulary door (the Transport defined type): a client
+		// typo is a 400, never a stranded row behind a lookup that can
+		// never hit.
+		http.Error(w, "transport must be ntfy or fcm", http.StatusBadRequest)
+		return
+	}
+	if !h.deps.Push.Knows(transport) {
 		http.Error(w, "transport is not configured on this server", http.StatusUnprocessableEntity)
 		return
 	}
@@ -130,7 +138,7 @@ func (h *Handlers) SavePushDevice(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.deps.Devices.Upsert(r.Context(), sess.Extension, body.DeviceID, body.Transport, body.Token)
+	err = h.deps.Devices.Upsert(r.Context(), sess.Extension, body.DeviceID, body.Transport, body.Token)
 	if err != nil {
 		if storeAtCapacity(w, err, "device list is full — deregister one first") {
 			return
@@ -179,7 +187,7 @@ func validDeviceToken(transport, token string) bool {
 	if token == "" || len(token) > tokenMaxLen {
 		return false
 	}
-	if transport == push.TransportNtfy {
+	if push.Transport(transport) == push.TransportNtfy {
 		return push.ValidNtfyTopic(token)
 	}
 	return asciiIdentifier(token, ":-_")
