@@ -712,9 +712,7 @@ def apply_seed_class(driver, selector: str, cls: str, where: str) -> None:
         if not els:
             print(f"warn: {where}: seed-class {selector!r} matched nothing")
             return
-        driver.execute_script(
-            "arguments[0].classList.add(arguments[1]);", els[0], cls
-        )
+        driver.execute_script("arguments[0].classList.add(arguments[1]);", els[0], cls)
         time.sleep(0.1)  # settle: let the state's own transition start
     except Exception as exc:  # noqa: BLE001 - harness-grade: seeds are best-effort
         print(
@@ -1758,9 +1756,7 @@ def tap_through(
         expect(
             "state 1: a real tab carries wp-active",
             bool(
-                driver.find_elements(
-                    "css selector", ".wp-nav-link[data-tab].wp-active"
-                )
+                driver.find_elements("css selector", ".wp-nav-link[data-tab].wp-active")
             ),
         )
         shoot_state("1-tab")
@@ -1770,8 +1766,7 @@ def tap_through(
         driver.find_element("css selector", ".wp-nav-phone").click()
         WebDriverWait(driver, 8).until(
             lambda d: d.execute_script(
-                "return document.documentElement"
-                ".classList.contains('wp-phone-focus')"
+                "return document.documentElement.classList.contains('wp-phone-focus')"
             )
         )
         expect(
@@ -1786,9 +1781,7 @@ def tap_through(
         # State 3 — tap a real tab: focus leaves AND the tab re-activates
         # (the nav fragment re-render carries wp-active; wait for BOTH so a
         # half-settled swap cannot pass as the returned state).
-        driver.find_element(
-            "css selector", '.wp-nav-link[data-tab="messages"]'
-        ).click()
+        driver.find_element("css selector", '.wp-nav-link[data-tab="messages"]').click()
         WebDriverWait(driver, 8).until(
             lambda d: (
                 not d.execute_script(
@@ -1805,9 +1798,7 @@ def tap_through(
         shoot_state("3-returned")
 
         if problems:
-            print(
-                f"tap-through: {len(problems)} FAILURE(S): {'; '.join(problems)}"
-            )
+            print(f"tap-through: {len(problems)} FAILURE(S): {'; '.join(problems)}")
             return 1
         print("tap-through: 3 states captured")
         return 0
@@ -2228,6 +2219,13 @@ def main() -> int:
     _apply_host_maps(args.host_map)
 
     full_page = not args.viewport_only
+    if full_page:
+        print(
+            "caveat: full-page shots render position:fixed elements at the "
+            "ORIGINAL viewport's bottom (CDP captureBeyondViewport) — the "
+            "mobile tab bar / toasts appear mid-page, not pinned; use "
+            "--viewport for a true fold view"
+        )
     viewports = (
         [_parse_viewport(v) for v in args.viewport] if args.viewport else [(1280, 900)]
     )
