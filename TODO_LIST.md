@@ -23,6 +23,9 @@ front matter does not carry their history (one home per fact, per the rule above
 - [ ] **Stack E2E strip assumption** (§f-14): the strip gained a JS-created button child;
       `refreshNav`'s `[data-tab]` walk is safe by construction — confirm the stack's
       `tests/browser-e2e.py` never assumes a strip child count.
+- [ ] **German stacked-table lane** (§f-12): the mobile History stack renders
+      `td[data-label]` copy from markup — verify the longest DE labels ("Zeit"/"Dauer")
+      fit their cells at 390px (the lane was verified EN-only).
 - [ ] **Phone label i18n** (§f-15): the label is English-only by the D3 shell rule while
       the localized tabs sit beside it — owner eyes or an owner exception.
 - [ ] **Destination-doc wording** (§f-29): Train 3's acceptance line says
