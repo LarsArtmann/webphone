@@ -798,14 +798,14 @@ func TestAdminCDRRowViewPrefersThePartyName(t *testing.T) {
 		CDR:       CDREntry{Context: "public", CallerIDNumber: "+4989123456", CallerIDName: "Acme GmbH", DestinationNumber: "+491512345678", Start: "2026-11-12 10:00:00", Billsec: 42},
 		Extension: "1001",
 	}, LangEN))
-	if !strings.Contains(named, "Acme GmbH") || !strings.Contains(named, "+4989123456 →") {
-		t.Errorf("a named party must lead and the number must stay visible; rendered:\n%s", named)
+	if !strings.Contains(named, "Acme GmbH → +491512345678") {
+		t.Errorf("a named party must lead the pair; rendered:\n%s", named)
 	}
 	bare := renderComponent(t, AdminCDRRowView(AdminCDRRow{
 		CDR:       CDREntry{Context: "public", CallerIDNumber: "+4989123456", DestinationNumber: "+491512345678", Start: "2026-11-12 10:00:00", Billsec: 42},
 		Extension: "1001",
 	}, LangEN))
-	if !strings.Contains(bare, ">+4989123456 → +491512345678<") {
+	if !strings.Contains(bare, ">+4989123456 → +491512345678 ") {
 		t.Errorf("a nameless party falls back to the raw number; rendered:\n%s", bare)
 	}
 }

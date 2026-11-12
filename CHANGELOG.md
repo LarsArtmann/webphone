@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Admin call records show the caller's name when the PBX carried
+  one** (the raw number stays the fallback), matching the History row's
+  party vocabulary; the section's three-state ladder (phone API off /
+  per-line fetch failure / empty) is pinned by a structural view test.
 - **Visual craft + token pass across the shell and the island.** A typed
   token ramp (`--text-lg/xl/2xl`, hover/pressed state layers, visible
   focus rings, press duration, one easing vocabulary) now drives both
