@@ -3,6 +3,7 @@ package cqrs
 import (
 	"context"
 	"fmt"
+	"sync/atomic"
 	"strconv"
 	"sync"
 	"testing"
@@ -20,11 +21,11 @@ func bootTranscripts(t *testing.T, dir string) *Transcripts {
 	return NewTranscripts(bootDomainSystem(t, dir, TranscriptsDomainDecl()))
 }
 
-var transcriptSeq int
+var transcriptSeq atomic.Int64
 
 func transcriptSegmentFor(t *testing.T, owner, callID, text string) domain.CallTranscriptSegment {
 	t.Helper()
-	transcriptSeq++
+	transcriptSeq.Add(1)
 	return domain.CallTranscriptSegment{
 		Owner:     mustExt(t, owner),
 		CallID:    callID,
