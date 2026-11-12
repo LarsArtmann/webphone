@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "threshold": 1,
-  "recordedAt": "2026-11-10T13:40:20.985157726Z",
+  "recordedAt": "2026-11-12T03:07:21.016991453Z",
   "entries": [
     {
       "hash": "0074763f10c77d08",
@@ -63,10 +63,11 @@
       "hash": "0e31d5301362f440",
       "files": [
         "internal/web/views/enroll.templ",
+        "internal/web/views/enroll.templ",
         "internal/web/views/layout.templ",
-        "internal/web/views/enroll.templ"
+        "internal/web/views/history.templ"
       ],
-      "tokens": 3
+      "tokens": 4
     },
     {
       "hash": "0e73909cd6a51b04",
@@ -115,19 +116,21 @@
     {
       "hash": "18bd9d5f2b66e759",
       "files": [
+        "internal/web/views/reports.templ",
         "internal/web/views/messages.templ",
         "internal/web/views/messages.templ",
         "internal/web/views/messages.templ"
       ],
-      "tokens": 3
+      "tokens": 4
     },
     {
       "hash": "1c3686a8f377258d",
       "files": [
         "internal/web/views/messages.templ",
-        "internal/web/views/messages.templ"
+        "internal/web/views/messages.templ",
+        "internal/web/views/reports.templ"
       ],
-      "tokens": 2
+      "tokens": 3
     },
     {
       "hash": "1cd20e39846e6405",
@@ -148,26 +151,10 @@
     {
       "hash": "20f6cbc572c6baaa",
       "files": [
-        "internal/cqrs/agentaudit.go",
-        "internal/readmodels/agentaudit.go"
+        "internal/readmodels/agentaudit.go",
+        "internal/cqrs/agentaudit.go"
       ],
       "tokens": 4
-    },
-    {
-      "hash": "234ba92b2d40770c",
-      "files": [
-        "internal/cqrs/transcriptsstore.go",
-        "internal/readmodels/transcripts.go"
-      ],
-      "tokens": 8
-    },
-    {
-      "hash": "2379e831fb7a1e63",
-      "files": [
-        "internal/readmodels/faxes.go",
-        "internal/cqrs/faxesstore.go"
-      ],
-      "tokens": 6
     },
     {
       "hash": "23d679627738d59a",
@@ -237,6 +224,14 @@
       "tokens": 2
     },
     {
+      "hash": "308e03aac80a42dc",
+      "files": [
+        "internal/web/views/history.templ",
+        "internal/web/views/history.templ"
+      ],
+      "tokens": 2
+    },
+    {
       "hash": "3153dddbc82ce316",
       "files": [
         "internal/web/views/settings.templ",
@@ -274,9 +269,10 @@
       "hash": "3461483432ddbac2",
       "files": [
         "internal/web/views/layout.templ",
+        "internal/web/views/layout.templ",
         "internal/web/views/layout.templ"
       ],
-      "tokens": 2
+      "tokens": 3
     },
     {
       "hash": "3757ced7705bcf69",
@@ -351,10 +347,11 @@
       "hash": "4ebddc0af69e86e9",
       "files": [
         "internal/server/actions.go",
+        "internal/server/passkey_api.go",
         "internal/server/actions.go",
         "internal/server/api/push_api.go"
       ],
-      "tokens": 6
+      "tokens": 8
     },
     {
       "hash": "507de1a6c654ae78",
@@ -402,14 +399,6 @@
       "tokens": 8
     },
     {
-      "hash": "5f0d2d5545d5a6df",
-      "files": [
-        "internal/readmodels/callnotes.go",
-        "internal/readmodels/callnotes.go"
-      ],
-      "tokens": 8
-    },
-    {
       "hash": "5f21776347889e82",
       "files": [
         "internal/web/views/messages.templ",
@@ -433,23 +422,6 @@
         "internal/web/views/phone.templ"
       ],
       "tokens": 2
-    },
-    {
-      "hash": "6081b9e62bb67b16",
-      "files": [
-        "internal/cqrs/callnotes.go",
-        "internal/readmodels/callnotes.go"
-      ],
-      "tokens": 8
-    },
-    {
-      "hash": "639d99d501842bf9",
-      "files": [
-        "internal/web/views/phone.templ",
-        "internal/web/views/enroll.templ",
-        "internal/web/views/phone.templ"
-      ],
-      "tokens": 3
     },
     {
       "hash": "69b70c8caa068a9a",
@@ -492,14 +464,6 @@
       "tokens": 10
     },
     {
-      "hash": "73e5373797b9e94a",
-      "files": [
-        "internal/cqrs/callreviews.go",
-        "internal/readmodels/callreviews.go"
-      ],
-      "tokens": 12
-    },
-    {
       "hash": "74042611aa2ea53e",
       "files": [
         "internal/cqrs/threadssweep.go",
@@ -526,11 +490,12 @@
     {
       "hash": "7651fca23bba19c5",
       "files": [
+        "internal/web/views/login_page.templ",
         "internal/web/views/layout.templ",
         "internal/web/views/layout.templ",
         "internal/web/views/layout.templ"
       ],
-      "tokens": 3
+      "tokens": 4
     },
     {
       "hash": "78a39dd0dc172759",
@@ -551,6 +516,7 @@
         "internal/web/views/fax.templ",
         "internal/web/views/messages.templ",
         "internal/web/views/history.templ",
+        "internal/web/views/history.templ",
         "internal/web/views/messages.templ",
         "internal/web/views/settings.templ",
         "internal/web/views/layout.templ",
@@ -575,8 +541,7 @@
         "internal/web/views/messages.templ",
         "internal/web/views/admin.templ",
         "internal/web/views/messages.templ",
-        "internal/web/views/error.templ",
-        "internal/web/views/history.templ"
+        "internal/web/views/error.templ"
       ],
       "tokens": 42
     },
@@ -603,14 +568,6 @@
         "internal/web/views/admin.templ"
       ],
       "tokens": 2
-    },
-    {
-      "hash": "823f339c330cd4d0",
-      "files": [
-        "internal/readmodels/callnotes.go",
-        "internal/cqrs/callnotes.go"
-      ],
-      "tokens": 6
     },
     {
       "hash": "82615bb33e03617c",
@@ -690,22 +647,6 @@
       "tokens": 2
     },
     {
-      "hash": "95af37c5e3ddf663",
-      "files": [
-        "internal/web/views/messages.templ",
-        "internal/web/views/history.templ"
-      ],
-      "tokens": 2
-    },
-    {
-      "hash": "96bd35998e100a78",
-      "files": [
-        "internal/cqrs/faxesstore.go",
-        "internal/readmodels/faxes.go"
-      ],
-      "tokens": 6
-    },
-    {
       "hash": "975b0be8892b1ffd",
       "files": [
         "internal/web/views/phone.templ",
@@ -716,9 +657,9 @@
     {
       "hash": "9a43bfa47b39295c",
       "files": [
-        "internal/web/views/reports.templ",
         "internal/web/views/messages.templ",
-        "internal/web/views/fax.templ"
+        "internal/web/views/fax.templ",
+        "internal/web/views/reports.templ"
       ],
       "tokens": 6
     },
@@ -786,26 +727,10 @@
       "tokens": 6
     },
     {
-      "hash": "a31a7dc76f0f5fe0",
-      "files": [
-        "internal/web/views/phone.templ",
-        "internal/web/views/phone.templ"
-      ],
-      "tokens": 4
-    },
-    {
-      "hash": "a3a1ec1ef53b4a0d",
-      "files": [
-        "internal/web/views/history.templ",
-        "internal/web/views/reports.templ"
-      ],
-      "tokens": 4
-    },
-    {
       "hash": "a618b191caffe6a5",
       "files": [
-        "internal/web/views/history.templ",
-        "internal/web/views/messages.templ"
+        "internal/web/views/messages.templ",
+        "internal/web/views/history.templ"
       ],
       "tokens": 2
     },
@@ -835,16 +760,17 @@
       "tokens": 2
     },
     {
-      "hash": "b2eace62a76c177d",
+      "hash": "b3d1a5087046a970",
       "files": [
-        "internal/push/push.go",
-        "internal/push/push.go"
+        "internal/web/views/history.templ",
+        "internal/web/views/history.templ"
       ],
       "tokens": 6
     },
     {
       "hash": "b851d7f8418a6560",
       "files": [
+        "internal/web/views/history.templ",
         "internal/web/views/admin.templ",
         "internal/web/views/contacts.templ",
         "internal/web/views/settings.templ",
@@ -854,7 +780,7 @@
         "internal/web/views/admin.templ",
         "internal/web/views/admin.templ"
       ],
-      "tokens": 16
+      "tokens": 18
     },
     {
       "hash": "b96984bc4d7e3b4b",
@@ -863,14 +789,6 @@
         "internal/web/views/admin.templ"
       ],
       "tokens": 2
-    },
-    {
-      "hash": "bb9eb95021921cdc",
-      "files": [
-        "internal/cqrs/transcripts.go",
-        "internal/readmodels/transcripts.go"
-      ],
-      "tokens": 4
     },
     {
       "hash": "bc0b8f2f3f03e5ff",
@@ -913,14 +831,6 @@
       "tokens": 4
     },
     {
-      "hash": "c438b89f63b55106",
-      "files": [
-        "internal/cqrs/enroll.go",
-        "internal/readmodels/enroll.go"
-      ],
-      "tokens": 14
-    },
-    {
       "hash": "c63ffa0e985337dc",
       "files": [
         "internal/web/views/history.templ",
@@ -953,8 +863,8 @@
         "internal/web/views/layout.templ",
         "internal/web/views/layout.templ",
         "internal/web/views/history.templ",
-        "internal/web/views/history.templ",
         "internal/web/views/layout.templ",
+        "internal/web/views/history.templ",
         "internal/web/views/settings.templ",
         "internal/web/views/layout.templ"
       ],
@@ -1034,36 +944,12 @@
       "tokens": 6
     },
     {
-      "hash": "d824d7400143ac49",
-      "files": [
-        "internal/readmodels/transcripts.go",
-        "internal/cqrs/transcriptsstore.go"
-      ],
-      "tokens": 10
-    },
-    {
       "hash": "dba893dacfe90981",
       "files": [
         "internal/web/views/history.templ",
         "internal/web/views/admin.templ"
       ],
       "tokens": 4
-    },
-    {
-      "hash": "dc91609a5b436dc3",
-      "files": [
-        "internal/readmodels/threads.go",
-        "internal/store/messages.go"
-      ],
-      "tokens": 8
-    },
-    {
-      "hash": "dcaab50199dd515e",
-      "files": [
-        "internal/readmodels/transcripts.go",
-        "internal/cqrs/transcriptsstore.go"
-      ],
-      "tokens": 14
     },
     {
       "hash": "ddb7b449626748c7",
@@ -1086,21 +972,14 @@
       "tokens": 2
     },
     {
-      "hash": "e4210c5ed2fcd4a7",
-      "files": [
-        "internal/cqrs/transcriptsstore.go",
-        "internal/readmodels/transcripts.go"
-      ],
-      "tokens": 6
-    },
-    {
       "hash": "e6714ae6d67509f0",
       "files": [
+        "internal/web/views/layout.templ",
         "internal/web/views/layout.templ",
         "internal/web/views/error.templ",
         "internal/web/views/contacts.templ"
       ],
-      "tokens": 3
+      "tokens": 4
     },
     {
       "hash": "eab08738485867a9",
@@ -1135,31 +1014,20 @@
       "tokens": 18
     },
     {
-      "hash": "efff352ba59569e9",
-      "files": [
-        "internal/readmodels/faxes.go",
-        "internal/cqrs/faxesstore.go"
-      ],
-      "tokens": 6
-    },
-    {
       "hash": "f284a893cb53f85c",
-      "files": [
-        "internal/web/views/phone.templ",
-        "internal/web/views/phone.templ",
-        "internal/web/views/phone.templ",
-        "internal/web/views/phone.templ",
-        "internal/web/views/phone.templ"
-      ],
-      "tokens": 5
-    },
-    {
-      "hash": "f5e434bba0d6bd74",
       "files": [
         "internal/web/views/phone.templ",
         "internal/web/views/phone.templ"
       ],
       "tokens": 2
+    },
+    {
+      "hash": "f3c57ca57d68f6f8",
+      "files": [
+        "internal/cqrs/callreviews.go",
+        "internal/cqrs/callnotes.go"
+      ],
+      "tokens": 6
     },
     {
       "hash": "f66b6a70c5b971f6",
@@ -1199,12 +1067,13 @@
       "tokens": 30
     },
     {
-      "hash": "fe78d922561ece38",
+      "hash": "fb2114ed9313b692",
       "files": [
-        "internal/cqrs/enroll.go",
-        "internal/readmodels/enroll.go"
+        "internal/app/app.go",
+        "internal/server/summary_api_test.go",
+        "internal/server/hooks/ring_test.go"
       ],
-      "tokens": 6
+      "tokens": 15
     },
     {
       "hash": "fe845478dbbb3430",
