@@ -350,3 +350,29 @@ main column (`wp-main-col wp-signed-out`) centers the welcome + login
 stack instead. Pinned by `TestServedPageHoldsTheDomContract` (anonymous
 page must be nav-free; the aria-current contract moved to the authed
 page) and the smoke's nav-partial check.
+
+### Train 2/3 structure classes (2026-11-12)
+
+Served classes from the History-table/Reports-grid/Contacts-grid restructure
+and the mobile Phone tab — documented, not pinned: the E2E may rely on them
+only behind capability checks.
+
+- `wp-table-wrap` (History) — the scroll-region wrapper (`role="region"`,
+  `tabindex="0"`) around the CDR `<table class="wp-table">`; day groups are
+  `<tbody>` sections headed by `th.wp-day-head` (the same class also styles
+  the transcript rows' flex heads — dual display context by design).
+  Narrow columns stack each row via `td[data-label]` + `::before content`.
+- `wp-reports-grid` (Reports) — the dashboard wrapper; at wide tab columns
+  the day/hour ladders sit side by side (`wp-reports-days`/`wp-reports-hours`
+  modifiers). `wp-reports-empty` marks the undated EmptyState so auto-flow
+  never splits it.
+- `wp-contacts-grid` (Contacts) — auto-fill fitted grid (two-up desktop,
+  one column narrow).
+- `wp-nav-phone` — the JS-created Phone VIEW-toggle button in the tab strip
+  (mobile only; `display: none` at desktop widths). NOT a route: it carries
+  `aria-pressed` (not `aria-current`), clears `wp-active` from `[data-tab]`
+  links when pressed, and is re-installed after every nav morph swap, so an
+  E2E must not assume a stable strip child count.
+- `wp-phone-focus` — on `<html>` while the dialer focus is live: the main
+  column hides and the island is the one body column. Cleared by any real
+  tab click (the document-level cleanup listener) and on second Phone tap.
