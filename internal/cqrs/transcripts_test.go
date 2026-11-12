@@ -3,9 +3,9 @@ package cqrs
 import (
 	"context"
 	"fmt"
-	"sync/atomic"
 	"strconv"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
