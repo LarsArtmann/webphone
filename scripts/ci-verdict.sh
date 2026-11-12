@@ -83,9 +83,15 @@ case "$sha" in
 "" | -* | help) usage ;;
 esac
 
-runs=$(gh run list --commit "$sha" --limit 100 \
-	--json workflowName,headSha,conclusion 2>&1) || {
-	echo "gh run list failed: $runs" >&2
+# `gh run list --commit <sha>` answers EMPTY on this repo even when runs
+# exist (verified live 2026-11-12: the API's head_sha filter returns the
+# runs the --commit flag misses). Query the API directly and map into the
+# same JSON shape the verdict parser consumes.
+full_sha=$(git rev-parse --verify --quiet "$sha^{commit}") || full_sha="$sha"
+runs=$(gh api "repos/LarsArtmann/webphone/actions/runs?head_sha=$full_sha&per_page=100" \
+	--jq '{runs: [.workflow_runs[] | {workflowName: .name, headSha: .head_sha, conclusion: .conclusion}]}' 2>&1) || {
+	echo "gh api failed: $runs" >&2
 	exit 3
 }
-echo "$runs" | verdict_from_json
+# The parser reads a bare array; unwrap the envelope.
+echo "$runs" | python3 -c 'import json, sys; print(json.dumps(json.load(sys.stdin)["runs"]))' | verdict_from_json
