@@ -1,4 +1,4 @@
-package server
+package platform
 
 import (
 	"context"
@@ -29,7 +29,7 @@ type TraceRecorder interface {
 // traceMiddleware reports every completed request to the recorder. It is
 // added to the chain ONLY when the seam is wired, so an untraced
 // deployment pays nothing at all.
-func traceMiddleware(rec TraceRecorder) func(http.Handler) http.Handler {
+func TraceMiddleware(rec TraceRecorder) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
@@ -52,13 +52,13 @@ func traceMiddleware(rec TraceRecorder) func(http.Handler) http.Handler {
 // it (a successful snapshot hands back a filesystem path). Disabled means
 // the seam is off and the surface does not exist — the ASR-seam
 // convention, where a disabled feature answers like a missing one.
-func (h *handlers) traceSnapshot(w http.ResponseWriter, r *http.Request) {
-	if !machineSurface(w, r, h.deps.Trace != nil, h.notFound) {
+func (p *Hub) TraceSnapshot(w http.ResponseWriter, r *http.Request) {
+	if !machineSurface(w, r, p.deps.Trace != nil, p.shell.NotFound) {
 		return
 	}
-	path, err := h.deps.Trace.Snapshot(r.Context())
+	path, err := p.deps.Trace.Snapshot(r.Context())
 	if err != nil {
-		h.internalError(w, r, "write trace snapshot", err)
+		p.shell.InternalError(w, r, "write trace snapshot", err)
 		return
 	}
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")

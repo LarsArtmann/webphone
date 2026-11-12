@@ -12,7 +12,7 @@ import (
 
 	flightrecorder "github.com/larsartmann/go-flightrecorder"
 
-	"github.com/larsartmann/webphone/internal/server"
+	"github.com/larsartmann/webphone/internal/server/platform"
 )
 
 // The flight recorder is an OPT-IN debugging seam: it keeps a rolling
@@ -46,7 +46,7 @@ func debugFlightRecorderEnabled() bool {
 	return err == nil && on
 }
 
-// traceRecorder adapts go-flightrecorder to the server's TraceRecorder
+// traceRecorder adapts go-flightrecorder to the platform package's TraceRecorder
 // seam. It implements do.Shutdowner so the container drains in-flight
 // captures on exit (the library blocks Close until they finish).
 type traceRecorder struct {
@@ -76,7 +76,7 @@ func newTraceRecorder(dir string) (*traceRecorder, error) {
 	}, nil
 }
 
-// Observe implements server.TraceRecorder. The request context is detached
+// Observe implements platform.TraceRecorder. The request context is detached
 // from cancellation: the snapshot write outlives the response, and the
 // library skips a capture whose context is already dead.
 func (t *traceRecorder) Observe(ctx context.Context, d time.Duration, status int) {
@@ -87,7 +87,7 @@ func (t *traceRecorder) Observe(ctx context.Context, d time.Duration, status int
 	t.rec.SnapshotIfAsync(context.WithoutCancel(ctx), tc, t.trigger)
 }
 
-// Snapshot implements server.TraceRecorder.
+// Snapshot implements platform.TraceRecorder.
 func (t *traceRecorder) Snapshot(ctx context.Context) (string, error) {
 	path, err := t.rec.SnapshotToDir(ctx)
 	if err != nil {
@@ -125,7 +125,7 @@ func traceRecorderFor(cfgDataDir string) (*traceRecorder, error) {
 // the typed-nil trap: a nil *traceRecorder must become a TRUE nil
 // interface, or `deps.Trace != nil` would wire middleware over a nil
 // receiver (the same class as the SSO nil-client break).
-func traceSeam(rec *traceRecorder) server.TraceRecorder {
+func traceSeam(rec *traceRecorder) platform.TraceRecorder {
 	if rec == nil {
 		return nil
 	}

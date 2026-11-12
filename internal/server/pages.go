@@ -13,6 +13,7 @@ import (
 
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/server/auth"
+	"github.com/larsartmann/webphone/internal/server/platform"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/web/views"
 )
@@ -68,12 +69,12 @@ type handlers struct {
 	unread *unreadCache
 	// Request-duration aggregates for /metrics (the ONE recorder instance:
 	// the middleware writes it, the metrics handler reads it).
-	latency *latencyRecorder
+	latency *platform.LatencyRecorder
 	// Island latency-beacon histograms for /metrics (the measure-first
 	// latency design; built ONLY when metrics.island_beacon is on — nil
 	// keeps the beacon route on a terse 404 and /metrics without the
 	// family, so the flag-off product stays byte-identical).
-	island *islandLatency
+	island *platform.IslandLatency
 }
 
 // page renders the full shell for the root URL. The login page is the
@@ -173,6 +174,23 @@ func (h *handlers) NotFound(w http.ResponseWriter, r *http.Request) { h.notFound
 // NotifyToast is the auth seam's toast push.
 func (h *handlers) NotifyToast(w http.ResponseWriter, kind, msg string) {
 	notifyToast(w, kind, msg)
+}
+
+// NotFoundPage is the platform seam's styled 404 (asset-tree misses).
+func (h *handlers) NotFoundPage(w http.ResponseWriter, r *http.Request) {
+	h.notFoundPage(w, r)
+}
+
+// InternalError is the platform seam's terse 500 (op logged).
+func (h *handlers) InternalError(w http.ResponseWriter, r *http.Request, op string, err error) {
+	h.internalError(w, r, op, err)
+}
+
+// NotifyVoicemail is the platform seam's post-read voicemail nudge (the
+// proxy forwards a 2xx voicemail read; the event vocabulary's one home
+// stays here).
+func (h *handlers) NotifyVoicemail(extension domain.Extension) {
+	h.deps.Hubs.Publish(extension, sseEventVoicemail, "")
 }
 
 // safeDetail logs the full error for the operator (English op text,

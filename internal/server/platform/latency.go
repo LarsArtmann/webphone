@@ -1,4 +1,4 @@
-package server
+package platform
 
 import (
 	"fmt"
@@ -24,7 +24,7 @@ var latencyBuckets = [...]float64{0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1, 2
 // itself — self-scrapes would otherwise dominate the slow tail.
 //
 // Safe for concurrent use (satisfies httputil.MetricsRecorder).
-type latencyRecorder struct {
+type LatencyRecorder struct {
 	mu sync.Mutex
 	// counts[i] is the number of observations that fell in bucket i
 	// (non-cumulative; the exposition accumulates).
@@ -35,13 +35,13 @@ type latencyRecorder struct {
 	classes map[int]uint64
 }
 
-func newLatencyRecorder() *latencyRecorder {
-	return &latencyRecorder{classes: map[int]uint64{}}
+func NewLatencyRecorder() *LatencyRecorder {
+	return &LatencyRecorder{classes: map[int]uint64{}}
 }
 
 // Record implements httputil.MetricsRecorder. The method and path arguments
 // are accepted for interface conformance only: neither is labelled.
-func (l *latencyRecorder) Record(_, path string, status int, d time.Duration) {
+func (l *LatencyRecorder) Record(_, path string, status int, d time.Duration) {
 	if path == "/metrics" {
 		return
 	}
@@ -65,7 +65,7 @@ func (l *latencyRecorder) Record(_, path string, status int, d time.Duration) {
 // writePrometheus appends the histogram and the status-class counter to the
 // exposition. Cumulative bucket semantics are built here, not stored, so the
 // hot path stays one increment.
-func (l *latencyRecorder) writePrometheus(b *strings.Builder) {
+func (l *LatencyRecorder) writePrometheus(b *strings.Builder) {
 	l.mu.Lock()
 	counts := l.counts
 	sum, total := l.sum, l.total

@@ -41,6 +41,7 @@ import (
 	"github.com/larsartmann/webphone/internal/server/api"
 	"github.com/larsartmann/webphone/internal/server/auth"
 	"github.com/larsartmann/webphone/internal/server/hooks"
+	"github.com/larsartmann/webphone/internal/server/platform"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/textagent"
 	"github.com/larsartmann/webphone/internal/userauth"
@@ -158,6 +159,13 @@ func newTemplRateLimiter(limit, burst uint) *httputil.KeyedRateLimiter {
 			_, _ = fmt.Fprintf(w, `<div class="wp-error" role="alert">%s</div>`, templRateLimitedMsg)
 		},
 	})
+}
+
+// sipDirectoryGate guards the internal directory endpoint with the
+// derivation secret (the bridge authenticates with the same secret the
+// server derives under — one secret, two sides of one seam).
+func (h *handlers) sipDirectoryGate(next http.Handler) http.Handler {
+	return hooks.BearerGate(h.deps.Config.SIP.CredentialSecret, "sip credentials not configured", next)
 }
 
 // remoteHostKey keys the bucket by the direct peer's host. The port MUST
@@ -292,7 +300,7 @@ type Deps struct {
 	// off). Nil: no request observation and no snapshot endpoint. Non-nil:
 	// every request is reported and GET /internal/flightrecorder writes a
 	// trace window (loopback only).
-	Trace TraceRecorder
+	Trace platform.TraceRecorder
 	// Push is the OPTIONAL push fanout behind ring-while-closed (the
 	// /hooks/ring lane and the /api/push-devices registry). Nil or
 	// disabled: the device API answers 404 and the ring hook
@@ -367,9 +375,9 @@ func New(deps Deps) http.Handler {
 	// that). The handlers' own field keeps the concrete type: nil-pointer
 	// comparison is what metrics.go checks.
 	var islandMetrics api.IslandBeaconSink
-	var islandRecorder *islandLatency
+	var islandRecorder *platform.IslandLatency
 	if deps.Config.Metrics.IslandBeacon {
-		islandRecorder = newIslandLatency()
+		islandRecorder = platform.NewIslandLatency()
 		islandMetrics = islandRecorder
 	}
 	h := &handlers{
@@ -389,7 +397,7 @@ func New(deps Deps) http.Handler {
 		cookies:              cookies,
 		csrfCfg:              csrfCfg,
 		unread:               newUnreadCache(5 * time.Second),
-		latency:              newLatencyRecorder(),
+		latency:              platform.NewLatencyRecorder(),
 		island:               islandRecorder,
 	}
 	// The carved auth surface (internal/server/auth): BOTH login modes,
@@ -435,6 +443,32 @@ func New(deps Deps) http.Handler {
 		Devices:       deps.PushDevices,
 		Notify:        notifierProject(deps.Notifier),
 	})
+
+	// The carved platform surface (internal/server/platform): the asset
+	// tree, /metrics, the CSP intake, the flight-recorder snapshot, the
+	// /phone-api proxy, the directory bridge, /config.js and the export.
+	// The hub reaches the session gate and the render/error plumbing back
+	// through h (the platform.Shell seam); the SSE nudge vocabulary keeps
+	// its one home in this package.
+	platformHub := platform.New(platform.Deps{
+		Version:     DisplayVersion(),
+		Config:      deps.Config,
+		DB:          deps.DB,
+		Sessions:    deps.Sessions,
+		Messages:    deps.Messages,
+		Faxes:       deps.Faxes,
+		Contacts:    deps.Contacts,
+		Transcripts: deps.Transcripts,
+		CRM:         deps.CRM,
+		Shared:      deps.Shared,
+		PhoneAPI:    deps.PhoneAPI,
+		TextAgent:   deps.TextAgent,
+		ASR:         deps.ASR,
+		ASRLocality: deps.ASRLocality,
+		Trace:       deps.Trace,
+		Latency:     h.latency,
+		Island:      h.island,
+	}, h)
 
 	csrf := httputil.CSRFMiddleware(csrfCfg)
 
@@ -566,7 +600,7 @@ func New(deps Deps) http.Handler {
 	// and personal contact the signed-in extension owns (settings-tab
 	// download link). GET-only and read-only, so the session cookie alone
 	// is the right gate — no CSRF surface.
-	protected.HandleFunc("GET /api/export", h.exportData)
+	protected.HandleFunc("GET /api/export", platformHub.ExportData)
 	// The island's post-call report to the CRM integration: session-gated,
 	// CSRF via authedFetch, sharing the contacts write budget (same class:
 	// one island JSON POST per user action). A disabled CRM answers 204 —
@@ -633,7 +667,7 @@ func New(deps Deps) http.Handler {
 	// per-peer-host bucket (60/min burst 60) is orders of magnitude above
 	// real traffic (one fetch per login rotation).
 	protected.Handle("GET /api/csrf", h.csrfLimiter.Middleware()(http.HandlerFunc(apiHandlers.RefreshCSRF)))
-	protected.Handle("/phone-api/", session.Require(h.deps.Sessions, http.HandlerFunc(h.proxyPhoneAPI), lifetime, cookies))
+	protected.Handle("/phone-api/", session.Require(h.deps.Sessions, http.HandlerFunc(platformHub.ProxyPhoneAPI), lifetime, cookies))
 	// Unknown paths render the styled 404 (shell + error panel), not Go's
 	// bare-text default — the catch-all sits inside the CSRF layer so the
 	// response shape matches every other full page.
@@ -645,13 +679,13 @@ func New(deps Deps) http.Handler {
 	// concatenates sse + idiomorph with per-extension version comments and a
 	// composite ETag) — the page loads exactly one script tag instead of two.
 	open.Handle("/htmx-ext.js", htmx.ExtensionsHandler(htmx.ExtSSE, htmx.ExtIdiomorph))
-	open.Handle("/assets/", h.assets())
-	open.HandleFunc("GET /config.js", h.configJS)
-	open.HandleFunc("GET /favicon.svg", h.favicon)
+	open.Handle("/assets/", platformHub.Assets())
+	open.HandleFunc("GET /config.js", platformHub.ConfigJS)
+	open.HandleFunc("GET /favicon.svg", platformHub.Favicon)
 	// Browsers and hard-coded scrapers ask for /favicon.ico when no icon
 	// link is parsed; the modern SVG answers both names (content-type
 	// carries the format, and every current browser sniffs it fine).
-	open.HandleFunc("GET /favicon.ico", h.favicon)
+	open.HandleFunc("GET /favicon.ico", platformHub.Favicon)
 	// PWA-LITE install manifest (2026-10-23 decision: owner demand signal
 	// unlocked the parked manifest; the service-worker NOT-DO of the
 	// 2026-09-22 spike stands — no fetch interception, zero staleness
@@ -665,11 +699,11 @@ func New(deps Deps) http.Handler {
 	// middleware wraps, so session/credential/SSE surfaces are
 	// structurally untouched (pinned by TestConditionalGETRootDocuments).
 	conditionalGET := etag.New(etag.DefaultETagConfig())
-	open.Handle("GET /manifest.webmanifest", conditionalGET(http.HandlerFunc(h.manifest)))
+	open.Handle("GET /manifest.webmanifest", conditionalGET(http.HandlerFunc(platformHub.Manifest)))
 	// /metrics is the ops scrape surface: AGGREGATES only (counts +
 	// build facts, never per-extension data), fenced per-location by
 	// the module's vhost like the probe triple.
-	open.HandleFunc("GET /metrics", h.metrics)
+	open.HandleFunc("GET /metrics", platformHub.Metrics)
 	// GET /events is rate-limited like the other unauthenticated-by-secret
 	// surfaces: a reconnecting tab (or a broken client) must not churn
 	// unlimited streams. One bucket per peer host reuses the hook budget
@@ -817,16 +851,16 @@ func New(deps Deps) http.Handler {
 	// without credentials; the bucket + the 4 KiB cap are the fences). One
 	// greppable journal line per accepted report makes a live XSS-class
 	// event observable instead of silent.
-	open.Handle("POST /csp-report", h.cspLimiter.Middleware()(http.HandlerFunc(h.cspReport)))
+	open.Handle("POST /csp-report", h.cspLimiter.Middleware()(http.HandlerFunc(platformHub.CSPReport)))
 	// The internal directory endpoint (the stack's FS directory bridge is
 	// the only consumer): outside CSRF/session (webhooks-class — secret
 	// gated), hook-grade flood budget, loopback-only posture in-handler.
 	open.Handle("GET /internal/directory/{extension}",
-		h.hookLimiter.Middleware()(h.sipDirectoryGate(http.HandlerFunc(h.internalDirectory))))
+		h.hookLimiter.Middleware()(h.sipDirectoryGate(http.HandlerFunc(platformHub.InternalDirectory))))
 	// The flight-recorder snapshot endpoint: machine-facing, registered
 	// unconditionally so the disabled seam answers the styled 404 rather
 	// than falling through the open mux; loopback-only in-handler.
-	open.HandleFunc("GET /internal/flightrecorder", h.traceSnapshot)
+	open.HandleFunc("GET /internal/flightrecorder", platformHub.TraceSnapshot)
 
 	root := http.NewServeMux()
 	root.Handle("/", session.Attach(h.deps.Sessions, csrf(protected), lifetime, cookies))
@@ -876,13 +910,13 @@ func New(deps Deps) http.Handler {
 		httputil.Metrics(httputil.MetricsConfig{Recorder: h.latency}),
 	}
 	if deps.Trace != nil {
-		middlewares = append(middlewares, traceMiddleware(deps.Trace))
+		middlewares = append(middlewares, platform.TraceMiddleware(deps.Trace))
 	}
 	middlewares = append(middlewares,
 		cqrshtmx.RequestLoggingSlog(slog.Default()),
 		servertiming.ServerTimingMiddlewareWhen(func(*http.Request) bool { return timingEnabled }),
 		security,
-		reportingEndpointsMiddleware,
+		platform.ReportingEndpointsMiddleware,
 		cqrshtmx.RecoveryMiddleware,
 	)
 	return cqrshtmx.Chain(middlewares...)(root)

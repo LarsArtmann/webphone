@@ -1,4 +1,4 @@
-package server
+package platform
 
 import (
 	"compress/gzip"
@@ -17,7 +17,7 @@ import (
 // stylesheet, the vendored sip.js bundle, the shell stylesheet, glue
 // script, and theme preload. Everything is same-origin; Content-Types
 // come from the file extensions via http.FileServer's FS-based serving.
-func (h *handlers) assets() http.Handler {
+func (p *Hub) Assets() http.Handler {
 	sub, err := fs.Sub(assets.FS(), "island")
 	if err != nil {
 		// Boot-time programmer-error contract (branching-flow triage
@@ -87,7 +87,7 @@ func (h *handlers) assets() http.Handler {
 	// client renders is bandwidth spent for nothing.
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.Header.Get("Accept"), "text/html") {
-			h.notFoundPage(w, r)
+			p.shell.NotFoundPage(w, r)
 			return
 		}
 		http.NotFound(w, r)
@@ -188,12 +188,12 @@ func noStore(next http.Handler) http.Handler {
 }
 
 // favicon serves the embedded island favicon at the site root.
-func (h *handlers) favicon(w http.ResponseWriter, r *http.Request) {
+func (p *Hub) Favicon(w http.ResponseWriter, r *http.Request) {
 	serveEmbedded(w, r, "island/favicon.svg", "image/svg+xml")
 }
 
 // manifest serves the PWA-LITE install manifest at the site root; the
 // head links it from every shell render (layout.templ headExtras).
-func (h *handlers) manifest(w http.ResponseWriter, r *http.Request) {
+func (p *Hub) Manifest(w http.ResponseWriter, r *http.Request) {
 	serveEmbedded(w, r, "island/manifest.webmanifest", "application/manifest+json")
 }

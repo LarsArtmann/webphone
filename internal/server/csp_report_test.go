@@ -10,6 +10,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/larsartmann/webphone/internal/server/platform"
 )
 
 // TestCspHeaderCarriesTheReportingLane pins the reporting lane: the strict
@@ -77,7 +79,7 @@ func TestCspReportFences(t *testing.T) {
 	ts := newTestServer(t)
 
 	resp, err := http.Post(ts.URL+"/csp-report", "application/csp-report",
-		strings.NewReader(fmt.Sprintf(`{"csp-report":{"blocked-uri":"%s"}}`, strings.Repeat("x", cspReportMaxBody))))
+		strings.NewReader(fmt.Sprintf(`{"csp-report":{"blocked-uri":"%s"}}`, strings.Repeat("x", 5<<10))))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -127,7 +129,18 @@ func TestCspReportFences(t *testing.T) {
 // decodes the Reporting API's csp-report object and keeps unknown fields
 // legal, so a browser adding keys never turns a report into a 400.
 func TestCspReportDecodeKnowsTheBrowserShape(t *testing.T) {
-	var payload cspReportPayload
+	// Local mirror of the intake's payload shape (the type moved with the
+	// platform carve): the test pins the WIRE, and the wire is the JSON.
+	var payload struct {
+		Report struct {
+			EffectiveDirective string `json:"effective-directive"`
+			ViolatedDirective  string `json:"violated-directive"`
+			BlockedURI         string `json:"blocked-uri"`
+			SourceFile         string `json:"source-file"`
+			LineNumber         int    `json:"line-number"`
+			DocumentURI        string `json:"document-uri"`
+		} `json:"csp-report"`
+	}
 	raw := `{"csp-report":{"document-uri":"https://home.lan/","violated-directive":"style-src","effective-directive":"style-src","blocked-uri":"inline","status-code":200,"unknown-future-field":true}}`
 	if err := json.Unmarshal([]byte(raw), &payload); err != nil {
 		t.Fatalf("browser-shaped report failed to decode: %v", err)
@@ -142,7 +155,7 @@ func TestCspReportDecodeKnowsTheBrowserShape(t *testing.T) {
 // drop the header while the CSP keeps referencing the group.
 func TestReportingEndpointsMiddlewareSetsTheHeader(t *testing.T) {
 	rec := httptest.NewRecorder()
-	reportingEndpointsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+	platform.ReportingEndpointsMiddleware(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})).ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/", nil))
 	if got := rec.Header().Get("Reporting-Endpoints"); got != `csp-endpoint="/csp-report"` {

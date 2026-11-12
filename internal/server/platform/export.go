@@ -1,4 +1,4 @@
-package server
+package platform
 
 import (
 	"archive/zip"
@@ -75,24 +75,24 @@ type exportTranscript struct {
 // sizes are listed in the JSON): the zip is a portable manifest, and the
 // blobs remain in the server's blob store where they are swept by
 // retention.
-func (h *handlers) exportData(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.RequireSession(w, r)
+func (p *Hub) ExportData(w http.ResponseWriter, r *http.Request) {
+	sess, ok := p.shell.RequireSession(w, r)
 	if !ok {
 		return
 	}
 
-	threadViews, err := h.deps.Messages.ListThreads(r.Context(), sess.Extension)
+	threadViews, err := p.deps.Messages.ListThreads(r.Context(), sess.Extension)
 	if err != nil {
 		http.Error(w, "could not list threads", http.StatusInternalServerError)
 		return
 	}
 	threads := readmodels.SummariesOfView(threadViews)
-	faxes, err := h.deps.Faxes.List(r.Context(), sess.Extension, exportLimit)
+	faxes, err := p.deps.Faxes.List(r.Context(), sess.Extension, exportLimit)
 	if err != nil {
 		http.Error(w, "could not list faxes", http.StatusInternalServerError)
 		return
 	}
-	contacts, err := h.deps.Contacts.List(r.Context(), sess.Extension)
+	contacts, err := p.deps.Contacts.List(r.Context(), sess.Extension)
 	if err != nil {
 		http.Error(w, "could not list contacts", http.StatusInternalServerError)
 		return
@@ -102,8 +102,8 @@ func (h *handlers) exportData(w http.ResponseWriter, r *http.Request) {
 	// reassembled per call. A read failure fails the whole export — a
 	// zip that silently omits a leg is not an honest export.
 	outTranscripts := []exportTranscript{}
-	if h.deps.Transcripts != nil {
-		calls, err := h.deps.Transcripts.Export(r.Context(), sess.Extension, exportLimit)
+	if p.deps.Transcripts != nil {
+		calls, err := p.deps.Transcripts.Export(r.Context(), sess.Extension, exportLimit)
 		if err != nil {
 			http.Error(w, "could not list transcripts", http.StatusInternalServerError)
 			return
@@ -118,7 +118,7 @@ func (h *handlers) exportData(w http.ResponseWriter, r *http.Request) {
 
 	outThreads := make([]exportThread, 0, len(threads))
 	for _, summary := range threads {
-		msgs, err := h.deps.Messages.ListMessages(r.Context(), sess.Extension, summary.Thread.ID, exportLimit)
+		msgs, err := p.deps.Messages.ListMessages(r.Context(), sess.Extension, summary.Thread.ID, exportLimit)
 		if err != nil {
 			http.Error(w, "could not list messages", http.StatusInternalServerError)
 			return

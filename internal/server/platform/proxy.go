@@ -1,4 +1,4 @@
-package server
+package platform
 
 import (
 	"io"
@@ -13,19 +13,19 @@ import (
 // upstream, injecting Basic auth from the server session. The island's
 // panels (voicemail, history) keep working byte-for-byte: same paths, same
 // JSON, no password in the browser beyond the island's own memory copy.
-func (h *handlers) proxyPhoneAPI(w http.ResponseWriter, r *http.Request) {
-	sess, ok := h.RequireSession(w, r)
+func (p *Hub) ProxyPhoneAPI(w http.ResponseWriter, r *http.Request) {
+	sess, ok := p.shell.RequireSession(w, r)
 	if !ok {
 		return
 	}
-	if !h.deps.PhoneAPI.Enabled() {
+	if !p.deps.PhoneAPI.Enabled() {
 		w.Header().Set("Retry-After", hooks.RetryAfterHint)
 		http.Error(w, "phone api not configured", http.StatusServiceUnavailable)
 		return
 	}
 
 	rest := strings.TrimPrefix(r.URL.Path, "/phone-api")
-	upstream := h.deps.PhoneAPI.UpstreamURL(rest, r.URL.RawQuery)
+	upstream := p.deps.PhoneAPI.UpstreamURL(rest, r.URL.RawQuery)
 
 	req, err := http.NewRequestWithContext(r.Context(), r.Method, upstream, nil)
 	if err != nil {
@@ -45,7 +45,7 @@ func (h *handlers) proxyPhoneAPI(w http.ResponseWriter, r *http.Request) {
 		req.Body = io.NopCloser(io.LimitReader(r.Body, 1<<20))
 	}
 
-	resp, err := h.deps.PhoneAPI.HTTPClient().Do(req)
+	resp, err := p.deps.PhoneAPI.HTTPClient().Do(req)
 	if err != nil {
 		http.Error(w, "phone api unreachable", http.StatusBadGateway)
 		return
@@ -69,6 +69,6 @@ func (h *handlers) proxyPhoneAPI(w http.ResponseWriter, r *http.Request) {
 	// without any server-side polling of the PBX. The nudge carries no
 	// payload; the panel re-fetches its partial on receipt.
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 && strings.HasPrefix(rest, "/voicemail/") {
-		h.deps.Hubs.Publish(sess.Extension, sseEventVoicemail, "")
+		p.shell.NotifyVoicemail(sess.Extension)
 	}
 }

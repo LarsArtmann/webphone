@@ -1,4 +1,4 @@
-package server
+package platform
 
 import (
 	"encoding/json/v2"
@@ -42,7 +42,7 @@ type cspReportPayload struct {
 // per accepted report. The answer is 204 for anything that parses or fails
 // to parse — report delivery is best-effort by the Reporting API contract,
 // and the browser discards the response either way.
-func (h *handlers) cspReport(w http.ResponseWriter, r *http.Request) {
+func (p *Hub) CSPReport(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		w.Header().Set("Allow", "POST")
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
@@ -80,7 +80,7 @@ func (h *handlers) cspReport(w http.ResponseWriter, r *http.Request) {
 // response, pairing the CSP's report-to directive with its target group.
 // It rides the middleware chain next to SecurityHeaders so the strict shell
 // CSP, the dashboard subtree and the login lane all carry it.
-func reportingEndpointsMiddleware(next http.Handler) http.Handler {
+func ReportingEndpointsMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Reporting-Endpoints", reportingEndpoints)
 		next.ServeHTTP(w, r)

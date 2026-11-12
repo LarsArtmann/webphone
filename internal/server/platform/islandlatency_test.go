@@ -1,4 +1,4 @@
-package server
+package platform
 
 import (
 	"strings"
@@ -6,7 +6,7 @@ import (
 )
 
 func TestIslandLatencyRecordFoldsValidLegs(t *testing.T) {
-	m := newIslandLatency()
+	m := NewIslandLatency()
 	m.RecordBeacon("dial_to_audio", map[string]int64{
 		"island_overhead": 12,
 		"signaling":       1500,
@@ -35,7 +35,7 @@ func TestIslandLatencyRecordFoldsValidLegs(t *testing.T) {
 }
 
 func TestIslandLatencyDropsMalformedBeaconsSilently(t *testing.T) {
-	m := newIslandLatency()
+	m := NewIslandLatency()
 	m.RecordBeacon("totally_unknown", map[string]int64{"leg": 5}, nil)
 	m.RecordBeacon("dial_to_audio", map[string]int64{"rogue_leg": 5}, nil)
 	m.RecordBeacon("asr_round_trip", map[string]int64{"capture_to_post": -1}, nil)
@@ -49,7 +49,7 @@ func TestIslandLatencyDropsMalformedBeaconsSilently(t *testing.T) {
 }
 
 func TestIslandLatencyNegativeBytesDropButLegSurvives(t *testing.T) {
-	m := newIslandLatency()
+	m := NewIslandLatency()
 	m.RecordBeacon("dial_to_audio", map[string]int64{"signaling": 10}, new(int64(-3)))
 	var b strings.Builder
 	m.writePrometheus(&b)
@@ -63,7 +63,7 @@ func TestIslandLatencyNegativeBytesDropButLegSurvives(t *testing.T) {
 }
 
 func TestIslandLatencyEmptyRendersNoFamily(t *testing.T) {
-	m := newIslandLatency()
+	m := NewIslandLatency()
 	var b strings.Builder
 	m.writePrometheus(&b)
 	if out := b.String(); out != "" {
@@ -72,7 +72,7 @@ func TestIslandLatencyEmptyRendersNoFamily(t *testing.T) {
 }
 
 func TestIslandLatencyASRBytesHistogram(t *testing.T) {
-	m := newIslandLatency()
+	m := NewIslandLatency()
 	size := int64(4000)
 	m.RecordBeacon("asr_round_trip", map[string]int64{"parse_to_insert": 3}, &size)
 	var b strings.Builder

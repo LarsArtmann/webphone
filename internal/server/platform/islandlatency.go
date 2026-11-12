@@ -1,4 +1,4 @@
-package server
+package platform
 
 import (
 	"fmt"
@@ -106,14 +106,14 @@ type islandSeriesKey struct {
 // nothing flowed publishes nothing that reads as broken).
 //
 // Safe for concurrent use.
-type islandLatency struct {
+type IslandLatency struct {
 	mu       sync.Mutex
 	series   map[islandSeriesKey]*islandBucket
 	asrBytes *islandBucket
 }
 
-func newIslandLatency() *islandLatency {
-	return &islandLatency{series: map[islandSeriesKey]*islandBucket{}}
+func NewIslandLatency() *IslandLatency {
+	return &IslandLatency{series: map[islandSeriesKey]*islandBucket{}}
 }
 
 // RecordBeacon folds one beacon. It IS the error handling: an unknown
@@ -121,7 +121,7 @@ func newIslandLatency() *islandLatency {
 // size — any malformed beacon is dropped SILENTLY (instrumentation
 // never alerts on itself, the design note's failure posture), so the
 // method has no error return to wrap and no error family to register.
-func (m *islandLatency) RecordBeacon(interval string, legsMS map[string]int64, segmentBytes *int64) {
+func (m *IslandLatency) RecordBeacon(interval string, legsMS map[string]int64, segmentBytes *int64) {
 	allowed := islandLatencyLegs[interval]
 	if allowed == nil {
 		return
@@ -155,7 +155,7 @@ func (m *islandLatency) RecordBeacon(interval string, legsMS map[string]int64, s
 // writePrometheus appends the island latency histograms (and the ASR
 // segment-size histogram) to the exposition. Series render in sorted
 // (interval, leg) order so a scrape diff stays stable.
-func (m *islandLatency) writePrometheus(sb *strings.Builder) {
+func (m *IslandLatency) writePrometheus(sb *strings.Builder) {
 	m.mu.Lock()
 	series := make(map[islandSeriesKey]*islandBucket, len(m.series))
 	maps.Copy(series, m.series)

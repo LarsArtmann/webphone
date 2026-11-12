@@ -1,6 +1,9 @@
 package server
 
 import (
+	"crypto/hmac"
+	"crypto/sha1"
+	"encoding/base64"
 	"encoding/json/v2"
 	"net/http"
 	"strconv"
@@ -64,7 +67,7 @@ func TestConfigJSTurnRESTCredentials(t *testing.T) {
 	if remaining <= 0 || remaining > 2*time.Hour+time.Minute {
 		t.Errorf("username expiry %s from now, want inside the configured 2h TTL", remaining)
 	}
-	if !verifyTURNPair(secret, turn.Username, turn.Credential) {
+	if !turnPairVerifies(secret, turn.Username, turn.Credential) {
 		t.Errorf("credential %q does not verify as base64(HMAC-SHA1(secret, username))", turn.Credential)
 	}
 
@@ -141,4 +144,13 @@ func TestConfigJSContactsWireKeys(t *testing.T) {
 	if _, ok := contact["Number"]; ok {
 		t.Errorf("capitalized Number leaked onto the wire: %v", contact)
 	}
+}
+
+// turnPairVerifies recomputes the coturn HMAC for username and reports
+// whether credential matches — the test-side oracle for the derivation
+// (the derivation itself lives in the platform package's configjs).
+func turnPairVerifies(secret, username, credential string) bool {
+	mac := hmac.New(sha1.New, []byte(secret))
+	mac.Write([]byte(username))
+	return hmac.Equal([]byte(credential), []byte(base64.StdEncoding.EncodeToString(mac.Sum(nil))))
 }

@@ -1,4 +1,4 @@
-package server
+package platform
 
 import (
 	"crypto/hmac"
@@ -19,21 +19,21 @@ import (
 // server from its config. TURN credentials are short-lived whenever the
 // turn_rest secret is configured: each response derives a fresh pair
 // (coturn REST API) instead of shipping a static password.
-func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
+func (p *Hub) ConfigJS(w http.ResponseWriter, _ *http.Request) {
 	// config.ICEServer and domain.SharedContact carry the JSON tags of the
 	// window.PBX_CONFIG wire contract (see README) — no local mirror types.
-	iceServers := h.deps.Config.ICEServers
-	if h.deps.Config.TURN.Secret != "" {
-		expiry := time.Now().Add(h.deps.Config.TURN.TTL)
-		iceServers = turnRESTCredentials(iceServers, h.deps.Config.TURN.Secret, expiry)
+	iceServers := p.deps.Config.ICEServers
+	if p.deps.Config.TURN.Secret != "" {
+		expiry := time.Now().Add(p.deps.Config.TURN.TTL)
+		iceServers = turnRESTCredentials(iceServers, p.deps.Config.TURN.Secret, expiry)
 	}
 	var cooldownSeconds *int
-	if h.deps.Config.Dial.Cooldown > 0 {
-		secs := int(h.deps.Config.Dial.Cooldown.Seconds())
+	if p.deps.Config.Dial.Cooldown > 0 {
+		secs := int(p.deps.Config.Dial.Cooldown.Seconds())
 		cooldownSeconds = &secs
 	}
 	var metricsBeacon *bool
-	if h.deps.Config.Metrics.IslandBeacon {
+	if p.deps.Config.Metrics.IslandBeacon {
 		on := true
 		metricsBeacon = &on
 	}
@@ -72,18 +72,18 @@ func (h *handlers) configJS(w http.ResponseWriter, _ *http.Request) {
 		SIPCredential bool                   `json:"sipCredential"`
 		Contacts      []domain.SharedContact `json:"contacts,omitempty"`
 	}{
-		SIPDomain:           h.deps.Config.SIPDomain,
-		WebsocketPath:       h.deps.Config.WebsocketPath,
+		SIPDomain:           p.deps.Config.SIPDomain,
+		WebsocketPath:       p.deps.Config.WebsocketPath,
 		ICEServers:          iceServers,
-		PhoneAPI:            h.deps.PhoneAPI.Enabled(),
-		CRM:                 h.deps.CRM.Enabled(),
-		ASR:                 h.asrOn(),
-		Agent:               h.deps.TextAgent != nil,
+		PhoneAPI:            p.deps.PhoneAPI.Enabled(),
+		CRM:                 p.deps.CRM.Enabled(),
+		ASR:                 p.asrOn(),
+		Agent:               p.deps.TextAgent != nil,
 		DialCooldownSeconds: cooldownSeconds,
 		Metrics:             metricsBeacon,
-		ASRLocality:         h.deps.ASRLocality,
-		SIPCredential:       h.deps.Config.SIP.DerivedCredentials(),
-		Contacts:            h.deps.Shared,
+		ASRLocality:         p.deps.ASRLocality,
+		SIPCredential:       p.deps.Config.SIP.DerivedCredentials(),
+		Contacts:            p.deps.Shared,
 	}
 
 	payload, err := json.Marshal(pbxConfig)
