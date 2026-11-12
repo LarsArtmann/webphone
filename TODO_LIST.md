@@ -284,6 +284,29 @@ New open items from the legs session, not homed elsewhere yet.
       contact/snippet/dial codes out; the regen also caught the
       concurrent train's uncommitted codes). Engine = push devices +
       agent audit ONLY (M05 empties it).
+- [x] ~~**Storage-ladder closeout (the plan's M05): delete the last
+      two prod-dead readmodels stores (push devices + agent audit)**
+      (both answered from the cqrs journal since the SUPERB Phase 3
+      swaps; zero prod callers)~~ â done 2026-11-12 â
+      push.go/agentaudit.go + their tests + export.go + readmodels.go
+      (the Engine itself) DELETED; the gate/view surface moved to
+      pushgate.go/agentauditgate.go (gates, views, cap constants) and
+      doc.go now carries the doctrine-complete package header. A new
+      arch test (`TestReadmodelsStaysGatesAndViewsOnly`) pins the
+      purity: no sqliteengine import, no `func Open(` â the
+      second storage brain can never grow back. The five consumer test
+      sites (hooks ring + idempotency contract, auth-audit, push-api,
+      summary-push) boot the journal backends through the core system;
+      both write doors carry the D7 `awaitOwnWrite` (the engine folded
+      synchronously; the ring prune flaked 1/5 without the await).
+      LOAD-BEARING SIDE-FIND: readmodels.go silently carried the
+      sqlite engine-driver registration for every boot â
+      internal/cqrs is now the ONE home (blank import in
+      threadsregister.go; without it every `system.New`, prod
+      included, dies unknown-driver). NewCoreSystem grew the two decls;
+      registry regen'd (10 `readmodels.push_*`/`agent_audit_*` codes
+      out); art-dupl 0 new (baseline holds 117); full suite + race
+      green.
 - [x] **fleet-libs `go-cqrs-lite.md` re-score (B159) + ROADMAP ES
       annotation (B160)** — the A46 leftovers: SUPERB made webphone the
       library's deepest consumer (threads/faxes aggregates, system

@@ -149,6 +149,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Removed
 
+- The LAST two prod-dead `readmodels` engine stores (push devices and
+  agent audit): the journal backends are the one implementation behind
+  `readmodels.PushDeviceGate`/`AgentAuditGate` â gates + view types are
+  all the package holds now, and a new arch test pins that purity (no
+  sqliteengine import, no engine constructor â the second storage brain
+  can never grow back). The five consumer test sites boot the journal
+  backends, and both write doors carry the D7 `awaitOwnWrite`
+  read-your-writes beat (the engine folded synchronously; the ring
+  prune flaked 1/5 without the await). `internal/cqrs` is now the ONE
+  home of the sqlite engine-driver registration â the deleted
+  readmodels.go silently carried it, so without the new blank import
+  every `system.New` boot (prod included) would have died
+  unknown-driver. 10 `readmodels.push_*` / `readmodels.agent_audit_*`
+  error codes leave the contract table.
 - The prod-dead `readmodels` contacts, snippets and dial-cooldown
   stores: the engine-backed twins (prod has answered all three from
   the cqrs journal since the SUPERB swaps) are deleted; `readmodels`

@@ -137,6 +137,7 @@ residue fixes. Companion reports all committed: D2 pair + 4th architecture revie
 ## f) Next queue (priority-ordered, ~34)
 
 **Integrity (P0/P1):**
+
 1. Strike the two landed TODO_LIST rows (hold verdict, ring fan-out) + add
    CHANGELOG entries for the four deepening refactors.
 2. Thread-split race probe (two-goroutine Receive, unseen remote).
@@ -148,20 +149,20 @@ residue fixes. Companion reports all committed: D2 pair + 4th architecture revie
 
 **Structure (P1):**
 7. Execute the `internal/server` carve — auth → html → platform, dormant
-   blueprint, trigger fired.
+blueprint, trigger fired.
 8. Per-package LOC/export ceilings as an arch test (the depth budget).
 9. Views prop typing for the remaining infra types (CDR, Voicemail, textagent).
 10. Store-ladder retirement TODO row (detection command + delete date).
 11. calls.js post-call extraction (postcall.js) per the deepening report.
 12. Delete the dead fax vocabulary doors (ParseFaxStatus consumers gone) or
-    re-point the webhook switch.
+re-point the webhook switch.
 13. `DeliveryStep.Event()` unknown-Kind rejection + round-trip test.
 14. `SendRefused` FailureKind validation.
 15. arch-test services allowlist → denylist (new packages classified by default).
 
 **UI/honesty (P2):**
 16. Hold/resume: add the re-INVITE verdict pins the new tests enable
-    (rejected/timeout arms at the UI level).
+(rejected/timeout arms at the UI level).
 17. Matomo-free glyph cleanup: panels.js text glyphs → inline SVG icons.
 18. `unreadDivider` aria-label fix (em-dash leak).
 19. German locale weekday/month fixes (reports.templ, crm.go) + DE pins.
@@ -175,7 +176,7 @@ residue fixes. Companion reports all committed: D2 pair + 4th architecture revie
 25. Run the docs-gates battery; measure the ratchets after this session's volume.
 26. buildflow full run; erraudit nolint-audit after the sweep-refactor commits.
 27. Annotate tonight's four companion reports into INDEX cross-refs (done for
-    arch-understanding; reviews/modularization INDEX rows pending).
+arch-understanding; reviews/modularization INDEX rows pending).
 28. Answer the standing cqrs-lint gating + C044 owner questions (pending rows).
 29. File the cqrs-lint `/*` lexer draft upstream (owner tick pending).
 
