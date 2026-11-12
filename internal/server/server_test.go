@@ -756,8 +756,13 @@ func TestMetricsServesAggregatesOnly(t *testing.T) {
 		}
 	}
 	// AGGREGATES ONLY: a scraped metrics body must never carry
-	// per-extension or per-number data.
-	for _, leak := range []string{"1001", "+441632960961", "metric probe"} {
+	// per-extension or per-number data. The extension is asserted in its
+	// LABEL form only — a bare `1001` can legitimately appear inside a
+	// float's decimal digits (CI run 43159504844: a duration sum,
+	// 0.027210017000000003, happened to contain the digit sequence and
+	// red the suite as a phantom extension leak). The phone number and
+	// body text are not float-representable, so they stay whole-string.
+	for _, leak := range []string{`"1001"`, "+441632960961", "metric probe"} {
 		if strings.Contains(page, leak) {
 			t.Errorf("metrics leaks %q — aggregates only:\n%s", leak, page)
 		}
