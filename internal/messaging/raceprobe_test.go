@@ -110,6 +110,6 @@ func TestConcurrentFirstSightYieldsOneThread(t *testing.T) {
 		t.Fatalf("Threads after re-delivery: %v", err)
 	}
 	if len(threads) != 1 || threads[0].Thread.Unread != 2 {
-		t.Fatalf("after re-delivery: %d threads, unread %d — want 1 thread, both messages counted", len(threads), threads[0].Unread)
+		t.Fatalf("after re-delivery: %d threads, unread %d — want 1 thread, both messages counted", len(threads), threads[0].Thread.Unread)
 	}
 }
