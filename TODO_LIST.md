@@ -16,11 +16,49 @@ front matter does not carry their history (one home per fact, per the rule above
 
 ### UI/UX destination trains (ratified 2026-11-11 — plan: docs/planning/2026-11-11_15-11_ui-ux-destination.md)
 
-- [ ] **Train 2 — per-surface desktop IA**: History as a scannable table, Reports as a
-      dashboard, contacts/settings layouts fitted to their content — under the shared
-      shell; acceptance = screenshots show RESTRUCTURES, not just paint.
-- [ ] **Train 3 — mobile dialer surface**: island-as-dialer on mobile (ring/dial
-      reachable like an app tab), bottom-bar integration.
+- [ ] **Train 3 tap-through proof** (§f-13 of the 04-09 report): a driver script taps
+      Phone → island full-screen → a real tab returns, capturing the three states —
+      the tab's LOOK is captured (bar fits 8 slots after the `min-width: 0` fix,
+      probe-verified `scrollW 358 ≤ nav 360` at 375px) but the FLOW is unproven.
+- [ ] **Stack E2E strip assumption** (§f-14): the strip gained a JS-created button child;
+      `refreshNav`'s `[data-tab]` walk is safe by construction — confirm the stack's
+      `tests/browser-e2e.py` never assumes a strip child count.
+- [ ] **Phone label i18n** (§f-15): the label is English-only by the D3 shell rule while
+      the localized tabs sit beside it — owner eyes or an owner exception.
+- [ ] **Destination-doc wording** (§f-29): Train 3's acceptance line says
+      "ring-while-closed parity"; the shipped tab is navigation focus, not push —
+      align the plan wording with what shipped.
+
+### UI token/craft + Train 2/3 residue (2026-11-12, harvested from the 04-09 report §f)
+
+- [ ] **Hover matrix per surface** (§f-18): `--hover SURFACE=SELECTOR` pairs so the
+      hover lane can vary per shot instead of one global selector.
+- [ ] **Fixed-element caveat print** (§f-19): full-page CDP captures render
+      `position: fixed` at the original viewport's bottom — one harness print
+      prevents the next "the bar is mid-image" misread (cost a §d scare once).
+- [ ] **helpers.mjs registry-root doc** (§f-20): the stub's querySelector walks
+      registry-root SUBTREES only (a root can never match itself; `body` is not a
+      root) — write it where the next spec author will read it (cost a debug session).
+- [ ] **`.wp-day-head` dual context** (§f-21): one class, two display semantics
+      (flex in transcripts, table-cell in the CDR table) — split the classes at the
+      next touch of either.
+- [ ] **Table region focus ring** (§f-22): the scroll wrapper's `tabindex="0"` needs a
+      focus-visible check INSIDE the container — sticky heads clip the ring.
+- [ ] **Empty-state action buttons** (§f-23, owner eyes): rows point at the composer
+      ("add one above") but carry no button — the library supports ActionText;
+      ruled out as a duplicate affordance, owner may disagree.
+- [ ] **Island state-layer mirror** (§f-25): `island/style.css` took the token
+      additions but not the hover state-layer sweep — deliberate (island buttons
+      use :active scale) or a gap? Decide, write the ruling.
+- [ ] **art-dupl sweep** (§f-30): the table stack lane / reports grid / contacts grid
+      share grid idioms — adjudicate fresh clones against the pinned baseline.
+- [ ] **whitespace-drift CSS-indent verification** (§f-31): confirm the formatter
+      adjudication would catch a 1-space-indent CSS commit (the §d-3 incident class).
+- [ ] **`wp-phone-focus` seeded capture** (§f-32): a 390-wide pass with the focus class
+      pre-seeded via script — the dialer-focus LAYOUT is captureable without taps.
+- [ ] **Sticky-head stacking** (§f-35): table thead z-index (1, inside the wrapper)
+      vs palette (200) and toasts (100) — confirm no bleed when a toast crosses a
+      scrolled table.
 
 ### Voicemail playback train residue (2026-11-10 — the fix is pushed; production legs open)
 
