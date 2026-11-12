@@ -122,11 +122,22 @@ func (s *Service) Send(
 
 	job := domain.NewOutboundFaxJob(domain.GenerateFaxID(), owner, to, path.String(), now)
 	if err := s.faxes.Create(ctx, job); err != nil {
+		s.unspool(path)
 		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_create", "persist fax job")
 	}
 	s.emit(ctx, domain.FaxAdvanced{Owner: owner, Fax: job.ID})
 
 	return s.drive(ctx, job)
+}
+
+// unspool removes a spooled document whose job row never persisted —
+// the compensating delete that keeps the blob tree owned by rows
+// (retention walks rows). Best-effort: the persist error stays the
+// verdict.
+func (s *Service) unspool(path domain.RelPath) {
+	if err := s.blobs.Remove(path); err != nil {
+		slog.Warn("fax: compensate spool remove", "error", err)
+	}
 }
 
 // drive submits one persisted queued job to the gateway and records the
@@ -223,6 +234,7 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundFax) (domai
 
 	job := domain.NewInboundFaxJob(domain.GenerateFaxID(), inbound.Owner, inbound.From, path.String(), inbound.ProviderRef, inbound.Pages, now)
 	if err := s.faxes.Create(ctx, job); err != nil {
+		s.unspool(path)
 		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_create", "persist inbound fax")
 	}
 	s.emit(ctx, domain.FaxAdvanced{Owner: inbound.Owner, Fax: job.ID})

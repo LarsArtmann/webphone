@@ -137,11 +137,14 @@ func (s *Service) Send(
 	msg := domain.NewOutboundMessage(domain.GenerateMessageID(), threadID, owner, to, body, len(uploads), now)
 
 	outbound := gateway.OutboundMessage{Owner: owner, To: to, Body: body}
+	var saved []domain.RelPath
 	for _, upload := range uploads {
 		path, err := s.blobs.Save("attachments", extensionOf(upload), upload.Bytes)
 		if err != nil {
+			s.rollbackSaved(saved)
 			return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.attachment_save", "store attachment")
 		}
+		saved = append(saved, path)
 		attachment := domain.Attachment{
 			ID:        domain.GenerateAttachmentID(),
 			MessageID: msg.ID,
@@ -157,6 +160,7 @@ func (s *Service) Send(
 	}
 
 	if err := s.messages.AppendMessage(ctx, msg); err != nil {
+		s.rollbackSaved(saved)
 		return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.message_append", "persist message")
 	}
 	s.emit(ctx, domain.MessageDeliveryAdvanced{Owner: owner, Thread: threadID})
@@ -206,11 +210,14 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundMessage) (d
 	}
 
 	msg := domain.NewInboundMessage(domain.GenerateMessageID(), threadID, inbound.Owner, inbound.From, inbound.Body, len(inbound.Attachments), now)
+	var saved []domain.RelPath
 	for _, att := range inbound.Attachments {
 		path, err := s.blobs.Save("attachments", extensionOf(att), att.Bytes)
 		if err != nil {
+			s.rollbackSaved(saved)
 			return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.attachment_save", "store inbound attachment")
 		}
+		saved = append(saved, path)
 		msg.Attachments = append(msg.Attachments, domain.Attachment{
 			ID:        domain.GenerateAttachmentID(),
 			MessageID: msg.ID,
@@ -222,11 +229,24 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundMessage) (d
 	}
 
 	if err := s.messages.AppendMessage(ctx, msg); err != nil {
+		s.rollbackSaved(saved)
 		return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.message_append", "persist inbound message")
 	}
 	s.emit(ctx, domain.MessageReceived{Owner: inbound.Owner, Thread: threadID})
 
 	return msg, nil
+}
+
+// rollbackSaved removes the blobs a message saved before its persist
+// failed — the compensating delete that keeps the blob tree owned by
+// rows (retention walks rows; an orphaned file is unreachable forever).
+// Removal is best-effort: the original persist error stays the verdict.
+func (s *Service) rollbackSaved(saved []domain.RelPath) {
+	for _, path := range saved {
+		if err := s.blobs.Remove(path); err != nil {
+			slog.Warn("messaging: compensate blob remove", "error", err)
+		}
+	}
 }
 
 // ResolveThread loads one thread row scoped to the owner — the reply
