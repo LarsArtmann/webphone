@@ -197,18 +197,12 @@ func (r *Receiver) Run(ctx context.Context) error {
 			//     pathological every-window-oversized homeserver cannot
 			//     hot-spin the loop.
 			if since != "" && poisonedCursor(err) {
-				r.log.Warn("matrix: the homeserver refused the saved sync cursor — resuming from a fresh sync", "error", err)
-				if saveErr := r.cursor.Save(ctx, ""); saveErr != nil {
-					r.log.Error("matrix: save empty cursor", "error", saveErr)
-				}
+				r.resetCursor(ctx, "matrix: the homeserver refused the saved sync cursor — resuming from a fresh sync", err)
 				attempt = 1
 				continue
 			}
 			if since != "" && isTooLarge(err) {
-				r.log.Warn("matrix: the sync answer exceeded the read cap — resetting to a fresh sync", "error", err)
-				if saveErr := r.cursor.Save(ctx, ""); saveErr != nil {
-					r.log.Error("matrix: save empty cursor", "error", saveErr)
-				}
+				r.resetCursor(ctx, "matrix: the sync answer exceeded the read cap — resetting to a fresh sync", err)
 				var alive bool
 				attempt, alive = chatloop.Backoff(ctx, r.log, "matrix: re-syncing fresh", err, attempt, 30*time.Second)
 				if !alive {
@@ -247,6 +241,15 @@ func poisonedCursor(err error) bool {
 func isTooLarge(err error) bool {
 	_, ok := errors.AsType[oversizedError](err)
 	return ok
+}
+
+// resetCursor is the self-heal arms' ONE home: drop the poisoned
+// resume point so the next sync starts fresh (the Warn names why).
+func (r *Receiver) resetCursor(ctx context.Context, reason string, cause error) {
+	r.log.Warn(reason, "error", cause)
+	if err := r.cursor.Save(ctx, ""); err != nil {
+		r.log.Error("matrix: save empty cursor", "error", err)
+	}
 }
 
 // ingest turns one sync response into inbound messages.
