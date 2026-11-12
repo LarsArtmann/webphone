@@ -15,7 +15,7 @@ import (
 )
 
 func TestDisabledClient(t *testing.T) {
-	client, err := asr.NewClient("", "", "")
+	client, err := asr.NewClient(asr.ClientConfig{BaseURL: "", Token: "", Model: ""})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -28,7 +28,7 @@ func TestDisabledClient(t *testing.T) {
 }
 
 func TestEmptyAudioRejected(t *testing.T) {
-	client, err := asr.NewClient("http://127.0.0.1:1", "", "")
+	client, err := asr.NewClient(asr.ClientConfig{BaseURL: "http://127.0.0.1:1", Token: "", Model: ""})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -65,7 +65,7 @@ func TestTranscribeHappyPath(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client, err := asr.NewClient(server.URL, "secret", "large-v3")
+	client, err := asr.NewClient(asr.ClientConfig{BaseURL: server.URL, Token: "secret", Model: "large-v3"})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,11 +102,11 @@ func TestTranscribeHappyPath(t *testing.T) {
 }
 
 func TestDescribeNamesKindAndModel(t *testing.T) {
-	client, _ := asr.NewClient("http://127.0.0.1:8081", "", "Systran/faster-whisper-large-v3-turbo")
+	client, _ := asr.NewClient(asr.ClientConfig{BaseURL: "http://127.0.0.1:8081", Token: "", Model: "Systran/faster-whisper-large-v3-turbo"})
 	if got := client.Describe(); got != "openai-compatible · Systran/faster-whisper-large-v3-turbo" {
 		t.Errorf("Describe: %q", got)
 	}
-	def, _ := asr.NewClient("http://127.0.0.1:8081", "", "")
+	def, _ := asr.NewClient(asr.ClientConfig{BaseURL: "http://127.0.0.1:8081", Token: "", Model: ""})
 	if got := def.Describe(); got != "openai-compatible · whisper-1" {
 		t.Errorf("Describe with the default model: %q", got)
 	}
@@ -125,7 +125,7 @@ func TestDefaultModelAndFilename(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client, _ := asr.NewClient(server.URL, "", "")
+	client, _ := asr.NewClient(asr.ClientConfig{BaseURL: server.URL, Token: "", Model: ""})
 	if _, err := client.Transcribe(context.Background(), asr.Request{Audio: []byte("x")}); err != nil {
 		t.Fatal(err)
 	}
@@ -143,7 +143,7 @@ func TestUnauthorized(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client, _ := asr.NewClient(server.URL, "bad", "")
+	client, _ := asr.NewClient(asr.ClientConfig{BaseURL: server.URL, Token: "bad", Model: ""})
 	if _, err := client.Transcribe(context.Background(), asr.Request{Audio: []byte("x")}); !errors.Is(err, asr.ErrUnauthorized) {
 		t.Fatalf("got %v, want ErrUnauthorized", err)
 	}
@@ -159,7 +159,7 @@ func TestRateLimitedIsTransient(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client, _ := asr.NewClient(server.URL, "", "")
+	client, _ := asr.NewClient(asr.ClientConfig{BaseURL: server.URL, Token: "", Model: ""})
 	_, err := client.Transcribe(context.Background(), asr.Request{Audio: []byte("x")})
 	if err == nil {
 		t.Fatal("want error")
@@ -181,7 +181,7 @@ func TestProviderErrors(t *testing.T) {
 				w.WriteHeader(tc.status)
 			}))
 			defer server.Close()
-			client, _ := asr.NewClient(server.URL, "", "")
+			client, _ := asr.NewClient(asr.ClientConfig{BaseURL: server.URL, Token: "", Model: ""})
 			_, err := client.Transcribe(context.Background(), asr.Request{Audio: []byte("x")})
 			if err == nil {
 				t.Fatal("want error")
@@ -214,7 +214,7 @@ func TestWhisperCppInferencePath(t *testing.T) {
 	}))
 	defer server.Close()
 
-	client, err := asr.NewWhisperCppClient(server.URL, "tok", "whisper-1")
+	client, err := asr.NewWhisperCppClient(asr.ClientConfig{BaseURL: server.URL, Token: "tok", Model: "whisper-1"})
 	if err != nil {
 		t.Fatal(err)
 	}

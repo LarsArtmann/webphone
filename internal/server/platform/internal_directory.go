@@ -34,9 +34,9 @@ func loopbackPeer(r *http.Request) bool {
 // machineSurface is the loopback-only machine-surface prologue: a disabled
 // seam answers like a missing surface (missing picks that surface's own
 // 404), then a non-loopback peer is refused before any secret matters.
-func machineSurface( //nolint:branching-flow // machineSurface bool-last is a recorded open-roadmap item (2026-10-25 review); the enabled gate is the seam's whole contract
-	w http.ResponseWriter, r *http.Request, enabled bool, missing func(http.ResponseWriter, *http.Request),
-) bool {
+func machineSurface(
+	w http.ResponseWriter, r *http.Request, missing func(http.ResponseWriter, *http.Request), enabled bool,
+) bool { //nolint:branching-flow // the enabled gate is the seam's whole contract; bool-last closes the 2026-10-25 roadmap item (position-capture traps die — the func reads `missing, then the gate`)
 	if !enabled {
 		missing(w, r)
 		return false
@@ -49,7 +49,7 @@ func machineSurface( //nolint:branching-flow // machineSurface bool-last is a re
 }
 
 func (p *Hub) InternalDirectory(w http.ResponseWriter, r *http.Request) {
-	if !machineSurface(w, r, p.deps.Config.SIP.DerivedCredentials(), http.NotFound) {
+	if !machineSurface(w, r, http.NotFound, p.deps.Config.SIP.DerivedCredentials()) {
 		return
 	}
 	extension, err := domain.ParseExtension(r.PathValue("extension"))

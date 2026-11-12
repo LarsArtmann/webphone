@@ -70,7 +70,7 @@ func TestClientFeedsOutcomes(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	client, err := NewClient(srv.URL, "", "")
+	client, err := NewClient(ClientConfig{BaseURL: srv.URL})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -53,7 +53,7 @@ func TraceMiddleware(rec TraceRecorder) func(http.Handler) http.Handler {
 // the seam is off and the surface does not exist — the ASR-seam
 // convention, where a disabled feature answers like a missing one.
 func (p *Hub) TraceSnapshot(w http.ResponseWriter, r *http.Request) {
-	if !machineSurface(w, r, p.deps.Trace != nil, p.shell.NotFound) {
+	if !machineSurface(w, r, p.shell.NotFound, p.deps.Trace != nil) {
 		return
 	}
 	path, err := p.deps.Trace.Snapshot(r.Context())

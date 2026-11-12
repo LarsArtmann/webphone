@@ -21,7 +21,7 @@ func TestSentinelsClassify(t *testing.T) {
 }
 
 func TestEmptyAudioIsRejection(t *testing.T) {
-	client, err := asr.NewClient("http://127.0.0.1:1", "", "")
+	client, err := asr.NewClient(asr.ClientConfig{BaseURL: "http://127.0.0.1:1"})
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -17,7 +17,7 @@ import (
 // the door.
 func TestFamilyPins(t *testing.T) {
 	dead := "http://127.0.0.1:1"
-	c := New(dead, "@w:example.org", "tok")
+	c := New(ClientConfig{Homeserver: dead, UserID: "@w:example.org", Token: "tok"})
 
 	_, transportErr := c.SendMessage(t.Context(), gateway.OutboundMessage{
 		To: domain.MustParseAddress(domain.NetworkMatrix, "@peer:example.org"), Body: "x",

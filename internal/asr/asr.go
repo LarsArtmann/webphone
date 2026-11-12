@@ -143,22 +143,33 @@ func (c *Client) HealthCheck(ctx context.Context) error { return c.stats.HealthC
 // empty baseURL means "disabled": every call returns ErrDisabled and the
 // server treats the whole seam as off. Config validation rejects a token
 // without a URL before this runs.
-func NewClient(baseURL, token, model string) (*Client, error) { //nolint:branching-flow // single composition-root caller; boot validation rejects token-without-URL before this runs (triage 2026-10-11)
-	if baseURL == "" {
+// ClientConfig is the OpenAI-compatible client's wiring struct: the
+// three primitives travel together, so a constructor-order swap cannot
+// compile (the 2026-10-25 wiring-struct roadmap item; Google's
+// GoogleConfig is the precedent).
+type ClientConfig struct {
+	BaseURL string
+	Token   string
+	Model   string
+}
+
+func NewClient(cfg ClientConfig) (*Client, error) { //nolint:branching-flow // single composition-root caller; boot validation rejects token-without-URL before this runs (triage 2026-10-11)
+	if cfg.BaseURL == "" {
 		return &Client{}, nil
 	}
 
-	parsed, err := url.Parse(baseURL)
+	parsed, err := url.Parse(cfg.BaseURL)
 	if err != nil {
-		return nil, errorfamily.WrapRejectionf(err, "asr.url", "parse asr url %q", baseURL)
+		return nil, errorfamily.WrapRejectionf(err, "asr.url", "parse asr url %q", cfg.BaseURL)
 	}
+	model := cfg.Model
 	if model == "" {
 		model = defaultModel
 	}
 
 	return &Client{
 		base:   parsed,
-		token:  token,
+		token:  cfg.Token,
 		model:  model,
 		path:   transcriptionsPath,
 		client: httpclient.Isolated(requestTimeout),
@@ -169,8 +180,8 @@ func NewClient(baseURL, token, model string) (*Client, error) { //nolint:branchi
 // wire (#21): the multipart body and the {"text"} response are the same
 // shape, the endpoint path is /inference. Unknown form fields (model,
 // language) are ignored by the server, so the body stays shared.
-func NewWhisperCppClient(baseURL, token, model string) (*Client, error) { //nolint:branching-flow // config primitives validated at load; parse-at-the-door ruling (strong-id/BD003 class)
-	client, err := NewClient(baseURL, token, model)
+func NewWhisperCppClient(cfg ClientConfig) (*Client, error) { //nolint:branching-flow // config primitives validated at load; parse-at-the-door ruling (strong-id/BD003 class)
+	client, err := NewClient(cfg)
 	if err != nil {
 		return nil, err
 	}

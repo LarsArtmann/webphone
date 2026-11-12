@@ -244,9 +244,9 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			})
 		}
 		if cfg.ASR.Provider == "whispercpp" {
-			return asr.NewWhisperCppClient(cfg.ASR.URL, cfg.ASR.Token, cfg.ASR.Model)
+			return asr.NewWhisperCppClient(asr.ClientConfig{BaseURL: cfg.ASR.URL, Token: cfg.ASR.Token, Model: cfg.ASR.Model})
 		}
-		return asr.NewClient(cfg.ASR.URL, cfg.ASR.Token, cfg.ASR.Model)
+		return asr.NewClient(asr.ClientConfig{BaseURL: cfg.ASR.URL, Token: cfg.ASR.Token, Model: cfg.ASR.Model})
 	}()
 	if err != nil {
 		return nil, wrapf("open asr provider: %w", err)

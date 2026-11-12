@@ -62,11 +62,20 @@ var _ gateway.MessageGateway = (*Client)(nil)
 // New builds the client. Config validation has already failed closed on
 // half configurations; the constructor stays mechanical.
 // brandid-lint:ignore(BD003) the bot MXID arrives pre-validated from config; foreign matrix vocabulary (strong-id ruling)
-func New(homeserver, userID, token string) *Client { //nolint:branching-flow // foreign matrix vocabulary, pre-validated config (BD003 ruling at site)
+// ClientConfig is the matrix client's wiring struct: the three
+// primitives travel together, so a constructor-order swap cannot
+// compile (the 2026-10-25 wiring-struct roadmap item).
+type ClientConfig struct {
+	Homeserver string
+	UserID     string
+	Token      string
+}
+
+func New(cfg ClientConfig) *Client { //nolint:branching-flow // foreign matrix vocabulary, pre-validated config (BD003 ruling at site)
 	return &Client{
-		homeserver: strings.TrimRight(homeserver, "/"),
-		userID:     userID,
-		token:      token,
+		homeserver: strings.TrimRight(cfg.Homeserver, "/"),
+		userID:     cfg.UserID,
+		token:      cfg.Token,
 		http:       httpclient.Isolated(60 * time.Second),
 		dmRooms:    map[string]string{},
 	}

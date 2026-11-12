@@ -96,7 +96,7 @@ func newHomeserver(t *testing.T) (*homeserver, *httptest.Server) {
 func newTestClient(t *testing.T) (*homeserver, *Client) {
 	t.Helper()
 	hs, server := newHomeserver(t)
-	return hs, New(server.URL, "@webphone:example.org", "tok")
+	return hs, New(ClientConfig{Homeserver: server.URL, UserID: "@webphone:example.org", Token: "tok"})
 }
 
 func TestWhoamiVerifiesTheTokenAndIdentity(t *testing.T) {
@@ -104,7 +104,7 @@ func TestWhoamiVerifiesTheTokenAndIdentity(t *testing.T) {
 	if err := c.Whoami(t.Context()); err != nil {
 		t.Fatalf("whoami: %v", err)
 	}
-	wrong := New(c.homeserver, "@other:example.org", "tok")
+	wrong := New(ClientConfig{Homeserver: c.homeserver, UserID: "@other:example.org", Token: "tok"})
 	if err := wrong.Whoami(t.Context()); err == nil {
 		t.Fatal("a token for another user must fail the boot check")
 	}
@@ -174,7 +174,7 @@ func TestHomeserverVerdictsClassify(t *testing.T) {
 		_, _ = fmt.Fprint(w, `{"errcode":"M_LIMIT_EXCEEDED","error":"slow down"}`)
 	}))
 	defer rateLimited.Close()
-	c := New(rateLimited.URL, "@w:example.org", "tok")
+	c := New(ClientConfig{Homeserver: rateLimited.URL, UserID: "@w:example.org", Token: "tok"})
 	_, err := c.SendMessage(t.Context(), gateway.OutboundMessage{
 		To: domain.MustParseAddress(domain.NetworkMatrix, "@peer:example.org"), Body: "x",
 	})
@@ -237,7 +237,7 @@ func (c *cursor) saveCount() int {
 func TestIngestDeliversDMTextAndSkipsEncrypted(t *testing.T) {
 	hs, server := newHomeserver(t)
 	_ = hs
-	c := New(server.URL, "@webphone:example.org", "tok")
+	c := New(ClientConfig{Homeserver: server.URL, UserID: "@webphone:example.org", Token: "tok"})
 	cur := &cursor{}
 	got := &sink{}
 	r := NewReceiver(c, domain.MustParseExtension("1001"), got, cur, slog.Default())
@@ -276,7 +276,7 @@ func TestIngestDeliversDMTextAndSkipsEncrypted(t *testing.T) {
 
 func TestIngestTurnsPeerReadReceiptsIntoDeliveryAdvances(t *testing.T) {
 	_, server := newHomeserver(t)
-	c := New(server.URL, "@webphone:example.org", "tok")
+	c := New(ClientConfig{Homeserver: server.URL, UserID: "@webphone:example.org", Token: "tok"})
 	got := &sink{}
 	r := NewReceiver(c, domain.MustParseExtension("1001"), got, &cursor{}, slog.Default())
 
@@ -308,7 +308,7 @@ func TestIngestTurnsPeerReadReceiptsIntoDeliveryAdvances(t *testing.T) {
 
 func TestIngestDownloadsDMMedia(t *testing.T) {
 	_, server := newHomeserver(t)
-	c := New(server.URL, "@webphone:example.org", "tok")
+	c := New(ClientConfig{Homeserver: server.URL, UserID: "@webphone:example.org", Token: "tok"})
 	got := &sink{}
 	r := NewReceiver(c, domain.MustParseExtension("1001"), got, &cursor{}, slog.Default())
 
@@ -337,7 +337,7 @@ func TestIngestDownloadsDMMedia(t *testing.T) {
 
 func TestRunPersistsCursorAndExitsOnCancel(t *testing.T) {
 	_, server := newHomeserver(t)
-	c := New(server.URL, "@webphone:example.org", "tok")
+	c := New(ClientConfig{Homeserver: server.URL, UserID: "@webphone:example.org", Token: "tok"})
 	cur := &cursor{}
 	r := NewReceiver(c, domain.MustParseExtension("1001"), &sink{}, cur, slog.Default())
 
