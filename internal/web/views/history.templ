@@ -123,8 +123,9 @@ templ HistoryPanel(props HistoryPanelProps) {
 		// list as a scannable TABLE (sticky column heads, right-aligned
 		// tabular When/Duration columns; day groups ride tbody sections),
 		// the same separator vocabulary otherwise.
-		<div class="wp-table-wrap" role="region" tabindex="0" aria-label={ T(props.Lang, "history.table.label") }>
-			<table class="wp-table">
+		if len(props.Entries) > 0 {
+			<div class="wp-table-wrap" role="region" tabindex="0" aria-label={ T(props.Lang, "history.table.label") }>
+				<table class="wp-table">
 				<thead>
 					<tr>
 						<th scope="col" class="wp-sr-only">{ T(props.Lang, "history.dir.label") }</th>
@@ -149,8 +150,9 @@ templ HistoryPanel(props HistoryPanelProps) {
 						}
 					</tbody>
 				}
-			</table>
-		</div>
+				</table>
+			</div>
+		}
 		if len(props.Transcripts) > 0 {
 			@TranscriptSection(props)
 		}
