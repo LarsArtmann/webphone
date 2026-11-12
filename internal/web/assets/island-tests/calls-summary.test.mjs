@@ -305,5 +305,8 @@ test("close removes the ended card and re-dispatches wp:calls-changed", async ()
     document.removeEventListener("wp:calls-changed", onChange);
   }
   assert.equal(card.parent, null, "the card is gone on Close");
-  assert.ok(changed > 0, "Close must re-dispatch wp:calls-changed so the badge and the live-context slot drop the ended call");
+  assert.ok(
+    changed > 0,
+    "Close must re-dispatch wp:calls-changed so the badge and the live-context slot drop the ended call",
+  );
 });

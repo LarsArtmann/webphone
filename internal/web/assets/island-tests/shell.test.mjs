@@ -2184,11 +2184,7 @@ test("installPhoneTab is idempotent and restores the focus state on recreate", (
   const before = nav.querySelectorAll(".wp-nav-phone").length;
   shellApi.setPhonePressed(true);
   shellApi.installPhoneTab(nav);
-  assert.equal(
-    nav.querySelectorAll(".wp-nav-phone").length,
-    before,
-    "no duplicate tab",
-  );
+  assert.equal(nav.querySelectorAll(".wp-nav-phone").length, before, "no duplicate tab");
   const recreated = shellApi.installPhoneTab(nav);
   assert.equal(recreated, undefined, "an existing tab blocks the install");
   shellApi.setPhonePressed(false);
