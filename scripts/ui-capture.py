@@ -219,6 +219,7 @@ TABS = [
     ("voicemail", "/voicemail"),
     ("history", "/history"),
     ("history-transcript", "/history?q=revenue"),  # seeded transcript search
+    ("reports", "/reports"),
     ("contacts", "/contacts"),
     ("settings", "/settings"),
     ("not-found", "/nope"),  # the styled 404: a real page, shot like any other
@@ -250,6 +251,12 @@ SURFACE_MARKERS: dict[
     "voicemail": "#voicemail-panel",
     "history": "#history-panel",
     "history-transcript": "[data-copy-transcript]",  # seeded transcript section
+    # Reports renders two honest shapes: the dashboard grid when the
+    # deployment fronts a phone API, the needsAPI notice when it does not
+    # (the local fixture has no CDR source — the grid's visual evidence
+    # rides a real-deployment --track run). Either satisfies the marker,
+    # the same stance the fax surface takes.
+    "reports": ".wp-reports-grid, .wp-empty",
     "contacts": ".wp-export-link",  # unconditional in the panel
     "settings": ("#settings-panel dd .wp-service-on", "openai-compatible"),
     "not-found": (".wp-panel.wp-notfound", "404 — page not found"),
@@ -624,6 +631,7 @@ def resolve_remote_surfaces(base: str, session: str, threads_n: int) -> dict:
         )
         SURFACE_MARKERS["crm-context"] = "#wp-crm-context"
     surfaces += [("fax", "/fax"), ("voicemail", "/voicemail"), ("history", "/history")]
+    surfaces += [("reports", "/reports")]
     try:
         history_html = _get(base, "/history", session)
         if "data-copy-transcript" in history_html:
