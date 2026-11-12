@@ -6,7 +6,7 @@
     "oldest_days": 45,
     "struck_rows": 20
   },
-  "generic_df": 22,
+  "generic_df": 27,
   "rule_f": true,
   "rule_f_extensions": [
     ".md",
