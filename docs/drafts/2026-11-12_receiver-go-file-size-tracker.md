@@ -1,3 +1,7 @@
+> CLOSED 2026-11-13: the split landed from the follow-up session in
+> `71f71771` (`sync.go` wire-surface carve, byte-pure motion); the
+> filed issue is closed. This draft is the filing record.
+
 > [!NOTE]
 > This filing was drafted by GLM-5.3-flash via Crush from an AI-run investigation, not at my request.
 >
