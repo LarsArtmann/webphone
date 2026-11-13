@@ -22,6 +22,26 @@
       packages = {
         default = self'.packages.webphone;
 
+        # The templ compiler pinned to go.mod's library version. nixpkgs'
+        # pkgs.templ lags (0.3.1020) and emits pre-wave codegen that no
+        # longer compiles against templ v0.3.1100 (templ.JoinURLErrs era) —
+        # the devshell and CI shells use THIS package so the committed
+        # `templ generate` output always comes from the same compiler the
+        # library pins. Keep the rev in lockstep with go.mod's
+        # github.com/a-h/templ line (the AGENTS.md templ rule).
+        templ = pkgs.buildGoModule.override { go = pkgs.go_1_27; } {
+          pname = "templ";
+          version = "0.3.1100";
+          src = pkgs.fetchFromGitHub {
+            owner = "a-h";
+            repo = "templ";
+            rev = "v0.3.1100";
+            hash = "sha256-QViQAMtCqaXS4GodlSCW/nE4Sox+EF49sbb7h9RBIS0=";
+          };
+          vendorHash = "sha256-MMAoHofeZzGNFsjxY4nrPRyaiKOk4fLYY+kIVmdAL3g=";
+          subPackages = [ "cmd/templ" ];
+        };
+
         # The docs-health battery, built from the locked rev of the upstream
         # repo (flake = false in flake.nix — see the comment there). Stdlib
         # only, so vendorHash = null; `subPackages` keeps the build inside

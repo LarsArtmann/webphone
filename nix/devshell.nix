@@ -32,7 +32,9 @@
           # so bare gopls/golangci-lint fail every go list.
           pkgs.gopls
           pkgs.golangci-lint-langserver
-          pkgs.templ
+          # The PINNED templ (nix/packages.nix) — matches go.mod's library
+          # version, unlike nixpkgs' lagging pkgs.templ (pre-wave codegen).
+          config.packages.templ
           pkgs.golangci-lint
           pkgs.esbuild
           pkgs.jq
@@ -97,7 +99,7 @@
       # closure quickly.
       devShells.ci = pkgs.mkShellNoCC {
         packages = goTools ++ [
-          pkgs.templ
+          config.packages.templ
           pkgs.golangci-lint
         ];
         env = goEnv;
