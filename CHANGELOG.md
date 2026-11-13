@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The shared contact directory no longer rides the pre-auth
+  `/config.js` (the island boot surface any anonymous fetcher could
+  read): the payload drops the `contacts` key and the island adopts
+  the directory post-login from the session-gated `GET /api/contacts`
+  answer (`{shared}`). Stack fixtures updated in the same train.
 - The catalog dependency rides v4.15.0 (the release tag needed a
   same-day fix upstream: the published `catalog/v4/v4.15.0` shape is
   inert to Go's tag mapping, so the proxy could not serve the release;
