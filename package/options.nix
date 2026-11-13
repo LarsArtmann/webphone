@@ -113,6 +113,19 @@
       '';
     };
 
+    debug = {
+      flightrecorder = {
+        enable = lib.mkEnableOption ''
+          the opt-in flight recorder (go tool trace snapshots under
+          dataDir/traces when a request runs slow or answers 5xx): sets
+          WEBPHONE_DEBUG_FLIGHTRECORDER=1 in the unit environment, the
+          same gate the recorder construction reads. Debug-only — the
+          runtime tracer costs CPU and snapshots are operator artifacts;
+          `GET /internal/flightrecorder` (loopback) writes one on demand.
+        '';
+      };
+    };
+
     memoryMax = lib.mkOption {
       type = with lib.types; nullOr str;
       default = null;

@@ -227,6 +227,9 @@ in
           }
           // lib.optionalAttrs cfg.serverTiming.enable {
             WEBPHONE_DEBUG_TIMING = "1";
+          }
+          // lib.optionalAttrs cfg.debug.flightrecorder.enable {
+            WEBPHONE_DEBUG_FLIGHTRECORDER = "1";
           };
 
           serviceConfig = {

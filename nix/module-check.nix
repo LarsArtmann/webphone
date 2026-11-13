@@ -172,6 +172,24 @@
           );
         }
         {
+          # debug.flightrecorder.enable must set the env gate the
+          # recorder construction reads (the opt-in tracer's declared
+          # module surface).
+          name = "flightrecorder-env";
+          path = pkgs.writeText "flightrecorder-env" (
+            let
+              traceEvaluated = lib.evalModules (moduleSet {
+                debug.flightrecorder.enable = true;
+              });
+              traceUnit = traceEvaluated.config.systemd.services.webphone.environment;
+            in
+            if traceUnit ? WEBPHONE_DEBUG_FLIGHTRECORDER && traceUnit.WEBPHONE_DEBUG_FLIGHTRECORDER == "1" then
+              "flightrecorder env gate rendered"
+            else
+              throw "webphone-module check: debug.flightrecorder.enable did not set WEBPHONE_DEBUG_FLIGHTRECORDER"
+          );
+        }
+        {
           name = "hsts-opt-in";
           path = pkgs.writeText "hsts-opt-in" (
             let
