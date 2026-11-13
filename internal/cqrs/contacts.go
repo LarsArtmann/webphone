@@ -51,17 +51,40 @@ type DeleteContact struct {
 	ContactID domain.ContactID
 }
 
-// contactSlot is one contact's aggregate state.
+// contactSlot is one contact's aggregate state. Phone carries the
+// slot's CURRENT display form (the raw string the journal events key
+// with) so a re-save in a different formatting stays a rename, and a
+// delete names the view key the projection actually holds.
 type contactSlot struct {
 	ID        string
 	Name      string
+	Phone     string
 	CreatedAt int64 // unix nanos — the list's exact numeric order
 }
 
-// contactsState is the owner's contact list keyed by phone (the upsert
-// axis — a rename rewrites the same slot).
+// contactsState is the owner's contact list keyed by the phone's digit
+// string (the upsert axis — see contactKeyOf).
+
 type contactsState struct {
 	Slots map[string]contactSlot
+}
+
+// contactKeyOf is the upsert axis: the phone's DIGIT string. Formatting
+// variants of one number ("+49 170 …", "0170/123…") collapse into the
+// same slot instead of forking duplicates (T11.2, the contacts mesh
+// review) — the digit string is the region-free identity; a trunk-form
+// and its country-code form still differ, which is the honest boundary
+// without a region assumption. The DISPLAYED number stays verbatim.
+func contactKeyOf(phone string) string {
+	key := make([]rune, 0, len(phone))
+
+	for _, r := range phone {
+		if r >= '0' && r <= '9' {
+			key = append(key, r)
+		}
+	}
+
+	return string(key)
 }
 
 func (contactsState) initial() contactsState { return contactsState{Slots: map[string]contactSlot{}} }
@@ -81,13 +104,18 @@ func applyContactsState(s contactsState, evt event.Event) (contactsState, error)
 		if err != nil {
 			return s, errorfamily.WrapCorruptionf(err, "cqrs.contact_fold", "decode ContactSaved")
 		}
-		s.Slots[fact.Key.Phone] = contactSlot{ID: fact.ID, Name: fact.Name, CreatedAt: fact.CreatedAt.UnixNano()}
+		// Fold keys by the digit string: pre-T11.2 events carry raw-form
+		// keys and re-key here on replay — the fold IS the migration (the
+		// journal bytes never change).
+		s.Slots[contactKeyOf(fact.Key.Phone)] = contactSlot{
+			ID: fact.ID, Name: fact.Name, Phone: fact.Key.Phone, CreatedAt: fact.CreatedAt.UnixNano(),
+		}
 	case event.Type(metaengine.EventTypeName(domain.ContactDeleted{})):
 		fact, err := event.DecodePayloadAuto[domain.ContactDeleted](evt)
 		if err != nil {
 			return s, errorfamily.WrapCorruptionf(err, "cqrs.contact_fold", "decode ContactDeleted")
 		}
-		delete(s.Slots, fact.Key.Phone)
+		delete(s.Slots, contactKeyOf(fact.Key.Phone))
 	}
 	return s, nil
 }
@@ -97,7 +125,9 @@ func decideSaveContact(s contactsState, ver event.Version, cmd SaveContact) ([]e
 	phone := cmd.Contact.Phone.String()
 	id := cmd.Contact.ID.String()
 	createdAt := cmd.Contact.CreatedAt
-	if prev, ok := s.Slots[phone]; ok {
+
+	prev, exists := s.Slots[contactKeyOf(phone)]
+	if exists {
 		// Rename: identity (id) and age stay with the slot.
 		id = prev.ID
 		createdAt = time.Unix(0, prev.CreatedAt)
@@ -105,6 +135,28 @@ func decideSaveContact(s contactsState, ver event.Version, cmd SaveContact) ([]e
 		return nil, errorfamily.WrapRejectionf(readmodels.ErrListFull, "cqrs.contact_list_full",
 			"%s at %d contacts", owner, contactsMaxPerOwner)
 	}
+
+	// A re-save in a NEW display form of the same digits moves the view:
+	// the projection is keyed by the RAW phone, so the old key's view is
+	// deleted and the new key's view saved under the SAME slot identity
+	// (one dispatch, two events; the journal keeps both display forms as
+	// they happened).
+	events := make([]event.Event, 0, 2)
+
+	if exists && prev.Phone != phone {
+		deleted, err := event.New(
+			event.Type(metaengine.EventTypeName(domain.ContactDeleted{})),
+			cmd.StreamID(), ContactsStreamType, ver.Increment(),
+			domain.ContactDeleted{Key: domain.ContactKey{Owner: owner, Phone: prev.Phone}},
+			event.WithSchemaVersion(1))
+		if err != nil {
+			return nil, errorfamily.WrapInfrastructuref(err, "cqrs.contact_save", "build ContactDeleted (display-form move)")
+		}
+
+		events = append(events, deleted)
+		ver = ver.Increment()
+	}
+
 	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.ContactSaved{})), cmd.StreamID(), ContactsStreamType, ver.Increment(), domain.ContactSaved{
 		Key:       domain.ContactKey{Owner: owner, Phone: phone},
 		ID:        id,
@@ -114,16 +166,17 @@ func decideSaveContact(s contactsState, ver event.Version, cmd SaveContact) ([]e
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.contact_save", "build ContactSaved")
 	}
-	return []event.Event{evt}, nil
+
+	return append(events, evt), nil
 }
 
 func decideDeleteContact(s contactsState, ver event.Version, cmd DeleteContact) ([]event.Event, error) {
-	for phone, slot := range s.Slots {
+	for _, slot := range s.Slots {
 		if slot.ID != cmd.ContactID.String() {
 			continue
 		}
 		evt, err := event.New(event.Type(metaengine.EventTypeName(domain.ContactDeleted{})), cmd.StreamID(), ContactsStreamType, ver.Increment(), domain.ContactDeleted{
-			Key: domain.ContactKey{Owner: cmd.Owner, Phone: phone},
+			Key: domain.ContactKey{Owner: cmd.Owner, Phone: slot.Phone},
 		}, event.WithSchemaVersion(1))
 		if err != nil {
 			return nil, errorfamily.WrapInfrastructuref(err, "cqrs.contact_delete", "build ContactDeleted")

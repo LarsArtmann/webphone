@@ -220,3 +220,85 @@ func TestContactStateSurvivesRestart(t *testing.T) {
 		time.Sleep(5 * time.Millisecond)
 	}
 }
+
+// TestContactFormattingVariantRenamesInsteadOfForking pins the T11.2
+// upsert axis (the contacts mesh review): a re-save in a DIFFERENT
+// display form of the same digits is a rename — one slot keeps its
+// identity, the view moves to the new raw key, and the list count does
+// not grow. The displayed number is the newest form the user wrote.
+func TestContactFormattingVariantRenamesInsteadOfForking(t *testing.T) {
+	s := bootContacts(t, t.TempDir())
+	ctx := context.Background()
+	owner := mustExt(t, "1001")
+
+	first := contactFor(t, "1001", "+49170 1234567", "Ada")
+	if err := s.Save(ctx, first); err != nil {
+		t.Fatalf("save first: %v", err)
+	}
+
+	time.Sleep(5 * time.Millisecond)
+
+	variant := contactFor(t, "1001", "+491701234567", "Ada B.")
+	variant.ID = first.ID
+	if err := s.Save(ctx, variant); err != nil {
+		t.Fatalf("save formatting variant: %v", err)
+	}
+
+	list, err := s.List(ctx, owner)
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+
+	if len(list) != 1 {
+		t.Fatalf("formatting variants must not fork: %d rows: %+v", len(list), list)
+	}
+
+	if list[0].ID.String() != first.ID.String() {
+		t.Errorf("slot identity changed: %s, want %s", list[0].ID, first.ID)
+	}
+
+	if list[0].Phone.String() != "+491701234567" {
+		t.Errorf("display form = %s, want the newest form the user wrote", list[0].Phone)
+	}
+
+	if list[0].Name != "Ada B." {
+		t.Errorf("name = %q, want the rename", list[0].Name)
+	}
+}
+
+// TestContactFoldRekeysLegacyRawFormEvents pins the migration half:
+// a journal written pre-T11.2 (raw-form slot keys) folds into the
+// digit-keyed state, so a formatting-variant save AFTER an old event
+// still renames instead of forking.
+func TestContactFoldRekeysLegacyRawFormEvents(t *testing.T) {
+	dir := t.TempDir()
+
+	s := bootContacts(t, dir)
+	ctx := context.Background()
+
+	first := contactFor(t, "1001", "+49170 1234567", "Ada")
+	if err := s.Save(ctx, first); err != nil {
+		t.Fatalf("save first: %v", err)
+	}
+
+	time.Sleep(5 * time.Millisecond)
+
+	// A fresh backend over the SAME directory replays the journal from
+	// scratch: the fold re-keys the stored event by its digit string.
+	reborn := bootContacts(t, dir)
+
+	variant := contactFor(t, "1001", "+491701234567", "Ada B.")
+	variant.ID = first.ID
+	if err := reborn.Save(ctx, variant); err != nil {
+		t.Fatalf("save variant on replayed state: %v", err)
+	}
+
+	list, err := reborn.List(ctx, mustExt(t, "1001"))
+	if err != nil {
+		t.Fatalf("list: %v", err)
+	}
+
+	if len(list) != 1 || list[0].Name != "Ada B." {
+		t.Fatalf("replayed fold did not merge the variant: %+v", list)
+	}
+}
