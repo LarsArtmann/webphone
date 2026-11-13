@@ -120,7 +120,9 @@ func TestConfigJSCarriesNoSharedDirectory(t *testing.T) {
 
 	// The anonymous boot probe is the leak: the directory must be absent
 	// from the payload it fetches without a session.
-	anonResp, anonBody := (&client{t: t}).do(http.MethodGet, "/config.js", nil, "")
+	anon := clientFor(t, server)
+
+	anonResp, anonBody := anon.do(http.MethodGet, "/config.js", nil, "")
 	if anonResp.StatusCode != http.StatusOK {
 		t.Fatalf("anonymous config.js status %d", anonResp.StatusCode)
 	}

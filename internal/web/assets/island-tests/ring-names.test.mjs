@@ -8,13 +8,12 @@ import assert from "node:assert/strict";
 import { installBrowserGlobals } from "./helpers.mjs";
 
 const doc = installBrowserGlobals();
-globalThis.window.PBX_CONFIG = {
-  contacts: [{ name: "Marta", number: "+493012345678" }],
-};
+globalThis.window.PBX_CONFIG = {};
 
 const config = await import("../island/app/config.js");
 const state = await import("../island/app/state.js");
 const ui = await import("../island/app/ui.js");
+config.setSharedContacts([{ name: "Marta", number: "+493012345678" }]);
 config.setExtraContacts([{ name: "Bob Personal", number: "030 999 888" }]);
 
 test("the banner and slots carry name (digits)", () => {
