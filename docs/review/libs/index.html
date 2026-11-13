@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>webphone × LarsArtmann stack — 25-library utilization audit (2026-11-04 · currency 2026-11-11)</title>
+    <title>webphone × LarsArtmann stack — 25-library utilization audit (2026-11-04 · currency 2026-11-13)</title>
     <style>
       /* =========================================================================
          BAUHAUS LIGHT — Editorial template
@@ -943,7 +943,8 @@
             direct dependencies</strong> (error-family, httputil + server_timing, go-sse, go-health,
             go-health-dashboard, templ-components, go-cqrs-lite, cqrs-htmx), the audit's
             <strong>four indirect-only candidates all resolved</strong> (retry and etag ADOPTED
-            2026-11-04; idempotency stays out with its written reason; codec is a direct test-only
+            2026-11-04; idempotency stays out of prod with its written reason — its contract suite
+            is a test-side pin since T18 (the same shape as codec&rsquo;s); codec is a direct test-only
             pin since D014), <strong>go-atomic-write joined as a direct dep the same day</strong>
             (the blob-durability fix), and <strong>six are absent by decision</strong>
             (filewatcher, daemon, output, credentials-store, appkit, cmdguard). The scored
@@ -967,6 +968,18 @@
             go-cqrs-lite catalog/v4 v4.15.0 (dir restructure + hub npm pin). cmdguard audited for
             the first time: NO-GO (three ritual one-shots behind a 15-line dispatch; the boot
             report is the designed error surface).
+            Currency + tree re-verified <strong>2026-11-13</strong> (audit-verify replay
+            <strong>105/105 green</strong>): every cqrs-htmx and go-cqrs-lite family pin is still
+            at its remote latest; <strong>go-idempotency&rsquo;s T18 contract pin recorded in its
+            report</strong> (direct test-only require since 2026-11-04 — the pin landed 23:33 the
+            day that report was written and the body never learned it; prod verdict unchanged);
+            behind-latest, all with no consumed surface changed: go-health-dashboard
+            <strong>v0.13.3</strong> (the <code>data-nonce</code> root bridge — the upstream
+            prerequisite for retiring the <code>/health</code> subtree&rsquo;s <code>unsafe-eval</code>;
+            its floor is exactly webphone&rsquo;s current pins), go-filewatcher v2.5.0
+            (<code>Healthy()</code>/circuit breaker — nothing-to-watch stands),
+            go-credentials-store v0.4.2 (adminui hardening — the stateful-service premise
+            stands).
           </p>
           <div class="callout callout-teal">
             <strong>The bottom line — both top findings LANDED 2026-11-04</strong>
@@ -1003,8 +1016,9 @@
             movement annotations record direction, not precision. Daemon commits after the
             audit stamp move <code>go.mod @ main</code> pins without moving these rows — the
             verdicts cite source shapes, not commit hashes; re-rendered at the 2026-11-04
-            closeout close, currency re-verified 2026-11-05 (the templ-wave train) and
-            2026-11-11 (remote tags + the login-train tree).</em>
+            closeout close, currency re-verified 2026-11-05 (the templ-wave train),
+            2026-11-11 (remote tags + the login-train tree) and 2026-11-13 (remote tags;
+            four reports refreshed).</em>
           </p>
           <div class="table-wrapper" role="region" aria-label="Per-library adoption scorecard" tabindex="0">
             <table class="compare">
@@ -1020,7 +1034,7 @@
               </thead>
               <tbody>
                 <tr><th scope="row"><a href="cqrs-htmx.md">cqrs-htmx</a></th><td>direct ×5</td><td>v4.18.1 / v4.18.1</td><td class="yes">100</td><td>Affirmed at the round-3 ceiling; setup stays rejected; loginpage v4.18.0 <code>ExtraSection</code> ADOPTED 2026-11-11 (<code>/login</code> = the auth front door in every mode); root v4.18.1 serves pristine htmx 2.0.11 + idiomorph 0.8.0 assets webphone&rsquo;s morph swaps ride; the v4.18 HTTP QUERY ladder is ruled not-applicable</td></tr>
-                <tr><th scope="row"><a href="go-health-dashboard.md">go-health-dashboard</a></th><td>direct</td><td>v0.13.2 / v0.13.2</td><td class="yes">88</td><td>Deep wiring; the auth seam (<code>WithMiddleware</code>) is the one open decision; v0.13.0 tagged by the closeout train (upstream tag was missing), v0.13.2 landed 2026-11-05 with the templ-wave</td></tr>
+                <tr><th scope="row"><a href="go-health-dashboard.md">go-health-dashboard</a></th><td>direct</td><td>v0.13.2 / v0.13.3</td><td class="yes">88</td><td>Deep wiring; the auth seam (<code>WithMiddleware</code>) is the one open decision; v0.13.0 tagged by the closeout train (upstream tag was missing), v0.13.2 landed 2026-11-05 with the templ-wave; v0.13.3 upstream (2026-11-13 re-verify) = the <code>data-nonce</code> root bridge, prerequisite for the <code>/health</code> strict-CSP lane, zero-collision bump</td></tr>
                 <tr><th scope="row"><a href="httputil.md">httputil</a></th><td>direct</td><td>v1.8.0 / v1.8.0</td><td class="yes">95</td><td>Configured, not defaulted; MaxBodySize adopted 2026-11-04 (14 route mounts; two ruled one-home funnels)</td></tr>
                 <tr><th scope="row"><a href="go-health.md">go-health</a></th><td>direct</td><td>v0.10.0 / v0.10.0</td><td class="yes">100</td><td>Injector-discovered probe, one readiness truth; <code>CoerceValidUTF8</code> wave landed 2026-11-04, v0.10.0 (tooling/docs delta) 2026-11-05</td></tr>
                 <tr><th scope="row"><a href="go-cqrs-lite.md">go-cqrs-lite</a></th><td>direct ×11</td><td>v4.23.0 / system v4.18.0</td><td class="yes">96</td><td><strong>SUPERB re-score 2026-11-09:</strong> ONE journal world — 11+ decider aggregates on the system composition root, snapshots (D8), <code>TrimStream</code> retention, <code>WithCapPerGroup</code> declarative caps (the #114 ask, LANDED); the per-CALL nested cap is the one open ask; catalog/v4 v4.15.0 available (restructure, no API delta)</td></tr>
@@ -1036,12 +1050,12 @@
                 <tr><th scope="row"><a href="go-paperless.md">go-paperless</a></th><td>direct (adjacent)</td><td>v0.5.0 / v0.5.2</td><td class="yes">85</td><td>Adjacent audit 2026-11-04: the fax Archiver adapter rides the SDK&rsquo;s branded ids (no second brand layer); write-only provenance, blob store stays the storage truth; 2 minors behind 2026-11-11 with no consumed surface changed</td></tr>
                 <tr><th scope="row"><a href="go-datastar.md">go-datastar</a></th><td>indirect (adjacent)</td><td>v0.6.2 / v0.7.0</td><td class="no">NO-GO</td><td>Adjacent audit 2026-11-04, deep-dive 2026-11-07 (posture 78): transitive-only (the dashboard&rsquo;s embedded SDK); the app&rsquo;s realtime deliberately rides SSE+htmx &mdash; a second reactive idiom buys nothing; v0.7.0 rides the consumers&rsquo; requires</td></tr>
                 <tr><th scope="row"><a href="go-sqlitestore.md">go-sqlitestore</a></th><td>indirect (adjacent)</td><td>v0.1.1 / v0.1.1</td><td class="no">NO-GO</td><td>Adjacent audit 2026-11-04: zero imports &mdash; rides in through cqrs-htmx and projectionhost; webphone&rsquo;s two sqlite homes (store ladder, metaengine engine) already own the fact</td></tr>
-                <tr><th scope="row"><a href="go-idempotency.md">go-idempotency</a></th><td>indirect</td><td>v0.3.2 / v0.3.2</td><td class="no">NO-GO</td><td>Semantics differ (check-first vs CheckAndRecord); metaengine DedupStore already IS the capability</td></tr>
+                <tr><th scope="row"><a href="go-idempotency.md">go-idempotency</a></th><td>direct (test-only)</td><td>v0.3.2 / v0.3.2</td><td class="no">NO-GO (prod)</td><td>Prod semantics differ (check-first vs CheckAndRecord); metaengine DedupStore already IS the capability — but the library&rsquo;s 13-invariant contract suite audits the REAL journal window test-side since T18 (fresh system.db per subtest)</td></tr>
                 <tr><th scope="row"><a href="go-codec.md">go-codec</a></th><td>direct (test-only)</td><td>v0.3.3 / v0.3.3</td><td class="no">NO-GO (prod)</td><td>Event-store payload codec; webphone benefits transitively, HTTP JSON is not codec territory — but the journal wire vocabulary is imported test-side (D014 tombstone replay pin, 2026-11-11)</td></tr>
-                <tr><th scope="row"><a href="go-filewatcher.md">go-filewatcher</a></th><td>absent</td><td>— / v2.4.3</td><td class="no">NO-GO</td><td>Nothing to watch: boot-immutable config, per-use secret reads, rotation = restart</td></tr>
+                <tr><th scope="row"><a href="go-filewatcher.md">go-filewatcher</a></th><td>absent</td><td>— / v2.5.0</td><td class="no">NO-GO</td><td>Nothing to watch: boot-immutable config, per-use secret reads, rotation = restart; v2.5.0&rsquo;s <code>Healthy()</code>/circuit breaker serves integrators with live watchers — premise unchanged</td></tr>
                 <tr><th scope="row"><a href="go-daemon.md">go-daemon</a></th><td>absent</td><td>— / v0.4.0</td><td class="no">NO-GO</td><td>Not daemonization; every slice (sockets, sd_notify, codecs, SSE parse) is owned elsewhere</td></tr>
                 <tr><th scope="row"><a href="go-output.md">go-output</a></th><td>absent</td><td>— / v0.38.x</td><td class="no">NO-GO</td><td>CLI prints one-liners; the boot report is a designed artifact, not tabular data</td></tr>
-                <tr><th scope="row"><a href="go-credentials-store.md">go-credentials-store</a></th><td>absent</td><td>— / v0.3.1</td><td class="no">NO-GO</td><td>Platform owns secrets (LoadCredential + NixOS); the library is a second stateful service</td></tr>
+                <tr><th scope="row"><a href="go-credentials-store.md">go-credentials-store</a></th><td>absent</td><td>— / v0.4.2</td><td class="no">NO-GO</td><td>Platform owns secrets (LoadCredential + NixOS); the library is a second stateful service; the v0.4 line is adminui/release hardening — premise unchanged</td></tr>
                 <tr><th scope="row"><a href="go-appkit.md">go-appkit</a></th><td>absent</td><td>— / root v0.12.0</td><td class="no">NO-GO (framework)</td><td>Re-ruled 2026-11-12 against v0.12.0 + 13 satellites: the &ldquo;every module re-wraps&rdquo; claim retired (httpx/config/flightrecorderhealth postdate it); framework stays out on expressiveness walls; flightrecorderhealth = first module-level adoption candidate (demand-gated)</td></tr>
                 <tr><th scope="row"><a href="cmdguard.md">cmdguard</a></th><td>absent</td><td>— / v5.1.0</td><td class="no">NO-GO</td><td>Audited 2026-11-11: three ritual one-shots behind a 15-line hand dispatch; the boot report owns the exit contract (1 designed / 2 panic); a CLI framework&rsquo;s DI scope would fork the one samber/do container; revisit on a second, human-driven binary</td></tr>
               </tbody>
@@ -1206,7 +1220,7 @@ root webphone
 ├── storage         modernc sqlite + go-sqlitestore                          [file durability = go-atomic-write WriteWithPerm]
 ├── conditional GET go-etag entitytag + server middleware                    [304 revalidation: /openapi.json + manifest]
 ├── chat reconnect  go-retry ComputeDelay jitter ladder                      [retry.Do declined — loops cannot exhaust]
-└── declined        idempotency, codec (test-only pin), filewatcher, daemon, output, credentials-store, appkit, cmdguard
+└── declined        idempotency (prod; contract suite audits the window test-side), codec (test-only pin), filewatcher, daemon, output, credentials-store, appkit, cmdguard
           </div>
         </section>
 
@@ -1236,8 +1250,8 @@ root webphone
             point counts (<code># expect N</code>) only where the value is structurally
             stable (a single-file grep, a removed symbol).
           </p>
-          <pre><code># re-derive the headline numbers (current values 2026-11-11)
-rg -l "larsartmann/go-error-family" --type go -g '!*_templ.go' internal/ cmd/ | wc -l   # 124 import sites at the 2026-11-12 re-read (97 at audit); point counts walk under live refactors, so the reports pin floors >= 115
+          <pre><code># re-derive the headline numbers (current values 2026-11-13)
+rg -l "larsartmann/go-error-family" --type go -g '!*_templ.go' internal/ cmd/ | wc -l   # 127 import sites at the 2026-11-13 re-read (97 at audit); point counts walk under live refactors, so the reports pin floors >= 115
 rg -l "MaxBytesReader" --type go -g '!*_test.go' internal/ | wc -l           # 3 hand-rolled body-cap files left (the ruled one-home funnels)
 rg -n "os.WriteFile" internal/blob/store.go | wc -l                        # 0 — the durability finding LANDED on go-atomic-write
 rg -c "NewConflict|WrapConflict" --type go internal/ | wc -l               # Conflict family: adopted (note_list_full)
@@ -1267,8 +1281,8 @@ for m in go-sse go-health go-etag go-paperless; do git -C /home/lars/projects/$m
 
         <footer class="footer">
           <p>
-            Generated 2026-11-04 &middot; updated 2026-11-12 (consistency pass: issue-1 + the dep-tree moved to the landed state, mean derivation written down) &middot; 25 reports in docs/review/libs/ &middot; <a href="index-render.jpg">Rendered screenshot</a> (the 2026-11-04 edition, pre-dating this pass; refresh is an owner call) &middot; Claims
-            verified against source; pins from go.mod; &ldquo;latest&rdquo; from remote tags (2026-11-11 tags, counts re-read 2026-11-12)
+            Generated 2026-11-04 &middot; updated 2026-11-13 (currency sweep: 4 reports refreshed, the T18 idempotency contract pin recorded; prior: 2026-11-12 consistency pass) &middot; 25 reports in docs/review/libs/ &middot; <a href="index-render.jpg">Rendered screenshot</a> (the 2026-11-04 edition, pre-dating this pass; refresh is an owner call) &middot; Claims
+            verified against source; pins from go.mod; &ldquo;latest&rdquo; from remote tags (2026-11-13 tags, counts re-read 2026-11-13)
           </p>
         </footer>
       </main>
