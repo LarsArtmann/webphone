@@ -1,8 +1,9 @@
 # Status — SUPERB pareto triage execution, part 2 (drain + bump + stack arms)
 
-**Claims verified as of 17:10 CET.** Push/CI statements rot fastest; the browser
-VM rerun and the webphone flake check were IN FLIGHT at snapshot time — their
-verdicts land in the report's §b and the session log.
+**Claims verified as of 17:35 CET.** The browser VM verdict LANDED (run 10,
+exit 0); the webphone flake check passed (all checks); the fresh smoke read
+54/54 + all scenarios green on the catalog-bumped binary; webphone main is
+RED at a3e9c4d2 on the FOREIGN configjs quartet (tracker #252).
 
 ## Direct answers to the opening question
 
@@ -39,9 +40,19 @@ boundary; the wall-clock and owner-gated halves stay scheduled.
    7d89a06 + the seam fix: the first VM run failed because browser.nix never
    enabled `webphone.phoneApi`/`operator` — the panel honestly rendered the
    withheld-capability empty state; the eval also caught an uninterpolated
-   `apiPasswordFile` derivation). The second VM run was IN FLIGHT at snapshot
-   time; the verdict lands in the session log. F59 (operator.nix 206 pin) was
-   ALREADY LANDED (lines 245-303) — no work needed.
+   `apiPasswordFile` derivation). The verdict LANDED: run 10 of the day is
+   GREEN (telephony-browser exit 0), through an honest-observable ladder —
+   the deposit's vmclient REGISTER (1001/TCP, 300 s expiry) forced the WSS
+   assert to count `transport=ws;` contacts (sofia never prints
+   `transport=wss`); the VM's headless chromium has NO audio output, so
+   play() hangs between load and start (the server log shows the browser
+   pulling 206 + 200, 67 KB through the vhost — the fetch chain is REAL),
+   neither wp-playing nor readyState ever fire, and the arm's final
+   observable set is playing | failed-toast | currentSrc resolving to the
+   tokenized recording URL, with the ONE-TOAST-PER-EPISODE dedup asserted
+   by a second play attempt on the toast branch. The voicemail fix ships
+   with executable coverage; the audio-positive branch is the device-train
+   item. F59 (operator.nix 206 pin) was ALREADY LANDED (lines 245-303).
 2. **T18 night-run pair (F61)** — the scheduler pack `ui-night-pair.sh` landed
    (two transient systemd user units, run 1 now + run 2 +8h); the pair itself
    needs its quiet window (wall clock). First pair sets the diff noise floor.
@@ -69,6 +80,20 @@ boundary; the wall-clock and owner-gated halves stay scheduled.
    wrong model (the suffixed tag form) that the bump then falsified. The
    script's own false-clean is exactly the class it was built to catch — the
    incident is now its pinned self-test case.
+6. **Two multi-command runs joined by newlines instead of `&&`** (the T17 VM
+   reruns): a failed python edit step did not stop the build step, so VM runs
+   burned against STALE code. The runbook rule exists; violated twice under
+   time pressure. Also: one edit anchor died on an em-dash/hyphen mismatch
+   and one on `len("vm")` vs `len("vm-")` — anchor edits must be copied from
+   the live bytes, never from memory.
+7. **`git add -u` swept the concurrent session's four in-flight configjs
+   files into a style commit** — caught before push, repaired by
+   `git reset --soft` + restage of only my four files; their work returned
+   to the working tree untouched. The daemon then swept and pushed their
+   half-written quartet anyway (a3e9c4d2), reding CI
+   (TestConfigJSCarriesNoSharedDirectory nil-pointer + island-js) — tracker
+   #252 filed per the fix-forward protocol (bounded wait, surfaces named,
+   both fix options).
 
 ## e) WHAT WE SHOULD IMPROVE
 
