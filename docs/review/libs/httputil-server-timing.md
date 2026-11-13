@@ -1,7 +1,7 @@
 # httputil/server_timing — library utilization audit
 
 **Verdict:** wired exactly as designed (env-gated edge middleware on an SSE-safe writer); named spans unused. **Adoption 67/100 (moderate)** — 2 of 3 applicable rows.
-**Pin:** v1.0.3 (go.mod:32) · **Latest:** v1.0.3 · **Currency:** current · **Status:** direct dep (separate module of the httputil repo)
+**Pin:** v1.0.3 (go.mod:45) · **Latest:** v1.0.3 · **Currency:** current · **Status:** direct dep (separate module of the httputil repo)
 **Audited:** 2026-11-04 · **Prior reports:** covered inside [httputil](httputil.md) and the [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html).
 
 ## Status

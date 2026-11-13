@@ -1,7 +1,7 @@
 # httputil — library utilization audit
 
 **Verdict:** configured, not defaulted — the security surface runs on this library by explicit choice. The standing body-cap gap LANDED 2026-11-04. **Adoption 95/100 (top band, post-adoption)** — 9.5 of 10 applicable rows (inputs below).
-**Pin:** v1.8.0 (go.mod:31) + `httputil/server_timing` v1.0.3 · **Latest:** v1.8.0 / v1.0.3 · **Currency:** current · **Status:** direct dep
+**Pin:** v1.8.0 (go.mod:44) + `httputil/server_timing` v1.0.3 · **Latest:** v1.8.0 / v1.0.3 · **Currency:** current · **Status:** direct dep
 **Audited:** 2026-11-04 · **Prior reports:** [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html) (82/100 at v1.2.0 — its finding #1, `MaxBodySize`, LANDED 2026-11-04). **Movement: → 95 at this audit (+13 — the standing finding closed and the mounts pinned)**; server_timing has its own [report](httputil-server-timing.md).
 
 ## Status

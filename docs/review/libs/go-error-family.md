@@ -1,7 +1,7 @@
 # go-error-family — library utilization audit
 
 **Verdict:** the backbone of webphone's error culture; deep and deliberate. **Adoption 64/100 (moderate)** — 7 of 11 applicable rows fully leveraged (inputs below).
-**Pin:** v0.12.0 (go.mod:24) · **Latest:** v0.12.0 · **Currency:** current · **Status:** direct dep
+**Pin:** v0.12.0 (go.mod:33) · **Latest:** v0.12.0 · **Currency:** current · **Status:** direct dep
 **Audited:** 2026-11-04 · **Prior reports:** [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html) (58/100 at v0.10.1 — superseded by this one; adoption roughly doubled since). **Movement: → 64 at this audit (+6)**.
 
 ## Status
