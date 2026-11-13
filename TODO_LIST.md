@@ -211,7 +211,11 @@ DONE 2026-11-10 (trains cabdeeb8 / abed8247 / 3d1c1ba2 / 12cee0b3): C1 is the on
       (badge bar / threshold calibration values; the 0.5% default is
       optimistic — identical-seed local runs peaked at 2.5% on relative
       timestamps). Home: the tracking plan's T25; pair the runs ≥8h
-      apart so relative times settle.
+      apart so relative times settle. SUPPORT PACK LANDED 2026-11-13
+      (pareto T18/F61): `scripts/ui-night-pair.sh` schedules both runs
+      as transient systemd user units (run 1 now, run 2 +8h) with the
+      env credentials — the wall-clock half stays a scheduled item until
+      the first pair actually runs.
 
 - [x] **Self-test pins for the dormant paths** (tracking plan T28's
       second half + §f-3 partial): the EMPTY-run discard guard

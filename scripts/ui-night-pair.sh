@@ -1,24 +1,19 @@
 #!/usr/bin/env bash
 # ui-night-pair.sh — schedule the night-run stability pair (TODO_LIST's
-# night-run row) as two transient systemd timers on this host, ≥8h apart,
-# each running scripts/ui-capture.py --track against prod, then leave the
-# pair for compare.html (the harness diffs the newest run per host at the
-# host level).
+# night-run row) as two transient systemd user units ≥8h apart, each
+# running scripts/ui-capture.py --track against prod. The harness's
+# host-level compare.html diffs the two newest runs once BOTH landed.
 #
 # WHY a script: the pair needs WALL-CLOCK separation (relative timestamps
-# must settle) and a quiet window (nobody watching the screen); both runs
-# must land in ui-shots/<host>/ with distinct UTC stamps for compare.html.
-# The first pair sets the diff noise floor (badge bar / threshold
-# calibration; the 0.5% default is optimistic — identical-seed local runs
-# peaked at 2.5% on relative timestamps).
+# must settle) and a quiet window; both runs land in ui-shots/<host>/ with
+# distinct UTC stamps. The first pair sets the diff noise floor (badge
+# bar / threshold calibration; the 0.5% default is optimistic —
+# identical-seed local runs peaked at 2.5% on relative timestamps).
 #
 # Usage (env carries the credentials, exactly like the prod capture):
 #   WEBPHONE_CAPTURE_EXTENSION=1001 WEBPHONE_CAPTURE_PASSWORD=... \
 #     scripts/ui-night-pair.sh --base-url https://pbx.artmann.tech \
 #     [--threads N] [--label "night pair"] [--hours 8]
-#
-# Both runs use --insecure? NO — the prod host is TLS-fronted by caddy with
-# a real chain; only the LOCAL TLS-front smoke lane may use --insecure.
 set -euo pipefail
 
 base=""; threads=""; label="night-pair"; hours=8
@@ -36,34 +31,40 @@ done
 : "${WEBPHONE_CAPTURE_PASSWORD:?WEBPHONE_CAPTURE_PASSWORD required}"
 
 repo_root="$(cd "$(dirname "$0")/.." && pwd)"
-run_one() {
-	local tag="$1"
-	systemd-run --user --unit="webphone-ui-night-$tag" --description="webphone ui-capture night run ($tag)" \
-		--collect \
-		env WEBPHONE_CAPTURE_EXTENSION="$WEBPHONE_CAPTURE_EXTENSION" \
-		WEBPHONE_CAPTURE_PASSWORD="$WEBPHONE_CAPTURE_PASSWORD" \
-		"$repo_root/scripts/ui-capture.py" \
-		--base-url "$base" --track ${threads:+--threads "$threads"} --label "$label ($tag)"
-}
+capture_argv=(
+	"$repo_root/scripts/ui-capture.py"
+	--base-url "$base"
+	--track
+	--label "$label"
+)
+[ -z "$threads" ] || capture_argv+=(--threads "$threads")
 
-# Run 1 immediately, run 2 after the settle window.
-run_one "run1"
-systemd-run --user --on-active="${hours}h" --unit="webphone-ui-night-delay" --collect \
-	bash -c 'sleep 1' >/dev/null   # placeholder timer semantics documented below
-run_one "run2" 2>/dev/null || true
+# Run 1 starts now; run 2 is scheduled ${hours}h later. Two independent
+# transient units — the delay lives on run2's OWN start, so the runs can
+# never overlap unless run1 somehow runs longer than the settle window
+# (rerun with a larger --hours if a ledger pair ever looks overlapped).
+systemd-run --user --unit=webphone-ui-night-run1 --collect \
+	--description="webphone ui-capture night pair, run 1 (now)" \
+	--setenv=WEBPHONE_CAPTURE_EXTENSION="$WEBPHONE_CAPTURE_EXTENSION" \
+	--setenv=WEBPHONE_CAPTURE_PASSWORD="$WEBPHONE_CAPTURE_PASSWORD" \
+	"${capture_argv[@]}"
+
+systemd-run --user --unit=webphone-ui-night-run2 --collect \
+	--on-active="${hours}h" \
+	--description="webphone ui-capture night pair, run 2 (now+${hours}h)" \
+	--setenv=WEBPHONE_CAPTURE_EXTENSION="$WEBPHONE_CAPTURE_EXTENSION" \
+	--setenv=WEBPHONE_CAPTURE_PASSWORD="$WEBPHONE_CAPTURE_PASSWORD" \
+	"${capture_argv[@]}"
 
 cat <<EOF
 
 night pair scheduled:
-  run1: unit webphone-ui-night-run1 (starts now)
-  run2: unit webphone-ui-night-run2 (starts ${hours}h later via the delay timer)
+  run1: unit webphone-ui-night-run1 — starts now
+  run2: unit webphone-ui-night-run2 — starts in ${hours}h (--on-active)
 
-Watch:  journalctl --user -u webphone-ui-night-run1 -f
-Ledger: ui-shots/<host>/<UTC-stamp>/summary.json per run; the host-level
-        compare.html diffs the two newest runs once BOTH have landed.
-
-NOTE: systemd-run --user --on-active schedules the SECOND unit's START, not
-a chained run — if the delay timer fires while run1 is still in flight,
-the two runs overlap and the noise floor is invalid. Rerun with a larger
---hours (default 8) in that case.
+Watch:   journalctl --user -u webphone-ui-night-run1 -f   (then run2)
+Ledger:  ui-shots/<host>/<UTC-stamp>/summary.json per run; compare.html
+         at the host level diffs the newest pair once run2 has landed.
+Cleanup: the units are --collect (gone when done); list with
+         systemctl --user list-units 'webphone-ui-night-*'
 EOF
