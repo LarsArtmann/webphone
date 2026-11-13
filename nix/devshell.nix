@@ -71,6 +71,11 @@
           pkgs.codespell
           pkgs.statix
           pkgs.deadnix
+          # The bandit triage runner, PINNED via this flake's locked
+          # nixpkgs (the gate-setup residue row: a bare `bandit` PATH hunt
+          # rode whatever the host had; 1.9.4 here matches BuildFlow's
+          # runner so findings agree).
+          pkgs.python312Packages.bandit
           # The island type gate: `tsc -p . --noEmit` inside the shell is
           # the only authority over the island tree — editors run
           # TypeScript 5.x and report phantom errors against a project
