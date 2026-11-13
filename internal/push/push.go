@@ -20,6 +20,7 @@ import (
 	"log/slog"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/larsartmann/go-error-family"
@@ -134,6 +135,7 @@ type Sender interface {
 type Fanout struct {
 	senders  map[Transport]Sender
 	registry DeviceRegistry
+	fans     sync.WaitGroup
 }
 
 // Device is one registered wake address, flattened for the fanout (the
@@ -227,7 +229,9 @@ func (f *Fanout) Fan(ctx context.Context, owner domain.Extension, fact any) erro
 		return errorfamily.Newf(errorfamily.Rejection, "push.registry", "fan: no device registry wired")
 	}
 	detached := context.WithoutCancel(ctx)
+	f.fans.Add(1)
 	go func() {
+		defer f.fans.Done()
 		// Goroutine containment (owner ruling 2026-10-27): RecoveryMiddleware
 		// cannot see this goroutine, so a panicking transport or registry
 		// would take the whole process down. Recover, log greppably, survive.
@@ -261,6 +265,29 @@ func (f *Fanout) Fan(ctx context.Context, owner domain.Extension, fact any) erro
 		}
 	}()
 	return nil
+}
+
+// Settle awaits every detached fan this Fanout launched. Production
+// callers never wait (the 202-inert doctrine: the answer never waits
+// on push health), but tests that hand Fan a store living in a TempDir
+// must settle before its cleanup removes the directory, or the fan's
+// store read races the removal (the 2026-11-13 ring-hook CI flake).
+// Bounded by ctx.
+func (f *Fanout) Settle(ctx context.Context) error {
+	if f == nil {
+		return nil
+	}
+	done := make(chan struct{})
+	go func() {
+		f.fans.Wait()
+		close(done)
+	}()
+	select {
+	case <-done:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 // route sends one fact to one device through the sender its transport

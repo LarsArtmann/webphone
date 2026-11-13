@@ -96,6 +96,17 @@ func newRingHandlers(t *testing.T, transport *fakeTransport) (*Handlers, readmod
 		Secret: "hook-secret",
 		Push:   fanout,
 	})
+	// The hooks detach their fans; settle them before TempDir's cleanup
+	// removes the journal's directory (cleanup order is LIFO: this
+	// registers after newRingCoreSystem's TempDir). The 2026-11-13 CI
+	// flake was the detached fan's store read racing that removal.
+	t.Cleanup(func() {
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		defer cancel()
+		if err := fanout.Settle(ctx); err != nil {
+			t.Logf("ring fans did not settle: %v", err)
+		}
+	})
 	return handlers, devices
 }
 

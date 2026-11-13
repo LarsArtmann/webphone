@@ -124,6 +124,27 @@ func TestFanRoutesPerTransport(t *testing.T) {
 	}
 }
 
+// TestFanSettleAwaitsTheDetachedFan pins the test seam: Settle returns
+// only after the detached fan finished, so settle-then-assert sees the
+// send without polling. The ring-hook fixture settles before TempDir
+// cleanup (the 2026-11-13 CI flake's hardening).
+func TestFanSettleAwaitsTheDetachedFan(t *testing.T) {
+	ntfy := &fakeSender{enabled: true}
+	fanout := push.NewFanout(map[push.Transport]push.Sender{push.TransportNtfy: ntfy}, &fakeRegistry{devices: []push.Device{
+		{DeviceID: "d1", Transport: push.TransportNtfy, Token: "topic-a"},
+	}})
+	ring := push.Ring{Event: push.EventRing, From: "+15550000001", CallID: "c1"}
+	if err := fanout.Fan(context.Background(), owner, ring); err != nil {
+		t.Fatal(err)
+	}
+	if err := fanout.Settle(context.Background()); err != nil {
+		t.Fatalf("settle: %v", err)
+	}
+	if ntfy.rings() != 1 {
+		t.Fatalf("rings after settle = %d, want the fan already finished", ntfy.rings())
+	}
+}
+
 // TestFanRoutesTheDraftFact pins the draft lane's routing: same
 // transport table, same per-device tokens — the draft fact is a peer
 // of the ring fact, not a special.

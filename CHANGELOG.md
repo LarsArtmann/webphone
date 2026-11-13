@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `push.Fanout.Settle` awaits the detached delivery goroutines, and the
+  ring-hook tests settle before TempDir cleanup so a fan's store read
+  can no longer race the journal directory's removal (CI flake
+  hardening; production behavior unchanged).
 - The digits-only rune reduction has ONE home (`domain.DigitsOf`),
   shared by the contact upsert key, the dialable sanitize and the
   avatar digit tail; the CRM context strip's muted meta lines render
