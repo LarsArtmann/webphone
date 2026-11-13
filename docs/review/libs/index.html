@@ -979,7 +979,13 @@
             its floor is exactly webphone&rsquo;s current pins), go-filewatcher v2.5.0
             (<code>Healthy()</code>/circuit breaker — nothing-to-watch stands),
             go-credentials-store v0.4.2 (adminui hardening — the stateful-service premise
-            stands).
+            stands). <strong>Untagged-release sweep (2026-11-13,
+            <code>scripts/fleet-tags.sh</code>)</strong>: every CHANGELOG's newest version
+            verified against its remote tag with per-submodule refspecs (the awk-mangle
+            class retired at its root) across 22 fleet checkouts — ONE finding, adjudicated
+            benign: go-cqrs-lite's meta-root CHANGELOG row v4.14.1 (the repo's release
+            convention is the per-module wave tags; the root module is unconsumed). No
+            untagged releases in the fleet; the dashboard v0.13.0 class has not recurred.
           </p>
           <div class="callout callout-teal">
             <strong>The bottom line — both top findings LANDED 2026-11-04</strong>
