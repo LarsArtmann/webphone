@@ -603,8 +603,10 @@ the surface); probe aliases at `/health/{livez,readyz,startupz}` (SAME
 probe instance as the root triple). The dashboard registers in the
 container under the name `dashboard` (its pusher-staleness check shows
 as non-critical warn). CSP: subtree override via `httputil.Nonce` +
-`dashboard.RecommendedCSP(nonce)` — `unsafe-eval` scoped to `/health`
-ONLY (Datastar SDK compiles expressions); every other surface keeps the
+`dashboardCSP` (RecommendedCSP minus `'unsafe-eval'` — since dashboard
+v0.13.3 the page's data-nonce root lets the SDK compile without the
+Function path, browser-verified upstream, so /health needs no eval);
+every other surface keeps the
 strict app policy. Its stylesheet is its OWN scoped build
 `/assets/health.css` (prettier-formatted, treefmt owns it; regenerated
 from the go-health-dashboard + templ-components layout/display/

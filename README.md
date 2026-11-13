@@ -71,10 +71,10 @@ config file) and `/health` serves a live operator dashboard — check
 cards over SSE (go-health-dashboard), the container's health checks
 (sqlite, blob-dir, plus the dashboard's own pusher staleness as a
 non-critical warn), a status trend, and JSON on `Accept:
-application/json`. The page is CSP-strict: per-request nonces, the
-Datastar SDK and its stylesheet served same-origin from the binary
-(`unsafe-eval` is scoped to this subtree only, because the SDK compiles
-its expressions). Probe aliases live at `/health/livez`,
+application/json`. The page is CSP-strict: per-request nonces, no
+`unsafe-eval` anywhere, and the Datastar SDK + its stylesheet served
+same-origin from the binary (the SDK compiles its expressions from the
+nonce stamped on the page root, dashboard v0.13.3). Probe aliases live at `/health/livez`,
 `/health/readyz`, `/health/startupz` — same probe as the root triple,
 never a second truth. Treat the subtree like the probe triple in front
 of it: it is an operator surface, so fence it. Two fronts already do the
