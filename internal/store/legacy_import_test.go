@@ -8,13 +8,15 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
-// The legacy tables stay in webphone.db after the 2026-10-15 move of the
-// personal-contacts, fax, snippet and transcript truth into the metaengine
-// read models, so an UPGRADED deployment's data rides the transitional reads
-// in this package exactly once at boot. A regression here does not red a
-// screen — it silently imports nothing and stamps the "imported" flag, which
-// is the one failure mode the user cannot notice until the data is gone. That
-// is why these readers get their own pins even though the tables are retired.
+// The legacy tables stay in webphone.db (the migration ladder never
+// rewrites shipped shape; docs/planning/2026-11-09_storage-ladder-retirement.md
+// §4 rows the whole frozen family for the operator-gated final DROP).
+// The transitional BOOT importers are gone since the 2026-11-09
+// unification (7122de92 deleted internal/app/legacy.go) — the remaining
+// pins cover the app-flag helpers the sync cursors ride, and the sibling
+// legacy readers (faxes/snippets/transcripts) until their own deletion
+// pass. The contacts reader itself is deleted (no production caller
+// since the unification; its table stays for the §5 drop).
 
 func seedAppFlag(t *testing.T, messages *Messages, key, value string) {
 	t.Helper()
@@ -47,66 +49,6 @@ func TestAppFlagsRoundTripAndAbsence(t *testing.T) {
 	seedAppFlag(t, messages, FlagLegacyContactsImported, "2026-11-08")
 	if value, _, err := FlagValue(ctx, messages.db, FlagLegacyContactsImported); err != nil || value != "2026-11-08" {
 		t.Fatalf("after rewrite: %q/%v, want the newer value", value, err)
-	}
-}
-
-func TestReadLegacyContactsIsOldestFirstAndTranslates(t *testing.T) {
-	messages := newTestDB(t)
-	ctx := context.Background()
-	now := time.Now()
-
-	// Inserted newest-first on purpose: the reader's ORDER BY is the contract.
-	// (owner, phone) is UNIQUE on the live table: two rows need two numbers.
-	for _, row := range []struct {
-		id      string
-		name    string
-		phone   string
-		created time.Time
-	}{
-		{domain.GenerateContactID().String(), "newer", "+441632960961", now},
-		{domain.GenerateContactID().String(), "older", "+441632960962", now.Add(-time.Hour)},
-	} {
-		if _, err := messages.db.ExecContext(ctx,
-			`INSERT INTO contacts (id, owner, name, phone, created_at) VALUES (?, ?, ?, ?, ?)`,
-			row.id, "1001", row.name, row.phone, row.created.Unix()); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	rows, err := ReadLegacyContacts(ctx, messages.db)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(rows) != 2 || rows[0].Name != "older" || rows[1].Name != "newer" {
-		t.Fatalf("order = %+v, want oldest first", rows)
-	}
-
-	contact, ok := rows[0].ToContact()
-	if !ok {
-		t.Fatal("a well-formed legacy row must translate")
-	}
-	if contact.Name != "older" || contact.Owner.String() != "1001" || contact.Phone.String() != "+441632960962" {
-		t.Errorf("contact = %+v, want the row's own values", contact)
-	}
-	if contact.ID != domain.MustContactID(rows[0].ID) {
-		t.Errorf("id = %s, want the stored id preserved", contact.ID)
-	}
-}
-
-func TestToContactSkipsCorruptRowsAndDemotesTheID(t *testing.T) {
-	good := LegacyContact{ID: "not-a-contact-id", Owner: "1001", Name: "n", Phone: "+441632960961"}
-	contact, ok := good.ToContact()
-	if !ok {
-		t.Fatal("an unparseable ID must DEMOTE, not drop the contact")
-	}
-	if contact.ID.IsZero() {
-		t.Error("a demoted id must still be minted, never empty")
-	}
-	if _, ok := (LegacyContact{Owner: "---", Phone: "+441632960961"}).ToContact(); ok {
-		t.Error("an owner with no dialable characters must be skipped")
-	}
-	if _, ok := (LegacyContact{Owner: "1001", Phone: "---"}).ToContact(); ok {
-		t.Error("a phone with no dialable characters must be skipped")
 	}
 }
 
