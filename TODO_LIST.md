@@ -1312,7 +1312,11 @@ evidence in the 16-50 plan + its execution status). Open rows:
       proof); (b) CONSIDER a `/config.js` key fixture pinning
       `sipDomain`/`websocketPath` in the same sync (trigger: the first
       config.js key drift or a second config consumer — the android
-      repo owns the regex reads). Rows mirrored in webphone-android's
+      repo owns the regex reads). BOTH TRIGGERS RE-CHECKED UNFIRED
+      2026-11-13 (pareto T20; config.js keys stable, no second
+      consumer, first device train still operator-blocked) — the
+      handover pack (docs/planning/2026-11-13_16-40_android-handover-pack.md)
+      carries the check + the line-picking/CallStyle contracts. Rows mirrored in webphone-android's
       TODO_LIST; the KMP spike stays deferred per the 2026-11-08
       preflight (quiet-repo gate). **Priority:** Low · **Effort:** S each.
 - [x] **DONE 2026-11-04 (ETag half): /openapi.json conditional GET** —
