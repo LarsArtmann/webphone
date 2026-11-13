@@ -125,6 +125,17 @@ report's still-open §f rows.
 - [ ] **Schema-export spike**: settings schema GENERATED from the
       config structs (the openapi.json doctrine applied to settings).
 
+### OIDC lane residuals (routed 2026-11-13 from the archived 2026-10-25 15-16 report)
+
+- [ ] **NixOS VM test for the OIDC lane** (`webphone-oauth2`-style:
+      systemd `LoadCredential` lands, mode 0400, the app actually
+      reads the credential at login) — the eval-time assertions +
+      `module-check-oauth2` cases are the current fence.
+- [ ] **Second module-check golden with `oauth2.enable`** (exact
+      rendered JSON, mirroring the zero-config golden).
+- [ ] **Typed passkey options** in the module (passkey-only configs
+      get derived rp the same way the OIDC lane derives them).
+
 ### Voicemail playback train residue (2026-11-10 — the fix is pushed; production legs open)
 
 The two product defects are fixed and CI-green (`fc352e66`: honest toast +
