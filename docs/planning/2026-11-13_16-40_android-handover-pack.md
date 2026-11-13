@@ -12,12 +12,12 @@ feed an Android CallStyle notification.
 
 ## 1. What the app already consumes (verified)
 
-| Fact | Source | Contract home |
-| --- | --- | --- |
-| `sipDomain`, `websocketPath` (island config) | `/config.js` (`window.PBX_CONFIG`) | `internal/server/configjs_test.go` |
-| Session identity, both credential arms | `/api/session` + `/api/session/switch` answers | `docs/contracts/wire/session-identity-{brokered,password}.json` (byte-pinned, freshness-gated) |
-| Push payloads, both transports | ntfy JSON body / FCM `data` | `docs/contracts/wire/push-*.json` (7 fixtures) |
-| Push registration | `POST /api/push-devices` (CSRF dance) | asyncapi.yaml + the fixtures' request shape |
+| Fact                                         | Source                                         | Contract home                                                                                  |
+| -------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `sipDomain`, `websocketPath` (island config) | `/config.js` (`window.PBX_CONFIG`)             | `internal/server/configjs_test.go`                                                             |
+| Session identity, both credential arms       | `/api/session` + `/api/session/switch` answers | `docs/contracts/wire/session-identity-{brokered,password}.json` (byte-pinned, freshness-gated) |
+| Push payloads, both transports               | ntfy JSON body / FCM `data`                    | `docs/contracts/wire/push-*.json` (7 fixtures)                                                 |
+| Push registration                            | `POST /api/push-devices` (CSRF dance)          | asyncapi.yaml + the fixtures' request shape                                                    |
 
 The build-time half of the digest handshake LANDED 2026-11-10: the android
 repo vendors these fixtures (`scripts/sync-wire-fixtures.sh` there) and its
@@ -32,8 +32,14 @@ the digest fetch effectively free when it fires.
 The session identity carries the switchable set:
 
 ```json
-{ "extension": "1001", "did": "+1555…", "display_name": "Jane Operator",
-  "numbers": ["+1555…"], "extensions": ["1001", "1002"], "sip_credential": "…" }
+{
+  "extension": "1001",
+  "did": "+1555…",
+  "display_name": "Jane Operator",
+  "numbers": ["+1555…"],
+  "extensions": ["1001", "1002"],
+  "sip_credential": "…"
+}
 ```
 
 - `extensions` lists EVERY same-email mapped line (`auth.users` mapping);
