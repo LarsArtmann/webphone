@@ -253,29 +253,30 @@ daemon commits with this session's edits.
    stability window made the handoff unambiguous.
 
 ## f) Top next tasks (this session's delta — the gate-hardening closeout's
+
 harvested rows are referenced, not duplicated)
 
-| #  | Task                                                                                                                                                                                  | Impact | Effort | Category      |
-| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
-| 1  | Split `internal/matrix/receiver.go` (381 → below cap, #248) — then re-run `buildflow -s file-size-check` and read exit 0; that closes the pasted failure completely                    | High   | S      | Quality       |
-| 2  | Land the raceprobe fix per #249's decision (await-poll test-side, or the fold-window semantics decision first, §g3)                                                                    | High   | S–M    | Quality       |
-| 3  | §D10 owner call: split-on-sight vs raise-cap vs warn-only for file-size-check — decides how every future 351-line file is handled, including #248's resolution shape                    | High   | S      | Decision      |
-| 4  | Harvest this report's §f into TODO_LIST (docs-health HARVEST; the loop-closer this skill mandates)                                                                                     | Medium | S      | Documentation |
+| #  | Task                                                                                                                                                                                     | Impact | Effort | Category      |
+| -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
+| 1  | Split `internal/matrix/receiver.go` (381 → below cap, #248) — then re-run `buildflow -s file-size-check` and read exit 0; that closes the pasted failure completely                      | High   | S      | Quality       |
+| 2  | Land the raceprobe fix per #249's decision (await-poll test-side, or the fold-window semantics decision first, §g3)                                                                      | High   | S–M    | Quality       |
+| 3  | §D10 owner call: split-on-sight vs raise-cap vs warn-only for file-size-check — decides how every future 351-line file is handled, including #248's resolution shape                     | High   | S      | Decision      |
+| 4  | Harvest this report's §f into TODO_LIST (docs-health HARVEST; the loop-closer this skill mandates)                                                                                       | Medium | S      | Documentation |
 | 5  | Branching-flow baseline refresh at the next governance sweep — re-home `COMPOSITION_mixin` (Client moved asr.go:124 → client.go) and prune the two stale old-path DUPLICATE_TYPE entries | Medium | S      | Quality       |
-| 6  | Probe `go test -race -count=3 ./internal/messaging/` for a race-detector signature and update #249's mechanism claim with the result                                                   | Low    | S      | Quality       |
-| 7  | Add the ci-flake-ledger row for the raceprobe flake on the day it first reds CI (evidence table ready in #249)                                                                          | Low    | S      | Documentation |
-| 8  | AGENTS.md one-liner: the error-registry regen fires on MOVE, not only on NEW codes (cap 203/377 has room; next legitimate AGENTS touch)                                                 | Low    | S      | Documentation |
-| 9  | Investigate or deliberately exclude `nix-build-verify` (22/25 failure history WARN in every recent buildflow run)                                                                       | Medium | M      | Quality       |
-| 10 | `buildflow timings --regressions` once, to classify the +182% test-race / +68% nix-build regressions (machine-load noise vs real)                                                       | Low    | S      | Quality       |
-| 11 | BuildFlow binary rebuild/reinstall (built `8936ca0`, repo at `39c4789`; advisory on every run) — ROADMAP row, pointer                                                                  | Low    | S      | Cleanup       |
-| 12 | BuildFlow cache-DB VACUUM (0.48 GB, 80% free pages) — state-DB purge decision is already ROADMAP; the cache half is a one-liner                                                        | Low    | S      | Cleanup       |
-| 13 | dprint plugins → nix-store pin (kills the network-fetch advisory) — ROADMAP row, pointer                                                                                               | Low    | M      | Quality       |
-| 14 | templ devshell pin alignment (v0.3.1020 → v0.3.1100, the fingerprint-drift advisory's root) — gate-hardening TODO row, pointer                                                         | Medium | S      | Quality       |
-| 15 | Standing: CI watch re-opens on the next daemon push (the 22:48 GREEN is anchored to `3d9515cc`; tip is `1c8959c7`, unpushed at 22:50)                                                  | High   | S      | Cleanup       |
-| 16 | Corpus cadence: this report is ~#67 unarchived against the 65 threshold — the T24 release-tails drain train owns it; check-rows + bare-rows before each `git mv`                        | Medium | M      | Documentation |
-| 17 | Cross-session §f dedup: this table vs the 22-04 gate-setup closeout §f and the deepening closeout §f (rows 9–14 here intentionally only POINT at their harvested rows)                  | Low    | S      | Documentation |
-| 18 | After #248 lands: one full buildflow for the clean exit-0 certification of the whole file-size train                                                                                    | Medium | M      | Quality       |
-| 19 | Verify the `1c8959c7` chunk pushed and CI stays green (minutes-old at report time; the bar is 60 min from the first unpushed commit)                                                    | High   | S      | Cleanup       |
+| 6  | Probe `go test -race -count=3 ./internal/messaging/` for a race-detector signature and update #249's mechanism claim with the result                                                     | Low    | S      | Quality       |
+| 7  | Add the ci-flake-ledger row for the raceprobe flake on the day it first reds CI (evidence table ready in #249)                                                                           | Low    | S      | Documentation |
+| 8  | AGENTS.md one-liner: the error-registry regen fires on MOVE, not only on NEW codes (cap 203/377 has room; next legitimate AGENTS touch)                                                  | Low    | S      | Documentation |
+| 9  | Investigate or deliberately exclude `nix-build-verify` (22/25 failure history WARN in every recent buildflow run)                                                                        | Medium | M      | Quality       |
+| 10 | `buildflow timings --regressions` once, to classify the +182% test-race / +68% nix-build regressions (machine-load noise vs real)                                                        | Low    | S      | Quality       |
+| 11 | BuildFlow binary rebuild/reinstall (built `8936ca0`, repo at `39c4789`; advisory on every run) — ROADMAP row, pointer                                                                    | Low    | S      | Cleanup       |
+| 12 | BuildFlow cache-DB VACUUM (0.48 GB, 80% free pages) — state-DB purge decision is already ROADMAP; the cache half is a one-liner                                                          | Low    | S      | Cleanup       |
+| 13 | dprint plugins → nix-store pin (kills the network-fetch advisory) — ROADMAP row, pointer                                                                                                 | Low    | M      | Quality       |
+| 14 | templ devshell pin alignment (v0.3.1020 → v0.3.1100, the fingerprint-drift advisory's root) — gate-hardening TODO row, pointer                                                           | Medium | S      | Quality       |
+| 15 | Standing: CI watch re-opens on the next daemon push (the 22:48 GREEN is anchored to `3d9515cc`; tip is `1c8959c7`, unpushed at 22:50)                                                    | High   | S      | Cleanup       |
+| 16 | Corpus cadence: this report is ~#67 unarchived against the 65 threshold — the T24 release-tails drain train owns it; check-rows + bare-rows before each `git mv`                         | Medium | M      | Documentation |
+| 17 | Cross-session §f dedup: this table vs the 22-04 gate-setup closeout §f and the deepening closeout §f (rows 9–14 here intentionally only POINT at their harvested rows)                   | Low    | S      | Documentation |
+| 18 | After #248 lands: one full buildflow for the clean exit-0 certification of the whole file-size train                                                                                     | Medium | M      | Quality       |
+| 19 | Verify the `1c8959c7` chunk pushed and CI stays green (minutes-old at report time; the bar is 60 min from the first unpushed commit)                                                     | High   | S      | Cleanup       |
 | 20 | Draft-file tidy: dprint reflowed both `docs/drafts/2026-11-12_*` files during the 18:45 buildflow; the filed issue bodies are the record — align or mark the drafts as historical        | Low    | S      | Documentation |
 
 Deliberately NOT listed: the gate-hardening closeout's harvested rows
