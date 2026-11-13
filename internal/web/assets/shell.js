@@ -260,14 +260,26 @@
       var content = document.getElementById("tab-content");
       if (!content || !window.htmx || content.querySelector(".wp-welcome"))
         return;
-      window.htmx.ajax("GET", "/partials/" + stored, {
-        target: "#tab-content",
-        swap: "innerHTML",
-      });
-      window.htmx.ajax("GET", "/partials/nav?active=" + stored, {
-        target: "#wp-nav",
-        swap: "morph:innerHTML",
-      });
+      // The promises carry the verdicts: a failed restore degrades to
+      // the welcome panel, and the throttled toast says so once (same
+      // M23 contract as the nav refresh — a flapping session must not
+      // spam).
+      window
+        .htmx.ajax("GET", "/partials/" + stored, {
+          target: "#tab-content",
+          swap: "innerHTML",
+        })
+        .catch(function () {
+          showThrottledError("Could not restore your last tab.");
+        });
+      window
+        .htmx.ajax("GET", "/partials/nav?active=" + stored, {
+          target: "#wp-nav",
+          swap: "morph:innerHTML",
+        })
+        .catch(function () {
+          showThrottledError("Could not restore your last tab.");
+        });
       if (window.history && window.history.replaceState) {
         window.history.replaceState(null, "", "/" + stored);
       }
@@ -685,11 +697,18 @@
         return;
       }
       if (!window.htmx) return;
-      window.htmx.ajax(
-        "GET",
-        "/partials/live-context?remote=" + encodeURIComponent(remote),
-        { target: "#wp-live-context", swap: "innerHTML" },
-      );
+      // A REJECTED promise (network failure mid-call) degrades to the
+      // same empty slot as the server's degraded 200 answers: the
+      // live-context doctrine (2026-11-06) forbids a banner during a
+      // live call, so this catch is deliberately silent — the slot
+      // staying empty IS the failure surface.
+      window.htmx
+        .ajax(
+          "GET",
+          "/partials/live-context?remote=" + encodeURIComponent(remote),
+          { target: "#wp-live-context", swap: "innerHTML" },
+        )
+        .catch(function () {});
     };
     document.addEventListener("wp:calls-changed", updateLiveContext);
     updateLiveContext();

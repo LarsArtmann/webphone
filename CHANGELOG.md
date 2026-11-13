@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The call-note cap now counts characters, not bytes: the server's
+  4000 bound matches its own "max 4000 chars" wire doc and the
+  editors' `maxLength=4000`, so a 4000-character CJK note is accepted
+  instead of rejected at the byte comparison (multibyte pins in
+  `TestCallNoteGuards`).
+- Storage guards on the `/login` page script and the island's language
+  module: browser privacy settings that block site data make the
+  `localStorage` property itself throw — the boot reads and writes now
+  degrade (no remember, navigator-default language) instead of killing
+  the sign-in handler and every translated string (specs pin the
+  throwing-storage class).
 - `/health` CSP drops `'unsafe-eval'`: the go-health-dashboard v0.13.3
   bump ships the `data-nonce` root bridge (upstream issue #23), letting
   the Datastar SDK compile its expressions without the Function path —
