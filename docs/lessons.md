@@ -1202,3 +1202,31 @@ the goroutine's context budget outlives the request either way); a join-the-
 goroutine harness would wire test-only synchronization into a seam whose prod
 contract is deliberately detached. REOPEN TRIGGER: a second occurrence OUTSIDE
 the buildflow sandbox, or the same signature on a NON-test surface.
+
+## Plan says X, code pins Y — amend the same turn (2026-11-13, raceprobe #249)
+
+The raceprobe issue (#249) carried a repro expectation from the b1b01b87 era;
+by the time the train ran, the storage-ladder retirement had shifted fold
+timing and NOTHING reproduced (`-count=20`, `-count=10 -race`, package
+`-count=2`, all green). The train neither chased the ghost nor silently
+dropped the row: it amended the decision the same turn — implemented the
+cheap await-poll hardening anyway (defensive at 5 lines), closed the issue
+WITH the non-repro evidence, and recorded why no ci-flake-ledger row exists
+(the flake never red CI). The lesson: a plan's premise can rot while the work
+sits queued; when the code no longer exhibits the premise, AMEND the plan's
+verdict the same turn, with evidence, instead of executing a stale step or
+skipping it quietly.
+
+## New dataDir artifacts owe the backup path an adjudication (2026-11-13)
+
+The flight-recorder train added `<dataDir>/traces` under the data dir; the
+backup unit and the restore drill tar the WHOLE data dir
+(`scripts/webphone-backup-drill.py` `tar.add(src, arcname=".")`), so up to 20
+gzip'd trace snapshots silently ride every backup — count-bounded but
+size-unbounded per snapshot, and neither the train nor the backup docs ever
+decided that. Nothing broke (the drill passed; snapshots are gzip best-speed),
+which is exactly the danger: an artifact class entered the backup payload
+without a decision. Lesson: any new writer under dataDir adjudicates the
+backup tar + the VM-test fixtures AT introduction — include deliberately or
+exclude deliberately; "it's just a subdir" is how unbounded backup growth
+lands.

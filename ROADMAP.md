@@ -21,6 +21,16 @@ and retention or not at all).
 
 ## Open ideas
 
+- Observability depth (recorded 2026-11-13): the pieces now exist — /metrics
+  aggregate families, the opt-in flight recorder (slow/5xx trace windows with
+  a disk floor), the go-health dashboard (live check cards), per-surface
+  criticality grading — but nothing joins them. Raw direction: a
+  metrics→dashboard alert lane (threshold or anomaly on the existing
+  families), snapshot-trigger annotations on the dashboard's check trend, and
+  a trace-pivot view (which endpoints fed a slow snapshot). No demand event
+  yet; revisit when the operator opens /health unprompted or a production
+  incident needs the join.
+
 - Union test coverage (`-coverpkg=./...`) in the buildflow test-coverage
   step: per-package attribution hides cross-package coverage (tests in
   `internal/server` exercising `internal/store` count as 0% for the
