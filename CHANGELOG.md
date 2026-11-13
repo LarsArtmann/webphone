@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The flight-recorder debug seam is a declared module surface
+  (`debug.flightrecorder.enable` sets the env gate), its snapshot
+  endpoint is rate-limited (tight bucket: each hit writes a trace
+  window), enabling it logs the seam's directory and capture policy at
+  boot, its snapshot writes fold into a `/metrics` counter family
+  (`webphone_flightrecorder_snapshots_total` by outcome + byte total),
+  and a 1 GiB free-disk floor guards every capture path so a
+  pathological upstream cannot fill the disk.
 - Island hardening: the dial form guards double submits (two rapid
   Enters no longer race two gate consults into two INVITEs), the tab
   restore and live-context `htmx.ajax` promises carry rejections (a
