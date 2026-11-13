@@ -11,7 +11,6 @@ import (
 	"time"
 
 	"github.com/larsartmann/webphone/internal/config"
-	"github.com/larsartmann/webphone/internal/domain"
 )
 
 // configJS renders window.PBX_CONFIG for the island — the same contract
@@ -19,6 +18,12 @@ import (
 // server from its config. TURN credentials are short-lived whenever the
 // turn_rest secret is configured: each response derives a fresh pair
 // (coturn REST API) instead of shipping a static password.
+//
+// The shared contact directory deliberately does NOT ride this payload:
+// /config.js is mounted PRE-AUTH (the island boot probe reads it before
+// any session exists), and the operator's directory is exactly the data
+// an anonymous fetcher must not enumerate. It loads post-login from the
+// session-gated GET /api/contacts answer ({shared}) instead.
 func (p *Hub) ConfigJS(w http.ResponseWriter, _ *http.Request) {
 	// config.ICEServer and domain.SharedContact carry the JSON tags of the
 	// window.PBX_CONFIG wire contract (see README) — no local mirror types.
@@ -69,8 +74,7 @@ func (p *Hub) ConfigJS(w http.ResponseWriter, _ *http.Request) {
 		// SIPCredential tells the island the login ORDER changes: the
 		// session must be minted BEFORE the REGISTER (the derived
 		// credential comes back in the login/resume answers).
-		SIPCredential bool                   `json:"sipCredential"`
-		Contacts      []domain.SharedContact `json:"contacts,omitempty"`
+		SIPCredential bool `json:"sipCredential"`
 	}{
 		SIPDomain:           p.deps.Config.SIPDomain,
 		WebsocketPath:       p.deps.Config.WebsocketPath,
@@ -83,7 +87,6 @@ func (p *Hub) ConfigJS(w http.ResponseWriter, _ *http.Request) {
 		Metrics:             metricsBeacon,
 		ASRLocality:         p.deps.ASRLocality,
 		SIPCredential:       p.deps.Config.SIP.DerivedCredentials(),
-		Contacts:            p.deps.Shared,
 	}
 
 	payload, err := json.Marshal(pbxConfig)

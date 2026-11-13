@@ -56,14 +56,33 @@ export const agentEnabled = config.agent === true;
 // beacons and stays byte-identical.
 export const metricsBeacon = config.metrics === true;
 
-export const sharedContacts = Array.isArray(config.contacts)
-  ? config.contacts
-  : [];
+// The operator's shared directory deliberately does NOT ride the boot
+// config: /config.js is mounted PRE-AUTH, and the directory is exactly
+// the data an anonymous fetcher must not enumerate. panels.js adopts it
+// from the session-gated GET /api/contacts answer ({shared}) right
+// after login; before that it stays empty, so an anonymous visitor
+// learns nothing about who shares this phone.
+/** @type {PBXSharedContact[]} */
+export const sharedContacts = [];
+
+/**
+ * Adopts the operator's shared directory from the session-gated
+ * contacts API answer (GET /api/contacts → {shared}).
+ * @param {unknown} contacts
+ */
+export function setSharedContacts(contacts) {
+  const list = Array.isArray(contacts) ? contacts : [];
+  sharedContacts.length = 0;
+  for (const contact of list) {
+    if (contact && contact.number) sharedContacts.push(contact);
+  }
+}
 
 // The contact sources behind the dial typeahead AND the ring surfaces
-// (F7): shared contacts ship in the config, per-extension personal
-// contacts are fed by panels.js once the session exists. Both resolve
-// here so a name resolves in exactly one way everywhere.
+// (F7): shared contacts are adopted from the session-gated API,
+// per-extension personal contacts are fed by panels.js once the session
+// exists. Both resolve here so a name resolves in exactly one way
+// everywhere.
 /** @type {PBXSharedContact[]} */
 const personalContacts = [];
 

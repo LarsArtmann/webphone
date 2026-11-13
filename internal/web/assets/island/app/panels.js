@@ -8,6 +8,7 @@ import {
   asrEnabled,
   crmEnabled,
   phoneApiEnabled,
+  setSharedContacts,
   sharedContacts,
 } from "./config.js";
 import {
@@ -213,8 +214,9 @@ export function renderHistory() {
 //
 // Personal contacts live in the server's per-extension store — the same
 // home the Contacts tab renders from — so they survive browser loss and
-// never fork. Shared contacts still come from config (they render
-// pre-login). The legacy localStorage list ("pbx-contacts") is imported
+// never fork. Shared contacts arrive with the SAME session-gated
+// answer ({shared}) — never from the pre-auth /config.js, which no
+// longer carries them. The legacy localStorage list ("pbx-contacts") is imported
 // once after login and cleared only after the server accepted every
 // row; a failed import keeps the local rows rendering and retries on
 // the next login (the store upserts by number, so re-import cannot
@@ -254,6 +256,7 @@ export async function loadContacts() {
     }
     const data = await res.json();
     personalContacts = Array.isArray(data.personal) ? data.personal : [];
+    setSharedContacts(data.shared);
     renderContacts();
     await migrateLegacyContacts();
   } catch (err) {
