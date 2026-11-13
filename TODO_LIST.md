@@ -113,6 +113,18 @@ report's still-open §f rows.
   drain beyond the one CI-greening archive stays with the T24
   release-tails train.
 
+### 2026-11-02 cue-assessment residue (harvested 2026-11-13 — the report's own §f-5 ask)
+
+- [ ] **Stack drift audit**: read the stack repo's webphone module
+      assertions and diff every rule against `internal/config` — the
+      CUE-era verification task, still valid under the typed NixOS
+      lane (rides the next stack module touch).
+- [ ] **Record the CUE ruling durably** (REJECTED; schema-export
+      deferred with a named trigger) as an owner decision line, and
+      park the cuelang.org/go cost measurement next to it.
+- [ ] **Schema-export spike**: settings schema GENERATED from the
+      config structs (the openapi.json doctrine applied to settings).
+
 ### Voicemail playback train residue (2026-11-10 — the fix is pushed; production legs open)
 
 The two product defects are fixed and CI-green (`fc352e66`: honest toast +
@@ -488,7 +500,7 @@ go-datastar adjacent ruling's trigger paragraph). One actionable item fell out:
   page, grant `'nonce-…'` instead of `'unsafe-eval'` in its csp.go), then
   re-pin `TestAppDashboardMountsHealthSubtree` (app_test.go:135) to assert the
   nonce form. Evidence: report F4.~~ →
-  adjudicated 2026-11-12 — the "nonce INSTEAD OF unsafe-eval" premise is unsatisfiable: the shipped csp.go (v0.13.1, commit 449aeb3) adds the nonce BESIDE `'unsafe-eval'` because the Datastar SDK compiles its data-* expressions with the Function constructor regardless of nonces (library comment + webphone dashboard.go + deep-dive F4 agree). The ACHIEVABLE half already landed and is pinned: per-request nonce'd inline scripts + the nonce'd CSP are asserted by TestAppDashboardMountsHealthSubtree (both tokens + rotation). The eval-free re-open trigger lives with Datastar upstream (expression compilation without eval) or a dashboard drop of Datastar — not this repo. 2026-11-13: dashboard v0.13.3 shipped the SDK-side half (the `data-nonce` root bridge, upstream issue #23 — the SDK reads the page nonce to evaluate "without the new Function path"); when the v0.13.3 bump rides, re-check whether csp.go can finally drop `'unsafe-eval'` on a nonce'd host.
+  adjudicated 2026-11-12 — the "nonce INSTEAD OF unsafe-eval" premise is unsatisfiable: the shipped csp.go (v0.13.1, commit 449aeb3) adds the nonce BESIDE `'unsafe-eval'` because the Datastar SDK compiles its data-* expressions with the Function constructor regardless of nonces (library comment + webphone dashboard.go + deep-dive F4 agree). The ACHIEVABLE half already landed and is pinned: per-request nonce'd inline scripts + the nonce'd CSP are asserted by TestAppDashboardMountsHealthSubtree (both tokens + rotation). The eval-free re-open trigger lives with Datastar upstream (expression compilation without eval) or a dashboard drop of Datastar — not this repo. ~~2026-11-13: dashboard v0.13.3 shipped the SDK-side half (the `data-nonce` root bridge, upstream issue #23 — the SDK reads the page nonce to evaluate "without the new Function path"); when the v0.13.3 bump rides, re-check whether csp.go can finally drop `'unsafe-eval'` on a nonce'd host.~~ → done 2026-11-13 — the v0.13.3 bump LANDED and the eval retirement SHIPPED WITH IT: the runtime can already avoid the Function path under the root nonce (upstream browser-verifies the exact no-eval policy in TestBrowser_StrictCSPNoEvalConnects), so webphone's `dashboardCSP` now strips the `'unsafe-eval'` token from RecommendedCSP (one line; the library stays the single source for every other directive); /health serves `script-src 'self' 'nonce-…'` with NO eval, pinned by the app tests (inverted assertions) + the smoke `dashboard nonce csp` check; full smoke 54 + all scenarios green; vendorHash re-pinned.
 - ~~**Implement the dashboard lane in the library repo** (go-health-dashboard):
   the nonce emit + CSP grant above, then run ITS gates there — this repo cannot
   ship the change and must not fake it locally.~~ →

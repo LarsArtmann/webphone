@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `/health` CSP drops `'unsafe-eval'`: the go-health-dashboard v0.13.3
+  bump ships the `data-nonce` root bridge (upstream issue #23), letting
+  the Datastar SDK compile its expressions without the Function path —
+  the subtree now serves `script-src 'self' 'nonce-…'` with no eval
+  grant, browser-verified upstream and pinned by the app tests and the
+  smoke's inverted `dashboard nonce csp` check.
+
 - **Six oversized Go files split along their natural seams** (the
   file-size gate's 350-line cap): the session API becomes login /
   switch / identity+mint files, the ASR seam separates its contract,
