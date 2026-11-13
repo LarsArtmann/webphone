@@ -31,6 +31,10 @@ type handlers struct {
 	eventsLimiter   *httputil.KeyedRateLimiter
 	csrfLimiter     *httputil.KeyedRateLimiter
 	contactsLimiter *httputil.KeyedRateLimiter
+	// Flight-recorder snapshot requests (GET /internal/flightrecorder):
+	// each hit writes a full execution-trace window + gzip to disk — a
+	// tight bucket keeps a runaway poller from filling the trace dir.
+	traceLimiter *httputil.KeyedRateLimiter
 	// Transcription uploads (one island/shell POST per audio segment; live
 	// call chunks arrive every few seconds): the hook-grade bucket.
 	transcribeLimiter *httputil.KeyedRateLimiter

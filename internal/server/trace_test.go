@@ -62,6 +62,29 @@ func TestTraceSnapshotReportsTheWrittenPath(t *testing.T) {
 	}
 }
 
+// The snapshot endpoint rides a TIGHT bucket: every hit writes a full
+// trace window to disk, so a poller gets fenced after the burst while
+// an operator's handful of asks passes.
+func TestTraceSnapshotIsRateLimited(t *testing.T) {
+	fake := &fakeTraceRecorder{snapshotAt: "/tmp/snapshot.trace.gz"}
+	server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.Trace = fake })
+	c := signIn(t, server)
+
+	lastStatus := 0
+	lastRetryAfter := ""
+	for range traceBurst + 5 {
+		resp, _ := c.do(http.MethodGet, "/internal/flightrecorder", nil, "")
+		lastStatus = resp.StatusCode
+		lastRetryAfter = resp.Header.Get("Retry-After")
+	}
+	if lastStatus != http.StatusTooManyRequests {
+		t.Fatalf("flood last status = %d, want 429 after burst %d", lastStatus, traceBurst)
+	}
+	if lastRetryAfter == "" {
+		t.Errorf("a 429 must carry Retry-After (the limiter contract), got none")
+	}
+}
+
 // Every completed request reaches the recorder once, with the status the
 // client saw — that is the whole contract the capture policy is built on.
 func TestTraceMiddlewareReportsEveryRequest(t *testing.T) {

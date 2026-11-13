@@ -411,6 +411,16 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+	if trace != nil {
+		// The opt-in's observable state: an operator looking for the
+		// seam in the journal finds WHERE snapshots land and WHAT the
+		// capture policy is, without reading source.
+		log.Info("flight recorder enabled (WEBPHONE_DEBUG_FLIGHTRECORDER=1)",
+			"dir", traceDir(cfg.DataDir),
+			"slow_request", traceSlowRequest.String(),
+			"retention", traceRetention,
+		)
+	}
 
 	var dashboardHandler http.Handler
 	if cfg.Dashboard.Enable {

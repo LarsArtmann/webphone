@@ -84,6 +84,11 @@ const (
 	// per violation; a hostile flood must not own the journal).
 	cspLimit = 30
 	cspBurst = 10
+	// Flight-recorder snapshots: each hit writes a full trace window to
+	// disk, so the bucket is tight (an operator debugging session asks
+	// a handful of times; a poller gets fenced).
+	traceLimit = 4
+	traceBurst = 2
 	// Templ form-POST buckets (2026-11-08): every write lane outside
 	// /api/* rides a keyed bucket now. Three classes by cost: the
 	// compose class (provider/paid surfaces) is tight, contacts and
@@ -389,6 +394,7 @@ func New(deps Deps) http.Handler {
 		contactsLimiter:      newKeyedRateLimiter(contactsLimit, contactsBurst),
 		switchLimiter:        newKeyedRateLimiter(switchLimit, switchBurst),
 		cspLimiter:           newKeyedRateLimiter(cspLimit, cspBurst),
+		traceLimiter:         newKeyedRateLimiter(traceLimit, traceBurst),
 		composeLimiter:       newTemplRateLimiter(composeLimit, composeBurst),
 		contactsTemplLimiter: newTemplRateLimiter(contactsLimit, contactsBurst),
 		stateTemplLimiter:    newTemplRateLimiter(hookLimit, hookBurst),
@@ -859,8 +865,11 @@ func New(deps Deps) http.Handler {
 		h.hookLimiter.Middleware()(h.sipDirectoryGate(http.HandlerFunc(platformHub.InternalDirectory))))
 	// The flight-recorder snapshot endpoint: machine-facing, registered
 	// unconditionally so the disabled seam answers the styled 404 rather
-	// than falling through the open mux; loopback-only in-handler.
-	open.HandleFunc("GET /internal/flightrecorder", platformHub.TraceSnapshot)
+	// than falling through the open mux; loopback-only in-handler, and
+	// the tight trace bucket fences a snapshot poller (each hit writes
+	// a full trace window to disk).
+	open.Handle("GET /internal/flightrecorder",
+		h.traceLimiter.Middleware()(http.HandlerFunc(platformHub.TraceSnapshot)))
 
 	root := http.NewServeMux()
 	root.Handle("/", session.Attach(h.deps.Sessions, csrf(protected), lifetime, cookies))

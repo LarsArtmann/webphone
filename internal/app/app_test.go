@@ -267,6 +267,27 @@ func TestDashboardEnableWarnsTheFenceIsTheProxy(t *testing.T) {
 	}
 }
 
+// The flight recorder's opt-in must be VISIBLE in the boot journal: an
+// operator hunting the debug seam finds where snapshots land and what
+// the capture policy is, without reading source (the off state stays
+// silent — zero-cost default, nothing to report).
+func TestFlightRecorderEnableLogsTheSeam(t *testing.T) {
+	t.Setenv("WEBPHONE_DEBUG_FLIGHTRECORDER", "1")
+	var buf bytes.Buffer
+	application, err := New(testConfig(t, false), slog.New(slog.NewTextHandler(&buf, nil)))
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if err := application.Shutdown(); err != nil {
+		t.Fatalf("Shutdown: %v", err)
+	}
+	for _, want := range []string{"flight recorder enabled", "traces", "slow_request"} {
+		if !strings.Contains(buf.String(), want) {
+			t.Errorf("flight-recorder boot INFO missing %q; boot log:\n%s", want, buf.String())
+		}
+	}
+}
+
 // TestAppServesMainPageUnderStrictCSP guards the boundary: the shell
 // page keeps webphone's strict app-wide CSP (no unsafe-eval, no nonce)
 // — the relaxed dashboard policy applies to the /health subtree ONLY.
