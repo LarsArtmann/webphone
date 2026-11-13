@@ -25,7 +25,7 @@ _Snapshot: claims verified as of 09:49 CET, 2026-11-13. Push/CI statements rot f
 ## c) NOT STARTED
 
 1. **dashboard v0.13.3 bump execution** — deliberately deferred: dependency bumps ride their own train with the tidy → vendorHash re-pin → CI-watch tail, not a docs sweep. The report + TODO row arm it as zero-collision.
-2. **The next honest cadence drain** — this report itself re-reds the count (65→66 unarchived vs threshold 65); candidates analyzed: 2026-11-02_05-29 is owner-answer-gated ("do not entomb"), 2026-11-02_05-19 is trigger-gated — a real per-row evidence pass is owed, not a rushed strike.
+2. **The cadence headroom is spent:** my report consumed the exact one-report headroom the morning's archive bought (count now 65/65, matrix-verified ARCHIVE-HEALTHY) — the NEXT report birth re-reds the gate unless a drain lands first. Candidates analyzed: 2026-11-02_05-29 is owner-answer-gated ("do not entomb"), 2026-11-02_05-19 is trigger-gated — a real per-row evidence pass is owed, not a rushed strike.
 
 ## d) TOTALLY FUCKED UP
 
@@ -41,29 +41,29 @@ No user-visible damage, CI ended green — but three honesty defects, all caught
 2. **Baseline the docs battery BEFORE editing** — I attributed format/cadence failures from first principles after the fact; a pre-edit `docs-gates --check` would have made attribution a diff.
 3. **dprint fmt immediately after every markdown table edit** — not "when the gate complains".
 4. **Stronger verify anchors:** this train's new verify line is RUN-OK class (passes even if the symbol is renamed); `# expect` anchors are the load-bearing shape.
-5. **Report-birth vs cadence-ratchet tension:** every session status report re-reds cadence until a drain catches up (the corpus was at 66 partly because a previous session's report was the 66th). Design smell; needs an owner ruling, not a silent ratchet bump (g-question 2).
+5. **Cadence headroom economics:** the gate counts unarchived reports; an archive sweep that drains exactly to threshold buys ONE report of headroom — the next session's status report re-reds it (observed this session: archive to 64, my report lands at 65/65). Either drains should bank ≥2 reports of headroom or the ratchet structure keeps every sweep ending on the edge. Owner-ruling territory (g-question 2).
 
 ## f) Up to 50 things we should get done next
 
 <!-- check-rows:ledger -->
 
-| #  | Task                                                                                                                                                                            | Impact                            | Effort | Category      |
-| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------- | ------ | ------------- |
-| 1  | go-health-dashboard v0.13.3 zero-collision bump train, and live-test whether `csp.go` can drop `'unsafe-eval'` on a nonce'd host (the `data-nonce` bridge is the SDK-side half) | Medium (CSP hardening lane)       | S-M    | Dependency    |
-| 2  | Honest cadence drain 66→65: per-row evidence pass over the 2026-11-06/2026-11-11 report backlog (strike canon + strike-safety before each `git mv`)                             | Medium (CI green)                 | M      | Docs-health   |
-| 3  | Untagged-release-commit sweep: `git log <tag>..origin/main` across the 20 fleet repos — the "v0.13.0 tag was missing" class tag equality cannot see                             | Medium (stale-pin alarm class)    | S      | Quality       |
-| 4  | Encode per-submodule refspec tag listing as `scripts/fleet-tags.sh` (kills the awk last-component mangle that nearly wrote 4 false "behind latest" claims)                      | Low-Medium (next sweep's honesty) | S      | Tooling       |
-| 5  | catalog/v4 v4.14.0→v4.15.0 bump (documented rider on the next go-cqrs-lite train; dir restructure + hub npm pin)                                                                | Low                               | S      | Dependency    |
-| 6  | File the go-idempotency injectable-clock upstream ask (the contract suite wall-sleeps; TimingScale 5 is the local band-aid, ci-flake-ledger row run 42407471289)                | Low                               | S      | Upstream      |
-| 7  | Check go-etag issue #5 (v0.7.0 CHANGELOG section still uncut for entitytag?) and the appkit asks #59/#60/#61 filed 2026-11-12                                                   | Low                               | S      | Upstream      |
-| 8  | Tier 1+2 error-family re-measure (calendar due 2026-12-08; `--max --no-suppress` + both enforce flags at 0)                                                                     | Low                               | S      | Quality       |
-| 9  | Re-measure the DF-brittle pins (annotate_max 203 / audit_max 72) at the next sweep — this session's corpus growth moved the living-doc line count again                         | Low (gate honesty)                | S      | Docs-health   |
-| 10 | Strengthen this train's RUN-OK verify line to an `# expect` anchor shape in go-idempotency.md                                                                                   | Low                               | S      | Documentation |
+| #  | Task                                                                                                                                                                                   | Impact                                 | Effort | Category      |
+| -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- | ------ | ------------- |
+| 1  | go-health-dashboard v0.13.3 zero-collision bump train, and live-test whether `csp.go` can drop `'unsafe-eval'` on a nonce'd host (the `data-nonce` bridge is the SDK-side half)        | Medium (CSP hardening lane)            | S-M    | Dependency    |
+| 2  | Honest cadence drain to bank headroom (target ≤63 unarchived): per-row evidence pass over the 2026-11-06/2026-11-11 report backlog (strike canon + strike-safety before each `git mv`) | Medium (next report birth stays green) | M      | Docs-health   |
+| 3  | Untagged-release-commit sweep: `git log <tag>..origin/main` across the 20 fleet repos — the "v0.13.0 tag was missing" class tag equality cannot see                                    | Medium (stale-pin alarm class)         | S      | Quality       |
+| 4  | Encode per-submodule refspec tag listing as `scripts/fleet-tags.sh` (kills the awk last-component mangle that nearly wrote 4 false "behind latest" claims)                             | Low-Medium (next sweep's honesty)      | S      | Tooling       |
+| 5  | catalog/v4 v4.14.0→v4.15.0 bump (documented rider on the next go-cqrs-lite train; dir restructure + hub npm pin)                                                                       | Low                                    | S      | Dependency    |
+| 6  | File the go-idempotency injectable-clock upstream ask (the contract suite wall-sleeps; TimingScale 5 is the local band-aid, ci-flake-ledger row run 42407471289)                       | Low                                    | S      | Upstream      |
+| 7  | Check go-etag issue #5 (v0.7.0 CHANGELOG section still uncut for entitytag?) and the appkit asks #59/#60/#61 filed 2026-11-12                                                          | Low                                    | S      | Upstream      |
+| 8  | Tier 1+2 error-family re-measure (calendar due 2026-12-08; `--max --no-suppress` + both enforce flags at 0)                                                                            | Low                                    | S      | Quality       |
+| 9  | Re-measure the DF-brittle pins (annotate_max 203 / audit_max 72) at the next sweep — this session's corpus growth moved the living-doc line count again                                | Low (gate honesty)                     | S      | Docs-health   |
+| 10 | Strengthen this train's RUN-OK verify line to an `# expect` anchor shape in go-idempotency.md                                                                                          | Low                                    | S      | Documentation |
 
 ## g) Questions I cannot answer myself
 
 1. **Bump priority:** should the v0.13.3 dashboard bump + `'unsafe-eval'`-drop experiment ride NOW as its own small train, or wait for the next coordinated wave / the nonce-lane work? (Both orders are defensible; it is a priority call.)
-2. **Ratchet policy:** should the cadence gate exclude fresh reports (e.g. < 7 days old) from the unarchived count, or is the friction intended to force drains? Ratchets are evidence-gated owner territory — I will not move 65 without a ruling.
+2. **Ratchet policy:** should the cadence gate exclude fresh reports (e.g. < 7 days old) from the unarchived count, or should drains bank ≥ 2 reports of headroom per sweep? Today's economics: one archive = one report of headroom, so the next status report re-reds main (the corpus was at 66 this morning for exactly that reason). Ratchets are evidence-gated owner territory — I will not move 65 without a ruling.
 3. **Archive-selection policy:** I archived the NEWEST gates-passing report (22-05) because it was the only one that passed unmodified; oldest-first would have required striking 13 rows in the 2026-10-25 report first. Which preference should the ritual encode?
 
 ---
