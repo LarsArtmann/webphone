@@ -12,7 +12,8 @@
 # commit pushed, the tag missing) keys on CHANGELOG.md files: the newest
 # `## [vX.Y.Z]` heading of every CHANGELOG in a repo must have a
 # matching remote tag — root module tag `vX.Y.Z`, nested module tag
-# `<module-dir>/vX.Y.Z` (fleet convention: module dir == module path).
+# `<module-path>/vX.Y.Z` (the module path from the dir's go.mod —
+# major-suffix modules tag at catalog/v4/v4.15.0, not catalog/v4.15.0).
 #
 # Usage:
 #   scripts/fleet-tags.sh [--repos dir...]      sweep; findings to stdout
@@ -33,23 +34,41 @@ sweep_repo() {
 		version="$(repo_latest_version "$changelog")"
 		[ -n "$version" ] || continue
 		dir="$(dirname "$changelog")"
-		if [ "$dir" = "$repo" ]; then
-			module=""
-			tag="$version"
-		else
-			module="${dir#"$repo"/}"
-			tag="$module/$version"
-		fi
-		if [ "$offline" = "1" ]; then
-			if git -C "$repo" rev-parse -q --verify "refs/tags/$tag" >/dev/null 2>&1; then
-				continue
+		label="<root>"
+		tags=("$version")
+		if [ "$dir" != "$repo" ]; then
+			# Nested module: candidates carry the dir-relative path, with
+			# AND without the module path's /vN major suffix (the fleet's
+			# tags use both forms — usermgmt/v4.20.0 without,
+			# catalog/v4/v4.15.0 with — only when NEITHER exists is the
+			# release untagged).
+			prefix="${dir#"$repo"/}"
+			major="$(sed -n 's/^module .*\(/v[0-9]\+\)$/\1/p' "$dir/go.mod" 2>/dev/null | head -1)"
+			label="$prefix${major:-}"
+			tags=("$prefix/$version")
+			if [ -n "$major" ]; then
+				tags+=("$prefix$major/$version")
 			fi
-		else
-			if git -C "$repo" ls-remote origin "refs/tags/$tag" 2>/dev/null | grep -q .; then
-				continue
-			fi
 		fi
-		printf 'UNTAGGED\t%s\t%s\t%s\n' "$repo" "${module:-<root>}" "$tag"
+		found=0
+		for tag in "${tags[@]}"; do
+			if [ "$offline" = "1" ]; then
+				if git -C "$repo" rev-parse -q --verify "refs/tags/$tag" >/dev/null 2>&1; then
+					found=1
+					break
+				fi
+			else
+				if git -C "$repo" ls-remote origin "refs/tags/$tag" 2>/dev/null | grep -q .; then
+					found=1
+					break
+				fi
+			fi
+			display_tag="$tag"
+		done
+		if [ "$found" = "1" ]; then
+			continue
+		fi
+		printf 'UNTAGGED\t%s\t%s\t%s\n' "$repo" "$label" "${display_tag:-$version}"
 	done
 }
 
@@ -74,6 +93,19 @@ self_test() {
 	printf '## [v4.20.0] - 2026-03-03\nnested\n' >"$tmp/fleet/usermgmt/CHANGELOG.md"
 	git -C "$tmp/fleet" add usermgmt/CHANGELOG.md
 	git -C "$tmp/fleet" commit -q -m "nested v4.20.0 untagged"
+	# A major-suffix module tagged in the SUFFIX-FORM (catalog/v4/v4.15.0)
+	# must NOT be a finding even though the bare form is absent — and its
+	# sibling in the bare form must not be flagged either (both candidate
+	# forms count).
+	mkdir -p "$tmp/fleet/catalog/v4" "$tmp/fleet/usermgmt/v4"
+	printf 'module example.com/fleet/catalog/v4\n\ngo 1.27\n' >"$tmp/fleet/catalog/v4/go.mod"
+	printf '## [v4.15.0] - 2026-04-04\nsuffix module\n' >"$tmp/fleet/catalog/v4/CHANGELOG.md"
+	printf 'module example.com/fleet/usermgmt/v4\n\ngo 1.27\n' >"$tmp/fleet/usermgmt/v4/go.mod"
+	printf '## [v4.21.0] - 2026-04-04\nbare-form sibling\n' >"$tmp/fleet/usermgmt/v4/CHANGELOG.md"
+	git -C "$tmp/fleet" add catalog/v4 usermgmt/v4
+	git -C "$tmp/fleet" commit -q -m "suffix-form and bare-form tagged modules"
+	git -C "$tmp/fleet" -c tag.forceSignAnnotated=false -c tag.gpgsign=false tag "catalog/v4/v4.15.0"
+	git -C "$tmp/fleet" -c tag.forceSignAnnotated=false -c tag.gpgsign=false tag "usermgmt/v4/v4.21.0"
 
 	findings="$(sweep_repo "$tmp/fleet" 1 | sort)"
 	expected="$(printf 'UNTAGGED\t%s\t<root>\tv9.9.9\nUNTAGGED\t%s\tusermgmt\tusermgmt/v4.20.0\n' "$tmp/fleet" "$tmp/fleet")"
