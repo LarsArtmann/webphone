@@ -6,12 +6,12 @@
 
 ## Status
 
-|                |                                                                                             |
-| -------------- | ------------------------------------------------------------------------------------------- |
-| Module         | `github.com/larsartmann/go-health-dashboard`                                                |
-| Pinned         | v0.13.2 direct (bumped 2026-11-05)                                                          |
+|                |                                                                                                  |
+| -------------- | ------------------------------------------------------------------------------------------------ |
+| Module         | `github.com/larsartmann/go-health-dashboard`                                                     |
+| Pinned         | v0.13.2 direct (bumped 2026-11-05)                                                               |
 | Latest release | v0.13.3 (2026-11-13 re-verify; webphone pin v0.13.2 — zero-collision bump pending, see Currency) |
-| Usage          | internal/app/dashboard.go (construction), internal/server/server.go:641-668 (mount + fence) |
+| Usage          | internal/app/dashboard.go (construction), internal/server/server.go:641-668 (mount + fence)      |
 
 ## What the library offers
 

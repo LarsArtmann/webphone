@@ -1,3 +1,6 @@
+> ARCHIVED 2026-11-13 (docs-health v11 sweep): every §f row is struck or routed (check-rows --strict + bare-rows green at archive time); archived to bring the unarchived count back under the cadence ratchet (66 → 65, threshold 65)
+> Live remainder: nothing exclusive to this file — the §a/§b strikes mirror TODO_LIST rows; parked deepening items stay TODO_LIST rows (row 1357 and neighbors).
+
 # Self-review after the deepening tail (T17–T24) — what I forgot, what I'd do better
 
 > Claims verified as of 22:05 local, 2026-11-12. Push/CI statements rot

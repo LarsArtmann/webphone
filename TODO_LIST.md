@@ -79,6 +79,40 @@ front matter does not carry their history (one home per fact, per the rule above
   scrolled table.~~ →
   done 2026-11-12 — census + ladder commented in app.css above `.wp-table thead th` (thead 1 < header 10 < snippet picker 30 < mobile island 50 < mobile nav 90 < skip links + #toasts 100 < palette 200); `.wp-table-wrap` is overflow-only (NOT a stacking context), so no overlay bleeds under the sticky head
 
+### 2026-11-12/13 file-size split train residue (harvested from the 22-50 report §f)
+
+The five-file split train closed 2026-11-12; the sixth file
+(`internal/matrix/receiver.go`, #248) was split 2026-11-13 (`sync.go`
+wire-surface carve, byte-pure motion, package + arch suites green) and
+`buildflow -s file-size-check` reads exit 0. This section holds the
+report's still-open §f rows.
+
+- [ ] **Raceprobe fix decision** (#249, High):
+      `TestConcurrentFirstSightYieldsOneThread` reds under `-count>1`
+      and full-suite parallelism ("unread 3", pre-existing, bisected to
+      `b1b01b87`) — test-side await-poll (mirror the transcripts'
+      `awaitTranscriptCount`) vs product-semantics ruling (should a
+      message the decider refused ever fold into the projection?) is an
+      OWNER question (§g3 of the 22-50 report). The struck row below
+      ("NOT REPRODUCIBLE") probed a single run; #249's repetition table
+      supersedes that verdict.
+- [ ] **Branching-flow baseline refresh** (Medium): at the next
+      governance sweep, `buildflow -s branching-flow --save-baseline`
+      from this checkout — re-homes `COMPOSITION_mixin` (the asr Client
+      moved to `client.go`) and prunes the two stale old-path
+      DUPLICATE_TYPE entries from the session carve.
+- [ ] **ci-flake-ledger row** (Low, conditional): the day the raceprobe
+      first reds CI, add the ledger row — #249's probe table is the
+      ready evidence (CI runs without `-count`, so it has not fired
+      yet).
+- [ ] **AGENTS.md one-liner** (Low): the error-registry regen fires on
+      MOVE, not only on NEW codes (proved 2026-11-12 on the asr split);
+      add it at the next legitimate AGENTS touch (cap has room).
+- §D10 (split-on-sight vs raise-cap vs warn-only) stays with its
+  existing 2026-11-08 pack above — no duplicate row. The corpus cadence
+  drain beyond the one CI-greening archive stays with the T24
+  release-tails train.
+
 ### Voicemail playback train residue (2026-11-10 — the fix is pushed; production legs open)
 
 The two product defects are fixed and CI-green (`fc352e66`: honest toast +
@@ -1503,7 +1537,7 @@ ceiling) + markdownlint posture execution (post-sitting row-18 verdict). Plan:
 
 - ~~**Hold/resume must settle on the re-INVITE verdict, not the send**~~ → done 2026-11-12 — `sipverdict.js` (`inviteVerdict`) wraps the re-INVITE in a requestDelegate whose onAccept/onReject settle the promise; `holdSession` (calls.js:117) commits only the far-end verdict (accepted/rejected/send-failed/timeout, 30s cap) and failed toggles return the SETTLED prior state. The verdict-arm UI pins landed the same day (`hold-verdicts.test.mjs`: TIMEOUT arm under mock timers, refused arm, settled-truth restoration + en/de copy pinned verbatim; island suite 336/336).
 - ~~**Detach the /hooks/ring fan-out from the request**~~ → done 2026-11-12 — `push.Fanout.Fan(ctx, owner, fact)` (push.go:197) is the ONE delivery policy (WithoutCancel detach + 15s budget + prune-on-unregistered); the ring hook hands off at `internal/server/hooks/ring.go:58` and answers 202 without waiting on transports (pinned by `TestHookRingFansOutToRegisteredDevices`).
-- ~~**Probe the concurrent first-sight thread-split race**~~ → probed 2026-11-12, **NOT REPRODUCIBLE — no guard needed** — `TestConcurrentFirstSightYieldsOneThread` (internal/messaging/raceprobe_test.go, race-detector clean): two barrier-started Receives for one unseen remote both miss FindThread's projection scan, but both appends target the SAME journal stream (ThreadStreamKey = owner|network|remote, threads.go:33), the first adopter wins the thread identity, and the decider's `cqrs.thread_identity` rejection (threads.go:103) refuses the loser. Exactly one thread exists after the race; the loser's append fails `store.message_append` and is recovered by re-delivery (the retried Receive resolves the winner's thread, unread counts both) — the webhook lane's provider retry / the receiver loops' retry ladder own that. No uniqueness guard to add.
+- ~~**Probe the concurrent first-sight thread-split race**~~ → probed 2026-11-12, **NOT REPRODUCIBLE — no guard needed** — `TestConcurrentFirstSightYieldsOneThread` (internal/messaging/raceprobe_test.go, race-detector clean): two barrier-started Receives for one unseen remote both miss FindThread's projection scan, but both appends target the SAME journal stream (ThreadStreamKey = owner|network|remote, threads.go:33), the first adopter wins the thread identity, and the decider's `cqrs.thread_identity` rejection (threads.go:103) refuses the loser. Exactly one thread exists after the race; the loser's append fails `store.message_append` and is recovered by re-delivery (the retried Receive resolves the winner's thread, unread counts both) — the webhook lane's provider retry / the receiver loops' retry ladder own that. No uniqueness guard to add. REOPENED 2026-11-12 by #249: the single-run probe missed the repetition class — `-count>1` and full-suite parallelism red the final assertion ("unread 3", pre-existing at `b1b01b87`); the await-poll-vs-semantics decision is parked with the file-size split train residue row above.
 - ~~**Compensating blob delete on persist failure**~~ → landed 2026-11-12 (cheap half) — both messaging lanes (Send/Receive save loops, incl. the mid-loop save failure) and both fax lanes (Send/Receive spool) now remove every saved blob when the persist fails (`rollbackSaved`/`unspool`, best-effort — the persist error stays the verdict); pinned by `TestFailed{Send,Receive}LeavesNoOrphaned{Blobs,Spool}` in both packages. **Owner question stands:** the crash window (file durable, row lost, process dies before compensation) still orphans files — an orphan sweep decision rides the owner-calls batch.
 
 ### SUPERB deepening plan — remaining trains (2026-11-12; plan + evidence: docs/planning/2026-11-12_05-25_SUPERB-deepening-and-integrity-plan.md)

@@ -6,9 +6,9 @@
 
 ## Status
 
-|             |                                         |
-| ----------- | --------------------------------------- |
-| Module      | `github.com/larsartmann/go-idempotency` |
+|             |                                                             |
+| ----------- | ----------------------------------------------------------- |
+| Module      | `github.com/larsartmann/go-idempotency`                     |
 | In webphone | direct require, test-side only; **zero production imports** |
 
 ## What the library offers
