@@ -57,6 +57,17 @@ aggregate, never into a new SQL table.
 | fax/contacts/snippets/transcripts/notes/reviews legacy tables | v2.13+ (operator)                                  | same retention-empty-then-drop posture                                                                                                                                                                                       |
 | `sessions`                                                    | never (this doc)                                   | stays SQL per §2 — the one deliberate hand-ladder survivor                                                                                                                                                                   |
 
+**Correction (2026-11-13, the contacts-data-architecture review's T18 execution):** the transitional
+BOOT importers for the whole frozen family are GONE since 7122de92 (the unification deleted
+`internal/app/legacy.go`) — the §4 "app_flags import markers have no reader" row extends to every
+legacy reader in `internal/store/legacy_*.go`: none has a production caller (contacts' reader was
+deleted 2026-11-13; faxes/snippets/threads/transcripts readers are the same class). Two drifts this
+correction pins: (1) the contacts legacy rows are NOT retention-swept — `store.Sweep` deletes only
+the legacy thread/message tables, so the contacts "retention-empty-then-drop posture" above has no
+mechanism yet; the §5 drop owes the family an export-or-confirm step before any DROP. (2) The
+contacts-table DROP was re-asked as a standalone task (T18) and deliberately NOT executed here: §5
+is the one home — ONE coordinated migration, operator-confirmed, after that export-or-confirm.
+
 Upgrade chain obligation: **v2.12.0 requires passing through v2.10.0 or
 v2.11.0 first** on deployments with pre-SUPERB data — the one-time
 importers lived in those releases. A fresh install needs nothing.
