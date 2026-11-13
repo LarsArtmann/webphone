@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Island hardening: the dial form guards double submits (two rapid
+  Enters no longer race two gate consults into two INVITEs), the tab
+  restore and live-context `htmx.ajax` promises carry rejections (a
+  failed restore toasts once; a failed live-context fetch degrades to
+  the empty slot, the doctrine's mid-call silence), and specs pin all
+  three paths.
 - The call-note cap now counts characters, not bytes: the server's
   4000 bound matches its own "max 4000 chars" wire doc and the
   editors' `maxLength=4000`, so a 4000-character CJK note is accepted

@@ -264,16 +264,16 @@
       // the welcome panel, and the throttled toast says so once (same
       // M23 contract as the nav refresh — a flapping session must not
       // spam).
-      window
-        .htmx.ajax("GET", "/partials/" + stored, {
+      window.htmx
+        .ajax("GET", "/partials/" + stored, {
           target: "#tab-content",
           swap: "innerHTML",
         })
         .catch(function () {
           showThrottledError("Could not restore your last tab.");
         });
-      window
-        .htmx.ajax("GET", "/partials/nav?active=" + stored, {
+      window.htmx
+        .ajax("GET", "/partials/nav?active=" + stored, {
           target: "#wp-nav",
           swap: "morph:innerHTML",
         })
