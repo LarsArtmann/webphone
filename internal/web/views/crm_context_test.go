@@ -179,3 +179,28 @@ func TestCrmDueLabelLocalizesTheMonth(t *testing.T) {
 		t.Fatalf("EN due = %q, want %q", got, "due 4 Nov")
 	}
 }
+
+// TestCRMContextStripNamesCachedFreshness pins the served-from marker
+// (T11.4, the contacts mesh review): a TTL-cache answer renders the
+// muted freshness chip, a live answer renders none — freshness needs
+// naming only when it is bounded.
+func TestCRMContextStripNamesCachedFreshness(t *testing.T) {
+	t.Parallel()
+
+	cached := &CRMContext{Company: "Analytical Engines Ltd", ServedFromCache: true}
+	page := renderComponent(t, crmContextStrip(cached, LangEN))
+	if !strings.Contains(page, "cached") {
+		t.Errorf("cache-served strip must name its freshness; got:\n%s", page)
+	}
+
+	live := &CRMContext{Company: "Analytical Engines Ltd"}
+	page = renderComponent(t, crmContextStrip(live, LangEN))
+	if strings.Contains(page, ">cached<") {
+		t.Errorf("live strip must not carry the freshness chip; got:\n%s", page)
+	}
+
+	de := renderComponent(t, crmContextStrip(cached, LangDE))
+	if !strings.Contains(de, "aus dem Cache") {
+		t.Errorf("german freshness wording missing; got:\n%s", de)
+	}
+}
