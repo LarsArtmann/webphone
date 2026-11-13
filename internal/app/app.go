@@ -501,6 +501,9 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			UserAuth:    auth,
 			SSO:         ssoClient,
 			Trace:       traceSeam(trace),
+			// The snapshot counter family rides the adapter: non-nil
+			// exactly when the recorder seam is on.
+			TraceMetrics: traceMetricsSeam(trace),
 			// The dedup window lives in system.db since A43 (sys.Dedup, the
 			// same CAS capability the fax replay guard rides): readmodels.db's
 			// window retired with the engine.

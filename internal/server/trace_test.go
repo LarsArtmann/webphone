@@ -7,6 +7,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/larsartmann/webphone/internal/server/platform"
 )
 
 // fakeTraceRecorder stands in for the composition root's adapter so the
@@ -82,6 +84,48 @@ func TestTraceSnapshotIsRateLimited(t *testing.T) {
 	}
 	if lastRetryAfter == "" {
 		t.Errorf("a 429 must carry Retry-After (the limiter contract), got none")
+	}
+}
+
+// The snapshot counter family renders on /metrics exactly when the
+// recorder seam is on — the debug tool observing itself (writes,
+// failures, disk-guard skips, byte total; aggregates only).
+func TestTraceSnapshotMetricsRenderWhenTheSeamIsOn(t *testing.T) {
+	metrics := platform.NewTraceSnapshotMetrics()
+	metrics.RecordWritten(4096)
+	metrics.RecordSkipped()
+	server := newTestServerWithPhoneAPI(t, "", func(d *Deps) {
+		d.Trace = &fakeTraceRecorder{snapshotAt: "/tmp/snapshot.trace.gz"}
+		d.TraceMetrics = metrics
+	})
+	c := signIn(t, server)
+
+	resp, body := c.do(http.MethodGet, "/metrics", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("metrics: %d", resp.StatusCode)
+	}
+	page := string(body)
+	for _, want := range []string{
+		`webphone_flightrecorder_snapshots_total{outcome="written"} 1`,
+		`webphone_flightrecorder_snapshots_total{outcome="skipped_low_disk"} 1`,
+		"webphone_flightrecorder_snapshot_bytes_total 4096",
+	} {
+		if !strings.Contains(page, want) {
+			t.Errorf("metrics missing %q:\n%s", want, page)
+		}
+	}
+}
+
+// Off by default means OFF on /metrics too: no zero-lines that read as
+// "tracing broken" on a deploy that never asked for the recorder.
+func TestTraceSnapshotMetricsAbsentWhenTheSeamIsOff(t *testing.T) {
+	c := signIn(t, newTestServer(t))
+	resp, body := c.do(http.MethodGet, "/metrics", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("metrics: %d", resp.StatusCode)
+	}
+	if strings.Contains(string(body), "webphone_flightrecorder") {
+		t.Errorf("the disabled seam must not render snapshot metrics:\n%s", body)
 	}
 }
 

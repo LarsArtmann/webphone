@@ -306,6 +306,10 @@ type Deps struct {
 	// every request is reported and GET /internal/flightrecorder writes a
 	// trace window (loopback only).
 	Trace platform.TraceRecorder
+	// TraceMetrics is the snapshot counter family the /metrics
+	// exposition renders; non-nil exactly when Trace is (the adapter
+	// owns both halves), nil-safe at the exposition.
+	TraceMetrics *platform.TraceSnapshotMetrics
 	// Push is the OPTIONAL push fanout behind ring-while-closed (the
 	// /hooks/ring lane and the /api/push-devices registry). Nil or
 	// disabled: the device API answers 404 and the ring hook
@@ -457,23 +461,24 @@ func New(deps Deps) http.Handler {
 	// through h (the platform.Shell seam); the SSE nudge vocabulary keeps
 	// its one home in this package.
 	platformHub := platform.New(platform.Deps{
-		Version:     DisplayVersion(),
-		Config:      deps.Config,
-		DB:          deps.DB,
-		Sessions:    deps.Sessions,
-		Messages:    deps.Messages,
-		Faxes:       deps.Faxes,
-		Contacts:    deps.Contacts,
-		Transcripts: deps.Transcripts,
-		CRM:         deps.CRM,
-		Shared:      deps.Shared,
-		PhoneAPI:    deps.PhoneAPI,
-		TextAgent:   deps.TextAgent,
-		ASR:         deps.ASR,
-		ASRLocality: deps.ASRLocality,
-		Trace:       deps.Trace,
-		Latency:     h.latency,
-		Island:      h.island,
+		Version:      DisplayVersion(),
+		Config:       deps.Config,
+		DB:           deps.DB,
+		Sessions:     deps.Sessions,
+		Messages:     deps.Messages,
+		Faxes:        deps.Faxes,
+		Contacts:     deps.Contacts,
+		Transcripts:  deps.Transcripts,
+		CRM:          deps.CRM,
+		Shared:       deps.Shared,
+		PhoneAPI:     deps.PhoneAPI,
+		TextAgent:    deps.TextAgent,
+		ASR:          deps.ASR,
+		ASRLocality:  deps.ASRLocality,
+		Trace:        deps.Trace,
+		TraceMetrics: deps.TraceMetrics,
+		Latency:      h.latency,
+		Island:       h.island,
 	}, h)
 
 	csrf := httputil.CSRFMiddleware(csrfCfg)

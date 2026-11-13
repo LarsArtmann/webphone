@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"syscall"
 	"time"
 
 	flightrecorder "github.com/larsartmann/go-flightrecorder"
@@ -133,7 +134,7 @@ func (t *traceRecorder) Observe(ctx context.Context, d time.Duration, status int
 
 // Snapshot implements platform.TraceRecorder. The manual path rides the
 // same disk guard as the trigger path: below the floor it refuses (and
-counts the skip) instead of writing.
+// counts the skip) instead of writing.
 func (t *traceRecorder) Snapshot(ctx context.Context) (string, error) {
 	if !diskHasRoom(t.dir) {
 		t.metrics.RecordSkipped()
@@ -184,4 +185,14 @@ func traceSeam(rec *traceRecorder) platform.TraceRecorder {
 		return nil
 	}
 	return rec
+}
+
+// traceMetricsSeam is the same typed-nil discipline for the counter
+// family: nil recorder → nil metrics, so /metrics stays byte-identical
+// when the debug seam is off.
+func traceMetricsSeam(rec *traceRecorder) *platform.TraceSnapshotMetrics {
+	if rec == nil {
+		return nil
+	}
+	return rec.Metrics()
 }
