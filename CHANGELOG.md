@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The catalog dependency rides v4.15.0 (the release tag needed a
+  same-day fix upstream: the published `catalog/v4/v4.15.0` shape is
+  inert to Go's tag mapping, so the proxy could not serve the release;
+  the correctly-shaped `catalog/v4.15.0` tag landed on the same verified
+  commit). Generated contracts and the catalog render are byte-identical
+- `scripts/fleet-tags.sh` checks the ONE Go-resolvable tag form
+  (`<module-path-minus-major-suffix>/vX.Y.Z`): a release tagged only in
+  the suffixed shape is now FLAGGED instead of silently read as tagged
+  (the heuristic that missed the catalog v4.15.0 incident)
+
 - The flight-recorder debug seam is a declared module surface
   (`debug.flightrecorder.enable` sets the env gate), its snapshot
   endpoint is rate-limited (tight bucket: each hit writes a trace

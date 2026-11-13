@@ -986,6 +986,15 @@
             benign: go-cqrs-lite's meta-root CHANGELOG row v4.14.1 (the repo's release
             convention is the per-module wave tags; the root module is unconsumed). No
             untagged releases in the fleet; the dashboard v0.13.0 class has not recurred.
+            SAME-DAY CORRECTION (the catalog v4.15.0 bump incident): the script's
+            "two tag-form candidates" heuristic was WRONG &mdash; Go resolves exactly one
+            form (<code>&lt;module-path-minus-major-suffix&gt;/vX.Y.Z</code>, e.g.
+            <code>catalog/v4.15.0</code>), and the release script's suffixed
+            <code>catalog/v4/v4.15.0</code> tag is inert to Go, so the old heuristic
+            read the release as tagged while the proxy could not serve it. The sweep
+            now checks only the resolvable form and FLAGS a wrong-shape-tagged
+            release (self-test pins the incident class); the release was unblocked
+            by pushing the correctly-shaped tag on the same verified commit.
           </p>
           <div class="callout callout-teal">
             <strong>The bottom line — both top findings LANDED 2026-11-04</strong>
