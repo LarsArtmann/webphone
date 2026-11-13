@@ -137,12 +137,17 @@ func (h *handlers) crmContextFor(ctx context.Context, remote domain.Address) *vi
 		return nil
 	}
 
-	published, ok := h.deps.CRM.ContextOf(ctx, person.Ref)
+	published, fromCache, ok := h.deps.CRM.ContextOfCached(ctx, person.Ref)
 	if !ok {
 		return nil
 	}
 
-	return crmContextView(*published)
+	view := crmContextView(*published)
+	if view != nil {
+		view.ServedFromCache = fromCache
+	}
+
+	return view
 }
 
 // crmContextView projects the seam's context onto the view's. It returns nil

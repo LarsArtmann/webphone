@@ -125,6 +125,9 @@ templ crmContextStrip(crm *CRMContext, lang Lang) {
 // drift the day one of them learns a new fact.
 templ crmContextItems(crm *CRMContext, lang Lang) {
 	if crm != nil {
+		if crm.ServedFromCache {
+			<span class="wp-crm-item wp-crm-muted">{ T(lang, "crm.cached") }</span>
+		}
 		if crm.Company != "" {
 			@crmContextItem(T(lang, "crm.company"), crm.Company, "")
 		}

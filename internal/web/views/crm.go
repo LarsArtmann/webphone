@@ -58,6 +58,12 @@ type CRMContext struct {
 	NextTaskDue  time.Time
 	Overdue      bool
 	LastActivity time.Time
+	// ServedFromCache is true when the CRM answered this strip from its
+	// TTL cache, so the facts may be up to the context TTL (2 min) old.
+	// A muted chip names it (T11.4, the contacts mesh review): the
+	// operator sees the freshness instead of guessing. Live answers
+	// render no chip — freshness needs naming only when it is bounded.
+	ServedFromCache bool
 }
 
 // crmProfileURL is the number's CRM URL, or "" when the deployment
