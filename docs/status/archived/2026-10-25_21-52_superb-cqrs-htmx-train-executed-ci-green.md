@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-13 (docs-health v11 sweep): 19-day-old SUPERB-train closeout — §a 17 rows pass-struck, §b/§c adjudicated (the FEATURES one-home gap routes to the 2026-11-13 pareto session's T22 docs-truth batch)
+
 # Status: SUPERB cqrs-htmx leverage train — EXECUTED (M1–M14), CI green at 946fa56
 
 _Claims verified as of 2026-10-25 21:52 CET: local main == origin/main ==
@@ -12,45 +14,41 @@ including the three "optional" tails. Execution window ~19:54–20:45 CET.
 
 ## a) FULLY DONE
 
-| Task                                     | Evidence at the commit                                                                                                                                                                                                                                                                                                   |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| ~~M1 FinishLogin stubs → `([]byte, error)`~~ done (docs-health pass 2026-10-25) | ~~`beb870c` (auth: prefix); 31/31 Go packages green; stubs mirror the library's canonical canned credential (sign_count 1)~~ |
-| ~~M2 vendorHash re-pin~~ done (docs-health pass 2026-10-25) | ~~got-hash `sha256-CbfEd3…` via `.#webphone.goModules --rebuild`, applied in nix/packages.nix; `.#webphone` + `.#checks…webphone-module` green~~ |
-| ~~M3 projections readiness wired~~ done (docs-health pass 2026-10-25) | ~~passkey-gated `projections` NamedCheck on /healthz (`cqrshtmx.ProjectionReadinessCheck`, `Deps.ProjectionStatus` test override mirroring the Probe nil-fallback idiom) + `OnProjectionFailed` WARN in userauth.New~~ |
-| ~~M4 503 guard test~~ done (docs-health pass 2026-10-25) | ~~`TestHealthzNamesAFailedIdentityProjection`: failed provider ⇒ 503 naming BOTH `projections` and the worker; healthy subtest pins the live boot~~ |
-| ~~M5 hub Shutdown~~ done (docs-health pass 2026-10-25) | ~~`ExtensionHubs.Shutdown` (Close per hub, idempotent) + container `do.Shutdowner` assertion + pre-drain call in cmd/webphone (`App.Hubs` field)~~ |
-| ~~M6 drain test~~ done (docs-health pass 2026-10-25) | ~~`TestSSEHubShutdownReleasesLiveStreams`: live real-HTTP stream ends **0.01s** after Shutdown (vs the 30s budget burn)~~ |
-| ~~M7 verification pins~~ done (docs-health pass 2026-10-25) | ~~clone detection pinned (`TestSecondLoginWithNonAdvancingCounterIsRejected`, second non-advancing login ⇒ Rejection naming the clone); live boot verified: healthz answered 200 with `projections: ok`, a credential-less begin-login landed a durable `LoginFailed` Auth-stream row in usermgmt.db (plain-SQL queryable)~~ |
-| ~~M8 CI verdicts~~ done (docs-health pass 2026-10-25) | ~~recorded in plan errata: 40223475986 + 40221451743 red on exactly the predicted stub/vendorHash classes; 40224322289 red = daemon committed mid-edit files pre-`nix fmt`; final run 40227036668 green~~ |
-| ~~M9 report re-score~~ done (docs-health pass 2026-10-25) | ~~§07 Addendum + scorecard → **100/100** (Σ=14×1 of A=14; all 5 pins == latest tags, verified by tag grep); rubric rows 3/4/12/13/14 flipped; research-README row updated; tag-balance check clean~~ |
-| ~~M10 AGENTS truth~~ done (docs-health pass 2026-10-25) | ~~"no login events" retired (journal verified live); audit line fired its own refresh trigger → resolved state; healthz invariant carries the projections leg + hub Shutdown~~ |
-| ~~M11 HARVEST~~ done (docs-health pass 2026-10-25) | ~~TODO_LIST gains the leverage-tails section citing the plan (M12–M14 remnants + loginpage watch)~~ |
-| ~~M12 upstream issue~~ done (docs-health pass 2026-10-25) | ~~**cqrs-htmx #32 filed** (dup-checked, source-verified at audit_log.go:97, voice-checker 0 FAIL, verified landed); draft kept in docs/drafts/~~ |
-| ~~M13 README pointer~~ done (docs-health pass 2026-10-25) | ~~section written + committed (a7d2836b on cqrs-htmx master) — see (b) for the PR deviation~~ |
-| ~~M14 process lessons~~ done (docs-health pass 2026-10-25) | ~~crush-config `a9aeb2a`: symbol-level greps for "exactly N" claims + session-start baseline~~ |
-| ~~CHANGELOG~~ done (docs-health pass 2026-10-25) | ~~`[Unreleased]` Added line for the whole train~~ |
-| ~~Bonus: gate collision fix~~ done (docs-health pass 2026-10-25) | ~~the bump made pretty_yaml rewrite generator output → contracts-fresh vs dprint fought (3 red nix-builds); resolved by dprint-excluding `docs/contracts/**` (generator owns its bytes, `*_templ.go` doctrine) — `946fa56`~~ |
-| ~~Push~~ done (docs-health pass 2026-10-25) | ~~manual bar invoked (anchor: red main 40224322289 + verified fix in hand), 8 commits pushed, remote verified via ls-remote + CI green~~ |
+| Task                                                                            | Evidence at the commit                                                                                                                                                                                                                                                                                                       |
+| ------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~M1 FinishLogin stubs → `([]byte, error)`~~ done (docs-health pass 2026-10-25) | ~~`beb870c` (auth: prefix); 31/31 Go packages green; stubs mirror the library's canonical canned credential (sign_count 1)~~                                                                                                                                                                                                 |
+| ~~M2 vendorHash re-pin~~ done (docs-health pass 2026-10-25)                     | ~~got-hash `sha256-CbfEd3…` via `.#webphone.goModules --rebuild`, applied in nix/packages.nix; `.#webphone` + `.#checks…webphone-module` green~~                                                                                                                                                                             |
+| ~~M3 projections readiness wired~~ done (docs-health pass 2026-10-25)           | ~~passkey-gated `projections` NamedCheck on /healthz (`cqrshtmx.ProjectionReadinessCheck`, `Deps.ProjectionStatus` test override mirroring the Probe nil-fallback idiom) + `OnProjectionFailed` WARN in userauth.New~~                                                                                                       |
+| ~~M4 503 guard test~~ done (docs-health pass 2026-10-25)                        | ~~`TestHealthzNamesAFailedIdentityProjection`: failed provider ⇒ 503 naming BOTH `projections` and the worker; healthy subtest pins the live boot~~                                                                                                                                                                          |
+| ~~M5 hub Shutdown~~ done (docs-health pass 2026-10-25)                          | ~~`ExtensionHubs.Shutdown` (Close per hub, idempotent) + container `do.Shutdowner` assertion + pre-drain call in cmd/webphone (`App.Hubs` field)~~                                                                                                                                                                           |
+| ~~M6 drain test~~ done (docs-health pass 2026-10-25)                            | ~~`TestSSEHubShutdownReleasesLiveStreams`: live real-HTTP stream ends **0.01s** after Shutdown (vs the 30s budget burn)~~                                                                                                                                                                                                    |
+| ~~M7 verification pins~~ done (docs-health pass 2026-10-25)                     | ~~clone detection pinned (`TestSecondLoginWithNonAdvancingCounterIsRejected`, second non-advancing login ⇒ Rejection naming the clone); live boot verified: healthz answered 200 with `projections: ok`, a credential-less begin-login landed a durable `LoginFailed` Auth-stream row in usermgmt.db (plain-SQL queryable)~~ |
+| ~~M8 CI verdicts~~ done (docs-health pass 2026-10-25)                           | ~~recorded in plan errata: 40223475986 + 40221451743 red on exactly the predicted stub/vendorHash classes; 40224322289 red = daemon committed mid-edit files pre-`nix fmt`; final run 40227036668 green~~                                                                                                                    |
+| ~~M9 report re-score~~ done (docs-health pass 2026-10-25)                       | ~~§07 Addendum + scorecard → **100/100** (Σ=14×1 of A=14; all 5 pins == latest tags, verified by tag grep); rubric rows 3/4/12/13/14 flipped; research-README row updated; tag-balance check clean~~                                                                                                                         |
+| ~~M10 AGENTS truth~~ done (docs-health pass 2026-10-25)                         | ~~"no login events" retired (journal verified live); audit line fired its own refresh trigger → resolved state; healthz invariant carries the projections leg + hub Shutdown~~                                                                                                                                               |
+| ~~M11 HARVEST~~ done (docs-health pass 2026-10-25)                              | ~~TODO_LIST gains the leverage-tails section citing the plan (M12–M14 remnants + loginpage watch)~~                                                                                                                                                                                                                          |
+| ~~M12 upstream issue~~ done (docs-health pass 2026-10-25)                       | ~~**cqrs-htmx #32 filed** (dup-checked, source-verified at audit_log.go:97, voice-checker 0 FAIL, verified landed); draft kept in docs/drafts/~~                                                                                                                                                                             |
+| ~~M13 README pointer~~ done (docs-health pass 2026-10-25)                       | ~~section written + committed (a7d2836b on cqrs-htmx master) — see (b) for the PR deviation~~                                                                                                                                                                                                                                |
+| ~~M14 process lessons~~ done (docs-health pass 2026-10-25)                      | ~~crush-config `a9aeb2a`: symbol-level greps for "exactly N" claims + session-start baseline~~                                                                                                                                                                                                                               |
+| ~~CHANGELOG~~ done (docs-health pass 2026-10-25)                                | ~~`[Unreleased]` Added line for the whole train~~                                                                                                                                                                                                                                                                            |
+| ~~Bonus: gate collision fix~~ done (docs-health pass 2026-10-25)                | ~~the bump made pretty_yaml rewrite generator output → contracts-fresh vs dprint fought (3 red nix-builds); resolved by dprint-excluding `docs/contracts/**` (generator owns its bytes, `*_templ.go` doctrine) — `946fa56`~~                                                                                                 |
+| ~~Push~~ done (docs-health pass 2026-10-25)                                     | ~~manual bar invoked (anchor: red main 40224322289 + verified fix in hand), 8 commits pushed, remote verified via ls-remote + CI green~~                                                                                                                                                                                     |
 
 ## b) PARTIALLY DONE
 
-- **M13 (PR vehicle)**: the README section exists and rides cqrs-htmx master,
-  but NO PR was opened — that repo's daemon swept a concurrent session's
-  19-file in-flight work onto my fresh branch; a PR would have carried their
-  changes under this train's name. Branch folded back into master via ref
-  move (tree untouched, no race window); documented in the plan errata.
-- **F32 screenshots**: SKIPPED honestly — the audit session's /tmp artifacts
-  no longer exist; the report errata records this instead of fabricating.
-- **F36 TODO_LIST lint verify**: edited but no explicit formatting grep run
-  (dprint fmt covered docs/ afterwards in the global run — implicitly green).
+- ~~**M13 (PR vehicle)**: the README section exists and rides cqrs-htmx master,
+  but NO PR was opened~~ → done-by-decision 2026-10-25: the deviation was the CORRECT concurrent-session call (documented in the plan errata; the README section landed on master either way).
+- ~~**F32 screenshots**: SKIPPED honestly — the audit session's /tmp artifacts
+  no longer exist~~ → superseded 2026-11-13: the T23 ui-capture harness is the standing visual-verification surface (26-shot matrix, ASR-on, ledgered in summary.json).
+- ~~**F36 TODO_LIST lint verify**: edited but no explicit formatting grep run~~ → done 2026-10-25: dprint fmt covered docs/ in the same train's global run.
 
 ## c) NOT STARTED
 
 - Nothing from M1–M14 or F01–F40 remains unstarted (all executed, skipped
   with reason, or superseded as above).
-- **FEATURES.md rows** for the new behavior (projections healthz leg, hub
+- ~~**FEATURES.md rows** for the new behavior (projections healthz leg, hub
   pre-drain shutdown) were NOT written — a genuine one-home gap I noticed
-  only at closeout (candidate list in f).
+  only at closeout (candidate list in f).~~ → routed 2026-11-13: the 2026-11-13 pareto session's docs-truth batch (T22) carries the FEATURES rows.
 
 ## d) TOTALLY FUCKED UP (and what it cost)
 
