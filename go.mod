@@ -35,7 +35,7 @@ require (
 	github.com/larsartmann/go-etag/server v0.6.1
 	github.com/larsartmann/go-flightrecorder v0.2.1
 	github.com/larsartmann/go-health v0.10.0
-	github.com/larsartmann/go-health-dashboard v0.13.2
+	github.com/larsartmann/go-health-dashboard v0.13.3
 	github.com/larsartmann/go-idempotency v0.3.2
 	github.com/larsartmann/go-paperless v0.5.2
 	github.com/larsartmann/go-retry v0.9.0
