@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-13 (cadence headroom sweep): the report's own §f-5 ask executed — three real rows harvested into TODO_LIST, the harvest row struck, the observation row marked NOT-DO
+
 # Session status: CUE-benefit assessment + self-review
 
 _Snapshot: claims verified as of 2026-11-02 05:19 CET. Working tree clean (HEAD `ded296f2`, daemon). This report covers THIS session only: one exploration question ("How could this project benefit from cuelang.org?"), one recon pass, one verdict, one report. No code was changed anywhere._
@@ -47,14 +49,14 @@ Nothing catastrophic: zero code touched, tree clean, no wrong artifacts. But fou
 
 Grounded in this session only — the user's scope instruction forbids padding this to 50 from unrelated inventory; the real backlog lives in TODO_LIST.md (unread this session). Honest count: **6**.
 
-| # | Task                                                                                                                                                                       | Impact                       | Effort | Category      |
-| - | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | ------ | ------------- |
-| 1 | Drift audit: read the stack repo's webphone module assertions, diff every rule against `internal/config` validators — the mirror is hand-trusted today **→ TODO_LIST 2026-11-02 cue-assessment residue: Stack drift audit row** | High (config mis-boot class) | M      | Quality       |
-| 2 | Record the CUE ruling durably (REJECTED; schema-export deferred with a named trigger) in the repo's decision home so it is never re-litigated **→ TODO_LIST 2026-11-02 cue-assessment residue: the CUE ruling record row (folds the cost-measurement park)** | Medium                       | S      | Documentation |
-| 3 | Schema-export spike: settings schema GENERATED from config structs (openapi.json doctrine) + flake check vetting the rendered module config — trigger-gated on question g1 **→ TODO_LIST 2026-11-02 cue-assessment residue: Schema-export spike row** | Medium                       | M      | Feature       |
-| 4 | Park a cuelang.org/go cost measurement next to the ruling if CUE ever re-surfaces **→ folded into the CUE ruling record row in TODO_LIST** | Low                          | S      | Research      |
-| ~~5~~ | ~~HARVEST this section into TODO_LIST.md (or owner declines — then mark this report harvested-no)~~ done — the harvest landed in TODO_LIST on 2026-11-13 (the three rows above are the section) | ~~Low~~ | ~~S~~ | ~~Documentation~~ |
-| ~~6~~ | ~~Observation only: the both-or-neither doctrine exists as comments at 4 config.go sites; if task 3 ever lands those become generated doc — no action until then~~ **NOT-DO — observation only — no action intended by the report.** | ~~Low~~ | ~~S~~ | ~~Cleanup~~ |
+| #     | Task                                                                                                                                                                                                                                                         | Impact                       | Effort | Category          |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------- | ------ | ----------------- |
+| 1     | Drift audit: read the stack repo's webphone module assertions, diff every rule against `internal/config` validators — the mirror is hand-trusted today **→ TODO_LIST 2026-11-02 cue-assessment residue: Stack drift audit row**                              | High (config mis-boot class) | M      | Quality           |
+| 2     | Record the CUE ruling durably (REJECTED; schema-export deferred with a named trigger) in the repo's decision home so it is never re-litigated **→ TODO_LIST 2026-11-02 cue-assessment residue: the CUE ruling record row (folds the cost-measurement park)** | Medium                       | S      | Documentation     |
+| 3     | Schema-export spike: settings schema GENERATED from config structs (openapi.json doctrine) + flake check vetting the rendered module config — trigger-gated on question g1 **→ TODO_LIST 2026-11-02 cue-assessment residue: Schema-export spike row**        | Medium                       | M      | Feature           |
+| 4     | Park a cuelang.org/go cost measurement next to the ruling if CUE ever re-surfaces **→ folded into the CUE ruling record row in TODO_LIST**                                                                                                                   | Low                          | S      | Research          |
+| ~~5~~ | ~~HARVEST this section into TODO_LIST.md (or owner declines — then mark this report harvested-no)~~ done — the harvest landed in TODO_LIST on 2026-11-13 (the three rows above are the section)                                                              | ~~Low~~                      | ~~S~~  | ~~Documentation~~ |
+| ~~6~~ | ~~Observation only: the both-or-neither doctrine exists as comments at 4 config.go sites; if task 3 ever lands those become generated doc — no action until then~~ **NOT-DO — observation only — no action intended by the report.**                         | ~~Low~~                      | ~~S~~  | ~~Cleanup~~       |
 
 ## g) Questions I cannot answer myself
 

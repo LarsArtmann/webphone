@@ -221,19 +221,19 @@ edits — two archives had to chase a moving report count).
 
 ## f) Things we should get done next (this session's delta)
 
-| #  | Task                                                                                                                                                          | Impact | Effort | Category      |
-| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
+| #  | Task                                                                                                                                                            | Impact | Effort | Category      |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
 | 1  | T24 release-tails drain — the count is at 65/65 with zero headroom; the next status report from ANY session reds CI again. Archive-gate the corpus oldest-first | High   | M      | Documentation |
-| 2  | Raceprobe fix decision (#249): test-side await-poll vs fold-window product semantics — the owner question in the harvest row                                   | High   | S–M    | Quality       |
-| 3  | §D10 file-size posture call: split-on-sight (what this session did) vs raise-cap vs warn-only                                                                  | High   | S      | Decision      |
-| 4  | Adjudicate the go-version-auto-configure vs dep-floor tension — the tool downgrades every run, tidy vetoes every run; one BuildFlow ask or a written stance    | Medium | S      | Tooling       |
-| 5  | Branching-flow baseline refresh at the next governance sweep (COMPOSITION_mixin re-home + two stale DUPLICATE_TYPE prunes)                                     | Medium | S      | Quality       |
-| 6  | Finish the draft tidy: mark the raceprobe draft historical (the receiver draft is done; row 20 said both)                                                      | Low    | S      | Documentation |
+| 2  | Raceprobe fix decision (#249): test-side await-poll vs fold-window product semantics — the owner question in the harvest row                                    | High   | S–M    | Quality       |
+| 3  | §D10 file-size posture call: split-on-sight (what this session did) vs raise-cap vs warn-only                                                                   | High   | S      | Decision      |
+| 4  | Adjudicate the go-version-auto-configure vs dep-floor tension — the tool downgrades every run, tidy vetoes every run; one BuildFlow ask or a written stance     | Medium | S      | Tooling       |
+| 5  | Branching-flow baseline refresh at the next governance sweep (COMPOSITION_mixin re-home + two stale DUPLICATE_TYPE prunes)                                      | Medium | S      | Quality       |
+| 6  | Finish the draft tidy: mark the raceprobe draft historical (the receiver draft is done; row 20 said both)                                                       | Low    | S      | Documentation |
 | 7  | Sharpen the raceprobe probe: `-count=10` plain and with `-race`, one run each, to strengthen (or split) the fold-window mechanism claim on #249                 | Low    | S      | Quality       |
-| 8  | AGENTS.md one-liner at the next legitimate touch: the error-registry regen fires on MOVE, not only on NEW codes                                                | Low    | S      | Documentation |
-| 9  | ci-flake-ledger row the day the raceprobe first reds CI (#249's probe table is the ready evidence)                                                             | Low    | S      | Documentation |
-| 10 | Investigate nix-build-verify's 22/26 failure history (pointed row, untouched this session)                                                                     | Medium | M      | Quality       |
-| 11 | dprint plugins → nix-store pin (kills the cold-run fetch hazard; pointed row)                                                                                  | Medium | M      | Quality       |
+| 8  | AGENTS.md one-liner at the next legitimate touch: the error-registry regen fires on MOVE, not only on NEW codes                                                 | Low    | S      | Documentation |
+| 9  | ci-flake-ledger row the day the raceprobe first reds CI (#249's probe table is the ready evidence)                                                              | Low    | S      | Documentation |
+| 10 | Investigate nix-build-verify's 22/26 failure history (pointed row, untouched this session)                                                                      | Medium | M      | Quality       |
+| 11 | dprint plugins → nix-store pin (kills the cold-run fetch hazard; pointed row)                                                                                   | Medium | M      | Quality       |
 
 ## g) Questions I cannot answer myself
 
