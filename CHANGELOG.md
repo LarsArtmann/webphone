@@ -9,12 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Five oversized Go files split along their natural seams** (the
+- **Six oversized Go files split along their natural seams** (the
   file-size gate's 350-line cap): the session API becomes login /
   switch / identity+mint files, the ASR seam separates its contract,
   OpenAI-compatible client and shared transport tail, the server shell
   moves the 404 pair and the auth seam wrappers into their own files,
-  and the transcript and CRM-view test suites split by concern.
+  the transcript and CRM-view test suites split by concern, and the
+  matrix receiver's `/sync` wire surface (response shapes + the
+  long-poll) moves to `sync.go`, leaving the loop in `receiver.go`.
   Served behavior, wire bytes and error-code vocabulary are unchanged;
   the error registry's seam-file column was regenerated for the moved
   ASR code sites.
