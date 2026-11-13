@@ -198,11 +198,19 @@ test("logout with a live call is a two-click move", async () => {
 test("a double submit places exactly one dial (the pending guard)", async () => {
   scenario = "transport";
   const realFetch = globalThis.fetch;
+  // placeCall unlocks the shared AudioContext on the dial click; the
+  // harness ships no WebAudio, so a minimal resume() stub stands in.
+  const realAudio = globalThis.AudioContext;
+  globalThis.AudioContext = class {
+    resume() {
+      return Promise.resolve();
+    }
+  };
   let gateCalls = 0;
   let releaseGate;
   globalThis.fetch = async (url, opts = {}) => {
     calls.fetches.push(`${opts.method ?? "GET"} ${url}`);
-    if (String(url).endsWith("/api/dials")) {
+    if (String(url).endsWith("/api/dials") && opts.method === "POST") {
       gateCalls++;
       return new Promise((resolve) => {
         releaseGate = () =>
@@ -239,5 +247,7 @@ test("a double submit places exactly one dial (the pending guard)", async () => 
     );
   } finally {
     globalThis.fetch = realFetch;
+    if (realAudio === undefined) delete globalThis.AudioContext;
+    else globalThis.AudioContext = realAudio;
   }
 });

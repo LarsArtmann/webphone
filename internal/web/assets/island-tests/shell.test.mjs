@@ -1137,6 +1137,53 @@ test("the live context asks once per remote and clears on the last call end", ()
   delete globalThis.window.htmx;
 });
 
+test("a rejected live-context fetch degrades silently (no banner mid-call)", async () => {
+  let rejecter;
+  globalThis.window.htmx = {
+    ajax: () =>
+      new Promise((_resolve, reject) => {
+        rejecter = reject;
+      }),
+  };
+  const slot = doc.getElementById("wp-live-context");
+  slot.replaceChildren();
+  doc.getElementById("toasts").replaceChildren();
+  const calls = doc.getElementById("calls");
+  const card = doc.createElement();
+  card.selector = ".call-card[data-remote]";
+  card.setAttribute("data-remote", "+49301234999");
+  calls.replaceChildren(card);
+
+  const unhandled = [];
+  const onUnhandled = (err) => unhandled.push(err);
+  process.on("unhandledRejection", onUnhandled);
+  try {
+    doc.dispatch("wp:calls-changed", {});
+    rejecter(new Error("network gone"));
+    await new Promise((resolve) => setImmediate(resolve));
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(
+      unhandled.length,
+      0,
+      "the rejection is handled — no unhandled-rejection noise",
+    );
+    assert.equal(
+      slot.children.length,
+      0,
+      "the slot stays empty — the doctrine forbids a banner during a live call",
+    );
+    assert.equal(
+      doc.getElementById("toasts").children.length,
+      0,
+      "no toast either — silence is the written degradation",
+    );
+  } finally {
+    process.off("unhandledRejection", onUnhandled);
+    calls.replaceChildren();
+    delete globalThis.window.htmx;
+  }
+});
+
 // --- voicemail player (M13 C1–C3/C9) ------------------------------------
 
 // Builds one player row from REGISTRY instances: the shell looks every
