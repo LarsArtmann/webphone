@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "threshold": 1,
-  "recordedAt": "2026-11-12T12:43:27.149409387Z",
+  "recordedAt": "2026-11-13T19:29:58.142498644Z",
   "entries": [
     {
       "hash": "0074763f10c77d08",
@@ -81,9 +81,10 @@
       "hash": "0e73909cd6a51b04",
       "files": [
         "internal/matrix/receiver.go",
+        "internal/matrix/receiver.go",
         "internal/matrix/receiver.go"
       ],
-      "tokens": 8
+      "tokens": 12
     },
     {
       "hash": "112322f48c9f18a1",
@@ -448,14 +449,6 @@
       "tokens": 4
     },
     {
-      "hash": "749a9e67d752a6bb",
-      "files": [
-        "internal/asr/asr.go",
-        "internal/crm/client.go"
-      ],
-      "tokens": 6
-    },
-    {
       "hash": "7561d09c6a3f298d",
       "files": [
         "internal/web/views/messages.templ",
@@ -598,15 +591,6 @@
       "tokens": 2
     },
     {
-      "hash": "90dfde1f2e467621",
-      "files": [
-        "internal/web/views/crm.templ",
-        "internal/web/views/crm.templ",
-        "internal/web/views/crm.templ"
-      ],
-      "tokens": 3
-    },
-    {
       "hash": "910c134aaa550a8e",
       "files": [
         "internal/web/views/phone.templ",
@@ -630,6 +614,14 @@
         "internal/web/views/reports.templ"
       ],
       "tokens": 6
+    },
+    {
+      "hash": "9ae81cbb75379934",
+      "files": [
+        "internal/web/views/crm.templ",
+        "internal/web/views/crm.templ"
+      ],
+      "tokens": 4
     },
     {
       "hash": "9b554b1498dfd35a",
@@ -800,7 +792,7 @@
     {
       "hash": "c71fd9f0df248ec5",
       "files": [
-        "internal/server/auth/session_api.go",
+        "internal/server/auth/session_identity.go",
         "internal/server/panels.go"
       ],
       "tokens": 4
@@ -864,7 +856,7 @@
     {
       "hash": "d48c1eb9a13718e2",
       "files": [
-        "internal/server/pages.go",
+        "internal/server/notfound.go",
         "internal/server/livecontext.go"
       ],
       "tokens": 6
@@ -897,7 +889,7 @@
     {
       "hash": "d773c47608efa040",
       "files": [
-        "internal/asr/asr.go",
+        "internal/asr/client.go",
         "internal/asr/google.go"
       ],
       "tokens": 6
@@ -954,6 +946,7 @@
         "internal/web/views/admin.templ",
         "internal/web/views/settings.templ",
         "internal/web/views/settings.templ",
+        "internal/web/views/crm.templ",
         "internal/web/views/messages.templ",
         "internal/web/views/settings.templ",
         "internal/web/views/crm.templ",
@@ -962,7 +955,7 @@
         "internal/web/views/admin.templ",
         "internal/web/views/reports.templ"
       ],
-      "tokens": 18
+      "tokens": 19
     },
     {
       "hash": "f284a893cb53f85c",
