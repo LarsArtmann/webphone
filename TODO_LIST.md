@@ -111,12 +111,12 @@ report's still-open §f rows.
       carries the gauntlet). No ledger row; reopen only if a repetition
       red ever lands on CI.
 - ~~**AGENTS.md one-liner** (Low): the error-registry regen fires on
-      MOVE, not only on NEW codes (proved 2026-11-12 on the asr split);
-      add it at the next legitimate AGENTS touch (cap has room).~~ →
-      done 2026-11-13 — already in: AGENTS.md carries the full fact
-      (MOVES/RENAMES regen + the `-update` command + the asr-split
-      proof + the same-push reading for two live sessions); nothing
-      left to add.
+  MOVE, not only on NEW codes (proved 2026-11-12 on the asr split);
+  add it at the next legitimate AGENTS touch (cap has room).~~ →
+  done 2026-11-13 — already in: AGENTS.md carries the full fact
+  (MOVES/RENAMES regen + the `-update` command + the asr-split
+  proof + the same-push reading for two live sessions); nothing
+  left to add.
 - §D10 (split-on-sight vs raise-cap vs warn-only) stays with its
   existing 2026-11-08 pack above — no duplicate row. The corpus cadence
   drain beyond the one CI-greening archive stays with the T24
