@@ -60,19 +60,14 @@ func avatarFor(nameOrNumber string) string {
 		return "?"
 	}
 	if runes[0] == '+' || (runes[0] >= '0' && runes[0] <= '9') {
-		digits := make([]rune, 0, len(runes))
-		for _, r := range runes {
-			if r >= '0' && r <= '9' {
-				digits = append(digits, r)
-			}
-		}
+		digits := domain.DigitsOf(trimmed)
 		switch len(digits) {
 		case 0:
 			return "+"
 		case 1:
-			return string(digits)
+			return digits
 		default:
-			return string(digits[len(digits)-2:])
+			return digits[len(digits)-2:]
 		}
 	}
 	letters := make([]rune, 0, 2)

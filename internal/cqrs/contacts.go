@@ -75,17 +75,7 @@ type contactsState struct {
 // review) — the digit string is the region-free identity; a trunk-form
 // and its country-code form still differ, which is the honest boundary
 // without a region assumption. The DISPLAYED number stays verbatim.
-func contactKeyOf(phone string) string {
-	key := make([]rune, 0, len(phone))
-
-	for _, r := range phone {
-		if r >= '0' && r <= '9' {
-			key = append(key, r)
-		}
-	}
-
-	return string(key)
-}
+func contactKeyOf(phone string) string { return domain.DigitsOf(phone) }
 
 func (contactsState) initial() contactsState { return contactsState{Slots: map[string]contactSlot{}} }
 
