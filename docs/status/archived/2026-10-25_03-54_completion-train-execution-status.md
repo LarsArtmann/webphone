@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-13 (docs-health v11 sweep): 19-day-old completed snapshot — all §a rows struck with pass evidence, §b adjudicated (upstream asks routed to docs/contracts/README.md, android to the P1 repo rows); the §f ledger items were harvested by the interim trains (ETag + catalog gotchas landed, per the AGENTS record)
+
 # Status — completion-train execution (red-main recovery → contracts rest tier)
 
 **Claims verified as of 03:54 (local machine clock, 2026-10-25; the
@@ -72,38 +74,36 @@ end-to-end (plan written+pushed `4b59be5`, then N1–N18 executed).
 
 | #  | Item                                                                                                                                                                                                                                                                                                                         | Evidence                                            |
 | -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| 1  | **N1 red-main root fix** — 3 error codes registered via the `-update` regen (Infrastructure family, correct sites, reviewed)                                                                                                                                                                                                 | `docs/error-contract.md`; full suite 31/31 green    |
-| 2  | **N2 smoke truth** — pin 3.1.0→3.0.3 with the upstream-path comment; live smoke **48/48** incl. the `/openapi.json` leg + restart 4/4 + boot-failure legs                                                                                                                                                                    | scripts/webphone-smoke.py:771-777; smoke run output |
-| 3  | **N3 land+push** — CHANGELOG Added entry, fmt, whitespace-drift, push; **CI GREEN on 7b7bcc6** (run 40153856104)                                                                                                                                                                                                             | gh run list; ls-remote matches                      |
-| 4  | **N4 decision record** — TODO_LIST wire-lane section (ADOPTED by ship, three lanes cover three vocabularies) + the hub push-pair update (webphone leg done)                                                                                                                                                                  | TODO_LIST.md:83-113                                 |
-| 5  | **N5 honesty batch** — audit report: subtitle addendum (snapshot vs same-day adoption), metaengine erratum inline (routine→418), finding-1 example correction (loginRequest was inline; hoist EXECUTED), Addenda section with the full verify-command re-run table; structural render check clean (9 sections, 0 mismatches) | commit 4794987                                      |
-| 6  | **N6 freshness gate, both paths proven** — `scripts/contracts-fresh.sh` + `contracts-fresh` flake check leg; GREEN on the fresh tree, RED with a stale marker (actionable message), restored; treefmt owns no yaml so the formatter cannot fight the generator                                                               | commit 436abdd (daemon-captured, verified content)  |
-| 7  | **N7 memory sweep** — AGENTS: contracts command + generated-contract gotchas + register-codes-same-commit rule + lowercase-verb drift trap; lessons.md: three war stories (daemon-pushed ghost, registry-drift red main, false-green drift test); dedup sweep-log line                                                       | commits 508e10f + 971b76e                           |
-| 8  | **N8+N10+N12 harvest + trains** — TODO_LIST rows (upstream candidates ×7 with filing gates, metaengine train, owner-gated catalog bump, android, ETag/golden); `docs/planning/2026-10-24_20-05_dependency-train-notes.md` prices BOTH trains from the actual tag deltas (418 / 213 commits, subject-level classification)    | commit 658a270                                      |
-| 9  | **N11 research index** — `docs/research/README.md`, all 7 reports with one-line verdicts                                                                                                                                                                                                                                     | commit 78a7973 (daemon-captured)                    |
-| 10 | **N16 one-home ruling + pin** — three-catalog rationale in docs/contracts/README.md; `/openapi.json` content-type PINNED by test (was unpinned post-swap)                                                                                                                                                                    | commit 78a7973 + middleware_test.go                 |
-| 11 | **N13 hub, resolved honestly** — appended, DISCOVERED generated, restored byte-exact, zero drift left; mechanism row recorded (pipeline home = inventory module or webphone's own export tree)                                                                                                                               | commit e48a2c8                                      |
-| 12 | **N15 gates** — buildflow exit 0 (67 success, 0 failed; the 9-unavailable + baseline/timing warnings are the documented advisory class); `nix flake check` exit 0 "all checks passed"; `nix run .#vulnix` zero real advisories (both CVEs distro-patched range-match noise)                                                  | gate outputs this session                           |
-| 13 | **N18 close-out** — status report appendix with per-tier verdicts; final push d87c599 (ls-remote matches); successor CI run on the same tree GREEN (40154765172), close-out run in progress at snapshot time                                                                                                                 | commit d87c599                                      |
+| ~~1~~  | ~~**N1 red-main root fix** — 3 error codes registered via the `-update` regen (Infrastructure family, correct sites, reviewed)~~ done (docs-health pass 2026-10-25) | ~~`docs/error-contract.md`; full suite 31/31 green~~ |
+| ~~2~~  | ~~**N2 smoke truth** — pin 3.1.0→3.0.3 with the upstream-path comment; live smoke **48/48** incl. the `/openapi.json` leg + restart 4/4 + boot-failure legs~~ done (docs-health pass 2026-10-25) | ~~scripts/webphone-smoke.py:771-777; smoke run output~~ |
+| ~~3~~  | ~~**N3 land+push** — CHANGELOG Added entry, fmt, whitespace-drift, push; **CI GREEN on 7b7bcc6** (run 40153856104)~~ done (docs-health pass 2026-10-25) | ~~gh run list; ls-remote matches~~ |
+| ~~4~~  | ~~**N4 decision record** — TODO_LIST wire-lane section (ADOPTED by ship, three lanes cover three vocabularies) + the hub push-pair update (webphone leg done)~~ done (docs-health pass 2026-10-25) | ~~TODO_LIST.md:83-113~~ |
+| ~~5~~  | ~~**N5 honesty batch** — audit report: subtitle addendum (snapshot vs same-day adoption), metaengine erratum inline (routine→418), finding-1 example correction (loginRequest was inline; hoist EXECUTED), Addenda section with the full verify-command re-run table; structural render check clean (9 sections, 0 mismatches)~~ done (docs-health pass 2026-10-25) | ~~commit 4794987~~ |
+| ~~6~~  | ~~**N6 freshness gate, both paths proven** — `scripts/contracts-fresh.sh` + `contracts-fresh` flake check leg; GREEN on the fresh tree, RED with a stale marker (actionable message), restored; treefmt owns no yaml so the formatter cannot fight the generator~~ done (docs-health pass 2026-10-25) | ~~commit 436abdd (daemon-captured, verified content)~~ |
+| ~~7~~  | ~~**N7 memory sweep** — AGENTS: contracts command + generated-contract gotchas + register-codes-same-commit rule + lowercase-verb drift trap; lessons.md: three war stories (daemon-pushed ghost, registry-drift red main, false-green drift test); dedup sweep-log line~~ done (docs-health pass 2026-10-25) | ~~commits 508e10f + 971b76e~~ |
+| ~~8~~  | ~~**N8+N10+N12 harvest + trains** — TODO_LIST rows (upstream candidates ×7 with filing gates, metaengine train, owner-gated catalog bump, android, ETag/golden); `docs/planning/2026-10-24_20-05_dependency-train-notes.md` prices BOTH trains from the actual tag deltas (418 / 213 commits, subject-level classification)~~ done (docs-health pass 2026-10-25) | ~~commit 658a270~~ |
+| ~~9~~  | ~~**N11 research index** — `docs/research/README.md`, all 7 reports with one-line verdicts~~ done (docs-health pass 2026-10-25) | ~~commit 78a7973 (daemon-captured)~~ |
+| ~~10~~ | ~~**N16 one-home ruling + pin** — three-catalog rationale in docs/contracts/README.md; `/openapi.json` content-type PINNED by test (was unpinned post-swap)~~ done (docs-health pass 2026-10-25) | ~~commit 78a7973 + middleware_test.go~~ |
+| ~~11~~ | ~~**N13 hub, resolved honestly** — appended, DISCOVERED generated, restored byte-exact, zero drift left; mechanism row recorded (pipeline home = inventory module or webphone's own export tree)~~ done (docs-health pass 2026-10-25) | ~~commit e48a2c8~~ |
+| ~~12~~ | ~~**N15 gates** — buildflow exit 0 (67 success, 0 failed; the 9-unavailable + baseline/timing warnings are the documented advisory class); `nix flake check` exit 0 "all checks passed"; `nix run .#vulnix` zero real advisories (both CVEs distro-patched range-match noise)~~ done (docs-health pass 2026-10-25) | ~~gate outputs this session~~ |
+| ~~13~~ | ~~**N18 close-out** — status report appendix with per-tier verdicts; final push d87c599 (ls-remote matches); successor CI run on the same tree GREEN (40154765172), close-out run in progress at snapshot time~~ done (docs-health pass 2026-10-25) | ~~commit d87c599~~ |
 
 ## b) PARTIALLY DONE
 
-1. **N15's flake-check SCOPE** — exit 0 + "all checks passed", but
+1. ~~**N15's flake-check SCOPE** — exit 0 + "all checks passed", but
    "running 0 flake checks" was never reconciled (see the forgotten
-   list). The check set is individually proven where it matters most
-   (contracts-fresh), but the aggregate claim needs one clean full-log
-   run.
-2. **N9 upstream filings** — the seven candidates are recorded with
+   list).~~ → done 2026-11-05: later trains name the legs by default (the admin train's full run read 68/68 named steps from `buildflow history`; `nix flake check` output names every check leg).
+2. ~~**N9 upstream filings** — the seven candidates are recorded with
    their filing gates (pinned-version repro + dupe search +
    github-voice) but the dupe SEARCH (minutes) was skipped with the
-   filings (hours).
-3. **N14 android** — TODO row only; the repo was not opened, so the
+   filings (hours).~~ → routed 2026-11-13: the catalog Exporter asks live in docs/contracts/README.md + AGENTS' machine-contract bullet (the Retry-After prose workaround is pinned); filings stay owner-gated per verify-before-filing.
+3. ~~**N14 android** — TODO row only; the repo was not opened, so the
    row's four sub-tasks are unassessed against the actual bootstrap
-   code.
-4. **buildflow advisories** — baseline staleness (47 dead entries) and
-   the timing-regression list: observed, reported here, not actioned.
-5. **CHANGELOG** — the machine-API entry landed; the contracts-fresh
-   gate line did not.
+   code.~~ → routed 2026-11-13: `~/projects/webphone-android` exists (P1 shell scaffold per the 2026-10-23 platform decision); spec-consumption rides the android handover-pack TODO rows.
+4. ~~**buildflow advisories** — baseline staleness (47 dead entries) and
+   the timing-regression list: observed, reported here, not actioned.~~ → done 2026-10-28: the baseline file was RETIRED (its 47 host-absolute ids matched nothing — AGENTS § erraudit bullet); the triage row owns the residue.
+5. ~~**CHANGELOG** — the machine-API entry landed; the contracts-fresh
+   gate line did not.~~ → done 2026-10-25: the contracts-fresh gate line landed (CHANGELOG "contracts-fresh checks").
 
 ## c) NOT STARTED
 
