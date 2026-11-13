@@ -904,7 +904,10 @@ test("a tab navigation stores the last-active tab (E3)", () => {
 test("a plain / load restores the remembered tab (E3)", () => {
   const calls = [];
   globalThis.window.htmx = {
-    ajax: (verb, url) => calls.push(url),
+    ajax: (verb, url) => {
+      calls.push(url);
+      return Promise.resolve();
+    },
   };
   globalThis.window.location = { pathname: "/" };
 
@@ -949,7 +952,12 @@ test("a plain / load restores the remembered tab (E3)", () => {
 
 test("restore never overrides a deep link, garbage, or the sign-in hint (E3)", () => {
   const calls = [];
-  globalThis.window.htmx = { ajax: (verb, url) => calls.push(url) };
+  globalThis.window.htmx = {
+    ajax: (verb, url) => {
+      calls.push(url);
+      return Promise.resolve();
+    },
+  };
   globalThis.window.location = { pathname: "/messages" };
   localStorage.setItem("wp-last-tab", "history");
 

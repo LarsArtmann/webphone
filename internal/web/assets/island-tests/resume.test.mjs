@@ -194,3 +194,50 @@ test("logout with a live call is a two-click move", async () => {
   assert.equal(calls.fetches.length, fetchesBefore, "the armed click drops no server session");
   sessions.clear();
 });
+
+test("a double submit places exactly one dial (the pending guard)", async () => {
+  scenario = "transport";
+  const realFetch = globalThis.fetch;
+  let gateCalls = 0;
+  let releaseGate;
+  globalThis.fetch = async (url, opts = {}) => {
+    calls.fetches.push(`${opts.method ?? "GET"} ${url}`);
+    if (String(url).endsWith("/api/dials")) {
+      gateCalls++;
+      return new Promise((resolve) => {
+        releaseGate = () =>
+          resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({ allowed: false, last_at: 1, window: 3600 }),
+          });
+      });
+    }
+    return realFetch(url, opts);
+  };
+  try {
+    await import("../island/app/main.js?case=dblsubmit");
+    await flushes(4);
+    const form = doc.getElementById("dial-form");
+    doc.getElementById("dest").value = "+1715";
+    const fire = () => form.listeners.submit.at(-1)({ preventDefault() {} });
+    const first = fire();
+    const second = fire();
+    await flushes(4);
+    assert.equal(
+      gateCalls,
+      1,
+      "the second submit while the gate consult is pending is a no-op — one INVITE race, one consult",
+    );
+    assert.ok(releaseGate, "the first dial reached the gate");
+    releaseGate();
+    await Promise.allSettled([first, second]);
+    assert.equal(
+      gateCalls,
+      1,
+      "the parked second submit never re-fires after the first settles",
+    );
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+});

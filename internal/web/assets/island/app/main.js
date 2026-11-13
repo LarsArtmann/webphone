@@ -243,20 +243,38 @@ els.logout.addEventListener("click", async () => {
   }
 });
 
+// The double-submit guard: two rapid Enters must not race two gate
+// consults into two INVITEs (the dial form has no disabled-button
+// protection while the gate round-trip is in flight — Enter submits
+// bypass button state). One pending dial at a time; the flag resets
+// when placeCall settles (dialed or not).
+let dialPending = false;
+
 els.dialForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (dialPending) return;
+  dialPending = true;
+  const submitButton = /** @type {HTMLButtonElement | null} */ (
+    els.dialForm.querySelector('button[type="submit"]')
+  );
+  if (submitButton) submitButton.disabled = true;
   els.dialError.hidden = true;
   // t0 of the dial_to_audio latency interval (the measure-first design):
   // the submit IS the dial activation — the click or Enter that starts
   // everything, gate consult included.
-  const dialed = await placeCall(els.dest.value.trim(), {
-    latencyT0: Date.now(),
-  });
-  // Clear only on a real INVITE: a validation error keeps the typed
-  // text for editing, and a stale value must never append onto the
-  // next dial (the E2E concatenated two extensions exactly once too
-  // often).
-  if (dialed) els.dest.value = "";
+  try {
+    const dialed = await placeCall(els.dest.value.trim(), {
+      latencyT0: Date.now(),
+    });
+    // Clear only on a real INVITE: a validation error keeps the typed
+    // text for editing, and a stale value must never append onto the
+    // next dial (the E2E concatenated two extensions exactly once too
+    // often).
+    if (dialed) els.dest.value = "";
+  } finally {
+    dialPending = false;
+    if (submitButton) submitButton.disabled = false;
+  }
 });
 
 els.vmRefresh.addEventListener("click", () => refreshVoicemail());
