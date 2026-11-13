@@ -132,8 +132,15 @@ func TestAppDashboardMountsHealthSubtree(t *testing.T) {
 		t.Fatalf("/health: code %d", resp.StatusCode)
 	}
 	csp := resp.Header.Get("Content-Security-Policy")
-	if !strings.Contains(csp, "unsafe-eval") || !strings.Contains(csp, "nonce-") {
+	if !strings.Contains(csp, "nonce-") {
 		t.Fatalf("/health CSP is not the dashboard policy: %q", csp)
+	}
+	// v0.13.3's data-nonce root bridge (issue #23) retires 'unsafe-eval':
+	// the SDK compiles expressions without the Function path (browser-
+	// verified upstream by TestBrowser_StrictCSPNoEvalConnects), so the
+	// subtree must not grant eval the old RecommendedCSP carried.
+	if strings.Contains(csp, "unsafe-eval") {
+		t.Fatalf("/health CSP still grants 'unsafe-eval' — the data-nonce lane makes it unnecessary: %q", csp)
 	}
 	body, _ := io.ReadAll(resp.Body)
 	page := string(body)

@@ -1239,7 +1239,7 @@ def run_checks(
     csp = headers.get("Content-Security-Policy", "")
     c.ok(
         "dashboard nonce csp",
-        "unsafe-eval" in csp and "nonce-" in csp,
+        "unsafe-eval" not in csp and "nonce-" in csp,
         csp[:100],
     )
     status, body, _ = s.request("GET", "/health/datastar.js")
