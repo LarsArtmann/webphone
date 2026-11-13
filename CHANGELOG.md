@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The digits-only rune reduction has ONE home (`domain.DigitsOf`),
+  shared by the contact upsert key, the dialable sanitize and the
+  avatar digit tail; the CRM context strip's muted meta lines render
+  through one `crmMutedItem` component. Pure dedup, no behavior
+  change (clone-gate baseline 110 → 109 groups).
 - The shared contact directory no longer rides the pre-auth
   `/config.js` (the island boot surface any anonymous fetcher could
   read): the payload drops the `contacts` key and the island adopts
