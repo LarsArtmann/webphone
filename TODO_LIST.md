@@ -87,24 +87,29 @@ wire-surface carve, byte-pure motion, package + arch suites green) and
 `buildflow -s file-size-check` reads exit 0. This section holds the
 report's still-open §f rows.
 
-- [ ] **Raceprobe fix decision** (#249, High):
-      `TestConcurrentFirstSightYieldsOneThread` reds under `-count>1`
-      and full-suite parallelism ("unread 3", pre-existing, bisected to
-      `b1b01b87`) — test-side await-poll (mirror the transcripts'
-      `awaitTranscriptCount`) vs product-semantics ruling (should a
-      message the decider refused ever fold into the projection?) is an
-      OWNER question (§g3 of the 22-50 report). The struck row below
-      ("NOT REPRODUCIBLE") probed a single run; #249's repetition table
-      supersedes that verdict.
-- [ ] **Branching-flow baseline refresh** (Medium): at the next
-      governance sweep, `buildflow -s branching-flow --save-baseline`
-      from this checkout — re-homes `COMPOSITION_mixin` (the asr Client
-      moved to `client.go`) and prunes the two stale old-path
-      DUPLICATE_TYPE entries from the session carve.
-- [ ] **ci-flake-ledger row** (Low, conditional): the day the raceprobe
-      first reds CI, add the ledger row — #249's probe table is the
-      ready evidence (CI runs without `-count`, so it has not fired
-      yet).
+- [x] **Raceprobe fix decision** (#249, High): ~~await-poll vs
+      product-semantics ruling (owner question §g3 of the 22-50
+      report)~~ → DECIDED + SHIPPED 2026-11-13 (pareto T14): await-poll,
+      not semantics — the probe's exact-count `svc.Threads` reads raced
+      the async projection fold; `awaitThreadFold` polls to convergence
+      (5s deadline, the `awaitTranscriptCount` pattern), both reads
+      route through it (`c46b9666`). Pre-fix reproduction at current
+      HEAD: NONE (the ladder retirement shifted fold timing), post-fix
+      gauntlet green; #249 CLOSED with the evidence comment. The
+      semantics question stays closed with it — a refused message never
+      folds; only the PROBE's read timing was wrong.
+- [x] **Branching-flow baseline refresh** (Medium): ~~at the next
+      governance sweep~~ → done 2026-11-13 (pareto T23, pulled forward):
+      `buildflow -s branching-flow --save-baseline` re-run from this
+      checkout with the result cache disabled — 220 findings
+      re-recorded at current paths (COMPOSITION_mixin re-homed, the
+      stale old-path DUPLICATE_TYPE entries gone), all under the
+      severity cap (non-gating per the config).
+- [x] **ci-flake-ledger row** (Low, conditional): → resolved 2026-11-13
+      — the condition never fired (#249 closed with the await-poll fix
+      before CI ever red; local-repetition class only, `c46b9666`
+      carries the gauntlet). No ledger row; reopen only if a repetition
+      red ever lands on CI.
 - [ ] **AGENTS.md one-liner** (Low): the error-registry regen fires on
       MOVE, not only on NEW codes (proved 2026-11-12 on the asr split);
       add it at the next legitimate AGENTS touch (cap has room).
