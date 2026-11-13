@@ -1,7 +1,7 @@
 # go-credentials-store — library utilization audit
 
 **Verdict:** NO-GO — it is a stateful credential _service_ (encrypted store, master keys, audit trail, admin UI) for personal infrastructure; webphone's threat model delegates secret-keeping to the platform (systemd `LoadCredential` + the NixOS secrets pipeline) and reads credentials fail-closed at use. **Adoption: n/a (absent, by decision).**
-**Pin:** none (absent from go.mod) · **Latest:** v0.3.1 (local checkout tag) · **Status:** not a dependency
+**Pin:** none (absent from go.mod) · **Latest:** v0.4.2 (re-verified against remote tags 2026-11-13; the report's original v0.3.1 has been superseded by three minors — the v0.4 line is adminui host-nav links + a CSP-nonce bridge for library scripts, generator-pinned templ regeneration, and a consumer-simulation pre-tag gate: service/UI hardening for the library's own deployment story, **no change to the stateful-service shape this ruling declines**) · **Status:** not a dependency
 **Audited:** 2026-11-04 · **Prior reports:** none (first audit).
 
 ## Status
@@ -28,7 +28,7 @@ Adopting the library would add a second stateful component with its own master-k
 
 ## Ruling
 
-**Decline.** The platform seam is the right seam for this deployment; the library is the right seam for hosts without systemd/NixOS secrets plumbing. Re-open only if webphone must run somewhere without `LoadCredential`-class support AND accumulates secrets it must audit.
+**Decline.** The platform seam is the right seam for this deployment; the library is the right seam for hosts without systemd/NixOS secrets plumbing. The v0.4.x line (reviewed at the tags, 2026-11-13) is UI/release engineering — the premise stands. Re-open only if webphone must run somewhere without `LoadCredential`-class support AND accumulates secrets it must audit.
 
 **Refresh trigger:** a non-systemd deployment target; a credential-audit compliance requirement; more than a handful of runtime-mutable secrets.
 
