@@ -325,9 +325,7 @@ def ring_guard_reshoot(
 
     if not probe(driver):
         return
-    print(
-        f"warn: an inbound call is ringing — re-shooting once after a settle wait"
-    )
+    print("warn: an inbound call is ringing — re-shooting once after a settle wait")
     time.sleep(3)
     shoot(driver, target, full_page)
     if probe(driver):
@@ -335,6 +333,7 @@ def ring_guard_reshoot(
             "warn: the banner is STILL up after the settle wait — the "
             "re-shot cell is archived with the guard's warn in the log"
         )
+
 
 # Remote-only conditional surfaces resolve markers at resolve time
 # (thread-NN, crm-context on real data); the admin panel's wire id is
@@ -1486,9 +1485,7 @@ def capture(
                     _check_pins(name, path, ANONYMOUS_MARKERS[name])
                     target = _target(name, theme, vp)
                     shoot(driver, target, full_page)
-                    ring_guard_reshoot(
-                        driver, shoot, target, full_page
-                    )
+                    ring_guard_reshoot(driver, shoot, target, full_page)
                     ledger.append(
                         {
                             "key": shot_key(target),
@@ -1573,9 +1570,7 @@ def capture(
                         name,
                     )
                     shoot(driver, target, full_page)
-                    ring_guard_reshoot(
-                        driver, shoot, target, full_page
-                    )
+                    ring_guard_reshoot(driver, shoot, target, full_page)
                     ledger.append(
                         {
                             "key": shot_key(target),
@@ -1894,9 +1889,7 @@ def self_test() -> int:
     )
 
     _shots.clear()
-    ring_guard_reshoot(
-        _StubDriver(), _shoot, "t.png", True, ringing=True
-    )
+    ring_guard_reshoot(_StubDriver(), _shoot, "t.png", True, ringing=True)
     check(
         "ring guard honors the forced-state override",
         _shots == ["t.png"],

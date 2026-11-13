@@ -16,17 +16,38 @@
 #     [--threads N] [--label "night pair"] [--hours 8]
 set -euo pipefail
 
-base=""; threads=""; label="night-pair"; hours=8
+base=""
+threads=""
+label="night-pair"
+hours=8
 while [ $# -gt 0 ]; do
 	case "$1" in
-	--base-url) base="$2"; shift 2 ;;
-	--threads) threads="$2"; shift 2 ;;
-	--label) label="$2"; shift 2 ;;
-	--hours) hours="$2"; shift 2 ;;
-	*) echo "unknown arg: $1" >&2; exit 2 ;;
+	--base-url)
+		base="$2"
+		shift 2
+		;;
+	--threads)
+		threads="$2"
+		shift 2
+		;;
+	--label)
+		label="$2"
+		shift 2
+		;;
+	--hours)
+		hours="$2"
+		shift 2
+		;;
+	*)
+		echo "unknown arg: $1" >&2
+		exit 2
+		;;
 	esac
 done
-[ -n "$base" ] || { echo "usage: $0 --base-url https://host [--threads N] [--label L] [--hours H]" >&2; exit 2; }
+[ -n "$base" ] || {
+	echo "usage: $0 --base-url https://host [--threads N] [--label L] [--hours H]" >&2
+	exit 2
+}
 : "${WEBPHONE_CAPTURE_EXTENSION:?WEBPHONE_CAPTURE_EXTENSION required}"
 : "${WEBPHONE_CAPTURE_PASSWORD:?WEBPHONE_CAPTURE_PASSWORD required}"
 
