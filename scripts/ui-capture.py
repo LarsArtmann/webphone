@@ -301,6 +301,41 @@ SURFACE_ABSENT_MARKERS: dict[str, tuple[str, ...]] = {}
 # a banner shot as a clean matrix cell.
 RINGING_SELECTOR = "#incoming-call:not([hidden])"
 
+
+def ringing_detected(driver) -> bool:
+    """True when the inbound-call banner is visible in this driver."""
+    return bool(driver.find_elements("css selector", RINGING_SELECTOR))
+
+
+def ring_guard_reshoot(
+    driver,
+    shoot,
+    target: str,
+    full_page: bool,
+    ringing: bool | None = None,
+) -> None:
+    """The ring guard, in its ONE home: re-shoot the cell once when the
+    inbound-call banner was visible at capture time, then settle-wait so
+    the second shot outraces the banner (idle cells keep the first shot
+    untouched). `ringing` overrides the DOM probe for the self-test (a
+    forced guarded state without a real inbound call)."""
+
+    def probe(d) -> bool:
+        return ringing if ringing is not None else ringing_detected(d)
+
+    if not probe(driver):
+        return
+    print(
+        f"warn: an inbound call is ringing — re-shooting once after a settle wait"
+    )
+    time.sleep(3)
+    shoot(driver, target, full_page)
+    if probe(driver):
+        print(
+            "warn: the banner is STILL up after the settle wait — the "
+            "re-shot cell is archived with the guard's warn in the log"
+        )
+
 # Remote-only conditional surfaces resolve markers at resolve time
 # (thread-NN, crm-context on real data); the admin panel's wire id is
 # unconditional markup of the admin surface itself.
@@ -1451,13 +1486,9 @@ def capture(
                     _check_pins(name, path, ANONYMOUS_MARKERS[name])
                     target = _target(name, theme, vp)
                     shoot(driver, target, full_page)
-                    if driver.find_elements("css selector", RINGING_SELECTOR):
-                        print(
-                            f"warn: {name}: an inbound call is ringing — re-shooting "
-                            "once after a settle wait"
-                        )
-                        time.sleep(3)
-                        shoot(driver, target, full_page)
+                    ring_guard_reshoot(
+                        driver, shoot, target, full_page
+                    )
                     ledger.append(
                         {
                             "key": shot_key(target),
@@ -1542,13 +1573,9 @@ def capture(
                         name,
                     )
                     shoot(driver, target, full_page)
-                    if driver.find_elements("css selector", RINGING_SELECTOR):
-                        print(
-                            f"warn: {name}: an inbound call is ringing — re-shooting "
-                            "once after a settle wait"
-                        )
-                        time.sleep(3)
-                        shoot(driver, target, full_page)
+                    ring_guard_reshoot(
+                        driver, shoot, target, full_page
+                    )
                     ledger.append(
                         {
                             "key": shot_key(target),
@@ -1839,6 +1866,42 @@ def self_test() -> int:
         else:
             failures.append(name)
             print(f"  FAIL {name}: {detail}")
+
+    # Ring guard, forced states (no real inbound call needed):
+    class _StubDriver:
+        def find_elements(self, _by, _sel):
+            return []  # idle: no banner in the DOM
+
+    class _StubRingingDriver:
+        def find_elements(self, _by, _sel):
+            return [object()]  # the guarded state, forced
+
+    _shots: list[str] = []
+
+    def _shoot(_driver, target, _full_page):
+        _shots.append(target)
+
+    _shots.clear()
+    ring_guard_reshoot(_StubDriver(), _shoot, "t.png", True)
+    check("ring guard idle keeps the shot", _shots == [])
+
+    _shots.clear()
+    ring_guard_reshoot(_StubRingingDriver(), _shoot, "t.png", True)
+    check(
+        "ring guard fires on the forced ringing state",
+        _shots == ["t.png"],
+        f"re-shots: {_shots}",
+    )
+
+    _shots.clear()
+    ring_guard_reshoot(
+        _StubDriver(), _shoot, "t.png", True, ringing=True
+    )
+    check(
+        "ring guard honors the forced-state override",
+        _shots == ["t.png"],
+        f"re-shots: {_shots}",
+    )
 
     check(
         "shot_key strips numbering",
