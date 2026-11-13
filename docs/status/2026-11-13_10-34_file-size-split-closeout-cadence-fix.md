@@ -78,3 +78,13 @@ the moved block against `git show`), never re-type them.
 - **§g3 owner questions** (raceprobe semantics, §D10 posture, the
   filing review boxes) stay with the owner — the harvest rows and
   #249 carry them.
+
+## f) Top next tasks (this session's delta)
+
+| # | Task                                                                                                                                                                | Impact | Effort | Category      |
+| - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
+| 1 | Re-run the full buildflow after this push — the exit-0 certification of the whole file-size split train (the morning run's only error finding was the cadence gate) | High   | S      | Quality       |
+| 2 | T24 release-tails drain: archive-gate the remaining 65-report corpus oldest-first (the 2026-10-25 03-54 report carries 13 untouched rows)                           | Medium | M      | Documentation |
+| 3 | Raceprobe fix decision (#249): await-poll vs fold-window semantics — the owner question parked in the file-size split train residue harvest row                     | High   | S–M    | Quality       |
+| 4 | Branching-flow baseline refresh at the next governance sweep: re-home COMPOSITION_mixin, prune the two stale session-carve DUPLICATE_TYPE entries                   | Medium | S      | Quality       |
+| 5 | AGENTS.md one-liner at the next legitimate touch: the error-registry regen fires on MOVE, not only on NEW codes                                                     | Low    | S      | Documentation |

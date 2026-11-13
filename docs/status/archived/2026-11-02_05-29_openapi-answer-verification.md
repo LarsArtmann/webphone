@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-13 (cadence CI-greening sweep): all five §f rows adjudicated with fresh evidence (grep, green server tests, split-rule re-read, attribution check) or routed to report 1's own section
+
 # Session status slice 2: OpenAPI-spec answer + verification self-review
 
 _Snapshot: claims verified as of 2026-11-02 05:29 CET. Covers the work since the 05:19 report: one question ("Do we have an OpenAPI spec and how does it currently work?"), answered from source. No code changed; tree carries only the two status reports (daemon owns commits)._
@@ -45,13 +47,13 @@ No code damage, no wrong architecture guidance — but three honesty defects, al
 
 Grounded in this slice only (no padding; the real backlog stays in TODO_LIST.md, still unread by design):
 
-| # | Task                                                                                                                                                           | Impact       | Effort | Category      |
-| - | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------ | ------------- |
-| 1 | Correct the record where the wrong count matters: none persisted outside chat — if any durable doc quotes "24 operations", fix to 23 (grep docs/ for it first) | Low          | S      | Documentation |
-| 2 | Run `nix develop -c go test -count=1 ./internal/server -run 'TestOpenAPI\|TestAPIContract'` for a current-green receipt of the seam                            | Low          | S      | Quality       |
-| 3 | Read docs/contracts/README.md; confirm the split-rule statement matches what I told the owner                                                                  | Low          | S      | Documentation |
-| 4 | Locate `json.Deterministic` in go-cqrs-lite catalog; correct AGENTS.md's phrasing if it misattributes the mechanism to webphone                                | Low          | S      | Documentation |
-| 5 | Report 1's f1–f6 remain open (drift audit, CUE ruling note, schema-export spike, HARVEST) — owner questions pending                                            | per report 1 | —      | —             |
+| #     | Task                                                                                                                                                                                                                                                                                            | Impact       | Effort | Category          |
+| ----- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | ------ | ----------------- |
+| ~~1~~ | ~~Correct the record where the wrong count matters: none persisted outside chat — if any durable doc quotes "24 operations", fix to 23 (grep docs/ for it first)~~ done — rg '24 operations' docs/ hits only this report (self-references) — no durable doc carried the wrong count             | ~~Low~~      | ~~S~~  | ~~Documentation~~ |
+| ~~2~~ | ~~Run the `TestOpenAPI` + `TestAPIContract` server tests for a current-green receipt of the seam~~ done — env -u GOEXPERIMENT go test -count=1, both test names, ./internal/server — ok 0.046s (2026-11-13)                                                                                     | ~~Low~~      | ~~S~~  | ~~Quality~~       |
+| ~~3~~ | ~~Read docs/contracts/README.md; confirm the split-rule statement matches what I told the owner~~ done — docs/contracts/README.md '## The split rule' states the same browser-vs-machine seam rule (re-read 2026-11-13)                                                                         | ~~Low~~      | ~~S~~  | ~~Documentation~~ |
+| ~~4~~ | ~~Locate `json.Deterministic` in go-cqrs-lite catalog; correct AGENTS.md's phrasing if it misattributes the mechanism to webphone~~ done — AGENTS.md credits the catalog lib (no webphone misattribution); the mechanism is the encoding/json/v2 json.Deterministic option (wirefixtures.go:71) | ~~Low~~      | ~~S~~  | ~~Documentation~~ |
+| 5     | Report 1's f1–f6 remain open (drift audit, CUE ruling note, schema-export spike, HARVEST) — owner questions pending **→ report 1's f1-f6 stay in the cue-assessment self-review's own section-f, owner-gated**                                                                                  | per report 1 | —      | —                 |
 
 ## g) Questions I cannot answer myself
 
