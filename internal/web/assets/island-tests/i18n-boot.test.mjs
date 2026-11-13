@@ -51,3 +51,31 @@ test("navigator is the last resort and applyI18n pins html lang to the boot lang
     "a cookie=de boot writes the same html lang the server rendered",
   );
 });
+
+test("blocked site data must not kill the language (private-mode storage)", async () => {
+  const good = globalThis.localStorage;
+  // Browser privacy settings that block site data make the localStorage
+  // property itself THROW at module top level — the boot read degrades
+  // to the navigator default and setLang persists best-effort instead
+  // of killing every translated string.
+  globalThis.localStorage = {
+    getItem() {
+      throw new Error("SecurityError: blocked site data");
+    },
+    setItem() {
+      throw new Error("SecurityError: blocked site data");
+    },
+    removeItem() {
+      throw new Error("SecurityError: blocked site data");
+    },
+  };
+  try {
+    document.cookie = "";
+    const i18n = await loadI18n("throwing-storage");
+    assert.equal(i18n.getLang(), "en", "the navigator default boots");
+    i18n.setLang("de");
+    assert.equal(i18n.getLang(), "de", "setLang still switches in memory");
+  } finally {
+    globalThis.localStorage = good;
+  }
+});

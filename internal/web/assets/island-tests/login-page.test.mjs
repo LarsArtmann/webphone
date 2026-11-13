@@ -142,3 +142,40 @@ test("an empty submit asks for the credentials instead of POSTing", async () => 
   assert.equal(posts.length, 0, "no POST without both fields");
   assert.match(errorEl().textContent, /Enter your extension and password/);
 });
+
+test("blocked site data must not kill the sign-in (private-mode storage)", async () => {
+  const good = globalThis.localStorage;
+  // Browser privacy settings that block site data make the localStorage
+  // property itself THROW — every storage access in the page script
+  // must degrade instead of dying (the boot-time remembered read runs
+  // under this stub via the fresh module instance below).
+  globalThis.localStorage = {
+    getItem() {
+      throw new Error("SecurityError: blocked site data");
+    },
+    setItem() {
+      throw new Error("SecurityError: blocked site data");
+    },
+    removeItem() {
+      throw new Error("SecurityError: blocked site data");
+    },
+  };
+  try {
+    await import("../login/login-page.js?blocked-storage");
+    useFetch(() => ({ status: 201, body: {} }));
+    const seen = replaces();
+    extEl().value = "1001";
+    passEl().value = "pw";
+    rememberEl().checked = true;
+    await submit();
+    assert.equal(posts.length, 1, "the sign-in still POSTs");
+    assert.deepEqual(seen, ["/"], "the redirect home still happens");
+    assert.equal(
+      errorEl().hidden,
+      true,
+      "no error line — a storage failure is not a sign-in failure",
+    );
+  } finally {
+    globalThis.localStorage = good;
+  }
+});
