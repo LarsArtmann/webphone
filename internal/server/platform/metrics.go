@@ -103,6 +103,11 @@ func (p *Hub) Metrics(w http.ResponseWriter, r *http.Request) {
 	if p.deps.Island != nil {
 		p.deps.Island.writePrometheus(&b)
 	}
+	// The flight-recorder family renders only when the debug seam is on
+	// (the adapter threads the recorder non-nil exactly then).
+	if p.deps.TraceMetrics != nil {
+		p.deps.TraceMetrics.writePrometheus(&b)
+	}
 
 	w.Header().Set("Content-Type", "text/plain; version=0.0.4; charset=utf-8")
 	_, _ = w.Write([]byte(b.String())) //nolint:erraudit // best-effort body write; nothing left to do on failure

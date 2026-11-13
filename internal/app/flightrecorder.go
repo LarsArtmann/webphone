@@ -31,6 +31,11 @@ const (
 	// traceRetention bounds the snapshot directory, so a pathological
 	// upstream cannot fill the disk with trace files.
 	traceRetention = 20
+	// traceDiskFloor is the free-space floor the disk guard enforces
+	// before any snapshot write: below it the recorder stops capturing
+	// (and counts the skip), so a pathological upstream cannot fill the
+	// DISK — the count bound alone assumes every snapshot is small.
+	traceDiskFloor = uint64(1) << 30 // 1 GiB
 )
 
 // errTraceRequestFailed is the trigger vocabulary's error signal, used for
@@ -52,17 +57,44 @@ func debugFlightRecorderEnabled() bool {
 type traceRecorder struct {
 	rec     *flightrecorder.Recorder
 	trigger flightrecorder.TriggerFunc
+	metrics *platform.TraceSnapshotMetrics
+	dir     string
+}
+
+// diskHasRoom reports whether the snapshot directory's filesystem still
+// has more free space than the floor. Best-effort: a stat failure reads
+// as "room" — the capture proceeds and the library's own write error
+// handling owns the failure (a broken mount must not silently disable
+// tracing, it must fail the capture visibly).
+func diskHasRoom(dir string) bool {
+	var st syscall.Statfs_t
+	if err := syscall.Statfs(dir, &st); err != nil {
+		return true
+	}
+	return st.Bavail*uint64(st.Bsize) > traceDiskFloor
 }
 
 // newTraceRecorder starts the recorder writing snapshots into dir. A
 // failure here is a boot failure, not a silent degradation: the operator
 // asked for tracing and must learn immediately that it is not running.
 func newTraceRecorder(dir string) (*traceRecorder, error) {
+	metrics := platform.NewTraceSnapshotMetrics()
 	rec, err := flightrecorder.New(
 		flightrecorder.WithSnapshotDir(dir),
 		flightrecorder.WithMaxSnapshots(traceRetention),
 		flightrecorder.WithCompression(gzip.BestSpeed),
 		flightrecorder.WithMinAge(traceMinAge),
+		// Every capture that reaches the write stage folds into the
+		// /metrics counter family — the debug tool observing itself
+		// (T13): an operator can see captures happening and how much
+		// disk they eat without grepping the directory.
+		flightrecorder.WithMetrics(func(e flightrecorder.SnapshotEvent, err error) {
+			if err != nil {
+				metrics.RecordFailed()
+				return
+			}
+			metrics.RecordWritten(e.Bytes)
+		}),
 	)
 	if err != nil {
 		return nil, wrapf("configure flight recorder: %w", err)
@@ -70,9 +102,21 @@ func newTraceRecorder(dir string) (*traceRecorder, error) {
 	if err := rec.Start(); err != nil {
 		return nil, wrapf("start flight recorder: %w", err)
 	}
+	base := flightrecorder.OnErrorOrLatency(traceSlowRequest)
 	return &traceRecorder{
-		rec:     rec,
-		trigger: flightrecorder.OnErrorOrLatency(traceSlowRequest),
+		rec: rec,
+		// The disk guard composes into the trigger: below the floor the
+		// auto-capture path refuses BEFORE the write (the skip is
+		// counted, the disk is spared).
+		trigger: func(tc flightrecorder.TriggerContext) bool {
+			if !diskHasRoom(dir) {
+				metrics.RecordSkipped()
+				return false
+			}
+			return base(tc)
+		},
+		metrics: metrics,
+		dir:     dir,
 	}, nil
 }
 
@@ -87,14 +131,24 @@ func (t *traceRecorder) Observe(ctx context.Context, d time.Duration, status int
 	t.rec.SnapshotIfAsync(context.WithoutCancel(ctx), tc, t.trigger)
 }
 
-// Snapshot implements platform.TraceRecorder.
+// Snapshot implements platform.TraceRecorder. The manual path rides the
+// same disk guard as the trigger path: below the floor it refuses (and
+counts the skip) instead of writing.
 func (t *traceRecorder) Snapshot(ctx context.Context) (string, error) {
+	if !diskHasRoom(t.dir) {
+		t.metrics.RecordSkipped()
+		return "", wrapf("trace snapshot skipped: free disk below the %d MiB floor", traceDiskFloor>>20)
+	}
 	path, err := t.rec.SnapshotToDir(ctx)
 	if err != nil {
 		return "", wrapf("write trace snapshot: %w", err)
 	}
 	return path, nil
 }
+
+// Metrics exposes the snapshot counter family the /metrics exposition
+// renders (nil never: the adapter is constructed with it).
+func (t *traceRecorder) Metrics() *platform.TraceSnapshotMetrics { return t.metrics }
 
 // Close implements do.Shutdowner: in-flight captures are drained before the
 // trace buffer is released.

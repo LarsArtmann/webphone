@@ -52,6 +52,10 @@ type Deps struct {
 	// Trace is the OPTIONAL flight-recorder seam; nil means the snapshot
 	// surface does not exist.
 	Trace TraceRecorder
+	// TraceMetrics is the /metrics counter family for the recorder's
+	// snapshot writes; non-nil exactly when Trace is (the adapter owns
+	// both halves), nil-safe at the exposition.
+	TraceMetrics *TraceSnapshotMetrics
 	// Latency and Island are the /metrics recorders (built by the server
 	// wiring: the middleware writes the latency one, the beacon intake
 	// writes the island one).
