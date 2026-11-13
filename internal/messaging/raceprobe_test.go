@@ -26,6 +26,37 @@ import (
 	"github.com/larsartmann/webphone/internal/messaging"
 )
 
+// awaitThreadFold polls the projection until the (owner, remote) thread
+// has settled to exactly one thread carrying want messages — the same
+// convergence pattern as the transcript tests' awaitTranscriptCount.
+// Receive returns when the DECIDER has its verdict, but the projection
+// fold that Threads reads is async to that; the probe's exact-count
+// read depended on fold timing and flapped under -count>1 and suite
+// parallelism (#249). The poll asserts the production invariant
+// (read-your-writes convergence, the D7 checkpoint budget) instead of
+// a race with the fold worker.
+func awaitThreadFold(t *testing.T, svc *messaging.Service, owner domain.Extension, want int) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		threads, err := svc.Threads(context.Background(), owner)
+		if err != nil {
+			t.Fatalf("Threads: %v", err)
+		}
+		if len(threads) == 1 && threads[0].Thread.Unread == want {
+			return
+		}
+		if time.Now().After(deadline) {
+			unread := -1
+			if len(threads) == 1 {
+				unread = threads[0].Thread.Unread
+			}
+			t.Fatalf("thread projection never settled to 1 thread with %d messages: got %d threads, unread %d", want, len(threads), unread)
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+}
+
 func TestConcurrentFirstSightYieldsOneThread(t *testing.T) {
 	blobs, err := blob.New(t.TempDir())
 	if err != nil {
@@ -81,13 +112,7 @@ func TestConcurrentFirstSightYieldsOneThread(t *testing.T) {
 		t.Fatalf("races settled without a verdict: %d winners, %d losers", len(winners), len(losers))
 	}
 
-	threads, err := svc.Threads(ctx, owner)
-	if err != nil {
-		t.Fatalf("Threads: %v", err)
-	}
-	if len(threads) != 1 {
-		t.Fatalf("thread split: %d threads exist for one (owner, remote), want 1 (losers: %v)", len(threads), losers)
-	}
+	awaitThreadFold(t, svc, owner, 1)
 
 	for _, err := range losers {
 		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
@@ -105,11 +130,5 @@ func TestConcurrentFirstSightYieldsOneThread(t *testing.T) {
 		t.Fatalf("re-delivery landed on thread %s, winner holds %s", retried.ThreadID, winners[0].ThreadID)
 	}
 
-	threads, err = svc.Threads(ctx, owner)
-	if err != nil {
-		t.Fatalf("Threads after re-delivery: %v", err)
-	}
-	if len(threads) != 1 || threads[0].Thread.Unread != 2 {
-		t.Fatalf("after re-delivery: %d threads, unread %d — want 1 thread, both messages counted", len(threads), threads[0].Thread.Unread)
-	}
+	awaitThreadFold(t, svc, owner, 2)
 }
