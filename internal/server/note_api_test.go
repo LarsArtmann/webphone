@@ -88,6 +88,17 @@ func TestCallNoteGuards(t *testing.T) {
 	if resp, _ := putCallNote(t, c, "call-n2", long); resp.StatusCode != http.StatusRequestEntityTooLarge {
 		t.Errorf("oversized note: %d, want 413", resp.StatusCode)
 	}
+	// The bound is characters, not bytes: 4000 CJK characters are 12000
+	// bytes, and the editors' maxLength=4000 counts characters — a byte
+	// comparison would reject a note the UI promised to accept.
+	multibyte := strings.Repeat("字", 4000)
+	if resp, _ := putCallNote(t, c, "call-n2", multibyte); resp.StatusCode != http.StatusNoContent {
+		t.Errorf("4000-character multibyte note: %d, want 204", resp.StatusCode)
+	}
+	overChars := strings.Repeat("字", 4001)
+	if resp, _ := putCallNote(t, c, "call-n2", overChars); resp.StatusCode != http.StatusRequestEntityTooLarge {
+		t.Errorf("4001-character multibyte note: %d, want 413", resp.StatusCode)
+	}
 
 	anon := newClient(t)
 	anon.token = ""

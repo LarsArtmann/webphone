@@ -95,7 +95,11 @@ func (h *Handlers) SetCallNote(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	body.Body = strings.TrimSpace(body.Body)
-	if len(body.Body) > noteBodyMax {
+	// The bound is CHARACTERS (runes), matching the wire doc's "max 4000
+	// chars" and the editors' maxLength=4000 — a byte comparison would
+	// reject a 4000-character CJK note the UI promised to accept
+	// (multibyte notes are 2-4 bytes per char).
+	if len([]rune(body.Body)) > noteBodyMax {
 		http.Error(w, "note too long", http.StatusRequestEntityTooLarge)
 		return
 	}

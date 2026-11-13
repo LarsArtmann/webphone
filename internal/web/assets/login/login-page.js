@@ -30,7 +30,36 @@ const rememberInput = $("remember");
 const errorEl = $("login-error");
 
 // The remembered extension prefills the form (never the password).
-const remembered = localStorage.getItem(REMEMBER_KEY);
+// Storage access can THROW (browser privacy settings that block site
+// data make the localStorage property itself throw SecurityError) — a
+// top-level throw would kill the whole submit handler, so every access
+// degrades to the no-remember behavior instead.
+function rememberedExtension() {
+  try {
+    return localStorage.getItem(REMEMBER_KEY);
+  } catch {
+    return null;
+  }
+}
+
+/** @param {string} extension */
+function rememberExtension(extension) {
+  try {
+    localStorage.setItem(REMEMBER_KEY, extension);
+  } catch {
+    // Private-mode storage failures degrade to an unpersisted extension.
+  }
+}
+
+function forgetExtension() {
+  try {
+    localStorage.removeItem(REMEMBER_KEY);
+  } catch {
+    // Nothing to forget is a fine outcome.
+  }
+}
+
+const remembered = rememberedExtension();
 if (remembered) {
   extInput.value = remembered;
   rememberInput.checked = true;
@@ -78,9 +107,9 @@ async function signIn() {
     });
     if (res.status === 201) {
       if (rememberInput.checked) {
-        localStorage.setItem(REMEMBER_KEY, extension);
+        rememberExtension(extension);
       } else {
-        localStorage.removeItem(REMEMBER_KEY);
+        forgetExtension();
       }
       window.location.replace("/");
       return;

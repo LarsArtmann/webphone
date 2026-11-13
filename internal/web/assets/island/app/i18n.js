@@ -461,10 +461,22 @@ function cookieLang() {
   return match ? /** @type {IslandLang} */ (match[1]) : "";
 }
 
+/** @returns {IslandLang | ""} */
+function storedLang() {
+  try {
+    return /** @type {IslandLang} */ (localStorage.getItem(LANG_KEY)) || "";
+  } catch {
+    // Browser privacy settings that block site data make the
+    // localStorage property itself THROW — a module-level throw would
+    // kill every translated string. Degrade to the navigator default.
+    return "";
+  }
+}
+
 /** @type {IslandLang} */
 let lang =
   cookieLang() ||
-  /** @type {IslandLang} */ (localStorage.getItem(LANG_KEY)) ||
+  storedLang() ||
   ((navigator.language || "en").toLowerCase().startsWith("de") ? "de" : "en");
 
 // The table value is a finished string OR the formatter for it, and the
@@ -489,7 +501,12 @@ export function getLang() {
 /** @param {IslandLang} next */
 export function setLang(next) {
   lang = next;
-  localStorage.setItem(LANG_KEY, lang);
+  try {
+    localStorage.setItem(LANG_KEY, lang);
+  } catch {
+    // Blocked site data: the in-memory language still applies for this
+    // page life; the persistence is best-effort.
+  }
   // Tell the server: tabs and SSE fragments render in the same language
   // (cookie read by every request; no reload — the island never unloads).
   document.cookie = `wp-lang=${lang}; path=/; samesite=strict; max-age=31536000`;
