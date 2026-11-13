@@ -1162,11 +1162,7 @@ test("a rejected live-context fetch degrades silently (no banner mid-call)", asy
     rejecter(new Error("network gone"));
     await new Promise((resolve) => setImmediate(resolve));
     await new Promise((resolve) => setImmediate(resolve));
-    assert.equal(
-      unhandled.length,
-      0,
-      "the rejection is handled — no unhandled-rejection noise",
-    );
+    assert.equal(unhandled.length, 0, "the rejection is handled — no unhandled-rejection noise");
     assert.equal(
       slot.children.length,
       0,

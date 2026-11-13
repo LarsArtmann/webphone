@@ -240,11 +240,7 @@ test("a double submit places exactly one dial (the pending guard)", async () => 
     assert.ok(releaseGate, "the first dial reached the gate");
     releaseGate();
     await Promise.allSettled([first, second]);
-    assert.equal(
-      gateCalls,
-      1,
-      "the parked second submit never re-fires after the first settles",
-    );
+    assert.equal(gateCalls, 1, "the parked second submit never re-fires after the first settles");
   } finally {
     globalThis.fetch = realFetch;
     if (realAudio === undefined) delete globalThis.AudioContext;
