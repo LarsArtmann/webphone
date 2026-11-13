@@ -113,8 +113,15 @@ def boot(data_dir):
 
 
 def attachment_row(data_dir):
-    db = sqlite3.connect(os.path.join(data_dir, "webphone.db"))
-    row = db.execute("select id, path from attachments limit 1").fetchone()
+    # The seam lives in the journal since Phase 5 (A34): threads,
+    # messages and attachments are system.db projection rows (the
+    # engine materializes each collection into its meta_planned_*
+    # table), not webphone.db tables — the drill asserts where the
+    # product actually writes, or it proves nothing about the backup.
+    db = sqlite3.connect(os.path.join(data_dir, "system.db"))
+    row = db.execute(
+        "select id, json_extract(value, '$.path') from meta_planned_message_attachments limit 1"
+    ).fetchone()
     db.close()
     return row
 
@@ -151,10 +158,15 @@ def main():
         assert status == 202, f"hook expected 202, got {status}"  # nosec B101 - drill script: the assert IS the check
         time.sleep(0.5)
         att = attachment_row(src)
-        assert att, "no attachment row landed in the source store"  # nosec B101 - drill script: the assert IS the check
+        assert att, "no attachment row landed in the source journal projection"  # nosec B101 - drill script: the assert IS the check
         att_id, att_path = att
         assert os.path.exists(os.path.join(src, "files", att_path)), (  # nosec B101 - drill script: the assert IS the check
             "blob missing on disk"
+        )
+        # The system journal database must exist from the very first boot
+        # (SUPERB Phase 1) — the backup set carries it from now on.
+        assert os.path.exists(os.path.join(src, "system.db")), (  # nosec B101 - drill script: the assert IS the check
+            "system.db missing after boot: the journal must ride the backup set"
         )
         print(f"[1] source loaded: attachment {att_id} at {att_path}")
     finally:
@@ -185,7 +197,10 @@ def main():
         # tarfile's "data" filter keeps file modes but forces the
         # execute bit onto directories, so 0755 is the honest bound
         # (never group/world-writable either way).
-        for name in ("webphone.db", "readmodels.db", "files"):
+        # readmodels.db is retired (A43): fresh boots never create it
+        # and the restore must not need it — the drill IS the
+        # restore-without-readmodels proof.
+        for name in ("webphone.db", "system.db", "files"):
             mode = stat_module.S_IMODE(os.lstat(os.path.join(dst, name)).st_mode)
             limit = 0o755 if name == "files" else 0o640
             assert mode <= limit, (  # nosec B101 - drill script: the assert IS the check

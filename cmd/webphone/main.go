@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"strings"
 	"syscall"
 	"time"
@@ -17,7 +18,7 @@ import (
 
 	"github.com/larsartmann/webphone/internal/app"
 	"github.com/larsartmann/webphone/internal/config"
-	"github.com/larsartmann/webphone/internal/readmodels"
+	"github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/userauth"
 )
 
@@ -62,12 +63,14 @@ type staticBootError string
 func (e staticBootError) Error() string { return string(e) }
 
 // enrollPasskey serves the `-enroll-passkey <email>` one-shot: it must
-// run under the SAME config and data dir as the server (the sqlite
-// identity store lives there — as the webphone service user on a
-// deployment), registers the account idempotently and mints the
-// one-time token. The printed URL names the first configured origin;
-// the token itself is single-use and expires after
-// userauth.EnrollTokenTTL.
+// run under the SAME config and data dir as the server, registers the
+// account idempotently and mints the one-time token INTO THE JOURNAL
+// the server verifies from (system.db — the P7 unification removed the
+// readmodels engine from the server, so the old readmodels.db mint
+// split-brained CLI-mint from server-verify: the stack's enroll-verify
+// VM check caught it as a fresh-token 503). The printed URL names the
+// first configured origin; the token itself is single-use and expires
+// after userauth.EnrollTokenTTL.
 func enrollPasskey(email string) error {
 	cfg, err := config.Load()
 	if err != nil {
@@ -81,16 +84,16 @@ func enrollPasskey(email string) error {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
-	engine, err := readmodels.Open(cfg.DataDir)
+	sys, err := cqrs.NewEnrollSystem(ctx, filepath.Join(cfg.DataDir, "system.db"))
 	if err != nil {
-		return propagatef("open read-model engine: %w", err)
+		return propagatef("open enroll journal: %w", err)
 	}
 	defer func() {
-		if err := engine.Shutdown(); err != nil {
-			slog.Warn("read-model engine shutdown failed after enrollment", "error", err)
+		if err := sys.Close(); err != nil {
+			slog.Warn("enroll system shutdown failed after enrollment", "error", err)
 		}
 	}()
-	svc, err := userauth.New(ctx, app.PasskeyRuntime(cfg.Auth.Passkey), cfg.DataDir, engine.EnrollTokens(), slog.Default())
+	svc, err := userauth.New(ctx, app.PasskeyRuntime(cfg.Auth.Passkey), cfg.DataDir, cqrs.NewEnrollTokens(sys), slog.Default())
 	if err != nil {
 		return propagatef("open identity store: %w", err)
 	}

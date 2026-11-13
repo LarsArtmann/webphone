@@ -43,7 +43,7 @@ func TestUnknownPathsAnswerTheStyledNotFoundPage(t *testing.T) {
 		// working app (the SIP stack, the tab chrome), not in a bare error
 		// document. This is the assertion the older shell test carried
 		// before the 404 pins were consolidated here.
-		if !strings.Contains(page, `id="login-view"`) {
+		if !strings.Contains(page, `id="phone-view"`) {
 			t.Errorf("%s: the 404 must keep the island shell, got %.200s", path, page)
 		}
 	}

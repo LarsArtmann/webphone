@@ -184,6 +184,27 @@
   // even when the island itself failed) and rethrow to the console —
   // never a silent half-wired shell.
   try {
+    // 0. Page-change feel for tab navigation (2026-11-11 restyle): htmx
+    //    wraps every swap in document.startViewTransition when the
+    //    browser has the API, so switching tabs cross-fades like a page
+    //    change instead of a hard content snap. Progressive enhancement
+    //    only — no API, no config change. Reduced motion gates the API
+    //    itself, not just the CSS: a reduced-motion user (or a headless
+    //    suite forcing the flag) gets no startViewTransition calls at
+    //    all, because the spec SKIPS a running transition when a new
+    //    one starts — on a churning page (SSE morphs + tab swaps) the
+    //    pending swap aborts and its content never lands (the 2026-11-11
+    //    E2E contacts stall: "Transition was skipped. New ViewTransition
+    //    started", five runs, zero POSTs). The CSS-only guard hid the
+    //    cross-fade but left the API — and the skip — alive.
+    if (
+      window.htmx &&
+      window.htmx.config &&
+      !window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      window.htmx.config.globalViewTransitions = true;
+    }
+
     // 1. Nav active state across HTMX partial swaps: the server marks the
     //    active link on full renders; after a partial swap only the clicked
     //    link knows. htmx:afterRequest fires on the link that issued it.
@@ -239,14 +260,26 @@
       var content = document.getElementById("tab-content");
       if (!content || !window.htmx || content.querySelector(".wp-welcome"))
         return;
-      window.htmx.ajax("GET", "/partials/" + stored, {
-        target: "#tab-content",
-        swap: "innerHTML",
-      });
-      window.htmx.ajax("GET", "/partials/nav?active=" + stored, {
-        target: "#wp-nav",
-        swap: "morph:innerHTML",
-      });
+      // The promises carry the verdicts: a failed restore degrades to
+      // the welcome panel, and the throttled toast says so once (same
+      // M23 contract as the nav refresh — a flapping session must not
+      // spam).
+      window.htmx
+        .ajax("GET", "/partials/" + stored, {
+          target: "#tab-content",
+          swap: "innerHTML",
+        })
+        .catch(function () {
+          showThrottledError("Could not restore your last tab.");
+        });
+      window.htmx
+        .ajax("GET", "/partials/nav?active=" + stored, {
+          target: "#wp-nav",
+          swap: "morph:innerHTML",
+        })
+        .catch(function () {
+          showThrottledError("Could not restore your last tab.");
+        });
       if (window.history && window.history.replaceState) {
         window.history.replaceState(null, "", "/" + stored);
       }
@@ -330,10 +363,16 @@
       var phoneView = document.getElementById("phone-view");
       if (!dest || !form) return;
       if (phoneView && phoneView.hidden) {
-        var ext = document.getElementById("ext");
-        if (ext) ext.focus();
+        // The login field lives on the /login front door now; when this
+        // page has the anonymous door's sign-in link (a deep link), that
+        // link is the actionable element — focus it. The toast names the
+        // state either way.
+        var signinLink = /** @type {HTMLElement | null} */ (
+          document.querySelector(".wp-welcome-signin")
+        );
+        if (signinLink) signinLink.focus();
         shellToast(
-          "Phone is signed out — sign in on the phone panel to call.",
+          "Phone is signed out — use the sign-in link to continue.",
           "warn",
         );
         return;
@@ -628,6 +667,52 @@
     document.addEventListener("wp:calls-changed", updateCallBadge);
     updateCallBadge();
 
+    // 2c2. Live-call context (issue #10): while a call runs, the island's
+    //      slot (aside #wp-live-context, rendered only when the CRM seam is
+    //      configured) shows who is on the line and what is outstanding
+    //      with them. The island owns the call lifecycle and publishes each
+    //      card's remote as data-remote; the shell owns the FETCH, because
+    //      the shell must work when the island scripts fail and because a
+    //      tab affordance never belongs in an island module.
+    //
+    //      Every degraded answer is an empty body (seam off, no match, no
+    //      context, CRM down), so this code has one job: ask once per
+    //      remote, clear the slot when the last call ends, and never let a
+    //      slow CRM block anything. An empty answer renders nothing into
+    //      the slot — the container is a fixed slot, so nothing shifts.
+    /** @type {HTMLElement | null} */
+    var liveContextSlot = document.getElementById("wp-live-context");
+    var liveContextRemote = "";
+    var updateLiveContext = function () {
+      liveContextSlot =
+        liveContextSlot || document.getElementById("wp-live-context");
+      if (!liveContextSlot) return;
+      var calls = document.getElementById("calls");
+      var card = calls ? calls.querySelector(".call-card[data-remote]") : null;
+      var remote = card ? card.getAttribute("data-remote") || "" : "";
+      if (remote === liveContextRemote) return;
+      liveContextRemote = remote;
+      if (!remote) {
+        liveContextSlot.replaceChildren();
+        return;
+      }
+      if (!window.htmx) return;
+      // A REJECTED promise (network failure mid-call) degrades to the
+      // same empty slot as the server's degraded 200 answers: the
+      // live-context doctrine (2026-11-06) forbids a banner during a
+      // live call, so this catch is deliberately silent — the slot
+      // staying empty IS the failure surface.
+      window.htmx
+        .ajax(
+          "GET",
+          "/partials/live-context?remote=" + encodeURIComponent(remote),
+          { target: "#wp-live-context", swap: "innerHTML" },
+        )
+        .catch(function () {});
+    };
+    document.addEventListener("wp:calls-changed", updateLiveContext);
+    updateLiveContext();
+
     // 2d. Missed-call presence: the island dispatches wp:call-missed when
     //     an inbound call ended without being answered (the caller gave
     //     up, or an accepted call died before media). A deliberate user
@@ -659,14 +744,54 @@
       missedCount += 1;
       renderMissedBadge();
     });
+    /** @type {HTMLElement | null} */
+    var pendingHistoryClear = null;
     document.addEventListener("click", function (event) {
       var link = closestHTMLElement(
         eventElement(event),
         "[data-tab='history']",
       );
-      if (!link) return;
-      missedCount = 0;
-      renderMissedBadge();
+      // M38: the click only ARMS the clear — the badge survives a failed
+      // swap (the History tab never arrived, so the reads did not
+      // happen), and clears when THIS link's response succeeds.
+      pendingHistoryClear = link;
+    });
+    document.addEventListener("htmx:afterRequest", function (event) {
+      if (!pendingHistoryClear) return;
+      var elt =
+        (eventDetail(event) && eventDetail(event).elt) || eventElement(event);
+      if (elt !== pendingHistoryClear) return;
+      if (eventDetail(event) && eventDetail(event).successful) {
+        missedCount = 0;
+        renderMissedBadge();
+      }
+      pendingHistoryClear = null;
+    });
+    // A4b (2026-11-08): the badge clears when the Recent calls PANEL
+    // lands, not only when the nav link was the door. The panel opening
+    // IS the review happening — a future palette entry or language
+    // re-fetch that swaps the same panel must not leave the badge
+    // claiming misses the operator is looking at. afterSwap fires on
+    // successful swaps only, so a failed load clears nothing (the M38
+    // honesty arm keeps its home above).
+    document.addEventListener("htmx:afterSwap", function (event) {
+      if (missedCount === 0) return;
+      var target = (eventDetail(event) && eventDetail(event).target) || null;
+      if (target && target.id === "history-panel") {
+        missedCount = 0;
+        renderMissedBadge();
+      }
+    });
+
+    // M26: the tab-error slot renders above the panel, and a SUCCESSFUL
+    // response clears it — a stale error banner must not outlive the
+    // request that supersedes it (failed responses keep it: the banner
+    // IS their surface).
+    document.addEventListener("htmx:afterRequest", function (event) {
+      var detail = eventDetail(event);
+      if (!detail || !detail.successful) return;
+      var slot = document.getElementById("wp-tab-error");
+      if (slot && slot.firstChild) slot.replaceChildren();
     });
 
     // 2d-2. Agent-mode pill (M13): the textagent's draft autonomy,
@@ -1042,10 +1167,19 @@
       var source = active
         ? "/partials/nav?active=" + active.dataset.tab
         : "/partials/nav";
-      window.htmx.ajax("GET", source, {
-        target: "#wp-nav",
-        swap: "morph:innerHTML",
-      });
+      // M23: a failed nav refresh must not half-apply the language
+      // switch silently — the promise carries the verdict; the throttle
+      // keeps a flapping session from spamming toasts.
+      window.htmx
+        .ajax("GET", source, {
+          target: "#wp-nav",
+          swap: "morph:innerHTML",
+        })
+        .catch(function () {
+          showThrottledError(
+            "The tab strip could not refresh. Reload the page to see it.",
+          );
+        });
       // E8: a morph re-render can leave the ACTIVE tab outside the
       // strip's scroll window on narrow screens; "nearest" scrolls
       // only when it is genuinely out of view.
@@ -1172,6 +1306,57 @@
       );
       if (input && input.value.trim() !== "") event.preventDefault();
     });
+    // 3b-4 (A5): the thread search is SHAREABLE. The debounced fetch's
+    //     result rides history.pushState as /messages?q=… — the server's
+    //     panel route reads the same q on a full render, so a share or
+    //     refresh lands the filter, and back unwinds the query stepwise.
+    //     popstate restores the input and re-fetches WITHOUT pushing
+    //     (the restore must not recreate the entry it just unwound); the
+    //     pending-restoring flag is spent by the very next search-form
+    //     response, so a failed restore leaves no stuck guard. A failed
+    //     fetch itself pushes nothing (only successes own the URL).
+    var restoringSearch = false;
+    document.addEventListener("htmx:afterRequest", function (event) {
+      var elt = eventElement(event);
+      if (!elt || !elt.classList || !elt.classList.contains("wp-thread-search"))
+        return;
+      if (!(eventDetail(event) && eventDetail(event).successful)) return;
+      if (restoringSearch) {
+        restoringSearch = false;
+        return;
+      }
+      var input = /** @type {HTMLInputElement | null} */ (
+        document.getElementById("wp-thread-search-input")
+      );
+      if (!input) return;
+      var q = input.value.trim();
+      var target =
+        q === "" ? "/messages" : "/messages?q=" + encodeURIComponent(q);
+      if (window.location.pathname + window.location.search !== target) {
+        window.history.pushState({}, "", target);
+      }
+    });
+    window.addEventListener("popstate", function () {
+      var input = /** @type {HTMLInputElement | null} */ (
+        document.getElementById("wp-thread-search-input")
+      );
+      var form = /** @type {HTMLFormElement | null} */ (
+        document.querySelector("form.wp-thread-search")
+      );
+      if (!input || !form || !window.htmx) return;
+      var match = window.location.search.match(/[?&]q=([^&]*)/);
+      var raw = match ? match[1] : "";
+      var decoded = raw;
+      try {
+        decoded = decodeURIComponent(raw.replace(/\+/g, " "));
+      } catch {
+        decoded = raw;
+      }
+      if (input.value === decoded) return;
+      input.value = decoded;
+      restoringSearch = true;
+      window.htmx.trigger(form, "submit");
+    });
     // The island's language switch re-labels itself and re-fetches the open
     // tab; the nav is shell territory, so it asks via this event.
     document.addEventListener("wp:lang-changed", refreshNav);
@@ -1273,9 +1458,13 @@
         !closestHTMLElement(area, "textarea.wp-compose-body")
       )
         return;
+      // The thread id is captured NOW, not at timer fire: a fast thread
+      // switch inside the 300ms debounce must not file this composer's
+      // text under the other conversation's key.
+      var draftId = currentDraftId();
       if (draftTimer) clearTimeout(draftTimer);
       draftTimer = setTimeout(function () {
-        saveDraft(currentDraftId(), area.value);
+        saveDraft(draftId, area.value);
       }, 300);
     });
     document.addEventListener("htmx:afterSwap", function () {
@@ -1291,12 +1480,61 @@
       }
       if (draft) area.value = draft;
     });
+    // The SENT draft's key is captured at request start, not at its
+    // afterRequest: by then the response swap may have morphed the
+    // transcript to another thread, and clearing then would leave the
+    // sent conversation's draft behind (a ghost restored on revisit).
+    var sentDraftIds = new WeakMap();
+    document.addEventListener("htmx:beforeRequest", function (event) {
+      var form =
+        (eventDetail(event) && eventDetail(event).elt) || eventElement(event);
+      if (!form || !form.matches || !form.matches("form")) return;
+      if (!form.querySelector("textarea.wp-compose-body")) return;
+      sentDraftIds.set(form, currentDraftId());
+    });
     document.addEventListener("htmx:afterRequest", function (event) {
       var form = eventElement(event);
       if (!form || !form.matches || !form.matches("form")) return;
       if (!eventDetail(event) || !eventDetail(event).successful) return;
       if (!form.querySelector("textarea.wp-compose-body")) return;
-      saveDraft(currentDraftId(), "");
+      var sent = sentDraftIds.get(form);
+      saveDraft(typeof sent === "string" ? sent : currentDraftId(), "");
+      sentDraftIds.delete(form);
+    });
+
+    // The drafts panel polls every 30s (DraftsPanel in messages.templ);
+    // a poll that fires while an edit <details> is open would swap the
+    // panel out from under the textarea and silently eat the typed
+    // change. A textarea the user typed into and then folded shut holds
+    // an unsaved change just the same, so a dirty edit textarea gates
+    // the poll too (F11): the flag rides a WeakSet keyed by the node,
+    // and every panel swap (approve, discard, the next poll that gets
+    // through) replaces #wp-drafts wholesale, so the dead nodes — and
+    // their flags with them — are forgotten. Dropping the poll request
+    // here is the CSP-safe choke point (htmx trigger filters need eval),
+    // and the poll fires again once the edit is saved, discarded or
+    // closed empty. Only the panel's own poll is gated: the
+    // approve/discard buttons are children of the panel and keep
+    // working while an edit is open.
+    var dirtyDraftAreas = new WeakSet();
+    document.addEventListener("input", function (event) {
+      var area = /** @type {HTMLTextAreaElement} */ (eventElement(event));
+      if (!area || !area.closest || !area.closest(".wp-draft-edit")) return;
+      dirtyDraftAreas.add(area);
+    });
+    document.addEventListener("htmx:beforeRequest", function (event) {
+      var elt =
+        (eventDetail(event) && eventDetail(event).elt) || eventElement(event);
+      if (!elt || !elt.matches || !elt.matches("#wp-drafts")) return;
+      var dirty = false;
+      document
+        .querySelectorAll(".wp-draft-edit textarea")
+        .forEach(function (area) {
+          if (dirtyDraftAreas.has(area)) dirty = true;
+        });
+      if (document.querySelector(".wp-draft-edit[open]") || dirty) {
+        event.preventDefault();
+      }
     });
 
     // 3e. Optimistic send: the reply composer appends a pending bubble
@@ -1315,6 +1553,15 @@
         (eventDetail(event) && eventDetail(event).elt) || eventElement(event);
       if (!form || !form.matches || !form.matches("form.wp-compose")) return;
       if (form.classList.contains("wp-compose-new")) return;
+      // One in-flight send per composer (double-Enter, double-click): a
+      // second submit would overwrite the pending record and orphan the
+      // first bubble as a forever-"sending" ghost. Dropping the request
+      // in beforeRequest keeps htmx from issuing the duplicate POST and
+      // leaves the honest single bubble in place.
+      if (optPending.has(form)) {
+        event.preventDefault();
+        return;
+      }
       var transcript = document.getElementById("thread-transcript");
       if (!transcript) return;
       var area = form.querySelector("textarea.wp-compose-body");
@@ -1531,6 +1778,21 @@
     /** @type {AudioContext | null} */
     var vmAudioContext = null; // browsers cap contexts — one per page, lazy
     var vmFallbackToasted = false;
+    // Playback-failure reporter (the silent-play defect): a failed load used
+    // to answer NOTHING — play()'s rejection was swallowed and the element
+    // carried no error listener, so a 404/403/undecodable recording looked
+    // like a dead button. One honest toast per failure episode (re-armed by
+    // a later successful "playing"), deduped against the element error the
+    // browser fires alongside the play() rejection.
+    var vmErrorNotified = new WeakSet();
+    var VM_PLAYBACK_FAILED_TEXT =
+      "voicemail playback failed — the recording could not be loaded";
+    /** @param {HTMLAudioElement} audio */
+    var vmPlaybackFailed = function (audio) {
+      if (vmErrorNotified.has(audio)) return;
+      vmErrorNotified.add(audio);
+      shellToast(VM_PLAYBACK_FAILED_TEXT, "error");
+    };
 
     var VM_BARS = 48;
     var VM_SPEED_LADDER = [1, 1.5, 2, 0.5];
@@ -1702,6 +1964,12 @@
       audio.addEventListener("play", function () {
         vmSetPlaying(uuid, audio, true);
       });
+      audio.addEventListener("playing", function () {
+        vmErrorNotified.delete(audio); // re-arm honest reporting after a success
+      });
+      audio.addEventListener("error", function () {
+        vmPlaybackFailed(audio);
+      });
       audio.addEventListener("pause", function () {
         vmSetPlaying(uuid, audio, false);
       });
@@ -1719,15 +1987,27 @@
     };
 
     /** @param {string} uuid @param {HTMLAudioElement | null} audio */
-    var vmFallback = function (uuid, audio) {
-      // Honest degradation (C1): without WebAudio there is no waveform;
-      // the browser's native controls take over so playback still works.
+    /**
+     * Honest degradation (C1): without WebAudio there is no waveform; the
+     * browser's native controls take over so playback still works. One
+     * honest toast per failure: when the recording itself could not be
+     * fetched, the player's playback-failed toast already owns that verdict
+     * and a second "waveform unavailable" toast would read as a
+     * contradicting claim on a dead player — the fallback stays silent for
+     * that class (recordingMissing) and keeps its toast for genuine
+     * capability shortfalls (no WebAudio, undecodable bytes), where playback
+     * still works.
+     * @param {string} uuid
+     * @param {HTMLAudioElement | null} audio
+     * @param {boolean} recordingMissing
+     */
+    var vmFallback = function (uuid, audio, recordingMissing) {
       if (audio) audio.controls = true;
       ["vm-play-", "vm-speed-", "vm-wave-"].forEach(function (prefix) {
         var el = document.getElementById(prefix + uuid);
         if (el) el.hidden = true;
       });
-      if (!vmFallbackToasted) {
+      if (!vmFallbackToasted && !recordingMissing) {
         vmFallbackToasted = true;
         shellToast(
           "voicemail waveform unavailable — using built-in player controls",
@@ -1740,16 +2020,23 @@
      * Decode the row's audio once and cache its waveform peaks.
      * @param {string} uuid
      * @param {HTMLAudioElement} audio
-     * @returns {Promise<number[] | undefined>}
+     * @returns {Promise<number[] | void>}
      */
     var vmBuildWave = function (uuid, audio) {
       if (vmPeaksCache.has(uuid)) {
         return Promise.resolve(vmPeaksCache.get(uuid));
       }
+      // One honest toast per failure: a fetch that was attempted and failed
+      // means the recording itself is unreachable — the same failure the
+      // player reports — and vmFallback must stay silent for it.
+      var recordingMissing = false;
+      var fail = function () {
+        vmFallback(uuid, audio, recordingMissing);
+      };
       var src = audio.getAttribute("src");
       var Ctor = window.AudioContext || window.webkitAudioContext;
       if (typeof fetch !== "function" || !src || !Ctor) {
-        return Promise.reject(new Error("webaudio unavailable"));
+        return Promise.reject(new Error("webaudio unavailable")).catch(fail);
       }
       // Bound once: the promise callbacks below run in a later frame, where
       // the checker can no longer narrow the module-level `vmAudioContext`.
@@ -1759,11 +2046,19 @@
         vmAudioContext = context;
       }
       return fetch(src)
-        .then(function (response) {
-          if (!response.ok)
-            throw new Error("audio fetch HTTP " + response.status);
-          return response.arrayBuffer();
-        })
+        .then(
+          function (response) {
+            if (!response.ok) {
+              recordingMissing = true;
+              throw new Error("audio fetch HTTP " + response.status);
+            }
+            return response.arrayBuffer();
+          },
+          function () {
+            recordingMissing = true;
+            throw new Error("audio fetch failed");
+          },
+        )
         .then(function (buffer) {
           // Bound once: the promise callbacks below run in a later frame,
           // where the checker can no longer narrow `context`.
@@ -1777,6 +2072,9 @@
           var peaks = vmPeaks(decoded.getChannelData(0), VM_BARS);
           vmCachePeaks(uuid, peaks);
           return peaks;
+        })
+        .catch(function () {
+          vmFallback(uuid, audio, recordingMissing);
         });
     };
 
@@ -1804,17 +2102,19 @@
       var player = /** @type {HTMLAudioElement} */ (audio);
       var started = audio.play();
       if (started && hasMethod(started, "catch")) {
-        started.catch(function () {});
-      }
-      vmBuildWave(uuid, audio)
-        .then(function (peaks) {
-          vmPaint(uuid, player);
-          var canvas = canvasElement("vm-wave-" + uuid);
-          if (canvas) vmDraw(canvas, peaks || [], 0);
-        })
-        .catch(function () {
-          vmFallback(uuid, player);
+        started.catch(function (reason) {
+          // AbortError = a pause/new play interrupted this attempt — benign,
+          // never a product failure. Everything else surfaces (the element's
+          // own error event dedups through vmErrorNotified).
+          if (reason && reason.name === "AbortError") return;
+          vmPlaybackFailed(player);
         });
+      }
+      vmBuildWave(uuid, audio).then(function (peaks) {
+        vmPaint(uuid, player);
+        var canvas = canvasElement("vm-wave-" + uuid);
+        if (canvas) vmDraw(canvas, peaks || [], 0);
+      });
     };
 
     /** @param {HTMLElement} btn */
@@ -1920,6 +2220,7 @@
       } else {
         document.documentElement.setAttribute("data-theme", theme);
       }
+      syncMetaTheme();
       var button = document.getElementById("theme-toggle");
       if (button) {
         button.textContent = "Theme: " + theme;
@@ -1927,6 +2228,60 @@
         // screen reader hears the theme change without re-reading the
         // visible label.
         button.setAttribute("aria-label", "Color theme: " + theme);
+      }
+    };
+
+    // A forced theme must recolor the browser chrome too: the served
+    // meta tags are media-scoped, so they keep tracking the OS scheme
+    // even when data-theme says otherwise. A forced theme collapses all
+    // of them to the forced scheme's saved color (media dropped so the
+    // choice is unambiguous); "auto" restores the served bytes.
+    /** @type {HTMLMetaElement[]} */
+    var themeMetas = [];
+    /** @type {{media: string|null, color: string|null}[]} */
+    var savedMetas = [];
+    var metaNodes = document.querySelectorAll('meta[name="theme-color"]');
+    for (var mi = 0; mi < metaNodes.length; mi++) {
+      var metaEl = /** @type {HTMLMetaElement} */ (metaNodes[mi]);
+      themeMetas.push(metaEl);
+      savedMetas.push({
+        media: metaEl.getAttribute("media"),
+        color: metaEl.getAttribute("content"),
+      });
+    }
+    var forcedMetaColor = function () {
+      var theme = THEMES[themeIndex];
+      if (theme === "auto") return null;
+      var want = theme === "light" ? "light" : "dark";
+      for (var i = 0; i < savedMetas.length; i++) {
+        var media = savedMetas[i].media;
+        if (media && media.indexOf(want) >= 0 && savedMetas[i].color) {
+          return savedMetas[i].color;
+        }
+      }
+      for (var j = 0; j < savedMetas.length; j++) {
+        if (savedMetas[j].color) return savedMetas[j].color;
+      }
+      return null;
+    };
+    var syncMetaTheme = function () {
+      var forced = forcedMetaColor();
+      for (var i = 0; i < themeMetas.length; i++) {
+        var meta = themeMetas[i];
+        var saved = savedMetas[i];
+        if (forced === null) {
+          if (saved.media) {
+            meta.setAttribute("media", saved.media);
+          } else {
+            meta.removeAttribute("media");
+          }
+          if (saved.color) {
+            meta.setAttribute("content", saved.color);
+          }
+        } else {
+          meta.removeAttribute("media");
+          meta.setAttribute("content", forced);
+        }
       }
     };
     applyTheme();
@@ -1985,6 +2340,22 @@
       document.documentElement.classList.contains("wp-island-collapsed"),
     );
 
+    // M31: a live call force-re-expands the island (the CSS :has() rule
+    // is the belt) — this listener is the suspenders: aria-expanded tells
+    // the truth and a screen reader hears WHY the layout moved. The
+    // stored preference is not rewritten; the next call-less state
+    // returns to it.
+    document.addEventListener("wp:calls-changed", function () {
+      var live = document.querySelector(".call-card:not(.wp-ended-card)");
+      if (
+        live &&
+        document.documentElement.classList.contains("wp-island-collapsed")
+      ) {
+        applyIslandCollapsed(false);
+        announceLive("Call in progress — the phone panel expanded.");
+      }
+    });
+
     if (islandToggle) {
       islandToggle.addEventListener("click", function () {
         var collapsed = !document.documentElement.classList.contains(
@@ -2012,12 +2383,13 @@
       ["M", "Mute / unmute the focused call"],
       ["P", "Hold / resume the focused call"],
       ["Esc", "Reject incoming, or hang up"],
+      ["[ / ]", "Switch between live calls"],
       ["Enter", "Send the message you are typing"],
       ["Shift+Enter", "New line in the composer"],
       ["Ctrl/Cmd+K", "Command palette"],
       ["?", "This help"],
     ];
-    /** @type {HTMLElement | null} */
+    /** @type {HTMLDialogElement | null} */
     var overlay = null;
     /** @type {HTMLInputElement | null} */
     var overlayInput = null;
@@ -2039,8 +2411,25 @@
       var links = document.querySelectorAll("#wp-nav .wp-nav-link");
       for (var i = 0; i < links.length; i++) {
         (function (link) {
+          // The label comes from the nav text, never the unread badge: a
+          // link reading "Messages4" must not become "Go to Messages4".
+          var name = link.textContent.trim();
+          var badge =
+            typeof link.querySelector === "function"
+              ? link.querySelector(".wp-nav-badge")
+              : null;
+          if (badge && badge.textContent) {
+            var at = name.indexOf(badge.textContent);
+            if (at >= 0) {
+              name = (
+                name.slice(0, at) + name.slice(at + badge.textContent.length)
+              )
+                .replace(/\s+/g, " ")
+                .trim();
+            }
+          }
           items.push({
-            label: "Go to " + link.textContent.trim(),
+            label: "Go to " + name,
             run: function () {
               link.click();
             },
@@ -2051,6 +2440,14 @@
         label: "Call a number",
         run: function () {
           var dest = document.getElementById("dest");
+          // M32: the island may be collapsed — expanding first is the
+          // action's whole point; the stored preference is not
+          // rewritten, the expansion is as transient as the call.
+          if (
+            document.documentElement.classList.contains("wp-island-collapsed")
+          ) {
+            applyIslandCollapsed(false);
+          }
           if (dest) dest.focus();
         },
       });
@@ -2082,13 +2479,21 @@
       overlayIndex = 0;
       var query = input.value.trim().toLowerCase();
       var source = overlaySource;
+      // Starts-with ranks before substring: typing "ca" puts "Call a
+      // number" ahead of anything that merely contains the letters.
+      /** @type [Array<{label: string, run?: () => void}>, Array<{label: string, run?: () => void}>] */
+      var ranked = [[], []];
       for (var i = 0; i < source.length; i++) {
-        if (query && source[i].label.toLowerCase().indexOf(query) < 0) continue;
-        overlayItems.push(source[i]);
+        var hay = source[i].label.toLowerCase();
+        if (query && hay.indexOf(query) < 0) continue;
+        ranked[hay.indexOf(query) === 0 ? 0 : 1].push(source[i]);
       }
+      overlayItems = ranked[0].concat(ranked[1]);
       for (var j = 0; j < overlayItems.length; j++) {
         var li = document.createElement("li");
-        li.className = "wp-overlay-item" + (j === 0 ? " wp-selected" : "");
+        li.className = "wp-overlay-item";
+        li.id = "wp-palette-opt-" + j;
+        li.setAttribute("role", "option");
         li.textContent = overlayItems[j].label;
         (function (index) {
           li.addEventListener("click", function () {
@@ -2098,18 +2503,40 @@
         })(j);
         list.append(li);
       }
+      paintSelection();
     };
 
     /** @param {number} delta */
     var selectOverlay = function (delta) {
-      var list = overlayList;
-      if (!list || overlayItems.length === 0) return;
+      if (!overlayList || overlayItems.length === 0) return;
       overlayIndex =
         (overlayIndex + delta + overlayItems.length) % overlayItems.length;
+      paintSelection();
+    };
+
+    /** @param {number} index */
+    var jumpOverlay = function (index) {
+      if (!overlayList || overlayItems.length === 0) return;
+      overlayIndex = Math.max(0, Math.min(index, overlayItems.length - 1));
+      paintSelection();
+    };
+
+    // One painter for the selection: the wp-selected class, the option's
+    // aria-selected, and the input's aria-activedescendant stay three
+    // views of the one index.
+    var paintSelection = function () {
+      var list = overlayList;
+      var input = overlayInput;
+      if (!list) return;
       var rows = list.children;
       for (var i = 0; i < rows.length; i++) {
+        var selected = i === overlayIndex;
         rows[i].className =
-          "wp-overlay-item" + (i === overlayIndex ? " wp-selected" : "");
+          "wp-overlay-item" + (selected ? " wp-selected" : "");
+        rows[i].setAttribute("aria-selected", selected ? "true" : "false");
+        if (selected && input && rows[i].id) {
+          input.setAttribute("aria-activedescendant", rows[i].id);
+        }
       }
     };
 
@@ -2121,19 +2548,25 @@
     };
 
     var buildOverlay = function () {
-      var panel = document.createElement("div");
+      // M33: a NATIVE dialog — focus containment, scroll lock and ESC
+      // come from the platform instead of hand-rolled traps.
+      var panel = document.createElement("dialog");
       panel.id = "wp-palette";
       panel.className = "wp-overlay";
-      panel.hidden = true;
-      panel.setAttribute("role", "dialog");
       panel.setAttribute("aria-label", "Command palette");
       var input = document.createElement("input");
       input.type = "text";
       input.className = "wp-overlay-input";
+      input.setAttribute("role", "combobox");
+      input.setAttribute("aria-expanded", "true");
+      input.setAttribute("aria-controls", "wp-palette-list");
+      input.setAttribute("aria-autocomplete", "list");
       input.setAttribute("aria-label", "Search commands");
       input.placeholder = "Type a command…";
       var list = document.createElement("ul");
       list.className = "wp-overlay-list";
+      list.id = "wp-palette-list";
+      list.setAttribute("role", "listbox");
       panel.append(input, list);
       document.body.append(panel);
       // Published before the listeners attach: renderOverlay and the
@@ -2150,6 +2583,12 @@
         } else if (event.key === "ArrowUp") {
           selectOverlay(-1);
           event.preventDefault();
+        } else if (event.key === "Home") {
+          jumpOverlay(0);
+          event.preventDefault();
+        } else if (event.key === "End") {
+          jumpOverlay(overlayItems.length - 1);
+          event.preventDefault();
         } else if (event.key === "Enter") {
           runOverlayItem();
           event.preventDefault();
@@ -2162,6 +2601,21 @@
         if (eventElement(event) === panel) closeOverlay();
       });
     };
+
+    // The served coarse-pointer palette button is a DISCLOSURE: its
+    // aria-expanded must track the dialog it opens, or a screen reader is told
+    // the palette is closed while it covers the page. Declared as a function so
+    // openOverlay/closeOverlay can call it before the button wiring below runs;
+    // it sits ABOVE openOverlay's JSDoc so the @param stays attached to it.
+    /**
+     * @param {boolean} expanded
+     */
+    function setPaletteExpanded(expanded) {
+      var button = document.getElementById("wp-palette-open");
+      if (button) {
+        button.setAttribute("aria-expanded", expanded ? "true" : "false");
+      }
+    }
 
     /** @param {string} mode */
     var openOverlay = function (mode) {
@@ -2178,7 +2632,9 @@
       overlayReturnFocus = /** @type {HTMLElement | null} */ (
         document.activeElement
       );
-      panel.hidden = false;
+      panel.showModal();
+      setPaletteExpanded(true);
+      input.setAttribute("aria-expanded", "true");
       input.value = "";
       input.placeholder =
         mode === "commands" ? "Type a command…" : "Shortcuts — Esc closes";
@@ -2187,10 +2643,26 @@
     };
 
     var closeOverlay = function () {
-      if (overlay) overlay.hidden = true;
+      setPaletteExpanded(false);
+      if (overlay) {
+        if (overlay.open) overlay.close();
+        var input = overlayInput;
+        if (input) input.setAttribute("aria-expanded", "false");
+      }
       if (overlayReturnFocus) overlayReturnFocus.focus();
       overlayReturnFocus = null;
     };
+
+    // The palette's coarse-pointer door (F12): the served header button
+    // (wp-palette-open, revealed by app.css only on touch) opens the same
+    // overlay Ctrl/Cmd+K opens.
+    var paletteOpen = document.getElementById("wp-palette-open");
+    if (paletteOpen) {
+      paletteOpen.addEventListener("click", function () {
+        if (overlay && overlay.open) closeOverlay();
+        else openOverlay("commands");
+      });
+    }
 
     document.addEventListener("keydown", function (event) {
       if (
@@ -2198,7 +2670,7 @@
         (event.key === "k" || event.key === "K")
       ) {
         event.preventDefault();
-        if (overlay && !overlay.hidden) closeOverlay();
+        if (overlay && overlay.open) closeOverlay();
         else openOverlay("commands");
         return;
       }
@@ -2228,7 +2700,7 @@
 
     // GSM 03.38: basic charset plus the extension table (its characters
     // cost TWO units). Anything outside the sets forces UCS-2, which
-    // carries 70 chars per segment (67 once concatenated).
+    // carries 70 UTF-16 code units per segment (67 once concatenated).
     var GSM7_BASIC =
       "@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞÆæßÉ !\"#¤%&'()*+,-./0123456789:;<=>?" +
       "¡ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§¿abcdefghijklmnopqrstuvwxyzäöñüà";
@@ -2238,13 +2710,15 @@
 
     /** @param {string} text @returns {number} */
     function ucs2Segments(text) {
-      var chars = Array.from(text).length;
-      return chars <= 70 ? 1 : Math.ceil(chars / 67);
+      var units = text.length;
+      return units <= 70 ? 1 : Math.ceil(units / 67);
     }
 
     // smsSegments returns the billable segment count for a body. CRLF
-    // is normalized first: the composer textarea submits \r\n. Code
-    // points (not UTF-16 units) count, so emoji cost one UCS-2 char.
+    // is normalized first: the composer textarea submits \r\n. UTF-16
+    // code units count (not code points): an astral emoji travels as a
+    // surrogate pair, and the surrogate pair is exactly what the network
+    // bills — two UCS-2 units per emoji.
     /** @param {unknown} body @returns {number} */
     function smsSegments(body) {
       var text = String(body == null ? "" : body).replace(/\r\n/g, "\n");
@@ -2383,6 +2857,92 @@
       input.files = transfer.files;
       renderAttachChips(input, box);
     });
+    // Train 3 (2026-11-11 destination): the Phone tab — the mobile dialer
+    // affordance in the bottom bar. The island is a VIEW toggle, not a
+    // route, so the entry is JS-created (tab→island affordances live in
+    // the shell, never island modules) and CSS keeps it invisible on the
+    // desktop bar (the island has its own column there). Tapping focuses
+    // the island full-screen; tapping a real tab — or Phone again —
+    // returns. The label stays English: shell copy is English-only (D3).
+    var WP_PHONE_SVG = svgIconHtml(
+      "M6.6 10.8c1.4 2.9 3.7 5.2 6.6 6.6l2.2-2.2c.3-.3.7-.4 1-.2 1.1.4 2.3.6 3.6.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1C10.6 21 3 13.4 3 4c0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.2.2 2.4.6 3.6.1.3 0 .7-.2 1l-2.3 2.2z",
+    );
+    var setPhonePressed = function (/** @type {boolean} */ pressed) {
+      var phone = document.querySelector(".wp-nav-phone");
+      var root = document.documentElement;
+      root.classList.toggle("wp-phone-focus", pressed);
+      if (phone) {
+        phone.setAttribute("aria-pressed", pressed ? "true" : "false");
+        phone.classList.toggle("wp-active", pressed);
+      }
+    };
+    /** @param {HTMLElement | null} [navIn] the strip; defaults to the document lookup */
+    var installPhoneTab = function (navIn) {
+      var nav =
+        navIn ||
+        /** @type {HTMLElement | null} */ (document.querySelector(".wp-nav"));
+      if (!nav || nav.querySelector(".wp-nav-phone")) return;
+      var tab = document.createElement("button");
+      tab.type = "button";
+      tab.className = "wp-nav-link wp-nav-phone";
+      tab.setAttribute("aria-pressed", "false");
+      tab.innerHTML =
+        '<span class="wp-nav-ic">' +
+        WP_PHONE_SVG +
+        "</span>" +
+        "<span>Phone</span>";
+      tab.addEventListener("click", function () {
+        var focused =
+          document.documentElement.classList.contains("wp-phone-focus");
+        if (focused) {
+          setPhonePressed(false);
+          return;
+        }
+        var strip = /** @type {HTMLElement} */ (nav);
+        strip
+          .querySelectorAll(".wp-nav-link[data-tab]")
+          .forEach(function (link) {
+            link.classList.remove("wp-active");
+            link.setAttribute("aria-current", "false");
+          });
+        setPhonePressed(true);
+      });
+      nav.appendChild(tab);
+      return tab;
+    };
+    installPhoneTab();
+    // The nav re-renders (language switch rides a morph re-fetch) and
+    // idiomorph drops the JS-created child — recreate it after every
+    // swap into the strip, carrying the focus state if one is live.
+    document.addEventListener("htmx:afterSwap", function (event) {
+      var target = eventDetail(event).target;
+      if (
+        target &&
+        target.classList &&
+        target.classList.contains("wp-nav") &&
+        !target.querySelector(".wp-nav-phone")
+      ) {
+        var tab = installPhoneTab();
+        var focused =
+          document.documentElement.classList.contains("wp-phone-focus");
+        if (tab && focused) {
+          tab.setAttribute("aria-pressed", "true");
+          tab.classList.add("wp-active");
+        }
+      }
+    });
+    // A real tab click leaves the dialer focus — the content column is
+    // the thing being navigated to.
+    document.addEventListener("click", function (event) {
+      var link = closestHTMLElement(
+        eventElement(event),
+        ".wp-nav-link[data-tab]",
+      );
+      if (!link) return;
+      if (document.documentElement.classList.contains("wp-phone-focus")) {
+        setPhonePressed(false);
+      }
+    });
     // Test seam only: on the wire this file is a classic script where
     // `module` does not exist, so the guard is a no-op in the browser. It
     // sits INSIDE the try on purpose: the five seams exist only once the
@@ -2393,6 +2953,8 @@
       module.exports.vmPeaks = vmPeaks;
       module.exports.vmClock = vmClock;
       module.exports.agentModeOpened = agentModeOpened;
+      module.exports.installPhoneTab = installPhoneTab;
+      module.exports.setPhonePressed = setPhonePressed;
       module.exports.errorMessage = errorMessage;
       module.exports.clock = clock;
     }

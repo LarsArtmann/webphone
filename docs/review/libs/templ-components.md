@@ -26,7 +26,7 @@ Root: `display` (49 components — badges, cards, charts, tables, tabs, modal/dr
 ## How webphone uses it
 
 - **layout.Base ×2** (internal/web/views/layout.templ:63 Shell, enroll.templ:23) with the full deliberate option set: `CSSPath:"/assets/app.css"`, `Locale` = session lang, `SEO{NoIndex:true}`, **`NoThemeScript:true`** (CSP — theme-preload is the same-origin `/assets/theme-preload.js`), ThemeColor/DarkThemeColor, Favicon; HTMX script served from cqrs-htmx assets (SRI default suppressed path untouched).
-- **display**: `Button` ×8 (secondary/sm variants), `EmptyState` ×6, `DefinitionList` in Settings (13 `DefinitionItem`s).
+- **display**: `Button` ×8 (secondary/sm variants), `EmptyState` ×6, `DefinitionList` in Settings (13 `DefinitionItem` nodes).
 - **forms**: `Input` ×3, `Textarea` ×1 with `utils.BaseProps`.
 - **icons**: `icons.Icon(name, "wp-icon …")` ×24 across settings/messages/history/fax/voicemail/phone/contacts.
 - **Boundaries held from the 09-22 audit**: `rg "RelativeTime|CountBadge|errorpage"` → 0 hits; the gray-family/token remap and cascade-layer contract documented in AGENTS.md still govern.
@@ -60,8 +60,8 @@ The thin-but-deep pattern is right for a domain-specific phone shell — do NOT 
 All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
 
 ```console
-rg -o "icons\.Icon" -N -g '*.templ' internal/ | wc -l                    # expect 12 (24 at audit time; the admin train's layout rewrite removed the nav icons)
+rg -o "icons\.Icon" -N -g '*.templ' internal/ | wc -l                    # expect >= 29 (24 at audit; admin rewrite -> 12; Reports + live-context + SUPERB panel trains +16 2026-11-06..09; +1 nav tabIcon 2026-11-11 — floor-pinned 2026-11-12: craft trains keep adding; the drift direction that matters is the one-home icon shrinking)
 rg -n "RelativeTime|CountBadge|errorpage" -g '*.templ' --type go internal/ | wc -l   # expect 0
-rg -n "wp-empty" -g '*.templ' internal/ | wc -l                          # expect 16 (9 at audit time; the admin train's panels added 7 informational empties — swap candidates only, not adoption gaps)
+rg -n "wp-empty" -g '*.templ' internal/ | wc -l                          # expect >= 22 (9 at audit; admin panels +7 2026-11-04; SUPERB panels +1 2026-11-09; +5 the 2026-11-11 panel/craft trains — floor-pinned 2026-11-12 after a concurrent session moved it 17->22 mid-sweep; swap candidates only, not adoption gaps)
 rg -c "display\.StatusBadge|feedback\.Alert" -g '*.templ' internal/ | wc -l   # expect 0 (the DECLINED components stay unused; SimpleEmptyState rides the two T12 swaps)
 ```

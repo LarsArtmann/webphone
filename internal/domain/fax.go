@@ -66,7 +66,8 @@ func ParseFaxDirection(raw string) (FaxDirection, error) {
 func MustFaxDirection(raw string) FaxDirection { return must(ParseFaxDirection(raw)) }
 
 // FaxJob is one fax transmission attempt (outbound) or one received
-// document (inbound). The PDF lives on disk at DocumentPath.
+// document (inbound). The PDF lives on disk at DocumentPath — the
+// branded blob-relative path, parsed once at the constructors.
 //
 // branching-flow COMPOSITION_mixin (baselined): the aggregate mirrors
 // its storage row by the parity-port ruling — the SQL→engine swap
@@ -79,7 +80,7 @@ type FaxJob struct {
 	Direction    FaxDirection
 	Status       FaxStatus
 	Pages        int
-	DocumentPath string
+	DocumentPath RelPath
 	ProviderRef  string
 	Error        string
 	CreatedAt    time.Time
@@ -101,7 +102,7 @@ type InboundFax struct {
 // status are consequences of "outbound send", not parameters, so a
 // queued inbound job (or a received outbound one) has no construction
 // path.
-func NewOutboundFaxJob(id FaxID, owner Extension, remote Phone, documentPath string, at time.Time) FaxJob {
+func NewOutboundFaxJob(id FaxID, owner Extension, remote Phone, documentPath RelPath, at time.Time) FaxJob {
 	return FaxJob{
 		ID:           id,
 		Owner:        owner,
@@ -116,7 +117,7 @@ func NewOutboundFaxJob(id FaxID, owner Extension, remote Phone, documentPath str
 
 // NewInboundFaxJob builds the row Receive persists: the received FACT —
 // direction in, status received, no lifecycle, stamps equal at birth.
-func NewInboundFaxJob(id FaxID, owner Extension, remote Phone, documentPath, providerRef string, pages int, at time.Time) FaxJob { //nolint:branching-flow // DocumentPath->domain.RelPath is a recorded open-roadmap item (2026-10-25 review); providerRef is a foreign provider token
+func NewInboundFaxJob(id FaxID, owner Extension, remote Phone, documentPath RelPath, providerRef string, pages int, at time.Time) FaxJob { //nolint:branching-flow // providerRef is a foreign provider token (strong-id wire ruling)
 	return FaxJob{
 		ID:           id,
 		Owner:        owner,
@@ -156,10 +157,17 @@ const (
 
 // FaxEvent is one trigger of the outbound fax machine. Construct via
 // FaxAccepted, FaxSettled, FaxSubmitFailed or FaxVerdict.
+//
+// An in-process machine trigger, never a journaled payload — the wire
+// forms are FaxReceipted/FaxStatusAdvanced/FaxExpunged. D014's json-tag
+// advice does not apply to it.
+// cqrs-lint:ignore-start(D014)
 type FaxEvent struct {
 	kind   faxEventKind
 	status FaxStatus // verdict: the provider's answer (transmitted or failed)
 }
+
+//cqrs-lint:ignore-end(D014)
 
 // FaxAccepted: the gateway took the job; its verdict arrives later on
 // the status webhook (a deferred receipt).
@@ -295,4 +303,19 @@ type FaxStatusAdvanced struct {
 // window; nothing else deletes fax rows).
 type FaxExpunged struct {
 	Key FaxKey
+}
+
+// FaxMayMoveTo reports whether ANY legal faxMoves trigger carries a
+// row from `from` to `to` — the decider's (from → to) legality sight
+// over the same ONE table (the service drives event-shaped triggers;
+// the store seam persists target statuses; both judge by faxMoves).
+// Journal time encoding quantizes time.Time payloads by ~200 ns (the
+// recorded CBOR constraint); status moves never read clock subticks.
+func FaxMayMoveTo(from, to FaxStatus) bool {
+	for move := range faxMoves {
+		if move.from == from && move.to == to {
+			return true
+		}
+	}
+	return false
 }

@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/go-error-family"
+	"github.com/larsartmann/webphone/internal/httpclient"
 )
 
 // FCM HTTP v1 wire: a service account (JSON key file) mints a
@@ -119,7 +120,7 @@ func NewFcmSender(credentialsFile string) (*FcmSender, error) {
 		key:      rsaKey,
 		tokenURI: account.TokenURI,
 		sendURL:  fmt.Sprintf(fcmSendURLTemplate, account.ProjectID),
-		client:   &http.Client{Timeout: fcmRequestTimeout},
+		client:   httpclient.Isolated(fcmRequestTimeout),
 	}, nil
 }
 
@@ -127,7 +128,7 @@ func NewFcmSender(credentialsFile string) (*FcmSender, error) {
 func (s *FcmSender) Enabled() bool { return s != nil && s.project != "" }
 
 // Describe names the transport for logs.
-func (s *FcmSender) Describe() string { return TransportFcm }
+func (s *FcmSender) Describe() string { return string(TransportFcm) }
 
 // fcmMessage is the messages:send body. Data (not notification) is
 // deliberate: the shell owns its CallStyle rendering; a stock FCM
@@ -143,16 +144,10 @@ type fcmMessage struct {
 	} `json:"message"`
 }
 
-// Send ships one ring fact to the device's registration token.
-func (s *FcmSender) Send(ctx context.Context, target string, ring Ring) error {
-	if !s.Enabled() {
-		return ErrDisabled
-	}
-	accessToken, err := s.fetchAccessToken(ctx)
-	if err != nil {
-		return err
-	}
-
+// ringFcmPayload builds the messages:send body for one ring fact — the
+// pure half of Send, shared with the wire-fixture renderer so the pinned
+// consumer contract can never diverge from the sent wire.
+func ringFcmPayload(target string, ring Ring) fcmMessage {
 	priority := "NORMAL"
 	if ring.Event == EventRing {
 		priority = "HIGH"
@@ -165,7 +160,34 @@ func (s *FcmSender) Send(ctx context.Context, target string, ring Ring) error {
 		"call_id": ring.CallID,
 	}
 	body.Message.Android.Priority = priority
-	payload, err := json.Marshal(body)
+	return body
+}
+
+// draftFcmPayload builds the messages:send body for one draft-ready
+// fact (NORMAL priority — good news is not urgent). Pure, like
+// ringFcmPayload, for the same fixture-truth reason.
+func draftFcmPayload(target string, draft Draft) fcmMessage {
+	var body fcmMessage
+	body.Message.Token = target
+	body.Message.Data = map[string]string{
+		"event":    string(draft.Event),
+		"contact":  draft.Contact,
+		"draft_id": draft.DraftID,
+	}
+	body.Message.Android.Priority = "NORMAL"
+	return body
+}
+
+// Send ships one ring fact to the device's registration token.
+func (s *FcmSender) Send(ctx context.Context, target string, ring Ring) error {
+	if !s.Enabled() {
+		return ErrDisabled
+	}
+	accessToken, err := s.fetchAccessToken(ctx)
+	if err != nil {
+		return err
+	}
+	payload, err := json.Marshal(ringFcmPayload(target, ring))
 	if err != nil {
 		return errorfamily.WrapInfrastructuref(err, "push.fcm_send", "encode fcm message")
 	}
@@ -182,15 +204,7 @@ func (s *FcmSender) SendDraft(ctx context.Context, target string, draft Draft) e
 	if err != nil {
 		return err
 	}
-	var body fcmMessage
-	body.Message.Token = target
-	body.Message.Data = map[string]string{
-		"event":    string(draft.Event),
-		"contact":  draft.Contact,
-		"draft_id": draft.DraftID,
-	}
-	body.Message.Android.Priority = "NORMAL"
-	payload, err := json.Marshal(body)
+	payload, err := json.Marshal(draftFcmPayload(target, draft))
 	if err != nil {
 		return errorfamily.WrapInfrastructuref(err, "push.fcm_send", "encode fcm message")
 	}
@@ -219,6 +233,15 @@ func (s *FcmSender) post(ctx context.Context, payload []byte, accessToken string
 	}
 	switch {
 	case resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden:
+		// The minted access token was refused — Google may revoke a
+		// grant early (or the host clock drifts). Without invalidation
+		// every send until the nominal expiry would replay the same
+		// poisoned token, so drop the cache and let the next send mint
+		// a fresh grant.
+		s.mu.Lock()
+		s.tokenValue = ""
+		s.tokenExpiry = time.Time{}
+		s.mu.Unlock()
 		return errorfamily.WrapRejectionf(ErrUnauthorized, "push.fcm_send", "fcm rejected the access token (%d)", resp.StatusCode)
 	case resp.StatusCode == http.StatusNotFound || strings.Contains(string(errorBody), fcmUnregisteredMarker):
 		return errorfamily.WrapInfrastructuref(ErrUnregistered, "push.fcm_send", "fcm reports the device token dead (%d)", resp.StatusCode)

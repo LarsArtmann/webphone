@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/go-error-family"
+	"github.com/larsartmann/webphone/internal/httpclient"
 )
 
 // ntfy wire: JSON publish to the server root — one round trip, the
@@ -48,7 +49,7 @@ func NewNtfySender(baseURL, token string) (*NtfySender, error) { //nolint:branch
 	return &NtfySender{
 		base:   parsed,
 		token:  token,
-		client: &http.Client{Timeout: ntfyRequestTimeout},
+		client: httpclient.Isolated(ntfyRequestTimeout),
 	}, nil
 }
 
@@ -56,7 +57,7 @@ func NewNtfySender(baseURL, token string) (*NtfySender, error) { //nolint:branch
 func (s *NtfySender) Enabled() bool { return s != nil && s.base != nil }
 
 // Describe names the transport for logs.
-func (s *NtfySender) Describe() string { return TransportNtfy }
+func (s *NtfySender) Describe() string { return string(TransportNtfy) }
 
 // ntfyMessage is the JSON publish body. The message field carries the
 // ring fact as compact JSON — the shell's receiver parses it, while
@@ -70,24 +71,44 @@ type ntfyMessage struct {
 	Tags     []string `json:"tags,omitempty"`
 }
 
-// Send publishes one ring fact to the device's topic.
-func (s *NtfySender) Send(ctx context.Context, topic string, ring Ring) error {
-	if !s.Enabled() {
-		return ErrDisabled
-	}
+// ringNtfyBody builds the publish body for one ring fact — the pure
+// half of Send, shared with the wire-fixture renderer so the pinned
+// consumer contract can never diverge from the sent wire.
+func ringNtfyBody(topic string, ring Ring) ntfyMessage {
 	priority := ntfyPriorityDefault
 	title := "Call ended"
 	if ring.Event == EventRing {
 		priority = ntfyPriorityMax
 		title = "Incoming call"
 	}
-	body, err := json.Marshal(ntfyMessage{
+	return ntfyMessage{
 		Topic:    topic,
 		Title:    title,
 		Message:  string(mustMarshalRing(ring)),
 		Priority: priority,
 		Tags:     []string{"telephone"},
-	})
+	}
+}
+
+// draftNtfyBody builds the publish body for one draft-ready fact
+// (default priority — good news is not urgent). Pure, like
+// ringNtfyBody, for the same fixture-truth reason.
+func draftNtfyBody(topic string, draft Draft) ntfyMessage {
+	return ntfyMessage{
+		Topic:    topic,
+		Title:    "Draft ready",
+		Message:  string(mustMarshalDraft(draft)),
+		Priority: ntfyPriorityDefault,
+		Tags:     []string{"telephone"},
+	}
+}
+
+// Send publishes one ring fact to the device's topic.
+func (s *NtfySender) Send(ctx context.Context, topic string, ring Ring) error {
+	if !s.Enabled() {
+		return ErrDisabled
+	}
+	body, err := json.Marshal(ringNtfyBody(topic, ring))
 	if err != nil {
 		return errorfamily.WrapInfrastructuref(err, "push.ntfy_send", "encode ntfy message")
 	}
@@ -101,13 +122,7 @@ func (s *NtfySender) SendDraft(ctx context.Context, topic string, draft Draft) e
 	if !s.Enabled() {
 		return ErrDisabled
 	}
-	body, err := json.Marshal(ntfyMessage{
-		Topic:    topic,
-		Title:    "Draft ready",
-		Message:  string(mustMarshalDraft(draft)),
-		Priority: ntfyPriorityDefault,
-		Tags:     []string{"telephone"},
-	})
+	body, err := json.Marshal(draftNtfyBody(topic, draft))
 	if err != nil {
 		return errorfamily.WrapInfrastructuref(err, "push.ntfy_send", "encode ntfy message")
 	}

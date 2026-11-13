@@ -1,0 +1,2283 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "webphone machine API",
+    "version": "1.0.0",
+    "description": "Generated from the handler wire types (go-cqrs-lite/catalog). The webhook lanes under /hooks/ and the /events SSE stream are machine-to-machine contracts documented separately (docs/contracts/)."
+  },
+  "servers": [
+    {
+      "url": ".",
+      "description": "Current server"
+    }
+  ],
+  "paths": {
+    "/api/calls": {
+      "post": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Log Call",
+        "description": "Journal one finished call on the CRM contact that owns the number (no-op when the CRM is disabled or the number matches no contact — the integration never creates contacts).",
+        "operationId": "postCallsLog",
+        "deprecated": false,
+        "requestBody": {
+          "description": "Log Call request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/command.calls.log"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No response body. Logged, or deliberately dropped (CRM disabled, or the number matches no CRM contact).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/command.calls.log.response.204"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed body, or direction not in/out."
+          },
+          "401": {
+            "description": "No live session."
+          },
+          "403": {
+            "description": "CSRF token missing or invalid."
+          },
+          "422": {
+            "description": "Number failed dialable validation."
+          },
+          "429": {
+            "description": "Per-client write flood budget exhausted (shares the contacts budget); the answer carries a Retry-After header naming the seconds until the bucket refills.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the flood bucket refills (see the response description).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The CRM could not record the call (unreachable or 5xx) — the island toasts."
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ]
+      }
+    },
+    "/api/calls/{id}/disposition": {
+      "post": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Confirm Call Disposition",
+        "description": "Record the operator's post-call verdict for one call — the one authority that may claim answered (the island's auto-report only ever claims missed or unknown). Persists the verdict first, then journals the correction upstream; a CRM 502 leaves the verdict stored and the retry open. Same verdict again is an inert 204; a different verdict is a correction and journals again.",
+        "operationId": "postCallsDisposition",
+        "deprecated": false,
+        "requestBody": {
+          "description": "Confirm Call Disposition request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/command.calls.disposition"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No response body. Verdict recorded (and corrected upstream, or deliberately not: CRM disabled, number matches no contact).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/command.calls.disposition.response.204"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed call id, body, disposition not in the vocabulary, or direction not in/out."
+          },
+          "401": {
+            "description": "No live session."
+          },
+          "403": {
+            "description": "CSRF token missing or invalid."
+          },
+          "409": {
+            "description": "The extension's review-slot list is at its cap — delete another note first."
+          },
+          "429": {
+            "description": "Per-client write flood budget exhausted (shares the contacts budget); the answer carries a Retry-After header naming the seconds until the bucket refills.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the flood bucket refills (see the response description).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Review-slot store failure."
+          },
+          "502": {
+            "description": "The CRM could not record the correction (unreachable or 5xx) — the verdict stays stored; the island offers a retry."
+          },
+          "503": {
+            "description": "Note storage unavailable (test compositions)."
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ]
+      }
+    },
+    "/api/calls/{id}/note": {
+      "get": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Get Call Note",
+        "description": "Read the signed-in extension's freeform note for one call. Always 200: an absent note is the empty body — the History form renders the same box either way.",
+        "operationId": "getCallsNoteget",
+        "deprecated": false,
+        "responses": {
+          "200": {
+            "description": "The stored note (empty when none).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/query.calls.noteGet.response.200"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed call id."
+          },
+          "401": {
+            "description": "No live session."
+          },
+          "403": {
+            "description": "CSRF token missing or invalid."
+          },
+          "429": {
+            "description": "Per-client read flood budget exhausted (shares the contacts budget); the answer carries a Retry-After header naming the seconds until the bucket refills.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the flood bucket refills (see the response description).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Note store failure."
+          },
+          "503": {
+            "description": "Note storage unavailable (test compositions)."
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The call's island Call-ID (the transcript's key).",
+            "required": true
+          }
+        ]
+      },
+      "put": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Set Call Note",
+        "description": "Upsert the signed-in extension's freeform note for one call (the slot is the owner+call pair — no duplicates). An empty body clears the note. A full note list is a 409: hand-written content is never silently expunged.",
+        "operationId": "putCallsNoteset",
+        "deprecated": false,
+        "requestBody": {
+          "description": "Set Call Note request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/command.calls.noteSet"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No response body",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/command.calls.noteSet.response.204"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed call id or body."
+          },
+          "401": {
+            "description": "No live session."
+          },
+          "403": {
+            "description": "CSRF token missing or invalid."
+          },
+          "409": {
+            "description": "The extension's note list is at its cap — delete another note first."
+          },
+          "413": {
+            "description": "Note body past the 4000-char budget."
+          },
+          "429": {
+            "description": "Per-client write flood budget exhausted (shares the contacts budget); the answer carries a Retry-After header naming the seconds until the bucket refills.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the flood bucket refills (see the response description).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Note store failure."
+          },
+          "503": {
+            "description": "Note storage unavailable (test compositions)."
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ]
+      }
+    },
+    "/api/calls/{id}/review": {
+      "post": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Dispatch Automatic Call Review",
+        "description": "Ask for the same AI follow-up draft the manual summarize button drafts, as a detached job — the island fires it once when a media call settles. The job runs without the request (closing the tab cannot abort it) and shares the summarize idempotency key, so exactly one of the two ever drafts; failure stays retryable because the key records successes only.",
+        "operationId": "postCallsReviewdispatch",
+        "deprecated": false,
+        "requestBody": {
+          "description": "Dispatch Automatic Call Review request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/command.calls.reviewDispatch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "description": "The job was accepted (duplicate:true when this call already has one — done or in flight).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/command.calls.reviewDispatch.response.202"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed call id."
+          },
+          "401": {
+            "description": "No live session."
+          },
+          "403": {
+            "description": "CSRF token missing or invalid."
+          },
+          "404": {
+            "description": "The textagent seam is not configured, or the call has no transcript for this extension."
+          },
+          "429": {
+            "description": "Per-client write flood budget exhausted (shares the contacts budget); the answer carries a Retry-After header naming the seconds until the bucket refills.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the flood bucket refills (see the response description).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Transcript store read failure."
+          },
+          "503": {
+            "description": "Transcript storage unavailable (test compositions)."
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Get Call Review",
+        "description": "Read the signed-in extension's stored automatic review for one call — the durable record of what the AI made of it (pending while the job runs, present with the draft dims, failed on a refusal/outage). An absent review is the empty body.",
+        "operationId": "getCallsReviewget",
+        "deprecated": false,
+        "responses": {
+          "200": {
+            "description": "The stored review (the empty body when none exists).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/query.calls.reviewGet.response.200"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed call id."
+          },
+          "401": {
+            "description": "No live session."
+          },
+          "403": {
+            "description": "CSRF token missing or invalid."
+          },
+          "404": {
+            "description": "The textagent seam is not configured."
+          },
+          "429": {
+            "description": "Per-client read flood budget exhausted (shares the contacts budget); the answer carries a Retry-After header naming the seconds until the bucket refills.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the flood bucket refills (see the response description).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Review store read failure."
+          },
+          "503": {
+            "description": "Review storage unavailable (test compositions)."
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The call's island Call-ID (the transcript's key).",
+            "required": true
+          }
+        ]
+      }
+    },
+    "/api/calls/{id}/summary-draft": {
+      "post": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Summarize Call",
+        "description": "Turn one call's stored transcript into an AI follow-up draft in the review queue (the Messages drafts panel reviews it). Idempotent within the window: a replay answers duplicate:true.",
+        "operationId": "postCallsSummarydraft",
+        "deprecated": false,
+        "requestBody": {
+          "description": "Summarize Call request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/command.calls.summaryDraft"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The drafted follow-up (or duplicate:true when this call was already summarized in the idempotency window).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/command.calls.summaryDraft.response.200"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed call id."
+          },
+          "401": {
+            "description": "No live session."
+          },
+          "403": {
+            "description": "CSRF token missing or invalid."
+          },
+          "404": {
+            "description": "The textagent seam is not configured, or the call has no transcript for this extension."
+          },
+          "429": {
+            "description": "Per-client write flood budget exhausted (shares the contacts budget); the answer carries a Retry-After header naming the seconds until the bucket refills.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the flood bucket refills (see the response description).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Transcript store failure."
+          },
+          "502": {
+            "description": "The AI agent is unreachable — the island toasts."
+          },
+          "503": {
+            "description": "Transcript storage unavailable (or the agent answered 5xx)."
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ]
+      }
+    },
+    "/api/contacts": {
+      "post": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Save Contact",
+        "description": "Upsert one personal contact: a repeated number renames. Mutations answer 204 and the island re-fetches the list.",
+        "operationId": "postContactsSave",
+        "deprecated": false,
+        "requestBody": {
+          "description": "Save Contact request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/command.contacts.save"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No response body. Saved (upsert by number within the session's extension).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/command.contacts.save.response.204"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body (or body over 4.0 KiB.)"
+          },
+          "401": {
+            "description": "No live session."
+          },
+          "403": {
+            "description": "CSRF token missing or invalid."
+          },
+          "422": {
+            "description": "Number failed dialable validation, or the per-extension list is full (500; renames never count)."
+          },
+          "429": {
+            "description": "Per-client write flood budget exhausted (generous: the legacy import bursts one POST per row); the answer carries a Retry-After header naming the seconds until the bucket refills.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the flood bucket refills (see the response description).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Store failure."
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "List Contacts",
+        "description": "The session extension's personal contacts plus the configured shared ones. The LIST is the only drift-free id source (renames keep the old id).",
+        "operationId": "getContactsList",
+        "deprecated": false,
+        "responses": {
+          "200": {
+            "description": "Personal (store-backed, per extension) and shared (config) contacts.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/query.contacts.list.response.200"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No live session."
+          },
+          "500": {
+            "description": "Store failure."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Delete Contact",
+        "description": "Delete one personal contact by id, scoped to the session's extension.",
+        "operationId": "deleteContactsDelete",
+        "deprecated": false,
+        "responses": {
+          "204": {
+            "description": "No response body. Deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/query.contacts.delete.response.204"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No live session."
+          },
+          "403": {
+            "description": "CSRF token missing or invalid."
+          },
+          "404": {
+            "description": "Unknown id (or another extension's contact)."
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "Contact id from the LIST response.",
+            "required": true
+          }
+        ]
+      }
+    },
+    "/api/csrf": {
+      "get": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Refresh CSRF",
+        "description": "Fetch the fresh masked CSRF token after the login rotation invalidated the old one. Needs no session; the answer pairs with the csrf_token cookie and is no-store.",
+        "operationId": "getCsrfRefresh",
+        "deprecated": false,
+        "responses": {
+          "200": {
+            "description": "Current masked CSRF token.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/query.csrf.refresh.response.200"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Per-client flood budget exhausted; the answer carries a Retry-After header naming the seconds until the bucket refills.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the flood bucket refills (see the response description).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "No CSRF token available."
+          }
+        }
+      }
+    },
+    "/api/dials": {
+      "post": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Consult Dial Gate",
+        "description": "Advisory pre-invite cooldown check for one remote: allowed=true records the attempt and the invite may go out; allowed=false answers inside the cooldown window with the slot's last-at stamp and window length (nothing recorded — a retry loop must not extend the window it fights). A one-shot override (the click-through) arms before the attempt and is spent by the first allowed dial.",
+        "operationId": "postCallsDialgate",
+        "deprecated": false,
+        "requestBody": {
+          "description": "Consult Dial Gate request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/command.calls.dialGate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The verdict (allowed true or false; both are success answers).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/command.calls.dialGate.response.200"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed body or remote (empty, over 64 chars, or containing / or %)."
+          },
+          "401": {
+            "description": "No live session."
+          },
+          "403": {
+            "description": "CSRF token missing or invalid."
+          },
+          "404": {
+            "description": "The dial cooldown is not configured (the gate is off — the island dials straight away)."
+          },
+          "429": {
+            "description": "Per-client write flood budget exhausted (shares the contacts budget); the answer carries a Retry-After header naming the seconds until the bucket refills.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the flood bucket refills (see the response description).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Window store failure — the island dials anyway (the gate is advisory; a phone must dial)."
+          },
+          "503": {
+            "description": "Dial window storage unavailable (test compositions)."
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "List Active Dial Windows",
+        "description": "The signed-in extension's ACTIVE cooldown windows, newest first — the dial typeahead decorates matching contact rows with the remaining wait instead of state nobody can see. Expired windows are skipped lazily; the POST's attempt path is what records and replaces rows.",
+        "operationId": "getCallsDialslots",
+        "deprecated": false,
+        "responses": {
+          "200": {
+            "description": "The active windows (empty slots array when none are live).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/query.calls.dialSlots.response.200"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No live session."
+          },
+          "403": {
+            "description": "CSRF token missing or invalid."
+          },
+          "404": {
+            "description": "The dial cooldown is not configured (the gate is off — nothing to decorate)."
+          },
+          "429": {
+            "description": "Per-client read flood budget exhausted (shares the contacts budget); the answer carries a Retry-After header naming the seconds until the bucket refills.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the flood bucket refills (see the response description).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Window store scan failure — the island hides the decoration, it never blocks a dial."
+          },
+          "503": {
+            "description": "Dial window storage unavailable (test compositions)."
+          }
+        }
+      }
+    },
+    "/api/metrics/latency": {
+      "post": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Latency Beacon",
+        "description": "Accept one fire-and-forget island latency measurement (the measure-first latency design): dial-press to first remote audio, or an ASR segment to text on screen, split into the server-fixed named legs. Pure instrumentation: every malformed beacon is a silent 204 — the endpoint never validates loudly, never retries, never alerts.",
+        "operationId": "postMetricsLatencyBeacon",
+        "deprecated": false,
+        "requestBody": {
+          "description": "Latency Beacon request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/command.metrics.latency_beacon"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No response body. The beacon was folded into the /metrics histograms, or silently dropped (unknown interval, junk legs, malformed body — all the same 204 by design).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/command.metrics.latency_beacon.response.204"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No live session."
+          },
+          "403": {
+            "description": "CSRF token missing or invalid."
+          },
+          "404": {
+            "description": "The beacon intake is not enabled on this server (metrics.island_beacon is off) — the surface does not exist."
+          },
+          "413": {
+            "description": "The beacon exceeds the 2 KiB body cap."
+          },
+          "429": {
+            "description": "Per-client flood budget exhausted; the answer carries a Retry-After header naming the seconds until the bucket refills.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the flood bucket refills (see the response description).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ]
+      }
+    },
+    "/api/push-devices": {
+      "post": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Register Push Device",
+        "description": "Register (or re-register) the calling install's wake address; re-registration replaces the stored row so FCM token churn never strands a device.",
+        "operationId": "postPushDevicesRegister",
+        "deprecated": false,
+        "requestBody": {
+          "description": "Register Push Device request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/command.push.devices.register"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No response body. Registered.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/command.push.devices.register.response.204"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid body (or body over 8.0 KiB.)"
+          },
+          "401": {
+            "description": "No live session."
+          },
+          "403": {
+            "description": "CSRF token missing or invalid."
+          },
+          "404": {
+            "description": "No push transport is configured — a shell must not believe registration succeeded."
+          },
+          "422": {
+            "description": "Bad device id or token shape, an unconfigured transport, or the per-extension device list is full (8; deregister one first)."
+          },
+          "429": {
+            "description": "Per-client write flood budget exhausted (shares the contacts budget); the answer carries a Retry-After header naming the seconds until the bucket refills.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the flood bucket refills (see the response description).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Store failure."
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "List Push Devices",
+        "description": "The session extension's registered push devices, newest first. The wake address is write-only and never echoed.",
+        "operationId": "getPushDevicesList",
+        "deprecated": false,
+        "responses": {
+          "200": {
+            "description": "The registered devices.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/query.push.devices.list.response.200"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No live session."
+          },
+          "404": {
+            "description": "No push transport is configured — a shell reads that as \"this server cannot ring closed apps\"."
+          },
+          "500": {
+            "description": "Store failure."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Deregister Push Device",
+        "description": "Deregister the calling install (logout). An unknown or foreign id is the same 204 — the deregistration outcome is identical.",
+        "operationId": "deletePushDevicesDelete",
+        "deprecated": false,
+        "responses": {
+          "204": {
+            "description": "No response body. Deregistered (unknown and foreign ids included).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/query.push.devices.delete.response.204"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No live session."
+          },
+          "403": {
+            "description": "CSRF token missing or invalid."
+          },
+          "404": {
+            "description": "No push transport is configured — the surface does not exist."
+          },
+          "500": {
+            "description": "Store failure."
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "description": "The shell-minted device id to deregister.",
+            "required": true
+          }
+        ]
+      }
+    },
+    "/api/session": {
+      "post": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Create Session",
+        "description": "Verify the credentials against the PBX directory and mint the tab session (sets the HttpOnly cookie, rotates CSRF).",
+        "operationId": "postSessionCreate",
+        "deprecated": false,
+        "requestBody": {
+          "description": "Create Session request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/command.session.create"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Session created. Credential brokering on answers the session-derived REGISTER credential instead of the password; no-store keeps either credential out of caches.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/command.session.create.response.201"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid extension or request body."
+          },
+          "401": {
+            "description": "Credentials rejected by the PBX directory."
+          },
+          "403": {
+            "description": "CSRF token missing or invalid."
+          },
+          "429": {
+            "description": "Per-client login flood budget exhausted; the answer carries a Retry-After header naming the seconds until the bucket refills.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the flood bucket refills (see the response description).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Session store failure."
+          },
+          "502": {
+            "description": "PBX credential verification unavailable."
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ]
+      },
+      "get": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Resume Session",
+        "description": "Island boot probe: a live cookie gets the SIP credentials back so the browser re-registers without the login form. no-store.",
+        "operationId": "getSessionResume",
+        "deprecated": false,
+        "responses": {
+          "200": {
+            "description": "The cookie's live session. Exactly one credential field rides: sip_credential (session-derived, credential brokering on) or password (legacy wire).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/query.session.resume.response.200"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "No live session — the island shows the login form."
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Destroy Session",
+        "description": "Sign the tab session out: clears the session cookie and rotates CSRF. Idempotent — 204 whether or not a live session existed.",
+        "operationId": "deleteSessionDestroy",
+        "deprecated": false,
+        "responses": {
+          "204": {
+            "description": "No response body. Session destroyed (any live session deleted, cookies cleared).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/query.session.destroy.response.204"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "CSRF token missing or invalid."
+          }
+        }
+      }
+    },
+    "/api/session/switch": {
+      "post": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Switch Line",
+        "description": "Re-mint the session for another extension mapped to the signed-in user (mapped logins only): directory-verifies the target line, rotates CSRF, deletes the old session row. The client reloads; the boot probe re-registers.",
+        "operationId": "postSessionSwitch",
+        "deprecated": false,
+        "requestBody": {
+          "description": "Switch Line request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/command.session.switch"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "The re-minted session's identity (same login email, new extension). Switching to the session's own extension is an idempotent no-op answer without a mint.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/command.session.switch.response.200"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid extension or request body."
+          },
+          "401": {
+            "description": "No live session, or the PBX directory rejected the target line's credentials."
+          },
+          "403": {
+            "description": "CSRF token missing or invalid, an unmapped login, or an extension not mapped to this account."
+          },
+          "429": {
+            "description": "Line-switch budget exhausted; the answer carries a Retry-After header naming the seconds until the bucket refills.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the flood bucket refills (see the response description).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The target line's password file could not be sourced (secrets pipeline)."
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ]
+      }
+    },
+    "/api/transcribe": {
+      "post": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Transcribe Audio",
+        "description": "Transcribe one audio segment via the configured ASR provider (live calls, voicemail, MMS audio all ride this endpoint). The request body is the raw audio bytes as a multipart/form-data part (honest Content-Type, up to 25 MiB); filename and lang ride the query string. Session-gated and CSRF-protected like every JSON post.",
+        "operationId": "postAsrTranscribe",
+        "deprecated": false,
+        "responses": {
+          "200": {
+            "description": "The transcribed text.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/query.asr.transcribe.response.200"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The audio could not be read, or the segment was empty."
+          },
+          "401": {
+            "description": "No live session."
+          },
+          "403": {
+            "description": "CSRF token missing or invalid."
+          },
+          "404": {
+            "description": "The ASR seam is not configured on this server — the surface does not exist."
+          },
+          "429": {
+            "description": "Per-client flood budget exhausted; the answer carries a Retry-After header naming the seconds until the bucket refills.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the flood bucket refills (see the response description).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "The transcription provider failed (including rejected upstream credentials — never a client problem)."
+          },
+          "503": {
+            "description": "The transcription concurrency ceiling is busy — retry shortly."
+          }
+        },
+        "parameters": [
+          {
+            "name": "filename",
+            "in": "query",
+            "description": "Original filename hint for the provider (optional).",
+            "required": false
+          },
+          {
+            "name": "lang",
+            "in": "query",
+            "description": "Language hint for the provider (optional).",
+            "required": false
+          }
+        ]
+      }
+    },
+    "/api/transcripts": {
+      "post": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Save Transcript",
+        "description": "Persist one live-call transcript segment to the owner-scoped store behind the History tab's transcript section. Fire-and-forget: 204 whether stored or deliberately shaped.",
+        "operationId": "postTranscriptsSave",
+        "deprecated": false,
+        "requestBody": {
+          "description": "Save Transcript request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/command.transcripts.save"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "No response body. Stored (or deliberately shaped — the island's capture loop never retries).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/command.transcripts.save.response.204"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed segment (bad direction, missing callId/startedAt/remote/text, oversized body)."
+          },
+          "401": {
+            "description": "No live session."
+          },
+          "403": {
+            "description": "CSRF token missing or invalid."
+          },
+          "404": {
+            "description": "The ASR seam is not configured — the surface does not exist."
+          },
+          "413": {
+            "description": "The segment text exceeds the 4000-character bound."
+          },
+          "429": {
+            "description": "Per-client flood budget exhausted; the answer carries a Retry-After header naming the seconds until the bucket refills.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the flood bucket refills (see the response description).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Store failure."
+          },
+          "503": {
+            "description": "Transcript storage is unavailable."
+          }
+        },
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Delete Transcript",
+        "description": "Erase one call's transcript (the end-user leg of the retention story). Idempotent: an unknown or already-deleted call is the same 204.",
+        "operationId": "deleteTranscriptsDelete",
+        "deprecated": false,
+        "responses": {
+          "204": {
+            "description": "No response body. Erased (or already absent).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/query.transcripts.delete.response.204"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The call query parameter is missing or oversized."
+          },
+          "401": {
+            "description": "No live session."
+          },
+          "403": {
+            "description": "CSRF token missing or invalid."
+          },
+          "404": {
+            "description": "The ASR seam is not configured — the surface does not exist."
+          },
+          "429": {
+            "description": "Per-client flood budget exhausted; the answer carries a Retry-After header naming the seconds until the bucket refills.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the flood bucket refills (see the response description).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Store failure."
+          },
+          "503": {
+            "description": "Transcript storage is unavailable."
+          }
+        },
+        "parameters": [
+          {
+            "name": "call",
+            "in": "query",
+            "description": "The call id whose transcript to erase.",
+            "required": true
+          }
+        ]
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "command.calls.dialGate": {
+        "properties": {
+          "override": {
+            "deprecated": false,
+            "description": "True on the click-through: spend this remote's one-shot override.",
+            "nullable": false,
+            "type": "boolean"
+          },
+          "remote": {
+            "deprecated": false,
+            "description": "The sanitized dialable remote the island is about to invite.",
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "remote",
+          "override"
+        ],
+        "type": "object"
+      },
+      "command.calls.dialGate.response.200": {
+        "properties": {
+          "allowed": {
+            "deprecated": false,
+            "description": "True when the dial may proceed (the attempt is recorded).",
+            "nullable": false,
+            "type": "boolean"
+          },
+          "last_at": {
+            "deprecated": false,
+            "description": "Unix seconds of the slot's last allowed dial (denied asks only).",
+            "nullable": false,
+            "type": "integer"
+          },
+          "window": {
+            "deprecated": false,
+            "description": "The configured cooldown window in seconds (denied asks only; powers the remaining-wait phrasing).",
+            "nullable": false,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "allowed",
+          "last_at",
+          "window"
+        ],
+        "type": "object"
+      },
+      "command.calls.disposition": {
+        "properties": {
+          "direction": {
+            "deprecated": false,
+            "description": "Call direction: in or out.",
+            "nullable": false,
+            "type": "string"
+          },
+          "disposition": {
+            "deprecated": false,
+            "description": "The operator's verdict: answered|voicemail|ivr|missed|failed|unknown. Only a human may claim answered.",
+            "nullable": false,
+            "type": "string"
+          },
+          "number": {
+            "deprecated": false,
+            "description": "The remote number (verbatim) the CRM contact resolves against.",
+            "nullable": false,
+            "type": "string"
+          },
+          "seconds": {
+            "deprecated": false,
+            "description": "Duration in seconds; negative values are clamped to 0.",
+            "nullable": false,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "disposition",
+          "number",
+          "direction",
+          "seconds"
+        ],
+        "type": "object"
+      },
+      "command.calls.disposition.response.204": {
+        "type": "object"
+      },
+      "command.calls.log": {
+        "properties": {
+          "direction": {
+            "deprecated": false,
+            "description": "Call direction: in or out.",
+            "nullable": false,
+            "type": "string"
+          },
+          "disposition": {
+            "deprecated": false,
+            "description": "How the call ended: answered|missed|voicemail|ivr|failed|unknown. The island reports only what it observed: missed (never connected) or unknown (media flowed; human vs voicemail is undetermined). answered arrives only via an operator confirm.",
+            "nullable": false,
+            "type": "string"
+          },
+          "key": {
+            "deprecated": false,
+            "description": "Island-generated idempotency key (UUID, max 128 chars). A retry with the same key answers 204 without journaling again; a failed (502) attempt stays retryable. Absent or empty means no dedupe.",
+            "nullable": false,
+            "type": "string"
+          },
+          "number": {
+            "deprecated": false,
+            "description": "The remote number the call was made with, e.g. +4917012345678.",
+            "nullable": false,
+            "type": "string"
+          },
+          "outcome": {
+            "deprecated": false,
+            "description": "Legacy island field, demoted via the legacy table (answered→unknown); superseded by disposition.",
+            "nullable": false,
+            "type": "string"
+          },
+          "seconds": {
+            "deprecated": false,
+            "description": "Duration in seconds; negative values are clamped to 0.",
+            "nullable": false,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "number",
+          "direction",
+          "seconds",
+          "key"
+        ],
+        "type": "object"
+      },
+      "command.calls.log.response.204": {
+        "type": "object"
+      },
+      "command.calls.noteSet": {
+        "properties": {
+          "body": {
+            "deprecated": false,
+            "description": "The note's plain text (max 4000 chars); empty clears the note.",
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "command.calls.noteSet.response.204": {
+        "type": "object"
+      },
+      "command.calls.reviewDispatch": {
+        "type": "object"
+      },
+      "command.calls.reviewDispatch.response.202": {
+        "properties": {
+          "dispatched": {
+            "deprecated": false,
+            "description": "True when the review job was accepted.",
+            "nullable": false,
+            "type": "boolean"
+          },
+          "duplicate": {
+            "deprecated": false,
+            "description": "True when this call already has a review (done or in flight).",
+            "nullable": false,
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "dispatched"
+        ],
+        "type": "object"
+      },
+      "command.calls.summaryDraft": {
+        "type": "object"
+      },
+      "command.calls.summaryDraft.response.200": {
+        "properties": {
+          "contact": {
+            "deprecated": false,
+            "description": "The number the draft addresses.",
+            "nullable": false,
+            "type": "string"
+          },
+          "duplicate": {
+            "deprecated": false,
+            "description": "True when this call was already summarized in the idempotency window.",
+            "nullable": false,
+            "type": "boolean"
+          },
+          "id": {
+            "deprecated": false,
+            "description": "The draft's review id (empty when duplicate).",
+            "nullable": false,
+            "type": "string"
+          },
+          "text": {
+            "deprecated": false,
+            "description": "The drafted follow-up text (empty when duplicate).",
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "contact",
+          "text"
+        ],
+        "type": "object"
+      },
+      "command.contacts.save": {
+        "properties": {
+          "name": {
+            "deprecated": false,
+            "description": "Display name; may be empty.",
+            "nullable": false,
+            "type": "string"
+          },
+          "number": {
+            "deprecated": false,
+            "description": "Dialable phone number, e.g. +4917012345678.",
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "number"
+        ],
+        "type": "object"
+      },
+      "command.contacts.save.response.204": {
+        "type": "object"
+      },
+      "command.metrics.latency_beacon": {
+        "properties": {
+          "bytes": {
+            "deprecated": false,
+            "description": "The segment's audio size in bytes (ASR beacons only).",
+            "nullable": false,
+            "type": "integer"
+          },
+          "interval": {
+            "deprecated": false,
+            "description": "The measured interval: dial_to_audio (dial-press to first remote audio) or asr_round_trip (spoken segment to text on screen).",
+            "nullable": false,
+            "type": "string"
+          },
+          "legs_ms": {
+            "deprecated": false,
+            "description": "The interval's named legs in milliseconds (server-fixed vocabulary, e.g. island_overhead/signaling/media_attach/audio_gap for dial_to_audio).",
+            "nullable": false,
+            "type": "object"
+          }
+        },
+        "required": [
+          "interval",
+          "legs_ms"
+        ],
+        "type": "object"
+      },
+      "command.metrics.latency_beacon.response.204": {
+        "type": "object"
+      },
+      "command.push.devices.register": {
+        "properties": {
+          "device_id": {
+            "deprecated": false,
+            "description": "The shell-minted per-install id (8-64 chars of letters, digits, hyphens, underscores).",
+            "nullable": false,
+            "type": "string"
+          },
+          "token": {
+            "deprecated": false,
+            "description": "The device's wake address: an ntfy topic or an FCM registration token. Write-only — never echoed back.",
+            "nullable": false,
+            "type": "string"
+          },
+          "transport": {
+            "deprecated": false,
+            "description": "The wake wire to register: ntfy or fcm (must be configured on the server).",
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "device_id",
+          "transport",
+          "token"
+        ],
+        "type": "object"
+      },
+      "command.push.devices.register.response.204": {
+        "type": "object"
+      },
+      "command.session.create": {
+        "properties": {
+          "extension": {
+            "deprecated": false,
+            "description": "The PBX extension to sign in, e.g. 1001.",
+            "nullable": false,
+            "type": "string"
+          },
+          "password": {
+            "deprecated": false,
+            "description": "The extension's PBX directory password.",
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "extension",
+          "password"
+        ],
+        "type": "object"
+      },
+      "command.session.create.response.201": {
+        "properties": {
+          "agent_default_mode": {
+            "deprecated": false,
+            "description": "The configured draft mode a reset restores.",
+            "nullable": false,
+            "type": "string"
+          },
+          "agent_mode": {
+            "deprecated": false,
+            "description": "The textagent's effective draft mode (agent seam on only; empty hides the nav pill).",
+            "nullable": false,
+            "type": "string"
+          },
+          "agent_mode_source": {
+            "deprecated": false,
+            "description": "Where the draft mode comes from: config or a runtime pin.",
+            "nullable": false,
+            "type": "string"
+          },
+          "agent_modes": {
+            "deprecated": false,
+            "description": "The draft modes the agent supports, in cycle order.",
+            "items": {
+              "deprecated": false,
+              "nullable": false,
+              "type": "string"
+            },
+            "nullable": false,
+            "type": "array"
+          },
+          "did": {
+            "deprecated": false,
+            "description": "Presented PSTN number (config identities), when known.",
+            "nullable": false,
+            "type": "string"
+          },
+          "display_name": {
+            "deprecated": false,
+            "description": "The passkey user's display name, when the extension is passkey-mapped.",
+            "nullable": false,
+            "type": "string"
+          },
+          "extension": {
+            "deprecated": false,
+            "description": "The signed-in extension.",
+            "nullable": false,
+            "type": "string"
+          },
+          "extensions": {
+            "deprecated": false,
+            "description": "Every extension mapped to the signed-in user (mapped logins only); more than one renders the line switcher.",
+            "items": {
+              "deprecated": false,
+              "nullable": false,
+              "type": "string"
+            },
+            "nullable": false,
+            "type": "array"
+          },
+          "numbers": {
+            "deprecated": false,
+            "description": "Every number mapped to the passkey user, deduplicated.",
+            "items": {
+              "deprecated": false,
+              "nullable": false,
+              "type": "string"
+            },
+            "nullable": false,
+            "type": "array"
+          },
+          "password": {
+            "deprecated": false,
+            "description": "Legacy wire only (credential brokering off): the session's directory password for the browser REGISTER.",
+            "nullable": false,
+            "type": "string"
+          },
+          "sip_credential": {
+            "deprecated": false,
+            "description": "Session-derived REGISTER credential (credential brokering on; the directory password never reaches the browser).",
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "extension"
+        ],
+        "type": "object"
+      },
+      "command.session.switch": {
+        "properties": {
+          "extension": {
+            "deprecated": false,
+            "description": "A mapped extension of the signed-in user to re-mint the session for.",
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "extension"
+        ],
+        "type": "object"
+      },
+      "command.session.switch.response.200": {
+        "properties": {
+          "agent_default_mode": {
+            "deprecated": false,
+            "description": "The configured draft mode a reset restores.",
+            "nullable": false,
+            "type": "string"
+          },
+          "agent_mode": {
+            "deprecated": false,
+            "description": "The textagent's effective draft mode (agent seam on only; empty hides the nav pill).",
+            "nullable": false,
+            "type": "string"
+          },
+          "agent_mode_source": {
+            "deprecated": false,
+            "description": "Where the draft mode comes from: config or a runtime pin.",
+            "nullable": false,
+            "type": "string"
+          },
+          "agent_modes": {
+            "deprecated": false,
+            "description": "The draft modes the agent supports, in cycle order.",
+            "items": {
+              "deprecated": false,
+              "nullable": false,
+              "type": "string"
+            },
+            "nullable": false,
+            "type": "array"
+          },
+          "did": {
+            "deprecated": false,
+            "description": "Presented PSTN number (config identities), when known.",
+            "nullable": false,
+            "type": "string"
+          },
+          "display_name": {
+            "deprecated": false,
+            "description": "The passkey user's display name, when the extension is passkey-mapped.",
+            "nullable": false,
+            "type": "string"
+          },
+          "extension": {
+            "deprecated": false,
+            "description": "The signed-in extension.",
+            "nullable": false,
+            "type": "string"
+          },
+          "extensions": {
+            "deprecated": false,
+            "description": "Every extension mapped to the signed-in user (mapped logins only); more than one renders the line switcher.",
+            "items": {
+              "deprecated": false,
+              "nullable": false,
+              "type": "string"
+            },
+            "nullable": false,
+            "type": "array"
+          },
+          "numbers": {
+            "deprecated": false,
+            "description": "Every number mapped to the passkey user, deduplicated.",
+            "items": {
+              "deprecated": false,
+              "nullable": false,
+              "type": "string"
+            },
+            "nullable": false,
+            "type": "array"
+          },
+          "password": {
+            "deprecated": false,
+            "description": "Legacy wire only (credential brokering off): the session's directory password for the browser REGISTER.",
+            "nullable": false,
+            "type": "string"
+          },
+          "sip_credential": {
+            "deprecated": false,
+            "description": "Session-derived REGISTER credential (credential brokering on; the directory password never reaches the browser).",
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "extension"
+        ],
+        "type": "object"
+      },
+      "command.transcripts.save": {
+        "properties": {
+          "callId": {
+            "deprecated": false,
+            "description": "The island's SIP Call-ID for the call the segment belongs to (max 128 chars).",
+            "nullable": false,
+            "type": "string"
+          },
+          "direction": {
+            "deprecated": false,
+            "description": "Call direction: in or out.",
+            "nullable": false,
+            "type": "string"
+          },
+          "remote": {
+            "deprecated": false,
+            "description": "The dial target (dialable number); stored sanitized so grouping keys never drift.",
+            "nullable": false,
+            "type": "string"
+          },
+          "startedAt": {
+            "deprecated": false,
+            "description": "Segment start, unix milliseconds.",
+            "nullable": false,
+            "type": "integer"
+          },
+          "text": {
+            "deprecated": false,
+            "description": "Trimmed plain text for the segment (max 4000 chars).",
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "callId",
+          "direction",
+          "remote",
+          "startedAt",
+          "text"
+        ],
+        "type": "object"
+      },
+      "command.transcripts.save.response.204": {
+        "type": "object"
+      },
+      "query.asr.transcribe": {
+        "type": "object"
+      },
+      "query.asr.transcribe.response.200": {
+        "properties": {
+          "text": {
+            "deprecated": false,
+            "description": "The transcribed plain text for the segment.",
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "type": "object"
+      },
+      "query.calls.dialSlots": {
+        "type": "object"
+      },
+      "query.calls.dialSlots.response.200": {
+        "properties": {
+          "slots": {
+            "deprecated": false,
+            "description": "Active windows, newest first (empty when none are live).",
+            "items": {
+              "deprecated": false,
+              "nullable": false,
+              "properties": {
+                "last_at": {
+                  "deprecated": false,
+                  "description": "Unix seconds of the slot's last allowed dial.",
+                  "nullable": false,
+                  "type": "integer"
+                },
+                "remote": {
+                  "deprecated": false,
+                  "description": "The sanitized remote inside its cooldown window.",
+                  "nullable": false,
+                  "type": "string"
+                },
+                "window": {
+                  "deprecated": false,
+                  "description": "The configured cooldown window in seconds.",
+                  "nullable": false,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "remote",
+                "last_at",
+                "window"
+              ],
+              "type": "object"
+            },
+            "nullable": false,
+            "type": "array"
+          }
+        },
+        "required": [
+          "slots"
+        ],
+        "type": "object"
+      },
+      "query.calls.noteGet": {
+        "type": "object"
+      },
+      "query.calls.noteGet.response.200": {
+        "properties": {
+          "body": {
+            "deprecated": false,
+            "description": "The note's plain text (empty when none).",
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "body"
+        ],
+        "type": "object"
+      },
+      "query.calls.reviewGet": {
+        "type": "object"
+      },
+      "query.calls.reviewGet.response.200": {
+        "properties": {
+          "confidence": {
+            "deprecated": false,
+            "description": "The agent's confidence 0-100 (present state only, 0 when absent).",
+            "nullable": false,
+            "type": "integer"
+          },
+          "draft_id": {
+            "deprecated": false,
+            "description": "The agent-side draft id (present state only).",
+            "nullable": false,
+            "type": "string"
+          },
+          "language": {
+            "deprecated": false,
+            "description": "The draft's language tag (present state only).",
+            "nullable": false,
+            "type": "string"
+          },
+          "state": {
+            "deprecated": false,
+            "description": "The review's lifecycle state: pending, present, or failed.",
+            "nullable": false,
+            "type": "string"
+          },
+          "text": {
+            "deprecated": false,
+            "description": "The drafted follow-up text (present state only).",
+            "nullable": false,
+            "type": "string"
+          },
+          "updated_at": {
+            "deprecated": false,
+            "description": "Unix seconds of the last state change.",
+            "nullable": false,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "state"
+        ],
+        "type": "object"
+      },
+      "query.contacts.delete": {
+        "type": "object"
+      },
+      "query.contacts.delete.response.204": {
+        "type": "object"
+      },
+      "query.contacts.list": {
+        "type": "object"
+      },
+      "query.contacts.list.response.200": {
+        "properties": {
+          "personal": {
+            "deprecated": false,
+            "description": "The extension's store-backed personal contacts.",
+            "items": {
+              "deprecated": false,
+              "nullable": false,
+              "properties": {
+                "id": {
+                  "deprecated": false,
+                  "nullable": false,
+                  "type": "string"
+                },
+                "name": {
+                  "deprecated": false,
+                  "nullable": false,
+                  "type": "string"
+                },
+                "number": {
+                  "deprecated": false,
+                  "nullable": false,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "name",
+                "number"
+              ],
+              "type": "object"
+            },
+            "nullable": false,
+            "type": "array"
+          },
+          "shared": {
+            "deprecated": false,
+            "description": "The operator's configured shared contacts.",
+            "items": {
+              "deprecated": false,
+              "nullable": false,
+              "properties": {
+                "name": {
+                  "deprecated": false,
+                  "nullable": false,
+                  "type": "string"
+                },
+                "number": {
+                  "deprecated": false,
+                  "nullable": false,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "number"
+              ],
+              "type": "object"
+            },
+            "nullable": false,
+            "type": "array"
+          }
+        },
+        "required": [
+          "personal",
+          "shared"
+        ],
+        "type": "object"
+      },
+      "query.csrf.refresh": {
+        "type": "object"
+      },
+      "query.csrf.refresh.response.200": {
+        "properties": {
+          "token": {
+            "deprecated": false,
+            "description": "The fresh masked CSRF token; pair it with the csrf_token cookie.",
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "token"
+        ],
+        "type": "object"
+      },
+      "query.push.devices.delete": {
+        "type": "object"
+      },
+      "query.push.devices.delete.response.204": {
+        "type": "object"
+      },
+      "query.push.devices.list": {
+        "type": "object"
+      },
+      "query.push.devices.list.response.200": {
+        "properties": {
+          "devices": {
+            "deprecated": false,
+            "description": "The extension's registered devices, newest registration first. The wake address (token) is write-only and never echoed.",
+            "items": {
+              "deprecated": false,
+              "nullable": false,
+              "properties": {
+                "device_id": {
+                  "deprecated": false,
+                  "description": "The shell-minted per-install id.",
+                  "nullable": false,
+                  "type": "string"
+                },
+                "transport": {
+                  "deprecated": false,
+                  "description": "The wake wire: ntfy or fcm.",
+                  "nullable": false,
+                  "type": "string"
+                },
+                "updated_at": {
+                  "deprecated": false,
+                  "description": "Last successful registration, unix nanoseconds.",
+                  "nullable": false,
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "device_id",
+                "transport",
+                "updated_at"
+              ],
+              "type": "object"
+            },
+            "nullable": false,
+            "type": "array"
+          }
+        },
+        "required": [
+          "devices"
+        ],
+        "type": "object"
+      },
+      "query.session.destroy": {
+        "type": "object"
+      },
+      "query.session.destroy.response.204": {
+        "type": "object"
+      },
+      "query.session.resume": {
+        "type": "object"
+      },
+      "query.session.resume.response.200": {
+        "properties": {
+          "agent_default_mode": {
+            "deprecated": false,
+            "description": "The configured draft mode a reset restores.",
+            "nullable": false,
+            "type": "string"
+          },
+          "agent_mode": {
+            "deprecated": false,
+            "description": "The textagent's effective draft mode (agent seam on only; empty hides the nav pill).",
+            "nullable": false,
+            "type": "string"
+          },
+          "agent_mode_source": {
+            "deprecated": false,
+            "description": "Where the draft mode comes from: config or a runtime pin.",
+            "nullable": false,
+            "type": "string"
+          },
+          "agent_modes": {
+            "deprecated": false,
+            "description": "The draft modes the agent supports, in cycle order.",
+            "items": {
+              "deprecated": false,
+              "nullable": false,
+              "type": "string"
+            },
+            "nullable": false,
+            "type": "array"
+          },
+          "did": {
+            "deprecated": false,
+            "description": "Presented PSTN number (config identities), when known.",
+            "nullable": false,
+            "type": "string"
+          },
+          "display_name": {
+            "deprecated": false,
+            "description": "The passkey user's display name, when the extension is passkey-mapped.",
+            "nullable": false,
+            "type": "string"
+          },
+          "extension": {
+            "deprecated": false,
+            "description": "The signed-in extension.",
+            "nullable": false,
+            "type": "string"
+          },
+          "extensions": {
+            "deprecated": false,
+            "description": "Every extension mapped to the signed-in user (mapped logins only); more than one renders the line switcher.",
+            "items": {
+              "deprecated": false,
+              "nullable": false,
+              "type": "string"
+            },
+            "nullable": false,
+            "type": "array"
+          },
+          "numbers": {
+            "deprecated": false,
+            "description": "Every number mapped to the passkey user, deduplicated.",
+            "items": {
+              "deprecated": false,
+              "nullable": false,
+              "type": "string"
+            },
+            "nullable": false,
+            "type": "array"
+          },
+          "password": {
+            "deprecated": false,
+            "description": "Legacy wire only (credential brokering off): the session's directory password for the browser REGISTER.",
+            "nullable": false,
+            "type": "string"
+          },
+          "sip_credential": {
+            "deprecated": false,
+            "description": "Session-derived REGISTER credential (credential brokering on; the directory password never reaches the browser).",
+            "nullable": false,
+            "type": "string"
+          }
+        },
+        "required": [
+          "extension"
+        ],
+        "type": "object"
+      },
+      "query.transcripts.delete": {
+        "type": "object"
+      },
+      "query.transcripts.delete.response.204": {
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "webphone_session",
+        "description": "The tab session cookie minted by POST /api/session; every session-gated surface requires it."
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "webphone machine API",
+      "description": "Session-gated JSON API behind the webphone UI: sessions, CSRF, personal contacts, and the CRM call journal. Credentials are verified against the PBX directory before a session is minted."
+    }
+  ]
+}

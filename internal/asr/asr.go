@@ -13,16 +13,8 @@
 package asr
 
 import (
-	"bytes"
 	"context"
-	"encoding/json/v2"
 	"errors"
-	"fmt"
-	"io"
-	"log/slog"
-	"mime/multipart"
-	"net/http"
-	"net/textproto"
 	"net/url"
 	"strconv"
 	"strings"
@@ -44,7 +36,7 @@ func init() {
 
 // Provider is the transcription seam every consumer depends on: one
 // call, one whole audio segment, one text back. The OpenAI-compatible
-// Client (this file) and the GoogleClient (google.go) both implement
+// Client (client.go) and the GoogleClient (google.go) both implement
 // it; the composition root picks the kind per config, and nothing
 // outside this package needs to know which wire is on the other end.
 type Provider interface {
@@ -117,78 +109,6 @@ const (
 	inferencePath = "/inference"
 )
 
-// Client talks to one OpenAI-compatible transcription provider.
-// branching-flow COMPOSITION_mixin (baselined): the client-chokepoint
-// idiom shared with crm/pbx by design; a mixin would weld independent
-// seams (registry 2026-10-05).
-type Client struct {
-	base   *url.URL
-	token  string
-	model  string
-	path   string
-	client *http.Client
-	stats  outcomes
-}
-
-// RecentOutcomes exposes the rolling round-trip state — the health
-// leg's truth (see outcomes.go).
-func (c *Client) RecentOutcomes() OutcomeSnapshot { return c.stats.snapshot() }
-
-// HealthCheck is the optional NON-CRITICAL probe leg (#22): the
-// outcomes verdict, never a provider round trip.
-func (c *Client) HealthCheck(ctx context.Context) error { return c.stats.HealthCheck(ctx) }
-
-// NewClient builds the client; baseURL like "http://127.0.0.1:8081". An
-// empty baseURL means "disabled": every call returns ErrDisabled and the
-// server treats the whole seam as off. Config validation rejects a token
-// without a URL before this runs.
-func NewClient(baseURL, token, model string) (*Client, error) { //nolint:branching-flow // single composition-root caller; boot validation rejects token-without-URL before this runs (triage 2026-10-11)
-	if baseURL == "" {
-		return &Client{}, nil
-	}
-
-	parsed, err := url.Parse(baseURL)
-	if err != nil {
-		return nil, errorfamily.WrapRejectionf(err, "asr.url", "parse asr url %q", baseURL)
-	}
-	if model == "" {
-		model = defaultModel
-	}
-
-	return &Client{
-		base:   parsed,
-		token:  token,
-		model:  model,
-		path:   transcriptionsPath,
-		client: &http.Client{Timeout: requestTimeout},
-	}, nil
-}
-
-// NewWhisperCppClient is NewClient for the native whisper.cpp server
-// wire (#21): the multipart body and the {"text"} response are the same
-// shape, the endpoint path is /inference. Unknown form fields (model,
-// language) are ignored by the server, so the body stays shared.
-func NewWhisperCppClient(baseURL, token, model string) (*Client, error) { //nolint:branching-flow // config primitives validated at load; parse-at-the-door ruling (strong-id/BD003 class)
-	client, err := NewClient(baseURL, token, model)
-	if err != nil {
-		return nil, err
-	}
-	client.path = inferencePath
-	return client, nil
-}
-
-// Enabled reports whether a provider is wired up.
-func (c *Client) Enabled() bool { return c != nil && c.base != nil }
-
-// Describe names the wire kind and the configured model.
-func (c *Client) Describe() string {
-	kind := "openai-compatible"
-	if c.path == inferencePath {
-		kind = "whisper.cpp"
-	}
-	return kind + " · " + c.model
-}
-
 // Request is one transcription job: a whole (segmented) audio file plus
 // the metadata the provider needs to decode and route it.
 type Request struct {
@@ -204,143 +124,4 @@ type Request struct {
 	// Language is an optional ISO-639-1 hint; empty lets the provider
 	// auto-detect.
 	Language string
-}
-
-// Transcribe sends one audio file to the provider and returns the text.
-// Every round trip feeds the outcomes tracker (latency metric + the
-// optional health leg) and one debug log line — the operator-greppable
-// latency signal (#23).
-func (c *Client) Transcribe(ctx context.Context, req Request) (text string, err error) {
-	started := time.Now()
-	defer func() {
-		latency := time.Since(started)
-		c.stats.record(latency, err)
-		slog.Debug("asr: transcription round-trip",
-			"duration_ms", latency.Milliseconds(), "audio_bytes", len(req.Audio),
-			"text_chars", len(text), "error", err)
-	}()
-	if !c.Enabled() {
-		return "", ErrDisabled
-	}
-	if len(req.Audio) == 0 {
-		return "", errorfamily.NewRejection("asr.empty", "no audio to transcribe")
-	}
-
-	body, contentType, err := buildMultipart(c.model, req)
-	if err != nil {
-		return "", err
-	}
-
-	target := c.base.JoinPath(c.path).String()
-	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, target, body)
-	if err != nil {
-		return "", errorfamily.WrapInfrastructuref(err, "asr.request", "asr: build request")
-	}
-	httpReq.Header.Set("Content-Type", contentType)
-	if c.token != "" {
-		httpReq.Header.Set("Authorization", "Bearer "+c.token)
-	}
-
-	resp, release, err := providerRoundTrip(c.client, httpReq)
-	if err != nil {
-		return "", err
-	}
-	defer release()
-
-	return decodeTranscript(resp.Body)
-}
-
-// transcriptResponse is the OpenAI-compatible /v1/audio/transcriptions
-// wire shape; providers that return a bare object or extra fields are
-// tolerated (unknown fields ignored by the decoder).
-type transcriptResponse struct {
-	Text string `json:"text"`
-}
-
-func decodeTranscript(r io.Reader) (string, error) {
-	raw, err := io.ReadAll(io.LimitReader(r, 1<<20))
-	if err != nil {
-		return "", errorfamily.WrapTransientf(err, "asr.read", "asr: read response")
-	}
-	var parsed transcriptResponse
-	if err := json.Unmarshal(raw, &parsed); err != nil {
-		return "", errorfamily.WrapTransientf(err, "asr.decode", "asr: decode response")
-	}
-	return strings.TrimSpace(parsed.Text), nil
-}
-
-// providerRoundTrip executes one provider request and classifies the
-// HTTP verdict — the ONE transport tail every Provider dialect shares
-// (the OpenAI-compatible wire and the Google recognize wire differ in
-// body shape and decoding, not in how a round trip fails). The returned
-// release func drains and closes the response body; the caller defers
-// it once done reading. A 429 is load, not misconfiguration: it maps to
-// a Transient error so the caller may retry after a beat.
-func providerRoundTrip(client *http.Client, httpReq *http.Request) (*http.Response, func(), error) {
-	resp, err := client.Do(httpReq)
-	if err != nil {
-		return nil, nil, errorfamily.WrapTransientf(err, "asr.transport", "asr: request")
-	}
-	release := func() {
-		_, _ = io.Copy(io.Discard, resp.Body)
-		_ = resp.Body.Close()
-	}
-	switch {
-	case resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden:
-		defer release()
-		return nil, nil, ErrUnauthorized
-	case resp.StatusCode == http.StatusTooManyRequests:
-		defer release()
-		return nil, nil, errorfamily.Newf(errorfamily.Transient, "asr.http", "asr: provider answered 429")
-	case resp.StatusCode != http.StatusOK:
-		defer release()
-		family := errorfamily.Transient
-		if resp.StatusCode < 500 {
-			family = errorfamily.Rejection
-		}
-		return nil, nil, errorfamily.Newf(family, "asr.http", "asr: provider answered %d", resp.StatusCode)
-	}
-	return resp, release, nil
-}
-
-// buildMultipart assembles the multipart body: the file part carries the
-// HONEST Content-Type (a provider that sniffs trusts the header less than
-// the bytes, but a truthful header never hurts), plus the model and the
-// optional language hint as fields.
-func buildMultipart(model string, req Request) (*bytes.Buffer, string, error) {
-	body := &bytes.Buffer{}
-	writer := multipart.NewWriter(body)
-
-	header := textproto.MIMEHeader{}
-	filename := req.Filename
-	if filename == "" {
-		filename = defaultFilename
-	}
-	contentType := req.ContentType
-	if contentType == "" {
-		contentType = "application/octet-stream"
-	}
-	header.Set("Content-Disposition", fmt.Sprintf(`form-data; name="file"; filename=%q`, filename))
-	header.Set("Content-Type", contentType)
-
-	part, err := writer.CreatePart(header)
-	if err != nil {
-		return nil, "", errorfamily.WrapInfrastructuref(err, "asr.encode", "asr: create file part")
-	}
-	if _, err := part.Write(req.Audio); err != nil {
-		return nil, "", errorfamily.WrapInfrastructuref(err, "asr.encode", "asr: write audio part")
-	}
-	if err := writer.WriteField("model", model); err != nil {
-		return nil, "", errorfamily.WrapInfrastructuref(err, "asr.encode", "asr: write model field")
-	}
-	if req.Language != "" {
-		if err := writer.WriteField("language", req.Language); err != nil {
-			return nil, "", errorfamily.WrapInfrastructuref(err, "asr.encode", "asr: write language field")
-		}
-	}
-	if err := writer.Close(); err != nil {
-		return nil, "", errorfamily.WrapInfrastructuref(err, "asr.encode", "asr: close multipart body")
-	}
-
-	return body, writer.FormDataContentType(), nil
 }

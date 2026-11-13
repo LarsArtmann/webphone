@@ -130,7 +130,15 @@ echo "ok: clean main at $(git rev-parse --short HEAD), $TAG is free"
 flake_version="$(sed -n 's/.*webphoneVersion = "\([^"]*\)".*/\1/p' flake.nix | head -1)"
 tag_version="$(git describe --tags --abbrev=0 2>/dev/null || echo '')"
 tag_version="${tag_version#v}"
-if [ "${WEBPHONE_RELEASE_SKIP_VERSION_GUARD:-0}" != "1" ] && [ -n "$tag_version" ] && [ "$flake_version" != "$tag_version" ]; then
+# Unset the override BEFORE any child process runs: the app's env parser
+# maps every WEBPHONE_* variable onto a config key, so a leaking
+# RELEASE_SKIP_VERSION_GUARD becomes an unknown-config-key WARN that
+# fails TestLoadCleanConfigWarnsNothing inside the gates (observed
+# 2026-11-08, the 2.10.0 train).
+skip_version_guard="${WEBPHONE_RELEASE_SKIP_VERSION_GUARD:-0}"
+unset WEBPHONE_RELEASE_SKIP_VERSION_GUARD
+
+if [ "$skip_version_guard" != "1" ] && [ -n "$tag_version" ] && [ "$flake_version" != "$tag_version" ]; then
 	echo "flake.nix webphoneVersion='$flake_version' but the newest tag is 'v$tag_version': a flake bump was never tagged, or this is a bump-before-tag commit. Reconcile before releasing (override: WEBPHONE_RELEASE_SKIP_VERSION_GUARD=1)." >&2
 	exit 1
 fi
@@ -203,8 +211,14 @@ else
 	fi
 fi
 
-step "6/9 link check (after push so the new tag link resolves)"
-run nix run nixpkgs#lychee -- .
+step "6/9 link check (after push so the new tag links resolve)"
+# The owner's PRIVATE repos 404 for an unauthenticated checker — those
+# links are verified by `gh` credentials elsewhere; exclude them rather
+# than teaching every release about each one. NOTE quoting: this string
+# is single-quoted, so it must carry exactly ONE backslash before the
+# dot — `\\.` reaches lychee as an escaped BACKSLASH (matches nothing)
+# and the private repos 404 the train (killed 2.10.0 AND 2.12.0).
+run nix run nixpkgs#lychee -- --exclude '^https://github\.com/LarsArtmann/(projects-management-automation|nix-international-telephony|pbx-artmann)/' .
 
 step "7/9 stack: relock, gates, push ($STACK)"
 [ -d "$STACK" ] || {
@@ -215,7 +229,14 @@ step "7/9 stack: relock, gates, push ($STACK)"
 	echo "stack tree not clean" >&2
 	exit 1
 }
-run bash -c "cd '$STACK' && nix flake lock --update-input webphone"
+# Pin the TAG, not the branch tip: the deprecated --update-input alias
+# is a full flake update, so a resume hours after the tag push would
+# re-lock the stack to whatever landed on main since (observed
+# 2026-11-11: the tip had gained an unverified refactor whose race
+# tests fail — the lock-move-guard refused the sweep commit and the
+# guard message is what caught the drift). The tag exists by step 5,
+# so the tag URL is always resolvable here.
+run bash -c "cd '$STACK' && nix flake lock --override-input webphone github:LarsArtmann/webphone/$TAG"
 if [ "$DRY_RUN" != "1" ]; then
 	git -C "$STACK" add flake.lock
 	git -C "$STACK" diff --cached --quiet || git -C "$STACK" commit -m "chore: bump webphone input to $TAG"

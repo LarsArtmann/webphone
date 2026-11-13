@@ -17,7 +17,7 @@
 
 ## Webphone overlap (verified)
 
-- **Hand-rolled conditional GET for embedded assets**, internal/server/assets.go: `assetHeaders` computes a strong sha256 content ETag (:93-115) and `ifNoneMatch(header, etag)` (:126) does a hand-written list-compare of `If-None-Match` values; `/manifest.webmanifest` inherits the same via `serveEmbedded`.
+- **Hand-rolled conditional GET for embedded assets**, internal/server/platform/assets.go (moved from internal/server/assets.go by the 2026-11-12 platform carve): `assetHeaders` computes a strong sha256 content ETag and the entitytag swap replaced the old `ifNoneMatch(header, etag)` hand-roll; `/manifest.webmanifest` inherits the same via `serveEmbedded`.
 - Everything else is deliberate no-validator policy: `/config.js` no-store, session/passkey/sso/csrf no-store, SSE no-cache. (`/openapi.json` was no-cache-only at audit time (apidocs.go:425); it now carries the middleware ETag per the landed Option B above — the `no-cache` directive itself stays, so the fetch still revalidates, just bodylessly on a match.)
 - The htmx-ext composite ETag comes from cqrs-htmx (which itself rides this library).
 
@@ -40,8 +40,8 @@ Option A AND option B both LANDED 2026-11-04. The B mount is deliberately minima
 All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
 
 ```console
-rg -n "ifNoneMatch" internal/server/assets.go            # expect 0 (deleted 2026-11-04)
-rg -n "entitytag" internal/server/assets.go              # expect the NewETag + MatchesIfNoneMatch use
+rg -n "ifNoneMatch" internal/server/platform/assets.go       # expect 0 (deleted 2026-11-04; file moved to platform/ 2026-11-12)
+rg -n "entitytag" internal/server/platform/assets.go         # expect the NewETag + MatchesIfNoneMatch use
 rg -n "conditionalGET" internal/server/server.go         # expect 4: 1 comment + 1 construction + 2 wraps (openapi.json, manifest)
 rg -n "go-etag" go.mod                                   # BOTH modules DIRECT since 2026-11-04
 git -C /home/lars/projects/go-etag describe --tags --abbrev=0   # v0.7.0 vs pin v0.6.1

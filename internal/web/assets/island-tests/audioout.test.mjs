@@ -116,3 +116,15 @@ test("device churn keeps a live selection and falls back off a dead one", async 
   await flush();
   assert.equal(select.value, "spk-1", "a live selection is kept across churn");
 });
+
+test("the default pick is APPLIED to the call audio, not skipped", () => {
+  select.value = "spk-1";
+  select.listeners.change.at(-1)({ target: select });
+  select.value = "";
+  select.listeners.change.at(-1)({ target: select });
+  assert.equal(
+    applied.at(-1),
+    "",
+    "choosing Default must move the audio back (issue #10's reset half)",
+  );
+});

@@ -342,6 +342,9 @@ func TestCSRFSecureFollowsTrustedOrigins(t *testing.T) {
 // both.
 func TestShellRendersValidJSONCSRFHxHeaders(t *testing.T) {
 	c := newClient(t)
+	// The shell renders only for a session (anonymous / redirects to the
+	// login page).
+	c.login("1001", "pw")
 	resp, body := c.do(http.MethodGet, "/", nil, "")
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("shell status %d", resp.StatusCode)

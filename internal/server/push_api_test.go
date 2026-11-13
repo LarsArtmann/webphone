@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/push"
 	"github.com/larsartmann/webphone/internal/readmodels"
 )
@@ -23,14 +24,14 @@ func (pushStubTransport) SendDraft(context.Context, string, push.Draft) error { 
 
 func newPushServer(t *testing.T) *testServer {
 	t.Helper()
-	engine := newTestEngine(t)
-	fanout := push.NewFanout(map[string]push.Sender{
+	devices := cqrs.NewPushDevices(newCoreSystem(t))
+	fanout := push.NewFanout(map[push.Transport]push.Sender{
 		push.TransportNtfy: pushStubTransport{},
 		push.TransportFcm:  pushStubTransport{},
-	})
+	}, nil)
 	return newTestServerWithPhoneAPI(t, "", func(d *Deps) {
 		d.Push = fanout
-		d.PushDevices = engine.PushDevices()
+		d.PushDevices = devices
 	})
 }
 
@@ -123,7 +124,8 @@ func TestPushDeviceRegistryValidation(t *testing.T) {
 		token      string
 		wantStatus int
 	}{
-		{"unknown transport", "device-1111-aaaa", "apns", "t", http.StatusUnprocessableEntity},
+		{"unknown transport vocabulary", "device-1111-aaaa", "apns", "t", http.StatusBadRequest},
+		{"junk transport case", "device-1111-aaaa", "Ntfy", "wp-topic", http.StatusBadRequest},
 		{"short device id", "short", "ntfy", "wp-topic", http.StatusUnprocessableEntity},
 		{"junk device id", "device 1111 !!!", "ntfy", "wp-topic", http.StatusUnprocessableEntity},
 		{"empty token", "device-1111-aaaa", "ntfy", "", http.StatusUnprocessableEntity},

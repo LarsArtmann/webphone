@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Architecture review for webphone</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script type="module">
+      import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+      mermaid.initialize({ startOnLoad: true, theme: "neutral", securityLevel: "loose" });
+    </script>
+    <style>
+      .seam { stroke-dasharray: 4 4; }
+      .leak { stroke: #dc2626; }
+      .deep { background: linear-gradient(135deg, #0f172a, #1e293b); }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-slate-900 font-sans">
+    <main class="max-w-5xl mx-auto px-6 py-12 space-y-12">
+      <header class="space-y-2">
+        <h1 class="text-3xl font-serif font-bold tracking-tight">Deepening opportunities — webphone</h1>
+        <p class="text-sm text-slate-500">2026-11-11 · scoped to this week's hot spots (UI triad, identity lanes, ring/push, journal seams)</p>
+        <div class="flex gap-4 text-xs text-slate-500 pt-1">
+          <span><span class="inline-block w-3 h-3 border border-slate-400 align-middle"></span> module</span>
+          <span><span class="inline-block w-4 border-t-2 border-dashed border-slate-400 align-middle"></span> seam</span>
+          <span><span class="inline-block w-4 border-t-2 border-red-500 align-middle"></span> leakage</span>
+          <span><span class="inline-block w-3 h-3 bg-slate-800 align-middle"></span> deep module</span>
+        </div>
+      </header>
+
+      <section id="candidates" class="space-y-10">
+
+        <article id="c1" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4 shadow-sm">
+          <div class="flex items-start justify-between gap-4">
+            <h2 class="text-xl font-serif font-bold">1 · Deepen the thread list read model</h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-1 rounded">Strong</span>
+              <span class="text-xs uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-1 rounded">in-process</span>
+            </div>
+          </div>
+          <div class="font-mono text-sm text-slate-600">internal/store/messages.go · internal/readmodels/{threads,summary_view}.go · internal/web/views/messages.templ · internal/server/notifier.go</div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
+              <div class="text-xs uppercase tracking-wider text-slate-400 mb-3">Before — the shape lives in three modules</div>
+              <div class="space-y-2">
+                <div class="border border-slate-300 bg-white px-3 py-2 text-xs uppercase tracking-wider">store <span class="text-slate-400 normal-case">ThreadSummary · ThreadFlag (beside SQL rows)</span></div>
+                <div class="border-l-4 border-red-400 pl-3 text-xs text-red-700">bridge: SummaryOfView re-parses view → store shape</div>
+                <div class="border border-slate-300 bg-white px-3 py-2 text-xs uppercase tracking-wider">readmodels <span class="text-slate-400 normal-case">ThreadSummaryView (engine wire)</span></div>
+                <div class="border-l-4 border-red-400 pl-3 text-xs text-red-700">views + notifier consume the store shape</div>
+              </div>
+            </div>
+            <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
+              <div class="text-xs uppercase tracking-wider text-slate-400 mb-3">After — one deep module owns the shape</div>
+              <div class="deep rounded-lg px-4 py-5 text-xs text-slate-100 uppercase tracking-wider">
+                readmodels — thread list module
+                <div class="mt-3 space-y-1 text-slate-400 normal-case tracking-normal">
+                  <div>ThreadSummary · ThreadFlag (moved)</div>
+                  <div>gate: ListThreads · Thread · SetFlag · MarkRead</div>
+                  <div class="text-slate-500">bridge deleted · wire stays raw inside</div>
+                </div>
+              </div>
+              <div class="mt-3 flex justify-around text-xs text-slate-500">
+                <span>views ─┐</span><span>notifier ─┤</span><span>admin ─┘</span><span class="text-slate-400">→ one seam</span>
+              </div>
+            </div>
+          </div>
+
+          <p class="text-sm"><span class="font-semibold">Problem:</span> the render shape's interface lives beside retired SQL rows, and ThreadFlag is defined twice (store + readmodels) — a field change touches 3 modules of implementation and 4 of consumers.</p>
+          <p class="text-sm"><span class="font-semibold">Solution:</span> ThreadSummary and ThreadFlag move into readmodels; the gate is the one seam every consumer already speaks.</p>
+          <ul class="text-sm text-slate-700 grid grid-cols-2 gap-x-6 gap-y-1 list-disc list-inside">
+            <li>locality: field changes concentrate in one module</li>
+            <li>bridge module deleted (deletion test passes)</li>
+            <li>store shrinks toward its sessions-only end state</li>
+            <li>leverage: one interface, N consumers</li>
+          </ul>
+          <div class="text-xs bg-amber-50 border border-amber-200 text-amber-800 rounded px-3 py-2">Aligns with the storage-ladder freeze ruling — no ADR conflict.</div>
+        </article>
+
+        <article id="c2" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4 shadow-sm">
+          <div class="flex items-start justify-between gap-4">
+            <h2 class="text-xl font-serif font-bold">2 · Deepen the login lanes into one identity module</h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="text-xs font-semibold uppercase tracking-wider bg-amber-100 text-amber-800 px-2 py-1 rounded">Worth exploring</span>
+              <span class="text-xs uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-1 rounded">ports &amp; adapters</span>
+            </div>
+          </div>
+          <div class="font-mono text-sm text-slate-600">internal/server/{login_page,session_api,passkey_api,passkey_settings,sso_api,auth_audit}.go over internal/{session,sso,userauth,authmap,sipcred}</div>
+
+          <div class="rounded-lg border border-slate-200 bg-white p-4">
+            <pre class="mermaid">
+flowchart LR
+  subgraph before[Before — five surfaces, one ritual each]
+    L1[login_page] --> V[directory-verify]
+    S1[session_api] --> V
+    P1[passkey_api] --> V
+    K1[passkey_settings] --> M[mapping resolve]
+    O1[sso_api] --> V
+    V --> T[mint + CSRF rotate]
+  end
+  subgraph after[After — one deep module]
+    A[auth: sign in · switch · revoke] --> D((ceremony + verify + mint, internal))
+  end
+  L1 -.-> A
+  S1 -.-> A
+  P1 -.-> A
+  K1 -.-> A
+  O1 -.-> A
+  classDef leak stroke:#dc2626,stroke-width:2px;
+  classDef deepbox fill:#0f172a,color:#f1f5f9;
+  class A deepbox
+            </pre>
+          </div>
+
+          <p class="text-sm"><span class="font-semibold">Problem:</span> verify and mint are already deep shared seams — the shallow residue is the mint→decorate→answer tail re-implemented 3× with drift (passkey alone carries the legacy password branch) and the nil-gate repeated in every passkey handler.</p>
+          <p class="text-sm"><span class="font-semibold">Solution:</span> the credential-answer tail absorbs into mintSession (DerivedCredentials policy inside), and route registration owns the seam-off gate — a smaller deepening than the full carve.</p>
+          <ul class="text-sm text-slate-700 grid grid-cols-2 gap-x-6 gap-y-1 list-disc list-inside">
+            <li>locality: auth bugs concentrate in one module</li>
+            <li>the ritual can never drift between lanes again</li>
+            <li>tests hit intents, not five handler copies</li>
+            <li>interface shrinks; implementation absorbs</li>
+          </ul>
+          <div class="text-xs bg-amber-50 border border-amber-200 text-amber-800 rounded px-3 py-2">The 2026-10-17 dormant blueprint owns this seam — its trigger ("next auth-surface change") fired today; reopening honors the ruling, it does not contradict it.</div>
+        </article>
+
+        <article id="c3" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4 shadow-sm">
+          <div class="flex items-start justify-between gap-4">
+            <h2 class="text-xl font-serif font-bold">3 · Deepen the call lifecycle behind intents</h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="text-xs font-semibold uppercase tracking-wider bg-amber-100 text-amber-800 px-2 py-1 rounded">Worth exploring</span>
+              <span class="text-xs uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-1 rounded">in-process</span>
+            </div>
+          </div>
+          <div class="font-mono text-sm text-slate-600">internal/web/assets/island/app/calls.js (~2 000 lines) · state.js · connection.js</div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
+              <div class="text-xs uppercase tracking-wider text-slate-400 mb-3">Before — one module, four vocabularies</div>
+              <div class="border border-slate-300 bg-white px-3 py-3 text-xs space-y-1">
+                <div class="uppercase tracking-wider">calls.js</div>
+                <div class="text-slate-400">sip.js transport talk</div>
+                <div class="text-red-700">verdict waiting (send ≠ settled)</div>
+                <div class="text-slate-400">DOM render · post-call products</div>
+                <div class="text-slate-400">notes · disposition · summarize</div>
+              </div>
+            </div>
+            <div class="rounded-lg border border-slate-200 bg-stone-50 p-4">
+              <div class="text-xs uppercase tracking-wider text-slate-400 mb-3">After — intents in, settled state out</div>
+              <div class="deep rounded-lg px-4 py-4 text-xs text-slate-100 uppercase tracking-wider">
+                call lifecycle
+                <div class="mt-2 space-y-1 text-slate-400 normal-case tracking-normal">
+                  <div>interface: answer · hold · end · transfer</div>
+                  <div class="text-slate-500">sip.js talk + verdict discipline inside</div>
+                </div>
+              </div>
+              <div class="mt-2 text-xs text-slate-500 text-center">render consumes settled state only</div>
+            </div>
+          </div>
+
+          <p class="text-sm"><span class="font-semibold">Problem:</span> the hold/resume honesty bug exists because verdict logic and state settle live in different vocabularies inside one module — a locality failure.</p>
+          <p class="text-sm"><span class="font-semibold">Solution:</span> a deep lifecycle module with an intent interface; sip.js talk and the verdict discipline absorb into it, renders consume settled state.</p>
+          <ul class="text-sm text-slate-700 grid grid-cols-2 gap-x-6 gap-y-1 list-disc list-inside">
+            <li>the honesty contract gets one enforcement point</li>
+            <li>tests hit intents, not transport stubs</li>
+            <li>post-call products stop riding the transport path</li>
+            <li>calls.js splits along seams that already exist</li>
+          </ul>
+        </article>
+
+        <article id="c4" class="rounded-xl border border-slate-200 bg-white p-6 space-y-4 shadow-sm">
+          <div class="flex items-start justify-between gap-4">
+            <h2 class="text-xl font-serif font-bold">4 · One adapter owns push delivery policy</h2>
+            <div class="flex gap-2 shrink-0">
+              <span class="text-xs font-semibold uppercase tracking-wider bg-emerald-100 text-emerald-800 px-2 py-1 rounded">Strong</span>
+              <span class="text-xs uppercase tracking-wider bg-slate-100 text-slate-600 px-2 py-1 rounded">ports &amp; adapters</span>
+            </div>
+          </div>
+          <div class="font-mono text-sm text-slate-600">internal/push/push.go · internal/server/hooks/ring.go · internal/server/api/summary_api.go · internal/fax (draft fan-out caller)</div>
+
+          <div class="rounded-lg border border-slate-200 bg-white p-4">
+            <pre class="mermaid">
+sequenceDiagram
+  participant R as ring hook
+  participant F as Fanout (deep)
+  participant N as ntfy / FCM adapters
+  Note over R,N: Before — policy re-implemented per caller
+  R->>R: send loop, request context, blocks the 202
+  R->>N: send × devices (synchronous)
+  Note over F,N: After — callers hand facts, never loops
+  R->>F: Ring fact
+  F->>N: detached, budgeted, prunes dead devices
+            </pre>
+          </div>
+
+          <p class="text-sm"><span class="font-semibold">Problem:</span> "fire a push without blocking, prune the dead" is implemented twice, divergently — and Fanout's own interface is as wide as its implementation (Send/SendDraft duplicate the guard+route boilerplate); the prune needs the device registry, which is why callers compose the loop themselves.</p>
+          <p class="text-sm"><span class="font-semibold">Solution:</span> a deep Fanout.FanEvent(ctx, owner, event) owns detach + budget + prune-on-unregistered; both caller loops die (deletion test passes), callers hand facts.</p>
+          <ul class="text-sm text-slate-700 grid grid-cols-2 gap-x-6 gap-y-1 list-disc list-inside">
+            <li>the ring contract violation fixes itself</li>
+            <li>leverage: one policy, three callers</li>
+            <li>two adapters already exist — real seam</li>
+            <li>prune logic stops living in a hook</li>
+          </ul>
+        </article>
+
+      </section>
+
+      <section id="top-recommendation" class="rounded-xl border-2 border-slate-800 bg-white p-6 space-y-2">
+        <div class="text-xs uppercase tracking-wider text-slate-400">Top recommendation</div>
+        <h2 class="text-xl font-serif font-bold"><a href="#c4" class="underline decoration-slate-300">4 · One adapter owns push delivery policy</a></h2>
+        <p class="text-sm text-slate-700">Smallest deepening with a live defect behind it: the fanout already has two adapters (ntfy, FCM — a real seam by the two-adapter rule), the policy already exists in one caller, and the ring hook's contract violation is today's filed finding. Candidates 1 and 2 are the bigger structural wins and follow naturally.</p>
+      </section>
+
+      <footer class="text-xs text-slate-400 pt-4">Grounded in the 2026-11-11 full-code-review (verified findings) + package coupling metrics. Vocabulary: module / interface / depth / seam / adapter / leverage / locality.</footer>
+    </main>
+  </body>
+</html>

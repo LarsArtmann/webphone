@@ -16,7 +16,12 @@ import (
 // ErrNotFound is returned when a row the caller asked for does not exist.
 var ErrNotFound = errors.New("not found")
 
-// Messages is the thread/message persistence.
+// Messages is the SQL ladder's thread/message persistence — TEST-ONLY
+// since the journal swap (SUPERB A34): no production code constructs it
+// (the composition root stopped registering it 2026-11-12; the gates are
+// answered by the journal-backed backend). The tables themselves stay:
+// retention's sweep empties them and §5's DROP migration removes them
+// (docs/planning/2026-11-09_storage-ladder-retirement.md).
 type Messages struct {
 	db *sql.DB
 }
@@ -143,9 +148,10 @@ func (s *Messages) MessageByProviderRef(ctx context.Context, ref string) (domain
 	return msg, nil
 }
 
-// ThreadSummary is a thread row as shown in the thread list: the thread
-// plus a preview of its last message.
-type ThreadSummary struct {
+// threadSummary is the SQL ladder's row shape for the thread list. The
+// render shape lives in readmodels.threadSummary now — this one is
+// store-internal and dies with the frozen ladder.
+type threadSummary struct {
 	Thread         domain.Thread
 	LastBody       string
 	LastDirection  domain.Direction
@@ -153,29 +159,32 @@ type ThreadSummary struct {
 	LastAttachment bool // the last message carries at least one attachment
 }
 
-// ThreadFlag names one organization axis of a thread (M22). It is the
-// persistence-layer spelling of the three bools on domain.Thread; the
-// handlers map their action path onto it.
-type ThreadFlag string
+// threadFlag is the SQL spelling of the three organization axes (M22).
+// The vocabulary's ONE home is readmodels.ThreadFlag — the gate takes
+// that type, the SQL ladder keeps its private spelling (import-bound:
+// readmodels imports store, so store cannot speak the readmodels type).
+type threadFlag string
 
 const (
-	FlagPinned   ThreadFlag = "pinned"
-	FlagArchived ThreadFlag = "archived"
-	FlagMuted    ThreadFlag = "muted"
+	flagPinned   threadFlag = "pinned"
+	flagArchived threadFlag = "archived"
+	flagMuted    threadFlag = "muted"
 )
 
 // threadFlagColumns maps each flag to its column; one home for the
 // toggle's UPDATE target.
-var threadFlagColumns = map[ThreadFlag]string{
-	FlagPinned:   "pinned",
-	FlagArchived: "archived",
-	FlagMuted:    "muted",
+var threadFlagColumns = map[threadFlag]string{
+	flagPinned:   "pinned",
+	flagArchived: "archived",
+	flagMuted:    "muted",
 }
 
-// SetThreadFlag sets or clears one organization flag on the owner's
-// thread. A missing thread (or another owner's) is ErrNotFound.
-func (s *Messages) SetThreadFlag(
-	ctx context.Context, owner domain.Extension, id domain.ThreadID, flag ThreadFlag, on bool,
+// setThreadFlag sets or clears one organization flag on the owner's
+// thread (the SQL ladder's private verb — the gate is cqrs-only since
+// the journal swap; nothing outside the package can call this). A
+// missing thread (or another owner's) is ErrNotFound.
+func (s *Messages) setThreadFlag(
+	ctx context.Context, owner domain.Extension, id domain.ThreadID, flag threadFlag, on bool,
 ) error {
 	column, ok := threadFlagColumns[flag]
 	if !ok {
@@ -200,17 +209,17 @@ func boolInt(on bool) int {
 // ListThreads returns the owner's active threads: pinned first, then
 // most recently active. Archived threads are excluded (design D6) —
 // ListArchivedThreads serves the archived view.
-func (s *Messages) ListThreads(ctx context.Context, owner domain.Extension) ([]ThreadSummary, error) {
+func (s *Messages) ListThreads(ctx context.Context, owner domain.Extension) ([]threadSummary, error) {
 	return listRows(ctx, s.db, "list threads", threadSummaryQuery("t.archived = 0"),
-		[]any{owner.String()}, scanThreadSummary)
+		[]any{owner.String()}, scanthreadSummary)
 }
 
 // ListArchivedThreads returns the owner's archived threads, most
 // recently active first (no pinned ordering — the archived view is a
 // filing cabinet, not a dashboard).
-func (s *Messages) ListArchivedThreads(ctx context.Context, owner domain.Extension) ([]ThreadSummary, error) {
+func (s *Messages) ListArchivedThreads(ctx context.Context, owner domain.Extension) ([]threadSummary, error) {
 	return listRows(ctx, s.db, "list archived threads", threadSummaryQuery("t.archived = 1"),
-		[]any{owner.String()}, scanThreadSummary)
+		[]any{owner.String()}, scanthreadSummary)
 }
 
 // CountArchived reports how many of the owner's threads are archived —
@@ -247,7 +256,7 @@ func threadSummaryQuery(archivedFilter string) string {
 // threads stay hidden (design D6 — search must not resurrect what
 // archive hid). LIKE metacharacters in the needle are escaped, so a
 // search for "50%" finds "50%", not "50" followed by anything.
-func (s *Messages) SearchThreads(ctx context.Context, owner domain.Extension, needle string) ([]ThreadSummary, error) {
+func (s *Messages) SearchThreads(ctx context.Context, owner domain.Extension, needle string) ([]threadSummary, error) {
 	pattern := "%" + likeEscape(needle) + "%"
 	return listRows(ctx, s.db, "search threads", `
 		SELECT t.id, t.owner, t.network, t.remote, t.last_activity_at, t.unread,
@@ -264,7 +273,7 @@ func (s *Messages) SearchThreads(ctx context.Context, owner domain.Extension, ne
 			WHERE sm.thread_id = t.id AND sm.owner = t.owner AND sm.body LIKE ? ESCAPE '\'
 		  ))
 		ORDER BY t.pinned DESC, t.last_activity_at DESC
-	`, []any{owner.String(), pattern, pattern}, scanThreadSummary)
+	`, []any{owner.String(), pattern, pattern}, scanthreadSummary)
 }
 
 // likeEscape escapes SQL LIKE metacharacters so the needle matches them
@@ -273,7 +282,7 @@ func likeEscape(needle string) string {
 	return strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(needle)
 }
 
-func scanThreadSummary(row rowScanner) (ThreadSummary, error) {
+func scanthreadSummary(row rowScanner) (threadSummary, error) {
 	var (
 		id, owner, network, remote string
 		lastActivity               int64
@@ -284,10 +293,10 @@ func scanThreadSummary(row rowScanner) (ThreadSummary, error) {
 	)
 	if err := row.Scan(&id, &owner, &network, &remote, &lastActivity, &unread,
 		&pinned, &archived, &muted, &lastBody, &lastDir, &lastCh, &lastAttachment); err != nil {
-		return ThreadSummary{}, errorfamily.WrapInfrastructuref(err, "store.thread_scan", "scan thread row") //nolint:erraudit // context_loss FP: lastDir is an OUT param, garbage exactly when the scan failed — no honest context to include
+		return threadSummary{}, errorfamily.WrapInfrastructuref(err, "store.thread_scan", "scan thread row") //nolint:erraudit // context_loss FP: lastDir is an OUT param, garbage exactly when the scan failed — no honest context to include
 	}
 
-	sum := ThreadSummary{
+	sum := threadSummary{
 		Thread: domain.Thread{
 			ID:             domain.MustThreadID(id),
 			Owner:          domain.MustParseExtension(owner),
@@ -510,7 +519,7 @@ func (s *Messages) MarkThreadRead(ctx context.Context, owner domain.Extension, i
 // inventory. Archived threads are INCLUDED (their archived flag rides
 // the summary so the view can badge them): an admin's inventory must not
 // resurrect what archive hid per line, it must show what exists.
-func (s *Messages) ListAllThreads(ctx context.Context, limit int) ([]ThreadSummary, error) {
+func (s *Messages) ListAllThreads(ctx context.Context, limit int) ([]threadSummary, error) {
 	rows, err := s.db.QueryContext(ctx, `
 		SELECT t.id, t.owner, t.network, t.remote, t.last_activity_at, t.unread,
 		       t.pinned, t.archived, t.muted,
@@ -527,9 +536,9 @@ func (s *Messages) ListAllThreads(ctx context.Context, limit int) ([]ThreadSumma
 		return nil, errorfamily.WrapInfrastructuref(err, "store.threads_list_all", "list all threads")
 	}
 	defer rows.Close() //nolint:errcheck // read-side close on defer; rows.Err owns the verdict
-	var out []ThreadSummary
+	var out []threadSummary
 	for rows.Next() {
-		summary, err := scanThreadSummary(rows)
+		summary, err := scanthreadSummary(rows)
 		if err != nil {
 			return nil, errorfamily.WrapInfrastructuref(err, "store.threads_list_all", "scan all-threads row")
 		}

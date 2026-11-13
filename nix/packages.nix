@@ -6,6 +6,7 @@
 # only — no build clock, byte-reproducibility preserved).
 {
   self,
+  inputs,
   webphoneVersion,
   ...
 }:
@@ -20,6 +21,42 @@
     {
       packages = {
         default = self'.packages.webphone;
+
+        # The templ compiler pinned to go.mod's library version. nixpkgs'
+        # pkgs.templ lags (0.3.1020) and emits pre-wave codegen that no
+        # longer compiles against templ v0.3.1100 (templ.JoinURLErrs era) —
+        # the devshell and CI shells use THIS package so the committed
+        # `templ generate` output always comes from the same compiler the
+        # library pins. Keep the rev in lockstep with go.mod's
+        # github.com/a-h/templ line (the AGENTS.md templ rule).
+        templ = pkgs.buildGoModule.override { go = pkgs.go_1_27; } {
+          pname = "templ";
+          version = "0.3.1100";
+          src = pkgs.fetchFromGitHub {
+            owner = "a-h";
+            repo = "templ";
+            rev = "v0.3.1100";
+            hash = "sha256-QViQAMtCqaXS4GodlSCW/nE4Sox+EF49sbb7h9RBIS0=";
+          };
+          vendorHash = "sha256-MMAoHofeZzGNFsjxY4nrPRyaiKOk4fLYY+kIVmdAL3g=";
+          subPackages = [ "cmd/templ" ];
+        };
+
+        # The docs-health battery, built from the locked rev of the upstream
+        # repo (flake = false in flake.nix — see the comment there). Stdlib
+        # only, so vendorHash = null; `subPackages` keeps the build inside
+        # cmd/docs-gates and away from the nested pkg/provider module. The
+        # upstream suite needs its own fixtures, and the gate that matters is
+        # the one this repo's corpus exercises, so doCheck stays off.
+        docs-gates = pkgs.buildGoModule {
+          pname = "docs-gates";
+          version = "unstable-2026-11-06";
+          src = inputs.docs-gates;
+          vendorHash = null;
+          subPackages = [ "cmd/docs-gates" ];
+          doCheck = false;
+          env.CGO_ENABLED = "0";
+        };
 
         # The vulnix triage verdict logic as a standalone CLI so the
         # `.#vulnix` app and the fixture check exercise the SAME code:
@@ -124,7 +161,7 @@
                 ];
               };
 
-              vendorHash = "sha256-EGkzo28ekHJPOsJdFtHOqa7MXAsjRNsguA52anKLlVE=";
+              vendorHash = "sha256-8eFWxYP8Ky6nLZVzNry0KmMOE8KPS8xhRKEy9Xoj5PU=";
 
               proxyVendor = true;
 

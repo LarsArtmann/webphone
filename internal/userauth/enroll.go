@@ -36,7 +36,7 @@ func (s *Service) MintEnrollToken(ctx context.Context, email string, userID iden
 	token := base64.RawURLEncoding.EncodeToString(raw)
 	sum := sha256.Sum256([]byte(token))
 	if err := s.enroll.Mint(ctx, hex.EncodeToString(sum[:]), email, userID.Get().String(), time.Now().Add(EnrollTokenTTL)); err != nil {
-		return "", err //nolint:erraudit // the enroll seam owns the classification (readmodels.enroll_*)
+		return "", err //nolint:erraudit // the enroll seam owns the classification (cqrs.enroll_*)
 	}
 	return token, nil
 }

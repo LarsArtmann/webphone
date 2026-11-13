@@ -5,25 +5,662 @@ through (docs-health: shipped work moves to CHANGELOG / FEATURES — one home
 per fact). Long-shot ideas and owner calls live in ROADMAP.md; every row
 cites its source report in Evidence.
 
-Last sweep: 2026-11-05 (hygiene train, assistant): CI-verified the CONCURRENT bump
-train GREEN (go-sse v0.7.0 + templ v0.3.1100 + loginpage v4.16.0 + cqrs-htmx v4.16.0 +
-usermgmt v4.19.0 + go-health v0.10.0 + templ-components v1.27.0; vendorHash re-pinned
-by its session after the named-hash red; full local suite green — its fleet-libs row
-below records the landing and the one residual). Executed this sweep: the retention
-test package (destructive sweeper had zero pins — see the hygiene-train section),
-tracked-artifact untracking (fsprobe + ui-shots-before), and the TODO_LIST truth
-sweep: executed sections DELETED (live-smoke CI, the dock-train M18 + E2E tails, the
-error-agents shipped enumeration, the cqrs-htmx + loginpage tails, the catalog and
-wire-contracts shipped prose, the declarative tier log, gate-recovery, the v2.8.0
-deploy tail — prod verified on v2.9.0, the island-honesty E2E leg — discharged
-2026-10-29, the samber/do tails — folded into /health, the god-package carve record —
-blueprint lives in docs/modularization/, the hub cross-link [x]); contradictions fixed
-at their rows (the #7/#8 header, the ai-phone dangling clause, the catalog
-"push pending" header); the stack-E2E mention sprawl collapsed to its ONE home
-(Cross-repo obligations). Sweep history lives in CHANGELOG + docs/status — this front
-matter no longer carries it (one home per fact, per the rule above).
+Last sweep: 2026-11-06 (docs-health v8, assistant): harvested the GitHub-issue
+train's residue (§ below), re-verified every living doc against HEAD `54c8bb17`,
+archived the August/September cohort's resolved snapshots, and adopted the
+`docs-gates` battery (`scripts/docs-gates.sh` + `.docs-gates.json`) as the
+standing docs health gate. Prior sweeps live in CHANGELOG + docs/status — this
+front matter does not carry their history (one home per fact, per the rule above).
 
 ## Open tasks
+
+### UI/UX destination trains (ratified 2026-11-11 — plan: docs/planning/2026-11-11_15-11_ui-ux-destination.md)
+
+- ~~**Train 3 tap-through proof** (§f-13 of the 04-09 report): a driver script taps
+  Phone → island full-screen → a real tab returns, capturing the three states —
+  the tab's LOOK is captured (bar fits 8 slots after the `min-width: 0` fix,
+  probe-verified `scrollW 358 ≤ nav 360` at 375px) but the FLOW is unproven.~~ →
+  done 2026-11-12 — `ui-capture.py --tap-through` (390x844, asserts all 3 states in DOM, aborts non-zero) ran GREEN 3/3; and it caught a REAL shipped defect: the phone-focus rule hid `.wp-main-col` (nav inside it — the only return affordance), fixed to hide `#tab-content` + `#wp-tab-error` only, re-proven green (app.css `@media (max-width:900px)` block)
+- ~~**Stack E2E strip assumption** (§f-14): the strip gained a JS-created button child;
+  `refreshNav`'s `[data-tab]` walk is safe by construction — confirm the stack's
+  `tests/browser-e2e.py` never assumes a strip child count.~~ →
+  done 2026-11-12 — verified: the stack E2E touches the nav ONLY via `[data-tab='{tab}']` exact selectors (line 680), no child-count walks; the JS-created Phone tab carries NO data-tab attribute — safe by construction
+- ~~**German stacked-table lane** (§f-12): the mobile History stack renders
+  `td[data-label]` copy from markup — verify the longest DE labels ("Zeit"/"Dauer")
+  fit their cells at 390px (the lane was verified EN-only).~~ →
+  done 2026-11-12 — measured GREEN at a TRUE 390px viewport (WebDriver `set_window_size`; the `--window-size` flag silently clamps at 500): a fake PBX (`/phone-api/history` + the voicemail-summary credential verify) served 3 CDR rows and every Zeit/Dauer stacked cell fits (scrollW == clientW, no lane-wrapper overflow); gotcha recorded — a harness `--window-size 390x844` boot measures 500px wide unless the WebDriver API resizes
+- ~~**Phone label i18n** (§f-15): the label is English-only by the D3 shell rule while
+  the localized tabs sit beside it — owner eyes or an owner exception.~~ →
+  done 2026-11-12 — batched as Q1 of docs/planning/2026-11-12_07-05_owner-calls-batch.md (default stands: D3 keeps the label English)
+- ~~**Destination-doc wording** (§f-29): Train 3's acceptance line says
+  "ring-while-closed parity"; the shipped tab is navigation focus, not push —
+  align the plan wording with what shipped.~~ →
+  done 2026-11-12 — the acceptance line now reads navigation-focus parity (wording-only diff in docs/planning/2026-11-11_15-11_ui-ux-destination.md)
+
+### UI token/craft + Train 2/3 residue (2026-11-12, harvested from the 04-09 report §f)
+
+- ~~**Hover matrix per surface** (§f-18): `--hover SURFACE=SELECTOR` pairs so the
+  hover lane can vary per shot instead of one global selector.~~ →
+  done 2026-11-12 — `--hover-map` shipped (repeatable SURFACE=SELECTOR, last-wins parse) and proven live: messages/history/settings × light/dark at 390x844 = exactly 6 shots
+- ~~**Fixed-element caveat print** (§f-19): full-page CDP captures render
+  `position: fixed` at the original viewport's bottom — one harness print
+  prevents the next "the bar is mid-image" misread (cost a §d scare once).~~ →
+  done 2026-11-12 — main() prints the caveat once on every full-page run (ruff + self-test green)
+- ~~**helpers.mjs registry-root doc** (§f-20): the stub's querySelector walks
+  registry-root SUBTREES only (a root can never match itself; `body` is not a
+  root) — write it where the next spec author will read it (cost a debug session).~~ →
+  done 2026-11-12 — doc line landed at the document.querySelector stub in island-tests/helpers.mjs
+- ~~**`.wp-day-head` dual context** (§f-21): one class, two display semantics
+  (flex in transcripts, table-cell in the CDR table) — split the classes at the
+  next touch of either.~~ →
+  done 2026-11-12 — split landed: CDR rows now `wp-table-day-head` (app.css counter-rule block + 2 container-query sites, history.templ + regenerated `_templ.go`, 3 history_test.go pins renamed); transcripts keep `.wp-day-head`; both suites green
+- ~~**Table region focus ring** (§f-22): the scroll wrapper's `tabindex="0"` needs a
+  focus-visible check INSIDE the container — sticky heads clip the ring.~~ →
+  done 2026-11-12 — `.wp-table-wrap:focus-visible` ring added (outline-offset −2px)
+- ~~**Empty-state action buttons** (§f-23, owner eyes): rows point at the composer
+  ("add one above") but carry no button — the library supports ActionText;
+  ruled out as a duplicate affordance, owner may disagree.~~ →
+  done 2026-11-12 — batched as Q2 of docs/planning/2026-11-12_07-05_owner-calls-batch.md (the decline stands by default)
+- ~~**Island state-layer mirror** (§f-25): `island/style.css` took the token
+  additions but not the hover state-layer sweep — deliberate (island buttons
+  use :active scale) or a gap? Decide, write the ruling.~~ →
+  done 2026-11-12 — ruled DELIBERATE: island buttons own color-shift hovers (accent-strong/danger-strong/surface-2) + press-scale (reduced-motion-neutralized); the shell's 6% overlay sweep is a dense-row idiom, not an island obligation
+- ~~**art-dupl sweep** (§f-30): the table stack lane / reports grid / contacts grid
+  share grid idioms — adjudicate fresh clones against the pinned baseline.~~ →
+  done 2026-11-12 — pinned v0.7.2 `-t 1` sweep: the three grid lanes carry ZERO clone groups (CSS/templ idiom, not Go duplication); baseline 110 holds; the run's one new group is another session's in-flight VoicemailSummary twin (fix-forward; sweep-log row in docs/dedup-registry.md)
+- ~~**whitespace-drift CSS-indent verification** (§f-31): confirm the formatter
+  adjudication would catch a 1-space-indent CSS commit (the §d-3 incident class).~~ →
+  done 2026-11-12 — planted probe: treefmt re-indents the 1-space CSS ("1 changed") and `--ci` mode exits 1 on the non-canonical bytes; canonical file passes
+- ~~**`wp-phone-focus` seeded capture** (§f-32): a 390-wide pass with the focus class
+  pre-seeded via script — the dialer-focus LAYOUT is captureable without taps.~~ →
+  done 2026-11-12 — `--seed-class html=wp-phone-focus` run captured the dialer-focus layout (2 shots, 390x844) without taps
+- ~~**Sticky-head stacking** (§f-35): table thead z-index (1, inside the wrapper)
+  vs palette (200) and toasts (100) — confirm no bleed when a toast crosses a
+  scrolled table.~~ →
+  done 2026-11-12 — census + ladder commented in app.css above `.wp-table thead th` (thead 1 < header 10 < snippet picker 30 < mobile island 50 < mobile nav 90 < skip links + #toasts 100 < palette 200); `.wp-table-wrap` is overflow-only (NOT a stacking context), so no overlay bleeds under the sticky head
+
+### 2026-11-12/13 file-size split train residue (harvested from the 22-50 report §f)
+
+The five-file split train closed 2026-11-12; the sixth file
+(`internal/matrix/receiver.go`, #248) was split 2026-11-13 (`sync.go`
+wire-surface carve, byte-pure motion, package + arch suites green) and
+`buildflow -s file-size-check` reads exit 0. This section holds the
+report's still-open §f rows.
+
+- [x] **Raceprobe fix decision** (#249, High): ~~await-poll vs
+      product-semantics ruling (owner question §g3 of the 22-50
+      report)~~ → DECIDED + SHIPPED 2026-11-13 (pareto T14): await-poll,
+      not semantics — the probe's exact-count `svc.Threads` reads raced
+      the async projection fold; `awaitThreadFold` polls to convergence
+      (5s deadline, the `awaitTranscriptCount` pattern), both reads
+      route through it (`c46b9666`). Pre-fix reproduction at current
+      HEAD: NONE (the ladder retirement shifted fold timing), post-fix
+      gauntlet green; #249 CLOSED with the evidence comment. The
+      semantics question stays closed with it — a refused message never
+      folds; only the PROBE's read timing was wrong.
+- [x] **Branching-flow baseline refresh** (Medium): ~~at the next
+      governance sweep~~ → done 2026-11-13 (pareto T23, pulled forward):
+      `buildflow -s branching-flow --save-baseline` re-run from this
+      checkout with the result cache disabled — 220 findings
+      re-recorded at current paths (COMPOSITION_mixin re-homed, the
+      stale old-path DUPLICATE_TYPE entries gone), all under the
+      severity cap (non-gating per the config).
+- [x] **ci-flake-ledger row** (Low, conditional): → resolved 2026-11-13
+      — the condition never fired (#249 closed with the await-poll fix
+      before CI ever red; local-repetition class only, `c46b9666`
+      carries the gauntlet). No ledger row; reopen only if a repetition
+      red ever lands on CI.
+- ~~**AGENTS.md one-liner** (Low): the error-registry regen fires on
+      MOVE, not only on NEW codes (proved 2026-11-12 on the asr split);
+      add it at the next legitimate AGENTS touch (cap has room).~~ →
+      done 2026-11-13 — already in: AGENTS.md carries the full fact
+      (MOVES/RENAMES regen + the `-update` command + the asr-split
+      proof + the same-push reading for two live sessions); nothing
+      left to add.
+- §D10 (split-on-sight vs raise-cap vs warn-only) stays with its
+  existing 2026-11-08 pack above — no duplicate row. The corpus cadence
+  drain beyond the one CI-greening archive stays with the T24
+  release-tails train.
+
+### 2026-11-02 cue-assessment residue (harvested 2026-11-13 — the report's own §f-5 ask)
+
+- [ ] **Stack drift audit**: read the stack repo's webphone module
+      assertions and diff every rule against `internal/config` — the
+      CUE-era verification task, still valid under the typed NixOS
+      lane (rides the next stack module touch).
+- [ ] **Record the CUE ruling durably** (REJECTED; schema-export
+      deferred with a named trigger) as an owner decision line, and
+      park the cuelang.org/go cost measurement next to it.
+- [ ] **Schema-export spike**: settings schema GENERATED from the
+      config structs (the openapi.json doctrine applied to settings).
+
+### OIDC lane residuals (routed 2026-11-13 from the archived 2026-10-25 15-16 report)
+
+- [ ] **NixOS VM test for the OIDC lane** (`webphone-oauth2`-style:
+      systemd `LoadCredential` lands, mode 0400, the app actually
+      reads the credential at login) — the eval-time assertions +
+      `module-check-oauth2` cases are the current fence.
+- [ ] **Second module-check golden with `oauth2.enable`** (exact
+      rendered JSON, mirroring the zero-config golden).
+- [ ] **Typed passkey options** in the module (passkey-only configs
+      get derived rp the same way the OIDC lane derives them).
+
+### Voicemail playback train residue (2026-11-10 — the fix is pushed; production legs open)
+
+The two product defects are fixed and CI-green (`fc352e66`: honest toast +
+Range forwarding; `shell.js` one-honest-toast split-brain repair). The LIVE
+root cause of the original "play does nothing" report is still unconfirmed —
+no credentials on the deployment. Discriminating evidence: the next failure
+now names itself via the toast (silence = fixed; text = live trigger named).
+
+- [ ] **Stack redeploy** riding webphone `main` so the fixes reach
+      `pbx.artmann.tech`; then click play and RECORD the verdict (the new
+      toast text is the live trigger's name).
+- [ ] **Host-side diagnostics** (needs deployment access):
+      `journalctl -u telephony-operator | grep -E "send_file|audio not found"`
+      + `systemctl status telephony-fs-state-acl` — the runbook's audio-404
+      class (`docs/ops-runbook.md` § audio).
+- [ ] **Stack coverage arms**: browser E2E voicemail playback (zero
+      voicemail surface in `tests/browser-e2e.py` today);
+      `verify-live.sh` authenticated audio fetch; `operator.nix` pin for
+      206-through-the-proxy.
+- ~~**Local freshness replay** before push (rebuild `tw.css` + `git diff`
+  inside the battery)~~ → done 2026-11-11 — `scripts/build-tw-css.sh --check`: the same staged pipeline, then byte-compare against the committed artifacts, restore + exit 1 on drift (verified in-sync at HEAD; the sibling's docs-gates `--check` CI leg covers the docs half)
+
+### Reports tab quality train (2026-11-10, owner triage of the live panel — plan: docs/planning/2026-11-10_10-15_SUPERB-reports-tab-quality-plan.html)
+
+DONE 2026-11-10 (trains cabdeeb8 / abed8247 / 3d1c1ba2 / 12cee0b3): C1 is the one-line root fix
+(73/73 CDR rows undated because FreeSWITCH writes `start_stamp` with seconds,
+`%Y-%m-%d %T`, and `reports.startLayout` accepts none):
+
+- [x] C1: `startLayout` "2006-01-02 15:04" → "2006-01-02 15:04:05" +
+      real-format fixtures in `reports_test.go` (restores This-week, By-day,
+      Hours — the 1%). Minute-only timestamps now pin as Undated
+      (counted, never dropped).
+- [x] C2: honest unknown rendering — all-undated ⇒ EmptyState instead of
+      "This week — 0"; guard the By-day heading; move the undated caveat next
+      to the temporal block; new i18n keys in BOTH maps.
+- [x] C3: resolve top-contact names through the contacts store first, CRM
+      fallback, at the shared `crmDirectory` seam (extended into
+      `directoryFor` — the SSE push lane merges through the SAME home, so a
+      morph can never rename a row a full render named differently);
+      muted mono for non-dialable remotes ("pifo42h1" class).
+- [x] C4: `Totals.NoAnswer` (unanswered outbound) as a seventh stat card when
+      > 0; `.wp-reports-totals` checked — auto-fit takes any card count,
+      no CSS change. Card renders NEUTRAL (deviation from the plan's
+      "alert tone": the alert red is the inbound-miss tone by contract).
+- [x] C5: pins + gates + live verification (reports/view suites, nix fmt,
+      buildflow, CHANGELOG line, prod ui-capture of the reports surface).
+
+### Prod screenshot-tracking train residue (2026-11-10 14:42 report, §f-24 — harvested by the cadence-sweep session)
+
+- [ ] **T05 — the authenticated prod capture** (owner-gated: needs
+      `WEBPHONE_CAPTURE_EXTENSION` / `WEBPHONE_CAPTURE_PASSWORD` env
+      creds, asked twice). The command is staged:
+      `nix run .#ui-track -- --base-url https://pbx.artmann.tech --track`.
+      Unblocks in order: owner gallery walkthrough → ranked ugliness
+      inventory (T05 act 2) → first fix with before/after proof (T06) →
+      second run / first real prod compare chain (T07) → calibration
+      values (T09/T10) → mobile pass (T08). Also rides that session:
+      the real-display `--open` pass and the ring-guard positive path
+      (row below).
+
+- [x] **ui-capture `--open` flag**: launch the gallery/compare in a browser
+      after a run — LANDED 2026-11-10 (harness v2; opens compare.html on
+      a display, prints a headless note otherwise; not yet exercised live
+      — first authenticated prod session should pass it once).
+
+- [ ] **Night-run stability pair**: a quiet-window (overnight)
+      ui-capture run pair on real prod data to set the diff noise floor
+      (badge bar / threshold calibration values; the 0.5% default is
+      optimistic — identical-seed local runs peaked at 2.5% on relative
+      timestamps). Home: the tracking plan's T25; pair the runs ≥8h
+      apart so relative times settle. SUPPORT PACK LANDED 2026-11-13
+      (pareto T18/F61): `scripts/ui-night-pair.sh` schedules both runs
+      as transient systemd user units (run 1 now, run 2 +8h) with the
+      env credentials — the wall-clock half stays a scheduled item until
+      the first pair actually runs.
+
+- [x] **Self-test pins for the dormant paths** (tracking plan T28's
+      second half + §f-3 partial): the EMPTY-run discard guard
+      (empty crashed dir removed, shots-bearing run kept) and the
+      `--open` decision (`open_target`: produced artifact wins,
+      out-dir fallback, headless refusal) are pinned in
+      `--self-test` (35 checks, both envs) — LANDED 2026-11-10.
+      The real-display `--open` pass stays with the first prod session.
+
+- [ ] **Ring-guard positive path**: exercise the
+      `#incoming-call:not([hidden])` re-shoot during a REAL inbound
+      call in a tracked run (first prod session + a caller; the
+      selector is verified against the served markup 2026-11-10 —
+      phone.templ renders `hidden`, the island toggles the attribute).
+      Home: the tracking plan's T13 live half.
+
+### BuildFlow tool-disposition residue (harvested 2026-11-08 from the 2026-10-11 findings-zeroing plan — one home now)
+
+Six tool dispositions the 2026-10-11 plan owned but TODO_LIST never carried;
+each verified still-open at harvest time (the plan doc keeps its detail):
+
+- ~~go-auto-upgrade: add the `warnings_budget` marker + rationale comment to
+  `.buildflow.yml` (lo/jsonv1 declined per doctrine; plan T6 µ20).~~ → done 2026-11-11 — VERIFIED HEALED, no marker owed: `buildflow -s go-auto-upgrade` runs clean at the current tip (the lo/jsonv1 warning premise the marker was drafted for no longer fires — upstream healed it), so a rationale comment would document a warning that does not exist
+- ~~jscpd: attribute the 6 island-test clone rows in docs/dedup-registry.md
+  (test-fixture class; plan T6 µ22).~~ → done 2026-11-11 — attributed: `buildflow -s jscpd` = 15 findings, ALL island-test bootstrap harnesses; standing-ruling row + sweep-log line landed in docs/dedup-registry.md (13:4x)
+- ~~lychee: rerun `-v` and reconcile the 5-vs-0 delta; the standing
+  authenticate-vs-exclude policy waits on sitting pack §F9.~~ → verification half done 2026-11-11 — rerun: 579 OK, 0 errors, 3 redirects (`nix run nixpkgs#lychee -- . --no-progress`, lychee.toml config). The reconcile found an UPSTREAM display gap: lychee 0.24.2 names redirect URLs in NO local mode (-v/-vv/--json/detailed carry only the count), so the 5-vs-0 delta cannot be decomposed locally — no URL guessing. The §F9 policy call stays owner-gated; the upstream gap question rides §g of the 14-02 report
+- [x] ~~nix: add `meta.description` to the vulnix app (nix/apps.nix; plan T6 µ23).~~ → done — VERIFIED ALREADY-SHIPPED (meta.description present at both app sites in nix/apps.nix; landed with the sibling session's sweep)
+- [ ] File the drafted BuildFlow bandit-provider issue
+      (docs/drafts/2026-10-11_buildflow-bandit-stdout-findings.md; owner banner
+      still unchecked).
+- [x] **DONE 2026-11-08 (P4-7): file-size-check configurable cap** — ALREADY
+      SHIPPED upstream: buildflow #91 (closed COMPLETED 2026-11-06) fixed the
+      inert `max_file_size` override at the root (the CLI clobbered the
+      materialized value; now flag-Changed-gated) with a regression test;
+      #66/#75 were the same defect family. No filing owed. The webphone-side
+      posture call (raise the cap vs keep the 46 per-finding accepts) stays
+      with sitting pack §D10 — untouched by this closure.
+
+### 2026-11-09 cross-repo session residue (harvested from the 00-49 report)
+
+New open items from the legs session, not homed elsewhere yet.
+
+- [x] **Re-record the art-dupl baseline for the Phase-6 fax-journal
+      groups** (adjudicate-before-write, pinned v0.7.2 detector — the
+      same repair shape as the 2026-11-08 threads-aggregate gate fix);
+      run 42538856915 red on it after the A39–A40 landing. Then read
+      run 42539029787's failing legs (the second red was unnamed at
+      snapshot time). Their train may own both — the 03-38 report's
+      §g-3 asks the owner.
+      DONE 2026-11-09 (SUPERB closeout train): the baseline re-record
+      rides that commit (131 → 137, all six groups adjudicated in
+      docs/dedup-registry.md — the readmodels fax twins, the
+      ProjectionHostOptions registration idiom, the sweep trivia);
+      run 42539029787's unnamed second leg was TWO: dprint format rc=20
+      (the honest report's wrap points, reworded) and strike-safety on
+      a 6-cell FEATURES row (healed by 4788bc52). The owner's execute
+      mandate gave the train to the SUPERB session.
+- [x] **Finish the v2.12.0 release train (legs 6–9)** — the train died
+      at 6/9 on release.sh's mis-quoted lychee `--exclude` (a
+      double-backslash inside single quotes reaches lychee as a
+      literal backslash and matches nothing); fix the quoting and
+      verify by running exactly that script line, then the lychee link
+      check → stack relock to v2.12.0 (plus its CHANGELOG lock-move
+      record, browser E2E, telephony-VM check, flake check, push with
+      exit codes captured — no pipe-swallowing) → aarch64 cross-build
+      + ELF b700 guard → `gh release create v2.12.0`. Every push owes
+      the `gh run watch` to green.
+      DONE 2026-11-09 (closeout train, report 04-50): quoting fixed +
+      fixture-verified; the relock surfaced the ENROLL CLI SPLIT-BRAIN
+      (fixed at efb0ff1a, E2E-proven 200/503) and two stale stack VM
+      tests (fax-feed + messaging, modernized to the journal world);
+      tag re-pointed onto the green fix commit; aarch64 b700 PASS; gh
+      release published 04:20Z as Latest.
+- ~~**Delete the prod-dead readmodels faxes store** — the
+  engine-backed `Faxes` in internal/readmodels/faxes.go lost its
+  prod wiring at P7 (app.go wires only `cqrs.NewFaxes`); it
+  survives as the fax service's test double
+  (internal/fax/teststore_test.go, archiver_test.go). Move those
+  tests to the cqrs backend, keep `FaxesProjection`/
+  `FaxJobOfView`/`FaxGate` (faxesgate.go, the shared fold builder
+  both DBs ride), then delete the store — dissolves 3 of the 6
+  clone groups baselined 2026-11-09 (the registry's post-P7 fax
+  twins row). **RIDER (2026-11-11 doctrine sweep): the same train
+  deletes the prod-dead `readmodels.EnrollTokens`** (the
+  composition root wires `CqrsService.EnrollSvc()`; the
+  engine-backed store has zero non-test callers — same
+  test-double pattern; readmodels/enroll.go + the engine field in
+  readmodels.go).~~ → done 2026-11-11 — faxes.go DELETED (FaxView/faxInput moved into faxesgate.go; FaxesProjection/FaxJobOfView/FaxGate kept); enroll.go slimmed to EnrollGate + EnrollTokenView (the live cqrs seams); Engine lost the faxes/enroll fields + accessors + Plan entries. Tests moved: fax/teststore_test.go boots the journal backend (`cqrs.FaxesDomainDecl` + `NewFaxes`), userauth/session_switch/passkey_api tests boot `cqrs.NewEnrollSystem`+`NewEnrollTokens`; the dying readmodels coverage PORTED (ListAll newest-first + ref guards + the 11-row faxMoves mirror + idempotent-second-key, now cqrs tests); admin_reads fax pins moved to cqrs/faxes_test.go (transcripts pin stays). Registry regen'd (-14 codes); art-dupl scan: 0 clones reference readmodels/faxes.go (3 twin groups dissolved — registry row updated); full `go test -count=1 ./...` green.
+- [x] ~~**Storage-ladder train A: delete the prod-dead readmodels
+      transcripts store** (the SUPERB 80/20 plan's M02; the faxes+enroll
+      recipe verbatim — prod has answered transcripts from the cqrs
+      journal since A27; the engine-backed `Transcripts` had zero
+      non-test callers)~~ → done 2026-11-11 — transcripts.go DELETED;
+      the surviving surface moved to transcriptsgate.go (TranscriptGate,
+      TranscriptSegmentView, both cap constants, ReassembleTranscripts —
+      the gate+view home the doctrine keeps); Engine lost the
+      calls field/accessor/Plan entry. The server test harness rides
+      `cqrs.NewTranscripts(coreSys)` (NewCoreSystem already carried the
+      decl; the gate's Append awaits its own projection fold, so the
+      harness stays deterministic). The admin RecentAll pin + the
+      window/caps table (2230-segment flood via direct projection
+      folds), the owner-cap trim (5010→5000 through EnforceCaps), the
+      metacharacter-literal search pin, and the 8×25 concurrent-append
+      no-loss test all PORTED to cqrs/transcripts_test.go; the per-call
+      floor stays decision-pinned (TestTranscriptPerCallFloorEvictsOldest).
+      Registry regen'd (−8 `readmodels.transcript_*` codes); art-dupl:
+      0 clones reference the deleted file.
+- [x] ~~**Storage-ladder train B: delete the prod-dead readmodels
+      notes + reviews stores** (the plan's M03; prod has answered both
+      from the cqrs journal since Phase 4 — the engine-backed twins had
+      zero non-test callers beyond the server harness)~~ → done
+      2026-11-11 — callnotes.go/callreviews.go DELETED; the surviving
+      surface moved to notesgate.go/reviewsgate.go (NotesGate/
+      CallNoteView, ReviewsGate/CallReviewView, the 2000-cap constants
+      and sentinels with their family classifications); Engine lost the
+      notes/reviews fields/accessors/Plan entries. The server test
+      harness rides `cqrs.NewNotes(coreSys)`/`cqrs.NewReviews(coreSys)`
+      (NewCoreSystem grew the two decls per its one-journal charter).
+      The two missing slot-shape pins ported (verdict-first slot
+      creation, empty-body-clears-still-a-slot — cqrs
+      TestNoteVerdictFirstAndClearedBody); the cap/merge/scoping/
+      restart pins already lived at the cqrs decision. BOTH backends'
+      write doors now carry the D7 awaitOwnWrite beat (the engine
+      store's synchronous fold used to provide it; the History panel
+      re-fetches right behind the SSE nudge — the aggregate header's
+      old "no D7 await" premise retired with the twin). Registry regen'd
+      (−7 note/review/disposition codes).
+- [x] ~~**Storage-ladder train C: delete the prod-dead readmodels
+      contacts + snippets + dialwindows stores** (the plan's M04; all
+      three answered from the cqrs journal since the SUPERB swaps —
+      the engine twins had zero non-test callers beyond the server
+      harness and the fuzz/cap pins)~~ → done 2026-11-12 —
+      contacts.go/snippets.go/dialwindows.go DELETED (plus the
+      engine-store dial_bench and the now-userless notFound envelope +
+      its test); the gate/view surface moved to contactsgate.go/
+      snippetsgate.go/dialwindowsgate.go (gates, views, cap constants,
+      sentinels); Engine lost the contacts/snippets/dials fields/
+      accessors/Plan entries and the aggregate-reader assertion (its
+      last consumer was the contacts metrics count). The server harness
+      rides `cqrs.NewContacts`/`NewSnippets`/`NewDialWindows` over the
+      core journal (NewCoreSystem grew the three decls); the fuzz spec,
+      the API cap pin, and the store-failure lanes boot the journal
+      through one newCoreSystem helper; the 500-contact API cap test
+      seeds through the backend (dispatch+await, ~2s). The live-engine
+      delete-miss envelope pins retired with the stores — the cqrs
+      delete tests carry the contract. Registry regen'd (readmodels
+      contact/snippet/dial codes out; the regen also caught the
+      concurrent train's uncommitted codes). Engine = push devices +
+      agent audit ONLY (M05 empties it).
+- [x] ~~**Storage-ladder closeout (the plan's M05): delete the last
+      two prod-dead readmodels stores (push devices + agent audit)**
+      (both answered from the cqrs journal since the SUPERB Phase 3
+      swaps; zero prod callers)~~ → done 2026-11-12 —
+      push.go/agentaudit.go + their tests + export.go + readmodels.go
+      (the Engine itself) DELETED; the gate/view surface moved to
+      pushgate.go/agentauditgate.go (gates, views, cap constants) and
+      doc.go now carries the doctrine-complete package header. A new
+      arch test (`TestReadmodelsStaysGatesAndViewsOnly`) pins the
+      purity: no sqliteengine import, no `func Open(` — the
+      second storage brain can never grow back. The five consumer test
+      sites (hooks ring + idempotency contract, auth-audit, push-api,
+      summary-push) boot the journal backends through the core system;
+      both write doors carry the D7 `awaitOwnWrite` (the engine folded
+      synchronously; the ring prune flaked 1/5 without the await).
+      LOAD-BEARING SIDE-FIND: readmodels.go silently carried the
+      sqlite engine-driver registration for every boot —
+      internal/cqrs is now the ONE home (blank import in
+      threadsregister.go; without it every `system.New`, prod
+      included, dies unknown-driver). NewCoreSystem grew the two decls;
+      registry regen'd (10 `readmodels.push_*`/`agent_audit_*` codes
+      out); art-dupl 0 new (baseline holds 117); full suite + race
+      green.
+- **Storage-ladder §5 DROP migration: owner date + precondition proof**
+  (F35, the deepening plan's T11). The frozen families
+  (threads/messages/attachments/fax_jobs/contacts/snippets/call_transcripts)
+  are reader-less in production (the legacy readers are test-only
+  since v2.12.0; the dead `*store.Messages` injector registration
+  deleted 2026-11-12); the retention sweep empties them at
+  `retention_days`. The precondition is provable per deployment with
+  ONE sqlite3 query against `webphone.db`:
+  `SELECT 'threads',COUNT(*) FROM threads UNION ALL SELECT
+      'messages',COUNT(*) FROM messages UNION ALL SELECT 'attachments',
+      COUNT(*) FROM attachments UNION ALL SELECT 'fax_jobs',COUNT(*) FROM
+      fax_jobs UNION ALL SELECT 'contacts',COUNT(*) FROM contacts UNION
+      ALL SELECT 'snippets',COUNT(*) FROM snippets UNION ALL SELECT
+      'call_transcripts',COUNT(*) FROM call_transcripts;` — all zeros ⇒
+  §5 is safe. **Owner proposal: schedule the DROP migration for the
+  first 2.15.x maintenance window after 2027-01-01** (gives every
+  deployment ≥30 days of default-retention sweep time past the
+  2026-11/12 releases). app_flags is NOT inert — the matrix/signal
+  sync cursors live there (doc corrected 2026-11-12); their move to
+  system.db (or their stated home) is §5's own precondition, listed
+  in the retirement doc now.
+- [x] **fleet-libs `go-cqrs-lite.md` re-score (B159) + ROADMAP ES
+      annotation (B160)** — the A46 leftovers: SUPERB made webphone the
+      library's deepest consumer (threads/faxes aggregates, system
+      composition, snapshots, DedupStore); the 83/100 score predates
+      the whole train. ROADMAP gains the event-sourcing doctrine
+      paragraph (ONE journal world; sessions stay SQL per D2).
+      DONE 2026-11-09 (closeout train): re-scored 96/100 on a 14-row
+      frame (11 direct modules; EnforceCap NO-GO superseded by
+      WithCapPerGroup; audit-verify 8/8), the ROADMAP carries the
+      doctrine paragraph, index.html + AGENTS updated (mean 80).
+- ~~**cqrs-lint advisory triage over internal/cqrs** — 185
+  warnings (C044 ×50, C006 ×20, D014 ×17, C023 ×14, C009 ×16 …;
+  C007 time-in-decider is only ×3 — the closeout report's "180
+  C007" miscount corrected), ALL severity-warning and non-gating
+  under the SDK cap. Adjudicate the real ones (A032 branded-id
+  suggestions collide with the JSON-wire raw-string ruling), file
+  the noise classes upstream, or baseline with rationale once the
+  error_rules-bearing BuildFlow release lands.~~ → done 2026-11-11 — the premise DECAYED: the pinned detector v4.21.0 over ./internal/cqrs reports SIX findings (F032 ERROR, F031 WARNING, F019/F009/F021×2 INFO), not 185 — the older count came from a different linter vintage/scope. Adjudicated ALL six: FIXED the two real ones (F031 `SearchThreads`' messages scan rode the engine's silent 100-row ceiling — a thread search over >100 messages MISSED hits; now `WithLimit(0)`, the package's lifted-ceiling contract, the legacy LIKE walk is the whole corpus; F019 all 13 hand-built cqrs query decls lacked the `Volume(humanScaleVolume)` hint the readmodels side carries — one const + 13 options); ADJUDICATED NOISE with rationale the remaining four (F032 catalog-not-wired — the wiring lives in internal/domain/catalog.go, invisible to a package-scoped scan; F031 `fetchSegments` variadic forwarder — all FOUR callers pass explicit WithLimit, the detector cannot see through the helper; F021×2 fold-count heuristics on the deliberate threads/messages projection models; F009 the visibility await's `time.After` is best-effort read-your-write, journal-durable by construction — not the durable-deadline class the scheduling module owns). Package green after the fixes; the noise classes are recorded HERE, not filed upstream — the F031-through-variadic and F032-scope classes are detector-limitation reports to go-cqrs-lite ONLY if they recur in practice (verify-before-filing bar: one live false-positive sighting each, no noise-issue spray). RE-RUN 2026-11-12 post-ladder-closeout (pinned cqrs-lint v4.20.1 over ./internal/cqrs): 5 findings, ALL recorded adjudications (F032 catalog-scope, F031 the fetchSegments variadic forwarder, F009 the visibility await's time.After, F021×2 fold-count heuristics) — the M05 push/agent-audit backends added ZERO new classes and one F019 healed; delta negative, no action
+- ~~**CI-verdict instrument fixes (the 2026-11-09 misread-green
+  class)**~~ → done 2026-11-11 — (a) `scripts/ci-verdict.sh <sha>` names the workflow and answers ONLY the CI run's conclusion (5-case self-test; exit 0/1/2 = green/no-run/red); (b) the watch lane's `run-name` now says "NOT a CI verdict"; (c) the workflowName-verified rule sits beside the check-CI rule in AGENTS. Live proof the day it landed: the tool exposed a real CI red (vendorHash mismatch) hiding under green watch rows
+- ~~**Mechanical ride-along probes for code trains**~~ → done 2026-11-11 — `scripts/pre-push-gates.sh` runs the six push-critical gates in ONE command (registry freshness, art-dupl pinned check, changelog-guard, templ-generate --check, build-tw-css --check, docs-gates --check); `--only=`/`--skip=` per gate
+- ~~**Smoke scenario for `-enroll-passkey`**~~ → done 2026-11-11 — `enroll_scenario` in webphone-smoke.py: CLI one-shot + server under ONE config file (the shared-journal contract), fresh token verifies 200, replay answers 503, /enroll page renders; full suite 8/8 scenarios green (the split-brain class is now webphone-caught)
+- ~~**Doctrine-doc sweep after the enroll CLI journal swap**~~ → done 2026-11-11 — AGENTS' ONE-journal-world bullet and README § Passkey were already current; the one stale artifact (userauth's `readmodels.enroll_*` code reference) fixed to `cqrs.enroll_*`; `readmodels.EnrollTokens` confirmed PROD-DEAD (composition root wires `CqrsService.EnrollSvc()`; zero non-test callers) — its deletion JOINS the readmodels faxes-store row below
+- ~~**Clone the transport-isolation fix into pbx, asr, matrix,
+  paperless**~~ → done 2026-11-11 — the crm Clone pattern extracted into the ONE home `internal/httpclient.Isolated` (stdlib-only leaf + micro-test) and migrated: pbx ×2 (incl. the HTTPClient fallback), asr ×2, matrix, push ×2 (unnamed in this row but the same bare-literal class), crm's plain branch; paperless rides the go-paperless SDK (no local client — the row's title overcounted). Production-neutral
+- [ ] **Hub runner durable fix** — ExecStartPre provisioning (or a
+      static uid / group-write) for the build-state roots, so the next
+      DynamicUser renumber cannot red every hub build (the 2026-11-08
+      chown was in-place; the durable half lives in the hub's TODO).
+- [ ] **Hub ALERT_WEBHOOK_URL decision** — the failure log says
+      channel decision pending (ntfy / email / Forgejo webhook); pick
+      the channel and set the secret so hub failures alert.
+- ~~**Verify catalog.home.lan serves run #240's publish** (the
+  hourly sync half) and the site freshness WARN cleared.~~ → done 2026-11-11 (the observable half) — the site serves a coherent publish: root 200 with generation stamp 2026-11-10T22:59:53 (run #240's window), and `/docs/domains/telephony/1.0.0` server-renders webphone's CURRENT event vocabulary (Fax Advanced / Message Received / Thread Flag Changed, 34 webphone mentions) — the freshness proof that does not need hub access. The hub-side WARN log line itself stays deployment-access territory (forgejo.home.lan host); if a newer publish lands and the WARN recurs, that read belongs to the hub session
+- [ ] **Ringhook operator docs + typed mirror**: the stack's deploy
+      docs gain the enable recipe (config keys, secret slot, expected
+      dialplan arms); consider a typed ringhook front in webphone's own
+      NixOS module for non-stack hosts; a ringhook health leg joining
+      telephony-health; the operator command sheet recipe.
+- ~~**Confirm crm's own gates on the vendorHash repair** (`37a1957`):
+  the hub build proves the build; crm's treefmt/buildflow verdicts
+  were not read this session.~~ → done 2026-11-11 — crm's full test suite green (`nix develop -c env -u GOEXPERIMENT go test -count=1 ./...` EXIT=0, all internal packages ok at e383ba9); treefmt step is not_applicable there (no treefmt.toml — the tool answers REJECTION honestly, not a red); the vendorHash repair never touched crm's tree (webphone-side pin only)
+
+### 2026-11-08 SUPERB Phase-5 mid-flight residue (harvested from the 22:46 report)
+
+All three rows CLOSED by the 2026-11-09 execution session (A38-A47
+complete; the plan doc's Phase-5/6/7 as-built errata carry the
+evidence):
+
+- [x] **A38 phase-gate: stack browser E2E** — ran green against the
+      v2.10.0 pin in the stack leg (319 s, under the 445 s budget);
+      telephony-webphone VM check green in the same train.
+- [x] **A43 dedup unification: hooksIdem/CallsIdem → sys.Dedup()** —
+      done: the dedup window resolves from the system (ONE CAS home in
+      system.db), the readmodels engine left the composition root, the
+      backup set, and the drill; readmodels.db is an inert orphan.
+- [x] **The metrics-count decision** — executed as the SUM posture
+      during the import window (`legacy + gate`, marker-gated by
+      `threads_journal_imported`; the importer flips the legacy
+      contribution to zero — no double count, no undercount), then the
+      journal is the one count.
+
+### 2026-11-07 Frontend UX fix-train (one home: the SUPERB plan)
+
+The 2026-11-07 design review
+(docs/review/2026-11-07_01-51_frontend-design-ux-review.html) produced 20
+carded findings + a 47-item agent matrix + 8 flow GAPs. The task inventory
+lives in the plan, NOT here:
+docs/planning/2026-11-07_04-09_SUPERB-frontend-ux-fix-train.md (Pareto
+tiers, 24 comprehensive tasks, 119 micro-tasks, execution graph, gate
+contracts). Harvest rows here only as trains close them. Owner calls open:
+F1 ink direction, F19 signed-out shape.
+
+Residue harvested 2026-11-07 (the execution train's open items):
+
+- [x] M20 (report §f item 37) DONE 2026-11-07 (commit 5c368085): voicemail
+      reload failure got its own copy (`vmLoadFailed` — 401 keeps the auth
+      line), and the history/contacts loads announce a warn toast on both
+      the `!res.ok` and thrown-fetch arms (`historyLoadFailed`/
+      `contactsLoadFailed`, en+de). Pinned by
+      panels-load-failures.test.mjs (6 specs, suite 318/318, tsc green).
+- [x] Gate evidence closed 2026-11-07: train-start buildflow 74/74 (run
+      20261107-032044), train-end 74/74 (run 20261107-084827), `nix flake
+  check` all-checks-passed; run ids filed in the status report.
+
+Residue harvested 2026-11-08 (the §f rows audit-all flagged; each verified
+against the tree at harvest time):
+
+- ~~Drafts-poll skip-if-dirty guard (F11)~~ → done 2026-11-11 — the dirty flag (WeakSet keyed by the textarea node) gates the poll alongside the existing `[open]` guard; folded-shut-but-typed edits no longer lose text; 3-case spec in drafts-guard.test.mjs
+- ~~Localize island-built aria-labels (F9)~~ → done 2026-11-11 — the last hardcode (typeahead's listbox) rides `t("typeaheadLabel")` (both i18n maps carried the key; main.js already re-labels on switch); the other seven were localized by later trains; shell.js copy stays English by the D3 ruling
+- ~~Chip-X 24px hit area (F14)~~ → verified LANDED at HEAD before this sweep — the glyph stays 18px and the invisible `::after` (`inset: -3px`) extends the hit to 24px with the F14 comment at the site (app.css)
+- ~~History empty state rewording (F15)~~ → verified LANDED 2026-11-07 (T16) — the review card itself carries the FIXED banner; `history.needsAPI.pre/post` carries the three-beat shape (en+de)
+- ~~Radius/spacing token adoption (F17)~~ → done 2026-11-11 — the stragglers swept: voicemail waveform, mono input, admin-ext chip → `--radius-sm` byte-identical; island `#lang`/small buttons/audio-out selects (8px literals between the tokens) normalized onto `--radius`; tw.css/login.css rebuilt; the 2px fax-step bar stays (a 4px-tall shape no token describes)
+- ~~Phase-4 release preflight (harvested 2026-11-08 from the 17-22
+  SUPERB report §f-2 residue): the KVM/local-only flake legs —
+  `nix build .#checks.x86_64-linux.webphone-module`, the
+  `webphone-backup` + `webphone-backup-drill` VM tests — before the
+  SUPERB release train; CI cannot exercise them.~~ → done 2026-11-11 — all three named legs green on KVM at the 6d2306ed tree: `webphone-module` (eval check, ad03g91w), `webphone-backup-drill` (8d1f8sw), `webphone-backup` (the full VM run, 24bnbx00). Side finding from the same sweep: the FULL buildflow run's go step flaked on `TestAutoReviewDispatchRoundTrip` (`sql: statement is closed` — the detached review goroutine racing the fixture engine's cleanup under sandbox timing; the test passes plain AND `-race` locally including the whole server package at 137s) — a shutdown-race flake class, not a regression; the CI `-race` legs that reached test execution passed
+
+### 2026-11-07 Datastar deep-dive residue (one home: the report)
+
+The full client-side adoption question is CLOSED (NO-GO, posture 78/100,
+docs/research/2026-11-07_datastar-deep-dive.html — supersedes the 2026-11-04
+go-datastar adjacent ruling's trigger paragraph). One actionable item fell out:
+
+- ~~Retire `/health` `'unsafe-eval'`: go-health-dashboard upstream adopts the
+  embedded Datastar v1.0.3 nonce + Trusted Types lane (emit `data-nonce` on its
+  page, grant `'nonce-…'` instead of `'unsafe-eval'` in its csp.go), then
+  re-pin `TestAppDashboardMountsHealthSubtree` (app_test.go:135) to assert the
+  nonce form. Evidence: report F4.~~ →
+  adjudicated 2026-11-12 — the "nonce INSTEAD OF unsafe-eval" premise is unsatisfiable: the shipped csp.go (v0.13.1, commit 449aeb3) adds the nonce BESIDE `'unsafe-eval'` because the Datastar SDK compiles its data-* expressions with the Function constructor regardless of nonces (library comment + webphone dashboard.go + deep-dive F4 agree). The ACHIEVABLE half already landed and is pinned: per-request nonce'd inline scripts + the nonce'd CSP are asserted by TestAppDashboardMountsHealthSubtree (both tokens + rotation). The eval-free re-open trigger lives with Datastar upstream (expression compilation without eval) or a dashboard drop of Datastar — not this repo. ~~2026-11-13: dashboard v0.13.3 shipped the SDK-side half (the `data-nonce` root bridge, upstream issue #23 — the SDK reads the page nonce to evaluate "without the new Function path"); when the v0.13.3 bump rides, re-check whether csp.go can finally drop `'unsafe-eval'` on a nonce'd host.~~ → done 2026-11-13 — the v0.13.3 bump LANDED and the eval retirement SHIPPED WITH IT: the runtime can already avoid the Function path under the root nonce (upstream browser-verifies the exact no-eval policy in TestBrowser_StrictCSPNoEvalConnects), so webphone's `dashboardCSP` now strips the `'unsafe-eval'` token from RecommendedCSP (one line; the library stays the single source for every other directive); /health serves `script-src 'self' 'nonce-…'` with NO eval, pinned by the app tests (inverted assertions) + the smoke `dashboard nonce csp` check; full smoke 54 + all scenarios green; vendorHash re-pinned.
+- ~~**Implement the dashboard lane in the library repo** (go-health-dashboard):
+  the nonce emit + CSP grant above, then run ITS gates there — this repo cannot
+  ship the change and must not fake it locally.~~ →
+  done (by train) — the library shipped cspPolicy(nonce, hardened) + strict variant (go-health-dashboard 449aeb3, first released v0.13.1); local checkout verified 2026-11-12
+- ~~**Release the dashboard version** (tag) once the lane lands — owner call per
+  the report's §g1; only then can webphone bump and re-pin the CSP assertion.~~ →
+  done — v0.13.1/2/3 tagged; webphone pins v0.13.2 and the CSP assertion already asserts the nonce form (app_test.go TestAppDashboardMountsHealthSubtree)
+
+### 2026-11-06 GitHub-issue train residue (harvest from the 10:45 report)
+
+The 2026-11-06 train closed 4 of 5 open GitHub issues (Reports tab #12, live-call
+context + ring routing #10, two stale red-CI flags) and shipped `crm.ca_file`.
+What remains, each with its ONE home:
+
+1. **Push the 14 local commits** and watch CI. Manual-push bar MET (first unpushed
+   commit `216ed28e`, 2026-11-06 09:30; ~75 min at 10:45). Nothing else here is
+   cheaper until remote `main` carries the train.
+2. **Merge PR #234** (ginkgo 2.33.1→2.34.0, green on `a2ad2815`, vendored-module
+   hash already re-pinned). Owner call; the tidy → re-pin → watch tail is done.
+3. **Stack `crm.caFile` pass-through** — `nix-international-telephony`'s typed CRM
+   front renders only `crm.url` + the env-file token, so the option cannot reach the
+   PBX host. Cross-repo; the standing home is the Cross-repo obligations section.
+4. **Issue #9 acceptance criteria 1–2** — needs `/run/secrets/crm_api_token`
+   (root/unit-scoped by design) and the PBX host: an inbound call must render the
+   Kith name and `call_logged` must land on the journal. The webphone slice is
+   complete; the residue is pbx-artmann-side.
+5. [x] **Anchor `.gitignore` against package shadows — DONE 2026-11-07 (P1-2)**:
+       `/result`, `/result-*`, `/.devenv`, `/.direnv` are root-anchored, and
+       `internal/arch/gitignore_test.go` now walks `go list ./...` and fails when any
+       package directory resolves to an ignore rule. `--no-index` is load-bearing:
+       without it the index silently excuses already-tracked packages, which made the
+       planted-rule canary pass until the flag was added. The rules inside the
+       buildflow-managed block (`build/`, `dist/`, `vendor/` …) cannot be edited —
+       `buildflow --fix` re-generates them — so THIS test is their guard.
+6. **Decide the `crm` health leg's criticality** — a CRM outage reds `/healthz`
+   readiness although the phone keeps working, while the library treats crm as
+   non-critical. Nothing routes traffic on it today (unit `Type=simple`, Caddy
+   fences the probes), so it stays an alarm channel until made explicit.
+7. **Findings-gate posture** — `buildflow` cannot exit 0 while 50 pre-existing
+   tier-3 findings stand, which trains readers to ignore its exit code (the
+   retired-baseline failure mode one layer up). Decide: elevate and fix, or a
+   sanctioned, visible baseline.
+8. **Re-run the hub fan-out benchmark on a quiet host** — the 2026-11-06 attempt was
+   inconclusive (load ~22 on 32 cores; spreads ~2×). Its trigger (cqrs-htmx v4.16.0 +
+   go-sse v0.7.0) has been fired for two trains.
+9. [x] **Store test train — DONE 2026-11-07 (P1-1)**: `internal/store` reads
+       **82.4%** (was 64.8%, and 75.3% on 2026-09-20). The gain came from the block
+       nobody had pinned at all — the transitional reads of the retired SQL tables
+       plus the `app_flags` helpers, all four readers and four translators at 0.0%
+       (`internal/store/legacy_import_test.go`). The admin read seams were already
+       pinned both ways by `store/admin_reads_test.go` and are now measured
+       (77–86%; the rest is the infrastructure-error branch), and one assertion is
+       mutation-proved. Delta recorded in
+       `docs/reviews/2026-09-20_coverage-baseline.md` § 2026-11-07.
+10. ~~**Wire the `docs-gates` battery into CI**~~ — done 2026-11-11 (the sibling's CI leg): `ci.yml` fast-checks runs `scripts/docs-gates.sh --check` (line ~115), the non-mutating mode; the ratchets hold
+11. **Bulk verdict pass over the archive residue** — after the v8 sweep archived 68
+    reports, the live status-report set is blocked by un-inventoried §a/§b table rows
+    (~1 600 measured 2026-11-06; those reports use a Verdict COLUMN instead of the
+    strike canon). PROGRESS 2026-11-07 (v9 sweep): the four executed September plans
+    (error-excellence 95, 20-year-durability 217, pareto-v260 118, stack-adoption 123
+    rows) were per-row verified, struck with evidence and ARCHIVED (gates held before
+    each move; citation repoints incl. archived citers). Remaining: the live status
+    reports (~1 600 rows). Plan: per-file `repair` strikes for §a/§b shipped tables
+    (Verdict-column evidence transcribed + hash-resolved), routed strikes for §f rows,
+    then `check-rows`/`bare-rows` BEFORE each `git mv`. The cadence ratchet holds the
+    residency and may only move DOWN.
+12. ~~**`/context` contract snapshot test**~~ — done 2026-11-11: the producer's RENDERED bytes captured from the CRM's own machine API (crm@85c7f2e, throwaway dumper deleted, tree verified clean) pinned in `internal/crm/testdata/kith_context_snapshot.json`; one test parses those exact bytes into the mapped Context, a second keeps fixture↔snapshot honest both directions (every producer-emitted key must exist in the fixture with the same JSON type; the fixture may not invent keys)
+13. [x] **History nudge for the notes save path — DONE 2026-11-07 (P2-3)**: a
+        successful `call_notes` PUT publishes the payload-less `notes` SSE event
+        (`NotifyCallNotesChanged` on the api Server seam, same shape as the contacts
+        nudge, fired only on success), the History panel subscribes with
+        `hx-trigger="sse:review, sse:notes"`, and the generated wire contract now
+        declares BOTH `review` (F89 shipped it undeclared) and `notes`. Pinned by
+        `TestCallNoteSaveNudgesHistory` (exactly one payload-less nudge to the
+        owner's hub).
+14. ~~**`scripts/templ-generate.sh` wrapper**~~ — done (landed 2026-11-07 by the sibling session; verified in-sync at templ v0.3.1100 today) — reads the pin from go.mod, warns on a disagreeing PATH templ, `--check` snapshots + regenerates + restores
+15. **Attended-transfer UI vs the NO-GO ruling** — `FEATURES.md` claimed the row
+    FULLY_FUNCTIONAL while `docs/research/2026-10-27_attended-transfer-spike.md` says
+    the bridge is UNVERIFIED (the stack has no Replaces dialplan handling); the status
+    is now PARTIALLY_FUNCTIONAL. Decide whether the dock's "Attended" button should be
+    hidden until a FreeSWITCH lab proves `Replaces` — the island's honesty contract
+    forbids a 200-OK that silently does nothing.
+16. [x] **`reverseLines` → `slices.Reverse` — DONE 2026-11-07 (P2-5)**: the
+        hand-rolled two-pointer helper in `internal/readmodels/transcripts.go` is
+        gone; its only caller now uses `slices.Reverse`, which also retires the
+        `//nolint:branching-flow` the helper's own arithmetic needed. Behavior is
+        identical (newest-first per call) and the readmodels suite is green.
+
+17. **Make freshness WARN on a §f-less newest report** — the gate PASSED on the
+    2026-11-06 10:45 report because it carried no §f at all ("nothing to check"),
+    so the ritual certified nothing (the vacuous-PASS class). A newest report
+    without §f should be a finding, not a green.
+18. ~~**Enforce CHANGELOG coverage for code-path commits**~~ — done (landed by the sibling session): `scripts/changelog-guard.sh` (+ selftest) — product-code deltas without a CHANGELOG.md change exit 1, tooling/tests/docs exempt per the ratified bar
+19. **Record the DF-brittleness + standalone-verb gotchas UPSTREAM** (docs-gates
+    repo, Artmann-Technologies): `audit_max` shifts with living-doc growth because
+    "generic" is a document-frequency threshold (observed 330 → 331 from one
+    CHANGELOG paragraph, then 354 → 360 in one session); **LOCAL CALIBRATION
+    2026-11-07 (P1-4 tail)**: `generic_df` is now 16 in `.docs-gates.json`
+    (**the rule: a token on more than ~0.5 % of the living corpus's lines is too
+    common to prove a harvest**, so it is re-derived from the line count each
+    sweep) instead of the upstream default 8, which alone dropped the residue
+    360 → 71 — the sweep of values (8→360, 12→181, 16→101, 20→76, 22→71, 30→40)
+    is the evidence, and a planted nonsense §f item is still flagged. Upstream should scale the default with corpus size
+    and expose it on the CLI (it is config-file-only today). Also: a standalone
+    verb ignores `.docs-gates.json`'s ratchets while `run` honors them.
+20. [x] **Frontend-UX verification tail — DONE 2026-11-07 (P1-4)**: three pins
+        landed in `internal/web/views/settings_structure_test.go`. (a) the admin
+        line-count copy is pinned in BOTH languages (it must name the transcript,
+        keep its leading space, and stay one unbreakable German compound — so there
+        is no wrap point inside "Transkriptzeilen"); (b) the F20 three-audience
+        Settings structure is pinned as an ORDER (prefs < data < collapsed server
+        `<details>` between them) plus a per-section dl-count pin (the 10
+        hand-written shortcut rows, which no helper generates); (c)
+        `#wp-palette-open` is now a real disclosure —
+        `aria-controls="wp-palette"` + `aria-expanded`, kept in step by `shell.js`
+        at runtime, documented in docs/dom-contract.md § Notes.
+21. **annotate.go/docs-gates tooling nits** (found by the docs-health v9 sweep
+    2026-11-07, upstream Artmann-Technologies repos): (a) escaped pipes inside a
+    code span (`\|`) defeat the table cell splitter, so a per-cell strike
+    silently crosses a cell boundary — hand-fixed one in the durability
+    archive; **LOCAL MITIGATION SHIPPED 2026-11-07 (P1-3)**:
+    `scripts/strike-safety.py rows` refuses the shape before a sweep writes and
+    is a wrapper gate (13-case self-test); still worth the upstream scanner
+    fix; (b) spec verdict values are not shape-validated — a literal "UNMAPPED"
+    verdict passes the banned-words check and would strike as garbage;
+    **LOCAL MITIGATION SHIPPED 2026-11-07 (P1-3)**:
+    `scripts/strike-safety.py verdict` enforces the canonical heads; upstream
+    should hard-error the same way;
+    (c) "live reports" has three disagreeing counters (INDEX regen count, raw
+    ls count, cadence gate count read 76/75/70 in one moment) — derive one
+    from the other or name the differences;
+    (d) the documented `<!-- fresh:skip -->` exemption does NOT actually exempt
+    an item (tried directly above the item and above the §f heading; the gate
+    still reported 2 unharvested). What DID work was a distinctive token in the
+    item text (`go-health-dashboard`) — so the marker is either undocumented in
+    its real placement or broken; verify upstream and fix the doc or the code.
 
 ### 2026-11-05 hygiene train (assistant sweep — tests + docs + repo hygiene)
 
@@ -58,9 +695,10 @@ Deferred engineering findings (each verified at HEAD 2026-11-05; none urgent):
    contacts import, snippets, flags are unlimited — only the `/api/*` lanes are
    bucketed. Decide: bucket them or document the session gate as the bound.
 5. **`server.Deps` grows a field per read model** (seven read-model fields, each with
-   a nil-means-503 convention riding every test composition) — an accessor-style
-   collapse (`readmodels.Engine`-shaped) is the refactor candidate for the next read
-   model, not a today change.
+   a nil-means-503 convention riding every test composition) — DESIGNED 2026-11-08:
+   docs/planning/2026-11-08_server-deps-accessor-collapse-design.md owns the shape,
+   the migration order, and the test-composition impact. EXECUTE only when the
+   eighth read model lands (the note's trigger).
 
 ### Fleet-libs closeout residue (2026-11-04, the SUPERB closeout train)
 
@@ -80,15 +718,48 @@ swap, fax badge, 2 empty states) lives in CHANGELOG + the per-library reports �
    Residual, no consumer today: the ssetest `WithLastEventID(sse.EventID)` branding
    ride — schedule it only when a Last-Event-ID replay surface exists (the
    `/events` heartbeat row below is NO-GO until drop-class evidence).
-2. **metaengine per-group cap upstream ask — FILED 2026-11-04:
-   [go-cqrs-lite#114](https://github.com/LarsArtmann/go-cqrs-lite/issues/114)** —
-   EnforceCap is collection-global; webphone's transcript/dial-window caps are
-   per-owner/per-call (NO-GO ruling re-verified at the pin v4.20.0,
-   `docs/review/libs/go-cqrs-lite.md` § errata). If #114 lands upstream, migrate
-   `trimOwner`/`trimCall`/`trimWindows` in one train.
-3. **templ-components taste calls** — owner decisions, not adoption gaps: the ✓ delivered
+2. **templ-components taste calls** — owner decisions, not adoption gaps: the ✓ delivered
    chip (or a Badge prefix/icon slot) and whether section subtitles should render as muted
    empty-states. Re-litigate only if the owner asks.
+3. **go-idempotency upstream ask (2026-11-07)**: the contract suite's NoopOnExistingKey
+   red-ed CI (run 42407471289) when a -race scheduling stall outlasted the scaled shortTTL —
+   the second Record legitimately re-claims the expired window and the wall-sleep assertion
+   reads it as an extension. Webphone's band-aid is TimingScale 5 (stall budget 60 → 100 ms);
+   the durable fix is upstream: an injectable clock instead of wall sleeps. **2026-11-08
+   (P4-7): the filing draft is committed** — docs/drafts/2026-11-08_go-idempotency_contract-clock-race.md
+   (all five verify-before-filing gates run at go-idempotency HEAD 9a82577; check-draft 0 FAIL).
+   Filing awaits the owner's review tick (the pack's D-slot is unanswered, so the unsolicited
+   banner stands and posting is not the agent's call). Evidence: docs/ci-flake-ledger.md row 42407471289.
+
+### go-appkit module candidate (2026-11-12 re-review — docs/review/libs/go-appkit.md)
+
+- [x] ~~**File the webphone walls UPSTREAM as appkit asks (fleet frame, owner ruling
+      2026-11-12: the walls are extraction backlog, not waiting conditions — the owner
+      owns both repos)**: (1) appkit/health per-SURFACE criticality grading (the same
+      check leg 503s a strict readiness route but WARNs the dashboard — health_crm_test.go
+      is the spec); (2) an aggregates-only metrics mode (no `route`/`method` labels — the
+      /metrics leak-test privacy line); (3) httpx success-status override (202-class
+      lanes) + per-route family→status tables.~~ **DONE 2026-11-12 — filed as
+      LarsArtmann/go-appkit#59 (strict readiness), #60 (aggregates-only metrics), #61
+      (httpx success-status; the ask NARROWED during source verification — error-side
+      statuses were already expressible via errorfamily's `HTTPStatuser`, so the
+      per-route-tables half was withdrawn as unnecessary). All three carry the
+      provenance banner for owner review; drafts in docs/drafts/appkit-asks/.** Adoption
+      order stands: simpler apps ride preset first (appkit's own battery-swap recipes);
+      webphone migrates last. Evidence: docs/review/libs/go-appkit.md § the open-mind
+      pass (issue links inline).
+- [ ] **Adopt `appkit/flightrecorderhealth` (first go-appkit MODULE adoption; framework stays NO-GO)** —
+      wire `frhealth.NewTrigger(rec, WithCooldown, WithTriggerFunc(fr.OnError))` into
+      `health.New` via go-health's `WithHealthRecorder` (options.go:127 in the pinned
+      v0.10.0) where app.go already builds both the probe and the recorder: health-batch
+      failure auto-captures a trace snapshot (cooldown-hardened, non-blocking, race-safe
+      — all pinned by the module's own tests), covering wedges that never surface as a
+      traced request (the dashboard's 1s loop failing with nobody polling /healthz) and
+      adding the cooldown the un-cooled 5xx snapshot arm lacks. Both hard deps already
+      pinned (go-flightrecorder v0.2.1, go-health v0.10.0); standalone constructor — no
+      injector-doctrine conflict. Demand-gated: the first wedge incident the
+      request-trigger misses, or ride the next flight-recorder train. Evidence:
+      docs/review/libs/go-appkit.md § module table (2026-11-12).
 
 ### Fleet-libs reopen-trigger registry (2026-11-04, T25 — the ONE table)
 
@@ -97,27 +768,31 @@ Every NO-GO/declined/keep-as-is ruling carries a written trigger in its report
 sweep answers "is any trigger fired?" in one read; re-litigate a ruling ONLY when its
 trigger fires, never on a schedule.
 
-| Fires when                                                                                      | Library                | Then                                                           |
-| ----------------------------------------------------------------------------------------------- | ---------------------- | -------------------------------------------------------------- |
-| metaengine grows a per-group cap (tracked as go-cqrs-lite#114)                                  | go-cqrs-lite           | migrate `trimOwner`/`trimCall`/`trimWindows` in one train      |
-| usermgmt major bump, or a second identity consumer                                              | cqrs-htmx              | re-run the family audit (adminui re-check)                     |
-| `internal/domain` gains a second Go consumer                                                    | go-branded-id          | ratified modularization trigger — brands need their own module |
-| A client-facing `Idempotency-Key` contract appears on a public API                              | go-idempotency         | re-run the adoption ruling (metaengine DedupStore vs the SDK)  |
-| A self-managed versioned blob format or event signing requirement                               | go-codec               | `DeterministicCodec` is the entry point                        |
-| A drop-folder/intake feature, or live-config-reload demand                                      | go-filewatcher         | re-run the NO-GO ruling                                        |
-| A `Type=notify` conversion, or a unix-socket machine surface                                    | go-daemon, go-appkit   | re-run both rulings together                                   |
-| A CLI subcommand outputs structured data                                                        | go-output              | adopt the renderer                                             |
-| A non-systemd target, credential-compliance rule, mutable secrets                               | go-credentials-store   | re-run the NO-GO ruling                                        |
-| A new file-persisting feature (export, backup, rotation)                                        | go-atomic-write        | ride `WriteWithPerm`/`WriteIfChanged`                          |
-| A latency investigation the histogram aggregates cannot localize                                | httputil/server_timing | instrument 2–3 named spans behind the same env gate            |
-| User-visible missed-update reports on flaky mobile links                                        | go-sse                 | ssetest-pinned Last-Event-ID replay                            |
-| A second retry-shaped loop (e.g. ASR uploads)                                                   | go-retry               | `retry.Do` is the natural home                                 |
-| A dashboard deployment without the Caddy front                                                  | go-health-dashboard    | re-decide the fence (see the 2026-11-04 fence memo)            |
-| A read model crossing ~10k rows/owner, or a second engine                                       | go-cqrs-lite           | keyset pagination / failover audit                             |
-| A second readiness consumer or multi-instance deployment                                        | go-health              | re-run the probe-topology ruling                               |
-| A templ-components release with a new status/toast component; the subtitle/✓-chip taste rulings | templ-components       | owner-taste re-litigation, not adoption gaps                   |
-| The dashboard library swaps its embedded SDK version                                            | go-datastar            | re-verify the /health CSP scope                                |
-| The library ships a parse-with-rules hook or a new linter rule                                  | go-branded-id          | migrate the invariant INTO the seam / adopt the rule           |
+| Fires when                                                                                           | Library                | Then                                                                                                                   |
+| ---------------------------------------------------------------------------------------------------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| metaengine grows NESTED group addressing (a per-call floor inside a per-owner group)                 | go-cqrs-lite           | `trimCall` is the last hand loop; delete it for the declarative cap                                                    |
+| usermgmt major bump, or a second identity consumer                                                   | cqrs-htmx              | re-run the family audit (adminui re-check)                                                                             |
+| `internal/domain` gains a second Go consumer                                                         | go-branded-id          | ratified modularization trigger — brands need their own module                                                         |
+| A client-facing `Idempotency-Key` contract appears on a public API                                   | go-idempotency         | re-run the adoption ruling (metaengine DedupStore vs the SDK)                                                          |
+| A self-managed versioned blob format or event signing requirement                                    | go-codec               | `DeterministicCodec` is the entry point                                                                                |
+| A drop-folder/intake feature, or live-config-reload demand                                           | go-filewatcher         | re-run the NO-GO ruling                                                                                                |
+| A `Type=notify` conversion, or a unix-socket machine surface                                         | go-daemon, go-appkit   | re-run both rulings together                                                                                           |
+| An appkit tag beyond v0.12.0 ships a new battery/module (httpx B6/B8, preset legs, W4 worker/polite) | go-appkit              | sweep the module table in docs/review/libs/go-appkit.md — the 2026-11-12 re-review proved the inventory drifts in days |
+| A wedge incident the request-triggered trace snapshots miss (loop failure with no traced request)    | go-appkit              | adopt `flightrecorderhealth` (the module-level candidate row above)                                                    |
+| A CLI subcommand outputs structured data                                                             | go-output              | adopt the renderer                                                                                                     |
+| A non-systemd target, credential-compliance rule, mutable secrets                                    | go-credentials-store   | re-run the NO-GO ruling                                                                                                |
+| A new file-persisting feature (export, backup, rotation)                                             | go-atomic-write        | ride `WriteWithPerm`/`WriteIfChanged`                                                                                  |
+| A latency investigation the histogram aggregates cannot localize                                     | httputil/server_timing | instrument 2–3 named spans behind the same env gate                                                                    |
+| User-visible missed-update reports on flaky mobile links                                             | go-sse                 | ssetest-pinned Last-Event-ID replay                                                                                    |
+| A second retry-shaped loop (e.g. ASR uploads)                                                        | go-retry               | `retry.Do` is the natural home                                                                                         |
+| A dashboard deployment without the Caddy front                                                       | go-health-dashboard    | re-decide the fence (see the 2026-11-04 fence memo)                                                                    |
+| A read model crossing ~10k rows/owner, or a second engine                                            | go-cqrs-lite           | keyset pagination / failover audit                                                                                     |
+| A second readiness consumer or multi-instance deployment                                             | go-health              | re-run the probe-topology ruling                                                                                       |
+| A templ-components release with a new status/toast component; the subtitle/✓-chip taste rulings      | templ-components       | owner-taste re-litigation, not adoption gaps                                                                           |
+| The dashboard library swaps its embedded SDK version                                                 | go-datastar            | re-verify the /health CSP scope                                                                                        |
+| A product surface wants server-pushed reactive state (live Reports-shaped, not fragment morphs)      | go-datastar            | re-run the client-side NO-GO (2026-11-07 deep-dive, posture 78/100)                                                    |
+| The library ships a parse-with-rules hook or a new linter rule                                       | go-branded-id          | migrate the invariant INTO the seam / adopt the rule                                                                   |
+| A second binary in this repo, or an interactive operator CLI beyond the three ritual one-shots       | cmdguard               | re-run as an adoption audit (docs/review/libs/cmdguard.md, 2026-11-11)                                                 |
 
 ### Fax enablement (owner + carrier action, 2026-10-30)
 
@@ -154,7 +829,11 @@ deployment that believes it archives learns otherwise only from the
 journal. Suggested shape + the other three seams' clean verdicts:
 `docs/planning/2026-10-30_14-05_capability-seam-audit.md`. Owner call
 on the shape (Settings row alone vs per-fax archive marker); recorded,
-not built.
+not built. **The shape now has a decision brief** (2026-11-08,
+recommending the Settings row, with the per-fax marker's cost and the
+correlation machinery it would need):
+[docs/planning/2026-11-08_decision-briefs.md](docs/planning/2026-11-08_decision-briefs.md)
+§ Brief 1 — answer in the sitting pack.
 
 ### CRM data-mesh train (2026-10-29) — deferred tail
 
@@ -311,6 +990,7 @@ fixes, the shutdown release-count log, push draft wrap-code pins, errors.AsType,
    prod, confirm the reason card + offline toast + reconnect pill title render on
    the live deployment (browser E2E owed only if served markup changed — it did
    not: all surfaces are island-JS-created).
+5. ~~**Flush-announce island spec**~~ — done 2026-11-11: `island-tests/transcribe-announce.test.mjs` (steppable clock) pins both arms — the lag warn announces once per streak and a fast segment re-arms it; the unavailable warn waits for the third consecutive failure and stays quiet while the streak continues (the 60s backoff gate is part of the sequence)
 
 ### Language stance: island type gate SHIPPED, Go→JS + full KMP rejected (2026-10-27 plan)
 
@@ -589,9 +1269,17 @@ webphone is a full federated source of catalog.home.lan: the four seam events
 (documented AS change notifications, NO commands declared — nothing fabricates a
 CQRS write model), the `catalog` CLI subcommand, export tests, and
 `.eventcatalog-hub.json` (the 2026-10-19 inventory-only record is superseded).
-`46cc6db` is on origin/main. Remaining leg is CROSS-REPO: the eventcatalog-hub
-re-pin + build (the hub CI clones webphone@main and runs the export; owned by
-the hub/stack session, ritual = webphone-push first, stack re-pin after).
+`46cc6db` is on origin/main. **The cross-repo leg EXECUTED 2026-11-08 (P4-10):**
+the hub rides `branch: main` (no sha pin to bump — the "re-pin" is the
+mirror-sync build), the Forgejo webphone mirror was force-synced to the GitHub tip
+(`mirror-sync-sources.sh webphone` → ✓ at tip), and hub run #240 is **GREEN
+end-to-end** (export, merge, governance lint, site build, publish) — reached
+through three real repairs: the CI host's runner state-root ownership (a
+NixOS switch renumbered the DynamicUser; chown + a durable-fix row in the
+hub's TODO), the crm source's stale go-modules vendorHash (re-pinned at the
+66f37f3 tip in the crm repo, `37a1957`), and a hub workflow step-scoping bug
+(`current_contract` derived in the build step but read in the verify step —
+`7551d4a`). The site published; the hourly sync pulls it to catalog.home.lan.
 
 ### Wire contracts (2026-10-24 — SHIPPED; three open rows)
 
@@ -600,16 +1288,45 @@ The three catalog lanes cover the three real vocabularies (eventcatalog federati
 rule lives in [docs/contracts/README.md](docs/contracts/README.md); generation
 evidence in the 16-50 plan + its execution status). Open rows:
 
-- [ ] **OWNER-GATED: catalog v4.9.0→v4.10.0 bump** — 213 commits
-      (architecture-reference + export-selection features webphone does
-      not use; the seven upstream candidates are NOT obviously fixed).
-      Lean: ride the next natural train. Same notes file. **Priority:**
-      Low · **Effort:** S (decision) / M (bump).
-- [ ] **webphone-android consumes the specs** — fetch/parse
-      `/openapi.json` in the client bootstrap, derive the push-devices
-      client calls, parse the asyncapi ring contract, verify the CSRF-dance
-      paths against the spec (completion-plan N14; other repo's gates).
-      **Priority:** Medium · **Effort:** M.
+- ~~**OWNER-GATED: catalog v4.9.0→v4.10.0 bump** — 213 commits
+  (architecture-reference + export-selection features webphone does
+  not use; the seven upstream candidates are NOT obviously fixed).
+  Lean: ride the next natural train. Same notes file. **Priority:**
+  Low · **Effort:** S (decision) / M (bump).~~ →
+  superseded 2026-11-12 — the pin is ALREADY v4.14.0 (go.mod; later
+  natural trains rode it well past v4.10.0), and the plan's M15
+  resolvability check (F045) found NO v4.15.0 published upstream —
+  the pin is CURRENT, this row is moot; a future bump needs an
+  upstream release first.
+- [ ] **webphone-android consumes the specs** — REMAINING HALF is the
+      runtime digest handshake: fetch a contract digest of exactly the
+      paths/shapes the app uses at origin-config time (the 304 ETag
+      lane makes it free) and render a named "server older than app"
+      surface on mismatch. The BUILD-TIME half LANDED 2026-11-10:
+      `webphone contracts` renders byte-pinned consumer fixtures
+      (`docs/contracts/wire/` — push facts both transports, both
+      sessionIdentity arms, the registration request), freshness-gated
+      with the asyncapi document; the android repo vendors them and
+      its JVM tests decode them through its real parsers
+      (`scripts/sync-wire-fixtures.sh` there; the runbook carries the
+      re-vendor leg). Trigger for the runtime half: first real
+      server/app version-skew incident. **Priority:** Low ·
+      **Effort:** M→S (build-time half done).
+- [ ] **Wire-fixture follow-ups (deferred, with triggers)** — (a) the
+      android-side loopback live-check script: boot a loopback webphone
+      and drive the app's real decoders against its LIVE `/api/session`
+      + `/config.js` answers (fixtures pin the shape, this would pin a
+      deployment; trigger: device-train prep wanting deployment-level
+      proof); (b) CONSIDER a `/config.js` key fixture pinning
+      `sipDomain`/`websocketPath` in the same sync (trigger: the first
+      config.js key drift or a second config consumer — the android
+      repo owns the regex reads). BOTH TRIGGERS RE-CHECKED UNFIRED
+      2026-11-13 (pareto T20; config.js keys stable, no second
+      consumer, first device train still operator-blocked) — the
+      handover pack (docs/planning/2026-11-13_16-40_android-handover-pack.md)
+      carries the check + the line-picking/CallStyle contracts. Rows mirrored in webphone-android's
+      TODO_LIST; the KMP spike stays deferred per the 2026-11-08
+      preflight (quiet-repo gate). **Priority:** Low · **Effort:** S each.
 - [x] **DONE 2026-11-04 (ETag half): /openapi.json conditional GET** —
       the go-etag/server middleware serves bodyless 304 revalidation on
       `/openapi.json` + `/manifest.webmanifest` (mount is the skip set;
@@ -650,6 +1367,12 @@ ROADMAP cross-linked); g3 sequencing (lean: own fresh session).
 6. **Quarterly baseline/suppressed-set audit** — first 2027-01-11 (registry Protocol step 1).
 
 **Evidence:** registry 2026-10-11 entries + ratified-rulings section; status docs `2026-10-11_02-19` (triage) + `2026-10-11_02-48` (session report); AGENTS.md dedup/nolint/dep-lane/INTERIM edits
+
+### brandid-lint enforcement posture (2026-10-16 scan train — unanswered policy call, harvested at the 2026-11-08 archive)
+
+**Status:** 🟡 `OPEN DECISION` (owner call: fleet-policy precedent) · **Priority:** Low · **Effort:** S (decide) / M (a BuildFlow step)
+
+The BD003 directives (87 sites at HEAD, grep 2026-11-08) are policed only when someone hand-runs `brandid-lint -rules all` — last clean run 2026-10-25 (AGENTS strong-id bullet). The 2026-10-16 train's proposal (BuildFlow step / CI job / flake version pin) was never answered; the report's g2 asked exactly this and waits. Decide: gate it (every train keeps it green) or ratify ad-hoc (directives rot only if an edit touches a directive site without a re-run; AGENTS's strong-id bullet is the convention home).
 
 ### ASR/SUPERB train follow-ups (2026-10-08 harvest: 16-54/18-15 §f + plan remainder)
 
@@ -695,13 +1418,15 @@ Outbound SMS bridge failure on prod: `POST /messages/send` answered 422 (gateway
 
 Deferred/scheduled message sending was cut from T18 (M21.6): the gateway seam has NO deferred-send concept (loopback sends immediately; the webhook bridge is fire-and-forget to the provider), so a scheduled-send UI would show a state the transport cannot honor — violating the island-honesty contract. Revisit only if the provider/stack grows a deferred-send lane; the snippets seam (M21) already covers the "reply faster" problem it was meant to solve.
 
-**Evidence:** design note `docs/planning/2026-10-02_10-02_T18-m21-m22-seam-design.md` (M21.6 cut); owner ratification pending (2026-10-02 §g).
+**Evidence:** design note `docs/planning/2026-10-02_10-02_T18-m21-m22-seam-design.md` (M21.6 cut); owner ratification pending (2026-10-02 §g) — answer surface: the sitting pack §F-side wording. **Audited 2026-11-08** (nothing lost; the NO-GO premise re-verified at HEAD: [docs/planning/2026-11-08_parked-decisions-audit.md](docs/planning/2026-11-08_parked-decisions-audit.md)).
 
 ### OWNER-calls batch session
 
-**Status:** 🟡 `PLANNED` (briefing ready, sitting owed) · **Priority:** High · **Effort:** S
+**Status:** 🟡 `PLANNED` (sitting pack ready, sitting owed) · **Priority:** High · **Effort:** S
 
-FRESH PACKET FIRST (2026-10-29, one sitting unlocks 10 planned tasks): `docs/planning/2026-10-29_15-53_SUPERB-owner-decision-packet.md` — six rulings with evidence one-pagers (group-rooms A1, E2EE P2 + store home, pma#348 ownership, tw-freshness posture, config typo strictness, branching-flow triage pull-forward). Answer inline at the top of the packet.
+**THE ONE ANSWER SURFACE (2026-11-08): [docs/planning/2026-11-07_21-30_owner-sitting-pack.md](docs/planning/2026-11-07_21-30_owner-sitting-pack.md)** — 58 rulings (A product/UX, B privacy/data, C infra, D tooling, E cross-repo) + the F bulk table that folds the briefing's 38 rows, each with a recommendation, the other branch's cost, and a payoff map. Every surface below (the 2026-10-29 packet, the briefing, the ROADMAP open questions) is consolidated INTO it; answer THERE and this row closes.
+
+Superseded surfaces kept for evidence only: the 2026-10-29 packet (six cards, folded into pack rows B1/B2/B3/C1/C2/D17), the briefing (38 rows, folded into pack §F), the ROADMAP §Open questions (prune in the same sitting per the pack's already-resolved section).
 
 OWNER-calls batch session (decisions, one sitting — briefing at `docs/planning/2026-09-22_13-50_owner-calls-briefing.md`): the original ~15 + CRM policy trio + self-send train-C semantics + templ-components history-blemish + tail items g1 force-push ratification / release.sh load-gate default / g2 KVM-timeout / art-dupl `-t 3` baseline (FIFTH surfacing) + registry ratification (`docs/dedup-registry.md` as THE home) + `settingsRow` build-or-retire (FOURTH surfacing) + suppression-bucket doc + dedup suppression-SCOPE ruling (shown-only vs periodic suppressed-set audit; 12:59 report g3, unrouted until v6) + webhook 400 body-text dependents + `msg/`→`message/` idem-key rename + helper micro-test bar + missed-call REJECT semantics + search `?q=` URL semantics + store `Must*` panic-on-corrupt policy. NEW since 2026-10-06 (briefing rows 36–38): the `auth:`-prefix × daemon-sweep interface (manual `auth:` commit before the sweep window vs accept a daemon `chore:` commit when the pinned session-behavior suite provably ran — 23:22 g2) · devShells.default tool additions (dprint/prettier/ruff/lychee, silences 4 buildflow warnings) + lychee authenticate-vs-exclude policy (22:08 f13/f14) · docs-only express-push ratification (23:22 g3). NEW since 2026-10-05 (briefing rows 29–32, addendum in the briefing doc): mixin/dupe detector-policy home (registry sweep-log only vs AGENTS promotion) · `config.CRM`/`Paperless` URL+Token twin standing ruling (resurfaced by TWO detectors) · `vcard.Card`/`SharedContact`/`apiSharedContact` triad boundary-layer rejection ratification · `errorfamily.Join` gap (add upstream constructor vs keep 4 nolint aggregate sites). NEW since 2026-10-02 (docs-health v6 sweep): ratify "routed-as-resolved → archive" for the four live owner-gated plans (error-excellence, 20-year-durability, 04-29 pareto, 13-33 stack-adoption — v4's g1); ratify train-level `v` verdict markers as the standing annotation hash bar (v3's g3, six sweeps running); the check-rows marker-cell baseline for the 37 pre-2026-09-18 archived files (restyle or accept). NEW since 2026-09-26: push-lag threshold policy (when is a silent daemon push stall BROKEN — 10 min? 1 h) + session push ratification (phase-boundary hand-pushes) · is the next webphone release 2.8.0 (making the bridge's ">= 2.8" claims true) or reword them · `gateway.attachment_limit` knob vs bridge-422-teaches design as final · sniff-fallback lifespan (keep forever vs delete-after-deploy-confirmed) · tier-2 family-adoption intent (dep swept-but-unused?) · report erraudit `tree` same-name-dedupe upstream? (owner's own tool) · AGENTS restructure permission · existing-prod-data chmod/re-backup for the UMask tightening · destDir nesting legality · stack verification now-vs-train-close
 
@@ -717,21 +1442,30 @@ Post the release announcements (drafts for v2.1.0–v2.3.0, v2.5.0, v2.6.0 AND v
 
 ### Standing watches
 
-**Status:** 🟡 `PLANNED` · **Priority:** Low · **Effort:** S
+**Status:** 🟢 `ONE CALENDAR` (refreshed 2026-11-08) · **Priority:** Low · **Effort:** S
 
-Standing watches — QUARTERLY RE-CHECK, next due 2026-12-20 (named triggers fire earlier): sip.js 0.22 (swap ONLY on Chromium WebRTC breakage, a sip.js security advisory, or a needed capability — re-checked 2026-09-23: npm latest still 0.21.2) · templ-components upstream v1.20.x watch (v1.19.4 now adopted in go.mod — daemon sweep; tw.css verified class-identical across the 1.19.2→1.19.4 ride 2026-09-30, no regen needed; next regen only when an adopted component's class set actually changes) · oxlint globals (any new browser global → island oxlint.json) · E2E wall-time budget 445s — greens 195s/184s with FOUC aboard; watch TWO consecutive over-budget runs · MONTHLY erraudit tier-2 re-measure next due 2026-11-05 (RE-MEASURED EARLY 2026-10-29, M26/F96-F97: `erraudit check --max --no-suppress` = 0 violations, `nolint-audit` decay cleaned (4 stale crm sentinel directives removed, re-audit 0 stale, crm tests green); prior early measure 2026-10-05: tier-1 0, tier-2a 0, tier-2b 0 — the passkey train (10-01→10-04) had regressed tier-2 with 7 findings post-09-30-pin: 2 bare constructors at enroll-boot sites, 4 errors.Join shutdown aggregates [errorfamily has no Join — briefing row 32], 1 bool-blank FP where `Duplicate()` returns (int64, bool, bool); all suppressed with reasoned nolints, boot-surface re-grade intact; prior early measure 2026-10-01 with one context_loss FP) · QMD `get`/`multi_get` render bug — blocked UPSTREAM on crush `#3846` (MCP embedded-resource content rendered as Go struct pointer; qmd 2.8.3 is spec-compliant; workaround = `query` tool + disk reads at the corpus root; re-test `get` after the next Crush upgrade; SUBSCRIBE attempt 2026-10-05 blocked — gh token lacks the `notifications` scope; owner one-liner: `gh auth refresh -s notifications` then the `updateSubscription` GraphQL mutation on the issue's node id, or click Subscribe in the web UI) · go-health M18 park watch: revisit ONLY if go-health hooks startup evaluations or cqrs-htmx grows a readiness hook (hook fires only inside `Probe.Evaluate`, which this wiring never calls — verified v0.3.0 AND v0.4.0, wiring reverted `f7028b4`) · branded-id Valuer/Scanner stays PARKED at the store seam (adopt on next storage-format touch) · sessions credentials-at-rest periodic re-review: next due 2026-12-30 OR on the next session-storage change (the 2026-10-06 auth train's changes shipped WITH the 13:10 audit's at-rest reconfirmation — posture stands; baseline `docs/reviews/2026-09-30_sessions-credentials-at-rest-review.md`) · go-cqrs-lite upstream filings 2026-10-15: #71 (TypedReader.Scan truncation signal) + #72 (keep-newest-N cap primitive) — WATCH both until addressed; when the library lands them, re-visit webphone's converging-loop trims + enroll sweep as the named trigger · QUARTERLY modularize re-trigger re-review next due ~2027-01 (fourth series entry 2026-10-17; detection commands live in `docs/modularization/2026-10-17_PROPOSAL.html` §09; the named reopen triggers fire earlier than any calendar)
+Standing watches live in ONE dated calendar now: [docs/watches/2026-11-08_standing-watch-calendar.md](docs/watches/2026-11-08_standing-watch-calendar.md) — every row carries cadence, next due, the named trigger, the evidence home, and the on-fire action. The refresh re-MEASURED the lapsed erraudit monthly check same-session (2026-11-08: `check --max --no-suppress` = 0 violations, `nolint-audit` 68/68 directives needed, 0 stale) instead of silently moving the date; next erraudit due **2026-12-08**, quarterly buildflow **2026-12-20**, credentials **2026-12-30**, modularize **~2027-01**, dedup **2027-01-11**. The Fleet-libs reopen-trigger registry (T25) stays the ONE home for ruling reopen triggers — the calendar references it, never duplicates it.
 
-**Evidence:** AGENTS erraudit bar + templ-components bullet; re-checked 2026-09-23/24 during the pareto cycle (C22/M22)
+**Evidence:** the calendar file itself (every date derived from a verified prior entry); prior prose list re-checked 2026-09-23/24 during the pareto cycle (C22/M22)
 
-### internal/server auth-package carve (dormant trigger)
+### ~~internal/server auth-package carve~~ → EXECUTED 2026-11-12, extended to platform; html carve RULED OUT with evidence
 
-The 2026-10-17 hooks/api carve is DONE and phase-3 adjudicated (session_api
-STAYS — it is the shared auth spine of both login modes; passkey_api reuses
-its three shared methods, and the handlers ride wiring-private state). The
-honest future move — BOTH login modes into an auth package — reopens on the
-next auth-surface change; the blueprint and dependency map live in
-`docs/modularization/2026-10-17_PROPOSAL.html`, the full adjudication in git
-history (the 2026-10-12 + 2026-10-17 entries).
+The trigger fired (the 2026-11-11 login-page front-door train) and the carve
+LANDED as `internal/server/auth` — both login modes, the ceremonies, the OIDC
+dance, the library /login page and the session spine, behind a narrow
+`auth.Shell` seam (the 2026-10-17 api/hooks pattern). Step 2 landed the same
+day: `internal/server/platform` — assets, /metrics + recorders, CSP intake,
+flight-recorder seam (+ TraceRecorder's new home), /phone-api proxy,
+directory bridge (+ machineSurface), /config.js, export. **The planned html
+carve (pages/panels/actions/notifier/sse) is RULED OUT structurally**:
+pages.go holds the `handlers` hub itself and panels/actions reference
+admin/crm/unread/auth-audit in both directions — moving them renames the
+package rather than splitting it. The god-package's honest end state is the
+four surface carves (api/hooks/auth/platform) + the depth-budget arch test
+(landed beside this row), with the html hub as the measured, named residual.
+Reopen the html question ONLY on a real architecture change (per-tab render
+packages over a shared kernel), never as a mechanical move. The 2026-10-17
+adjudication lives in git history (the 2026-10-12 + 2026-10-17 entries).
 
 ### Mic pre-warm live verification + gates
 
@@ -751,7 +1485,7 @@ history (the 2026-10-12 + 2026-10-17 entries).
 
 ### Cross-repo obligations (stack / pbx-artmann)
 
-**Status:** PLANNED · **Priority:** Medium · **Effort:** S-M — THE ONE HOME for the standing stack-E2E obligation.
+**Status:** MOSTLY EXECUTED (2026-11-08 legs train) · **Priority:** Medium — THE ONE HOME for the standing stack-E2E obligation. The four standing legs have a verified step-by-step runbook: [docs/planning/2026-11-08_cross-repo-handover-pack.md](docs/planning/2026-11-08_cross-repo-handover-pack.md) (stack `crm.caFile` pass-through · `/hooks/ring` dialplan leg · `mod_enum` CI-ceiling repair · the #9 owner sequence). **Per-leg verdicts (2026-11-08):** Leg 1 `crm.caFile` — RESOLVED (already landed in the stack: options + threading + eval render pin); Leg 2 `/hooks/ring` — SHIPPED as-built (loopback shim `ringhook.py` + `services.telephony.ringhook.*` unit + conditional dialplan arms, off = byte-identical; `ringhookCheck` eval arm + 7-spec unittest; the RING-GROUP path uncovered — owner question §g-1); Leg 3 `mod_enum` — EXCLUDED with the ruling comment (zero call sites grep-verified), telephony-eval green, pbx toplevel builds; run 42529951959 finished the flake leg in 46m40s (under the old ceiling) with every suite green EXCEPT the sibling session-2's own named-open `telephony-voicemail` quota red — the twice-green acceptance is blocked on THAT train, not on these legs; Leg 4 — owner-gated (unchanged). Remaining open: the voicemail quota red (sibling's), the ring-group boundary ruling, and the residues below.
 
 Owner/stack legs that block or derive from webphone work: repair the stack
 FreeSWITCH `mod_enum` build (it produces the stack CI 1h ceiling that cancels every
@@ -764,7 +1498,11 @@ the WebTransport-not-adopted verdict doc; telephony `deploy.md` secret PATH colu
 ops-runbook demo-call recipe (`originate user/1000 &playback(local_stream://moh)` +
 the `/var/lib/telephony-secrets/` password path); MOH audibility + `/recordings/` +
 CDR check; the gateway stack-side bits (`ftypqt`→`video/quicktime` sniff, E2E
-MMS-outbound, pbx-artmann FEATURES:87 stale text). No assistant ssh — verified
+MMS-outbound, pbx-artmann FEATURES:87 stale text); the 2026-10-23 404-health
+stack residues (a dashboard-on VM test leg — boots the stack with
+`webphone.dashboard.enable = true` and asserts the page renders through the
+vhost fence — and the app's styled-404 shape rule in `tests/browser-e2e.py`,
+grep-verified absent 2026-11-08). No assistant ssh — verified
 handovers only. Evidence: owner command sheet
 `docs/planning/2026-09-24_19-25_owner-terminal-command-sheet.md`.
 
@@ -780,9 +1518,87 @@ ceiling) + markdownlint posture execution (post-sitting row-18 verdict). Plan:
 
 ### Native-app train: ring-while-closed legs (2026-10-23 ship, webphone side closed)
 
-**Status:** 🟡 `P2 SHIPPED server-side; P1 shell scaffolded (webphone-android v0.1, BUILD GREEN + 16KB-aligned); the two remaining legs live OUTSIDE this repo` · **Priority:** High · **Effort:** M (each leg)
+**Status:** 🟡 `P2 SHIPPED server-side; P1 shell scaffolded (webphone-android v0.1, BUILD GREEN + 16KB-aligned); the two remaining legs live OUTSIDE this repo` · **Priority:** High · **Effort:** M (each leg) · **Preflight 2026-11-08:** the android repo is QUIET (clean tree, last commit 11-05, 2 commits/7d — half the KMP gate met, so the spike STAYS deferred; the go/no-go note + the first-device-train checklist: [docs/planning/2026-11-08_native-app-preflight.md](docs/planning/2026-11-08_native-app-preflight.md))
 
-- **Stack leg (nix-international-telephony):** the FS dialplan must POST `webphone:/hooks/ring` (Bearer webhook secret; `{owner, from, call_id, state: ring|end}`) on inbound-call ring + ring-end — the same bridge pattern as the Telnyx webhooks. Until this lands, the seam is inert (fire-and-forget 202, no devices rung). Config to expose: `services.telephony.webphone.push.*` (freeform `settings` already carries it; document in the stack's deploy docs).
-- **Shell leg (webphone-android):** first device train — exercise the SIP UA against the live WSS gateway (REGISTER/INVITE/BYE/DTMF/hold + incoming INVITE + REFER/NOTIFY are implemented but UNTESTED against FreeSWITCH), compose the real CallStyle notification (v0.1 posts the FSI heads-up), the origin-picker settings UI (App.origin is a constant today), and the `/api/session` field-name check against the served sessionIdentity shape.
+- **Stack leg (nix-international-telephony) — LANDED 2026-11-08:** the FS dialplan now POSTs the ring facts (`{owner, from, call_id, state: ring|end}`) to the `ringhook.py` loopback shim, which Bearer-signs the forward to `webphone:/hooks/ring` (`services.telephony.ringhook.*`; dialplan arms only when enabled — off = byte-identical; eval arm + 7-spec unittest). REMAINS: the end-to-end ring proof (needs a push device registered + the shim enabled in a VM or the live host) and the ring-group-path ruling (§g-1). The seam is no longer inert stack-side; it is OFF by default until an deployment sets `ringhook.enable`.
+- **Shell leg (webphone-android):** first device train — exercise the SIP UA against the live WSS gateway (REGISTER/INVITE/BYE/DTMF/hold + incoming INVITE + REFER/NOTIFY are implemented but UNTESTED against FreeSWITCH), compose the real CallStyle notification (v0.1 posts the FSI heads-up), and the origin-picker settings UI (App.origin is a constant today). The `/api/session` field-name check LANDED 2026-11-10: the wire-contract sync train fixed the android `resumeSession` drift (it read `sip_domain`/`sip_password`/`websocket_url`, keys the server never sends — REGISTER ran on empty credentials) and now pins both sessionIdentity arms + the push payloads + the registration DTO via byte-pinned fixtures (`docs/contracts/wire/` here, vendored + decoded by `WireContractTest` there; re-vendor ritual in the release runbook).
 
 **Evidence:** decision doc `docs/planning/2026-10-23_16-13_native-app-platform-decision.md` (status: DECIDED + SHIPPING); `~/projects/webphone-android` README honesty markers; `internal/push` + `internal/server/hooks/ring_test.go` + `internal/server/push_api_test.go` for the shipped server contract.
+
+### Trunk truth + v2.13.0 release train — open rows (2026-11-10 harvest)
+
+**Status:** 🔴 the rows below are the OPEN tail of the 19:14 report's §f (the satisfied half is struck in the report itself) · **Priority:** see each row · **Effort:** S each unless noted
+
+- **OWNER legs (a sitting, not a script):** A3.4 — send the assembled Telnyx reply into ticket #832080 (paste-ready at pbx-artmann `docs/evidence/2026-11-10-trunk-siptrace/FINDINGS.md`, attach the capture, reply INSIDE the thread); C3.2 — one real inbound mobile call to the DID (closes the six-week zero-inbound ruling only when a `context=public` CDR lands); E3 — pick the `reports.weekly_talk_budget` number and set it in the host config; E5.2–E5.4 — hikaru's passkey one-time link + enroll + the Super Admin 3-surface check; E6 — the first real outbound fax (owner picks the destination, watch webhooks → delivered); row-33/34/35 confirmations — listen to the `pifo42h1` recording once, say what 9100 is, decide whether internal test destinations get contact-store names.
+- **R-URI `+` dialplan train (8):** if Telnyx engineering confirms the leading-`+` R-URI question, the dialplan fix is OURS — same-day train, `trunk-lift-watch` watches for the answer.
+- **C5 lift day (15):** probe rc=3 twice → capture the LIFTED wire beside the screened one (re-run `trunk-debug-matrix.sh` with `PBX_MATRIX_KEEP=1` into a durable path — the 2026-11-10 /tmp cell logs rotted) → first real PSTN dial + CDR + recording → inbound green → strike `trunk-lift-watch` with the evidence lines.
+- **Watcher fire-drill (13):** deliberately trip one alert class (canary against a deliberately-wrong host in a scratch run) to prove the GitHub-issue filing + suppression path works inside the systemd user environment — the alert leg has never fired in earnest.
+- **api-dial tripwire (14):** the 2026-11-17 revisit of the DEFER recommendation self-surfaces here (memo: pbx-artmann `docs/planning/2026-11-10_17-30_api-dial-stopgap-decision-memo.md`).
+- **Release hygiene on a quiet host (22/30/31):** owner call on `.buildflow.yml`'s stale baseline file (157 accepted entries match nothing — delete or refresh deliberately); re-run `buildflow timings --regressions` on a quiet host before rebaselining the +200% race-step timing; correlate the one SQLITE_BUSY warning from attempt 2's tail if it recurs.
+- ~~**lychee redirect hints (32):**~~ partially — 0 errors at today's run (579 OK, the 5-vs-0 delta reconciles as green); the 3 redirecting URLs are UNNAMED by lychee 0.24.2 in every local output mode (-v/-vv/json/detailed carry only the count — an upstream display gap worth filing, owner-gated); no URL guessing
+
+### Release-green + B5-staged — open rows (2026-11-11 harvest)
+
+- **Answer the 00-45 report's §g Q1–Q3:** (1) B5 prod-switch authority + timing, (2) main's treefmt red — heal over the other session's refactor files or let them self-heal, (3) the E3 budget number.
+- **Verify webphone CI green on the treefmt-healed tip:** the daemon-swept refactor files owe a formatter pass; main sat red across four consecutive tips (`a3832e4a` → `346cad88`), treefmt-check failing on gofmt alignment around `cqrs-lint:ignore` comments.
+- **Post-switch verification battery** once B5 executes: prod `/version` = `v2.13.0`, journal quiet (no unknown-config-key WARNs), `ui-capture --track` Reports causes subline + voicemail honest-toast verdict on real data, pbx-artmann deploy-ledger row.
+- **Release-log archival:** the `/tmp/release-2.13.0-{5..11}.log` evidence was LOST to a tmpfiles purge before it reached the docs evidence home — row 32's rot warning materialized. The runbook addition below is the fix; the raw logs are unrecoverable (the verdicts live in the CHANGELOG + the status docs).
+- **aarch64 toplevel ruling:** the `pbx-aarch64` toplevel is EVAL-proven (it evaluated and reached building) but its full build is QEMU-bound on `stalwart` (a Rust mail server compiled from source for aarch64 — hours, silent). Prod is x86_64. Revisit only with an aarch64 host, or via a remote aarch64 builder.
+- ~~**Runbook additions:** `--check`-mode docs battery as the pre-push verdict (the mutating battery hid the rule-F glue that red-ed CI); verify the HEAD sha is unchanged in the same call as the push (the daemon swept 28 files between verify and push); archive one gate-clean report in the same push that files a new one; copy release attempt logs into the evidence home AT attempt completion — never "later" (tmpfiles purges faster than a session idles).~~ → done 2026-11-11 — all four landed as release-runbook.md § "Train-hygiene rules from the v2.13.0 seven-attempt war" (check-mode pre-push, HEAD-assert-in-push-call, archive-when-filing, logs-home-at-creation), plus the entangled-red-train rule the day surfaced
+- **18-08 report drain train** before the 45-day cadence age threshold (~2026-12-07): 102 bare rows across 13 tables, zero adjudication — the oldest live report.
+- ~~**cadence-candidates script:** turn the archive-candidate scan (check-rows + bare-rows over every live report, oldest-first CLEAN list) into `scripts/cadence-candidates.sh`.~~ → done 2026-11-11 — script landed; first run: 9 clean candidates / 57 dirty (INDEX.md excluded); builds the session-fresh annotate tool into /tmp/annotool when missing
+- ~~**Runbook additions (dup):** `--check`-mode docs battery as the pre-push verdict (the mutating battery hid the rule-F glue that red-ed CI); verify the HEAD sha is unchanged in the same call as the push (the daemon swept 28 files between verify and push); archive one gate-clean report in the same push that files a new one.~~ → done 2026-11-11 — duplicate of the row above; the canonical row carries the verdict
+- ~~**erraudit tier re-measure** (overdue since 2026-11-05): tier 1 exit 0, tier 2 must stay 0.~~ → done 2026-11-11 — BuildFlow erraudit step 1/1 green (RC=0, detect 3.2s); the raw CLI's 119 unconfigured findings are the bypass-suppression class, not tree regressions; next calendar due 2026-12-08
+- ~~**Red-main watcher visibility:** no tracker issue visible through four red tips — verify the LIST-API title-dedup still matches when every sweep changes the commit subject. UPDATE 2026-11-11: the 09:47 island-js red (tip `9b47bc78`, fixed only inside another session's unpushed train) has NO tracker issue either, 4h+ red — the watcher's red-detection needs a live look, not just the title-dedup theory.~~ → done 2026-11-11 — the live look FOUND the defect the theory missed, two layers deep: (1) the dedup lane rode `gh issue list --search` (the lagging search index — the exact 2026-11-04 class), and (2) `--label ci-red --limit 1` picked ANY ci-red issue — six open daemon-audit flags share that label BY DESIGN, so the next red-main would have commented its evidence onto a daemon-audit flag and then spammed it every 15 min (CREATE was unreachable). Fixed: `red_main_issues()` = LIST api over ci-red filtered by the `red-main run` title prefix (daemon-audit's exact-title dedup untouched — its own lane already used the LIST api); decide() core unchanged; self-test 11/11 with a lane-fixture case; live dry-run answers CREATE against the real red tip (run 43027836672, the sibling train's art-dupl leg) — correct on both inputs.
+
+### 18-08 report drain harvest — open rows (2026-11-11, the archive-drain routes)
+
+- **Flight-recorder + metrics hardening cluster** (routed from the 18-08 report's f26/f38/f39/f40/f41/f42/f47/f49, e6/e8/e10): trace observation vs the `/metrics` exclusion alignment; a NixOS-module declared surface for the env-only recorder; a rate limit on `/internal/flightrecorder`; a snapshots-taken metric (count + bytes); a startup log line when the recorder is on; disk-aware `maxBytes`; an arch test pinning `h.notFound` as the only HTML-router 404 writer; a quarterly re-rule of the remaining `http.NotFound` sites; the `ResponseRecorder` sendfile cost on downloads; an IPv6-loopback (`::1`) pinned case; the route-family test's say-so where it lives.
+- **Traces-in-backup ruling (owner)** (routed from f22/f23, d4, g1): should `<dataDir>/traces` ride the backup set or be excluded from the module's backup unit + documented. The 2026-11-09 journal swap moved the db backup set to system.db; the traces directory question was left unanswered by it.
+- **Observability docs rows** (routed from f32/f33, c5): FEATURES.md owes the `/metrics` histogram wording (the row still says "build info, uptime, table counts") and flight-recorder rows; ROADMAP.md owes an observability-depth entry. Grep-verified absent 2026-11-11.
+- **Lessons candidates** (routed from f35, e3, e4): the "plan says X, the code pins Y — amend the plan in the same turn" lesson; the "check the backup/test-path consequence of every new on-disk artifact under dataDir" process lesson. Grep-verified absent from docs/lessons.md 2026-11-11; the daemon-attribution lesson (f34) ALREADY landed (lessons line ~1062) and is not part of this row.
+- **go-appkit report refresh trigger fired** (routed from f37): the report's flight-recorder fact says "indirect dep"; the seam is a DIRECT dep since the 2026-10-23 train (AGENTS flight-recorder bullet). Re-scoring rides the report's own refresh trigger, not a re-litigation.
+- **Cadence drain continuation + ratchet re-measure** (the 2026-11-11 13-54 report's §f): re-measure the annotate_max pin at the next sweep (the 18-08 + two-candidate archives moved corpus counts; ratchets move DOWN only, so a lower measured count is the expected direction); drain-train the next-oldest DIRTY candidates from `scripts/cadence-candidates.sh` output before their 45-day age thresholds; decide heal-or-wait for the active login-page train's docs-gate reds (the 12-31 report's missing §f + dprint format) if that session idles. That train LANDED 2026-11-11: the island suite (330/330) + smoke pins (54/54) healed, the art-dupl templ clones dissolved at the sites (baseline untouched, registry sweep log appended), and the fold shipped in 2.14.0.
+
+### cqrs-lint triage follow-ups — open rows (2026-11-11 harvest, the 01-58 report's §f)
+
+- **File the suppression state-machine draft upstream** (`~/projects/BuildFlow/docs/drafts/cqrs-lint-suppression-block-comment-state-machine.md`; owner review tick first) — and the **D005 draft** beside it (same gate, older).
+- **Track the upstream `/*` lexer fix**: on the next cqrs-lint bump, remove the actions.go hedge comment if the fix shipped; until then any directive below a one-`/*` line comment in the six swept files is dead on arrival.
+- **Confirm the enroll.go S001 heuristic change upstream** (the wirefixtures twin still fires — intentional change or drift?).
+- **Train-specific decay pass: `erraudit nolint-audit`** after the C007/At-command train (the calendar's quarterly re-measure is separate, next due 2026-12-08).
+- ~~**Pin the D014 tags with a replay test**~~ → done 2026-11-11 — `internal/cqrs/tombstone_wire_test.go`: untagged old-shape witnesses replay through `DecodePayloadAuto` and must re-encode byte-identically; JSON wire keys pinned to the Go field names with byte goldens; MUTATION-PROVEN (a planted `json:"reason"` drift fails both legs)
+- ~~**`cqrs-lint scorecard` before/after** and **`cqrs-lint doctor` render check**~~ → done 2026-11-11 — scorecard: adoption 11/36 relevant modules (30%, Grade Sparse) and the score counts MODULE adoption, so the 11 disabled LINT rules could not distort it; doctor renders all 11 disable-reasons (217 rules total, 206 active, 11 disabled, each `why` verbatim)
+- ~~**Write the triage decision table**; move three lessons~~ → done 2026-11-11 — the 4-way table (config-disable / directive / keep-visible / fix) is the standing rule beside the CHANGELOG bar in AGENTS (cites the 00-36 report); docs/lessons.md § Tooling traps gains the result-cache war story, the scoped-verifier near-miss, and the vendorHash-tail red (CI's own-hash repair)
+- ~~**Pin the B007 ruling**; consider feeding the stream-vocab vars to the catalog (B010)~~ → done/ruled 2026-11-11 — the ruling comment sits at server.New's registration block (explicit rows ARE the route table); B010 DECLINED: the catalog's scope is the four SSE seam events by ruling (nothing fabricates a CQRS write model into the federation), the stream vocab is the internal write model, and the seam events do not map 1:1 onto streams
+- **Owner decisions pending**: cqrs-lint gating posture (answer or TODO row), C044 prefixed-key permanence (answer or priced TODO row), BuildFlow rebuild + reinstall (freshness only), dprint-remote-plugins advisory, `buildflow format` fingerprint drift, test-race +202% on a quiet host.
+- ~~**Cosmetic**: the AGENTS.md erraudit bullet's stale inline "next 2026-11-05" date~~ → done 2026-11-11 — the bullet now defers to the watch calendar (next 2026-12-08, last measured 2026-11-08)
+
+### Full-code-review open rows (2026-11-11 harvest, the 18-23 report's verified findings)
+
+- ~~**Hold/resume must settle on the re-INVITE verdict, not the send**~~ → done 2026-11-12 — `sipverdict.js` (`inviteVerdict`) wraps the re-INVITE in a requestDelegate whose onAccept/onReject settle the promise; `holdSession` (calls.js:117) commits only the far-end verdict (accepted/rejected/send-failed/timeout, 30s cap) and failed toggles return the SETTLED prior state. The verdict-arm UI pins landed the same day (`hold-verdicts.test.mjs`: TIMEOUT arm under mock timers, refused arm, settled-truth restoration + en/de copy pinned verbatim; island suite 336/336).
+- ~~**Detach the /hooks/ring fan-out from the request**~~ → done 2026-11-12 — `push.Fanout.Fan(ctx, owner, fact)` (push.go:197) is the ONE delivery policy (WithoutCancel detach + 15s budget + prune-on-unregistered); the ring hook hands off at `internal/server/hooks/ring.go:58` and answers 202 without waiting on transports (pinned by `TestHookRingFansOutToRegisteredDevices`).
+- ~~**Probe the concurrent first-sight thread-split race**~~ → probed 2026-11-12, **NOT REPRODUCIBLE — no guard needed** — `TestConcurrentFirstSightYieldsOneThread` (internal/messaging/raceprobe_test.go, race-detector clean): two barrier-started Receives for one unseen remote both miss FindThread's projection scan, but both appends target the SAME journal stream (ThreadStreamKey = owner|network|remote, threads.go:33), the first adopter wins the thread identity, and the decider's `cqrs.thread_identity` rejection (threads.go:103) refuses the loser. Exactly one thread exists after the race; the loser's append fails `store.message_append` and is recovered by re-delivery (the retried Receive resolves the winner's thread, unread counts both) — the webhook lane's provider retry / the receiver loops' retry ladder own that. No uniqueness guard to add. ~~REOPENED 2026-11-12 by #249: the single-run probe missed the repetition class — `-count>1` and full-suite parallelism red the final assertion ("unread 3", pre-existing at `b1b01b87`); the await-poll-vs-semantics decision is parked with the file-size split train residue row above.~~ → CLOSED 2026-11-13 (#249) — decision: await-poll, not semantics: the probe's exact-count `svc.Threads` reads raced the async projection fold; `awaitThreadFold` polls to convergence (5s deadline, the `awaitTranscriptCount` pattern) and both reads route through it. Pre-fix reproduction at current HEAD: NONE (`-count=20`, `-count=10 -race`, package `-count=2` all green — the ladder retirement shifted the fold timing since the b1b01b87 observations); post-fix gauntlet green again. Never red CI (no ledger row — local-repetition class only).
+- ~~**Compensating blob delete on persist failure**~~ → landed 2026-11-12 (cheap half) — both messaging lanes (Send/Receive save loops, incl. the mid-loop save failure) and both fax lanes (Send/Receive spool) now remove every saved blob when the persist fails (`rollbackSaved`/`unspool`, best-effort — the persist error stays the verdict); pinned by `TestFailed{Send,Receive}LeavesNoOrphaned{Blobs,Spool}` in both packages. **Owner question stands:** the crash window (file durable, row lost, process dies before compensation) still orphans files — an orphan sweep decision rides the owner-calls batch.
+
+### SUPERB deepening plan — remaining trains (2026-11-12; plan + evidence: docs/planning/2026-11-12_05-25_SUPERB-deepening-and-integrity-plan.md)
+
+T01–T16 are done (strikes live in the plan file + the 2026-11-12 status reports); T17–T23 landed the same day:
+
+1. ~~**T17** — admin CDR party fallback over `views.CDREntry` (F48)~~ → done 2026-11-12 — `cdrParty` (name → number → unknown) leads the admin row; the CDROff/Failed/None ladder is pinned by a structural view test (`e897efe8`).
+2. ~~**T18 receiver hardening** (F49–F52)~~ → done 2026-11-12 — matrix answerCap 16 MiB + `matrix.too_large` verdict; poisoned-cursor (400 M_UNKNOWN) + oversized arms self-heal via `resetCursor` with receiver tests; FCM drops the cached grant on 401/403 (cache test); CRM reads capped 1 MiB with `crm.too_large` at both sites (family pins + registry rows landed in the same commit set; tail `d15dcc89`).
+3. ~~**T19** — postcall.js extraction (F53)~~ → done 2026-11-12 — the ended-reason/note/disposition/AI-draft family moved to `postcall.js` (calls.js 2 025 → 1 693; q850CauseOf's one home moved with it); three specs re-pointed; closure pin + island 336/336 + tsc green (`e5fcccfc`; one dead import caught by island-lint and removed — lesson: run the flake lint gate before pushing island moves).
+4. ~~**T20** — glyph→SVG sweep (F54)~~ → done 2026-11-12 — redial/save/call/remove carry the island's `wp-icon` SVG vocabulary (`b1b01b87`); the shell's pinned "✕ Close" label and the OS-notification titles stay deliberately out of scope.
+5. ~~**T21** — owner-calls prep doc (F55/F62)~~ → done 2026-11-12 — Q7–Q17 fill the owner batch's stub section with evidence links + defaults (`e9dfc02e`); F62's posture verification: 1 brandid-lint displacement fixed, #48 + ASR gates confirmed still owner-held.
+6. ~~**T22** — erraudit nolint-audit + calendar sweep (F56/F61)~~ → done 2026-11-12 — `erraudit nolint-audit`: 69 directives, 69 needed, 0 stale (the carve trains moved none into decay); the calendar's dated obligations (erraudit/buildflow re-measure 2026-12-08, docs-gates cadence 65/45d) re-verified true.
+7. ~~**T23** — cqrs-lint upstream drafts (F57)~~ → verified complete 2026-11-12 — both drafts already exist in BuildFlow `docs/drafts/` (suppression block-comment state machine + D005 first-token misattribution), each with released-binary repro evidence; the owner tick gates the filing.
+8. **T24 release tails** (F58–F60) — PARTIALLY done 2026-11-12: the cadence gate FORCED the first drain tranche (3 reports archived gates-first, the residue harvested into TODO_LIST; live corpus 67 → 64); F59's FEATURES `/metrics` row now names the latency + beacon vocabulary (the traces-backup half is owner Q13); F60's release-log POLICY landed in the runbook (raw logs stay out of git; verdict tails go into the filing report). REMAINS: the full 18-08 archived-corpus drain (the annotate pin 260's way back DOWN) before the ~2026-12-07 cadence window.
+9. ~~**Island small-hardening residue** (harvested from the 05-22 trains report): note-textarea bytes-vs-chars cap alignment for multibyte; login-page.js localStorage try/catch; dial-form double-submit guard; `htmx.ajax` unhandled-rejection catches in restoreLastTab/live-context paths.~~ → done 2026-11-13 — all four: the note cap aligns at the SERVER (rune count = the wire doc's "chars" and the editors' maxLength; multibyte 4000-accept/4001-reject pins in `TestCallNoteGuards`); login-page.js + i18n.js storage accesses degrade under blocked site data (throwing-storage specs); the dial form's pending flag kills the double-INVITE race (double-submit spec, one consult under a hung gate); restoreLastTab catches → throttled toast, live-context catches → doctrine-silent empty slot (rejection specs assert no unhandled rejections). Island suite 340/340, tsc + island-lint green.
+
+### Gate-setup hardening residue (2026-11-12 five-scoped-run triage — plan: docs/planning/2026-11-12_16-14_SUPERB-gate-setup-hardening.md; status report: docs/status/2026-11-12_15-57_five-scoped-buildflow-triage.md)
+
+1. ~~**Canonical bandit runner**~~ → done 2026-11-13 — `python312Packages.bandit` rides the devshell (locked-nixpkgs pin; 1.9.4 = BuildFlow's runner); fresh full-tree scan green: 0 issues, only the decided-dead B105 nosec furniture warnings (row 4's verify-only class).
+2. ~~**`buildflow format` in a quiet window**~~ → done 2026-11-13 — format lane + full battery re-ran green on the quiet tree (23/23, findings gate green); ROOT CAUSE found and fixed UPSTREAM: the drift check returned early without persisting, so a stale record warned forever (webphone's sat frozen 2026-10-23 → three weeks of re-warns) — BuildFlow fix landed `c3eaec3a7` (one-shot semantics, test-pinned; doctor suite green); webphone-side store re-baselined (13 lanes @ templ v0.3.1100, zero warns on re-run). The `~/.nix-profile` buildflow (7e4ca72) picks the fix up at its next fleet profile rebuild.
+3. ~~**templ-fmt devshell pin alignment**~~ → done 2026-11-13 — both devshells now carry a source-built templ at go.mod's exact version (`config.packages.templ` in nix/packages.nix, buildGoModule rev v0.3.1100, nixpkgs' lagging 0.3.1020 retired from the shells); `templ generate` with the new pin produced ZERO delta, proving the committed codegen already matches; format gate green (`5186a657`).
+4. **Stale `# nosec B105` audit (verify-only, decided)** — bandit warns "nosec encountered, but no failed test" at `render-diff.py:76,77,78,146` + `webphone-smoke.py:1771–1778`; deleting documented suppressions to silence cosmetic warnings is churn (the upstream `-f json` lane removes the whole furniture class anyway) — re-check only when touching those lines. Evidence: BuildFlow bandit stdout, 2026-11-12 runs.
+5. **File the bandit upstream ask (owner-tick gated)** — `docs/drafts/2026-10-11_buildflow-bandit-stdout-findings.md` carries the 2026-11-12 reobservation (#64-class linkage, root-cause chain, locally reproducible command, the comma-form nosec gotcha); filing is a human act per verify-before-filing.
+6. **AGENTS.md b5 one-liner (owner call)** — one sentence on the per-site cqrs-lint directive convention in the strong-id bullet (2026-11-11 triage report §b5; the 203/377 line cap has room).

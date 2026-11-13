@@ -195,58 +195,58 @@ the 12:08 report (13–50, compressed; full rationale lives there). Impact
 Critical/High/Medium/Low; Effort S (<30min)/M (30min–2h)/L (>2h). This section
 is the HARVEST source for TODO_LIST.md / ROADMAP.md.
 
-| #  | Task | Impact                                                                                                                                            | Effort   | Category |
-| -- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | -------- |
-| ~~ | 1    | Fix island boot language: read `wp-lang` cookie first, then localStorage, then navigator (i18n.js:236-238) — closes the server↔island split brain | Critical | S        |
-| ~~ | 2    | Pin it: island i18n test (cookie=de + empty localStorage → German) + `TestShellHtmlLangFollowsSessionLang` (still owed from typography train)     | Critical | S        |
-| ~~ | 3    | Re-run the capture matrix with output teed to a file; diagnose the shot-5 login-step death                                                        | High     | S        |
-| ~~ | 4    | Capture + review the remaining 8 shots (messages, thread bubbles, island keypad/log mono, settings, history, 2× mobile)                           | High     | S        |
-| ~~ | 5    | Persist the harness: `scripts/ui-capture.py` + AGENTS.md "visual gate" note for CSS/markup trains                                                 | High     | M        |
-| ~~ | 6    | Decide the vision CLI cross-check: provider/model/key for `vision <shots>` reviews, or own-eyes only (g-1)                                        | Medium   | S        |
-| ~~ | 7    | Port hygiene habit: identity-check (`/version` body) before seeding/assuming on ANY local port; document in AGENTS.md                             | Medium   | S        |
-| ~~ | 8    | Record this run's lessons in docs/lessons.md: unsupported `kill` builtin → `pkill -9`; foreign-CSP fingerprinting for port squatters              | Low      | S        |
-| ~~ | 9    | ANNOTATE the 12:08 report: downgraded "lang fix fully done" (island runtime override open), link this report                                      | Medium   | S        |
-| ~~ | 10   | Extend the stack browser-e2e with a de pass asserting `html lang` AND island language agreement                                                   | Medium   | M        |
-| ~~ | 11   | Fix the "remember extension" checkbox alignment vs its two-line label (both themes)                                                               | Low      | S        |
-| ~~ | 12   | Visually verify the styled 404 + `.wp-error` banner surfaces once (never eyeballed)                                                               | Low      | S        |
-| ~~ | 13   | Run full `nix flake check` to close the typography train (treefmt, island-lint, module check, KVM backup VM)                                      | High     | M        |
-| ~~ | 14   | CHANGELOG entry for the typography train (+ this fix when it lands)                                                                               | High     | S        |
-| ~~ | 15   | Collapse font-family duplication: `--font-sans`/`--font-mono` tokens in app.css, island consumes `var()`                                          | High     | S        |
-| ~~ | 16   | Token-parity test: app.css ↔ island/style.css mirrored blocks stay identical (island-only `--led`/`--key`/`--key-down` documented)                | High     | M        |
-| ~~ | 17   | Contrast sweep at real sizes (muted on surface-2/3, 0.72–0.9em) vs WCAG 4.5:1                                                                     | High     | S        |
-| ~~ | 18   | Settle the go.mod `go`-line flipflop (doctor: 8 changes/20 commits)                                                                               | High     | M        |
-| ~~ | 19   | `hyphens: auto` on `.wp-bubble-body` + welcome body (lang now correct); verify German compounds                                                   | Medium   | S        |
-| ~~ | 20   | `#log` 0.72rem readability bump + wrap check (keep English + greppable contract)                                                                  | Medium   | S        |
-| ~~ | 21   | tabular-nums audit: voicemail `.len`, fax pages, settings `dd`, history `.when`                                                                   | Medium   | S        |
-| ~~ | 22   | govalid-generate parallel contention: report upstream (verify-before-filing first), skip_steps, or tolerate (g-3 of 12:08)                        | Medium   | M        |
-| ~~ | 23   | Investigate the 11:48:22 zero-byte mtime bumps on both CSS files                                                                                  | Medium   | S        |
-| ~~ | 24   | AGENTS.md diet: 552 → ~≤400 lines; war stories → docs/lessons.md (after concurrent edits land)                                                    | Medium   | M        |
-| ~~ | 25   | HARVEST both status reports into TODO_LIST.md / ROADMAP.md (docs-health)                                                                          | Medium   | S        |
-| ~~ | 26   | README: Accessibility note (root scales with browser setting, lang per session)                                                                   | Medium   | S        |
-| ~~ | 27   | vulnix "0/5 retries recovered": fix or gate vulnix to release builds                                                                              | Medium   | S        |
-| ~~ | 28   | Focus-visible normalization (island input offset −1px vs 2px elsewhere)                                                                           | Low      | S        |
-| ~~ | 29   | Update stale BuildFlow binary (e881e96 → 8dd634e)                                                                                                 | Low      | S        |
-| ~~ | 30   | VACUUM buildflow cache.db (0.81 GB) / review state db (0.26 GB)                                                                                   | Low      | S        |
-| ~~ | 31   | `text-wrap: pretty` on `.wp-welcome-body` / `.wp-welcome-hint`                                                                                    | Low      | S        |
-| ~~ | 32   | Dark-mode +50 weight trial on a VF-capable box; adopt only if visibly better                                                                      | Low      | S        |
-| ~~ | 33   | Keypad `✱` (U+2731) glyph sweep across platforms                                                                                                  | Low      | S        |
-| ~~ | 34   | Heading-hierarchy audit of tab partials                                                                                                           | Low      | S        |
-| ~~ | 35   | ANNOTATE reports as items close (docs-health ANNOTATE mode)                                                                                       | Low      | S        |
-| ~~ | 36   | CSS-level structural checks beyond token parity (no px font-size; uppercase ⇒ letter-spacing)                                                     | Medium   | M        |
-| ~~ | 37   | Prove island node:test suite has zero CSS coupling (one recorded run)                                                                             | Low      | S        |
-| ~~ | 38   | Document island-only tokens (`--led`, `--key`, `--key-down`) in AGENTS.md mirror rule                                                             | Low      | S        |
-| ~~ | 39   | Named type-scale tokens — only when a third stylesheet consumer appears (YAGNI)                                                                   | Low      | M        |
-| ~~ | 40   | `prefers-contrast: more` adjustments                                                                                                              | Low      | M        |
-| ~~ | 41   | Self-hosted display font for the brand wordmark only (owner taste call)                                                                           | Low      | L        |
-| ~~ | 42   | `#wp-sse-live` light-mode visibility (0.45-opacity muted dot)                                                                                     | Low      | S        |
-| ~~ | 43   | Cross-font check of the `·` separator in `.wp-signed-in-did`                                                                                      | Low      | S        |
-| ~~ | 44   | Evaluate `font-variant-numeric: slashed-zero` for mono diagnostics                                                                                | Low      | S        |
-| ~~ | 45   | og:locale per-session values: confirm no cache layer ever keys on them (noindex today)                                                            | Low      | S        |
-| ~~ | 46   | Retire `/tmp/webphone-typo` + `/tmp/wp-*` artifacts when the train closes                                                                         | Low      | S        |
-| ~~ | 47   | Document a dev-server port convention (never reuse across sessions; 180xx range)                                                                  | Low      | S        |
-| ~~ | 48   | Owner verdict: visual-gate cadence (every CSS train vs on-demand) — g-1 here                                                                      | High     | S        |
-| ~~ | 49   | Owner verdict: fix-on-sight vs report-first for defects found during visual review — g-3 here                                                     | High     | S        |
-| ~~ | 50   | Keypad sub-label (0.55rem) contrast check                                                                                                         | Low      | S        |
+| #     | Task | Impact                                                                                                                                            | Effort   | Category |
+| ----- | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | -------- |
+| ~~ ~~ | 1    | Fix island boot language: read `wp-lang` cookie first, then localStorage, then navigator (i18n.js:236-238) — closes the server↔island split brain | Critical | S        |
+| ~~ ~~ | 2    | Pin it: island i18n test (cookie=de + empty localStorage → German) + `TestShellHtmlLangFollowsSessionLang` (still owed from typography train)     | Critical | S        |
+| ~~ ~~ | 3    | Re-run the capture matrix with output teed to a file; diagnose the shot-5 login-step death                                                        | High     | S        |
+| ~~ ~~ | 4    | Capture + review the remaining 8 shots (messages, thread bubbles, island keypad/log mono, settings, history, 2× mobile)                           | High     | S        |
+| ~~ ~~ | 5    | Persist the harness: `scripts/ui-capture.py` + AGENTS.md "visual gate" note for CSS/markup trains                                                 | High     | M        |
+| ~~ ~~ | 6    | Decide the vision CLI cross-check: provider/model/key for `vision <shots>` reviews, or own-eyes only (g-1)                                        | Medium   | S        |
+| ~~ ~~ | 7    | Port hygiene habit: identity-check (`/version` body) before seeding/assuming on ANY local port; document in AGENTS.md                             | Medium   | S        |
+| ~~ ~~ | 8    | Record this run's lessons in docs/lessons.md: unsupported `kill` builtin → `pkill -9`; foreign-CSP fingerprinting for port squatters              | Low      | S        |
+| ~~ ~~ | 9    | ANNOTATE the 12:08 report: downgraded "lang fix fully done" (island runtime override open), link this report                                      | Medium   | S        |
+| ~~ ~~ | 10   | Extend the stack browser-e2e with a de pass asserting `html lang` AND island language agreement                                                   | Medium   | M        |
+| ~~ ~~ | 11   | Fix the "remember extension" checkbox alignment vs its two-line label (both themes)                                                               | Low      | S        |
+| ~~ ~~ | 12   | Visually verify the styled 404 + `.wp-error` banner surfaces once (never eyeballed)                                                               | Low      | S        |
+| ~~ ~~ | 13   | Run full `nix flake check` to close the typography train (treefmt, island-lint, module check, KVM backup VM)                                      | High     | M        |
+| ~~ ~~ | 14   | CHANGELOG entry for the typography train (+ this fix when it lands)                                                                               | High     | S        |
+| ~~ ~~ | 15   | Collapse font-family duplication: `--font-sans`/`--font-mono` tokens in app.css, island consumes `var()`                                          | High     | S        |
+| ~~ ~~ | 16   | Token-parity test: app.css ↔ island/style.css mirrored blocks stay identical (island-only `--led`/`--key`/`--key-down` documented)                | High     | M        |
+| ~~ ~~ | 17   | Contrast sweep at real sizes (muted on surface-2/3, 0.72–0.9em) vs WCAG 4.5:1                                                                     | High     | S        |
+| ~~ ~~ | 18   | Settle the go.mod `go`-line flipflop (doctor: 8 changes/20 commits)                                                                               | High     | M        |
+| ~~ ~~ | 19   | `hyphens: auto` on `.wp-bubble-body` + welcome body (lang now correct); verify German compounds                                                   | Medium   | S        |
+| ~~ ~~ | 20   | `#log` 0.72rem readability bump + wrap check (keep English + greppable contract)                                                                  | Medium   | S        |
+| ~~ ~~ | 21   | tabular-nums audit: voicemail `.len`, fax pages, settings `dd`, history `.when`                                                                   | Medium   | S        |
+| ~~ ~~ | 22   | govalid-generate parallel contention: report upstream (verify-before-filing first), skip_steps, or tolerate (g-3 of 12:08)                        | Medium   | M        |
+| ~~ ~~ | 23   | Investigate the 11:48:22 zero-byte mtime bumps on both CSS files                                                                                  | Medium   | S        |
+| ~~ ~~ | 24   | AGENTS.md diet: 552 → ~≤400 lines; war stories → docs/lessons.md (after concurrent edits land)                                                    | Medium   | M        |
+| ~~ ~~ | 25   | HARVEST both status reports into TODO_LIST.md / ROADMAP.md (docs-health)                                                                          | Medium   | S        |
+| ~~ ~~ | 26   | README: Accessibility note (root scales with browser setting, lang per session)                                                                   | Medium   | S        |
+| ~~ ~~ | 27   | vulnix "0/5 retries recovered": fix or gate vulnix to release builds                                                                              | Medium   | S        |
+| ~~ ~~ | 28   | Focus-visible normalization (island input offset −1px vs 2px elsewhere)                                                                           | Low      | S        |
+| ~~ ~~ | 29   | Update stale BuildFlow binary (e881e96 → 8dd634e)                                                                                                 | Low      | S        |
+| ~~ ~~ | 30   | VACUUM buildflow cache.db (0.81 GB) / review state db (0.26 GB)                                                                                   | Low      | S        |
+| ~~ ~~ | 31   | `text-wrap: pretty` on `.wp-welcome-body` / `.wp-welcome-hint`                                                                                    | Low      | S        |
+| ~~ ~~ | 32   | Dark-mode +50 weight trial on a VF-capable box; adopt only if visibly better                                                                      | Low      | S        |
+| ~~ ~~ | 33   | Keypad `✱` (U+2731) glyph sweep across platforms                                                                                                  | Low      | S        |
+| ~~ ~~ | 34   | Heading-hierarchy audit of tab partials                                                                                                           | Low      | S        |
+| ~~ ~~ | 35   | ANNOTATE reports as items close (docs-health ANNOTATE mode)                                                                                       | Low      | S        |
+| ~~ ~~ | 36   | CSS-level structural checks beyond token parity (no px font-size; uppercase ⇒ letter-spacing)                                                     | Medium   | M        |
+| ~~ ~~ | 37   | Prove island node:test suite has zero CSS coupling (one recorded run)                                                                             | Low      | S        |
+| ~~ ~~ | 38   | Document island-only tokens (`--led`, `--key`, `--key-down`) in AGENTS.md mirror rule                                                             | Low      | S        |
+| ~~ ~~ | 39   | Named type-scale tokens — only when a third stylesheet consumer appears (YAGNI)                                                                   | Low      | M        |
+| ~~ ~~ | 40   | `prefers-contrast: more` adjustments                                                                                                              | Low      | M        |
+| ~~ ~~ | 41   | Self-hosted display font for the brand wordmark only (owner taste call)                                                                           | Low      | L        |
+| ~~ ~~ | 42   | `#wp-sse-live` light-mode visibility (0.45-opacity muted dot)                                                                                     | Low      | S        |
+| ~~ ~~ | 43   | Cross-font check of the `·` separator in `.wp-signed-in-did`                                                                                      | Low      | S        |
+| ~~ ~~ | 44   | Evaluate `font-variant-numeric: slashed-zero` for mono diagnostics                                                                                | Low      | S        |
+| ~~ ~~ | 45   | og:locale per-session values: confirm no cache layer ever keys on them (noindex today)                                                            | Low      | S        |
+| ~~ ~~ | 46   | Retire `/tmp/webphone-typo` + `/tmp/wp-*` artifacts when the train closes                                                                         | Low      | S        |
+| ~~ ~~ | 47   | Document a dev-server port convention (never reuse across sessions; 180xx range)                                                                  | Low      | S        |
+| ~~ ~~ | 48   | Owner verdict: visual-gate cadence (every CSS train vs on-demand) — g-1 here                                                                      | High     | S        |
+| ~~ ~~ | 49   | Owner verdict: fix-on-sight vs report-first for defects found during visual review — g-3 here                                                     | High     | S        |
+| ~~ ~~ | 50   | Keypad sub-label (0.55rem) contrast check                                                                                                         | Low      | S        |
 
 Rejected-with-rationale list: unchanged from the 12:08 report §f 36–50 (palette
 churn, webfonts, fluid scale, sentence-case pill, justified text, extra motion,

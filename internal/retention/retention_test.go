@@ -9,9 +9,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/larsartmann/go-cqrs-lite/system/v4"
 	"github.com/larsartmann/webphone/internal/blob"
+	"github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/store"
 )
 
@@ -23,10 +24,11 @@ import (
 // and one corrupt stored path cannot protect every other blob from
 // expiry.
 
-// sweepWorld wires the three stores exactly the way the composition
-// root wires them (app.go): one store db, one blob root, one
-// read-model engine.
-func sweepWorld(t *testing.T) (*sql.DB, *blob.Store, *readmodels.Engine, *store.Messages) {
+// sweepWorld wires the stores exactly the way the composition root
+// wires them (app.go): one store db (the legacy ladder's frozen rows),
+// one blob root, and ONE journal system carrying the threads, faxes
+// and transcripts the retention legs sweep.
+func sweepWorld(t *testing.T) (*sql.DB, *blob.Store, *system.System, *store.Messages) {
 	t.Helper()
 	db, err := store.Open(":memory:")
 	if err != nil {
@@ -37,12 +39,22 @@ func sweepWorld(t *testing.T) (*sql.DB, *blob.Store, *readmodels.Engine, *store.
 	if err != nil {
 		t.Fatalf("open blob store: %v", err)
 	}
-	engine, err := readmodels.Open(t.TempDir())
+	coreSys, err := cqrs.NewCoreSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
 	if err != nil {
-		t.Fatalf("open engine: %v", err)
+		t.Fatalf("boot core system: %v", err)
 	}
-	t.Cleanup(func() { _ = engine.Shutdown() })
-	return db, blobs, engine, store.NewMessages(db)
+	t.Cleanup(func() { _ = coreSys.Close() })
+	return db, blobs, coreSys, store.NewMessages(db)
+}
+
+// journalSweepersOf bundles the journal legs over the sweep world's
+// one system.
+func journalSweepersOf(coreSys *system.System) JournalSweepers {
+	return JournalSweepers{
+		Threads:     cqrs.NewThreads(coreSys),
+		Faxes:       cqrs.NewFaxes(coreSys),
+		Transcripts: cqrs.NewTranscripts(coreSys),
+	}
 }
 
 // mustSaveBlob stores real bytes and returns the stored relative path,
@@ -113,14 +125,16 @@ func mustFaxJob(t *testing.T, owner domain.Extension, remote string, at time.Tim
 		CreatedAt: at, UpdatedAt: at,
 	}
 	if docRel != "" {
-		job.DocumentPath = docRel
+		job.DocumentPath = domain.MustParseRelPath(docRel)
 	}
 	return job
 }
 
 func TestSweepOnceExpiresOldTenantsAndUnlinksTheirBlobs(t *testing.T) {
-	db, blobs, engine, messages := sweepWorld(t)
+	db, blobs, coreSys, messages := sweepWorld(t)
 	ctx := context.Background()
+	faxes := cqrs.NewFaxes(coreSys)
+	transcripts := cqrs.NewTranscripts(coreSys)
 	owner := domain.MustParseExtension("1001")
 	now := time.Now()
 	old := now.Add(-48 * time.Hour)
@@ -134,30 +148,29 @@ func TestSweepOnceExpiresOldTenantsAndUnlinksTheirBlobs(t *testing.T) {
 	oldThread := appendMessage(t, messages, owner, "+441632960961", old, oldMsgBlob)
 	liveThread := appendMessage(t, messages, owner, "+441632960977", now, liveMsgBlob)
 	liveFax := mustFaxJob(t, owner, "+15550000012", now, liveFaxDoc)
-	if err := engine.Faxes().Create(ctx, mustFaxJob(t, owner, "+15550000011", old, oldFaxDoc)); err != nil {
+	if err := faxes.Create(ctx, mustFaxJob(t, owner, "+15550000011", old, oldFaxDoc)); err != nil {
 		t.Fatalf("create old fax: %v", err)
 	}
-	if err := engine.Faxes().Create(ctx, liveFax); err != nil {
+	if err := faxes.Create(ctx, liveFax); err != nil {
 		t.Fatalf("create live fax: %v", err)
 	}
-	// A segment's retention clock is its ARRIVAL time (Append stamps
-	// Seq = now, not StartedAt — readmodels/transcripts.go), so a
-	// freshly appended segment is never sweepable here; the
-	// expired-segment deletion itself is pinned in the readmodels
-	// suite. What this package must prove is the wiring: the engine
-	// sweep runs, reports its count, and live speech survives.
+	// A segment's retention clock is its ARRIVAL time (the journal's
+	// seq stamp, not StartedAt), so freshly appended segments are never
+	// sweepable here; the expired-segment deletion itself is pinned in
+	// the cqrs battery. What this package must prove is the wiring: the
+	// journal legs run, report their counts, and live speech survives.
 	for _, seg := range []domain.CallTranscriptSegment{
 		{Owner: owner, CallID: "old-call", Direction: domain.DirectionInbound, Remote: "+15550000011", StartedAt: old, Text: "old line"},
 		{Owner: owner, CallID: "live-call", Direction: domain.DirectionInbound, Remote: "+15550000012", StartedAt: now, Text: "live line"},
 	} {
-		if err := engine.Transcripts().Append(ctx, seg); err != nil {
+		if err := transcripts.Append(ctx, seg); err != nil {
 			t.Fatalf("append transcript: %v", err)
 		}
 	}
 
-	sum := sweepOnce(ctx, db, blobs, engine, cutoff)
+	sum := sweepOnce(ctx, db, blobs, journalSweepersOf(coreSys), cutoff)
 
-	if sum.messages != 1 || sum.threads != 1 || sum.faxes != 1 || sum.transcripts != 0 || sum.blobs != 2 {
+	if sum.messages != 1 || sum.threads != 1 || sum.journalFaxes != 1 || sum.transcripts != 0 || sum.blobs != 2 {
 		t.Fatalf("sweep summary wrong: %+v", sum)
 	}
 	mustNotExist(t, blobPath(blobs, oldMsgBlob), "expired message attachment")
@@ -171,13 +184,13 @@ func TestSweepOnceExpiresOldTenantsAndUnlinksTheirBlobs(t *testing.T) {
 	if _, err := messages.ListMessages(ctx, owner, oldThread, 10); err != nil {
 		t.Fatalf("listing an empty swept thread must not error: %v", err)
 	}
-	if _, err := engine.Faxes().Get(ctx, owner, liveFax.ID); err != nil {
+	if _, err := faxes.Get(ctx, owner, liveFax.ID); err != nil {
 		t.Fatalf("live fax lost: %v", err)
 	}
-	if freshTranscript, err := engine.Transcripts().Call(ctx, owner, "old-call"); err != nil || freshTranscript == nil {
+	if freshTranscript, err := transcripts.Call(ctx, owner, "old-call"); err != nil || freshTranscript == nil {
 		t.Fatalf("freshly arrived transcript must survive despite its backdated StartedAt: %v %v", freshTranscript, err)
 	}
-	if liveTranscript, err := engine.Transcripts().Call(ctx, owner, "live-call"); err != nil || liveTranscript == nil {
+	if liveTranscript, err := transcripts.Call(ctx, owner, "live-call"); err != nil || liveTranscript == nil {
 		t.Fatalf("live transcript lost: %v %v", liveTranscript, err)
 	}
 }
@@ -187,7 +200,7 @@ func TestSweepOnceExpiresOldTenantsAndUnlinksTheirBlobs(t *testing.T) {
 // skipped — the sweep must not die on it and must not skip the
 // NEIGHBOURING valid blob in the same pass.
 func TestSweepOnceSkipsCorruptBlobPath(t *testing.T) {
-	db, blobs, engine, messages := sweepWorld(t)
+	db, blobs, _, messages := sweepWorld(t)
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	now := time.Now()
@@ -198,7 +211,7 @@ func TestSweepOnceSkipsCorruptBlobPath(t *testing.T) {
 	appendMessage(t, messages, owner, "+441632960961", old, "/abs/escape")
 	appendMessage(t, messages, owner, "+441632960963", old, validBlob)
 
-	sum := sweepOnce(ctx, db, blobs, engine, cutoff)
+	sum := sweepOnce(ctx, db, blobs, retention0Sweepers(), cutoff)
 
 	if sum.messages != 2 || sum.blobs != 1 {
 		t.Fatalf("corrupt path must skip itself, not the sweep: %+v", sum)
@@ -213,13 +226,13 @@ func TestSweepOnceSkipsCorruptBlobPath(t *testing.T) {
 func TestStartDisabledWindowKeepsEverything(t *testing.T) {
 	for _, window := range []time.Duration{0, -time.Hour} {
 		t.Run(window.String(), func(t *testing.T) {
-			db, blobs, engine, messages := sweepWorld(t)
+			db, blobs, _, messages := sweepWorld(t)
 			ctx := context.Background()
 			owner := domain.MustParseExtension("1001")
 			ancient := time.Now().Add(-365 * 24 * time.Hour)
 			thread := appendMessage(t, messages, owner, "+441632960965", ancient, "")
 
-			Start(ctx, db, blobs, engine, window)
+			Start(ctx, db, blobs, retention0Sweepers(), window)
 			time.Sleep(50 * time.Millisecond)
 
 			msgs, err := messages.ListMessages(ctx, owner, thread, 10)
@@ -235,14 +248,14 @@ func TestStartDisabledWindowKeepsEverything(t *testing.T) {
 // retention and shut down a minute later still swept), and ctx
 // cancellation retires the goroutine without a second pass.
 func TestStartSweepsImmediatelyThenHonorsContext(t *testing.T) {
-	db, blobs, engine, messages := sweepWorld(t)
+	db, blobs, _, messages := sweepWorld(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	owner := domain.MustParseExtension("1001")
 	ancient := time.Now().Add(-365 * 24 * time.Hour)
 	thread := appendMessage(t, messages, owner, "+441632960967", ancient, "")
 
-	Start(ctx, db, blobs, engine, 24*time.Hour)
+	Start(ctx, db, blobs, retention0Sweepers(), 24*time.Hour)
 
 	deadline := time.Now().Add(2 * time.Second)
 	for {
@@ -262,3 +275,7 @@ func TestStartSweepsImmediatelyThenHonorsContext(t *testing.T) {
 	cancel()
 	time.Sleep(20 * time.Millisecond)
 }
+
+// retention0Sweepers is the nil-legs bundle (pre-wiring test
+// compositions).
+func retention0Sweepers() JournalSweepers { return JournalSweepers{} }

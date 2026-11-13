@@ -53,6 +53,58 @@ let
   ++ lib.attrValues (cfg.settings.auth.passkey.extension_password_files or { })
   ++ lib.optional (cfg.crm.enable && cfg.crm.tokenFile != null) cfg.crm.tokenFile;
   leakedSecretFiles = lib.count leaksSecretToStore secretFilePaths;
+
+  # Freeform literal-secret guard: a secret-SHAPED key (`*secret*`,
+  # `*token*`, `*password*`, ...) carrying an INLINE string value renders
+  # that value straight into the world-readable config JSON — the same
+  # class the path guard above owns, one shape over. The sanctioned lanes
+  # stay exempt: `*_file`/`*_files`/`*_path` keys are runtime file PATHS
+  # (owned by the path guard), and values that already point at a runtime
+  # location (`/…`) or an expansion (`$…`) are not literals.
+  isInlineSecretKey =
+    name:
+    builtins.match ".*(secret|token|password|credential|api[_-]?key|private[_-]?key).*" name != null
+    && !lib.hasSuffix "_file" name
+    && !lib.hasSuffix "_files" name
+    && !lib.hasSuffix "_path" name;
+  isInlineSecretValue =
+    path: value:
+    builtins.isString value
+    && value != ""
+    && !lib.hasPrefix "/" value
+    && !lib.hasPrefix "$" value
+    && isInlineSecretKey (lib.last path);
+  findInlineSecretLeaks =
+    let
+      walk =
+        path: value:
+        if lib.isAttrs value then
+          lib.concatLists (lib.mapAttrsToList (name: v: walk (path ++ [ name ]) v) value)
+        else if isInlineSecretValue path value then
+          [ (lib.concatStringsSep "." path) ]
+        else
+          [ ];
+    in
+    walk [ ] cfg.settings;
+  inlineSecretLeaks = findInlineSecretLeaks;
+
+  # Metrics fencing: without the generated vhost the app self-serves on
+  # settings.addr, and a non-loopback bind puts the monitoring surfaces
+  # (/metrics, /version, /openapi.json, the health probes) on every
+  # interface it binds — the silent-exposure class. A WARNING, not a
+  # refusal: hand-rolled fronts (nginx, a tailscale funnel, ...) are a
+  # legal shape this module must not fight; the operator gets the named
+  # surfaces and the two closes (caddy.enable, loopback bind).
+  listenHost = lib.replaceStrings [ "[" "]" ] [ "" "" ] (
+    lib.head (lib.splitString ":" cfg.settings.addr)
+  );
+  loopbackHosts = [
+    ""
+    "127.0.0.1"
+    "localhost"
+    "::1"
+  ];
+  metricsExposed = !cfg.caddy.enable && !lib.elem listenHost loopbackHosts;
 in
 {
   imports = [
@@ -62,6 +114,16 @@ in
   ];
 
   config = lib.mkIf cfg.enable {
+    warnings = lib.optional metricsExposed ''
+      services.webphone listens on a non-loopback address
+      (${cfg.settings.addr}) with the generated Caddy vhost disabled, so
+      the monitoring surfaces (/metrics, /version, /openapi.json, the
+      health probes) answer on every interface it binds. Close it one of
+      two ways: set settings.addr back to a loopback address and let
+      caddy.enable = true terminate and fence, or front the listener
+      yourself and keep the monitoring surfaces off the wire.
+    '';
+
     assertions = [
       {
         assertion = lib.hasPrefix "/var/lib/" cfg.dataDir && cfg.dataDir != "/var/lib/";
@@ -101,7 +163,22 @@ in
         crm.tokenFile at runtime files as plain strings
         (e.g. /run/secrets/...).
       '';
-    };
+    }
+    # The literal-secret twin: same store class, inline VALUE shape.
+    ++ lib.optionals (inlineSecretLeaks != [ ]) [
+      {
+        assertion = false;
+        message = ''
+          these services.webphone.settings keys carry inline secret
+          values that render into the world-readable config JSON:
+          ${lib.concatStringsSep ", " inlineSecretLeaks}
+          Move each value out of the config: feed it through
+          services.webphone.environmentFile as its WEBPHONE_*__* env var,
+          or use the seam's file form (*_file / tokenFile) pointing at a
+          runtime file (e.g. /run/secrets/...).
+        '';
+      }
+    ];
 
     services.webphone.settings = {
       data_dir = lib.mkDefault cfg.dataDir;
@@ -150,6 +227,9 @@ in
           }
           // lib.optionalAttrs cfg.serverTiming.enable {
             WEBPHONE_DEBUG_TIMING = "1";
+          }
+          // lib.optionalAttrs cfg.debug.flightrecorder.enable {
+            WEBPHONE_DEBUG_FLIGHTRECORDER = "1";
           };
 
           serviceConfig = {

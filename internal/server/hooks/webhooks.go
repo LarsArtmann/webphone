@@ -19,13 +19,12 @@ import (
 	"strings"
 	"time"
 
-	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
+	"github.com/larsartmann/cqrs-htmx/v4/httperr"
 	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/fax"
 	"github.com/larsartmann/webphone/internal/messaging"
 	"github.com/larsartmann/webphone/internal/push"
-	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/store"
 )
 
@@ -47,11 +46,10 @@ type Deps struct {
 	Dedup DedupWindow
 	// Push is the OPTIONAL push fanout behind the ring hook (nil or
 	// disabled: the hook acknowledges inertly — a dialplan must never
-	// depend on push health).
+	// depend on push health). The fanout owns the device registry
+	// (armed at the composition root); the hook hands facts, never
+	// loops.
 	Push *push.Fanout
-	// Devices is the registered-device store the ring hook fans out
-	// to (nil with a disabled seam).
-	Devices *readmodels.PushDevices
 }
 
 // UnreadCache is the narrow nav-badge seam the message hook
@@ -69,7 +67,6 @@ type Handlers struct {
 	unread    UnreadCache
 	idem      Gate
 	push      *push.Fanout
-	devices   *readmodels.PushDevices
 }
 
 // New builds the webhook ingest handlers, including their idempotency
@@ -82,7 +79,6 @@ func New(deps Deps) *Handlers {
 		unread:    deps.Unread,
 		idem:      NewGate(deps.Dedup, hookIdempotencyTTL),
 		push:      deps.Push,
-		devices:   deps.Devices,
 	}
 }
 
@@ -93,7 +89,7 @@ func New(deps Deps) *Handlers {
 // semantics is not this helper's job.
 func webhookFail(w http.ResponseWriter, kind string, err error) {
 	slog.Warn("webhook apply failed", "kind", kind, "err", err)
-	http.Error(w, cqrshtmx.SafeDetail(err, http.StatusInternalServerError, false), http.StatusInternalServerError)
+	http.Error(w, httperr.SafeDetail(err, http.StatusInternalServerError, false), http.StatusInternalServerError)
 }
 
 // RetryAfterHint is the Retry-After value the 503 writers send: one

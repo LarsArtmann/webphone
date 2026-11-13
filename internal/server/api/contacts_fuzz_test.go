@@ -4,11 +4,12 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"strings"
 	"testing"
 
+	cqrs "github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/session"
 )
 
@@ -29,6 +30,8 @@ func (contextSessionGate) RequireSession(w http.ResponseWriter, r *http.Request)
 
 func (contextSessionGate) NotifyContactsChanged(domain.Extension) {}
 
+func (contextSessionGate) NotifyCallNotesChanged(domain.Extension) {}
+
 // AuditAgent: the fuzz fake mirrors the Server seam but has no audit sink —
 // the contacts lane never calls it (the agent lanes do).
 func (contextSessionGate) AuditAgent(event, actorEmail, extension, draftID, outcome string) {}
@@ -48,11 +51,12 @@ func FuzzContactsAPISave(f *testing.F) {
 	f.Add([]byte(`{"name":"overflow","number":"+9999999999999999999999"}`))
 
 	f.Fuzz(func(t *testing.T, body []byte) {
-		engine, err := readmodels.Open(t.TempDir())
+		sys, err := cqrs.NewCoreSystem(t.Context(), "file:"+filepath.Join(t.TempDir(), "system.db"))
 		if err != nil {
 			t.Fatal(err)
 		}
-		h := New(Deps{Server: contextSessionGate{}, Contacts: engine.Contacts()})
+		t.Cleanup(func() { _ = sys.Close() })
+		h := New(Deps{Server: contextSessionGate{}, Contacts: cqrs.NewContacts(sys)})
 
 		sess := session.Session{Extension: domain.MustParseExtension("1001")}
 		req := httptest.NewRequest("POST", "/api/contacts",

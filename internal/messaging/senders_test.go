@@ -15,7 +15,10 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/gateway"
 	"github.com/larsartmann/webphone/internal/messaging"
-	"github.com/larsartmann/webphone/internal/store"
+
+	"path/filepath"
+
+	cqrs "github.com/larsartmann/webphone/internal/cqrs"
 )
 
 // chatGateway records the outbound message it was handed.
@@ -32,17 +35,17 @@ func (g *chatGateway) SendMessage(_ context.Context, msg gateway.OutboundMessage
 
 func newSenderTestService(t *testing.T) (*messaging.Service, *chatGateway, *countingGateway) {
 	t.Helper()
-	db, err := store.Open(":memory:")
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = db.Close() })
 	blobs, err := blob.New(t.TempDir())
 	if err != nil {
 		t.Fatal(err)
 	}
 	telephony := &countingGateway{}
-	svc := messaging.New(store.NewMessages(db), blobs, telephony, nil, nil)
+	sys, err := cqrs.NewThreadsSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = sys.Close() })
+	svc := messaging.New(cqrs.NewThreads(sys), blobs, telephony, nil, nil)
 	chat := &chatGateway{}
 	return svc, chat, telephony
 }

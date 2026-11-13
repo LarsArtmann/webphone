@@ -17,14 +17,14 @@ import (
 	"github.com/larsartmann/webphone/internal/blob"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/gateway"
-	"github.com/larsartmann/webphone/internal/store"
+	"github.com/larsartmann/webphone/internal/readmodels"
 )
 
 // Limits keep uploads and bodies honest without a config knob each.
 const (
 	MaxAttachments    = 5
 	MaxAttachmentSize = 10 << 20 // 10 MiB per attachment
-	MaxBodyLength     = 1600
+	MaxBodyLength     = domain.MaxBodyLength
 	// MessagePageSize is the transcript window shared by the thread view
 	// and its live SSE pushes.
 	MessagePageSize = 200
@@ -40,10 +40,10 @@ func (e *ErrInvalidSend) Error() string { return e.Reason }
 // (English, runbook-greppable) — the family only drives behavior.
 func (e *ErrInvalidSend) ErrorFamily() errorfamily.Family { return errorfamily.Rejection }
 
-// Service wires the message store, blob store, and the per-network
-// outbound senders.
+// Service wires the thread gate (the journal-backed store, SUPERB A34),
+// blob store, and the per-network outbound senders.
 type Service struct {
-	messages *store.Messages
+	messages readmodels.ThreadGate
 	blobs    *blob.Store
 	// senders routes by the destination address's network: the
 	// telephony gateway under sms (registered by New), chat-network
@@ -66,7 +66,7 @@ const selfSendDetail = "messages cannot be sent to your own number"
 // DID is refused locally before the gateway roundtrip (nil or missing
 // entry = guard off).
 func New(
-	messages *store.Messages, blobs *blob.Store, gw gateway.MessageGateway, onChange domain.ChangeFunc, identities map[string]string,
+	messages readmodels.ThreadGate, blobs *blob.Store, gw gateway.MessageGateway, onChange domain.ChangeFunc, identities map[string]string,
 ) *Service {
 	return &Service{
 		messages:   messages,
@@ -137,11 +137,14 @@ func (s *Service) Send(
 	msg := domain.NewOutboundMessage(domain.GenerateMessageID(), threadID, owner, to, body, len(uploads), now)
 
 	outbound := gateway.OutboundMessage{Owner: owner, To: to, Body: body}
+	var saved []domain.RelPath
 	for _, upload := range uploads {
 		path, err := s.blobs.Save("attachments", extensionOf(upload), upload.Bytes)
 		if err != nil {
+			s.rollbackSaved(saved)
 			return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.attachment_save", "store attachment")
 		}
+		saved = append(saved, path)
 		attachment := domain.Attachment{
 			ID:        domain.GenerateAttachmentID(),
 			MessageID: msg.ID,
@@ -157,6 +160,7 @@ func (s *Service) Send(
 	}
 
 	if err := s.messages.AppendMessage(ctx, msg); err != nil {
+		s.rollbackSaved(saved)
 		return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.message_append", "persist message")
 	}
 	s.emit(ctx, domain.MessageDeliveryAdvanced{Owner: owner, Thread: threadID})
@@ -179,7 +183,7 @@ func (s *Service) Send(
 		// before the machine existed.
 		next, _ := domain.DeliveryAdvance(msg.DeliveryOf(), domain.SendRefused(failureKindOf(err), err.Error()))
 		msg = msg.WithDelivery(next)
-		updateErr := s.messages.UpdateOutboundStatus(ctx, msg.ID, next)
+		updateErr := s.messages.AdvanceOutbound(ctx, msg.ID, domain.SendRefused(failureKindOf(err), err.Error()).Step())
 		s.emit(ctx, domain.MessageDeliveryAdvanced{Owner: owner, Thread: threadID})
 		if updateErr != nil {
 			slog.Warn("messaging: mark failed", "error", updateErr)
@@ -188,7 +192,7 @@ func (s *Service) Send(
 	default:
 		next, _ := domain.DeliveryAdvance(msg.DeliveryOf(), domain.SendAccepted(receipt.ProviderRef))
 		msg = msg.WithDelivery(next)
-		if err := s.messages.UpdateOutboundStatus(ctx, msg.ID, next); err != nil {
+		if err := s.messages.AdvanceOutbound(ctx, msg.ID, domain.SendAccepted(receipt.ProviderRef).Step()); err != nil {
 			slog.Warn("messaging: mark sent", "error", err)
 		}
 		s.emit(ctx, domain.MessageDeliveryAdvanced{Owner: owner, Thread: threadID})
@@ -206,11 +210,14 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundMessage) (d
 	}
 
 	msg := domain.NewInboundMessage(domain.GenerateMessageID(), threadID, inbound.Owner, inbound.From, inbound.Body, len(inbound.Attachments), now)
+	var saved []domain.RelPath
 	for _, att := range inbound.Attachments {
 		path, err := s.blobs.Save("attachments", extensionOf(att), att.Bytes)
 		if err != nil {
+			s.rollbackSaved(saved)
 			return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.attachment_save", "store inbound attachment")
 		}
+		saved = append(saved, path)
 		msg.Attachments = append(msg.Attachments, domain.Attachment{
 			ID:        domain.GenerateAttachmentID(),
 			MessageID: msg.ID,
@@ -222,11 +229,24 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundMessage) (d
 	}
 
 	if err := s.messages.AppendMessage(ctx, msg); err != nil {
+		s.rollbackSaved(saved)
 		return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.message_append", "persist inbound message")
 	}
 	s.emit(ctx, domain.MessageReceived{Owner: inbound.Owner, Thread: threadID})
 
 	return msg, nil
+}
+
+// rollbackSaved removes the blobs a message saved before its persist
+// failed — the compensating delete that keeps the blob tree owned by
+// rows (retention walks rows; an orphaned file is unreachable forever).
+// Removal is best-effort: the original persist error stays the verdict.
+func (s *Service) rollbackSaved(saved []domain.RelPath) {
+	for _, path := range saved {
+		if err := s.blobs.Remove(path); err != nil {
+			slog.Warn("messaging: compensate blob remove", "error", err)
+		}
+	}
 }
 
 // ResolveThread loads one thread row scoped to the owner — the reply
@@ -239,15 +259,23 @@ func (s *Service) ResolveThread(
 }
 
 // Threads lists the owner's threads for the sidebar.
-func (s *Service) Threads(ctx context.Context, owner domain.Extension) ([]store.ThreadSummary, error) {
-	return s.messages.ListThreads(ctx, owner)
+func (s *Service) Threads(ctx context.Context, owner domain.Extension) ([]readmodels.ThreadSummary, error) {
+	views, err := s.messages.ListThreads(ctx, owner)
+	if err != nil {
+		return nil, err
+	}
+	return readmodels.SummariesOfView(views), nil
 }
 
 // AllThreads is the admin surface's cross-owner inventory (see the
 // store's ListAllThreads for the seam contract): every line's
 // conversations, newest first, archived included.
-func (s *Service) AllThreads(ctx context.Context, limit int) ([]store.ThreadSummary, error) {
-	return s.messages.ListAllThreads(ctx, limit)
+func (s *Service) AllThreads(ctx context.Context, limit int) ([]readmodels.ThreadSummary, error) {
+	views, err := s.messages.ListAllThreads(ctx, limit)
+	if err != nil {
+		return nil, err
+	}
+	return readmodels.SummariesOfView(views), nil
 }
 
 // ThreadAny resolves one thread across owners (the admin deep link's
@@ -259,8 +287,12 @@ func (s *Service) ThreadAny(ctx context.Context, id domain.ThreadID) (domain.Thr
 
 // ArchivedThreads lists the owner's archived threads (the filing
 // cabinet view — ListThreads excludes them by design).
-func (s *Service) ArchivedThreads(ctx context.Context, owner domain.Extension) ([]store.ThreadSummary, error) {
-	return s.messages.ListArchivedThreads(ctx, owner)
+func (s *Service) ArchivedThreads(ctx context.Context, owner domain.Extension) ([]readmodels.ThreadSummary, error) {
+	views, err := s.messages.ListArchivedThreads(ctx, owner)
+	if err != nil {
+		return nil, err
+	}
+	return readmodels.SummariesOfView(views), nil
 }
 
 // ArchivedCount is the archived-thread count behind the toggle link.
@@ -272,7 +304,7 @@ func (s *Service) ArchivedCount(ctx context.Context, owner domain.Extension) (in
 // notifies the owner's surfaces — the SSE "threads" push re-renders the
 // list with the new ordering/visibility.
 func (s *Service) SetThreadFlag(
-	ctx context.Context, owner domain.Extension, id domain.ThreadID, flag store.ThreadFlag, on bool,
+	ctx context.Context, owner domain.Extension, id domain.ThreadID, flag readmodels.ThreadFlag, on bool,
 ) error {
 	if err := s.messages.SetThreadFlag(ctx, owner, id, flag, on); err != nil {
 		return err
@@ -290,8 +322,12 @@ func (s *Service) emitThreads(ctx context.Context, owner domain.Extension) {
 // ThreadSearch filters the owner's threads by a text query over the
 // remote number and every message body. Callers route empty queries to
 // Threads instead — the store treats them as a wildcard.
-func (s *Service) ThreadSearch(ctx context.Context, owner domain.Extension, query string) ([]store.ThreadSummary, error) {
-	return s.messages.SearchThreads(ctx, owner, query)
+func (s *Service) ThreadSearch(ctx context.Context, owner domain.Extension, query string) ([]readmodels.ThreadSummary, error) {
+	views, err := s.messages.SearchThreads(ctx, owner, query)
+	if err != nil {
+		return nil, err
+	}
+	return readmodels.SummariesOfView(views), nil
 }
 
 // Thread returns one thread's transcript (oldest first), the newest
@@ -351,10 +387,10 @@ func (s *Service) DeliveryReceipt(
 	}
 	// Every verdict is a legal move from every state (deliveryMoves),
 	// so advance cannot refuse; the table is the single home of that rule.
-	next, _ := domain.DeliveryAdvance(msg.DeliveryOf(), domain.ProviderVerdict(verdict, errMsg))
-	if err := s.messages.UpdateOutboundStatus(ctx, msg.ID, next); err != nil {
+	if err := s.messages.AdvanceOutbound(ctx, msg.ID, domain.ProviderVerdict(verdict, errMsg).Step()); err != nil {
 		return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.outbound_status", "record delivery status")
 	}
+	next, _ := domain.DeliveryAdvance(msg.DeliveryOf(), domain.ProviderVerdict(verdict, errMsg))
 	msg = msg.WithDelivery(next)
 	s.emit(ctx, domain.MessageDeliveryAdvanced{Owner: msg.Owner, Thread: msg.ThreadID})
 	return msg, nil

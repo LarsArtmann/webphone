@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/textagent"
 )
 
 func TestAvatarForNumberTailDigits(t *testing.T) {
@@ -97,7 +96,7 @@ func TestFormatClockAndStampFollowLanguage(t *testing.T) {
 		clock string
 		stamp string
 	}{
-		{"english keeps the meridiem clock", LangEN, "4:09PM", "Sep 22, 16:09"},
+		{"english keeps the meridiem clock everywhere", LangEN, "4:09PM", "Sep 22, 4:09PM"},
 		{"german goes 24h + numeric date", LangDE, "16:09", "22.09. 16:09"},
 	}
 	for _, tc := range cases {
@@ -153,7 +152,7 @@ func TestDraftMetaShape(t *testing.T) {
 		"garbage": "pl · 80%",
 	}
 	for created, want := range cases {
-		draft := textagent.Draft{Language: "pl", Confidence: 80, CreatedAt: created}
+		draft := AgentDraft{Language: "pl", Confidence: 80, CreatedAt: created}
 		if got := draftMeta(draft, now); got != want {
 			t.Errorf("draftMeta(CreatedAt=%q) = %q, want %q", created, got, want)
 		}

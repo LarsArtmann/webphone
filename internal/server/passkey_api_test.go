@@ -9,7 +9,7 @@ package server
 import (
 	"bytes"
 	"context"
-	"encoding/json"
+	"encoding/json/v2"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -18,10 +18,12 @@ import (
 	"strings"
 	"testing"
 
+	"encoding/json/jsontext"
+
 	identitymodel "github.com/larsartmann/cqrs-htmx/identity-model/v4"
 	"github.com/larsartmann/webphone/internal/config"
+	"github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/sipcred"
 	"github.com/larsartmann/webphone/internal/userauth"
 )
@@ -39,7 +41,7 @@ const (
 type pkStub struct{}
 
 func (pkStub) BeginRegistration(_ context.Context, _ []byte) ([]byte, []byte, error) {
-	return []byte(`{"publicKey":{}}`), []byte(`{}`), nil
+	return []byte(`{"publicKey":{"challenge":"dGVzdA=="}}`), []byte(`{}`), nil
 }
 
 func (pkStub) FinishRegistration(_ context.Context, _, _, _ []byte) ([]byte, error) {
@@ -76,11 +78,12 @@ func newPasskeyServerWithConfig(t *testing.T, tweak func(*config.Config), depsMu
 		t.Fatal(err)
 	}
 	ext := domain.MustParseExtension("1000")
-	engine, err := readmodels.Open(dir)
+	sys, err := cqrs.NewEnrollSystem(context.Background(), filepath.Join(dir, "system.db"))
 	if err != nil {
-		t.Fatalf("readmodels.Open: %v", err)
+		t.Fatalf("cqrs.NewEnrollSystem: %v", err)
 	}
-	t.Cleanup(func() { _ = engine.Shutdown() })
+	t.Cleanup(func() { _ = sys.GracefulClose(context.Background()) })
+	enroll := cqrs.NewEnrollTokens(sys)
 	svc, err := userauth.New(context.Background(), userauth.PasskeyRuntime{
 		RPID:          "localhost",
 		RPDisplayName: "WebPhone",
@@ -90,7 +93,7 @@ func newPasskeyServerWithConfig(t *testing.T, tweak func(*config.Config), depsMu
 		},
 		ExtensionPasswordFiles: map[string]string{"1000": passFile},
 		WebAuthn:               pkStub{},
-	}, dir, engine.EnrollTokens(), slog.Default())
+	}, dir, enroll, slog.Default())
 	if err != nil {
 		t.Fatalf("userauth.New: %v", err)
 	}
@@ -133,7 +136,6 @@ func TestPasskeyOffAnswersTheStyled404(t *testing.T) {
 		{http.MethodPost, passkeyBegin},
 		{http.MethodPost, passkeyFinish + "?user_id=x"},
 		{http.MethodPost, "/api/auth/passkey/enroll/verify"},
-		{http.MethodGet, "/login"},
 		{http.MethodGet, "/enroll"},
 	} {
 		resp, body := c.do(target.method, target.path, []byte(`{}`), "application/json")
@@ -144,6 +146,9 @@ func TestPasskeyOffAnswersTheStyled404(t *testing.T) {
 			t.Errorf("%s %s: the 404 must stay the styled shell, got %q", target.method, target.path, body)
 		}
 	}
+	// /login is NOT in this list anymore: the page exists in every mode
+	// (the extension form is the mode-off sign-in; login_page_test.go
+	// pins its shape).
 }
 
 func TestPasskeyBeginIsUniformAgainstEnumeration(t *testing.T) {
@@ -313,11 +318,24 @@ func TestPasskeyEnrollHandlersWalkTheCeremony(t *testing.T) {
 		t.Fatalf("enroll begin: %d %s", resp.StatusCode, body)
 	}
 	var begun struct {
-		Options    json.RawMessage `json:"options"`
-		SessionKey string          `json:"session_key"`
+		Options    jsontext.Value `json:"options"`
+		SessionKey string         `json:"session_key"`
 	}
 	if err := json.Unmarshal(body, &begun); err != nil || len(begun.Options) == 0 || begun.SessionKey == "" {
 		t.Fatalf("enroll begin body %q: %v", body, err)
+	}
+	// Open the options object: the wire nests the ceremony dictionary under
+	// "publicKey" (go-webauthn's CredentialCreation shape) and both JS
+	// consumers read the challenge through that envelope — a body that is
+	// non-empty but shapeless would strand the ceremony client-side.
+	var creationOptions struct {
+		PublicKey struct {
+			Challenge string `json:"challenge"`
+		} `json:"publicKey"`
+	}
+	if err := json.Unmarshal(begun.Options, &creationOptions); err != nil ||
+		creationOptions.PublicKey.Challenge == "" {
+		t.Fatalf("enroll begin options %q: no publicKey.challenge (%v)", begun.Options, err)
 	}
 
 	// finish: persist the attested credential (the stub provider accepts
@@ -448,22 +466,40 @@ func TestPasskeyFinishAnswersTheDerivedCredentialWhenBrokeringIsOn(t *testing.T)
 	}
 }
 
-// TestPasskeySettingsListsAndRevokes covers the A2 slice end to end: the
-// settings partial lists the mapped account's enrolled passkeys, the
-// session-gated revoke removes the named credential (owner-matched via
-// the session extension's mapping), and an unmapped extension's settings
-// carry no passkeys section at all.
+// TestPasskeySettingsListsAndRevokes covers the A2 slice end to end: a
+// PASSKEY-MINTED session (the session's own login identity) lists the
+// mapped account's enrolled passkeys and revokes the named credential;
+// classic extension logins authenticated the line, not a human — they
+// render no passkeys section at all and revocation answers the uniform
+// 404 (the own-account contract, C7 review fix).
 func TestPasskeySettingsListsAndRevokes(t *testing.T) {
 	server, svc := newPasskeyServer(t)
 	enrollCredential(t, svc, pkEmail)
 	c := clientFor(t, server)
-	c.login("1000", pkPassword)
+
+	// Sign in through the ceremony so the session carries the login
+	// identity: begin server-side, finish over HTTP with the
+	// deterministic stub assertion.
+	begun, err := svc.BeginLogin(context.Background(), pkEmail)
+	if err != nil {
+		t.Fatalf("begin login: %v", err)
+	}
+	resp, body := c.do(http.MethodPost,
+		"/api/auth/webauthn/login/finish?user_id="+begun.SessionKey,
+		[]byte(`{"id":"x","rawId":"eA","type":"public-key","response":{"clientDataJSON":"eA"}}`),
+		"application/json")
+	if resp.StatusCode != http.StatusCreated {
+		t.Fatalf("passkey login: %d %s", resp.StatusCode, body)
+	}
+	// The mint rotated the CSRF cookie (fixation defense); the client
+	// adopts the fresh token exactly as the island does post-login.
+	c.token = c.csrfToken()
 
 	creds, ok := svc.Credentials(pkEmail)
 	if !ok || len(creds) != 1 {
 		t.Fatalf("Credentials(%q) = %v, %v; want one enrolled key", pkEmail, creds, ok)
 	}
-	resp, body := c.do(http.MethodGet, "/partials/settings", nil, "")
+	resp, body = c.do(http.MethodGet, "/partials/settings", nil, "")
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("settings partial: %d %s", resp.StatusCode, body)
 	}
@@ -489,10 +525,24 @@ func TestPasskeySettingsListsAndRevokes(t *testing.T) {
 		t.Errorf("settings partial must render the empty state after revoke:\n%s", body)
 	}
 
-	// An extension without a mapped account gets no passkeys section.
+	// A classic extension login on the SAME mapped extension has no login
+	// identity: no passkeys section, and revocation answers 404 before
+	// touching any account (a line-password session must not manage the
+	// sorted-first human's credentials).
 	c2 := clientFor(t, server)
-	c2.login("2001", pkPassword)
+	c2.login("1000", pkPassword)
 	_, body = c2.do(http.MethodGet, "/partials/settings", nil, "")
+	if strings.Contains(string(body), "wp-passkeys-head") {
+		t.Errorf("extension login must not render the passkeys section:\n%s", body)
+	}
+	if resp, _ := c2.do(http.MethodDelete, "/api/passkeys/some-credential", nil, ""); resp.StatusCode != http.StatusNotFound {
+		t.Errorf("extension-login revoke: %d, want 404", resp.StatusCode)
+	}
+
+	// An extension without a mapped account gets no passkeys section.
+	c3 := clientFor(t, server)
+	c3.login("2001", pkPassword)
+	_, body = c3.do(http.MethodGet, "/partials/settings", nil, "")
 	if strings.Contains(string(body), "wp-passkeys-head") {
 		t.Errorf("unmapped extension must not render the passkeys section:\n%s", body)
 	}

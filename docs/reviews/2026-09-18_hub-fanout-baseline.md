@@ -67,3 +67,55 @@ runs average out the coarse-iteration noise both tables above carry.
 **Reading:** no regression — every shape at or below the v4.11.0
 numbers (part methodology: 1s×5 medians are tighter than the 2000x
 single shots). The broadcast path is untouched by both bumps.
+
+## 2026-11-06 re-run — cqrs-htmx v4.16.0 + go-sse v0.7.0 — INCONCLUSIVE
+
+The file's own re-run trigger fired twice since the last entry (the
+2026-10-25 identity train to cqrs-htmx v4.16.0 and the 2026-11-05 wave
+to go-sse v0.7.0), so the benchmark was re-run. **The numbers below are
+NOT a regression verdict**: the host carried a load average of ~22 on
+32 cores (concurrent nix builds plus two foreign `docs-gates` replays),
+and the per-shape spreads are ~2×.
+
+`nix develop -c go test -run '^$' -bench BenchmarkHubFanOut -benchtime=1s -count=6`
+· medians and extremes of 6:
+
+| Shape (hubs × subs) | median ns/op | min   | max   | 2026-09-24 median |
+| ------------------- | ------------ | ----- | ----- | ----------------- |
+| 1 × 1               | 46.8         | 38.7  | 48.7  | 35.0              |
+| 10 × 2              | 55.2         | 43.1  | 66.0  | 39.8              |
+| 100 × 2             | 65.2         | 42.2  | 84.6  | 39.5              |
+| 100 × 10            | 210.3        | 110.9 | 220.5 | 105.0             |
+
+**Reading:** the MINIMA sit 6–11% above the 2026-09-24 medians on a host
+that was demonstrably busy — consistent with scheduling noise, not with
+a broadcast-path change (no `ExtensionHubs`/notifier edit landed in
+either bump train). Treat this entry as "measurement attempted, verdict
+carried": **re-run on a quiet host (`load < 8`) before quoting any
+number**, per the 2026-09-24 methodology note.
+
+## 2026-11-07 re-run — VERDICT: no regression (the 2026-11-06 inconclusive entry is answered)
+
+The 2026-11-06 entry deferred a verdict because the host was busy (load ~22);
+this run took the same measurement on a **quiet host** and delivers the
+verdict that entry owed.
+
+`nix develop -c go test -run '^$' -bench BenchmarkHubFanOut -benchtime=1s -count=6 ./internal/server/`
+· load average **0.75 / 2.06 / 9.72** (1 / 5 / 15 min) on 32 threads, sampled
+immediately before the run · medians and extremes of 6:
+
+| Shape (hubs × subs) | median ns/op | min   | max    | 2026-09-24 median | spread |
+| ------------------- | ------------ | ----- | ------ | ----------------- | ------ |
+| 1 × 1               | 33.2         | 32.88 | 33.60  | 35.0              | 2.2 %  |
+| 10 × 2              | 38.4         | 38.08 | 39.06  | 39.8              | 2.5 %  |
+| 100 × 2             | 38.6         | 38.55 | 39.09  | 39.5              | 1.4 %  |
+| 100 × 10            | 104.3        | 97.84 | 106.10 | 105.0             | 8.1 %  |
+
+**Reading:** every shape is at or below its 2026-09-24 median, and the
+per-shape spreads (1.4–8.1 %) are an order of magnitude tighter than the
+2026-11-06 run's ~2× — the difference was scheduling noise, not the library.
+That confirms the earlier reading: the two bump trains (cqrs-htmx v4.16.0,
+go-sse v0.7.0) did not touch the broadcast path, as expected from their diffs
+(no `ExtensionHubs` or notifier change landed in either). The 2026-11-06
+"measurement attempted, verdict carried" entry is now **answered**, not
+contradicted.

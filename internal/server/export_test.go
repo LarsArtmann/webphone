@@ -117,7 +117,16 @@ func TestExportDataZipsEverythingTheExtensionOwns(t *testing.T) {
 		t.Fatalf("export body is not a zip: %v", err)
 	}
 
-	var threads []exportThread
+	// Local mirrors of the export's portability DTOs (the types moved
+	// with the platform carve): the test pins the WIRE, and the wire is
+	// the JSON.
+	var threads []struct {
+		Remote   string `json:"remote"`
+		Unread   int    `json:"unread"`
+		Messages []struct {
+			Body string `json:"body"`
+		} `json:"messages"`
+	}
 	if err := json.Unmarshal(readZipEntry(t, archive, "messages.json"), &threads); err != nil {
 		t.Fatalf("messages.json: %v", err)
 	}
@@ -145,7 +154,12 @@ func TestExportDataZipsEverythingTheExtensionOwns(t *testing.T) {
 		t.Errorf("contacts.vcf missing the imported contact: %s", vcfOut)
 	}
 
-	var transcripts []exportTranscript
+	var transcripts []struct {
+		CallID    string   `json:"callId"`
+		Remote    string   `json:"remote"`
+		Direction string   `json:"direction"`
+		Lines     []string `json:"lines"`
+	}
 	if err := json.Unmarshal(readZipEntry(t, archive, "transcripts.json"), &transcripts); err != nil {
 		t.Fatalf("transcripts.json: %v", err)
 	}

@@ -43,7 +43,7 @@ func newContextClient(t *testing.T, stub *contextStub) (*Client, *Resolver) {
 	srv := httptest.NewServer(http.HandlerFunc(stub.handler))
 	t.Cleanup(srv.Close)
 
-	client, err := NewClient(srv.URL, "sekrit")
+	client, err := NewClient(srv.URL, "sekrit", "")
 	if err != nil {
 		t.Fatalf("NewClient: %v", err)
 	}
@@ -58,6 +58,7 @@ func newContextClient(t *testing.T, stub *contextStub) (*Client, *Resolver) {
 const fullContextJSON = `{
   "id": "01M",
   "name": "Ada Lovelace",
+  "email": "ada@example.com",
   "company": "Analytical Engines Ltd",
   "tags": ["lead", "conference"],
   "open_deals": [
@@ -228,7 +229,7 @@ func TestResolverContextOfIsDisabledSafe(t *testing.T) {
 		t.Fatal("a nil resolver must never resolve a context")
 	}
 
-	client, err := NewClient("", "")
+	client, err := NewClient("", "", "")
 	if err != nil {
 		t.Fatalf("NewClient: %v", err)
 	}

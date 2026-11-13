@@ -76,10 +76,10 @@ NOT duplicate it there" so the inheritance isn't mistaken for an omission).
 
 | Split brain | Status                                                               |
 | ----------- | -------------------------------------------------------------------- |
-| ~~          | Token blocks mirrored app.css ↔ island/style.css (dark ×3, light ×2) |
-| ~~          | Font-family list ×2                                                  |
-| ~~          | Mirrored `--radius-*`/`--shadow` values                              |
-| ~~          | AGENTS.md's "change both" rule                                       |
+| ~~ ~~       | Token blocks mirrored app.css ↔ island/style.css (dark ×3, light ×2) |
+| ~~ ~~       | Font-family list ×2                                                  |
+| ~~ ~~       | Mirrored `--radius-*`/`--shadow` values                              |
+| ~~ ~~       | AGENTS.md's "change both" rule                                       |
 
 **Removed something useful?** No. Nothing was deleted; all changes are additive
 or in-place value swaps with exact pixel parity at default settings.
@@ -224,73 +224,73 @@ Ranked in tiers. Impact: Critical/High/Medium/Low. Effort: S (<30min) / M
 
 **Now — this train's debt:**
 
-| #  | Task | Impact                                                                                                                                                          | Effort   | Category |
-| -- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | -------- |
-| ~~ | 1    | Add `TestShellHtmlLangFollowsSessionLang` (de cookie → `lang="de"`, default `en`, `og:locale` follows)                                                          | Critical | S        |
-| ~~ | 2    | Run full `nix flake check` to close the train canonically (treefmt, island-lint, module check, KVM backup VM)                                                   | High     | M        |
-| ~~ | 3    | CHANGELOG.md entry for the typography train                                                                                                                     | High     | S        |
-| ~~ | 4    | Collapse font-family duplication: `--font-sans`/`--font-mono` tokens in app.css `:root`, island consumes `var()`                                                | High     | S        |
-| ~~ | 5    | Token-parity test: assert app.css ↔ island/style.css mirrored token blocks stay identical (incl. island-only `--led`, `--key`, `--key-down` documented as such) | High     | M        |
-| ~~ | 6    | Screenshot review of this train: light/dark × en/de × 375px; eyeball keypad, bubbles, status pill, antialiasing                                                 | High     | M        |
-| ~~ | 7    | Harvest this report: (f) Now/Next → TODO_LIST.md, Later → ROADMAP.md (docs-health HARVEST)                                                                      | Medium   | S        |
-| ~~ | 8    | `hyphens: auto` on `.wp-bubble-body` + welcome body (lang now correct); verify German compound overflow                                                         | Medium   | S        |
-| ~~ | 9    | README: short Accessibility note (root scales with browser font setting, lang per session) — zero a11y mentions today                                           | Medium   | S        |
-| ~~ | 10   | Prove island node:test suite has zero CSS coupling (one command, records the assumption)                                                                        | Low      | S        |
+| #     | Task | Impact                                                                                                                                                          | Effort   | Category |
+| ----- | ---- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | -------- |
+| ~~ ~~ | 1    | Add `TestShellHtmlLangFollowsSessionLang` (de cookie → `lang="de"`, default `en`, `og:locale` follows)                                                          | Critical | S        |
+| ~~ ~~ | 2    | Run full `nix flake check` to close the train canonically (treefmt, island-lint, module check, KVM backup VM)                                                   | High     | M        |
+| ~~ ~~ | 3    | CHANGELOG.md entry for the typography train                                                                                                                     | High     | S        |
+| ~~ ~~ | 4    | Collapse font-family duplication: `--font-sans`/`--font-mono` tokens in app.css `:root`, island consumes `var()`                                                | High     | S        |
+| ~~ ~~ | 5    | Token-parity test: assert app.css ↔ island/style.css mirrored token blocks stay identical (incl. island-only `--led`, `--key`, `--key-down` documented as such) | High     | M        |
+| ~~ ~~ | 6    | Screenshot review of this train: light/dark × en/de × 375px; eyeball keypad, bubbles, status pill, antialiasing                                                 | High     | M        |
+| ~~ ~~ | 7    | Harvest this report: (f) Now/Next → TODO_LIST.md, Later → ROADMAP.md (docs-health HARVEST)                                                                      | Medium   | S        |
+| ~~ ~~ | 8    | `hyphens: auto` on `.wp-bubble-body` + welcome body (lang now correct); verify German compound overflow                                                         | Medium   | S        |
+| ~~ ~~ | 9    | README: short Accessibility note (root scales with browser font setting, lang per session) — zero a11y mentions today                                           | Medium   | S        |
+| ~~ ~~ | 10   | Prove island node:test suite has zero CSS coupling (one command, records the assumption)                                                                        | Low      | S        |
 
 **Next — bounded, noticed during the run:**
 
-| #  | Task | Impact                                                                                                                             | Effort | Category |
-| -- | ---- | ---------------------------------------------------------------------------------------------------------------------------------- | ------ | -------- |
-| ~~ | 11   | Contrast sweep at actual sizes (muted on surface-2/3 at 0.72–0.9em) vs WCAG 4.5:1; fix failures                                    | High   | S        |
-| ~~ | 12   | `#log` 0.72rem readability bump + wrap check (keep English + greppable row contract)                                               | Medium | S        |
-| ~~ | 13   | tabular-nums audit: voicemail `.len`, fax page counts, settings `dd`, history `.when`                                              | Medium | S        |
-| ~~ | 14   | Focus-visible normalization: island `input:focus` outline-offset −1px vs 2px elsewhere                                             | Low    | S        |
-| ~~ | 15   | Report govalid-generate parallel contention upstream to the BuildFlow repo (verify-before-filing gate first: minimal repro)        | Medium | M        |
-| ~~ | 16   | Investigate the 11:48:22 zero-byte mtime bumps on both CSS files (which process?)                                                  | Medium | S        |
-| ~~ | 17   | Settle the go.mod `go`-line flipflop (doctor: 8 changes/20 commits; align go-version-auto-configure vs go-mod-update dispositions) | High   | M        |
-| ~~ | 18   | AGENTS.md diet: 552 → ~≤400 lines; war stories → docs/lessons.md (after the concurrent session's AGENTS edits land)                | Medium | M        |
-| ~~ | 19   | Update the stale BuildFlow binary (e881e96 → 8dd634e) in the BuildFlow checkout                                                    | Low    | S        |
-| ~~ | 20   | VACUUM buildflow cache.db (0.81 GB, 54% free) / review state db (0.26 GB)                                                          | Low    | S        |
-| ~~ | 21   | Triage vulnix "0/5 retries recovered" — fix or gate vulnix to release builds only                                                  | Medium | S        |
-| ~~ | 22   | `text-wrap: pretty` on `.wp-welcome-body` / `.wp-welcome-hint`                                                                     | Low    | S        |
-| ~~ | 23   | Dark-mode +50 weight trial on a VF-capable machine; adopt only if visibly better                                                   | Low    | S        |
-| ~~ | 24   | Keypad `✱` (U+2731) glyph rendering sweep across platforms                                                                         | Low    | S        |
-| ~~ | 25   | Heading-hierarchy audit of tab partials (welcome uses h2 under an implicit h1-less region)                                         | Low    | S        |
-| ~~ | 26   | Annotate this report via docs-health ANNOTATE as its items close                                                                   | Low    | S        |
+| #     | Task | Impact                                                                                                                             | Effort | Category |
+| ----- | ---- | ---------------------------------------------------------------------------------------------------------------------------------- | ------ | -------- |
+| ~~ ~~ | 11   | Contrast sweep at actual sizes (muted on surface-2/3 at 0.72–0.9em) vs WCAG 4.5:1; fix failures                                    | High   | S        |
+| ~~ ~~ | 12   | `#log` 0.72rem readability bump + wrap check (keep English + greppable row contract)                                               | Medium | S        |
+| ~~ ~~ | 13   | tabular-nums audit: voicemail `.len`, fax page counts, settings `dd`, history `.when`                                              | Medium | S        |
+| ~~ ~~ | 14   | Focus-visible normalization: island `input:focus` outline-offset −1px vs 2px elsewhere                                             | Low    | S        |
+| ~~ ~~ | 15   | Report govalid-generate parallel contention upstream to the BuildFlow repo (verify-before-filing gate first: minimal repro)        | Medium | M        |
+| ~~ ~~ | 16   | Investigate the 11:48:22 zero-byte mtime bumps on both CSS files (which process?)                                                  | Medium | S        |
+| ~~ ~~ | 17   | Settle the go.mod `go`-line flipflop (doctor: 8 changes/20 commits; align go-version-auto-configure vs go-mod-update dispositions) | High   | M        |
+| ~~ ~~ | 18   | AGENTS.md diet: 552 → ~≤400 lines; war stories → docs/lessons.md (after the concurrent session's AGENTS edits land)                | Medium | M        |
+| ~~ ~~ | 19   | Update the stale BuildFlow binary (e881e96 → 8dd634e) in the BuildFlow checkout                                                    | Low    | S        |
+| ~~ ~~ | 20   | VACUUM buildflow cache.db (0.81 GB, 54% free) / review state db (0.26 GB)                                                          | Low    | S        |
+| ~~ ~~ | 21   | Triage vulnix "0/5 retries recovered" — fix or gate vulnix to release builds only                                                  | Medium | S        |
+| ~~ ~~ | 22   | `text-wrap: pretty` on `.wp-welcome-body` / `.wp-welcome-hint`                                                                     | Low    | S        |
+| ~~ ~~ | 23   | Dark-mode +50 weight trial on a VF-capable machine; adopt only if visibly better                                                   | Low    | S        |
+| ~~ ~~ | 24   | Keypad `✱` (U+2731) glyph rendering sweep across platforms                                                                         | Low    | S        |
+| ~~ ~~ | 25   | Heading-hierarchy audit of tab partials (welcome uses h2 under an implicit h1-less region)                                         | Low    | S        |
+| ~~ ~~ | 26   | Annotate this report via docs-health ANNOTATE as its items close                                                                   | Low    | S        |
 
 **Later — roadmap fuel:**
 
-| #  | Task | Impact                                                                                            | Effort | Category |
-| -- | ---- | ------------------------------------------------------------------------------------------------- | ------ | -------- |
-| ~~ | 27   | CSS-level test harness beyond token parity (no px font-size gate, uppercase⇒letter-spacing rule)  | Medium | M        |
-| ~~ | 28   | Extend stack browser-e2e with a de-language pass (server strings + `html lang`)                   | Medium | M        |
-| ~~ | 29   | Named type-scale tokens — only when a third stylesheet consumer appears (YAGNI now)               | Low    | M        |
-| ~~ | 30   | `prefers-contrast: more` adjustments                                                              | Low    | M        |
-| ~~ | 31   | Self-hosted display font for the brand wordmark only (same-origin is CSP-legal; owner taste call) | Low    | L        |
-| ~~ | 32   | Print styles for history/fax lists — on request only                                              | Low    | S        |
-| ~~ | 33   | Cross-font rendering check of the `·` separator in `.wp-signed-in-did`                            | Low    | S        |
-| ~~ | 34   | Evaluate `font-variant-numeric: slashed-zero` for mono diagnostics                                | Low    | S        |
-| ~~ | 35   | `#wp-sse-live` light-mode visibility (0.45-opacity muted dot)                                     | Low    | S        |
+| #     | Task | Impact                                                                                            | Effort | Category |
+| ----- | ---- | ------------------------------------------------------------------------------------------------- | ------ | -------- |
+| ~~ ~~ | 27   | CSS-level test harness beyond token parity (no px font-size gate, uppercase⇒letter-spacing rule)  | Medium | M        |
+| ~~ ~~ | 28   | Extend stack browser-e2e with a de-language pass (server strings + `html lang`)                   | Medium | M        |
+| ~~ ~~ | 29   | Named type-scale tokens — only when a third stylesheet consumer appears (YAGNI now)               | Low    | M        |
+| ~~ ~~ | 30   | `prefers-contrast: more` adjustments                                                              | Low    | M        |
+| ~~ ~~ | 31   | Self-hosted display font for the brand wordmark only (same-origin is CSP-legal; owner taste call) | Low    | L        |
+| ~~ ~~ | 32   | Print styles for history/fax lists — on request only                                              | Low    | S        |
+| ~~ ~~ | 33   | Cross-font rendering check of the `·` separator in `.wp-signed-in-did`                            | Low    | S        |
+| ~~ ~~ | 34   | Evaluate `font-variant-numeric: slashed-zero` for mono diagnostics                                | Low    | S        |
+| ~~ ~~ | 35   | `#wp-sse-live` light-mode visibility (0.45-opacity muted dot)                                     | Low    | S        |
 
 **Considered and REJECTED during this train (decision record, do not re-litigate without new evidence):**
 
-| #  | Rejected | Why                                      |
-| -- | -------- | ---------------------------------------- |
-| ~~ | 36       | Palette/accent churn                     |
-| ~~ | 37       | Webfonts for body text                   |
-| ~~ | 38       | Global fluid clamp type scale            |
-| ~~ | 39       | Sentence-case the status pill            |
-| ~~ | 40       | Justified text anywhere                  |
-| ~~ | 41       | More entrance/hover motion               |
-| ~~ | 42       | Tailwind-ify the panels                  |
-| ~~ | 43       | Island markup font hooks                 |
-| ~~ | 44       | `font-size-adjust` fallback tuning       |
-| ~~ | 45       | `text-wrap: balance` on body text        |
-| ~~ | 46       | Custom scrollbar styling                 |
-| ~~ | 47       | Letter-spacing on body text              |
-| ~~ | 48       | Variable-font optical sizing             |
-| ~~ | 49       | Hyphens in thread previews               |
-| ~~ | 50       | Hand-format CSS against prettier's grain |
+| #     | Rejected | Why                                      |
+| ----- | -------- | ---------------------------------------- |
+| ~~ ~~ | 36       | Palette/accent churn                     |
+| ~~ ~~ | 37       | Webfonts for body text                   |
+| ~~ ~~ | 38       | Global fluid clamp type scale            |
+| ~~ ~~ | 39       | Sentence-case the status pill            |
+| ~~ ~~ | 40       | Justified text anywhere                  |
+| ~~ ~~ | 41       | More entrance/hover motion               |
+| ~~ ~~ | 42       | Tailwind-ify the panels                  |
+| ~~ ~~ | 43       | Island markup font hooks                 |
+| ~~ ~~ | 44       | `font-size-adjust` fallback tuning       |
+| ~~ ~~ | 45       | `text-wrap: balance` on body text        |
+| ~~ ~~ | 46       | Custom scrollbar styling                 |
+| ~~ ~~ | 47       | Letter-spacing on body text              |
+| ~~ ~~ | 48       | Variable-font optical sizing             |
+| ~~ ~~ | 49       | Hyphens in thread previews               |
+| ~~ ~~ | 50       | Hand-format CSS against prettier's grain |
 
 ## g) Three questions I cannot answer myself
 

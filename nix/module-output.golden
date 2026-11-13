@@ -22,12 +22,17 @@ handle {
 
 == backup script (retentionDays = 7) ==
 sqlite3 "/var/lib/webphone/webphone.db" ".backup '/var/lib/webphone-backup/webphone.db'"
-# The metaengine read-model database (dedup windows, contacts, snippets,
-# faxes, transcripts, enroll tokens) carries user data since the
-# metaengine train — guard for data dirs that have not booted a
-# webphone new enough to create it yet.
-if [ -f "/var/lib/webphone/readmodels.db" ]; then
-  sqlite3 "/var/lib/webphone/readmodels.db" ".backup '/var/lib/webphone-backup/readmodels.db'"
+# readmodels.db is RETIRED (SUPERB A43): every collection it served
+# answers from system.db since the journal swaps, the one-time
+# importers copied (never moved) the history, and the composition
+# root stopped opening the file — it is not backed up anymore. A
+# leftover file on upgraded deployments is an inert orphan.
+# The system composition root's journal database (command/event
+# streams, projections, checkpoints, DLQ) carries user data from the
+# SUPERB phases on — guarded the same way for data dirs that have
+# not booted a webphone new enough to create it yet.
+if [ -f "/var/lib/webphone/system.db" ]; then
+  sqlite3 "/var/lib/webphone/system.db" ".backup '/var/lib/webphone-backup/system.db'"
 fi
 rsync -a --delete "/var/lib/webphone/files/" "/var/lib/webphone-backup/files/"
 # Dated history: snapshot today's state under snapshots/,
@@ -42,8 +47,8 @@ basis=$(
 )
 mkdir -p "$snap"
 sqlite3 "/var/lib/webphone/webphone.db" ".backup '$snap/webphone.db'"
-if [ -f "/var/lib/webphone/readmodels.db" ]; then
-  sqlite3 "/var/lib/webphone/readmodels.db" ".backup '$snap/readmodels.db'"
+if [ -f "/var/lib/webphone/system.db" ]; then
+  sqlite3 "/var/lib/webphone/system.db" ".backup '$snap/system.db'"
 fi
 if [ -n "$basis" ]; then
   rsync -a --delete --link-dest="$basis" "/var/lib/webphone/files/" "$snap/files/"

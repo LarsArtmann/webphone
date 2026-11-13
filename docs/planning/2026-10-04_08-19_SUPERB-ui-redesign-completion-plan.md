@@ -107,7 +107,7 @@ independent of each other; both before T6 (docs describe the final state).
 
 ### Execution status (2026-10-04 19:42) — evidence in
 
-[docs/status/2026-10-04_19-42_cascade-fix-verification-t4-t8-status.md](../status/2026-10-04_19-42_cascade-fix-verification-t4-t8-status.md)
+[docs/status/archived/2026-10-04_19-42_cascade-fix-verification-t4-t8-status.md](../status/archived/2026-10-04_19-42_cascade-fix-verification-t4-t8-status.md)
 
 - **T1 DONE** — suite green; byte-pins fixed via the cascade scoping fix
   (`a379976`, pushed).

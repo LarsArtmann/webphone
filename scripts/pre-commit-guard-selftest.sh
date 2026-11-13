@@ -90,6 +90,26 @@ b=$(git hash-object -w "$tmp/vendor.js")
 git update-index --add --cacheinfo "100644,$b,internal/web/assets/vendor/sip.min.js"
 run_case "the vendored bundle bypasses the syntax gate" 0
 
+# Cases 6b-6c (2026-11-11): Gate 3, staged scripts/*.py — the daemon's
+# ui-capture.py corruption class (a comment line losing its leading #) is
+# a Python syntax error nothing gated. Mirror the node cases: broken
+# refuses, valid allows. python3 comes from PATH like node.
+if command -v python3 >/dev/null 2>&1; then
+	git read-tree HEAD
+	printf '# a script\ndef broken(:\n' >"$tmp/broken.py"
+	b=$(git hash-object -w "$tmp/broken.py")
+	git update-index --add --cacheinfo "100644,$b,scripts/ui-capture.py"
+	run_case "staged Python syntax error is refused" 1
+
+	git read-tree HEAD
+	printf '# a script\ndef fine():\n    return 1\n' >"$tmp/fine.py"
+	b=$(git hash-object -w "$tmp/fine.py")
+	git update-index --add --cacheinfo "100644,$b,scripts/ui-capture.py"
+	run_case "a staged valid Python script is allowed" 0
+else
+	echo "pre-commit-guard-selftest: WARN — python3 not on PATH, Python syntax cases skipped" >&2
+fi
+
 # Cases 7-8 (2026-10-28): whitespace-drift's formatter adjudication, in a
 # THROWAWAY repo (the real repo's HEAD is formatter-clean by CI, so a
 # whitespace-only staged delta that IS canonical cannot be staged against
@@ -134,4 +154,4 @@ else
 	ws_cases=0
 fi
 
-echo "pre-commit-guard-selftest: $((6 + ws_cases)) passed"
+echo "pre-commit-guard-selftest: $((8 + ws_cases)) passed"

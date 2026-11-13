@@ -1,5 +1,9 @@
 package views
 
+import (
+	"github.com/larsartmann/webphone/internal/domain"
+)
+
 // crmNameLink is the ONE place a CRM link is built. It renders the
 // contact's published name as a link into the CRM's own UI when the
 // deployment configured a deep-link template, and the plain name otherwise:
@@ -10,18 +14,39 @@ package views
 // inside the list's row link would be invalid HTML and a nested hit target.
 // The link opens in a NEW TAB on purpose, so the SIP island (registration,
 // a live call) is never unloaded by a navigation.
+// crmAnchor is the ONE home of the CRM's external anchor: the profile
+// link and the create affordance are the same shape (new tab, noopener,
+// a title and a "<who>, <title>" label), and two hand-kept copies would
+// drift the day one gains an attribute.
+templ crmAnchor(href, class, text, who, title string) {
+	<a
+		class={ class }
+		href={ href }
+		target="_blank"
+		rel="noopener noreferrer"
+		title={ title }
+		aria-label={ who + ", " + title }
+	>{ text }</a>
+}
+
 templ crmNameLink(number string, contacts CRMContacts, lang Lang) {
 	if url := crmProfileURL(number, contacts); url != "" {
-		<a
-			class="wp-crm-link"
-			href={ url }
-			target="_blank"
-			rel="noopener noreferrer"
-			title={ T(lang, "crm.open") }
-			aria-label={ displayName(number, contacts) + ", " + T(lang, "crm.open") }
-		>{ displayName(number, contacts) }</a>
+		@crmAnchor(url, "wp-crm-link", displayName(number, contacts), displayName(number, contacts), T(lang, "crm.open"))
 	} else {
 		{ displayName(number, contacts) }
+	}
+}
+
+// crmCreateLink renders the new-contact affordance for an UNKNOWN number:
+// the deployment's create-form template with {phone} substituted. Empty
+// template renders nothing (the byte-identical zero-config product), a
+// MATCHED number renders nothing (its profile link is the affordance
+// there), and the CRM still owns the record — this opens the CRM's OWN
+// form in a NEW TAB (the SIP island never unloads), which keeps the
+// browser→CRM surface at exactly the operator's own navigation.
+templ crmCreateLink(number string, createURL string, contacts CRMContacts, lang Lang) {
+	if createURL != "" && crmProfileURL(number, contacts) == "" {
+		@crmAnchor(crmCreateURLFor(number, createURL), "wp-crm-create", T(lang, "crm.create"), displayName(number, contacts), T(lang, "crm.create"))
 	}
 }
 
@@ -29,9 +54,15 @@ templ crmNameLink(number string, contacts CRMContacts, lang Lang) {
 // name, linked into the CRM when a template is configured, in the row's
 // canonical strong. Fax rows and History's CDR rows both render exactly this,
 // and two hand-kept copies would drift the day one of them gains an
-// attribute.
+// attribute. A remote the phone alphabet cannot read renders muted mono
+// instead: it is not a number, and a number-shaped strong would lie about
+// what the PBX sent.
 templ remoteLabel(number string, contacts CRMContacts, lang Lang) {
-	<strong class="wp-thread-remote">@crmNameLink(number, contacts, lang)</strong>
+	if _, err := domain.ParsePhone(number); err != nil {
+		<span class="wp-muted wp-mono">{ number }</span>
+	} else {
+		<strong class="wp-thread-remote">@crmNameLink(number, contacts, lang)</strong>
+	}
 }
 
 // crmDraftContact is a draft's caller label: the CRM-served name LINKED
@@ -65,6 +96,13 @@ templ crmContextItem(key, value, tail string) {
 	</span>
 }
 
+// crmMutedItem is the ONE home of the context row's muted meta line: the
+// cache notice and the deal overflow are two conditional spans of one
+// shape, and a second hand-kept copy drifts the day the styling moves.
+templ crmMutedItem(text string) {
+	<span class="wp-crm-item wp-crm-muted">{ text }</span>
+}
+
 // crmContextStrip renders the CRM's published context for the one contact
 // the surface is about: the company, the open deals, the outstanding task
 // count, and when the CRM last saw activity with them.
@@ -82,22 +120,36 @@ templ crmContextItem(key, value, tail string) {
 templ crmContextStrip(crm *CRMContext, lang Lang) {
 	if crm != nil {
 		<aside class="wp-crm-context" id="wp-crm-context" aria-label={ T(lang, "crm.context") }>
-			if crm.Company != "" {
-				@crmContextItem(T(lang, "crm.company"), crm.Company, "")
-			}
-			for _, deal := range crm.Deals {
-				@crmContextItem(T(lang, "crm.deal")+" · "+deal.Stage, deal.Title, dealValue(deal))
-			}
-			if crm.MoreDeals > 0 {
-				<span class="wp-crm-item wp-crm-muted">+{ fmtInt(crm.MoreDeals) }</span>
-			}
-			if crm.OpenTasks > 0 {
-				@crmContextItem(T(lang, "crm.tasks"), fmtInt(crm.OpenTasks), crmNextTaskTail(*crm, lang))
-			}
-			if !crm.LastActivity.IsZero() {
-				@crmContextItem(T(lang, "crm.lastActivity"), relativeTime(crm.LastActivity, lang), "")
-			}
+			@crmContextItems(crm, lang)
 		</aside>
+	}
+}
+
+// crmContextItems is the ONE home of the context row's content: the
+// company, the open deals, the outstanding task count and the last touch.
+// Two surfaces render these lines — the conversation head's strip and the
+// live-call panel beside the island — and a second hand-kept copy would
+// drift the day one of them learns a new fact.
+templ crmContextItems(crm *CRMContext, lang Lang) {
+	if crm != nil {
+		if crm.ServedFromCache {
+			@crmMutedItem(T(lang, "crm.cached"))
+		}
+		if crm.Company != "" {
+			@crmContextItem(T(lang, "crm.company"), crm.Company, "")
+		}
+		for _, deal := range crm.Deals {
+			@crmContextItem(T(lang, "crm.deal")+" · "+deal.Stage, deal.Title, dealValue(deal))
+		}
+		if crm.MoreDeals > 0 {
+			@crmMutedItem("+" + fmtInt(crm.MoreDeals))
+		}
+		if crm.OpenTasks > 0 {
+			@crmContextItem(T(lang, "crm.tasks"), fmtInt(crm.OpenTasks), crmNextTaskTail(*crm, lang))
+		}
+		if !crm.LastActivity.IsZero() {
+			@crmContextItem(T(lang, "crm.lastActivity"), relativeTime(crm.LastActivity, lang), "")
+		}
 	}
 }
 

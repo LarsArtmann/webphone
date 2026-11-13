@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json/v2"
 	"errors"
+	"io"
 	"net/http"
 	"time"
 
@@ -107,8 +108,14 @@ func (c *Client) ContactContext(ctx context.Context, ref ContactRef) (Context, e
 
 	var buf bytes.Buffer
 
-	if _, err := buf.ReadFrom(resp.Body); err != nil {
+	// The same readCap + crm.too_large verdict as the lookup read (the
+	// two CRM read sites are one fact: an oversized answer is an
+	// upstream fault, never a process balloon).
+	if _, err := buf.ReadFrom(io.LimitReader(resp.Body, readCap+1)); err != nil {
 		return Context{}, errorfamily.WrapTransientf(err, "crm.context_read", "crm: read context response")
+	}
+	if buf.Len() > readCap {
+		return Context{}, errorfamily.NewTransient("crm.too_large", "crm: context response exceeds the read cap")
 	}
 
 	var parsed contextWire
@@ -182,18 +189,34 @@ type contextEntry struct {
 // is no fan-out to join, and the names single-flight exists precisely because
 // a list page resolves tens of numbers.
 func (r *Resolver) ContextOf(ctx context.Context, ref ContactRef) (*Context, bool) {
+	context, _, ok := r.contextOf(ctx, ref)
+
+	return context, ok
+}
+
+// ContextOfCached is ContextOf with the served-from verdict: fromCache
+// is true when the answer came from the TTL cache, so the strip's facts
+// may be up to the context TTL old (T11.4, the contacts mesh review —
+// the operator sees the freshness instead of guessing). ok behaves like
+// ContextOf's.
+func (r *Resolver) ContextOfCached(ctx context.Context, ref ContactRef) (*Context, bool, bool) {
+	return r.contextOf(ctx, ref)
+}
+
+// contextOf is the shared lookup core: (context, fromCache, ok).
+func (r *Resolver) contextOf(ctx context.Context, ref ContactRef) (*Context, bool, bool) {
 	if !r.Enabled() || ref.Get() == "" {
-		return nil, false
+		return nil, false, false
 	}
 
 	if entry, fresh := r.cachedContext(ref.Get()); fresh {
 		if entry.absent {
-			return nil, false
+			return nil, false, false
 		}
 
 		out := entry.context
 
-		return &out, true
+		return &out, true, true
 	}
 
 	parsed, err := r.client.ContactContext(ctx, ref)
@@ -202,7 +225,7 @@ func (r *Resolver) ContextOf(ctx context.Context, ref ContactRef) (*Context, boo
 	case err == nil:
 		r.rememberContext(ref.Get(), contextEntry{context: parsed, fetched: time.Now()})
 
-		return &parsed, true
+		return &parsed, false, true
 	case errors.Is(err, ErrNoContext):
 		r.rememberContext(ref.Get(), contextEntry{absent: true, fetched: time.Now()})
 	case errors.Is(err, ErrUnauthorized):
@@ -216,7 +239,7 @@ func (r *Resolver) ContextOf(ctx context.Context, ref ContactRef) (*Context, boo
 		r.log.Debug("crm: context failed; no strip", "ref", ref, "error", err)
 	}
 
-	return nil, false
+	return nil, false, false
 }
 
 func (r *Resolver) cachedContext(ref string) (contextEntry, bool) {

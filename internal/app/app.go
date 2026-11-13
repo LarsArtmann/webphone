@@ -52,6 +52,7 @@ import (
 	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/retention"
 	"github.com/larsartmann/webphone/internal/server"
+	serverauth "github.com/larsartmann/webphone/internal/server/auth"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/sso"
 	"github.com/larsartmann/webphone/internal/store"
@@ -68,11 +69,11 @@ var (
 	_ do.HealthcheckerWithContext = (*store.Database)(nil)
 	_ do.HealthcheckerWithContext = (*blob.Store)(nil)
 	_ do.HealthcheckerWithContext = (*userauth.Service)(nil)
-	_ do.HealthcheckerWithContext = (*readmodels.Engine)(nil)
 	_ do.HealthcheckerWithContext = (*crm.Resolver)(nil)
+	_ do.HealthcheckerWithContext = (*CqrsService)(nil)
 	_ do.ShutdownerWithError      = (*store.Database)(nil)
 	_ do.ShutdownerWithError      = (*userauth.Service)(nil)
-	_ do.ShutdownerWithError      = (*readmodels.Engine)(nil)
+	_ do.ShutdownerWithError      = (*CqrsService)(nil)
 	_ do.Shutdowner               = (*dashboard.Dashboard)(nil)
 	_ do.Shutdowner               = (*server.ExtensionHubs)(nil)
 )
@@ -121,6 +122,43 @@ type App struct {
 	// cascade closes it again idempotently; the field exists because the
 	// drain runs BEFORE do.Shutdown.
 	Hubs *server.ExtensionHubs
+	// Push is the OPTIONAL push fanout (nil-safe by the seam's own
+	// doctrine). The field exists so Start can arm the prune registry
+	// once the cqrs system — which the push-devices store rides — has
+	// resolved; the HTTP listener accepts only afterwards, so every Fan
+	// sees an armed registry.
+	Push *push.Fanout
+}
+
+// pushRegistryAdapter adapts the journal-backed push-devices store to
+// the fanout's prune seam: the fanout stays dependency-light (domain
+// types only), and the conversion is the adapter's whole job.
+type pushRegistryAdapter struct {
+	devices readmodels.PushDeviceGate
+}
+
+func (a pushRegistryAdapter) List(ctx context.Context, owner domain.Extension) ([]push.Device, error) {
+	views, err := a.devices.List(ctx, owner)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]push.Device, 0, len(views))
+	for _, v := range views {
+		// The row's transport string passed the registration door's
+		// ParseTransport at upsert; a row that predates the door (or a
+		// hand-seeded test row) parses or skips — never a fan-time
+		// lookup miss.
+		transport, err := push.ParseTransport(v.Transport)
+		if err != nil {
+			continue
+		}
+		out = append(out, push.Device{DeviceID: v.DeviceID, Transport: transport, Token: v.Token})
+	}
+	return out, nil
+}
+
+func (a pushRegistryAdapter) Remove(ctx context.Context, owner domain.Extension, deviceID string) error {
+	return a.devices.Remove(ctx, owner, deviceID)
 }
 
 // wrapf is this package's home for family-neutral startup wraps (same
@@ -169,23 +207,20 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	do.ProvideNamed(injector, "blob-dir", func(i do.Injector) (*blob.Store, error) {
 		return blob.New(filepath.Join(cfg.DataDir, "files"))
 	})
-	// The metaengine storage (read models + dedup windows) lives in its
-	// OWN database file so the engine-owned DDL and webphone's hand-
-	// written migration ladder never touch (plan N5/N6). Named like the
-	// critical pair because the probe discovers health by name; NOT in
-	// WithCriticalServices — the seams it serves today fail open
-	// (dedup forgets → one harmless re-apply), unlike sqlite/blob whose
-	// loss takes the product down.
-	//samber-linter:allow hw-4 eagerly resolved via MustInvokeNamed in New
-	do.ProvideNamed(injector, "metaengine", func(i do.Injector) (*readmodels.Engine, error) {
-		return readmodels.Open(cfg.DataDir)
-	})
+	// The system composition root (SUPERB plan): the command/event
+	// journal rides its OWN system.db beside the read-model engine —
+	// engine DDL never meets the hand ladder, and the container sees
+	// one more named eager service with probe-discoverable health
+	// (optional non-critical leg while only advisory features ride it).
+	registerCqrs(injector, cfg, log)
 	do.Provide(injector, func(i do.Injector) (*pbx.Client, error) {
 		return pbx.NewClient(cfg.PhoneAPIURL)
 	})
+	//samber-linter:allow hw-4 resolved eagerly via the named "crm" alias below when the seam is on; off = no crm leg anywhere
 	do.Provide(injector, func(i do.Injector) (*crm.Client, error) {
-		return crm.NewClient(cfg.CRM.URL, cfg.CRM.Token)
+		return crm.NewClient(cfg.CRM.URL, cfg.CRM.Token, cfg.CRM.CAFile)
 	})
+	//samber-linter:allow hw-4 resolved eagerly via the named "crm" alias below when the seam is on (probe discovery)
 	do.Provide(injector, func(i do.Injector) (*crm.Resolver, error) {
 		return crm.NewResolver(do.MustInvoke[*crm.Client](i), cfg.CRM.ContactURL, log), nil
 	})
@@ -211,9 +246,9 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			})
 		}
 		if cfg.ASR.Provider == "whispercpp" {
-			return asr.NewWhisperCppClient(cfg.ASR.URL, cfg.ASR.Token, cfg.ASR.Model)
+			return asr.NewWhisperCppClient(asr.ClientConfig{BaseURL: cfg.ASR.URL, Token: cfg.ASR.Token, Model: cfg.ASR.Model})
 		}
-		return asr.NewClient(cfg.ASR.URL, cfg.ASR.Token, cfg.ASR.Model)
+		return asr.NewClient(asr.ClientConfig{BaseURL: cfg.ASR.URL, Token: cfg.ASR.Token, Model: cfg.ASR.Model})
 	}()
 	if err != nil {
 		return nil, wrapf("open asr provider: %w", err)
@@ -244,7 +279,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	// FCM credentials file, unparseable ntfy URL) fails the boot here —
 	// the same doctrine as the passkey/Paperless seams.
 	pushFanout, err := func() (*push.Fanout, error) {
-		senders := map[string]push.Sender{}
+		senders := map[push.Transport]push.Sender{}
 		if cfg.Push.Ntfy.Enabled() {
 			sender, err := push.NewNtfySender(cfg.Push.Ntfy.URL, cfg.Push.Ntfy.Token)
 			if err != nil {
@@ -259,7 +294,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			}
 			senders[push.TransportFcm] = sender
 		}
-		return push.NewFanout(senders), nil
+		return push.NewFanout(senders, nil), nil
 	}()
 	if err != nil {
 		return nil, wrapf("open push senders: %w", err)
@@ -277,7 +312,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			bootCtx, cancel := context.WithTimeout(context.Background(), userauthBootTimeout)
 			defer cancel()
 			return userauth.New(bootCtx, PasskeyRuntime(cfg.Auth.Passkey), cfg.DataDir,
-				do.MustInvokeNamed[*readmodels.Engine](i, "metaengine").EnrollTokens(), log)
+				do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).EnrollSvc(), log)
 		})
 	}
 
@@ -316,20 +351,19 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	}
 
 	// --- services --------------------------------------------------------
-	do.Provide(injector, func(i do.Injector) (*store.Messages, error) {
-		return store.NewMessages(do.MustInvokeNamed[*store.Database](i, "sqlite").SQL()), nil
-	})
 	do.Provide(injector, func(i do.Injector) (*session.SQLiteStore, error) {
 		return session.NewSQLiteStore(do.MustInvokeNamed[*store.Database](i, "sqlite").SQL(), cfg.SessionTTL)
 	})
+	//samber-linter:allow hw-1 health is the hand-assembled go-health probe (per-surface grading); the hub's liveness is the /events surface, never a do-healthcheck row
 	do.Provide(injector, func(i do.Injector) (*server.ExtensionHubs, error) {
 		return server.NewHubs(), nil
 	})
 	do.Provide(injector, func(i do.Injector) (*server.Notifier, error) {
 		return server.NewNotifier(
 			do.MustInvoke[*server.ExtensionHubs](i),
-			do.MustInvoke[*store.Messages](i),
-			do.MustInvokeNamed[*readmodels.Engine](i, "metaengine").Faxes(),
+			do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).ThreadsSvc(),
+			do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).FaxesSvc(), //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service's fax backend (SUPERB Phase 6)
+			do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).ContactsSvc(),
 			do.MustInvoke[*crm.Resolver](i),
 			cfg.ASR.Enabled(),
 			views.FaxCapability{Send: cfg.Fax.SendEnabled(), Receive: cfg.Fax.ReceiveEnabled()},
@@ -343,7 +377,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	})
 	do.Provide(injector, func(i do.Injector) (*messaging.Service, error) {
 		return messaging.New(
-			do.MustInvoke[*store.Messages](i),
+			do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).ThreadsSvc(),
 			do.MustInvokeNamed[*blob.Store](i, "blob-dir"),
 			do.MustInvoke[gateway.MessageGateway](i),
 			do.MustInvoke[*server.Notifier](i).Project,
@@ -352,7 +386,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	})
 	do.Provide(injector, func(i do.Injector) (*fax.Service, error) {
 		return fax.New(
-			do.MustInvokeNamed[*readmodels.Engine](i, "metaengine").Faxes(),
+			do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).FaxesSvc(), //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service's fax backend (SUPERB Phase 6)
 			do.MustInvokeNamed[*blob.Store](i, "blob-dir"),
 			do.MustInvoke[gateway.FaxGateway](i),
 			do.MustInvoke[*server.Notifier](i).Project,
@@ -377,6 +411,16 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	if err != nil {
 		return nil, err
 	}
+	if trace != nil {
+		// The opt-in's observable state: an operator looking for the
+		// seam in the journal finds WHERE snapshots land and WHAT the
+		// capture policy is, without reading source.
+		log.Info("flight recorder enabled (WEBPHONE_DEBUG_FLIGHTRECORDER=1)",
+			"dir", traceDir(cfg.DataDir),
+			"slow_request", traceSlowRequest.String(),
+			"retention", traceRetention,
+		)
+	}
 
 	var dashboardHandler http.Handler
 	if cfg.Dashboard.Enable {
@@ -393,8 +437,6 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	do.Provide(injector, func(i do.Injector) (http.Handler, error) {
 		db := do.MustInvokeNamed[*store.Database](i, "sqlite")
 		blobs := do.MustInvokeNamed[*blob.Store](i, "blob-dir")
-		engine := do.MustInvokeNamed[*readmodels.Engine](i, "metaengine")
-
 		var auth *userauth.Service
 		if cfg.Auth.Passkey.Enabled() {
 			auth = do.MustInvokeNamed[*userauth.Service](i, "userauth")
@@ -407,7 +449,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		// begin would panic on the nil receiver (the 2026-10-23
 		// browser-suite M11 break, proven against the config-less
 		// binary).
-		var ssoClient server.SSOClient
+		var ssoClient serverauth.SSOClient
 		if cfg.Auth.OAuth2.Enabled() {
 			ssoClient = do.MustInvokeNamed[*sso.Client](i, "sso")
 		}
@@ -421,17 +463,27 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			return nil, err
 		}
 		return server.New(server.Deps{
-			Config:      cfg,
-			Sessions:    do.MustInvoke[*session.SQLiteStore](i),
-			Messages:    do.MustInvoke[*store.Messages](i),
-			Faxes:       engine.Faxes(),
-			Contacts:    engine.Contacts(),
-			Snippets:    engine.Snippets(),
-			Transcripts: engine.Transcripts(),
-			Notes:       engine.Notes(),
-			Reviews:     engine.Reviews(),
-			Dials:       engine.DialWindows(),
-			AgentAudit:  engine.AgentAudit(),
+			Config:   cfg,
+			Sessions: do.MustInvoke[*session.SQLiteStore](i),
+			Messages: do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).ThreadsSvc(),
+			Faxes:    do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).FaxesSvc(), //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service's fax backend (SUPERB Phase 6)
+			// The Phase-4 seams answer from the journal's decisions
+			// (SUPERB): the journal is the one implementation behind their
+			// readmodels gate interfaces (the engine stores retired with
+			// the 2026-11-11 storage-ladder closeout).
+			Contacts:    do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).ContactsSvc(),
+			Snippets:    do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).SnippetsSvc(), //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service's snippet backend (SUPERB Phase 3)
+			Transcripts: do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).TranscriptsSvc(),
+			Notes:       do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).NotesSvc(),
+			Reviews:     do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).ReviewsSvc(),
+			// The dial gate answers from the journal's decisions since the
+			// SUPERB Phase 2 swap (the DialGate seam's one home is the
+			// journal backend; the engine store retired).
+			Dials: do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).Dials(),
+			// The agent-audit store answers from the journal since the
+			// SUPERB Phase 3 swap (the AgentAuditGate seam's one home is
+			// the journal backend; the engine store retired).
+			AgentAudit:  do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).AgentAuditSvc(),
 			Messaging:   do.MustInvoke[*messaging.Service](i),
 			Fax:         do.MustInvoke[*fax.Service](i),
 			PhoneAPI:    do.MustInvoke[*pbx.Client](i),
@@ -449,9 +501,18 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 			UserAuth:    auth,
 			SSO:         ssoClient,
 			Trace:       traceSeam(trace),
-			Dedup:       engineDedupWindow{store: engine.DedupStore()},
-			Push:        pushFanout,
-			PushDevices: engine.PushDevices(),
+			// The snapshot counter family rides the adapter: non-nil
+			// exactly when the recorder seam is on.
+			TraceMetrics: traceMetricsSeam(trace),
+			// The dedup window lives in system.db since A43 (sys.Dedup, the
+			// same CAS capability the fax replay guard rides): readmodels.db's
+			// window retired with the engine.
+			Dedup: engineDedupWindow{store: systemDedup(i)},
+			Push:  pushFanout,
+			// The device registry answers from the journal since the SUPERB
+			// Phase 3 swap (the PushDeviceGate seam's one home is the
+			// journal backend; the engine store retired).
+			PushDevices: do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).PushDevicesSvc(),
 			Admin:       adminService,
 		}), nil
 	})
@@ -467,17 +528,14 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	if _, err := do.InvokeNamed[*blob.Store](injector, "blob-dir"); err != nil {
 		return nil, wrapf("open blob store: %w", err)
 	}
-	if _, err := do.InvokeNamed[*readmodels.Engine](injector, "metaengine"); err != nil {
-		return nil, wrapf("open read-model engine: %w", err)
+	if _, err := do.InvokeNamed[*CqrsService](injector, cqrsProviderName); err != nil {
+		return nil, wrapf("open cqrs system: %w", err)
 	}
-	// The four legacy imports share one (sqlite, engine) resolution —
-	// named once, eagerly, per the composition-root doctrine (AGENTS.md).
-	sqlite := do.MustInvokeNamed[*store.Database](injector, "sqlite")        //nolint:branching-flow // composition-root resolution (AGENTS.md): the eager named pair, resolved once for the legacy imports
-	engine := do.MustInvokeNamed[*readmodels.Engine](injector, "metaengine") //nolint:branching-flow // composition-root resolution (AGENTS.md): the eager named pair, resolved once for the legacy imports
-	importLegacyContacts(context.Background(), sqlite, engine, log)
-	importLegacySnippets(context.Background(), sqlite, engine, log)
-	importLegacyTranscripts(context.Background(), sqlite, engine, log)
-	importLegacyFaxes(context.Background(), sqlite, engine, log)
+	// The read-model engine and its one-time importers are GONE (A43):
+	// every seam answers from system.db, and readmodels.db stopped opening
+	// at boot. Upgrades ride the v2.10.0/v2.11.0 import trains first (the
+	// retirement plan doc names the boundary).
+
 	if cfg.Auth.Passkey.Enabled() {
 		if _, err := do.InvokeNamed[*userauth.Service](injector, "userauth"); err != nil {
 			return nil, wrapf("open passkey auth: %w", err)
@@ -499,7 +557,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	}
 
 	//nolint:branching-flow // MustInvoke in the composition root is doctrine (DO-1 fail-fast miswires); arch-test pins it to internal/app
-	return &App{injector: injector, cfg: cfg, log: log, Probe: probe, Trace: trace, Handler: handler, Hubs: do.MustInvoke[*server.ExtensionHubs](injector)}, nil
+	return &App{injector: injector, cfg: cfg, log: log, Probe: probe, Trace: trace, Handler: handler, Hubs: do.MustInvoke[*server.ExtensionHubs](injector), Push: pushFanout}, nil
 }
 
 // probeRefreshIf keeps the probe in live mode (interval 0, the exact
@@ -537,7 +595,7 @@ func PasskeyRuntime(p config.Passkey) userauth.PasskeyRuntime {
 		for _, raw := range user.Extensions {
 			ext, err := domain.ParseExtension(raw)
 			if err != nil {
-				panic(fmt.Sprintf("passkey mapping for %q holds unparseable extension %q after config validation: %v", email, raw, err))
+				panic(fmt.Sprintf("passkey mapping for %q holds unparseable extension %q after config validation: %v", email, raw, err)) //cqrs-lint:ignore(C009) post-validation impossible state: fail loudly at boot (DO-1)
 			}
 			extensions = append(extensions, ext)
 		}
@@ -572,7 +630,7 @@ func SSOConfig(a config.Auth) sso.Config {
 			ext, err := domain.ParseExtension(raw)
 			if err != nil {
 				//nolint:branching-flow // composition-root fail-fast (DO-1): config validation already rejects unparseable extensions, so reaching here is an unrepresentable miswire
-				panic(fmt.Sprintf("auth mapping for %q holds unparseable extension %q after config validation: %v", email, raw, err))
+				panic(fmt.Sprintf("auth mapping for %q holds unparseable extension %q after config validation: %v", email, raw, err)) //cqrs-lint:ignore(C009) post-validation impossible state: fail loudly at boot (DO-1)
 			}
 			extensions = append(extensions, ext)
 		}
@@ -617,7 +675,7 @@ func AdminService(cfg config.Config) (*admin.Service, error) {
 			ext, err := domain.ParseExtension(raw)
 			if err != nil {
 				//nolint:branching-flow // composition-root fail-fast (DO-1): config validation already rejects unparseable extensions, so reaching here is an unrepresentable miswire
-				panic(fmt.Sprintf("auth mapping for %q holds unparseable extension %q after config validation: %v", email, raw, err))
+				panic(fmt.Sprintf("auth mapping for %q holds unparseable extension %q after config validation: %v", email, raw, err)) //cqrs-lint:ignore(C009) post-validation impossible state: fail loudly at boot (DO-1)
 			}
 			extensions = append(extensions, ext)
 		}
@@ -658,14 +716,27 @@ func (a *App) Start(ctx context.Context) error {
 	if err != nil {
 		return wrapf("resolve blob store: %w", err)
 	}
-	// The dedup sweeper rides the same ctx bound as every background
-	// loop; a missing engine here is impossible (eager invoke in New).
-	engine, err := do.InvokeNamed[*readmodels.Engine](a.injector, "metaengine") //nolint:branching-flow // composition-root resolution (AGENTS.md): the named metaengine service
+	// The system's projection workers and timers start BEFORE the HTTP
+	// listener accepts traffic (contract §3), so the initial journal
+	// drain never races a request that expects a caught-up view.
+	cqrs, err := do.InvokeNamed[*CqrsService](a.injector, cqrsProviderName) //nolint:branching-flow // composition-root resolution (AGENTS.md): the named cqrs service
 	if err != nil {
-		return wrapf("resolve read-model engine: %w", err)
+		return wrapf("resolve cqrs system: %w", err)
 	}
-	retention.Start(ctx, db.SQL(), blobs, engine, time.Duration(a.cfg.RetentionDays)*24*time.Hour)
-	startDedupSweeper(ctx, a.log, engineDedupWindow{store: engine.DedupStore()})
+	if err := cqrs.Start(ctx); err != nil {
+		return wrapf("start cqrs system: %w", err)
+	}
+	// Arm the fanout's prune registry now that the push-devices store
+	// resolves (it rides the cqrs system): start order guarantees every
+	// later Fan sees an armed registry, and the adapter keeps the fanout
+	// dependency-light (domain types only).
+	if a.Push != nil {
+		a.Push.WithRegistry(pushRegistryAdapter{devices: cqrs.PushDevicesSvc()})
+	}
+	retention.Start(ctx, db.SQL(), blobs, retention.JournalSweepers{
+		Threads: cqrs.ThreadsSvc(), Faxes: cqrs.FaxesSvc(), Transcripts: cqrs.TranscriptsSvc(),
+	}, time.Duration(a.cfg.RetentionDays)*24*time.Hour)
+	startDedupSweeper(ctx, a.log, engineDedupWindow{store: systemDedup(a.injector)})
 	// The chat-network lanes wire here (config-gated; absent config wires
 	// nothing) and run under the same ctx bound: a lane exiting while the
 	// app lives is a loud Error, not silent intake death.

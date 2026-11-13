@@ -16,8 +16,7 @@ import {
   sendDtmf,
   teardownAll,
 } from "./calls.js";
-import { sipCredentialMode, sipDomain, websocketUrl } from "./config.js";
-import { showSSOError } from "./ssoerror.js";
+import { sipDomain } from "./config.js";
 import "./ice.js";
 import { applyI18n, getLang, setLang, t } from "./i18n.js";
 import {
@@ -25,13 +24,11 @@ import {
   clearContacts,
   refreshServerHistory,
   refreshVoicemail,
-  renderContacts,
   renderHistory,
 } from "./panels.js";
-import { requestNotifications, titleFlashStop } from "./notify.js";
+import { titleFlashStop } from "./notify.js";
 import {
   connectLiveUpdates,
-  createSession,
   destroySession,
   fetchLiveSession,
   initSseLiveIndicator,
@@ -55,12 +52,6 @@ import {
 import { initAudioOutput } from "./audioout.js";
 import { initDeviceCheck } from "./selftest.js";
 
-const REMEMBER_KEY = "pbx-extension";
-
-if (localStorage.getItem(REMEMBER_KEY)) {
-  els.ext.value = localStorage.getItem(REMEMBER_KEY) || "";
-  els.remember.checked = true;
-}
 renderHistory();
 
 if (els.lang) {
@@ -88,21 +79,19 @@ if (els.lang) {
 }
 applyI18n();
 
-// --- boot: resume a live cookie session before showing the login form ------
+// --- boot: resume a live cookie session ------------------------------------
 //
 // A returning browser holds a live server session (sliding idle window);
 // the resume probe hands its SIP credentials back and the island
-// re-registers silently. The form stays hidden during the probe so a
-// resumed load never flashes it; EVERY failure path restores it, so a
-// broken probe can never leave a dead page.
-function showLogin() {
-  els.loginView.hidden = false;
-}
+// re-registers silently. The server only renders the shell with a live
+// session (anonymous / redirects to /login), so a probe that finds
+// nothing either raced an expiry or hit a broken network answer — both
+// go back to the front door instead of a dead island.
 
 async function resumeSession() {
   const session = await fetchLiveSession();
   if (!session) {
-    showLogin();
+    window.location.replace("/login");
     return;
   }
   setRegStatus("status-offline", t("resuming"));
@@ -116,14 +105,15 @@ async function resumeSession() {
     if (registerWasRejected()) {
       // The row's credentials no longer register (the PBX password
       // changed since sign-in): the server session is stale — drop it
-      // quietly and put the reason where the user is looking.
+      // quietly and let the login page say why (its ?error= alert is
+      // the one surface; the English sentence is server copy there).
       await signOutQuiet();
-      els.loginError.textContent = t("resumeRejected")(errorMessage(err));
-      els.loginError.hidden = false;
-      showLogin();
       log(
         `resumed credentials rejected; server session dropped (${errorMessage(err)})`,
         "error",
+      );
+      window.location.replace(
+        `/login?error=${encodeURIComponent("Your saved sign-in was rejected by the phone system; sign in again.")}`,
       );
       return;
     }
@@ -141,9 +131,14 @@ async function resumeSession() {
   // The line switcher renders only for a multi-line mapped user (D1);
   // single-line and extension sessions render nothing.
   renderLineSwitcher(session);
-  els.loginView.hidden = true;
   els.phoneView.hidden = false;
   connectLiveUpdates();
+  // The notification-permission state line: the login page's submit
+  // requested the prompt under its own user gesture; the boot states
+  // the RESULT where the operator trail lives (#log, English).
+  if (typeof Notification !== "undefined") {
+    log(`notifications: ${Notification.permission}`);
+  }
   // The wp:session-opened listener appends the did and refreshes the
   // session-gated panels — the exact post-login wiring, reused. The
   // agent_mode* fields feed the shell's drafts pill (M13).
@@ -162,66 +157,15 @@ async function resumeSession() {
   );
 }
 
-// SSO callback failures land on the shell as ?sso_error=<code> (the
-// callback always redirects home, so the browser never sits on a raw
-// error page); ssoerror.js renders the localized sentence and strips
-// the parameter so a reload never re-shows a stale failure.
-showSSOError(t);
-els.loginView.hidden = true;
 resumeSession().catch((err) => {
   log(`session resume failed: ${errorMessage(err)}`, "error");
-  showLogin();
-});
-
-els.loginForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  els.loginError.hidden = true;
-  // Permission prompts need a user gesture; the login click is the
-  // natural one (a later denied state is shown in the log, not nagged).
-  requestNotifications();
-  try {
-    const extension = els.ext.value.trim();
-    if (sipCredentialMode) {
-      // Credential brokering: the session (and its derived REGISTER
-      // credential) comes FIRST — the directory password the user just
-      // typed stays in this closure and never reaches the SIP wire.
-      // Quiet: the inline login error is where the user is looking.
-      const credential = await createSession(extension, els.pass.value, {
-        quiet: true,
-      });
-      if (!credential) {
-        throw new Error(t("sessionFailed401"));
-      }
-      await connect(extension, credential);
-    } else {
-      await connect(extension, els.pass.value);
-      // The PBX accepted the REGISTER — these credentials are good. Hand
-      // them to the server so the tabs and the /phone-api proxy share
-      // the same login (see session.js).
-      createSession(extension, els.pass.value);
-    }
-    if (els.remember.checked) localStorage.setItem(REMEMBER_KEY, extension);
-    else localStorage.removeItem(REMEMBER_KEY);
-    els.whoami.textContent = `${extension}@${sipDomain}`;
-    els.loginView.hidden = true;
-    els.phoneView.hidden = false;
-    log(`connected via ${websocketUrl}`);
-    // Only the shared-contacts render runs here: it needs no server
-    // session. The session-gated panels (voicemail badge, server
-    // history) are refreshed by the wp:session-opened listener — firing
-    // them at submit raced the session POST and 401'd on every login.
-    renderContacts();
-  } catch (err) {
-    els.loginError.textContent = t("loginError")(errorMessage(err));
-    els.loginError.hidden = false;
-    log(`connect failed: ${errorMessage(err)}`, "error");
-  }
+  window.location.replace("/login");
 });
 
 // The server completes the whoami line with the extension's presented
-// number when it knows one (config identities). The session POST runs
-// async on purpose, so the DID arrives after the synchronous
-// ext@sipDomain write above — append it once, on the event.
+// number when it knows one (config identities). Append it once, on the
+// event — a passkey/SSO/resumed session knows the did only after the
+// probe's answer lands.
 document.addEventListener("wp:session-opened", (event) => {
   /** @type {{did?: string}} */
   const detail = /** @type {CustomEvent} */ (event).detail || {};
@@ -266,7 +210,17 @@ function restoreTabsAfterSignIn() {
   });
 }
 
+// M21: logout with a live call is a two-click move — the first click
+// warns (the misclick must not hang up on the operator), the second
+// within the arm window confirms. An idle phone signs out on one click.
+let logoutArmedAt = 0;
 els.logout.addEventListener("click", async () => {
+  if (sessions.size > 0 && Date.now() - logoutArmedAt > 4000) {
+    logoutArmedAt = Date.now();
+    announce(t("logoutLiveCall"), "warn");
+    return;
+  }
+  logoutArmedAt = 0;
   try {
     [...sessions.values()].forEach(({ session }) => {
       // Logout tears the page down next: a failed bye has no surface
@@ -284,19 +238,43 @@ els.logout.addEventListener("click", async () => {
     clearContacts();
     setRegStatus("status-offline", t("offline"));
     els.phoneView.hidden = true;
-    els.loginView.hidden = false;
+    // destroySession reloads; the anonymous page then redirects to the
+    // login page (the server never renders the shell without a session).
   }
 });
 
+// The double-submit guard: two rapid Enters must not race two gate
+// consults into two INVITEs (the dial form has no disabled-button
+// protection while the gate round-trip is in flight — Enter submits
+// bypass button state). One pending dial at a time; the flag resets
+// when placeCall settles (dialed or not).
+let dialPending = false;
+
 els.dialForm.addEventListener("submit", async (event) => {
   event.preventDefault();
+  if (dialPending) return;
+  dialPending = true;
+  const submitButton = /** @type {HTMLButtonElement | null} */ (
+    els.dialForm.querySelector('button[type="submit"]')
+  );
+  if (submitButton) submitButton.disabled = true;
   els.dialError.hidden = true;
-  const dialed = await placeCall(els.dest.value.trim());
-  // Clear only on a real INVITE: a validation error keeps the typed
-  // text for editing, and a stale value must never append onto the
-  // next dial (the E2E concatenated two extensions exactly once too
-  // often).
-  if (dialed) els.dest.value = "";
+  // t0 of the dial_to_audio latency interval (the measure-first design):
+  // the submit IS the dial activation — the click or Enter that starts
+  // everything, gate consult included.
+  try {
+    const dialed = await placeCall(els.dest.value.trim(), {
+      latencyT0: Date.now(),
+    });
+    // Clear only on a real INVITE: a validation error keeps the typed
+    // text for editing, and a stale value must never append onto the
+    // next dial (the E2E concatenated two extensions exactly once too
+    // often).
+    if (dialed) els.dest.value = "";
+  } finally {
+    dialPending = false;
+    if (submitButton) submitButton.disabled = false;
+  }
 });
 
 els.vmRefresh.addEventListener("click", () => refreshVoicemail());

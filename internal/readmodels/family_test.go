@@ -1,13 +1,12 @@
 // Readmodels family pins (T07 swap, 2026-10-15): the contacts read
-// model owns the ErrListFull sentinel now — the wrap keeps its
-// errors.Is identity (the contacts_api 422 branch depends on it), and
-// the delete-missing Join stays ErrNotFound-matchable with the
-// Rejection family. The snippets swap (T09) homed ErrSnippetListFull
-// the same way; its pins ride the same shape.
+// model owns the ErrListFull sentinel — the wrap keeps its errors.Is
+// identity (the contacts_api 422 branch depends on it). The snippets
+// swap (T09) homed ErrSnippetListFull the same way. The live-engine
+// delete-miss pins retired with the engine stores (2026-11-11 train C:
+// the cqrs backend's own delete tests carry the contract).
 package readmodels_test
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"testing"
@@ -16,7 +15,6 @@ import (
 	errorfamilytest "github.com/larsartmann/go-error-family/errorfamilytest"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/readmodels"
-	"github.com/larsartmann/webphone/internal/store"
 )
 
 func TestErrListFullClassifiesRejection(t *testing.T) {
@@ -46,24 +44,4 @@ func TestListCapWrapKeepsIdentityAndFamily(t *testing.T) {
 		t.Fatal("identity must survive service wraps")
 	}
 	errorfamilytest.AssertFamily(t, wrapped, errorfamily.Rejection)
-}
-
-func TestDeleteMissingJoinsStayNotFound(t *testing.T) {
-	engine, err := readmodels.Open(t.TempDir())
-	if err != nil {
-		t.Fatal(err)
-	}
-	t.Cleanup(func() { _ = engine.Shutdown() })
-
-	err = engine.Contacts().Delete(context.Background(), domain.MustParseExtension("1001"), domain.GenerateContactID())
-	if !errors.Is(err, store.ErrNotFound) {
-		t.Fatalf("delete of missing row: want ErrNotFound, got %v", err)
-	}
-	errorfamilytest.AssertFamily(t, err, errorfamily.Rejection)
-
-	err = engine.Snippets().Delete(context.Background(), domain.MustParseExtension("1001"), domain.GenerateSnippetID())
-	if !errors.Is(err, store.ErrNotFound) {
-		t.Fatalf("snippet delete of missing row: want ErrNotFound, got %v", err)
-	}
-	errorfamilytest.AssertFamily(t, err, errorfamily.Rejection)
 }

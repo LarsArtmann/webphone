@@ -1,0 +1,194 @@
+package domain
+
+import "time"
+
+// Thread-stream facts (SUPERB Phase 5): the journal payloads for the
+// threads/messages/attachments core. Every field is a PRIMITIVE mirror —
+// Address and the branded id types carry unexported/branded state the
+// journal codec cannot round-trip, so the facts carry exactly what the
+// folds need and the gates re-parse through the Must* doors (the journal
+// is trusted: only parsed domain values are ever appended).
+
+// Row-key types: the projection collections' key shapes, carried by the
+// facts whose folds are keyed removes (the ContactKey pattern — type
+// matching resolves the key unambiguously).
+type ThreadRowKey struct{ ThreadID string }
+
+type MessageRowKey struct{ MessageID string }
+
+type AttachmentRowKey struct{ ID string }
+
+// ThreadSummaryImage is the thread row's full image as the list renders
+// it. The DECISION computes it (it owns the aggregate state) and the
+// facts carry it whole, so every threads-collection fold is a full-image
+// insert — no prev-aware update, no partial-patch ambiguity, replay
+// exact.
+type ThreadSummaryImage struct {
+	ThreadID       string
+	Owner          string
+	Network        string
+	Remote         string
+	LastActivity   int64 // unix nanos
+	Unread         int
+	Pinned         bool
+	Archived       bool
+	Muted          bool
+	LastBody       string
+	LastDirection  string
+	LastChannel    string
+	LastAttachment bool
+}
+
+// AttachmentFact is one MMS attachment inside a MessageAppended fact.
+type AttachmentFact struct {
+	ID        string
+	MessageID string
+	Name      string
+	MimeType  string
+	SizeBytes int64
+	Path      string
+}
+
+// MessageAppended is the ONE append fact: a first message on an empty
+// stream is thread creation (the fold adopts the fact's thread identity
+// exactly as the legacy AppendToThread upsert did), every later message
+// advances the thread. Attachments ride inside — one event, three
+// projection folds.
+type MessageAppended struct {
+	Key           ThreadRowKey
+	Summary       ThreadSummaryImage
+	MessageID     string
+	ThreadID      string
+	Owner         string
+	Network       string
+	Remote        string
+	Direction     string
+	Channel       string
+	Body          string
+	Status        string
+	ProviderRef   string
+	FailureKind   string
+	FailureDetail string
+	Attachments   []AttachmentFact
+	CreatedAt     time.Time
+}
+
+// OutboundAdvanced records the delivery machine's OUTCOME for one
+// outbound message (legality was deliveryMoves' call at the decision; the
+// fact carries the advanced slice so replay never re-judges it).
+type OutboundAdvanced struct {
+	Key           MessageRowKey
+	MessageID     string
+	Status        string
+	ProviderRef   string
+	FailureKind   string
+	FailureDetail string
+}
+
+// ThreadFlagSet sets or clears one organization axis (pinned |
+// archived | muted) to the DESIRED state.
+type ThreadFlagSet struct {
+	Key      ThreadRowKey
+	Summary  ThreadSummaryImage
+	Owner    string
+	ThreadID string
+	Flag     string
+	On       bool
+}
+
+// ThreadUnreadCleared zeroes the unread counter.
+type ThreadUnreadCleared struct {
+	Key      ThreadRowKey
+	Summary  ThreadSummaryImage
+	Owner    string
+	ThreadID string
+}
+
+// ThreadDeleted is the retention/owner tombstone: the decision gathered
+// every id the stream ever carried, so each projection fold is a pure
+// keyed Remove and replay is exact. Reason is "retention" or "owner".
+// The json tags pin the journal's wire keys to today's Go field names —
+// byte-neutral now, rename-safe later.
+type ThreadDeleted struct {
+	Key           ThreadRowKey `json:"Key"`
+	Owner         string       `json:"Owner"`
+	ThreadID      string       `json:"ThreadID"`
+	Network       string       `json:"Network"`
+	Remote        string       `json:"Remote"`
+	MessageIDs    []string     `json:"MessageIDs"`
+	AttachmentIDs []string     `json:"AttachmentIDs"`
+	Reason        string       `json:"Reason"`
+}
+
+// DeliveryStep is the wire form of a DeliveryEvent (the command payload):
+// DeliveryEvent's fields are deliberately unexported — the constructors
+// are the door — so the command seam carries the step and the decider
+// rebuilds the event through the same constructors. Kind is "accepted" |
+// "refused" | "verdict".
+type DeliveryStep struct {
+	Kind    string
+	Ref     string
+	Failure FailureKind
+	Detail  string
+	Verdict Verdict
+}
+
+// DeliveryStepKind constants (stringly on purpose: the step is wire data,
+// not a domain closure).
+const (
+	DeliveryStepAccepted = "accepted"
+	DeliveryStepRefused  = "refused"
+	DeliveryStepVerdict  = "verdict"
+)
+
+// Step renders the event as its wire form.
+func (e DeliveryEvent) Step() DeliveryStep {
+	switch e.kind {
+	case eventSendAccepted:
+		return DeliveryStep{Kind: DeliveryStepAccepted, Ref: e.ref}
+	case eventSendRefused:
+		return DeliveryStep{Kind: DeliveryStepRefused, Failure: e.failure, Detail: e.detail}
+	default:
+		return DeliveryStep{Kind: DeliveryStepVerdict, Verdict: e.verdict, Detail: e.detail}
+	}
+}
+
+// Event rebuilds the DeliveryEvent from its wire form (the same
+// constructors the send lane uses — no second legality door).
+func (s DeliveryStep) Event() DeliveryEvent {
+	switch s.Kind {
+	case DeliveryStepAccepted:
+		return SendAccepted(s.Ref)
+	case DeliveryStepRefused:
+		return SendRefused(s.Failure, s.Detail)
+	default:
+		return ProviderVerdict(s.Verdict, s.Detail)
+	}
+}
+
+// MessageRemoved is one keyed row removal of the transcript projection
+// (the delete batch's per-message fact — a fold Remove is keyed, so a
+// thread-wide clear is a batch of these, journal-replayable).
+type MessageRemoved struct {
+	Key       MessageRowKey
+	MessageID string
+}
+
+// AttachmentStored is one attachment row's own fact (an MMS appends one
+// MessageAppended plus one AttachmentStored per attachment — map folds
+// are one row per event, so the attachment collection gets its own).
+type AttachmentStored struct {
+	ID        string
+	MessageID string
+	Owner     string
+	Name      string
+	MimeType  string
+	SizeBytes int64
+	Path      string
+}
+
+// AttachmentRemoved is the attachment projection's keyed removal twin.
+type AttachmentRemoved struct {
+	Key AttachmentRowKey
+	ID  string
+}

@@ -96,6 +96,16 @@ type Config struct {
 	// client over a local signal-cli daemon unix socket. Zero value =
 	// disabled.
 	Signal Signal `json:"signal" koanf:"signal"`
+	// Metrics carries the OPTIONAL island latency-beacon intake (the
+	// measure-first latency design,
+	// docs/planning/2026-11-08_latency-measure-first-design.md): while
+	// IslandBeacon is on, POST /api/metrics/latency accepts the island's
+	// fire-and-forget latency beacons and folds them into the
+	// webphone_island_latency_seconds{interval,leg} histograms on
+	// /metrics. Zero value = disabled: the route answers a terse 404,
+	// /config.js carries no metrics key, and the product stays
+	// byte-identical.
+	Metrics Metrics `json:"metrics" koanf:"metrics"`
 	// Push is the OPTIONAL push seam behind ring-while-closed: the
 	// registered-device registry rides readmodels unconditionally, but
 	// no transport is configured with a zero value — the device API
@@ -106,6 +116,10 @@ type Config struct {
 	// every SIP invite. Zero Cooldown = off: no route, no island ask,
 	// byte-identical product.
 	Dial Dial `json:"dial" koanf:"dial"`
+	// Reports carries the Reports tab's feedback knob (issue #12): the
+	// optional weekly talk-time budget its one bar measures against.
+	// Zero = no budget, no bar — the tab still reports talk time.
+	Reports Reports `json:"reports" koanf:"reports"`
 	// RetentionDays bounds how long stored content lives: 0 (default)
 	// keeps everything forever; a positive value makes the daily sweep
 	// delete messages (with attachments), fax jobs (with documents) and
@@ -361,17 +375,40 @@ type CRM struct {
 	// the UI behind the reverse proxy), so deriving one from the other
 	// would mint links nobody can open.
 	ContactURL string `json:"contact_url,omitempty" koanf:"contact_url"`
+	// CreateURL is the OPTIONAL deep-link template into the CRM's
+	// NEW-CONTACT form, with {phone} standing for the caller's dialable
+	// number (e.g. "https://crm.example/contacts/new?phone={phone}").
+	// Empty means unknown callers render no affordance, which is the
+	// zero-config product. It needs a configured CRM and must carry
+	// {phone} — the same fail-closed shape as contact_url, one placeholder
+	// over. The link is a CONVENIENCE into the CRM's own form: the phone
+	// still stores nothing in the CRM and the browser talks to the CRM UI
+	// only by the operator's own navigation (the data-mesh doctrine).
+	CreateURL string `json:"create_url,omitempty" koanf:"create_url"`
+	// CAFile is the OPTIONAL PEM bundle that vouches for the CRM vhost's
+	// TLS chain. It exists because a private-CA CRM (the normal
+	// deployment: a *.cloud vhost the PBX host does not trust) would
+	// otherwise force host-wide trust — security.pki on the host, or
+	// SSL_CERT_FILE in the process — vouching for every TLS connection
+	// the machine makes. One file, one client: the trust boundary stays
+	// as narrow as the need (issue #9). Empty = the system trust store.
+	CAFile string `json:"ca_file,omitempty" koanf:"ca_file"`
 }
 
 // Paperless configures the optional Paperless-ngx archive for inbound
 // faxes. Both fields must be set together, exactly like the CRM seam —
 // half a configuration would mint a client that cannot authenticate (or
 // one with nowhere to go), and config validation fails closed on that.
+// TokenFile is the systemd-credential form of Token (at-most-one-of:
+// Load resolves it before validation, the same way the CRM seam's
+// credential form works), so the bearer never has to sit in the
+// world-readable config JSON.
 // branching-flow DUPLICATE_TYPE (baselined): independent seam twin of
 // CRM by owner ruling 2026-10-11 (see CRM).
 type Paperless struct {
-	URL   string `json:"url" koanf:"url"`
-	Token string `json:"token" koanf:"token"`
+	URL       string `json:"url" koanf:"url"`
+	Token     string `json:"token" koanf:"token"`
+	TokenFile string `json:"token_file,omitempty" koanf:"token_file"`
 }
 
 // Enabled is the both-or-neither rule as a fact the UI can state: the
@@ -494,6 +531,21 @@ type Signal struct {
 // Enabled reports whether the signal lane is configured.
 func (s Signal) Enabled() bool { return s.SocketPath != "" }
 
+// Metrics configures the OPTIONAL island latency observability seam
+// (the measure-first latency design). Zero value = disabled: no beacon
+// route, no island latency histograms, byte-identical product.
+type Metrics struct {
+	// IslandBeacon enables POST /api/metrics/latency (env
+	// WEBPHONE_METRICS__ISLAND_BEACON or config metrics.island_beacon):
+	// the island's fire-and-forget beacons fold into the
+	// webphone_island_latency_seconds{interval,leg} histograms. The
+	// endpoint is instrumentation, not a control surface: a failed or
+	// malformed beacon is dropped SILENTLY (alerting on the instrument
+	// would be the alarm-cries-wolf class), so there is no error
+	// contract to configure.
+	IslandBeacon bool `json:"island_beacon" koanf:"island_beacon"`
+}
+
 // Enabled reports whether an ASR provider is configured. The openai
 // wire enables on URL alone; the google wire on a project id.
 // Validation rejects half-configurations before this matters.
@@ -586,6 +638,13 @@ var errSIPSecretBothSources error = errorfamily.NewRejection("config.sip.credent
 // Classified Rejection: the operator must fix
 // the deployment's config before the service can start.
 var errCRMTokenBothSources error = errorfamily.NewRejection("config.crm.token_sources", "crm: set at most one of token / token_file")
+
+// errPaperlessTokenBothSources: exactly-one-of paperless.token /
+// paperless.token_file — the same one-fact-one-source drift argument as
+// the gateway, SIP and CRM pairs.
+// Classified Rejection: the operator must fix
+// the deployment's config before the service can start.
+var errPaperlessTokenBothSources error = errorfamily.NewRejection("config.paperless.token_sources", "paperless: set at most one of token / token_file")
 
 // TURNREST switches TURN authentication from static config passwords to
 // coturn's REST API (draft-uberti-behave-turn-rest): while the secret is
@@ -745,6 +804,28 @@ func Load() (Config, error) {
 			return Config{}, errorfamily.Newf(errorfamily.Rejection, "config.crm.token_file", "crm.token_file %s is empty", cfg.CRM.TokenFile)
 		}
 		cfg.CRM.Token = token
+	}
+
+	// paperless.token / paperless.token_file: the same at-most-one-of +
+	// resolve-before-validate pairing as the CRM block above. Without
+	// this read, a token_file-only deployment would fail the later
+	// both-or-neither validation with a misleading "token is set
+	// without" message and the credential form would be unusable.
+	if cfg.Paperless.TokenFile != "" && cfg.Paperless.Token != "" {
+		// Shape check BEFORE the file read: both sources set is a config
+		// drift bug regardless of whether the file is readable.
+		return Config{}, &ConfigInvalidError{err: errPaperlessTokenBothSources}
+	}
+	if cfg.Paperless.TokenFile != "" {
+		data, err := os.ReadFile(cfg.Paperless.TokenFile)
+		if err != nil {
+			return Config{}, errorfamily.WrapRejectionf(err, "config.paperless.token_file", "paperless.token_file %s", cfg.Paperless.TokenFile)
+		}
+		token := strings.TrimSpace(string(data))
+		if token == "" {
+			return Config{}, errorfamily.Newf(errorfamily.Rejection, "config.paperless.token_file", "paperless.token_file %s is empty", cfg.Paperless.TokenFile)
+		}
+		cfg.Paperless.Token = token
 	}
 
 	auth, err := resolvedAuth(cfg.Auth)
@@ -920,10 +1001,44 @@ func validate(cfg Config) error {
 	if err := validateCRMContactURL(cfg.CRM); err != nil {
 		return err
 	}
+	if err := validateCRMCreateURL(cfg.CRM); err != nil {
+		return err
+	}
+	if err := validateCRMCAFile(cfg.CRM); err != nil {
+		return err
+	}
 	if err := validateDial(cfg.Dial); err != nil {
 		return err
 	}
+	if err := validateReports(cfg.Reports); err != nil {
+		return err
+	}
 	return validatePush(cfg.Push)
+}
+
+// validateCRMCreateURL checks the optional new-contact form template: the
+// contact_url rules, one placeholder over — {phone} instead of {id}. A
+// template without {phone} would create a form pre-filled with nobody,
+// which is worse than no affordance at all.
+func validateCRMCreateURL(cfgCRM CRM) error {
+	if cfgCRM.CreateURL == "" {
+		return nil
+	}
+
+	if cfgCRM.URL == "" {
+		return errorfamily.NewRejection("config.crm.create_url", "crm.create_url is set without crm.url: a form for a CRM this deployment cannot query is a dead affordance")
+	}
+
+	if !strings.Contains(cfgCRM.CreateURL, "{phone}") {
+		return errorfamily.NewRejection("config.crm.create_url", "crm.create_url must contain the {phone} placeholder (e.g. https://crm.example/contacts/new?phone={phone}); without it every caller opens the same empty form")
+	}
+
+	u, err := url.Parse(strings.Replace(cfgCRM.CreateURL, "{phone}", "+4915112345678", 1))
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return errorfamily.Newf(errorfamily.Rejection, "config.crm.create_url", "crm.create_url %q is not an absolute http(s) URL template (e.g. https://crm.example/contacts/new?phone={phone})", cfgCRM.CreateURL)
+	}
+
+	return nil
 }
 
 // validateCRMContactURL checks the optional deep-link template: it needs a
@@ -946,6 +1061,25 @@ func validateCRMContactURL(cfgCRM CRM) error {
 	u, err := url.Parse(strings.Replace(cfgCRM.ContactURL, "{id}", "x", 1))
 	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
 		return errorfamily.Newf(errorfamily.Rejection, "config.crm.contact_url", "crm.contact_url %q is not an absolute http(s) URL template (e.g. https://crm.example/contacts/{id})", cfgCRM.ContactURL)
+	}
+
+	return nil
+}
+
+// validateCRMCAFile checks the optional private-CA bundle: a trust anchor
+// for a CRM this deployment cannot query would be a credential with
+// nowhere to go, the same argument as crm.contact_url. The bundle's
+// CONTENT is validated where it is used (crm.NewClient), because a
+// readable file that holds no certificate is a runtime fact, not a
+// config shape.
+func validateCRMCAFile(cfgCRM CRM) error {
+	if cfgCRM.CAFile == "" {
+		return nil
+	}
+
+	if cfgCRM.URL == "" {
+		return errorfamily.NewRejection("config.crm.ca_file",
+			"crm.ca_file is set without crm.url: a trust anchor for a CRM this deployment cannot query (set crm.url, or clear crm.ca_file)")
 	}
 
 	return nil
@@ -1013,6 +1147,28 @@ func validateDial(cfg Dial) error {
 	if cfg.Cooldown < 0 {
 		return errorfamily.NewRejection("config.dial.cooldown", "dial.cooldown is negative — set a positive duration (e.g. \"2m\") or remove the key")
 	}
+	return nil
+}
+
+// Reports configures the Reports tab's feedback (issue #12). It holds
+// no data of its own: the tab is a pure projection over the phone API's
+// CDR page, so the only thing a deployment can choose is the goal it
+// measures against.
+type Reports struct {
+	// WeeklyTalkBudget is the talk time the current week is allowed to
+	// spend, rendered as one bar under the week's headline. Zero (the
+	// default) renders no bar at all — a personal phone has no goal
+	// unless its owner sets one.
+	WeeklyTalkBudget time.Duration `json:"weekly_talk_budget" koanf:"weekly_talk_budget"`
+}
+
+// validateReports rejects a negative budget: a goal below zero cannot be
+// met by any week, which is a typo, not a tighter goal.
+func validateReports(cfg Reports) error {
+	if cfg.WeeklyTalkBudget < 0 {
+		return errorfamily.NewRejection("config.reports.weekly_talk_budget", "reports.weekly_talk_budget is negative — set a positive duration (e.g. \"10h\") or remove the key")
+	}
+
 	return nil
 }
 

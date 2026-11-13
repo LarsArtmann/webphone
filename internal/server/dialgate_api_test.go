@@ -1,13 +1,14 @@
 package server
 
 import (
-	"encoding/json"
+	"encoding/json/v2"
 	"net/http"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/larsartmann/webphone/internal/config"
+	cqrs "github.com/larsartmann/webphone/internal/cqrs"
 )
 
 // dialServer builds a server with the dial gate enabled for cooldown.
@@ -162,10 +163,10 @@ func TestDialGateBadInput(t *testing.T) {
 // honest 502 — the island dials anyway (the gate is advisory), but the
 // failure is visible, not swallowed into a fake allow.
 func TestDialGateStoreFailureIs502(t *testing.T) {
-	dead := newTestEngine(t)
-	closed := dead.DialWindows()
-	if err := dead.Shutdown(); err != nil {
-		t.Fatalf("close engine: %v", err)
+	deadSys := newCoreSystem(t)
+	closed := cqrs.NewDialWindows(deadSys)
+	if err := deadSys.Close(); err != nil {
+		t.Fatalf("close system: %v", err)
 	}
 	srv := dialServer(t, time.Hour, func(d *Deps) { d.Dials = closed })
 	c := clientFor(t, srv)
@@ -210,7 +211,7 @@ func TestDialGateSlotsListing(t *testing.T) {
 			t.Fatalf("seed dial %s: %d", remote, r.StatusCode)
 		}
 	}
-	resp, body = c.do(http.MethodGet, "/api/dials", nil, "")
+	_, body = c.do(http.MethodGet, "/api/dials", nil, "")
 	if err := json.Unmarshal(body, &got); err != nil {
 		t.Fatalf("decode listing: %v", err)
 	}
@@ -227,7 +228,7 @@ func TestDialGateSlotsListing(t *testing.T) {
 	// Owner scoping: another extension sees none of these.
 	other := clientFor(t, srv)
 	other.login("2002", "pw")
-	resp, body = other.do(http.MethodGet, "/api/dials", nil, "")
+	_, body = other.do(http.MethodGet, "/api/dials", nil, "")
 	if err := json.Unmarshal(body, &got); err != nil {
 		t.Fatalf("decode other listing: %v", err)
 	}
@@ -243,10 +244,10 @@ func TestDialGateSlotsListing(t *testing.T) {
 	}
 
 	// A dead store is the honest 502.
-	dead := newTestEngine(t)
-	closed := dead.DialWindows()
-	if err := dead.Shutdown(); err != nil {
-		t.Fatalf("close engine: %v", err)
+	deadSys := newCoreSystem(t)
+	closed := cqrs.NewDialWindows(deadSys)
+	if err := deadSys.Close(); err != nil {
+		t.Fatalf("close system: %v", err)
 	}
 	deadSrv := dialServer(t, time.Hour, func(d *Deps) { d.Dials = closed })
 	deadClient := clientFor(t, deadSrv)

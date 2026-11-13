@@ -25,7 +25,7 @@ import datetime
 import difflib
 import json
 import re
-import subprocess
+import subprocess  # nosec B404 - local git runners only (the error-code router's registry/lesson probes)
 import sys
 from pathlib import Path
 
@@ -39,7 +39,7 @@ TESTFUNC_RE = re.compile(r"^func (Test\w+)")
 
 
 def run(argv, **kw):
-    return subprocess.run(argv, capture_output=True, text=True, **kw)
+    return subprocess.run(argv, check=False, capture_output=True, text=True, **kw)  # nosec B603 - argv built by callers from pinned constants, never shell
 
 
 def normalize_target(raw):

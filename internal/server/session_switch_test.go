@@ -9,7 +9,7 @@ package server
 import (
 	"bytes"
 	"context"
-	"encoding/json"
+	"encoding/json/v2"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -20,8 +20,8 @@ import (
 	"testing"
 
 	"github.com/larsartmann/webphone/internal/config"
+	"github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/userauth"
 )
@@ -44,11 +44,12 @@ func newSwitchIdentity(t *testing.T) *userauth.Service {
 		}
 		return file
 	}
-	engine, err := readmodels.Open(dir)
+	sys, err := cqrs.NewEnrollSystem(context.Background(), filepath.Join(dir, "system.db"))
 	if err != nil {
-		t.Fatalf("readmodels.Open: %v", err)
+		t.Fatalf("cqrs.NewEnrollSystem: %v", err)
 	}
-	t.Cleanup(func() { _ = engine.Shutdown() })
+	t.Cleanup(func() { _ = sys.GracefulClose(context.Background()) })
+	enroll := cqrs.NewEnrollTokens(sys)
 	svc, err := userauth.New(context.Background(), userauth.PasskeyRuntime{
 		RPID:          "localhost",
 		RPDisplayName: "WebPhone",
@@ -64,7 +65,7 @@ func newSwitchIdentity(t *testing.T) *userauth.Service {
 			"1001": fileFor("1001", switchTargetPassword),
 		},
 		WebAuthn: pkStub{},
-	}, dir, engine.EnrollTokens(), slog.Default())
+	}, dir, enroll, slog.Default())
 	if err != nil {
 		t.Fatalf("userauth.New: %v", err)
 	}

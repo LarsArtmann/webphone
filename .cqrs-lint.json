@@ -1,0 +1,36 @@
+// cqrs-lint project rulings (JSONC). The rules disabled here are
+// PERMANENT ARCHITECTURE decisions, not noise damping: each carries a
+// machine-readable reason that `cqrs-lint doctor` renders next to the
+// disabled rule. One-off per-site rulings live as inline
+// //cqrs-lint:ignore(RULE) directives at the finding's line instead.
+// Re-enabling any entry below requires revisiting the named ruling.
+{
+  "rules": {
+    "disable": [
+      "C044",
+      "B004",
+      "B010",
+      "B007",
+      "D005",
+      "E014",
+      "F003",
+      "F004",
+      "F005",
+      "F007",
+      "F028"
+    ],
+    "disable-reasons": {
+      "C044": "The prefixed .String() form IS the internal key form here, used SYMMETRICALLY: metaengine collection keys, journal payload strings and fold comparisons all write AND read via .String(), and the parse doors (domain mustID parsers) accept both forms. No mixed-form bug exists; moving keys to bare .Get() values is a versioned data migration (stored collection keys AND historical journal bytes change shape) — priced as a dedicated train, not a lint cleanup. Reopen only via that migration train.",
+      "B004": "cqrs-gen codegen declined: commands are hand-curated structs wired through system.RegisterCommand closures, reviewed like every other seam. No external Go consumers exist (single go.mod, ratified); a codegen step adds toolchain tax for zero gain — the same posture as the rejected cqrs-htmx setup bundle.",
+      "B010": "Same cqrs-gen decline as B004: the catalog.Event registrations are hand-curated and reviewable.",
+      "B007": "Explicit handler registrations ARE the route table here: each line carries its own limiter bucket (composeLimiter/contactsTemplLimiter/stateTemplLimiter classes) and middleware. AGENTS.md buckets the lanes explicitly; a loop or variadic indirection would hide the per-lane cost the buckets doctrine depends on.",
+      "D005": "Detector misattribution: the rule takes the FIRST version-like token on any line mentioning go-cqrs-lite as the doc's version claim, so AGENTS.md lines naming sibling modules (metaengine v4.21.0 was the WithCapPerGroup release note; go.mod carries v4.23.0) false-positive. Evidence + repro drafted upstream (BuildFlow docs/drafts/cqrs-lint-d005-first-token-misattribution.md). Re-enable when the token-attachment fix ships.",
+      "E014": "Read-your-writes is owned by the D7 awaitOwnWrite worker checkpoint (250ms budget) — AGENTS.md owns that ruling; this detector cannot see the projectionhost seam it wraps. Revisit only if awaitOwnWrite is ever retired.",
+      "F003": "OpenTelemetry declined by the go-appkit deep-dive ruling (docs/research/2026-10-23_go-appkit-deep-dive.html): this single-binary deployment does not operate distributed tracing.",
+      "F004": "Prometheus metrics exist via httputil.Metrics (/metrics latency histograms + status_class counters, AGENTS.md § Latency metrics). The rule looks for the cqrsprometheus.Setup module specifically and cannot see them.",
+      "F005": "Every event is stamped schema v1 (the WithSchemaVersion train, 2026-11-10); an upcaster registry is born with the FIRST v2 event, not before — registering one now would be an empty ritual. Re-enable at the first real schema change.",
+      "F007": "Command idempotency lives at the store level: sys.Dedup is the ONE CAS home (callsIdem/hooksIdem/fax replay guard, 1h TTLs, successes only). Dispatcher-level idempotency middleware would duplicate that capability.",
+      "F028": "Logging is injected: slog loggers are threaded through handlers and Deps; slog.SetDefault is deliberately never used."
+    }
+  }
+}

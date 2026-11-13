@@ -18,12 +18,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/larsartmann/cqrs-htmx/usermgmt/v4"
+	identitymodel "github.com/larsartmann/cqrs-htmx/identity-model/v4"
 	errorfamily "github.com/larsartmann/go-error-family"
 	errorfamilytest "github.com/larsartmann/go-error-family/errorfamilytest"
 
+	"github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/userauth"
 )
 
@@ -61,7 +61,7 @@ const (
 // (lars/1000) and a password file holding a fixed secret; returns the
 // service, its enrollment-token store (for seeding rows), the data dir
 // and the password file path.
-func newService(t *testing.T) (*userauth.Service, *readmodels.EnrollTokens, string, string) {
+func newService(t *testing.T) (*userauth.Service, *cqrs.EnrollTokens, string, string) {
 	t.Helper()
 	dir := t.TempDir()
 	passFile := filepath.Join(dir, "ext1000")
@@ -72,11 +72,12 @@ func newService(t *testing.T) (*userauth.Service, *readmodels.EnrollTokens, stri
 	if err != nil {
 		t.Fatal(err)
 	}
-	engine, err := readmodels.Open(dir)
+	sys, err := cqrs.NewEnrollSystem(context.Background(), filepath.Join(dir, "system.db"))
 	if err != nil {
-		t.Fatalf("readmodels.Open: %v", err)
+		t.Fatalf("cqrs.NewEnrollSystem: %v", err)
 	}
-	t.Cleanup(func() { _ = engine.Shutdown() })
+	t.Cleanup(func() { _ = sys.GracefulClose(context.Background()) })
+	enroll := cqrs.NewEnrollTokens(sys)
 	svc, err := userauth.New(context.Background(), userauth.PasskeyRuntime{
 		RPID:          "pbx.example.org",
 		RPDisplayName: "WebPhone",
@@ -86,12 +87,12 @@ func newService(t *testing.T) (*userauth.Service, *readmodels.EnrollTokens, stri
 		},
 		ExtensionPasswordFiles: map[string]string{ext1000: passFile},
 		WebAuthn:               stubWebAuthn{},
-	}, dir, engine.EnrollTokens(), slog.Default())
+	}, dir, enroll, slog.Default())
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
 	t.Cleanup(func() { _ = svc.Shutdown() })
-	return svc, engine.EnrollTokens(), dir, passFile
+	return svc, enroll, dir, passFile
 }
 
 func TestRegisterIsIdempotent(t *testing.T) {
@@ -200,7 +201,7 @@ func finishLoginFor(t *testing.T, svc *userauth.Service, email string) (userauth
 		return userauth.MappedUser{}, err
 	}
 	r := httptest.NewRequest(http.MethodPost, "/finish?user_id="+begun.SessionKey, strings.NewReader(`{}`))
-	return svc.FinishLogin(ctx, usermgmt.MustParseUserID(begun.SessionKey), r)
+	return svc.FinishLogin(ctx, identitymodel.MustParseUserID(begun.SessionKey), r)
 }
 
 func TestRegistrationAndLoginCeremoniesResolveMapping(t *testing.T) {
@@ -224,7 +225,7 @@ func TestRegistrationAndLoginCeremoniesResolveMapping(t *testing.T) {
 		t.Fatal("begin registration lost the session key")
 	}
 	r := httptest.NewRequest(http.MethodPost, "/enroll/finish?user_id="+begun.SessionKey, strings.NewReader(`{}`))
-	if err := svc.FinishRegistration(ctx, usermgmt.MustParseUserID(begun.SessionKey), r, "laptop"); err != nil {
+	if err := svc.FinishRegistration(ctx, identitymodel.MustParseUserID(begun.SessionKey), r, "laptop"); err != nil {
 		t.Fatalf("finish registration: %v", err)
 	}
 
@@ -260,7 +261,7 @@ func TestSecondLoginWithNonAdvancingCounterIsRejected(t *testing.T) {
 		t.Fatalf("begin registration: %v", err)
 	}
 	r := httptest.NewRequest(http.MethodPost, "/enroll/finish?user_id="+begun.SessionKey, strings.NewReader(`{}`))
-	if err := svc.FinishRegistration(ctx, usermgmt.MustParseUserID(begun.SessionKey), r, "laptop"); err != nil {
+	if err := svc.FinishRegistration(ctx, identitymodel.MustParseUserID(begun.SessionKey), r, "laptop"); err != nil {
 		t.Fatalf("finish registration: %v", err)
 	}
 
@@ -290,7 +291,7 @@ func TestFinishLoginUnmappedAccountFailsClosed(t *testing.T) {
 		t.Fatal(err)
 	}
 	r := httptest.NewRequest(http.MethodPost, "/finish?user_id="+begun.SessionKey, strings.NewReader(`{}`))
-	if err := svc.FinishRegistration(ctx, usermgmt.MustParseUserID(begun.SessionKey), r, "device"); err != nil {
+	if err := svc.FinishRegistration(ctx, identitymodel.MustParseUserID(begun.SessionKey), r, "device"); err != nil {
 		t.Fatal(err)
 	}
 	// The stub provider approves the ceremony; the MAPPING is the gate.

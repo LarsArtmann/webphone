@@ -11,12 +11,14 @@ import (
 	"encoding/json/v2"
 	"encoding/pem"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync/atomic"
 	"testing"
 
 	"github.com/larsartmann/go-error-family"
@@ -226,5 +228,61 @@ func TestFcmSenderDisabledWhenUnconfigured(t *testing.T) {
 	}
 	if sender.Enabled() {
 		t.Fatal("empty credentials path must disable the sender")
+	}
+}
+
+// TestFcmSendInvalidatesTheCachedTokenOnRejection (T18 F51): an
+// access token the send endpoint refuses (401/403) must not be
+// replayed until its nominal expiry — the cache drops it and the next
+// send mints a fresh grant.
+func TestFcmSendInvalidatesTheCachedTokenOnRejection(t *testing.T) {
+	var grants atomic.Int32
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		n := grants.Add(1)
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = fmt.Fprintf(w, `{"access_token":"grant-%d","expires_in":3600}`, n)
+	}))
+	defer tokenServer.Close()
+
+	var firstSend atomic.Bool
+	sendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Authorization") == "Bearer grant-1" {
+			firstSend.Store(true)
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer sendServer.Close()
+
+	credentialsPath, _ := writeTestCredentials(t, tokenServer.URL)
+	sender, err := NewFcmSender(credentialsPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sender.sendURL = sendServer.URL
+
+	if err := sender.Send(context.Background(), "dev1", Ring{Event: EventRing}); !errors.Is(err, ErrUnauthorized) {
+		t.Fatalf("first send = %v, want ErrUnauthorized", err)
+	}
+	if !firstSend.Load() {
+		t.Fatal("the first send must have carried the minted grant-1 token")
+	}
+	if err := sender.Send(context.Background(), "dev1", Ring{Event: EventRing}); err != nil {
+		t.Fatalf("send after invalidation = %v, want nil", err)
+	}
+	if got := grants.Load(); got != 2 {
+		t.Fatalf("grant count = %d, want 2 (the poisoned grant must not be reused)", got)
+	}
+
+	// Control: two healthy sends share one grant.
+	if err := sender.Send(context.Background(), "dev1", Ring{Event: EventRing}); err != nil {
+		t.Fatal(err)
+	}
+	if err := sender.Send(context.Background(), "dev1", Ring{Event: EventRing}); err != nil {
+		t.Fatal(err)
+	}
+	if got := grants.Load(); got != 2 {
+		t.Fatalf("grant count after healthy sends = %d, want 2 (the cache must serve)", got)
 	}
 }

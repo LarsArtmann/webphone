@@ -25,6 +25,7 @@
       backupCases = import ./module-check-backup.nix { inherit lib pkgs base; };
       oauth2Cases = import ./module-check-oauth2.nix { inherit lib pkgs base; };
       crmCases = import ./module-check-crm.nix { inherit lib pkgs base; };
+      secretCases = import ./module-check-secrets.nix { inherit lib pkgs base; };
 
       # Every streaming-critical directive the DOM/SSE contract rides
       # on must be present in the generated extraConfig: the
@@ -171,6 +172,24 @@
           );
         }
         {
+          # debug.flightrecorder.enable must set the env gate the
+          # recorder construction reads (the opt-in tracer's declared
+          # module surface).
+          name = "flightrecorder-env";
+          path = pkgs.writeText "flightrecorder-env" (
+            let
+              traceEvaluated = lib.evalModules (moduleSet {
+                debug.flightrecorder.enable = true;
+              });
+              traceUnit = traceEvaluated.config.systemd.services.webphone.environment;
+            in
+            if traceUnit ? WEBPHONE_DEBUG_FLIGHTRECORDER && traceUnit.WEBPHONE_DEBUG_FLIGHTRECORDER == "1" then
+              "flightrecorder env gate rendered"
+            else
+              throw "webphone-module check: debug.flightrecorder.enable did not set WEBPHONE_DEBUG_FLIGHTRECORDER"
+          );
+        }
+        {
           name = "hsts-opt-in";
           path = pkgs.writeText "hsts-opt-in" (
             let
@@ -183,6 +202,37 @@
               "hsts header present when enabled"
             else
               throw "webphone-module check: caddy.hsts.enable did not produce an HSTS vhost header"
+          );
+        }
+        {
+          # Metrics fencing: a non-loopback listen with the vhost off
+          # must WARN naming the monitoring surfaces; the loopback
+          # default stays silent, and the same address with caddy on
+          # stays silent too (the vhost is the fence).
+          name = "metrics-fencing";
+          path = pkgs.writeText "metrics-fencing" (
+            let
+              exposed =
+                (lib.evalModules (moduleSet {
+                  caddy.enable = false;
+                  settings.addr = "0.0.0.0:8080";
+                })).config.warnings;
+              loopbackSilent = (lib.evalModules (moduleSet { })).config.warnings;
+              caddiedSilent =
+                (lib.evalModules (moduleSet {
+                  caddy.enable = true;
+                  settings.addr = "0.0.0.0:8080";
+                })).config.warnings;
+            in
+            if
+              lib.length exposed == 1
+              && lib.hasInfix "/metrics" (lib.head exposed)
+              && loopbackSilent == [ ]
+              && caddiedSilent == [ ]
+            then
+              "non-loopback listen warns; loopback default and caddied shapes stay silent"
+            else
+              throw "webphone-module check: metrics fencing mis-fires (exposed=${toString (lib.length exposed)}, loopback=${toString (lib.length loopbackSilent)}, caddied=${toString (lib.length caddiedSilent)})"
           );
         }
         {
@@ -204,7 +254,7 @@
     in
     {
       checks.webphone-module = pkgs.linkFarm "webphone-module-check" (
-        coreCases ++ csrfCases ++ backupCases ++ oauth2Cases ++ crmCases
+        coreCases ++ csrfCases ++ backupCases ++ oauth2Cases ++ crmCases ++ secretCases
       );
     };
 }

@@ -181,16 +181,16 @@ func TestHistoryOutcomeFilterAndDayGroups(t *testing.T) {
 	// with the group count; the missed row carries the danger styling.
 	_, body = c.do(http.MethodGet, "/partials/history", nil, "")
 	page = string(body)
-	if got := strings.Count(page, "wp-day-head"); got != 2 {
+	if got := strings.Count(page, "wp-table-day-head"); got != 2 {
 		t.Errorf("two distinct days must render two day heads, got %d: %.600s", got, page)
 	}
-	head1 := strings.Index(page, "wp-day-head")
-	head2 := strings.Index(page[head1+1:], "wp-day-head") + head1 + 1
+	head1 := strings.Index(page, "wp-table-day-head")
+	head2 := strings.Index(page[head1+1:], "wp-table-day-head") + head1 + 1
 	if head1 >= head2 {
 		t.Errorf("day heads must render in record order")
 	}
-	if !strings.Contains(page, "wp-row-missed") || !strings.Contains(page, "✖") {
-		t.Errorf("the missed record must carry the missed row styling + glyph: %.600s", page)
+	if !strings.Contains(page, "wp-row-missed") || !strings.Contains(page, `aria-label="missed"`) {
+		t.Errorf("the missed record must carry the missed row styling + named chip: %.600s", page)
 	}
 
 	// E2: the filter form pushes its URL — filters are addressable.

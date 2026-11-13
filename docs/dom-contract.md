@@ -32,12 +32,6 @@ island sources verbatim — see AGENTS.md "The DOM + bundle contract".
 <!-- dom-contract:begin -->
 
 reg-status
-login-view
-login-form
-login-error
-ext
-pass
-remember
 phone-view
 offline-banner
 whoami-ext
@@ -89,18 +83,44 @@ that follow.
 
 <!-- dom-contract-conditional:begin -->
 
-sso-login
-sso-error
-
 <!-- dom-contract-conditional:end -->
+
+## The login page (a separate surface, every mode)
+
+The login page at `/login` is THE auth front door in every deployment
+mode (the island card carries no login form; an anonymous root
+navigation redirects there). It is hosted by the cqrs-htmx loginpage
+library — its `lp-*` ids are library-owned contract (presence checks
+only, pinned in login_page_test.go) — and carries webphone's own
+section (views.LoginPageExtra + /assets/login-page.js):
+
+<!-- login-page-contract:begin -->
+
+login-form
+ext
+pass
+remember
+login-error
+sso-login
+
+<!-- login-page-contract:end -->
+
+`sso-login` (the Pocket ID door, `/api/auth/oauth2/begin`) renders only
+when the OIDC seam is configured; the extension form renders in EVERY
+mode — bare when the passkey ceremony is off (the primary method),
+inside the "Use extension and password instead" disclosure when it is
+on (the break-glass lifeline). The old island-side ids (`login-view`,
+`passkey-login`, `sso-error`) are RETIRED with the card; the SSO
+failure line moved to the library page's `?error=` alert.
 
 ## Conditional ids (SSO lane)
 
 Rendered when the deployment configures the OIDC lane
-(`auth.oauth2.*`): `sso-login` (the Pocket ID front-door link) and
-`sso-error` (its failure line). The island's `ssoerror.js` writes into
-the latter, which is why the id is declared in its typed lookups even
-though the markup is conditional.
+(`auth.oauth2.*`): `sso-login` — the Pocket ID front-door button — now
+lives on the LOGIN PAGE (see the login-page block above), not on the
+island. The old island-side failure line (`sso-error`) is retired: the
+OIDC callback redirects a failure to `/login?sso_error=<code>`, which
+the login page translates into the library alert's text.
 
 ## Conditional ids (admin surface)
 
@@ -133,20 +153,15 @@ the owner-scoped lookup misses.
 
 ## Conditional ids (passkey mode)
 
-These ids render ONLY when the deployment enables the passkey
-(WebAuthn) login mode (`auth.passkey.*`); the always-on contract above
-stays complete without them, and the E2E must not assume them:
-
-- `passkey-login` — the `/login` front-door LINK on the island login
-  card (the cqrs-htmx `loginpage` library page owns the whole ceremony;
-  the card only navigates there — a plain anchor, works without
-  scripts)
-
-The passkey ceremony UI itself lives on the SEPARATE `/login` page
-(same gate), rendered by the library: `lp-login-form`, `lp-email`,
-`lp-login-btn`, `lp-error` (plus the `loginpage-config` JSON blob its
-embedded nonce'd script reads). That markup is library-owned contract —
-do not pin it beyond presence checks.
+The passkey ceremony UI lives on the `/login` page (the ONE front
+door), rendered by the cqrs-htmx loginpage library when the identity
+layer is wired: `lp-login-form`, `lp-email`, `lp-login-btn`, `lp-error`
+(plus the `loginpage-config` JSON blob its embedded nonce'd script
+reads). That markup is library-owned contract — do not pin it beyond
+presence checks. With the ceremony on the page, webphone's extension
+form renders inside the break-glass disclosure (see the login-page
+block above); the old island-card front-door link (`passkey-login`) is
+retired with the card.
 
 Settings passkey management (passkey mode on AND the signed-in
 extension has a mapped account) renders `wp-passkeys-head`,
@@ -159,9 +174,10 @@ on) renders `wp-agent-audit-head` and either `wp-agent-audit-empty`
 (no rows yet, seam on) or `wp-agent-audit-list` (the newest audit
 rows); absent markup means the seam is off with no recorded history.
 
-With the mode on, the extension login moves INSIDE a
-`details.passkey-breakglass` disclosure (summary: "Use extension and
-password instead") but keeps its own ids and behavior unchanged.
+With the mode on, the extension login renders on the LOGIN PAGE inside
+a `details` disclosure (summary: "Use extension and password instead")
+but keeps its own ids and behavior unchanged (see the login-page block
+above).
 
 The standalone `/enroll` page (same gate) carries `enroll-view`,
 `enroll-form`, `enroll-token`, `enroll-credential-name`,
@@ -187,6 +203,18 @@ above stays complete without them, and the E2E must not assume them:
   `value="reset"` submit returns to the configured mode)
 
 ## Notes
+
+### Served, not contracted: the palette disclosure (2026-11-07)
+
+`wp-palette-open` is served on every signed-in page but is NOT in the pinned
+block, because it is invisible to a pointer:fine desktop (app.css reveals it
+only on `pointer: coarse`). It is a DISCLOSURE, so it carries
+`aria-controls="wp-palette"` (the native `<dialog>` the shell builds on first
+open) and `aria-expanded`, which `shell.js` keeps in step with the dialog —
+`false` while closed, `true` while the palette covers the page. An E2E that
+clicks it should assume nothing about the attribute until it has opened the
+palette, and the dialog itself is JS-created, so it never appears in served
+bytes.
 
 ### Optional integration ids (served only when configured — 2026-10-29)
 
@@ -217,6 +245,42 @@ assume both:
 - The Settings fax row is UNCONDITIONAL (owner decision 2, 2026-10-30) and
   states both lanes in all deployments; its pill class
   (`wp-service-on`/`wp-service-off`) follows whether any lane is up.
+
+### Live-call context slot (served only with the CRM seam — 2026-11-06)
+
+- `wp-live-context` — the island aside's slot for the live call's CRM
+  context (issue #10). Rendered ONLY when the CRM integration is
+  configured; the shell fills it from `GET /partials/live-context?remote=…`
+  and empties it when the last call ends. Most answers are EMPTY: the seam
+  off, an unknown number, no published context or an unreachable CRM all
+  render nothing inside the slot, so the E2E must assert presence-OR-empty,
+  never content.
+- `.call-card[data-remote]` — the island's live call card publishes its
+  remote party as a data attribute; it is the ONE channel the shell reads to
+  decide which number to ask about (shell.js must work when island scripts
+  fail, so no island import).
+- `.wp-live-context-head`, `.wp-live-context .wp-crm-context` — the head
+  line naming the caller and the reused context strip inside the slot.
+
+### Reports tab ids (served per tab — 2026-11-06)
+
+The Reports tab (issue #12) is a pure fold of the call records the History
+tab lists, so its ids render only for `GET /reports` and
+`GET /partials/reports` — the E2E drives it by clicking the nav entry, never
+by assuming the nodes on another tab:
+
+- `reports-panel` — the tab's panel
+- `.wp-stat`, `.wp-stat-value`, `.wp-stat-label` — the six-cell totals grid
+  (calls, talk time, incoming, outgoing, answered, missed); `.wp-stat-alert`
+  marks a non-zero missed count, and a zero never carries it
+- `.wp-reports-row` — one ladder row (day, busiest hour, or top contact);
+  `.wp-reports-row-pair` marks the bar-less rows so they collapse to two
+  columns instead of leaving an empty track
+- `.wp-budget-meter` (+ `.wp-budget-over` when the week overspends) — the
+  optional weekly talk-time bar; present ONLY when
+  `reports.weekly_talk_budget` is configured
+- `.wp-reports-undated` — the honesty note naming records whose start could
+  not be parsed (they still count in the totals)
 
 ### Layout ids (served, but NOT required — 2026-10-29)
 
@@ -275,3 +339,42 @@ thread list fragment contains `wp-thread-row` and the transcript page
 contains `wp-bubble`. The templ-components v1.20.0 → v1.20.1 ride
 therefore does not disturb the fragment contract; this note records the
 coverage reasoning so future bumps can re-run the same probe.
+
+### Conditional nav region (F19, 2026-11-07)
+
+`#wp-nav` stays served on every full page (the post-login re-fetch and
+the language switch target it), but its LINKS are session-conditional:
+a signed-out page renders the region with zero `wp-nav-link` anchors —
+the desk's tab row is for sessions that can use it, and the signed-out
+main column (`wp-main-col wp-signed-out`) centers the welcome + login
+stack instead. Pinned by `TestServedPageHoldsTheDomContract` (anonymous
+page must be nav-free; the aria-current contract moved to the authed
+page) and the smoke's nav-partial check.
+
+### Train 2/3 structure classes (2026-11-12)
+
+Served classes from the History-table/Reports-grid/Contacts-grid restructure
+and the mobile Phone tab — documented, not pinned: the E2E may rely on them
+only behind capability checks.
+
+- `wp-table-wrap` (History) — the scroll-region wrapper (`role="region"`,
+  `tabindex="0"`) around the CDR `<table class="wp-table">`; day groups are
+  `<tbody>` sections headed by `th.wp-day-head` (the same class also styles
+  the transcript rows' flex heads — dual display context by design).
+  Narrow columns stack each row via `td[data-label]` + `::before content`.
+- `wp-reports-grid` (Reports) — the dashboard wrapper; at wide tab columns
+  the day/hour ladders sit side by side (`wp-reports-days`/`wp-reports-hours`
+  modifiers). `wp-reports-empty` marks the undated EmptyState so auto-flow
+  never splits it.
+- `wp-contacts-grid` (Contacts) — auto-fill fitted grid (two-up desktop,
+  one column narrow).
+- `wp-nav-phone` — the JS-created Phone VIEW-toggle button in the tab strip
+  (mobile only; `display: none` at desktop widths). NOT a route: it carries
+  `aria-pressed` (not `aria-current`), clears `wp-active` from `[data-tab]`
+  links when pressed, and is re-installed after every nav morph swap, so an
+  E2E must not assume a stable strip child count.
+- `wp-phone-focus` — on `<html>` while the dialer focus is live: the tab
+  content region hides (`#tab-content` + `#wp-tab-error`) and the island
+  is the one body column; the NAV STAYS VISIBLE — it is the only way
+  back, never hidden (the 2026-11-12 trap fix). Cleared by any real
+  tab click (the document-level cleanup listener) and on second Phone tap.

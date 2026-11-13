@@ -1,0 +1,325 @@
+package views
+
+import (
+	"cmp"
+	"fmt"
+	"slices"
+	"strconv"
+	"strings"
+	"time"
+
+	"github.com/larsartmann/templ-components/display"
+	"github.com/larsartmann/templ-components/icons"
+	"github.com/larsartmann/webphone/internal/reports"
+)
+
+// ReportsPanelProps carries the Reports tab's projection.
+//
+// The tab is a LOOK at records that already exist: no storage, no
+// configuration beyond the optional weekly budget, and no state of its
+// own. Everything it renders comes from the same CDR page the History
+// tab reads, folded by internal/reports, so the two tabs can never
+// disagree about the same calls.
+type ReportsPanelProps struct {
+	// Enabled reports whether the operator phone API is configured: off
+	// means there are no call records in this deployment and the panel
+	// says so instead of rendering zeros that look like a real week.
+	Enabled bool
+	// Error is the unreachable-phone-API banner copy (empty = fine).
+	Error string
+	// Report is the folded window.
+	Report reports.Report
+	// CRM names the top contacts (name + deep link); an unresolved
+	// number renders raw.
+	CRM  CRMContacts
+	Lang Lang
+}
+
+// TopContactRows is how many contacts the ladder lists: enough to see
+// where the time went, few enough to read at a glance. Exported because
+// the handler resolves CRM names for exactly these rows — asking the CRM
+// about contacts nobody sees would be a lookup storm for nothing.
+const TopContactRows = 5
+
+// busiestHourRows is how many hour buckets the ladder lists.
+const busiestHourRows = 4
+
+templ ReportsPanel(props ReportsPanelProps) {
+	<section class="wp-panel" id="reports-panel">
+		@panelHead(props.Lang, "tab.reports", "reports.subtitle")
+		@panelError(props.Error)
+		if !props.Enabled {
+			<p class="wp-empty">{ T(props.Lang, "reports.needsAPI.pre") }<code>phone_api_url</code>{ T(props.Lang, "reports.needsAPI.post") }</p>
+		} else if props.Error == "" && props.Report.Totals.Calls == 0 {
+			@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, "reports.empty"), Icon: icons.Clock})
+		} else if props.Error == "" {
+			// One home for the temporal guard (art-dupl: the note has ONE
+			// call site). Datable records render the week/day/hour ladders;
+			// an all-undated window (Calls > 0, no day bucket) would read
+			// as a fake quiet week, so it names the real cause and renders
+			// only the date-independent facts. The undated note renders
+			// unconditionally there (its temporal sections are absent) and
+			// only for surviving records otherwise.
+			{{ showTemporal := len(props.Report.Days) > 0 }}
+			// Train 2: the dashboard grid — the sections arrange into two
+			// columns at desktop width (the tab-column container decides),
+			// stack single-column below it.
+			<div class="wp-reports-grid">
+				if showTemporal {
+					@reportsWeek(props)
+				} else {
+					@display.EmptyState(display.EmptyStateProps{
+						Title:       T(props.Lang, "reports.undated.empty.title"),
+						Description: T(props.Lang, "reports.undated.empty.desc"),
+						Icon:        icons.Clock,
+						Class:       "wp-reports-empty",
+					})
+				}
+				@reportsTotals(props)
+				if showTemporal {
+					@reportsDays(props)
+					@reportsBusiestHours(props)
+				}
+				if !showTemporal || props.Report.Undated > 0 {
+					@reportsUndatedNote(props.Lang, props.Report.Undated)
+				}
+				@reportsTopContacts(props)
+			</div>
+		}
+	</section>
+}
+
+// reportsUndatedNote is the one home for the "N records resisted their
+// timestamp" line: the all-undated arm renders it unconditionally (its
+// temporal sections are absent), the normal arm only when some records are
+// undated. Same bytes from both arms by construction.
+templ reportsUndatedNote(lang Lang, undated int) {
+	<p class="wp-muted wp-reports-undated">
+		{ T(lang, "reports.undated") } { fmtInt(undated) }
+	</p>
+}
+
+// reportsWeek is the one-number-one-bar headline: how much this week has
+// spent, against the budget when the deployment configured one. It needs
+// at least one datable record — without that guard an all-undated window
+// would headline a week of zeros that looks like a quiet week.
+templ reportsWeek(props ReportsPanelProps) {
+	{{ week := props.Report.ThisWeek
+	   showWeek := !week.Start.IsZero() && len(props.Report.Days) > 0 }}
+	if showWeek {
+		<section class="wp-reports-week">
+			<h3 class="wp-reports-head">{ T(props.Lang, "reports.week") }</h3>
+			<p class="wp-reports-figure">
+				<span class="wp-reports-big">{ talkTimeLabel(week.Talk) }</span>
+				<span class="wp-muted">{ T(props.Lang, "reports.week.calls") } { fmtInt(week.Calls) }</span>
+			</p>
+			if week.Budget > 0 {
+				<label class="wp-budget">
+					<span class="wp-budget-label">
+						if week.OverBudget() {
+							{ T(props.Lang, "reports.week.over") }
+						} else {
+							{ T(props.Lang, "reports.week.budget") }
+						}
+						<span class="wp-muted">{ talkTimeLabel(week.Talk) } / { talkTimeLabel(week.Budget) }</span>
+					</span>
+					<meter
+						class={ "wp-budget-meter", templ.KV("wp-budget-over", week.OverBudget()) }
+						min="0"
+						max="1"
+						value={ fractionAttr(week.Fraction()) }
+						low="0.8"
+						high="1"
+						optimum="0"
+					></meter>
+				</label>
+			}
+		</section>
+	}
+}
+
+// reportsTotals is the window's arithmetic: direction and outcome are
+// two different questions, so they get two different rows. The no-answer
+// card renders only when the window held one — a zero would claim a
+// fact about nothing, and the alert tone stays reserved for inbound
+// misses (a call somebody placed and nobody took), not the ordinary
+// noise of an outbound that did not connect.
+templ reportsTotals(props ReportsPanelProps) {
+	{{ totals := props.Report.Totals }}
+	<section class="wp-reports-totals">
+		@reportsStat(fmtInt(totals.Calls), T(props.Lang, "reports.stat.calls"), false)
+		@reportsStat(talkTimeLabel(totals.Talk), T(props.Lang, "reports.stat.talk"), false)
+		@reportsStat(fmtInt(totals.Inbound), T(props.Lang, "reports.stat.inbound"), false)
+		@reportsStat(fmtInt(totals.Outbound), T(props.Lang, "reports.stat.outbound"), false)
+		@reportsStat(fmtInt(totals.Answered), T(props.Lang, "reports.stat.answered"), false)
+		@reportsStat(fmtInt(totals.Missed), T(props.Lang, "reports.stat.missed"), totals.Missed > 0)
+		if totals.NoAnswer > 0 {
+			@reportsStat(fmtInt(totals.NoAnswer), T(props.Lang, "reports.stat.noanswer"), false)
+		}
+	</section>
+	// The cause ranking under the NoAnswer card (E2): WHY the outbound
+	// calls never connected — the trunk's own vocabulary, not a
+	// translation. Renders whenever the fold saw a cause, which is
+	// exactly when the card above carries a count.
+	if len(props.Report.NoAnswerByCause) > 0 {
+		<p class="wp-muted wp-reports-causes">{ noAnswerCausesLine(props.Lang, props.Report.NoAnswerByCause) }</p>
+	}
+}
+
+// reportsStat is the totals grid's ONE home: a value over its localized
+// label, the alert tone reserved for counts the operator must not skim
+// past (missed calls).
+templ reportsStat(value, label string, alert bool) {
+	<div class={ "wp-stat", templ.KV("wp-stat-alert", alert) }>
+		<span class="wp-stat-value">{ value }</span>
+		<span class="wp-stat-label">{ label }</span>
+	</div>
+}
+
+// reportsDays is the per-day ladder, each day's talk time bar sized
+// against the window's own busiest day — a shape, not an absolute scale
+// nobody can calibrate. Guarded like the hours and contact ladders: a
+// heading above nothing reads as data, not absence.
+templ reportsDays(props ReportsPanelProps) {
+	{{ max := props.Report.MaxDayTalk() }}
+	if len(props.Report.Days) > 0 {
+		<section class="wp-reports-section wp-reports-days">
+			<h3 class="wp-reports-head">{ T(props.Lang, "reports.days") }</h3>
+			for _, day := range props.Report.Days {
+				<div class="wp-reports-row">
+					<span class="wp-reports-day">{ reportDayLabel(props.Lang, day.Date) }</span>
+					<span class="wp-muted wp-reports-day-meta">
+						{ fmtInt(day.Calls) } · { talkTimeLabel(day.Talk) }
+					</span>
+					<meter class="wp-bar" min="0" max={ fmtInt(dayScaleMax(max)) } value={ fmtInt(secondsOf(day.Talk)) }></meter>
+				</div>
+			}
+		</section>
+	}
+}
+
+// reportsBusiestHours answers "when does the phone ring": the hour
+// buckets that carried calls, busiest first.
+templ reportsBusiestHours(props ReportsPanelProps) {
+	{{ busy := props.Report.BusiestHours() }}
+	if len(busy) > 0 {
+		<section class="wp-reports-section wp-reports-hours">
+			<h3 class="wp-reports-head">{ T(props.Lang, "reports.hours") }</h3>
+			for i, hour := range busy {
+				if i < busiestHourRows {
+					<div class="wp-reports-row wp-reports-row-pair">
+						<span class="wp-reports-day">{ hourSpan(hour.Hour) }</span>
+						<span class="wp-muted wp-reports-day-meta">
+							{ fmtInt(hour.Calls) } · { talkTimeLabel(hour.Talk) }
+						</span>
+					</div>
+				}
+			}
+		</section>
+	}
+}
+
+// reportsTopContacts is where the talk time went, named when the CRM can
+// name it.
+templ reportsTopContacts(props ReportsPanelProps) {
+	if len(props.Report.Contacts) > 0 {
+		<section class="wp-reports-section wp-reports-top">
+			<h3 class="wp-reports-head">{ T(props.Lang, "reports.contacts") }</h3>
+			for i, contact := range props.Report.Contacts {
+				if i < TopContactRows {
+					<div class="wp-reports-row wp-reports-row-pair">
+						<span class="wp-reports-contact">@remoteLabel(contact.Number, props.CRM, props.Lang)</span>
+						<span class="wp-muted wp-reports-day-meta">
+							{ fmtInt(contact.Calls) } · { talkTimeLabel(contact.Talk) }
+						</span>
+					</div>
+				}
+			}
+		</section>
+	}
+}
+
+// talkTimeLabel renders a talk time the way a person reads it: minutes
+// and seconds under an hour, hours and minutes above it, an em dash for
+// nothing at all (the History rows' own vocabulary, so a call's duration
+// reads identically in both tabs).
+func talkTimeLabel(talk time.Duration) string {
+	seconds := int(talk.Round(time.Second) / time.Second)
+	if seconds <= 0 {
+		return "—"
+	}
+
+	if seconds < 3600 {
+		return fmtInt(seconds/60) + ":" + pad2(seconds%60)
+	}
+
+	return fmtInt(seconds/3600) + "h " + pad2((seconds%3600)/60) + "m"
+}
+
+// dayScaleMax is the bar ladder's denominator: the busiest day's talk
+// time in seconds, never zero (an <meter> with max 0 has no scale).
+// reportDayLabel renders a day-ladder row head: the transcripts'
+// weekdayLabel vocabulary (one weekday home, REUSED here per the DE
+// locale ruling) over the language's numeric date convention.
+func reportDayLabel(lang Lang, day time.Time) string {
+	if lang == LangDE {
+		return weekdayLabel(lang, day.Weekday()) + " " + day.Format("02.01.")
+	}
+	return weekdayLabel(lang, day.Weekday()) + ", " + day.Format("Jan 2")
+}
+
+func dayScaleMax(max time.Duration) int {
+	seconds := secondsOf(max)
+	if seconds <= 0 {
+		return 1
+	}
+
+	return seconds
+}
+
+// fractionAttr formats the budget fraction for the meter's value
+// attribute: fixed point, so a tiny week never renders as "5e-05" and a
+// locale never decides the decimal separator.
+func fractionAttr(fraction float64) string {
+	return strconv.FormatFloat(fraction, 'f', 3, 64)
+}
+
+// secondsOf is a duration in whole seconds, the unit the bar ladders
+// measure in.
+func secondsOf(d time.Duration) int {
+	seconds := int(d.Round(time.Second) / time.Second)
+	if seconds <= 0 {
+		return 0
+	}
+
+	return seconds
+}
+
+// hourSpan labels one hour bucket as the span it covers ("18–19").
+func hourSpan(hour int) string {
+	return pad2(hour) + "–" + pad2((hour+1)%24)
+}
+
+// noAnswerCausesLine renders the cause ranking behind the NoAnswer
+// card: the localized lead, then each FreeSWITCH cause with its count,
+// loudest first, ties by name (map order would make identical runs
+// differ). Raw vocabulary on purpose — the trunk's own words are the
+// truth the operator can grep.
+func noAnswerCausesLine(lang Lang, causes map[string]int) string {
+	type causeRow struct {
+		name  string
+		count int
+	}
+	rows := make([]causeRow, 0, len(causes))
+	for name, count := range causes {
+		rows = append(rows, causeRow{name: name, count: count})
+	}
+	slices.SortFunc(rows, func(a, b causeRow) int {
+		return cmp.Or(b.count-a.count, strings.Compare(a.name, b.name))
+	})
+	parts := make([]string, 0, len(rows))
+	for _, row := range rows {
+		parts = append(parts, fmt.Sprintf("%s %d", row.name, row.count))
+	}
+	return T(lang, "reports.noanswer.causes") + " " + strings.Join(parts, " · ")
+}

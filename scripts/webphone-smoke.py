@@ -335,7 +335,7 @@ def restart_scenario(binary: str, workdir: str, port: int, env: dict) -> int:
     c = Check()
     base = f"http://127.0.0.1:{port}"
     s = Smoke(base)
-    _, body, _ = s.request("GET", "/")
+    _, body, _ = s.request("GET", "/login")
     m = re.search(
         r'name="csrf-token" content="([^"]+)"', body.decode("utf-8", "replace")
     )
@@ -538,7 +538,7 @@ def asr_scenario(binary: str, workdir: str) -> int:
     srv, base = boot({"WEBPHONE_ASR__URL": provider}, "data-asr-openai")
     try:
         s = Smoke(base)
-        _, page, _ = s.request("GET", "/")
+        _, page, _ = s.request("GET", "/login")
         m = re.search(
             r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
         )
@@ -606,7 +606,7 @@ def asr_scenario(binary: str, workdir: str) -> int:
     )
     try:
         s = Smoke(base)
-        _, page, _ = s.request("GET", "/")
+        _, page, _ = s.request("GET", "/login")
         m = re.search(
             r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
         )
@@ -690,7 +690,7 @@ def dialgate_scenario(binary: str, workdir: str) -> int:
 
     def login_csrf(base: str) -> Smoke:
         s = Smoke(base)
-        _, page, _ = s.request("GET", "/")
+        _, page, _ = s.request("GET", "/login")
         m = re.search(
             r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
         )
@@ -773,6 +773,152 @@ def dialgate_scenario(binary: str, workdir: str) -> int:
     return 1 if c.failures else 0
 
 
+def metrics_scenario(binary: str, workdir: str) -> int:
+    """The island latency-beacon intake (measure-first design), end-to-end.
+
+    Two boots prove the opt-in contract: with
+    WEBPHONE_METRICS__ISLAND_BEACON the session-gated route folds a valid
+    beacon into the /metrics histograms (204, then labeled buckets), a
+    garbage body is a silent 204 (instrumentation never alerts), an
+    unauthenticated POST is a 401, and /config.js advertises "metrics";
+    with zero config the route answers 404, /config.js stays silent, and
+    /metrics carries no island family (byte-identical off).
+    """
+    c = Check()
+
+    def boot(env_extra: dict[str, str], datadir: str) -> tuple[subprocess.Popen, str]:
+        port = free_port()
+        env = dict(os.environ)
+        env.update(
+            {
+                "WEBPHONE_ADDR": f"127.0.0.1:{port}",
+                "WEBPHONE_DATA_DIR": f"{workdir}/{datadir}",
+                "WEBPHONE_GATEWAY__WEBHOOK_SECRET": "test-secret",  # nosec B105 - fixture secret for the self-booted smoke server
+            }
+        )
+        env.update(env_extra)
+        srv = subprocess.Popen(  # nosec B603 - argv-list (no shell) launch of the local binary under test
+            [binary], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+        base = f"http://127.0.0.1:{port}"
+        deadline = time.monotonic() + TIMEOUT
+        while time.monotonic() < deadline:
+            try:
+                urllib.request.urlopen(base + "/healthz", timeout=1).read()  # nosec B310 - readiness probe of the local server under test
+                return srv, base
+            except OSError:
+                time.sleep(0.1)
+        srv.kill()
+        raise RuntimeError("metrics scenario: server did not become ready")
+
+    def stop_server(srv: subprocess.Popen) -> None:
+        srv.terminate()
+        try:
+            srv.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            srv.kill()
+
+    def login_csrf(base: str) -> Smoke:
+        s = Smoke(base)
+        _, page, _ = s.request("GET", "/login")
+        m = re.search(
+            r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
+        )
+        if m:
+            s.csrf = m.group(1)
+        c.ok("metrics: login accepted", s.login(), "POST /api/session != 201")
+        return s
+
+    beacon = (
+        b'{"interval":"dial_to_audio",'
+        b'"legs_ms":{"island_overhead":12,"signaling":1500,'
+        b'"media_attach":80,"audio_gap":240}}'
+    )
+
+    # OFF boot: 404 route, silent config.js, no island family on /metrics.
+    srv, base = boot({}, "data-metrics-off")
+    try:
+        s = login_csrf(base)
+        status, _, _ = s.request(
+            "POST", "/api/metrics/latency", beacon, "application/json"
+        )
+        c.ok("metrics: off answers 404", status == 404, f"status {status}")
+        _, body, _ = s.request("GET", "/config.js")
+        c.ok(
+            "metrics: config.js silent when off",
+            b'"metrics"' not in body,
+            body[:160].decode("utf-8", "replace"),
+        )
+        _, metrics, _ = s.request("GET", "/metrics")
+        c.ok(
+            "metrics: no island family when off",
+            b"webphone_island_latency_seconds" not in metrics,
+            "island family present on a disabled deploy",
+        )
+    finally:
+        stop_server(srv)
+
+    # ON boot: advertise, fold a valid beacon, stay silent on garbage,
+    # fence the anonymous, and expose the labeled buckets.
+    srv, base = boot({"WEBPHONE_METRICS__ISLAND_BEACON": "true"}, "data-metrics-on")
+    try:
+        s = login_csrf(base)
+        _, body, _ = s.request("GET", "/config.js")
+        c.ok(
+            "metrics: config.js advertises the intake",
+            b'"metrics":true' in body,
+            body[:160].decode("utf-8", "replace"),
+        )
+        status, _, _ = s.request(
+            "POST", "/api/metrics/latency", beacon, "application/json"
+        )
+        c.ok("metrics: valid beacon answers 204", status == 204, f"status {status}")
+        status, _, _ = s.request(
+            "POST", "/api/metrics/latency", b"{not json at all", "application/json"
+        )
+        c.ok(
+            "metrics: garbage body is a silent 204",
+            status == 204,
+            f"status {status}",
+        )
+        _, metrics, _ = s.request("GET", "/metrics")
+        c.ok(
+            "metrics: histogram bucket appears with the leg label",
+            b'webphone_island_latency_seconds_bucket{interval="dial_to_audio",leg="signaling"'
+            in metrics,
+            metrics[:400].decode("utf-8", "replace"),
+        )
+        c.ok(
+            "metrics: count line folds the beacon",
+            b'webphone_island_latency_seconds_count{interval="dial_to_audio",leg="signaling"} 1'
+            in metrics,
+            "count != 1 after one valid beacon",
+        )
+        status, _, _ = s.request(
+            "POST", "/api/metrics/latency", beacon, "application/json"
+        )
+        anon_status = urllib.request.Request(
+            base + "/api/metrics/latency", data=beacon, method="POST"
+        )
+        try:
+            urllib.request.urlopen(anon_status, timeout=2)  # nosec B310 - probe of the local server under test
+            anon_code = 0
+        except urllib.error.HTTPError as err:
+            anon_code = err.code
+        c.ok(
+            "metrics: anonymous POST is fenced",
+            anon_code in (401, 403),
+            f"anon status {anon_code}",
+        )
+    finally:
+        stop_server(srv)
+
+    print(f"metrics scenario: {c.passed} passed, {len(c.failures)} failed")
+    for failure in c.failures:
+        print(f"  FAILED: {failure}")
+    return 1 if c.failures else 0
+
+
 def faxcap_scenario(binary: str, workdir: str) -> int:
     """The fax capability declaration, end-to-end on a self-booted server.
 
@@ -818,7 +964,7 @@ def faxcap_scenario(binary: str, workdir: str) -> int:
 
     def login(base: str) -> Smoke:
         s = Smoke(base)
-        _, page, _ = s.request("GET", "/")
+        _, page, _ = s.request("GET", "/login")
         m = re.search(
             r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
         )
@@ -888,6 +1034,135 @@ def faxcap_scenario(binary: str, workdir: str) -> int:
     return 1 if c.failures else 0
 
 
+def enroll_scenario(binary: str, workdir: str) -> int:
+    """The -enroll-passkey CLI one-shot end-to-end (the 2026-11-09
+    split-brain class).
+
+    One config file drives BOTH sides: the CLI one-shot runs under the
+    SAME config and data dir as the server, so its token lands in the
+    same system.db journal the server verifies from — mint on a fresh
+    dir, boot the server, verify the fresh token 200, replay the burned
+    token 503, and prove the /enroll page (the conditional surface)
+    renders with passkey enabled.
+    """
+    c = Check()
+
+    datadir = f"{workdir}/data-enroll"
+    os.makedirs(datadir, exist_ok=True)
+    pwfile = f"{workdir}/pw-1001"
+    with open(pwfile, "w", encoding="utf-8") as fh:
+        fh.write("pw\n")
+    cfg = {
+        # The CLI one-shot validates the WHOLE config: a real addr shape
+        # up front, rewritten to the server's port before boot.
+        "addr": "127.0.0.1:18099",
+        "data_dir": datadir,
+        "gateway": {"webhook_secret": "test-secret"},  # nosec B105 - fixture secret for the self-booted smoke server
+        "auth": {
+            "users": {"lars@example.com": {"extensions": ["1001"]}},
+            "extension_password_files": {"1001": pwfile},
+            "passkey": {
+                "rp_id": "webphone.test",
+                "rp_origins": ["https://webphone.test"],
+            },
+        },
+    }
+    cfg_path = f"{workdir}/config-enroll.json"
+    with open(cfg_path, "w", encoding="utf-8") as fh:
+        json.dump(cfg, fh)
+
+    def cli_mint() -> tuple[int, str, str]:
+        env = dict(os.environ)
+        env["WEBPHONE_CONFIG"] = cfg_path
+        done = subprocess.run(  # nosec B603 - argv-list (no shell) run of the CLI one-shot under test
+            [binary, "-enroll-passkey", "lars@example.com"],
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        return done.returncode, done.stdout, done.stderr
+
+    def boot() -> tuple[subprocess.Popen, str]:
+        port = free_port()
+        cfg["addr"] = f"127.0.0.1:{port}"
+        with open(cfg_path, "w", encoding="utf-8") as fh:
+            json.dump(cfg, fh)
+        env = dict(os.environ)
+        env["WEBPHONE_CONFIG"] = cfg_path
+        srv = subprocess.Popen(  # nosec B603 - argv-list (no shell) launch of the local binary under test
+            [binary], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+        base = f"http://127.0.0.1:{port}"
+        deadline = time.monotonic() + TIMEOUT
+        while time.monotonic() < deadline:
+            try:
+                urllib.request.urlopen(base + "/healthz", timeout=1).read()  # nosec B310 - readiness probe of the local server under test
+                return srv, base
+            except OSError:
+                time.sleep(0.1)
+        srv.kill()
+        raise RuntimeError("enroll scenario: server did not become ready")
+
+    # Mint FIRST: the one-shot opens the journal alone, the server joins
+    # it after — the shared-journal contract without a write race.
+    rc, out, err = cli_mint()
+    c.ok("enroll: CLI one-shot exits 0", rc == 0, err.strip()[:160])
+    m = re.search(r"token=([A-Za-z0-9_-]+)", out)
+    c.ok("enroll: the link carries a token", m is not None, out.strip()[:160])
+    if not m:
+        print(f"enroll scenario: {c.passed} passed, {len(c.failures)} failed")
+        for failure in c.failures:
+            print(f"  FAILED: {failure}")
+        return 1
+    token = m.group(1)
+
+    srv, base = boot()
+    try:
+        s = Smoke(base)
+        status, body, _ = s.request("GET", "/enroll")
+        page = body.decode("utf-8", "replace")
+        c.ok(
+            "enroll: the page renders with passkey on",
+            status == 200,
+            f"status {status}",
+        )
+        m = re.search(r'name="csrf-token" content="([^"]+)"', page)
+        if m:
+            s.csrf = m.group(1)
+
+        status, body, _ = s.request(
+            "POST",
+            "/api/auth/passkey/enroll/verify",
+            json.dumps({"token": token}).encode(),
+            "application/json",
+        )
+        c.ok(
+            "enroll: fresh token verifies 200",
+            status == 200 and b"lars@example.com" in body,
+            f"status {status} body {body[:120].decode('utf-8', 'replace')}",
+        )
+
+        status, _, _ = s.request(
+            "POST",
+            "/api/auth/passkey/enroll/verify",
+            json.dumps({"token": token}).encode(),
+            "application/json",
+        )
+        c.ok("enroll: burned token answers 503", status == 503, f"status {status}")
+    finally:
+        srv.terminate()
+        try:
+            srv.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            srv.kill()
+
+    print(f"enroll scenario: {c.passed} passed, {len(c.failures)} failed")
+    for failure in c.failures:
+        print(f"  FAILED: {failure}")
+    return 1 if c.failures else 0
+
+
 def run_checks(
     s: Smoke,
     boot_configured: Callable[[], tuple[str, Callable[[], None]]] | None = None,
@@ -897,14 +1172,29 @@ def run_checks(
     c = s.check
     print(f"smoke against {s.base}")
 
-    # 1. Shell page serves the island contract markers + CSRF meta.
-    status, body, _ = s.request("GET", "/")
+    # 1. The login page is the front door in EVERY mode: the extension
+    #    form + CSRF meta render anonymously, and the anonymous root
+    #    navigation redirects here (the signed-in shell is checked after
+    #    the login below). The redirect-following client lands on the
+    #    login page for both.
+    status, body, _ = s.request("GET", "/login")
     page = body.decode("utf-8", "replace")
-    c.ok("shell 200", status == 200, f"got {status}")
+    c.ok("login page 200", status == 200, f"got {status}")
     c.ok(
-        "shell holds island login",
-        'id="login-view"' in page and 'id="reg-status"' in page,
-        "island ids missing",
+        "login page holds the extension form",
+        'id="login-form"' in page and 'id="login-error"' in page,
+        "login form ids missing",
+    )
+    c.ok(
+        "login form drives its own module",
+        "/assets/login-page.js" in page,
+        "the standalone submit module is not referenced",
+    )
+    status_root, body_root, _ = s.request("GET", "/")
+    c.ok(
+        "anonymous root lands on the front door",
+        status_root == 200 and b"login-form" in body_root,
+        f"root GET answered {status_root} without the login form",
     )
     match = re.search(r'name="csrf-token" content="([^"]+)"', page)
     c.ok("CSRF meta present", match is not None, "no csrf-token meta")
@@ -949,7 +1239,7 @@ def run_checks(
     csp = headers.get("Content-Security-Policy", "")
     c.ok(
         "dashboard nonce csp",
-        "unsafe-eval" in csp and "nonce-" in csp,
+        "unsafe-eval" not in csp and "nonce-" in csp,
         csp[:100],
     )
     status, body, _ = s.request("GET", "/health/datastar.js")
@@ -1050,32 +1340,38 @@ def run_checks(
         status == 200 and "javascript" in ctype.lower() and b"data-theme" in body,
         f"{status} {ctype!r}",
     )
-    inline = re.search(r"<script(?![^>]*\bsrc=)[^>]*>.{0,120}", page, re.DOTALL)
+    # 4b. /partials/nav contract (F19): a signed-out session gets ZERO
+    # links — the desk's tab row is for sessions that can use it; the
+    # signed-in re-fetch below is the only badge source. A fresh Smoke
+    # keeps it session-free even mid-suite.
+    anon_nav = Smoke(s.base)
+    # 4a-bis. The zero-inline-script contract belongs to the SHELL: an
+    # anonymous deep link renders it session-free (the login page is the
+    # nonce'd inline-script surface by design, so `page` above must not
+    # be the probe).
+    status, shell_anon, _ = anon_nav.request("GET", "/messages")
+    shell_page = shell_anon.decode("utf-8", "replace")
+    inline = re.search(r"<script(?![^>]*\bsrc=)[^>]*>.{0,120}", shell_page, re.DOTALL)
     c.ok(
         "shell has zero inline scripts",
-        inline is None,
-        f"inline <script> without src found: {inline.group(0)[:140]!r}"
+        status == 200 and inline is None and b'id="reg-status"' in shell_anon,
+        f"{status} inline <script> without src found: {inline.group(0)[:140]!r}"
         if inline
-        else "",
+        else f"{status} not the shell",
     )
-
-    # 4b. /partials/nav contract (AGENTS-documented, now smoked): labels
-    # render anonymously — badges NEVER do; the signed-in re-fetch below
-    # is the only badge source. A fresh Smoke keeps it session-free even
-    # mid-suite.
-    anon_nav = Smoke(s.base)
     status, body, _ = anon_nav.request("GET", "/partials/nav")
     nav_anon = body.decode("utf-8", "replace")
     c.ok(
         "nav partial anonymous shape",
-        status == 200 and "wp-nav-link" in nav_anon and "wp-nav-badge" not in nav_anon,
-        f"{status} labels/badges wrong: {nav_anon[:80]!r}",
+        status == 200 and "wp-nav-link" not in nav_anon,
+        f"{status} anonymous nav should be link-free: {nav_anon[:80]!r}",
     )
 
     # 4c. Unknown paths render the STYLED 404: shell chrome around the
     # not-found panel (literal 404, the requested path echoed back, a way
     # home, NO reload button), status stays 404. Works in --base foreign
-    # mode too, so the post-deploy probe validates prod.
+    # mode too, so the post-deploy probe validates prod. The island fact
+    # is #phone-view — the login card left the island (front-door train).
     status, body, _ = anon_nav.request("GET", "/definitely/not/a/path")
     nf = body.decode("utf-8", "replace")
     c.ok(
@@ -1084,7 +1380,7 @@ def run_checks(
         and 'class="wp-panel wp-notfound"' in nf
         and "/definitely/not/a/path" in nf
         and "Back to Messages" in nf
-        and 'id="login-view"' in nf,
+        and 'id="phone-view"' in nf,
         f"{status} bare-or-unstyled: {nf[:80]!r}",
     )
 
@@ -1153,6 +1449,16 @@ def run_checks(
             "login rotated the CSRF token",
             s.csrf != pre_login_token and s.adopt_csrf(),
             "adoption missing or stale token reused",
+        )
+        # The signed-in root now renders the SHELL (the island contract
+        # markers live here since the front door took the login form).
+        status, shell, _ = s.request("GET", "/")
+        c.ok(
+            "signed-in shell serves the island",
+            status == 200
+            and b'id="reg-status"' in shell
+            and b'id="phone-view"' in shell,
+            f"{status} island ids missing",
         )
         # 6b. The pre-login token is dead: POSTs with it must 403, while the
         # same probe with the adopted token passes CSRF (unknown path = 404).
@@ -1254,6 +1560,30 @@ def run_checks(
             and "wp-nav-link" in nav_authed
             and "wp-nav-badge" in nav_authed,
             f"{status} badge missing: {nav_authed[:80]!r}",
+        )
+
+        # 10c. The Reports tab (issue #12): a deep link renders the full
+        # shell with the panel, and the partial answers on its own. The
+        # loopback smoke runs WITHOUT a phone API, so the panel must say
+        # which knob is missing rather than render a quiet week of zeros —
+        # the same honesty the History tab owes.
+        status, body, _ = s.request("GET", "/reports")
+        reports_page = body.decode("utf-8", "replace")
+        c.ok(
+            "reports deep link renders the panel",
+            status == 200
+            and 'id="reports-panel"' in reports_page
+            and 'data-tab="reports"' in reports_page,
+            f"{status} panel or nav entry missing",
+        )
+        status, body, _ = s.request("GET", "/partials/reports")
+        reports_partial = body.decode("utf-8", "replace")
+        c.ok(
+            "reports names the missing phone API",
+            status == 200
+            and "phone_api_url" in reports_partial
+            and "wp-stat-value" not in reports_partial,
+            f"{status} disabled-API shape wrong: {reports_partial[:80]!r}",
         )
 
         # 11. Thread row exists; opening it shows the transcript bubble region.
@@ -1471,6 +1801,8 @@ def main() -> int:
         rc = max(rc, asr_scenario(binary, workdir))
         rc = max(rc, dialgate_scenario(binary, workdir))
         rc = max(rc, faxcap_scenario(binary, workdir))
+        rc = max(rc, metrics_scenario(binary, workdir))
+        rc = max(rc, enroll_scenario(binary, workdir))
         return rc
     finally:
         server.terminate()

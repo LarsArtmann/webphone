@@ -76,6 +76,23 @@ test("prepareRegistrationOptions decodes challenge, user.id and excludeCredentia
   });
 });
 
+test("prepareRegistrationOptions unwraps the {publicKey} envelope the begin endpoints send", () => {
+  // go-webauthn's CredentialCreation marshals the dictionary under a
+  // "publicKey" key (the WebAuthn API's own parameter shape), and usermgmt
+  // serves those bytes as-is — the real wire IS the envelope. Both the
+  // wrapped and the bare dictionary must prepare identically.
+  const dictionary = {
+    challenge: "AAAAAQ",
+    rp: { id: "pbx.example.com", name: "WebPhone" },
+    user: { id: "AQIDBA", name: "lars@example.com", displayName: "Lars" },
+    pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+  };
+  const wrapped = prepareRegistrationOptions({ publicKey: dictionary });
+  assert.deepEqual([...wrapped.challenge], [0, 0, 0, 1]);
+  assert.deepEqual([...wrapped.user.id], [1, 2, 3, 4]);
+  assert.equal("publicKey" in wrapped, false, "envelope key must not leak into creation options");
+});
+
 test("serializeCredential encodes a login assertion the server parses", () => {
   const credential = {
     id: "AAECAw",

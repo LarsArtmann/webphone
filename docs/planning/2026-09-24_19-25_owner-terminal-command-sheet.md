@@ -46,10 +46,18 @@ again whenever a GC collects it.
 
 ## 1. Deploy the released chain to prod (M1, TODO row "Deploy the released chain")
 
+STATUS 2026-11-06 (docs-health v8 re-verification): **DISCHARGED — prod runs
+v2.9.0.** `GET https://pbx.artmann.tech/version` answers
+`{"version":"v2.9.0","commit":"2d25c3f7…","commitDate":"2026-11-02T04:50:42Z",
+"goVersion":"go1.27.3"}`. The commands below are the v2.8.0-era shape, kept
+because the ritual they encode (test → smoke → switch) is still the one the
+release runbook prescribes; the CURRENT step list is
+[docs/release-runbook.md](../release-runbook.md).
+
 UPDATE 2026-09-30: **v2.8.0 is CUT and the stack is relocked** (webphone
 signed tag pushed, stack `3afcf57` carries the lock bump + caddy guard
 fix, browser E2E + webphone VM test + stack flake check green). The
-chain is READY — deploy straight to v2.8.0 (prod currently v2.6.0):
+chain is READY — deploy straight to v2.8.0 (prod was v2.6.0 on that date):
 
 ```console
 cd ~/projects/pbx-artmann && nixos-rebuild test --flake .#pbx --target-host root@pbx.artmann.tech
@@ -74,8 +82,12 @@ nix build .#nixosConfigurations.pbx-aarch64.config.system.build.toplevel  # NOT 
 
 ## 3. Post-deploy verification (M1 tail, from the webphone repo)
 
+STATUS 2026-11-06: the version assertion below targets v2.8.0 because that was
+the release in flight; the LIVE chain is v2.9.0, so run it as
+`--expect-version 2.9.0`.
+
 ```console
-python3 scripts/webphone-smoke.py --base https://pbx.artmann.tech --expect-version 2.8.0
+python3 scripts/webphone-smoke.py --base https://pbx.artmann.tech --expect-version 2.9.0
 ```
 
 Then the live self-send check (needs a real extension session):

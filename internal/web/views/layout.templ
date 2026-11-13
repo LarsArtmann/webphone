@@ -13,6 +13,11 @@ const (
 	TabFax       Tab = "fax"
 	TabVoicemail Tab = "voicemail"
 	TabHistory   Tab = "history"
+	// TabReports answers "what is this adding up to" over the same call
+	// records History lists (issue #12): talk time, direction and
+	// outcome, the daily shape, the busiest hours and the contacts that
+	// consumed the time.
+	TabReports   Tab = "reports"
 	TabContacts  Tab = "contacts"
 	TabSettings  Tab = "settings"
 	// TabAdmin is the cross-line admin surface (read-only visibility
@@ -25,10 +30,35 @@ const (
 
 // AllTabs is the navigation order (TabAdmin rides at the end; NavLinks
 // hides it from non-admin sessions).
-var AllTabs = []Tab{TabMessages, TabFax, TabVoicemail, TabHistory, TabContacts, TabSettings, TabAdmin}
+var AllTabs = []Tab{TabMessages, TabFax, TabVoicemail, TabHistory, TabReports, TabContacts, TabSettings, TabAdmin}
 
 // Path returns the tab's route.
 func (t Tab) Path() string { return "/" + string(t) }
+
+// tabIcon gives every tab a glyph so the nav reads as an app rail instead
+// of a text strip — on the mobile bottom bar (8 slots on a 390px screen)
+// the icon is what makes the labels legible at their small size.
+func tabIcon(t Tab) icons.Name {
+	switch t {
+	case TabMessages:
+		return icons.Inbox
+	case TabFax:
+		return icons.Printer
+	case TabVoicemail:
+		return icons.Microphone
+	case TabHistory:
+		return icons.Clock
+	case TabReports:
+		return icons.Chart
+	case TabContacts:
+		return icons.Users
+	case TabSettings:
+		return icons.Settings
+	case TabAdmin:
+		return icons.ShieldCheck
+	}
+	return icons.Name("")
+}
 
 // ShellProps carries everything the outer page needs.
 type ShellProps struct {
@@ -51,19 +81,17 @@ type ShellProps struct {
 	Unread int
 	// NewVoicemail counts badge the Voicemail nav item.
 	NewVoicemail int
-	// Passkey renders the island's passkey (WebAuthn) front door with
-	// the extension login demoted to break-glass. False keeps the served
-	// shell byte-equivalent to the pre-passkey login card.
-	Passkey bool
-	// SSO renders the OIDC (Pocket ID) front door: one link into the
-	// IdP's authorization-code + PKCE dance. False renders nothing, so
-	// deployments without OIDC keep their exact login card.
-	SSO bool
 	// Admin renders the Admin tab in the nav: the signed-in session's
 	// login email carries the admin flag (resolved per request from the
 	// live mapping). False keeps the served shell byte-equivalent to a
 	// non-admin build.
 	Admin bool
+	// LiveContext renders the island's live-call context slot (issue #10):
+	// the aside gains an empty container the shell fills from
+	// /partials/live-context while a call runs. False (the CRM off, which
+	// is the default) keeps the served markup byte-identical to a
+	// deployment that never had the integration.
+	LiveContext bool
 	// Lang drives the server-rendered strings.
 	Lang Lang
 }
@@ -75,8 +103,8 @@ templ Shell(props ShellProps) {
 	@layout.Base(layout.PageProps{
 		Title:          "WebPhone",
 		Description:    "Self-hosted unified communications: calls, messages, fax and voicemail over SIP/WebRTC.",
-		ThemeColor:     "#0f766e",
-		DarkThemeColor: "#10161a",
+		ThemeColor:     "#0e8752",
+		DarkThemeColor: "#17a467",
 		CSSPath:        "/assets/app.css",
 		Favicon:        "/favicon.svg",
 		Nonce:          "",
@@ -108,15 +136,17 @@ templ Shell(props ShellProps) {
 templ ShellBody(props ShellProps) {
 	<a class="wp-skip" href="#tab-content">{ T(props.Lang, "skip.content") }</a>
 	<header class="wp-header">
-		<a class="wp-brand" href="/" aria-label="WebPhone home">
-			<svg class="wp-brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
-				<rect width="32" height="32" rx="7" class="wp-mark-bg"></rect>
-				<path
-					d="M9 7h4l2 5-2.5 2a12 12 0 0 0 5.5 5.5L20 17l5 2v4a2 2 0 0 1-2.2 2A17.8 17.8 0 0 1 7 9.2 2 2 0 0 1 9 7z"
-					class="wp-mark-fg"></path>
-			</svg>
-			<span>WebPhone</span>
-		</a>
+		<h1 class="wp-brand-h1">
+			<a class="wp-brand" href="/" aria-label="WebPhone home">
+				<svg class="wp-brand-mark" viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+					<rect width="32" height="32" rx="7" class="wp-mark-bg"></rect>
+					<path
+						d="M9 7h4l2 5-2.5 2a12 12 0 0 0 5.5 5.5L20 17l5 2v4a2 2 0 0 1-2.2 2A17.8 17.8 0 0 1 7 9.2 2 2 0 0 1 9 7z"
+						class="wp-mark-fg"></path>
+				</svg>
+				<span>WebPhone</span>
+			</a>
+		</h1>
 		<div class="wp-header-actions">
 			if props.SignedIn != "" {
 				<span class="wp-signed-in">{ props.SignedIn }
@@ -151,25 +181,48 @@ templ ShellBody(props ShellProps) {
 					<span class="wp-island-toggle-label">{ T(props.Lang, "shell.island.toggle") }</span>
 				</button>
 			}
+			// The command palette's coarse-pointer entry (F12): keyboard users
+			// own Ctrl/Cmd+K and the "?" help documents it; touch has no
+			// keyboard, so this header button opens the same overlay. app.css
+			// reveals the button only on (pointer: coarse) — the desktop
+			// chrome stays byte-identical.
+			// aria-expanded is the state channel for the dialog it opens: the
+			// button is a disclosure, so a screen reader must be able to tell
+			// whether the palette is showing (it stays false when the overlay
+			// is opened from the keyboard, which is correct — the button is
+			// not the control in that path, and the dialog announces itself).
+			<button id="wp-palette-open" class="wp-palette-open" type="button" aria-label="Command palette" aria-controls="wp-palette" aria-expanded="false" title="Command palette">@icons.Icon(icons.Search, "wp-icon")</button>
 			<button id="theme-toggle" class="wp-theme-toggle" type="button" title="Color theme (auto, light, dark)">Theme: auto</button>
 		</div>
 	</header>
 	<div class="wp-body">
 		<aside class="wp-island" id="wp-island" aria-label="Phone">
-			@PhoneIsland(PhoneIslandProps{Passkey: props.Passkey, SSO: props.SSO})
+			@PhoneIsland()
+			// The live call's CRM context (issue #10). One fixed slot, filled
+			// by the shell from /partials/live-context when a call starts and
+			// emptied when the last one ends: an empty answer renders nothing
+			// inside it, so the slot costs no layout shift.
+			if props.LiveContext {
+				<div id="wp-live-context" class="wp-live-context"></div>
+			}
 		</aside>
-		<div class="wp-main-col">
+		<div class={ "wp-main-col", templ.KV("wp-signed-out", props.SignedIn == "") }>
 			<nav class="wp-nav" id="wp-nav" aria-label="Sections">
 				@NavLinks(props)
 			</nav>
-			<main class="wp-content" id="tab-content">
+			// M26: the error slot renders ABOVE the panel — at panel height
+			// an error swapped in below the main never scrolled into view,
+			// and a slot the eye never meets is a slot that does not exist.
+			// Still outside #tab-content, so tab swaps cannot remove the
+			// retarget anchor.
+			<div id="wp-tab-error"></div>
+			<main class="wp-content" id="tab-content" tabindex="-1">
 				if props.TabContent != nil {
 					@props.TabContent
 				} else {
 					@SignInHint(props.Lang)
 				}
 			</main>
-			<div id="wp-tab-error"></div>
 			// Skeleton placeholder (F1): the shell reveals this while a
 			// navigation partial is in flight, so a slow tab reads as
 			// loading instead of dead air.
@@ -186,29 +239,36 @@ templ ShellBody(props ShellProps) {
 }
 
 templ NavLinks(props ShellProps) {
-	for _, tab := range AllTabs {
-		// templ has no loop `continue`: the admin tab's visibility is an
-		// if-guard around the whole link (a non-admin session renders no
-		// admin nav entry at all).
-		if tab != TabAdmin || props.Admin {
-			<a
-				class={ "wp-nav-link", templ.KV("wp-active", props.ActiveTab == tab) }
-				href={ tab.Path() }
-				aria-current={ currentAttr(props.ActiveTab == tab) }
-				hx-get={ "/partials" + tab.Path() }
-				hx-target="#tab-content"
-				hx-swap="innerHTML show:window:top"
-				hx-push-url={ tab.Path() }
-				data-tab={ string(tab) }
-			>
-				<span>{ T(props.Lang, "tab."+string(tab)) }</span>
-				if tab == TabMessages && props.Unread > 0 {
-					<span class="wp-nav-badge" aria-label={ badgeCount(props.Lang, props.Unread, "nav.unread") }>{ fmtInt(props.Unread) }</span>
-				}
-				if tab == TabVoicemail && props.NewVoicemail > 0 {
-					<span class="wp-nav-badge" id="wp-nav-vm-badge" aria-label={ badgeCount(props.Lang, props.NewVoicemail, "nav.new") }>{ fmtInt(props.NewVoicemail) }</span>
-				}
-			</a>
+	// F19: a signed-out page is a door, not a floor plan — the tab row
+	// exists only for a session that can use it. The nav REGION stays
+	// (the post-login re-fetch targets #wp-nav); anonymously it renders
+	// zero links instead of seven dead doors.
+	if props.SignedIn != "" {
+		for _, tab := range AllTabs {
+			// templ has no loop `continue`: the admin tab's visibility is an
+			// if-guard around the whole link (a non-admin session renders no
+			// admin nav entry at all).
+			if tab != TabAdmin || props.Admin {
+				<a
+					class={ "wp-nav-link", templ.KV("wp-active", props.ActiveTab == tab) }
+					href={ tab.Path() }
+					aria-current={ currentAttr(props.ActiveTab == tab) }
+					hx-get={ "/partials" + tab.Path() }
+					hx-target="#tab-content"
+					hx-swap="innerHTML show:window:top"
+					hx-push-url={ tab.Path() }
+					data-tab={ string(tab) }
+				>
+					<span class="wp-nav-ic">@icons.Icon(tabIcon(tab), "wp-icon")</span>
+					<span>{ T(props.Lang, "tab."+string(tab)) }</span>
+					if tab == TabMessages && props.Unread > 0 {
+						<span class="wp-nav-badge" aria-label={ badgeCount(props.Lang, props.Unread, "nav.unread") }>{ fmtInt(props.Unread) }</span>
+					}
+					if tab == TabVoicemail && props.NewVoicemail > 0 {
+						<span class="wp-nav-badge" id="wp-nav-vm-badge" aria-label={ badgeCount(props.Lang, props.NewVoicemail, "nav.new") }>{ fmtInt(props.NewVoicemail) }</span>
+					}
+				</a>
+			}
 		}
 	}
 }
@@ -237,7 +297,7 @@ func badgeCount(lang Lang, n int, key string) string {
 // stay hand-rolled.
 templ panelHead(lang Lang, titleKey, subtitleKey string) {
 	<header class="wp-panel-head">
-		<h2>{ T(lang, titleKey) }</h2>
+		<h2 tabindex="-1">{ T(lang, titleKey) }</h2>
 		<p class="wp-panel-sub">{ T(lang, subtitleKey) }</p>
 	</header>
 }
@@ -265,6 +325,14 @@ templ identityLine(lang Lang, identity string) {
 	if identity != "" {
 		<p class="wp-identity">{ T(lang, "identity.from") } <strong>{ identity }</strong></p>
 	}
+}
+
+// sendIndicator is the ONE home of the submit-button htmx spinner (the
+// request in-flight marker htmx toggles on .htmx-request forms); Button
+// renders it ahead of the label. Every long-running htmx form submit
+// passes it in the Button's Icon slot — a click must always answer.
+templ sendIndicator() {
+	<span class="htmx-indicator" aria-hidden="true">…</span>
 }
 
 // headExtras applies the theme BEFORE anything paints (render-blocking,
@@ -330,6 +398,9 @@ templ SignInHint(lang Lang) {
 			<li>{ T(lang, "welcome.point3") }</li>
 		</ul>
 		<p class="wp-welcome-hint">{ T(lang, "signin.hint") }</p>
+		<p class="wp-welcome-signin-line">
+			<a class="wp-welcome-signin" href="/login">{ T(lang, "signin.link") }</a>
+		</p>
 		<p class="wp-welcome-compact-line">{ T(lang, "welcome.compact") }</p>
 		<button type="button" class="wp-mini wp-welcome-dismiss">{ T(lang, "welcome.dismiss") }</button>
 	</section>

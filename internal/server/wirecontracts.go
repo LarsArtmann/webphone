@@ -116,18 +116,30 @@ func BuildWireContracts() *catalog.Catalog {
 			catalog.WithName("SSE contacts"),
 			catalog.WithSummary("GET /events event \"contacts\": payload-less nudge — the panel re-fetches."),
 		),
+		// F89 shipped the review nudge without declaring it; the generated
+		// contract is the ONE place a consumer can learn which events exist, so
+		// an undeclared lane is a contract gap, not a documentation nicety.
+		catalog.Event[struct{}]("wire.sse.review",
+			catalog.Sends,
+			catalog.WithName("SSE review"),
+			catalog.WithSummary("GET /events event \"review\": payload-less nudge — the History panel re-fetches (F89)."),
+		),
+		catalog.Event[struct{}]("wire.sse.notes",
+			catalog.Sends,
+			catalog.WithName("SSE notes"),
+			catalog.WithSummary("GET /events event \"notes\": payload-less nudge after a post-call note save — the History panel re-fetches."),
+		),
 	)
 
 	return builder.Build()
 }
 
 // wireContractsDocument exports the declared lanes as an AsyncAPI
-// document. The exporter's default server stanza is a kafka broker —
-// pure fabrication for these HTTP lanes — so the empty host suppresses
-// the Servers section entirely.
+// document. catalog v4.13.0 omits the servers object entirely when no
+// WithServer is declared (the old kafka-broker fabrication and the
+// empty-host suppression hack are both gone).
 func wireContractsDocument() *asyncapi.Document {
 	return asyncapi.NewExporter(WireContractsTitle, WireContractsVersion,
-		asyncapi.WithServer("webphone", "", ""),
 		asyncapi.WithDescription(
 			"Generated from the handler wire types (go-cqrs-lite/catalog). "+
 				"The lanes are plain HTTPS calls: the telephony stack POSTs the "+

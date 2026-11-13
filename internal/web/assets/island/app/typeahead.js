@@ -3,7 +3,10 @@
 // keyboard-driven, and invisible whenever anything is missing (no
 // contacts, no dial form, no JS). Pure client-side over config data.
 
-import { sharedContacts } from "./config.js";
+import {
+  contactSource,
+  setExtraContacts as storeExtraContacts,
+} from "./config.js";
 import {
   cooldownFor,
   cooldownRemainder,
@@ -11,6 +14,19 @@ import {
 } from "./dialgate.js";
 import { t } from "./i18n.js";
 import { els } from "./ui.js";
+
+// Per-extension personal contacts now LIVE in config.js (the one data
+// home the ring surfaces read too); this module keeps its feed export
+// so panels.js keeps one import.
+/** @param {unknown} contacts */
+export function setExtraContacts(contacts) {
+  storeExtraContacts(contacts);
+}
+
+/** @returns {PBXSharedContact[]} */
+function suggestionSource() {
+  return contactSource();
+}
 
 const MAX_SUGGESTIONS = 6;
 
@@ -20,30 +36,6 @@ let list = null;
 let entries = [];
 let activeIndex = -1;
 let initialized = false;
-
-// Per-extension personal contacts (the server store, fed by panels.js
-// once the session exists). A number present in both worlds yields ONE
-// suggestion — the personal name wins, it is the one the user edits.
-/** @type {PBXSharedContact[]} */
-let personalContacts = [];
-
-/** @param {unknown} contacts */
-export function setExtraContacts(contacts) {
-  personalContacts = Array.isArray(contacts)
-    ? /** @type {PBXSharedContact[]} */ (
-        contacts.filter((contact) => contact && contact.number)
-      )
-    : [];
-}
-
-/** @returns {PBXSharedContact[]} */
-function suggestionSource() {
-  const personalNumbers = new Set(personalContacts.map((c) => c.number));
-  return [
-    ...personalContacts,
-    ...sharedContacts.filter((c) => !personalNumbers.has(c.number)),
-  ];
-}
 
 // rankContacts scores a contact against the query: a name that starts
 // with it beats a name that merely contains it, which beats a number
@@ -154,14 +146,14 @@ function render(matches) {
 export function initDialTypeahead() {
   if (initialized) return;
   if (!els.dest || !els.dialForm) return;
-  if (sharedContacts.length === 0 && personalContacts.length === 0) return;
+  if (contactSource().length === 0) return;
   initialized = true;
 
   list = document.createElement("ul");
   list.id = "dial-suggest";
   list.className = "wp-typeahead";
   list.setAttribute("role", "listbox");
-  list.setAttribute("aria-label", "Contact suggestions");
+  list.setAttribute("aria-label", t("typeaheadLabel"));
   list.hidden = true;
   els.dialForm.append(list);
 

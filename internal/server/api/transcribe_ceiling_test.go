@@ -29,7 +29,7 @@ func TestTranscribeCeilingBoundsInFlight(t *testing.T) {
 	}))
 	defer provider.Close()
 
-	client, err := asr.NewClient(provider.URL, "", "")
+	client, err := asr.NewClient(asr.ClientConfig{BaseURL: provider.URL, Token: "", Model: ""})
 	if err != nil {
 		t.Fatal(err)
 	}

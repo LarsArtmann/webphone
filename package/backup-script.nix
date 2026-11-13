@@ -10,12 +10,17 @@ let
 in
 ''
   sqlite3 "${cfg.dataDir}/webphone.db" ".backup '${dest}/webphone.db'"
-  # The metaengine read-model database (dedup windows, contacts, snippets,
-  # faxes, transcripts, enroll tokens) carries user data since the
-  # metaengine train — guard for data dirs that have not booted a
-  # webphone new enough to create it yet.
-  if [ -f "${cfg.dataDir}/readmodels.db" ]; then
-    sqlite3 "${cfg.dataDir}/readmodels.db" ".backup '${dest}/readmodels.db'"
+  # readmodels.db is RETIRED (SUPERB A43): every collection it served
+  # answers from system.db since the journal swaps, the one-time
+  # importers copied (never moved) the history, and the composition
+  # root stopped opening the file — it is not backed up anymore. A
+  # leftover file on upgraded deployments is an inert orphan.
+  # The system composition root's journal database (command/event
+  # streams, projections, checkpoints, DLQ) carries user data from the
+  # SUPERB phases on — guarded the same way for data dirs that have
+  # not booted a webphone new enough to create it yet.
+  if [ -f "${cfg.dataDir}/system.db" ]; then
+    sqlite3 "${cfg.dataDir}/system.db" ".backup '${dest}/system.db'"
   fi
   rsync -a --delete "${cfg.dataDir}/files/" "${dest}/files/"
 ''
@@ -32,8 +37,8 @@ in
   )
   mkdir -p "$snap"
   sqlite3 "${cfg.dataDir}/webphone.db" ".backup '$snap/webphone.db'"
-  if [ -f "${cfg.dataDir}/readmodels.db" ]; then
-    sqlite3 "${cfg.dataDir}/readmodels.db" ".backup '$snap/readmodels.db'"
+  if [ -f "${cfg.dataDir}/system.db" ]; then
+    sqlite3 "${cfg.dataDir}/system.db" ".backup '$snap/system.db'"
   fi
   if [ -n "$basis" ]; then
     rsync -a --delete --link-dest="$basis" "${cfg.dataDir}/files/" "$snap/files/"

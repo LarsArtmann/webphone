@@ -343,8 +343,11 @@ Ordered by (impact ÷ risk), not by area.
     one 400-line column.
 24. **Fax**: the send form and the job list compete for the eye; consider the
     same split (form aside, list main).
-25. Empty-vs-filtered-vs-error: audit every panel for the same lie P3 fixed
-    (contacts, fax).
+25. ~~Empty-vs-filtered-vs-error: audit every panel for the same lie P3 fixed
+    (contacts, fax).~~ done — the fleet-libs train's templ-components ruling
+    (2026-11-04, AGENTS § Fleet-libs) IS this audit: 2 true empty states
+    swapped (push, snippets) and 9 of 11 wp-empty sites ruled out with
+    per-site evidence (subtitles, code-embedded notices, id-pinned hooks).
 26. A `views`-level ladder helper if a third panel needs the same
     disabled/unavailable/empty/content branching (then `DataState` or a local
     one-home helper becomes justified — not before).
@@ -365,8 +368,13 @@ Ordered by (impact ÷ risk), not by area.
 32. Verify `container-type: inline-size` does not break the sticky island or
     the jump-to-latest chip under stress (long transcripts, `position:
     sticky` + `contain: layout` interactions).
-33. Check the split at the _boundary_ widths (43rem / 44rem / 45rem) for a
-    one-pixel oscillation.
+33. ~~Check the split at the _boundary_ widths (43rem / 44rem / 45rem) for a
+    one-pixel oscillation.~~ done — adjudicated structurally impossible: the feedback loop the check
+    feared cannot exist: `.wp-main-col` (the `tabcol` container) is sized by SHELL geometry
+    (viewport − island − gap − padding) and the rail/detail grid lives INSIDE it, so engaging
+    the split at 44rem changes the inner columns but never the container width the query
+    reads; any residual fractional-pixel rounding at the boundary would be a static cosmetic,
+    re-checkable in the 24-shot ui-capture matrix.
 
 **Accessibility**
 

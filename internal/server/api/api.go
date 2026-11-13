@@ -49,6 +49,11 @@ type Server interface {
 	// NotifyContactsChanged nudges the extension's surfaces with the
 	// payload-less "contacts" SSE event.
 	NotifyContactsChanged(extension domain.Extension)
+	// NotifyCallNotesChanged nudges the extension's surfaces with the
+	// payload-less "notes" SSE event after a post-call note save, so a
+	// second tab showing the same call re-fetches instead of holding a
+	// stale box.
+	NotifyCallNotesChanged(extension domain.Extension)
 	// AuditAgent writes one greppable agent-action audit line (the
 	// ONE home of the vocabulary is the server's agentAudit; the JSON
 	// lane reaches it through this seam). actorEmail carries the
@@ -62,22 +67,22 @@ type Server interface {
 // server's Deps docs for each seam.
 type Deps struct {
 	Server      Server
-	Contacts    *readmodels.Contacts
+	Contacts    readmodels.ContactGate
 	Shared      []domain.SharedContact
 	CRM         *crm.Resolver
 	CallsIdem   hooks.Gate
 	ASR         asr.Provider
-	Transcripts *readmodels.Transcripts
-	// Notes is the post-call-note store (readmodels-backed; present
-	// whenever the composition built the engine). Nil: test
+	Transcripts readmodels.TranscriptGate
+	// Notes is the post-call-note store (the readmodels.NotesGate
+	// seam, journal-backed since SUPERB Phase 4). Nil: test
 	// compositions only — the handlers answer 503 like the transcript
 	// surface does.
-	Notes *readmodels.Notes
-	// Reviews is the post-call-review store (readmodels-backed; the
-	// automatic review's durable artifact slot, issue #8). Nil: test
-	// compositions only — the artifact endpoints answer 503 and the
-	// job skips the writes.
-	Reviews *readmodels.Reviews
+	Notes readmodels.NotesGate
+	// Reviews is the post-call-review store (the readmodels.ReviewsGate
+	// seam, journal-backed since SUPERB Phase 4; the automatic review's
+	// durable artifact slot, issue #8). Nil: test compositions only —
+	// the artifact endpoints answer 503 and the job skips the writes.
+	Reviews readmodels.ReviewsGate
 	// TextAgent is the OPTIONAL supervised text-agent seam (the stack's
 	// review API). Nil: the summarize endpoint answers 404 — a client
 	// reads that as "this server does not draft".
@@ -86,16 +91,23 @@ type Deps struct {
 	// Nil or disabled: the routes answer 404 (a native shell reads
 	// that as "this server does not ring closed apps").
 	Push *push.Fanout
-	// Devices is the registered-device store (readmodels-backed;
-	// present whenever the composition built the engine).
-	Devices *readmodels.PushDevices
-	// Dials is the dial-cooldown window store (readmodels-backed;
-	// present whenever the composition built the engine). Nil: test
-	// compositions only — the gate answers 503.
-	Dials *readmodels.DialWindows
+	// Devices is the registered-device store (journal-backed since
+	// SUPERB Phase 3; the engine store is the import source).
+	Devices readmodels.PushDeviceGate
+	// Dials is the dial-cooldown seam as the handlers see it (the
+	// readmodels.DialGate interface — engine-backed or journal-backed,
+	// interchangeable). Nil: test compositions only — the gate answers
+	// 503.
+	Dials readmodels.DialGate
 	// DialCooldown is the advisory window length (issue #7). Zero:
 	// the gate route 404s and the island never asks.
 	DialCooldown time.Duration
+	// IslandLatency is the OPTIONAL beacon sink behind
+	// POST /api/metrics/latency (the measure-first latency design):
+	// the server-owned histogram recorder. Nil or disabled: the route
+	// answers a terse 404 (the island reads that as "this server does
+	// not measure" and stays silent — it never retries a beacon).
+	IslandLatency IslandBeaconSink
 	// Notify turns a service-layer fact into the server's SSE
 	// projection (the Notifier — the ONE notification-policy home).
 	// The review job runs detached from any request, so it needs an

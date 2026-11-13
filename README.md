@@ -6,7 +6,8 @@ page, one login (your PBX extension and directory password). No plugin, no
 app install, no CDN, strict same-origin CSP.
 
 The SIP call UI is a proven [sip.js](https://github.com/onsip/SIP.js) 0.21
-island (multi-line calls, blind/attended transfer, DTMF, reconnect
+island (multi-line calls, blind transfer, attended transfer (client half; the
+network bridge is only proven once your PBX dialplan handles `Replaces`), DTMF, reconnect
 watchdog, ICE diagnostics); everything around it — threads, faxes,
 voicemail, history, contacts, live updates — is server-rendered
 [templ](https://github.com/a-h/templ) + [HTMX](https://htmx.org), stored
@@ -20,14 +21,15 @@ but usable against any SIP/WebSocket PBX (FreeSWITCH/sofia or compatible).
 
 | Capability      | Notes                                                                                                                                                                                                                                                                                    |
 | --------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Phone calls     | Multi-line (N-deep ring queue + call dock), hold/focus/mute, blind + attended transfer, DTMF keypad; ended calls keep a post-call card (freeform note, optional AI summarize → draft SMS)                                                                                                |
+| Phone calls     | Multi-line (N-deep ring queue + call dock), hold/focus/mute, blind transfer + an attended-transfer REFER (client half; the bridge needs `Replaces` in the dialplan); ended calls keep a post-call card (freeform note, optional AI summarize → draft SMS)                                |
 | Resilience      | Bounded reconnect watchdog with re-registration; live calls survive                                                                                                                                                                                                                      |
-| Call comfort    | Dial typeahead from your contacts, call state chip, missed-call badge, audio output picker for multi-output desks                                                                                                                                                                        |
+| Call comfort    | Dial typeahead from your contacts, call state chip, missed-call badge, audio output picker for multi-output desks (the chosen device carries the call audio AND the locally generated ring tones), live-call context beside the island when the CRM knows the caller                     |
 | SMS & MMS       | Threads with unread badges, attachments in/out, delivery receipts, live updates, search over remote + message bodies; pin/mute/archive a conversation, quick reply snippets, optimistic send with retry                                                                                  |
 | Fax             | Send PDFs, receive documents, per-job status timeline, resend failed jobs, download; optional fire-and-forget Paperless-ngx archive of inbound faxes. **Per-deployment**: a server with no fax lane hides the send form and says so (`fax.send` / `fax.receive`, see _Fax capabilities_) |
 | Voicemail       | List, play (inline scrubber + speed control), delete — straight from the PBX's per-extension API                                                                                                                                                                                         |
 | Call history    | Server-side CDR records through the same API; outcome filters (missed/answered), day grouping, shareable filter URLs; per-call notes + reassembled live transcripts with search                                                                                                          |
 | Contacts        | Shared (config) + personal (per extension), vCard import/export, click-to-dial                                                                                                                                                                                                           |
+| Reports         | A pure fold of the same call records History lists: talk time, calls by direction and outcome, the per-day and busiest-hour ladders, the contacts that consumed the time, and an optional weekly talk-time budget as one bar (`reports.weekly_talk_budget`)                              |
 | Data export     | One session-gated download (Settings tab) zips every thread, fax job and personal contact of the signed-in extension                                                                                                                                                                     |
 | TURN auth       | Optional short-lived coturn REST credentials derived per response (`turn_rest.secret`) — long-lived TURN passwords never ship                                                                                                                                                            |
 | Live updates    | Per-extension SSE feed: threads, open transcripts, fax list, voicemail                                                                                                                                                                                                                   |
@@ -69,10 +71,10 @@ config file) and `/health` serves a live operator dashboard — check
 cards over SSE (go-health-dashboard), the container's health checks
 (sqlite, blob-dir, plus the dashboard's own pusher staleness as a
 non-critical warn), a status trend, and JSON on `Accept:
-application/json`. The page is CSP-strict: per-request nonces, the
-Datastar SDK and its stylesheet served same-origin from the binary
-(`unsafe-eval` is scoped to this subtree only, because the SDK compiles
-its expressions). Probe aliases live at `/health/livez`,
+application/json`. The page is CSP-strict: per-request nonces, no
+`unsafe-eval` anywhere, and the Datastar SDK + its stylesheet served
+same-origin from the binary (the SDK compiles its expressions from the
+nonce stamped on the page root, dashboard v0.13.3). Probe aliases live at `/health/livez`,
 `/health/readyz`, `/health/startupz` — same probe as the root triple,
 never a second truth. Treat the subtree like the probe triple in front
 of it: it is an operator surface, so fence it. Two fronts already do the
@@ -142,6 +144,7 @@ design and are exempt.
 | `turn_rest.ttl`                         | `48h`                        | Validity window of the derived TURN credentials (per-response freshness; the pair expires with the username's unix timestamp)                                                                                                                                                                                                                                                                                                                                             |
 | `contacts`                              | _empty_                      | Shared directory entries (`name`, `number`); a number with no dialable characters fails the boot naming the entry                                                                                                                                                                                                                                                                                                                                                         |
 | `dial.cooldown`                         | `0` (off)                    | Advisory per-(extension, remote) redial cooldown (a duration, e.g. `2h`): every dial asks `POST /api/dials` first; a remote inside its window gets the state line (last call age, time left) with a one-shot inline **Dial anyway** override. Off = no route, no ask, byte-identical product; the gate advises, it never traps (404/unreachable dials anyway)                                                                                                             |
+| `reports.weekly_talk_budget`            | `0` (no bar)                 | Talk time the current week may spend, rendered as one bar under the Reports tab's week headline (a duration, e.g. `10h`). Zero renders no bar — the tab still reports talk time                                                                                                                                                                                                                                                                                           |
 | `identities`                            | _empty_                      | Extension → presented number (DID) shown as the user's own number (header, whoami, composers); display-only — a key that isn't a normalized extension fails the boot naming the key                                                                                                                                                                                                                                                                                       |
 | `gateway.mode`                          | `loopback`                   | `loopback` or `webhook`                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | `gateway.webhook_url`                   | _empty_                      | Provider base URL in webhook mode (required there)                                                                                                                                                                                                                                                                                                                                                                                                                        |
@@ -155,8 +158,11 @@ design and are exempt.
 | `crm.token`                             | _empty_                      | Bearer token of the CRM's machine API (`-api-token` there); both keys together or neither                                                                                                                                                                                                                                                                                                                                                                                 |
 | `crm.token_file`                        | _empty_                      | Read the CRM bearer from a runtime file (the NixOS module's systemd `LoadCredential` lane) instead of `crm.token`; at most one of the two may be set                                                                                                                                                                                                                                                                                                                      |
 | `crm.contact_url`                       | _empty_ = no links           | Deep-link template into the CRM's own UI; `{id}` is replaced with the CRM contact id (e.g. `https://crm.example/contacts/{id}`). Needs `crm.url`; a template without `{id}` refuses the boot                                                                                                                                                                                                                                                                              |
+| `crm.create_url`                        | _empty_ = no affordance      | Deep-link template into the CRM's NEW-CONTACT form for unknown callers; `{phone}` is replaced with the caller's dialable number (e.g. `https://crm.example/contacts/new?phone={phone}`). Needs `crm.url`; a template without `{phone}` refuses the boot. Opens in a new tab; the phone still stores no CRM record                                                                                                                                                         |
+| `crm.ca_file`                           | _empty_ = system roots       | PEM bundle that vouches for the CRM vhost's TLS chain, trusted by the CRM client ALONE (a private-CA CRM without host-wide `security.pki` or `SSL_CERT_FILE` trust). Needs `crm.url`; a file holding no certificate refuses the boot                                                                                                                                                                                                                                      |
 | `paperless.url`                         | _empty_ = disabled           | Paperless-ngx base URL for the optional inbound-fax archive (e.g. `http://127.0.0.1:2280`); both keys together or neither                                                                                                                                                                                                                                                                                                                                                 |
 | `paperless.token`                       | _empty_                      | Paperless-ngx API token (Profile → My Profile → API token)                                                                                                                                                                                                                                                                                                                                                                                                                |
+| `paperless.token_file`                  | _empty_                      | Read the Paperless bearer from a runtime file (the systemd `LoadCredential` lane, same as `crm.token_file`) instead of `paperless.token`; at most one of the two may be set                                                                                                                                                                                                                                                                                               |
 | `asr.provider`                          | `openai`                     | Provider kind: `openai` (any `/v1/audio/transcriptions` server), `whispercpp` (native whisper.cpp `/inference` server), or `google` (Cloud Speech-to-Text V2)                                                                                                                                                                                                                                                                                                             |
 | `asr.url`                               | _empty_ = disabled           | OpenAI wire: base URL of the provider (e.g. `http://127.0.0.1:8081`); a URL alone enables. Google wire: optional endpoint override (empty derives the `europe-west3` regional endpoint)                                                                                                                                                                                                                                                                                   |
 | `asr.token`                             | _empty_                      | OpenAI wire: optional bearer credential (a token WITHOUT a URL fails closed). Google wire: API key sent as `x-goog-api-key`                                                                                                                                                                                                                                                                                                                                               |
@@ -235,6 +241,28 @@ Example file:
 }
 ```
 
+## Reports tab
+
+History answers "what happened"; Reports answers "what is this adding
+up to". It is a pure projection over the same call records the History
+tab lists (`GET /history` on the operator phone API, one page of up to
+500 records), folded by `internal/reports`: total talk time, call counts
+split by direction (in/out) and outcome (answered/missed — two
+independent axes, so an outbound call that never connected is neither),
+the per-day ladder, the busiest hours, and the contacts that consumed
+the most time. Top contacts are named through the CRM when the
+integration is configured.
+
+Nothing is stored: the numbers are reproducible from the same records,
+which is why the tab needs no read model and no rebuild step. Calls
+whose start timestamp cannot be parsed still count in the totals and the
+contact ranking and are reported as "records without a readable
+timestamp", so the time ladders are never silently short.
+
+Set `reports.weekly_talk_budget` (e.g. `10h`) to get the feedback a goal
+gives: the week's talk time against the budget, flagged when the week
+overspends instead of merely clamping the bar.
+
 ## Integration contracts
 
 ### Ledger CRM (optional)
@@ -258,6 +286,15 @@ CRM must run with `-api-token <same-token>`):
   link into the CRM's own contact page, opened in a new tab so the SIP
   island is never unloaded. Unset = plain names, byte-identical to a
   deployment without links; a number with no CRM match stays raw text.
+- **Live call context** (`GET /partials/live-context`): while a call is up,
+  the slot under the island shows who is on the line and the same
+  outstanding-work line the conversation strip renders — company, open
+  deals, the next follow-up, the last touch. The shell asks once per remote
+  and empties the slot when the last call ends; every degraded answer (seam
+  off, unknown number, CRM down or without the product) is an EMPTY body, so
+  the slot never holds an empty shell, a spinner or an error. Session-gated:
+  the answer is resolved with the server's CRM token, so it is never an
+  anonymous enumeration surface for contact names.
 - **Contact context** (`GET /api/contacts/{id}/context` on the CRM): opening
   a conversation with a known contact shows one quiet line of what is
   outstanding, their company, the deals in flight with values, the open
@@ -272,9 +309,20 @@ no CRM records (the in-process cache is a render-time memo, not a
 replica), never creates contacts, and renders each surface exactly as well
 as before when the CRM is unreachable.
 
+- **Private CA** (`crm.ca_file`): a CRM behind a certificate from a
+  private authority (the usual `*.cloud` vhost) needs that CA to be
+  trusted. Pointing `crm.ca_file` at the CA bundle extends the trust
+  store for THIS client only — the webphone's other outbound TLS (the
+  OIDC issuer, the Paperless archive, the ASR provider) keeps the
+  system roots untouched, which host-wide `security.pki` or a
+  process-wide `SSL_CERT_FILE` cannot promise. The bundle is additive
+  (system roots stay valid), read and parsed at boot, and a path that is
+  missing or certificate-free refuses the boot with `crm.ca_file`.
+
 Enable it on both sides: webphone gets `crm.url` + `crm.token`, the CRM
 gets `-api-token <same value>` (its machine API is unmounted without
-that flag).
+that flag). The NixOS module wires all three (plus `crm.caFile`) through
+`services.telephony.webphone.crm`.
 
 ### Paperless-ngx fax archive (optional)
 
@@ -314,25 +362,39 @@ failed job carrying the provider's own reason, never as a fake success
 (only the `loopback` dev gateway resolves instantly, and that mode is
 documented as a demo).
 
+### Signing in
+
+**`/login` is the front door in every mode.** An anonymous visit to the
+app root redirects there (303); the page carries the extension +
+password form in EVERY deployment — bare when the passkey identity
+layer is off (the primary method), one "Use extension and password
+instead" disclosure down when it is on (the break-glass lifeline: the
+phone never depends on the IdP or on a passkey being present) — plus a
+"Continue to Pocket ID" door when the OIDC seam is configured. The
+form POSTs `/api/session` (which directory-verifies before minting;
+loopback dev skips the verification) and lands back on the app, where
+the phone REGISTERs — the same resume path every sign-in method takes.
+The remembered extension (`remember extension on this device`) stores
+the extension under localStorage — never the password. A live session
+visiting `/login` bounces home (`303 /`). The page renders styled
+without the shell (its own Tailwind build, `/assets/login.css`) and is
+the single HTML surface with a per-request nonce CSP; everything else
+keeps the strict no-inline-scripts policy.
+
 ### Passkey sign-in (optional)
 
-With `auth.passkey.*` configured (OFF by default — zero config keeps
-the login card byte-identical), the webphone embeds the
+With `auth.passkey.*` configured (OFF by default — the ceremony UI
+joins the `/login` front door only when on), the webphone embeds the
 cqrs-htmx/usermgmt identity layer in-process and offers email + passkey
-logins next to the extension form. The passkey front door is the
-cqrs-htmx `loginpage` library page at **`/login`** (published tag
-v4.13.0, chosen so it rides the exact library versions webphone
-already pins): the island login card renders a "Sign in with passkey"
-link to it, and a live session visiting `/login` bounces home (`303
-/`). The page carries the ceremony UI only — no registration
-(enrollment stays CLI-token-gated at `/enroll`) and no OAuth2 buttons
-(the card's Pocket ID link stays the one SSO door). It is the single
-HTML surface with a per-request nonce CSP (`script-src 'self'
-'nonce-…'`; every other surface keeps the strict no-inline-scripts
-policy) and links its own standalone Tailwind build
-(`/assets/login.css`), so it renders styled without the shell. Its
-theme script follows the OS `prefers-color-scheme` — a user who forced
-a theme in the shell may see the OS theme on `/login`.
+sign-in on **`/login`** (the cqrs-htmx `loginpage` library page, pin
+`loginpage/v4 v4.18.0` — the release that made `Service` optional and
+added the consumer sign-in section webphone hosts the extension form
+in). The page carries the ceremony UI only — no registration
+(enrollment stays CLI-token-gated at `/enroll`) and no library OAuth2
+buttons (the Pocket ID door inside the same page's sign-in section is
+the one SSO entry). Its theme script follows the OS
+`prefers-color-scheme` — a user who forced a theme in the shell may see
+the OS theme on `/login`.
 
 - **Login order is inverted**: `POST /api/auth/webauthn/login/finish`
   (the usermgmt-canonical path the library's embedded JS posts to;
@@ -372,9 +434,9 @@ a theme in the shell may see the OS theme on `/login`.
 
 ### OIDC / SSO sign-in (optional)
 
-With `auth.oauth2.*` configured (OFF by default — zero config keeps the
-login card byte-identical), the card gains a "Sign in with Pocket ID"
-entry: `GET /api/auth/oauth2/begin` mints state + nonce + PKCE verifier
+With `auth.oauth2.*` configured (OFF by default — the Pocket ID door on
+the login page appears only when on), `GET /api/auth/oauth2/begin`
+mints state + nonce + PKCE verifier
 into short-lived path-scoped cookies and redirects to the IdP;
 `GET /api/auth/oauth2/callback` verifies them, exchanges the code,
 verifies the ID token (signature, issuer, audience, expiry, nonce), maps
@@ -382,9 +444,10 @@ the verified email through the SAME `auth.users` mapping the passkey
 mode uses, verifies the sourced SIP directory password against the PBX
 and mints the one webphone session. OIDC tokens are used once and never
 reach the browser; discovery is lazy inside the app, so a dead IdP costs
-a login (with an honest reason code on the card) and never the boot.
-The extension login stays available, so the phone is never locked by an
-IdP outage.
+a login (the callback redirects to `/login?sso_error=<code>` and the
+login page renders the honest sentence in its alert) and never the boot.
+The extension login stays one disclosure away on the same page, so the
+phone is never locked by an IdP outage.
 
 **NixOS module:** `services.webphone.oauth2.*` is the typed front. The
 client secret is handed to systemd via `LoadCredential` — systemd copies
@@ -626,17 +689,22 @@ request_body {
 ### Backups and restore
 
 The state directory (`data_dir`, default `/var/lib/webphone`) holds
-everything: `webphone.db` (SQLite), `readmodels.db` (the engine-side
-read models: contacts, snippets, faxes, call transcripts), and `files/`
-(the content-addressed blob tree for attachments and fax documents).
-Back up all of them together.
+everything: `webphone.db` (SQLite: the remaining hand-ladder tables —
+sessions and the transitional import markers), `system.db` (the
+command/event journal: every domain aggregate's streams, projections,
+checkpoints, dedup windows and the dead-letter store — the user-data
+home since the SUPERB phases), and `files/` (the content-addressed
+blob tree for attachments and fax documents). Back up all of them
+together. (`readmodels.db` is retired: deployments upgrading through
+v2.10+ had their engine-side history imported into the journal once;
+the leftover file is an inert orphan and is no longer backed up.)
 
 Online, per snapshot (no downtime — what `services.webphone.backup.*`
 in the NixOS module wires as a daily timer):
 
 ```console
 sqlite3 /var/lib/webphone/webphone.db ".backup '/var/lib/webphone-backup/webphone.db'"
-sqlite3 /var/lib/webphone/readmodels.db ".backup '/var/lib/webphone-backup/readmodels.db'"
+sqlite3 /var/lib/webphone/system.db ".backup '/var/lib/webphone-backup/system.db'"
 rsync -a --delete /var/lib/webphone/files/ /var/lib/webphone-backup/files/
 ```
 
@@ -651,11 +719,12 @@ python3 scripts/webphone-backup-drill.py   # end-to-end restore drill (boots a t
 ```
 
 1. stop the service,
-2. copy `webphone.db`, `readmodels.db` and `files/` back into the data
-   directory,
+2. copy `webphone.db`, `system.db` and `files/` back
+   into the data directory,
 3. start the service — tab sessions live in the SQLite database, so the
    restored session rows keep working (signed-in browsers stay signed
-   in); everything else renders straight from the restored store.
+   in); the journal replays its projections on boot; everything else
+   renders straight from the restored store.
 
 Dated history (point-in-time restore): set
 `services.webphone.backup.retentionDays` (default `null` = single
@@ -665,7 +734,7 @@ tree, unchanged blobs hardlinked against the previous snapshot, so a
 month of history typically costs little more than one snapshot) and
 deletes snapshot directories older than the given days. Restore from a
 specific day: stop the service, copy `snapshots/<date>/webphone.db`,
-`snapshots/<date>/readmodels.db` and `snapshots/<date>/files/` back into
+`snapshots/<date>/system.db` and `snapshots/<date>/files/` back into
 the data directory, start it.
 
 Keep a copy OFF the machine: the snapshot directory (`destDir`) lives on

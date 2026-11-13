@@ -49,6 +49,12 @@ var ErrNotFound = errors.New("crm has no contact for this number")
 // tab render hang.
 const requestTimeout = 3 * time.Second
 
+// readCap bounds one buffered CRM answer (1 MiB). The lookup and
+// context payloads are small JSON; anything bigger is an upstream
+// fault and answers crm.too_large (Transient) instead of buffering
+// without bound.
+const readCap = 1 << 20
+
 // Client talks to one Ledger CRM machine API (mounted with -api-token).
 // branching-flow COMPOSITION_mixin (baselined): the client-chokepoint
 // idiom (same shape as pbx/asr on purpose — the do() chokepoint
@@ -60,8 +66,9 @@ type Client struct {
 }
 
 // NewClient builds the client; baseURL like "http://127.0.0.1:8080". An
-// empty baseURL means "disabled": every call returns ErrDisabled.
-func NewClient(baseURL, token string) (*Client, error) { //nolint:branching-flow // single composition-root caller; both-or-neither validated at boot
+// empty baseURL means "disabled": every call returns ErrDisabled. caFile
+// (optional) is a PEM bundle that vouches for the CRM vhost's TLS chain.
+func NewClient(baseURL, token, caFile string) (*Client, error) { //nolint:branching-flow // single composition-root caller; both-or-neither validated at boot
 	if baseURL == "" {
 		return &Client{}, nil
 	}
@@ -71,10 +78,15 @@ func NewClient(baseURL, token string) (*Client, error) { //nolint:branching-flow
 		return nil, errorfamily.WrapRejectionf(err, "crm.url", "parse crm url %q", baseURL)
 	}
 
+	httpClient, err := newHTTPClient(caFile)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Client{
 		base:   parsed,
 		token:  token,
-		client: &http.Client{Timeout: requestTimeout},
+		client: httpClient,
 	}, nil
 }
 
@@ -132,6 +144,12 @@ func (c *Client) do(
 	}
 
 	req.Header.Set("Authorization", "Bearer "+c.token)
+	// Accept is not decoration: the CRM's machine API shares an origin with its
+	// HUMAN UI in some deployments, and a content-negotiating proxy is free to
+	// answer HTML when the client does not ask for JSON. Without this header a
+	// 200 HTML page would reach the decoder and surface as a decode error that
+	// reads like a CRM bug (pinned by TestContactContextRequestShapeIsPinned).
+	req.Header.Set("Accept", "application/json")
 	if len(body) > 0 {
 		req.Header.Set("Content-Type", "application/json")
 	}
@@ -183,8 +201,16 @@ func (c *Client) LookupByPhone(ctx context.Context, number string) (Person, erro
 
 	var buf bytes.Buffer
 
-	if _, err := buf.ReadFrom(resp.Body); err != nil {
+	// readCap bounds the buffered answer (the same cap at both CRM read
+	// sites): the lookup/context payloads are small JSON, so anything
+	// bigger is an upstream fault — it must not balloon the process, and
+	// it gets its own Transient verdict (crm.too_large) rather than a
+	// confusing truncation-induced decode error.
+	if _, err := buf.ReadFrom(io.LimitReader(resp.Body, readCap+1)); err != nil {
 		return Person{}, errorfamily.WrapTransientf(err, "crm.read", "crm: read response")
+	}
+	if buf.Len() > readCap {
+		return Person{}, errorfamily.NewTransient("crm.too_large", "crm: lookup response exceeds the read cap")
 	}
 
 	var parsed lookupResponse

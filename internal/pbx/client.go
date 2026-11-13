@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/go-error-family"
+	"github.com/larsartmann/webphone/internal/httpclient"
 )
 
 // Client talks to one phone API base URL.
@@ -38,7 +39,7 @@ func NewClient(baseURL string) (*Client, error) {
 	}
 	return &Client{
 		base:   parsed.JoinPath("/phone-api"),
-		client: &http.Client{Timeout: 15 * time.Second},
+		client: httpclient.Isolated(15 * time.Second),
 	}, nil
 }
 
@@ -64,9 +65,12 @@ var ErrUnauthorized = errors.New("phone api rejected the credentials")
 // Enabled reports whether a phone API is wired up.
 func (c *Client) Enabled() bool { return c != nil && c.base != nil }
 
-// ResolvePath builds the absolute upstream URL for a /phone-api-relative
-// path (without the "/phone-api" prefix), used by the proxy.
-func (c *Client) ResolvePath(rest, rawQuery string) string { //nolint:branching-flow // the documented join-path-and-query-separately home (url.JoinPath percent-encodes '?'); the names carry the contract
+// UpstreamURL builds the absolute upstream URL for a /phone-api-relative
+// path (without the "/phone-api" prefix), used by the proxy. (Named for
+// the URL it returns: constants.ResolvePath is the canonical
+// filesystem-path helper of the same shape, and delegation is
+// impossible across URL-vs-filesystem semantics.)
+func (c *Client) UpstreamURL(rest, rawQuery string) string { //nolint:branching-flow // the documented join-path-and-query-separately home (url.JoinPath percent-encodes '?'); the names carry the contract
 	target := c.base.JoinPath(rest).String()
 	if rawQuery != "" {
 		target += "?" + rawQuery
@@ -81,7 +85,7 @@ func (c *Client) HTTPClient() *http.Client {
 	if c.client != nil {
 		return c.client
 	}
-	return &http.Client{Timeout: 15 * time.Second}
+	return httpclient.Isolated(15 * time.Second)
 }
 
 // Credentials are the extension's SIP credentials (Basic auth).
@@ -99,6 +103,10 @@ type CDR struct {
 	DestinationNumber string `json:"destination_number"`
 	Start             string `json:"start"`
 	Billsec           int    `json:"billsec"`
+	// HangupCause is FreeSWITCH's own verdict vocabulary (USER_BUSY,
+	// NO_ANSWER, …) — the Reports tab renders it verbatim. Empty on
+	// rows the API did not populate.
+	HangupCause string `json:"hangup_cause"`
 }
 
 // HistoryPage is the /history response shape.

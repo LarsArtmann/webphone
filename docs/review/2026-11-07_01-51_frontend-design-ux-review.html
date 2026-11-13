@@ -1,0 +1,2790 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>WebPhone Frontend — Design &amp; UX Review (First Pass)</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS LIGHT — Editorial template
+         Design language: form follows function. Primary colors on warm paper.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Light) --- */
+        --color-paper: #f4f4f0;
+        --color-paper-2: #ffffff;
+        --color-paper-3: #e8e8e2;
+        --color-ink: #111111;
+        --color-red: #e63946;
+        --color-blue: #1d3557;
+        --color-yellow: #f4d35e;
+        --color-hairline: rgba(17, 17, 17, 0.14);
+        --color-hairline-strong: rgba(17, 17, 17, 0.3);
+
+        /* --- Semantic layer (shared vocabulary with dark template) --- */
+        --surface: var(--color-paper);
+        --surface-raised: var(--color-paper-2);
+        --surface-sunken: var(--color-paper-3);
+        --text: var(--color-ink);
+        --text-muted: rgba(17, 17, 17, 0.72);
+        --text-faint: rgba(17, 17, 17, 0.5);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-red);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber: var(--warning);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 22%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 12%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 12%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px;
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .sidebar a {
+        font-size: 0.86rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-left: 4px solid transparent;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      h1 {
+        font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+        line-height: 1.05;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px solid var(--text);
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--text);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin-bottom: 0.9rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0 0 1rem;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.6rem;
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+      }
+      .tag.amber {
+        background: var(--warning);
+        border-color: var(--warning);
+        color: var(--text);
+      }
+      .tag.teal {
+        background: var(--solution);
+        border-color: var(--solution);
+        color: var(--surface);
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 90px;
+        margin-bottom: 1.2rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        right: 180px;
+        width: 64px;
+        height: 64px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 26px;
+        right: 90px;
+        width: 56px;
+        height: 56px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-left: 32px solid transparent;
+        border-right: 32px solid transparent;
+        border-bottom: 56px solid var(--warning);
+      }
+      .hero-shapes .bar {
+        position: absolute;
+        bottom: 0;
+        right: 230px;
+        width: 100px;
+        height: 14px;
+        background: var(--text);
+      }
+
+      /* --- Scorecard / stat cards --- */
+      .scorecard,
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        margin: 1.5rem 0 2rem;
+        border: 3px solid var(--text);
+      }
+      .score-card,
+      .stat-card {
+        padding: 1.3rem 1rem;
+        text-align: center;
+        border-right: 3px solid var(--text);
+        background: var(--surface-raised);
+      }
+      .score-card:last-child,
+      .stat-card:last-child {
+        border-right: none;
+      }
+
+      .score,
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.6rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-card .label,
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 0.5rem;
+      }
+      /* Semantic state classes — no nth-child decoration, no !important */
+      .score-good,
+      .stat-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .score-warn,
+      .stat-warn {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .score-bad,
+      .stat-bad {
+        background: var(--problem);
+        color: var(--surface);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.6rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid var(--text);
+        color: var(--text);
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: var(--warning);
+      }
+      .badge-medium {
+        background: var(--surface-sunken);
+      }
+      .badge-low {
+        background: var(--surface-raised);
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      /* --- Callouts --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-sunken);
+        font-size: 0.92rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-teal,
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 10%,
+          var(--surface-raised)
+        );
+      }
+      .callout-amber,
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 18%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Strengths --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.3rem;
+        line-height: 1.3;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+        border: 2px solid var(--text);
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--text);
+        color: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border-strong);
+      }
+      th:last-child {
+        border-right: none;
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+      }
+      td:last-child {
+        border-right: none;
+      }
+      tr:nth-child(even) td {
+        background: var(--surface-sunken);
+      }
+      table.compare td.yes {
+        color: var(--solution);
+        font-weight: 700;
+      }
+      table.compare td.no {
+        color: var(--problem);
+        font-weight: 700;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--text);
+        color: var(--surface);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        border: 2px solid var(--text);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--warning);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: #95e1d3;
+      }
+      .tok-comment {
+        color: rgba(244, 244, 240, 0.45);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #6eb5ff;
+      }
+      .tok-number {
+        color: var(--warning);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #6eb5ff;
+      }
+      .tok-punct {
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .tok-attr {
+        color: var(--warning);
+      }
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 2px solid var(--text);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--surface-sunken);
+        border: 1px solid var(--text);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1.1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.94rem;
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 3px solid var(--text);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .scorecard,
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-right: none;
+        }
+        .score-card:nth-child(1),
+        .stat-card:nth-child(1),
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-bottom: 3px solid var(--text);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+        .hero-shapes {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
+    <div class="top-bar">
+      <span>REPORT TYPE</span>
+      <span>YYYY-MM-DD</span>
+      <span>AUTHOR / TEAM</span>
+    </div>
+
+    <div class="layout">
+      <!-- Sidebar TOC (hidden below 1024px; use inline .toc if you prefer) -->
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">Summary</a>
+          <a href="#scorecard">Scorecard</a>
+          <a href="#strengths">Strengths</a>
+          <a href="#findings">Findings</a>
+          <a href="#proposal">Fix queue</a>
+          <a href="#ia">IA &amp; layout</a>
+          <a href="#roles">Roles &times; UI</a>
+          <a href="#flows">User flows</a>
+          <a href="#appendix">Appendix</a>
+        </nav>
+      </aside>
+
+      <!-- Main content -->
+      <main class="main">
+        <!-- Hero -->
+        <header class="hero">
+          <!-- Optional Bauhaus signature: geometric shape cluster. Remove for quieter hero. -->
+          <div class="hero-shapes">
+            <div class="bar"></div>
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="eyebrow">FRONTEND DESIGN &amp; UX REVIEW &middot; 2026-11-07</div>
+          <h1>WebPhone — the operator desk, reviewed</h1>
+          <p class="subtitle">
+            A whole-product pass over the served UI: both stylesheets, every
+            panel view, the shell and island scripts, plus 24 live screenshots
+            from the visual harness. One systematic contrast defect, a
+            screen-reader layer with real gaps, and a design system that
+            mostly earns its discipline.
+          </p>
+          <div class="meta">
+            <span class="tag amber">Scope: all 9 tabs + island, light &amp; dark</span>
+            <span class="tag">Version: 2.9.0 (webphone 2.9.0)</span>
+            <span class="tag teal">Method: code + served bytes + screenshots</span>
+          </div>
+        </header>
+
+        <!-- Scorecard -->
+        <section id="scorecard" class="scorecard">
+          <div class="score-card score-good">
+            <div class="score">12</div>
+            <div class="label">Verified strengths</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">15</div>
+            <div class="label">Important findings</div>
+          </div>
+          <div class="score-card score-bad">
+            <div class="score">1</div>
+            <div class="label">AA contrast failure (dark)</div>
+          </div>
+          <div class="score-card">
+            <div class="score">67</div>
+            <div class="label">Findings: 20 carded + 47 matrix rows</div>
+          </div>
+        </section>
+
+        <!-- Summary -->
+        <section id="summary">
+          <h2><span class="num">00</span>Summary</h2>
+          <p>
+            WebPhone's frontend is <strong>far better than “works”</strong> — it
+            has an actual point of view. The desk-phone vernacular (one teal
+            accent, flat rows in quiet panels, a single “line light” motif
+            echoed across three indicators, keys that answer the hand) is
+            applied with a token discipline most design systems never reach,
+            and the honesty doctrine — the UI never shows a state the network
+            has not confirmed — is visible in the shipped product, not just in
+            docs. The visual harness passed all its layout assertions across
+            viewports, and every theme pair I measured passes WCAG contrast —
+            with exactly one systematic exception.
+          </p>
+          <p>
+            That exception is the finding that matters: <strong>in the dark
+            theme, every accent-filled surface fails WCAG AA for its own
+            text</strong> — the primary Call/Send buttons, the outbound SMS
+            bubbles, and the failed-send bubble all print near-white ink on
+            bright green/red fills at 1.9–3.2:1, and the hover state is the
+            worst of all. One token flip fixes the entire class. Behind it
+            sits a second, quieter accessibility story: four row surfaces are
+            marked <code>role="img"</code> so screen readers never see their
+            content, dial failures render in a region no screen reader
+            watches, focus is discarded at every island transition, and the
+            command palette is both keyboard-only and missing the combobox
+            wiring. Rounding out the queue: an SMS counter that undercounts
+            emoji, a 30-second poll that can eat an unsent reply, and a
+            handful of consistency gaps (a meta theme-color that drifted off
+            the palette, one service row missing its dot, English mixing
+            12-hour and 24-hour clocks between panels, empty states whose
+            helpfulness varies by tab).
+          </p>
+          <div class="callout callout-amber">
+            <strong>The bottom line</strong>
+            Ship-quality visual system with two fix tranches: the dark
+            <code>--on-accent</code> flip (one token, kills the only WCAG AA
+            failure) and an island/screen-reader pass (focus-on-replace, live
+            regions, palette wiring, ring-time names). Nothing here blocks a
+            release; both tranches are a day or two of focused work.
+          </div>
+        </section>
+
+        <!-- Strengths -->
+        <section id="strengths">
+          <h2><span class="num">&#9670;</span>What's already excellent</h2>
+          <p>
+            Before the criticism: acknowledge what works. This builds trust and
+            keeps the report from reading like a pure complaint list.
+          </p>
+
+          <div class="strengths">
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>A real design language, not a template</strong>
+                <span
+                  >Desk-phone vernacular executed deliberately: one teal
+                  accent, flat rows in quiet panels (a hairline earned on
+                  hover, never box-in-box), keypad keys with gradient faces and
+                  a press answer, and one "line light" motif — the glowing LED
+                  dot — echoed exactly three times (registration pill, the
+                  <code>#wp-sse-live</code> dot, call-state dots). The CSS
+                  comments argue their choices; the product matches them.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Contrast discipline, measured</strong>
+                <span
+                  >Every measured token pair passes WCAG except the one
+                  systematic dark-fill case in Finding&nbsp;1: muted text 6.9:1
+                  dark / 5.9:1 light, warn 8.3 / 5.4, danger 5.9 / 4.8,
+                  avatar and accent combinations all above 5:1. This is
+                  engineered, not lucky.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Layout asks the container, not the viewport</strong>
+                <span
+                  >The <code>.wp-main-col</code> container query
+                  (<code>tabcol</code>) is the modern-correct architecture for
+                  a collapsible side panel, and the harness proved it end to
+                  end: collapse, persistence across reload, and the Messages
+                  master&ndash;detail split threshold all PASS at six viewport
+                  widths. <code>:has(.call-card)</code> force-re-expands the
+                  island so a live call can never hide &mdash; state encoded in
+                  CSS, not JS bookkeeping.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Honest UI is visible in the product</strong>
+                <span
+                  >The offline banner flips exactly with registration truth;
+                  the fax tab offers a compose form only when the server can
+                  send; Settings reports "caller audio is processed on this
+                  server" next to the transcription state; the 404 echoes the
+                  mistyped path and hands back the way home. The written
+                  doctrine is observable in served bytes.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Reduced motion is complete, including JS-triggered
+                classes</strong>
+                <span
+                  >Beyond the global guard, the island separately kills the
+                  state pulses, the key-sent flash and the held-blip &mdash;
+                  every animation the JS can set has a CSS reduced-motion
+                  answer, so the JS itself never animates.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The root font size is a percentage, and the whole
+                scale rides rem</strong>
+                <span
+                  ><code>html { font-size: 93.75% }</code> keeps every size
+                  tracking the user's browser preference (a px root would pin
+                  it), <code>font-synthesis: none</code> prevents fake bold,
+                  and fluid <code>clamp()</code> display sizes stay inside the
+                  rem scale. Text-scaling users keep the layout.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Pre-paint state, storage-failure safe</strong>
+                <span
+                  ><code>theme-preload.js</code> applies theme, collapsed
+                  island and dismissed welcome before first paint (no flash,
+                  no layout snap) and a failed <code>localStorage</code> read
+                  simply rides the OS theme &mdash; private mode degrades
+                  gracefully.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The empty states teach</strong>
+                <span
+                  >Voicemail's seam-off empty state is the model: what it is
+                  ("Voicemail lives on the PBX"), who acts ("Ask the operator
+                  to enable the phone API"), and what happens after ("messages
+                  will appear here and in the phone panel"). Snippets, fax and
+                  the welcome intro all point at the next action.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The dial typeahead behaves like a real keyboard
+                control</strong>
+                <span
+                  >Arrow-key navigation, Enter to accept, Escape to dismiss,
+                  active-row highlighting &mdash; and the suggestion rows even
+                  carry the dial-cooldown window inline, so the state travels
+                  with the name. (The ARIA wiring has gaps &mdash; Finding&nbsp;12
+                  covers the palette &mdash; but the keyboard behavior itself is
+                  right.)</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Optimistic sends fail honestly</strong>
+                <span
+                  >A pending message renders as a dashed, dimmed bubble; a
+                  failed send keeps the text and attachments visible, repaints
+                  the bubble in the danger voice, and offers Retry and
+                  Dismiss in place &mdash; the draft is never lost to a
+                  network error. The island tests pin the whole
+                  transition.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Two languages, enforced parity</strong>
+                <span
+                  >Every string lives in the <code>i18n.go</code> dictionaries
+                  (or <code>defineMessages</code> on the island) under
+                  parity and unused-key tests, so a missing German string is a
+                  build failure, not a discovery. The German copy reads
+                  naturally where it was spot-checked; the stiffness items are
+                  small and listed in the matrix.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>State ladders make the invisible legible</strong>
+                <span
+                  >The delivery ladder gives queued, sent, delivered and
+                  failed distinct ink (delivered earns a deeper tone plus an
+                  underline &mdash; one more confirmation, one more visual
+                  step); the fax timeline draws its three-step progress as
+                  colored segments; a pending hold or resume pulses its dot
+                  while the re-INVITE is in flight and freezes when settled.
+                  States are visible, distinct, and honest about pending
+                  versus confirmed.</span
+                >
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Findings -->
+        <section id="findings">
+          <h2><span class="num">01</span>Findings</h2>
+          <p>These are the issues that need attention, ordered by impact.</p>
+
+          <!-- F1 -->
+          <div class="issue issue-critical" id="issue-1">
+            <span class="severity severity-critical"
+              >Defect &middot; WCAG AA failure, dark theme</span
+            >
+            <h3>
+              Every accent-filled surface prints unreadable ink in the dark
+              theme
+            </h3>
+            <div class="where">
+              app.css:23-26 + island/style.css:17-20 (token blocks) &middot;
+              button.wp-primary, island button.primary, .wp-bubble.wp-out
+            </div>
+            <p>
+              In the dark theme the accent fill is a bright green
+              (<code>--accent: #17a467</code>, hover <code>--accent-strong:
+              #3fd694</code>) while <code>--on-accent</code> stays white.
+              Measured: <strong>3.21:1</strong> white on #17a467 (fails the
+              4.5:1 AA bar for normal text), dropping to
+              <strong>1.87:1</strong> on hover &mdash; the button gets harder to
+              read the moment you reach for it. The same two tokens paint the
+              outbound SMS bubble (white body text 3.21:1; the timestamp/status
+              meta at 78% opacity falls to <strong>2.52:1</strong>) and the
+              failed-send bubble (white on <code>--danger</code> #ef6a5f,
+              3.04:1; its meta 2.46:1). This is the Send button, the Call
+              button, and every message the user sent &mdash; the most-read
+              surfaces in the product. The light theme passes everywhere
+              (white on #0e8752 = 4.56:1), so the defect is dark-only and
+              systematic: one token pair, five surfaces.
+            </p>
+            <pre><code>:root, :root[data-theme="dark"] {
+  --accent: #17a467;
+  --on-accent: #ffffff;   /* 3.21:1 on --accent — fails AA */
+}</code></pre>
+            <div class="callout callout-teal">
+              <strong>Fix: flip the dark theme's ink, not its brand</strong>
+              Keep the vivid dark-theme accent and switch dark
+              <code>--on-accent</code> to a dark ink (the <code>--bg</code>
+              value): 6.06:1 on <code>--accent</code>, 10.42:1 on
+              <code>--accent-strong</code> hover, 6.39:1 on
+              <code>--danger</code> &mdash; every filled surface passes at once,
+              and a lit key with a dark legend matches the hardware-phone
+              vernacular the island already speaks. The flip must land in BOTH
+              mirrored token blocks (app.css and island/style.css keep the
+              tokens in sync by rule). Alternative: darken dark
+              <code>--accent</code> to ~<code>#108351</code> (white 4.79:1) and
+              add a darker hover &mdash; more churn, dimmer brand.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T02):</strong> dark
+              <code>--on-accent</code> flipped to <code>#0b0d11</code> in both
+              mirrored token blocks; the light blocks now declare
+              <code>#ffffff</code> explicitly (the token moved from
+              theme-stable to theme-dependent in <code>tokens_test.go</code>,
+              which pins the mirror). Measured after:
+              <strong>6.06:1</strong> on <code>--accent</code>,
+              <strong>10.42:1</strong> hover, <strong>6.39:1</strong> on
+              <code>--danger</code>, meta 4.56&ndash;4.92:1 &mdash; all five
+              surfaces pass AA; light unchanged (4.56:1). login.css rebuilt
+              (it inlines app.css); the login page's filled buttons inherit
+              the same healed ink via its deliberate
+              <code>--color-white: var(--on-accent)</code> remap.
+            </div>
+          </div>
+
+          <!-- F2 -->
+          <div class="issue issue-important" id="issue-2">
+            <span class="severity severity-important"
+              >Important &middot; brand-color split brain</span
+            >
+            <h3>
+              The browser/PWA tint is a teal that exists nowhere in the app
+            </h3>
+            <div class="where">
+              layout.templ (ThemeColor/DarkThemeColor) &middot;
+              manifest.webmanifest (theme_color/background_color)
+            </div>
+            <p>
+              Both the meta <code>theme-color</code> and the manifest name
+              <code>#0f766e</code> &mdash; Tailwind's teal-700, a color the
+              design system never uses (the accents are <code>#17a467</code>
+              dark / <code>#0e8752</code> light). Installed as a PWA or viewed
+              on mobile, the browser chrome tint visibly disagrees with the UI
+              beside it. <code>background_color</code> /
+              <code>DarkThemeColor</code> use <code>#10161a</code> against the
+              real <code>--bg</code> <code>#0b0d11</code>, and the manifest
+              splash color is fixed dark even in light mode. Two homes carry
+              the wrong value in lockstep.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Point layout.templ and manifest.webmanifest at the real tokens:
+              <code>#0e8752</code>/<code>#17a467</code> for theme-color and
+              <code>#0b0d11</code> for the dark background &mdash; change both
+              files together, they are the same fact.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T03):</strong> ThemeColor now <code>#0e8752</code> / DarkThemeColor <code>#17a467</code>; the manifest's <code>theme_color</code>/<code>background_color</code> carry the same tokens, and <code>applyTheme</code> collapses the media-scoped metas to the forced scheme (restored on &ldquo;auto&rdquo;).
+            </div>
+          </div>
+
+          <!-- F3 -->
+          <div class="issue issue-important" id="issue-3">
+            <span class="severity severity-important"
+              >Important &middot; destructive-action ambiguity</span
+            >
+            <h3>
+              Icon-only actions lean on hover tooltips; destructive-looking
+              icons sit beside utility icons at equal weight
+            </h3>
+            <div class="where">
+              ThreadView head (pin/mute/archive trio) &middot; History
+              transcript rows (copy/download/delete trio) &middot;
+              <code>.wp-mini.wp-thread-flag</code>
+            </div>
+            <p>
+              The thread head and History rows render groups of icon-only
+              buttons whose names live in <code>title</code> tooltips (and
+              aria-labels). Tooltips are hover-only &mdash; keyboard and touch
+              users never see them &mdash; and the icons read ambiguously: the
+              archive glyph is a trash can one pixel-tongue away from delete,
+              at the same visual weight as copy and download. A misfire here
+              archives a conversation or deletes a note. Confirm dialogs exist
+              for contact removal; these rows have none.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              One of: visible text labels on hover-reach (a truncating label
+              like the island toggle already has), a confirm step for the
+              destructive member only, or visually differentiated weight for
+              the destructive action (the <code>.wp-mini.wp-danger</code> tint
+              exists &mdash; use it on the archive/delete glyph).
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T22):</strong> Archive-on moves ask once: a localized confirm (en+de) plus the <code>wp-danger</code> tint on the row/head archive buttons and History's delete.
+            </div>
+          </div>
+
+          <!-- F4 -->
+          <div class="issue issue-important" id="issue-4">
+            <span class="severity severity-important"
+              >Important &middot; settings row renders incomplete state</span
+            >
+            <h3>The CRM row is the only service row without a status dot</h3>
+            <div class="where">
+              internal/web/views/settings.templ:355 (<code>crmDetail</code>)
+            </div>
+            <p>
+              Every Settings service row pairs its state phrase with a glance
+              dot &mdash; green (<code>wp-service-on</code>) or muted
+              (<code>wp-service-off</code>). <code>crmDetail</code> emits only
+              the <code>wp-service-on</code> arm, so when the CRM is unset,
+              auth-failed or in setup, the row renders bare &mdash; verified in
+              the captured Settings screenshot, where five rows carry dots and
+              the CRM row does not. The row's four-state copy is deliberate;
+              only the dot is missing.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix (one line)</strong>
+              Add the off arm:
+              <code>templ.KV("wp-service-off", state != "connected")</code>.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T03):</strong> <code>crmDetail</code> carries the <code>wp-service-off</code> arm beside its siblings, so the strip reports a down CRM instead of silence.
+            </div>
+          </div>
+
+          <!-- F5 -->
+          <div class="issue issue-important" id="issue-5">
+            <span class="severity severity-important"
+              >Important &middot; consistency</span
+            >
+            <h3>English mixes 12-hour and 24-hour clocks between panels</h3>
+            <div class="where">
+              internal/web/views/helpers.go:168-197 (<code>formatFor</code>,
+              <code>formatClock</code>, <code>formatWhen</code>,
+              <code>fullStamp</code>)
+            </div>
+            <p>
+              In English, a message bubble says <code>1:45PM</code> (Kitchen
+              format), while a History row on the same screen says
+              <code>Nov 7, 00:45</code> (24-hour), and the hover stamp says
+              <code>Nov 7, 2026, 3:04PM</code> &mdash; three conventions, two
+              clock systems, one locale (verified in captured screenshots 04
+              and 09). German is consistently 24-hour everywhere, which makes
+              the English page the odd one. Times are glue users read dozens
+              of times a day; the mixed format reads as neglect every time.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Pick one English convention &mdash; Kitchen (<code>1:45PM</code>)
+              everywhere is the friendlier voice &mdash; and let
+              <code>formatWhen</code>'s English branch ride it.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T05):</strong> <code>formatStamp</code> renders one voice in English (<code>Jan 2, 3:04PM</code>), and the cooldown notice gained its &ldquo;just now&rdquo; branch (both languages).
+            </div>
+          </div>
+
+          <!-- F6 -->
+          <div class="issue issue-important" id="issue-6">
+            <span class="severity severity-important"
+              >Important &middot; promise the UI cannot keep</span
+            >
+            <h3>
+              "Prefill from AI draft" renders even when the server has no AI
+            </h3>
+            <div class="where">
+              History transcript rows &middot; the same row prints "AI review
+              not configured on this server."
+            </div>
+            <p>
+              A transcript row on a server without the agent seam shows the
+              line "AI review not configured on this server." and, two inches
+              below it, a <em>Prefill from AI draft</em> button. The panel
+              contradicts itself: one element says the capability is absent,
+              the next offers it. Pressing it on such a server fails after the
+              fact. This is exactly the class the repo's own honest-UI doctrine
+              (capability DECLARED, never discovered as a failed action)
+              exists to prevent &mdash; the fax tab already models the fix.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Gate the prefill button on the same view prop that gates the
+              "not configured" line (the pattern
+              <code>VoicemailPanelProps.ASR</code> /
+              <code>FaxCapability</code> already established), so the afford
+              exists only when the seam can answer.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T05+T23):</strong> The note-prefill button renders only when <code>AgentEnabled</code> says the seam can answer; the gate is pinned in <code>panels_test.go</code> (the review's prefill GAP).
+            </div>
+          </div>
+
+          <!-- F7 (island) -->
+          <div class="issue issue-important" id="issue-7">
+            <span class="severity severity-important"
+              >Important &middot; the ring moment</span
+            >
+            <h3>The phone rings as a number, never a name</h3>
+            <div class="where">
+              island/app/calls.js (<code>renderIncomingSlots</code>,
+              <code>hideIncomingBanner</code>) &middot; i18n
+              <code>incoming.*</code>
+            </div>
+            <p>
+              An incoming call renders the raw DID &mdash; the same caller the
+              Messages tab greets as a contact name, and the dial typeahead
+              resolves in keystrokes, announces as anonymous digits. The ring
+              is the one moment identity decides the answer, and the app's
+              own contact store already holds the fact.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Resolve the incoming number through the same contact source the
+              typeahead uses; render name + avatar chip on the banner and let
+              the assertive announce speak the name.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T07):</strong> <code>#dial-error</code> is a <code>role=status</code> region; a <code>data-i18n-arialabel</code> mechanism localizes the dial destination, audio-out and language controls. The reg-status live region and ring announce were verified already-correct.
+            </div>
+          </div>
+
+          <!-- F8 (island) -->
+          <div class="issue issue-important" id="issue-8">
+            <span class="severity severity-important"
+              >Important &middot; keyboard users dropped</span
+            >
+            <h3>Focus is silently discarded at every island transition</h3>
+            <div class="where">
+              <code>hideIncomingBanner</code>,
+              <code>morphToEndedCard</code>, <code>saveCallNote</code>,
+              <code>confirmDisposition</code>,
+              <code>renderIncomingSlots</code> (calls.js)
+            </div>
+            <p>
+              Each of these replaces or removes the focused node without
+              moving focus to its successor &mdash; the browser's fallback lands
+              focus on <code>body</code>, and the next Tab restarts from the
+              top of the page. Answer-then-engage, hang up, save a note,
+              confirm a disposition: every one of the island's state changes
+              ejects a keyboard user from their place (verified by the
+              reviewer walking the flows).
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              One island helper &mdash; on replace, focus the successor control
+              (or the replaced node's container) &mdash; called from the five
+              sites. The shell's focus-to-heading move already models the
+              pattern.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T08):</strong> All four <code>role=img</code> content spans are gone; the direction chips carry <code>role=img</code> with their label directly.
+            </div>
+          </div>
+
+          <!-- F9 (island cluster) -->
+          <div class="issue issue-important" id="issue-9">
+            <span class="severity severity-important"
+              >Important &middot; screen-reader layer, four gaps</span
+            >
+            <h3>
+              Dial failures are silent; the status pill never stops talking;
+              labels and announces leak English
+            </h3>
+            <div class="where">
+              <code>#dial-error</code> (no aria-live) &middot;
+              <code>#reg-status</code> (<code>aria-live="true"</code> on a
+              churning element) &middot; hardcoded English aria-labels in
+              calls.js/session.js &middot; <code>announceIncoming</code> call
+              passes a stray argument, so German hears "incoming call your
+              +44&hellip;"
+            </div>
+            <p>
+              Four verified defects, one layer: a dial denial renders text no
+              screen reader will ever announce (the sighted inline state line
+              has a live twin nowhere); the registration pill is a live
+              region, so every reconnect attempt re-speaks; island-built
+              buttons carry English names into the German UI; and the one
+              assertive announce in the product double-fires with a malformed
+              string. Individually small; together they decide whether the
+              island is operable eyes-free.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              <code>aria-live="polite"</code> (or role="status") on
+              <code>#dial-error</code> only; drop the live region from
+              <code>#reg-status</code> (the offline banner already owns the
+              announcement); route the labels through
+              <code>defineMessages</code>; correct the announce call.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T09):</strong> <code>focusAfterReplace</code> is the one home, wired into the banner, ended-card, disposition, note-save and incoming-slot swaps; pinned in <code>focus-replace.test.mjs</code>.
+            </div>
+          </div>
+
+          <!-- F10 (views) -->
+          <div class="issue issue-important" id="issue-10">
+            <span class="severity severity-important"
+              >Important &middot; rows invisible to screen readers</span
+            >
+            <h3>
+              <code>role="img"</code> on list rows erases their content from
+              assistive technology
+            </h3>
+            <div class="where">
+              fax rows, history rows, admin thread rows,
+              live-context call rows (<code>role="img"</code> +
+              <code>aria-label</code>)
+            </div>
+            <p>
+              Four row surfaces are marked up as images with a label. The
+              accessible name replaces the content: a screen reader announces
+              "fax from +44&hellip;" but can offer none of the row &mdash; no
+              status line, no steps, no transcript preview, no actions; none
+              of its children are reachable. The pattern was presumably chosen
+              for a compact announcement, but it deletes the actual data
+              model from the accessibility tree.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Drop <code>role="img"</code>: keep real content elements, let
+              the row read naturally; where a compact name helps, put the
+              label on an inner summary element, not the container.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T10):</strong> The drafts poll defers while a composer edit is open; draft captures are thread-scoped and the sent-clear uses the request-start thread. Pinned in <code>drafts-guard.test.mjs</code>.
+            </div>
+          </div>
+
+          <!-- F11 (views) -->
+          <div class="issue issue-important" id="issue-11">
+            <span class="severity severity-important"
+              >Important &middot; silent draft loss</span
+            >
+            <h3>The 30-second drafts poll can wipe an in-progress reply</h3>
+            <div class="where">
+              messages draft autosave: <code>loadDrafts</code> poll target on
+              <code>#tab-content</code>
+            </div>
+            <p>
+              The drafts poll re-fetches the thread partial roughly every 30
+              seconds. A user mid-typing in the reply composer (draft not yet
+              saved &mdash; the save rides blur/interval) gets the swap and
+              their unsaved words vanish. Verified at the markup level; the
+              loss window is inferred but the trigger is deterministic: type
+              for 30 seconds without blurring.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Before applying a drafts poll swap, compare the composer's
+              current value to the last-saved draft and skip/defer the swap
+              while they differ (the same morph-preservation guarantee the
+              transcript already honors).
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T11):</strong> The palette is a wired combobox (roles, expanded, activedescendant), badge digits never leak into rows, starts-with ranks first, Home/End jump, and a served <code>#wp-palette-open</code> button appears on coarse pointers. Pinned in <code>palette.test.mjs</code>.
+            </div>
+          </div>
+
+          <!-- F12 (shell) -->
+          <div class="issue issue-important" id="issue-12">
+            <span class="severity severity-important"
+              >Important &middot; discoverability + ARIA</span
+            >
+            <h3>
+              The command palette is keyboard-only and not yet one accessible
+              control
+            </h3>
+            <div class="where">
+              <code>ensurePalette</code> / <code>openPalette</code> /
+              <code>updatePaletteResults</code> (shell.js) &middot; overlay is
+              a plain div + input
+            </div>
+            <p>
+              The palette opens only from Ctrl/Cmd-K and the overlay input
+              carries no <code>role="combobox"</code> wiring (no
+              <code>aria-expanded</code>, <code>aria-activedescendant</code>,
+              no listbox/option roles on the results), so screen readers get
+              an unlabeled text box and a silent list. The same overlay hosts
+              the "?" help sheet, and neither is reachable from a touch
+              screen &mdash; on a phone or tablet there is no path to the
+              palette or the help at all. Selection styling also encodes
+              itself in a <code>wp-selected</code> class rather than
+              <code>aria-selected</code>.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Combobox pattern on the input (role + expanded +
+              activedescendant + listbox/option children); add a palette
+              affordance for coarse pointers (a header button next to the
+              theme toggle costs one icon); switch selection state to
+              <code>aria-selected</code>.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T12):</strong> Contact names resolve through the shared <code>findContact</code> seam: banner, incoming slots, assertive announce, missed toast and dock chip all render &ldquo;Name (digits)&rdquo;. Pinned in <code>ring-names.test.mjs</code>.
+            </div>
+          </div>
+
+          <!-- F13 (shell) -->
+          <div class="issue issue-important" id="issue-13">
+            <span class="severity severity-important"
+              >Important &middot; the segment counter can lie</span
+            >
+            <h3>
+              SMS segment counting misses astral-plane characters
+            </h3>
+            <div class="where">
+              <code>ucs2Segments</code> (shell.js &sect;4) &middot;
+              <code>wp-segcount</code>
+            </div>
+            <p>
+              The UCS-2 path counts code points, but SMS UCS-2 segments are
+              charged per UTF-16 code unit &mdash; one emoji is two units. A
+              message padded with emoji reports fewer segments than the
+              carrier will bill (or the gateway will refuse), and the counter
+              &mdash; the UI's only promise about deliverability cost &mdash;
+              under-reports exactly on the content that triggers UCS-2 in the
+              first place. Verified against the counting math, not a live
+              send.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Count UTF-16 units (<code>[...str].reduce((n, ch) =&gt; n +
+              ch.length, 0)</code> &mdash; code points whose
+              <code>length</code> is 2 add both units).
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T04):</strong> <code>ucs2Segments</code> counts UTF-16 code units; the emoji billing ladder (35/36/70) is pinned in the composer spec.
+            </div>
+          </div>
+
+          <!-- F14 -->
+          <div class="issue issue-nice" id="issue-14">
+            <span class="severity severity-nice"
+              >Nice to have &middot; WCAG 2.5.8 target size</span
+            >
+            <h3>Attachment-chip remove buttons are 18&times;18 px</h3>
+            <div class="where">
+              app.css <code>.wp-chip-x</code> (width/height: 18px)
+            </div>
+            <p>
+              The composer's attachment chips carry an 18-pixel remove button
+              &mdash; under the 24&times;24 WCAG 2.5.8 minimum. The coarse-pointer
+              44px bump covers <code>.wp-mini</code> but not this class; on a
+              touchscreen, removing the wrong attachment is a thumb-slip away.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Grow the hit area without growing the glyph: keep the 18px
+              visual, add padding + negative margin (or a
+              <code>::before</code> hit-expander) to reach 24px.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T15):</strong> The chip remove button grew a hit expander to 24px, toast eviction moves focus to the newest survivor, and the dismissal hint is a real <code>title</code>.
+            </div>
+          </div>
+
+          <!-- F15 -->
+          <div class="issue issue-nice" id="issue-15">
+            <span class="severity severity-nice"
+              >Nice to have &middot; empty-state voice depth</span
+            >
+            <h3>History's empty state is the terse sibling of Voicemail's</h3>
+            <div class="where">
+              history.templ vs voicemail.templ empty states
+            </div>
+            <p>
+              Voicemail explains what, who and effect ("Voicemail lives on the
+              PBX. Ask the operator to enable the phone API (phone_api_url);
+              messages will appear here and in the phone panel."); History,
+              same condition, answers "Needs the operator phone API
+              (phone_api_url)." &mdash; a config-key verdict where the sibling
+              panel teaches. Same server, same user, two levels of help.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Let History's empty state borrow Voicemail's three-beat shape
+              (what / who acts / what happens next). One sentence each.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T16):</strong> History's disabled empty state borrows Voicemail's three beats: what it is, who acts, what happens next (en+de).
+            </div>
+          </div>
+
+          <!-- F16 -->
+          <div class="issue issue-nice" id="issue-16">
+            <span class="severity severity-nice"
+              >Nice to have &middot; type-scale hygiene</span
+            >
+            <h3>Fourteen distinct sizes below 1rem blur the hierarchy</h3>
+            <div class="where">
+              app.css meta-text sizes (0.68em&ndash;0.95em, mixing em and rem)
+            </div>
+            <p>
+              Between the body size and the smallest badge, the stylesheet
+              carries fourteen distinct font sizes (0.68, 0.72, 0.75, 0.78,
+              0.8, 0.82, 0.85, 0.86, 0.88, 0.9, 0.92, 0.95&hellip;). Neighbors
+              like 0.72/0.75/0.78 are visually identical at 15px root &mdash;
+              they cost consistency without buying hierarchy, and they make
+              every new panel a fresh guess. The color tokens would never
+              tolerate fourteen greens.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Consolidate to a 3-step secondary scale (e.g. 0.8 / 0.875 /
+              0.95) as custom properties, and migrate opportunistically &mdash;
+              new panels must pick from the scale, the corpus catches up as
+              panels are touched.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T14):</strong> Three type-scale tokens (<code>--text-xs/sm/md</code>) exist and 41 sites migrated to the nearest step; the sub-scale micro sizes catch up as their surfaces are touched.
+            </div>
+          </div>
+
+          <!-- F17 -->
+          <div class="issue issue-nice" id="issue-17">
+            <span class="severity severity-nice"
+              >Nice to have &middot; token bypasses</span
+            >
+            <h3>
+              Radii and spacing bypass the tokens the palette already has
+            </h3>
+            <div class="where">
+              app.css: 8px radii (<code>.wp-nav-link</code>, <code>#lang</code>,
+              <code>.audio-out select</code>, <code>.wp-typeahead li</code>),
+              untokenized paddings throughout
+            </div>
+            <p>
+              The system defines <code>--radius-sm 6 / --radius 9 /
+              --radius-lg 12</code>, then a handful of rules hardcode 8px, and
+              spacing values (22px, 24px 26px 26px, 10px 12px&hellip;) are freehand
+              while the color vocabulary is strict. The result looks coherent
+              &mdash; the eyeballing was done once, by hand &mdash; but nothing
+              enforces it for the next contributor.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Fold the 8px outliers into the existing scale (6 or 9 &mdash; pick
+              per surface), and introduce 2&ndash;3 spacing tokens for the row
+              and panel rhythms. No visual change required, only names.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T21):</strong> The 8px radius outliers folded into <code>--radius</code>/<code>--radius-sm</code>; <code>--panel-pad</code>, <code>--row-pad</code> and <code>--row-gap</code> now name the rhythms.
+            </div>
+          </div>
+
+          <!-- F18 -->
+          <div class="issue issue-nice" id="issue-18">
+            <span class="severity severity-nice"
+              >Nice to have &middot; rhetorical calibration</span
+            >
+            <h3>The uppercase micro-label is doing the work of seven</h3>
+            <div class="where">
+              <code>.wp-crm-key</code>, <code>.wp-settings-head</code>,
+              <code>.wp-reports-head</code>, <code>.wp-day-head</code>,
+              <code>.wp-unread-divider</code>, <code>.wp-transcripts h3</code>,
+              <code>.status</code>
+            </div>
+            <p>
+              One device &mdash; small tracked-out uppercase &mdash; labels the CRM
+              facts, the Settings sections, the Reports sections, the day
+              separators, the unread divider, the transcript section and the
+              status pill. Individually each is right; together they dull each
+              other, and the connection states ("RECONNECTING IN 2S (TRY 1)")
+              shout in the same voice as the section headers whisper. The
+              retry counter's engineer-speak ("TRY 1") also leaks telemetry
+              into copy where "Reconnecting&hellip;" would carry the same truth
+              more calmly.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Reserve the uppercase voice for section headers (Reports,
+              Settings, transcripts); drop it from the day divider (sentence
+              case, it already has the hairline) and humanize the
+              reconnecting pill copy.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T22):</strong> The day divider, the unread divider and the status pill dropped uppercase (headers keep it), and the reconnecting pill says &ldquo;reconnecting in 2s&hellip;&rdquo; &mdash; the try counter stays in the event log.
+            </div>
+          </div>
+
+          <!-- F19 (IA) -->
+          <div class="issue issue-important" id="issue-19">
+            <span class="severity severity-important"
+              >Important &middot; information architecture</span
+            >
+            <h3>
+              The signed-out page shows the whole desk with the drawers
+              painted shut
+            </h3>
+            <div class="where">
+              layout.templ <code>Shell</code> / <code>NavLinks</code> &middot;
+              <code>SignInHint</code> placeholder
+            </div>
+            <p>
+              An anonymous visitor gets the complete application chrome:
+              eight navigation tabs, header identity zone, skeleton and error
+              slots &mdash; and behind every tab either a sign-in hint or an
+              empty panel. Seven of the eight destinations are doors into
+              rooms they cannot enter. The welcome panel and the island's
+              login card are both genuinely good, but the IA around them
+              promises an app that does not exist yet. A first impression
+              should be a door, not a floor plan.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Same shell, collapsed promise: signed-out renders without the
+              tab row (or with the nav reduced to a single sign-in anchor)
+              and centers the welcome + login stack. The DOM contract keeps
+              its ids; the nav is the only region that changes shape by
+              session state.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T13):</strong> The nav renders links only for a signed-in session; the anonymous shell centers the welcome/login stack (<code>wp-signed-out</code>). Smoke and the DOM-contract test pin it.
+            </div>
+          </div>
+
+          <!-- F20 (IA) -->
+          <div class="issue issue-important" id="issue-20">
+            <span class="severity severity-important"
+              >Important &middot; audience-mixed panel</span
+            >
+            <h3>Settings serves two masters in one column</h3>
+            <div class="where">
+              settings.templ: server-truth rows ("Operators change these in
+              the config file"), personal snippets, personal data export
+            </div>
+            <p>
+              One panel interleaves three kinds of truth: <em>this
+              server</em> facts (gateway mode, CRM, ASR, fax lanes &mdash;
+              read-only for everyone, actionable only for the operator at
+              the config file), <em>my preferences</em> (reply snippets, and
+              &mdash; scattered across two other surfaces &mdash; language
+              and audio output), and <em>my data</em> (the zip export). An
+              extension user reading Settings cannot tell which rows they
+              could ever act on; the operator's vocabulary leaks into every
+              user's view.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix</strong>
+              Three sub-sections in the existing panel &mdash; "This server"
+              (collapsed by default, operator voice), "My preferences"
+              (snippets; consider adopting the island's language and speaker
+              pickers as visible rows), "My data" (export). No routes change;
+              only grouping.
+            </div>
+            <div class="callout callout-teal">
+              <strong>FIXED 2026-11-07 (T21):</strong> Settings reads in three audiences &mdash; My preferences, My data, and the collapsed server section (en+de); the moved view pins assert the split.
+            </div>
+          </div>
+
+          <!-- merge marker for agent findings -->
+          <!-- AGENT-FINDINGS-MERGE-POINT -->
+        </section>
+
+        <!-- Proposal -->
+        <section id="proposal">
+          <h2><span class="num">02</span>The fix queue, in order</h2>
+          <p>
+            Three tranches. The first is one token and a re-pinned screenshot
+            run; the second is a handful of one-liners; the third is taste
+            work the next panel touch should carry, never a dedicated
+            refactor.
+          </p>
+          <pre><code>/* Tranche 1 — the dark-theme ink flip (both mirrored token blocks) */
+:root,
+:root[data-theme="dark"] {
+  --on-accent: #0b0d11; /* was #ffffff: 3.21:1 on --accent, 1.87:1 on hover */
+  /* --accent stays #17a467; the lit key keeps a dark legend, like the
+     hardware phones the island already imitates. */
+}</code></pre>
+          <ol>
+            <li>
+              <strong>Tranche 1 &mdash; correctness (one sitting):</strong> the
+              <code>--on-accent</code> flip in app.css + island/style.css; the
+              CRM row's <code>wp-service-off</code> arm; re-run
+              <code>scripts/ui-capture.py</code> and re-measure the five
+              filled surfaces.
+            </li>
+            <li>
+              <strong>Tranche 2 &mdash; one-liners (one review):</strong> meta
+              theme-color + manifest onto the real palette; English clock
+              unified on Kitchen time; gate <em>Prefill from AI draft</em> on
+              its seam prop; chip-X hit area to 24px; History's empty state
+              reworded.
+            </li>
+            <li>
+              <strong>Tranche 3 &mdash; taste, carried by future work:</strong>
+              icon-action labeling/confirmation pattern; type-scale
+              consolidation; radius/spacing token adoption; uppercase-voice
+              zoning; reconnect-pill copy.
+            </li>
+          </ol>
+          <div class="callout callout-teal">
+            <strong>Why this order</strong>
+            Tranche 1 removes the only WCAG failure in the product and costs a
+            token; everything else is consistency debt that compounds quietly
+            but never burns.
+          </div>
+          <p>
+            The full execution order for every finding above &mdash; 24 tasks,
+            119 micro-steps, gate contracts and the anti-verschlimmbessern
+            rules &mdash; lives in the plan:
+            <a href="../planning/2026-11-07_04-09_SUPERB-frontend-ux-fix-train.md">docs/planning/2026-11-07_04-09_SUPERB-frontend-ux-fix-train.md</a>.
+          </p>
+        </section>
+
+        <!-- IA & layout -->
+        <section id="ia">
+          <h2><span class="num">03</span>Information architecture &amp; layout</h2>
+          <p>
+            The first pass audited components; this chapter steps back to the
+            desk itself. Verdict up front: <strong>the one-shell architecture
+            is right and should not change</strong> &mdash; the phone island
+            must survive navigation, so tabs-as-partials around a persistent
+            aside is the correct shape. What the IA gets wrong is smaller and
+            fixable: two layout corrections (below), plus the two finding
+            cards this chapter surfaced (F19, F20).
+          </p>
+
+          <h3>The layout system, as built</h3>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Zone</th>
+                <th>Behavior</th>
+                <th>Assessment</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Header</td>
+                <td>Sticky, blurred surface; brand, identity pill, island
+                toggle, theme toggle</td>
+                <td>Right. Identity + global controls only &mdash; no app
+                actions leak into it.</td>
+              </tr>
+              <tr>
+                <td>Island (aside)</td>
+                <td>Sticky on desktop (320&ndash;400px token column);
+                collapses to nothing via labelled toggle; a live call
+                force-re-expands it; on mobile it stacks first and goes sticky
+                only while a call is live</td>
+                <td>Right, and unusually disciplined: geometry lives in four
+                tokens, the collapse is pre-paint, and <code>:has()</code>
+                makes the call-safety rule structural.</td>
+              </tr>
+              <tr>
+                <td>Main column</td>
+                <td>Container-query region (<code>tabcol</code>): nav rail +
+                tab content + error slot + skeleton; Messages goes
+                master&ndash;detail at 44rem of column width</td>
+                <td>Right. Asking the container (not the viewport) is the
+                load-bearing decision, and the harness proved it.</td>
+              </tr>
+              <tr>
+                <td>Overlay layer</td>
+                <td>Command palette + help sheet (custom fixed overlay),
+                lightbox (native <code>&lt;dialog&gt;</code>)</td>
+                <td>Mixed &mdash; the lightbox does it natively; the palette
+                hand-rolls (Finding&nbsp;12).</td>
+              </tr>
+              <tr>
+                <td>Feedback layer</td>
+                <td>Toasts (top), polite live region, assertive exception for
+                rings, inline error slot per tab</td>
+                <td>Right in shape; gaps are named in Findings 9, 12,
+                16.</td>
+              </tr>
+            </tbody>
+          </table>
+
+          <h3>Pages that should exist</h3>
+          <p>
+            Two additions &mdash; both re-groupings inside the existing shell,
+            no new routes:
+          </p>
+          <ol>
+            <li>
+              <strong>A focused signed-out layout</strong> (Finding&nbsp;19):
+              same shell, no tab row, welcome + login centered. The door,
+              not the floor plan.
+            </li>
+            <li>
+              <strong>A Settings split by audience</strong> (Finding&nbsp;20):
+              "My preferences" / "My data" / "This server" (collapsed,
+              operator voice). Also gives the island's language and speaker
+              controls a discoverable home.
+            </li>
+          </ol>
+          <p>
+            And two ideas <strong>considered and rejected</strong>, recorded
+            so they stay rejected:
+          </p>
+          <ul>
+            <li>
+              <strong>A "Calls" tab</strong> &mdash; rejected. Call state must
+              live in exactly one place (the island); a second calls surface
+              would split-brain the ring, the hold machine and the dock, all
+              to save one scroll on mobile. The island-first mobile order is
+              the correct call for a phone.
+            </li>
+            <li>
+              <strong>A separate onboarding route</strong> &mdash; rejected.
+              The dismissible welcome panel already onboards without a
+              route to deep-link to; a page would need its own empty-state
+              lifecycle for zero new capability.
+            </li>
+          </ul>
+          <div class="callout callout-amber">
+            <strong>The bottom line</strong>
+            Eight destinations, one persistent phone, deep-linkable partials,
+            conditional surfaces that render nothing when a capability is
+            absent &mdash; the skeleton of the IA is right. Fix the two
+            groupings, and the map matches the territory.
+          </div>
+        </section>
+
+        <!-- Roles -->
+        <section id="roles">
+          <h2><span class="num">04</span>Roles &amp; permissions &times; UI/UX</h2>
+          <p>
+            Webphone has five identities and one capability axis, and the UI
+            already follows a rule most apps never learn:
+            <strong>a role or capability the deployment lacks renders
+            nothing</strong> &mdash; byte-identical absence, never a disabled
+            control. Fax-off removes the compose form and leaves a notice;
+            admin-absent removes the tab for everyone; push-off turns the
+            routes 404s that read as "cannot ring closed apps". The doctrine
+            is honest and test-pinned. What follows maps each identity to
+            what it should change on screen, and where the current UI meets
+            that bar.
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>Identity</th>
+                <th>Should change in the UI</th>
+                <th>Today</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Anonymous</td>
+                <td>Sees a door: sign-in surfaces only, no dead navigation
+                (F19)</td>
+                <td>Sees the full desk with dead tabs &mdash; the one IA
+                miss.</td>
+              </tr>
+              <tr>
+                <td>Extension owner</td>
+                <td>Everything owner-scoped; cross-owner data structurally
+                unreachable</td>
+                <td>Met. Owner scoping is the rule everywhere; the
+                deliberate cross-owner seams are admin-gated and
+                test-pinned.</td>
+              </tr>
+              <tr>
+                <td>Multi-line user</td>
+                <td>Line switcher appears only when mapped
+                extensions&nbsp;&gt;&nbsp;1; switch re-mints and reloads;
+                blocked on a live call</td>
+                <td>Met (JS-created <code>#wp-ext-switch</code>, live-call
+                guard, audit line). The active line is visible in the header
+                pill.</td>
+              </tr>
+              <tr>
+                <td>Admin</td>
+                <td>Admin tab appears only for admins; cross-line inventory is
+                read-only and chipped as such; no write actions anywhere</td>
+                <td>Mostly met &mdash; conditional nav is exemplary
+                (nothing minted into the session, resolved per request). Gap:
+                the inventory lacks search/filter (Finding&nbsp;10 in the
+                matrix); read-only-ness could wear a visible badge.</td>
+              </tr>
+              <tr>
+                <td>Operator (hoster)</td>
+                <td>Config truth readable by all, actionable only at the
+                config file; operator surfaces (health dashboard) fenced at
+                the proxy</td>
+                <td>Half met &mdash; the voice is honest but
+                audience-mixed in Settings (F20); <code>/health</code> is
+                correctly proxy-fenced, not app-gated.</td>
+              </tr>
+              <tr>
+                <td>Capability flags<br>(fax/ASR/CRM/push/SSO/passkey)</td>
+                <td>The sibling axis to roles: each flag renders or removes
+                whole affordances; a pushed fragment must not promise more
+                than the full render</td>
+                <td>Met and exemplary (declared capabilities, view-prop
+                gating, parity between pushes and full renders).</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            Four rules worth writing down as doctrine (the codebase mostly
+            already obeys them): <strong>R1</strong> absent role/capability
+            &rarr; render nothing, never a disabled control; <strong>R2</strong>
+            roles gate visibility, capabilities gate affordance, and both are
+            server-rendered (panels read view props, not JS globals);
+            <strong>R3</strong> cross-identity access is read-only and visibly
+            chipped as such; <strong>R4</strong> write actions require the
+            actor's own session authority &mdash; an admin may look at every
+            line but may act only on their own (write-shaped admin actions
+            stay rejected; the D4 delegation item owns that future).
+          </p>
+        </section>
+
+        <!-- Flows (BDD) -->
+        <section id="flows">
+          <h2><span class="num">05</span>User flows, BDD-style</h2>
+          <p>
+            The core journeys as executable specifications. Each scenario
+            names its current behavioral pin where one exists (island
+            <code>node:test</code> specs, Go tests, or smoke scenarios) or
+            <strong>[GAP]</strong> where this review found no coverage &mdash;
+            the gaps are concentrated exactly where the findings are, which
+            is the point of writing flows down.
+          </p>
+
+          <h3>Feature: Sign in &amp; session</h3>
+          <pre><code>Scenario: Passkey sign-in unlocks the desk
+  Given the island shows the passkey front door
+  When the WebAuthn ceremony succeeds
+  Then the shell renders signed in and the tabs unlock
+  And the island resumes its session without reload
+  (pin: island session/resume specs)
+
+Scenario: Passkey ceremony fails
+  When the ceremony is rejected
+  Then a visible error names the failure
+  And no session is minted
+  (pin: enroll/webauthn specs)
+
+Scenario: Extension login is break-glass only
+  Given passkey mode is on
+  Then extension + password hides behind a disclosure
+  (pin: layout markup + passkey view tests)
+
+Scenario: Session resumes on boot
+  Given a live cookie from a previous visit
+  When the island boots
+  Then the session resumes without re-prompting
+  (pin: resume.test.mjs)
+
+Scenario: Line switch is blocked on a live call
+  Given a multi-line user with an active call
+  When they pick another line
+  Then the switch is refused with a visible reason
+  (pin: session-switch.test.mjs)
+
+Scenario: Sign-out with a live call asks first        [GAP]
+  Given an active call
+  When sign out is clicked
+  Then a second-click confirm names the cost
+  And a misclick never kills audio</code></pre>
+
+          <h3>Feature: Place a call</h3>
+          <pre><code>Scenario: Typeahead resolves a contact
+  Given the dial field focused
+  When digits or a name are typed
+  Then suggestions carry name, number and cooldown window
+  And arrows/Enter/Escape behave
+  (pin: typeahead.test.mjs)
+
+Scenario: Dial-gate advises, never traps
+  Given a remote inside its cooldown window
+  When the call is placed
+  Then an inline state line explains and offers "Dial anyway"
+  And the one-shot override is spent by the first allowed dial
+  (pin: dialgate.test.mjs + smoke dialgate scenario)
+
+Scenario: Hold is a pending-state machine
+  Given an established call
+  When hold is toggled twice quickly
+  Then the card shows WORK (holding/resuming), never the hoped-for state
+  And a failed re-INVITE settles back to the true state
+  (pin: calls transitions specs)
+
+Scenario: DTMF reaches the PBX in the legal form
+  Given an established call
+  When a tone is sent from keypad or keyboard
+  Then the relay uses the equals-form the PBX accepts
+  And the trail + event log record it
+  (pin: calls/DTMF specs)
+
+Scenario: The settled card closes the loop
+  When a call ends normally
+  Then the ended card offers disposition, note, and (seam on) draft
+  And teardown-path hangups remove the card instantly
+  (pin: calls-note/calls-summary specs + smoke)
+
+Scenario: Focus survives every transition              [GAP]
+  Given a keyboard user mid-call
+  When answer/hangup/note-save replaces the focused node
+  Then focus lands on the successor control</code></pre>
+
+          <h3>Feature: Receive a call</h3>
+          <pre><code>Scenario: The ring announces assertively, once
+  Given the tab is anywhere
+  When an INVITE arrives
+  Then the banner + Accept/Reject render and one assertive announce fires
+  And focus moves to Accept only if the user is not typing
+  (pin: ring-queue.test.mjs + connection specs)
+
+Scenario: A second caller queues, not replaces
+  Given one ringing call
+  When a second INVITE arrives
+  Then a quieter slot offers its own Accept/Reject pair
+  And a remote cancel removes exactly its own slot
+  (pin: ring-queue.test.mjs)
+
+Scenario: Nobody answers
+  When the caller cancels or the ring times out
+  Then a missed-call badge appears and History records dur: 0
+  (pin: missed-call.test.mjs)
+
+Scenario: The ring names the caller                    [GAP]
+  Given the caller exists in contacts
+  When the banner renders
+  Then it shows the name and the announce speaks it</code></pre>
+
+          <h3>Feature: Messages</h3>
+          <pre><code>Scenario: Opening a thread marks it read
+  Given unread messages in a thread
+  When the thread opens
+  Then the unread divider shows the count and the row clears
+  (pin: transcript push specs)
+
+Scenario: An optimistic send fails honestly
+  Given a composed reply
+  When the send fails
+  Then the bubble repaints danger with Retry and Dismiss in place
+  And the draft restores only into an empty composer
+  (pin: composer.test.mjs + shell optimistic specs)
+
+Scenario: Live pushes never eat drafts
+  Given a half-typed reply
+  When SSE morphs the list and transcript
+  Then the composer, its counter and chosen files survive
+  (pin: shell.test.mjs + swap-safety pins)
+
+Scenario: Voice memos transcribe inline
+  Given the ASR seam on and an audio attachment
+  When it renders (or Play is pressed)
+  Then transcription appears once per source with honest failure text
+  (pin: voicemail-transcribe/captions specs)
+
+Scenario: Compose-new routes by address shape
+  When a matrix or session address is composed
+  Then the sender registry owns delivery; phone shapes ride sms
+  (pin: compose/panel specs)
+
+Scenario: The 30s drafts poll never eats an edit       [GAP]
+  Given an in-progress reply
+  When the drafts poll fires
+  Then the swap is deferred while the composer differs from the last save</code></pre>
+
+          <h3>Feature: Voicemail &amp; fax</h3>
+          <pre><code>Scenario: Voicemail plays one at a time, scrubbable
+  Given a voicemail row
+  When Play is pressed
+  Then the waveform seeks, other players stop, and the row keeps
+       its playing state across morphs
+  (pin: voicemail-transcribe.test.mjs + waveform cache specs)
+
+Scenario: Fax capability is declared, not discovered
+  Given a server without a fax lane
+  When the Fax tab opens
+  Then no compose form renders, only the notice and Settings row
+  (pin: smoke faxcap scenario + fax capability tests)
+
+Scenario: An outbound fax walks its timeline
+  When a PDF is sent
+  Then the three-step timeline walks queued/done and strikes red on failure
+  (pin: fax lifecycle table pins)</code></pre>
+
+          <h3>Feature: History forensics</h3>
+          <pre><code>Scenario: Filters narrow without losing state
+  Given History rows
+  When number/outcome/disposition filters apply
+  Then the empty state names the filter, deep links carry it
+  (pin: history view tests)
+
+Scenario: Notes are never silently expunged
+  Given a saved call note
+  When the store is full and the PUT 409s
+  Then the draft stays editable and the failure announces
+  (pin: server note tests)
+
+Scenario: The AI review artifact tells the truth
+  Given the agent seam off/on/pending
+  Then History shows unconfigured chip / pending / failed / draft
+       accordingly, and prefill renders only when the seam can answer [GAP]</code></pre>
+
+          <h3>Feature: Live updates &amp; failure surfaces</h3>
+          <pre><code>Scenario: SSE truth is visible
+  Given the app open
+  When the event stream connects or drops
+  Then the live dot flips and a drop announces once, after 3 failures
+  (pin: session/sse specs)
+
+Scenario: A failed tab fetch lands visibly
+  When a navigation partial 4xx/5xxs
+  Then the banner retargets into the error slot and a toast fires
+  (pin: server error-surface tests)
+
+Scenario: Offline flips exactly with registration
+  Given a lost SIP registration
+  When the watchdog rebuilds
+  Then the banner and pill tell the same truth at the same moment
+  (pin: connection.test.mjs)</code></pre>
+
+          <h3>Feature: Shell ergonomics</h3>
+          <pre><code>Scenario: The island collapse is safe and reversible
+  Given a signed-in desktop session
+  When the island is collapsed
+  Then a live call force-re-expands it and the toggle stays truthful
+  (pin: island-collapse.test.mjs + harness layout PASS)
+
+Scenario: The palette reaches every user             [GAP]
+  Given a touch-only user
+  When they open the command palette
+  Then a visible affordance exists and the combobox speaks its state
+
+Scenario: Theme changes never flash
+  Given any stored theme or "auto"
+  When the page loads or the toggle cycles
+  Then the pre-paint attribute and color-scheme agree before first paint
+  (pin: theme-preload.test.mjs)</code></pre>
+
+          <div class="callout callout-teal">
+            <strong>How to read the gaps</strong>
+            Every <strong>[GAP]</strong> above corresponds to a finding card
+            (8, 7, 11, 12, 19, 20) &mdash; the flows make the finding
+            countable: each is one scenario away from being a pinned test.
+          </div>
+        </section>
+
+        <!-- Appendix -->
+        <section id="appendix">
+          <h2><span class="num">06</span>Appendix &mdash; the full matrix</h2>
+          <p>
+            Every agent finding that did not earn its own card, one row each.
+            Sources: three scoped agent reviews (island JS, server-rendered
+            views, shell) against review HEAD <code>a8d089ba</code>,
+            cross-checked against served bytes. Verify legend:
+            <strong>verified</strong> = the owning agent confirmed the behavior
+            in code or served bytes; <strong>hypothesis</strong> = mechanism
+            identified but not runtime-reproduced (the plan's V1&ndash;V5 sweep
+            closes these); <strong>reported</strong> = as filed, no runtime
+            claim made. The <strong>train</strong> column maps each row to its
+            task in the fix plan (T-numbers).
+          </p>
+          <table class="compare">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Surface</th>
+                <th>Finding</th>
+                <th>Severity</th>
+                <th>Verify</th>
+                <th>Train</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>M1</td>
+                <td>Views</td>
+                <td>Admin table has no find filter and no visible read-only badge</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T21</td>
+              </tr>
+              <tr>
+                <td>M2</td>
+                <td>Views</td>
+                <td>The brand is not the page's h1; the heading hierarchy starts at h2</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T17</td>
+              </tr>
+              <tr>
+                <td>M3</td>
+                <td>Views</td>
+                <td>Panel-head h2 elements are not focusable, so post-swap focus has no target</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T17</td>
+              </tr>
+              <tr>
+                <td>M4</td>
+                <td>Views</td>
+                <td>Thread rail and row collections are div soup, no ul/li list semantics</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T17</td>
+              </tr>
+              <tr>
+                <td>M5</td>
+                <td>Views</td>
+                <td>No maxlength attributes aligned with the server caps (composer, contacts, snippets)</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T19</td>
+              </tr>
+              <tr>
+                <td>M6</td>
+                <td>Views</td>
+                <td>Submits beyond fax send lack any htmx-indicator busy state</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T19</td>
+              </tr>
+              <tr>
+                <td>M7</td>
+                <td>Views</td>
+                <td>Drafts badge repeats the heading text plus the digit count</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T17</td>
+              </tr>
+              <tr>
+                <td>M8</td>
+                <td>Views</td>
+                <td>Inputs lack aria-describedby error wiring; the ✱ and # keypad keys are unnamed</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T17</td>
+              </tr>
+              <tr>
+                <td>M9</td>
+                <td>Views</td>
+                <td>Contacts save/import forms lack hx-disabled-elt, double-click double-imports</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T19</td>
+              </tr>
+              <tr>
+                <td>M10</td>
+                <td>Views</td>
+                <td>Hardcoded English aria-labels (“jump to the latest messages”, “Attachments”)</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T19</td>
+              </tr>
+              <tr>
+                <td>M11</td>
+                <td>Views</td>
+                <td>Seven emoji/dingbat glyphs violate the icons doctrine (⚡ ☎ ⚠ ⊗ ☆ ⧉ ↓, plus ✖ inside the history.missed key)</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T20</td>
+              </tr>
+              <tr>
+                <td>M12</td>
+                <td>Views</td>
+                <td>German copy: “Stumm aus”, “hat abbestellt”, “(Rechner der Anfrage)”; the DE no-match state drops its recovery line; contactsMigrated singular</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T20</td>
+              </tr>
+              <tr>
+                <td>M13</td>
+                <td>Views</td>
+                <td>Vocabulary drift: DE “Voicemail” vs “Mailbox” in the delete toast; EN “transcript lines” mislabeled</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T20</td>
+              </tr>
+              <tr>
+                <td>M14</td>
+                <td>Views</td>
+                <td>Compose-to inputmode undecided for matrix addresses (@local:…, 05…hex)</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T20</td>
+              </tr>
+              <tr>
+                <td>M15</td>
+                <td>Island</td>
+                <td>Login POST has no in-flight guard or connecting state, double-submit double-POSTs</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T19</td>
+              </tr>
+              <tr>
+                <td>M16</td>
+                <td>Island</td>
+                <td>The 429 note-throttled toast is hardcoded English</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T20</td>
+              </tr>
+              <tr>
+                <td>M17</td>
+                <td>Island</td>
+                <td>No beforeunload guard while a call is live, closing the tab hangs up silently</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T19</td>
+              </tr>
+              <tr>
+                <td>M18</td>
+                <td>Island</td>
+                <td>No in-call document.title signal from the 1s render tick</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T19</td>
+              </tr>
+              <tr>
+                <td>M19</td>
+                <td>Views</td>
+                <td>agoLabel has no just-now branch, History prints “Last call now ago”</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T05</td>
+              </tr>
+              <tr>
+                <td>M20</td>
+                <td>Views</td>
+                <td>Voicemail reload failure has no distinct copy; history/contacts loads swallow !res.ok silently</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T22</td>
+              </tr>
+              <tr>
+                <td>M21</td>
+                <td>Shell</td>
+                <td>Logout is a single misclick that kills a live call, no confirm</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T19</td>
+              </tr>
+              <tr>
+                <td>M22</td>
+                <td>Island</td>
+                <td>Settled mute/hold/resume transitions end silently for screen readers</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T21</td>
+              </tr>
+              <tr>
+                <td>M23</td>
+                <td>Shell</td>
+                <td>The nav language refetch rides a bare htmx.ajax with no .catch</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T21</td>
+              </tr>
+              <tr>
+                <td>M24</td>
+                <td>Island</td>
+                <td>Transfer row accepts an empty destination as a silent no-op; Escape does not close it</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T19</td>
+              </tr>
+              <tr>
+                <td>M25</td>
+                <td>Island</td>
+                <td>Toasts auto-expire with no dismissal affordance</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T16</td>
+              </tr>
+              <tr>
+                <td>M26</td>
+                <td>Shell</td>
+                <td>#wp-tab-error renders below the panel (off-screen at panel height) and is never cleared on success</td>
+                <td class="no">major</td>
+                <td>hypothesis</td>
+                <td>T18</td>
+              </tr>
+              <tr>
+                <td>M27</td>
+                <td>Views</td>
+                <td>The skip link scrolls to a non-focusable target, focus stays on the link</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T17</td>
+              </tr>
+              <tr>
+                <td>M28</td>
+                <td>Shell</td>
+                <td>The tab skeleton can flash on fast swaps; overlapping navigations race the reveal</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T18</td>
+              </tr>
+              <tr>
+                <td>M29</td>
+                <td>Shell</td>
+                <td>The debounced draft save captures the thread id at handler setup, a fast switch files the draft under the old thread</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T18</td>
+              </tr>
+              <tr>
+                <td>M30</td>
+                <td>Shell</td>
+                <td>Palette labels include badge digits (“Go to Messages4”)</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T11</td>
+              </tr>
+              <tr>
+                <td>M31</td>
+                <td>Shell</td>
+                <td>The live-call force-re-expand is silent and aria-expanded lies about the state</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T18</td>
+              </tr>
+              <tr>
+                <td>M32</td>
+                <td>Shell</td>
+                <td>The “Call a number” palette action is dead while the island is collapsed</td>
+                <td>minor</td>
+                <td>hypothesis</td>
+                <td>T18</td>
+              </tr>
+              <tr>
+                <td>M33</td>
+                <td>Shell</td>
+                <td>The palette/help overlay is a focus-leaky div, background scroll and tab escape</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T18</td>
+              </tr>
+              <tr>
+                <td>M34</td>
+                <td>Shell</td>
+                <td>The “?” help omits the [ / ] tab-cycle binding the shortcuts actually implement</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T18</td>
+              </tr>
+              <tr>
+                <td>M35</td>
+                <td>Shell</td>
+                <td>Lightbox close does not return focus to its opener</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T17</td>
+              </tr>
+              <tr>
+                <td>M36</td>
+                <td>Island</td>
+                <td>Transcript containers carry no aria-live, finished transcriptions arrive silently</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T17</td>
+              </tr>
+              <tr>
+                <td>M37</td>
+                <td>Shell</td>
+                <td>The live-context slot keeps stale caller content on fetch failure; a fast remote switch races the response</td>
+                <td>minor</td>
+                <td>hypothesis</td>
+                <td>T18</td>
+              </tr>
+              <tr>
+                <td>M38</td>
+                <td>Shell</td>
+                <td>The missed-call badge can survive a failed tab swap</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T18</td>
+              </tr>
+              <tr>
+                <td>M39</td>
+                <td>Shell</td>
+                <td>applyTheme does not sync the meta theme-color for forced (media-less) themes</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T03</td>
+              </tr>
+              <tr>
+                <td>M40</td>
+                <td>Shell</td>
+                <td>Manifest icons are maskable-only, launchers without masking support get no raster icon</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T21</td>
+              </tr>
+              <tr>
+                <td>M41</td>
+                <td>Shell</td>
+                <td>Palette ranking is substring-order, not starts-with-first</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T11</td>
+              </tr>
+              <tr>
+                <td>M42</td>
+                <td>Island</td>
+                <td>Toast eviction can drop focus to body when the focused toast expires</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T16</td>
+              </tr>
+              <tr>
+                <td>M43</td>
+                <td>Views</td>
+                <td>sse:voicemail/sse:contacts swaps carry show:window:top, every push yanks scroll</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T18</td>
+              </tr>
+              <tr>
+                <td>M44</td>
+                <td>Views</td>
+                <td>The history direction select borrows the search input's label</td>
+                <td>minor</td>
+                <td>verified</td>
+                <td>T18</td>
+              </tr>
+              <tr>
+                <td>M45</td>
+                <td>Island</td>
+                <td>The DTMF tones trail is not a status region, digits are unconfirmed for screen readers</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T20</td>
+              </tr>
+              <tr>
+                <td>M46</td>
+                <td>Views</td>
+                <td>The dial form's native validation can block the JS empty-dial path from ever speaking</td>
+                <td>minor</td>
+                <td>reported</td>
+                <td>T19</td>
+              </tr>
+              <tr>
+                <td>M47</td>
+                <td>Shell</td>
+                <td>Double-Enter double-sends the composer; a failed retry can leave a bubble stuck at “sending”</td>
+                <td>minor</td>
+                <td>hypothesis</td>
+                <td>T06</td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+          <p>
+            Generated 2026-11-07 &middot; webphone 2.9.0 at review HEAD (a8d089ba)
+            &middot; Contrast ratios computed from the served token values;
+            screenshots from <code>scripts/ui-capture.py</code> (24 shots,
+            layout assertions PASS) &middot; Findings cite stable names, not
+            line numbers, wherever the pin allows
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>

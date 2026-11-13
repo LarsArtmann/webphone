@@ -1,0 +1,45 @@
+package views
+
+// LiveContextPanel is the live call's context beside the island (issue
+// #10): who is on the line, and what is outstanding with them in the CRM.
+//
+// It renders INSIDE the shell's `#wp-live-context` container, which exists
+// only when the CRM seam is configured, and it renders NOTHING when there
+// is nothing to say: no seam, no match, no published context or an
+// unreachable CRM all produce an empty body, so the slot never holds an
+// empty shell, a spinner, or an error. The container is a fixed slot in
+// the aside, so an empty answer costs no layout shift either.
+//
+// This is the same degradation contract as the conversation strip — the
+// context itself comes from the SAME helper (`crmContextItems`), because a
+// live call and an open conversation are two views of one contact.
+type LiveContextProps struct {
+	// Remote is the live call's other party, as the island reported it.
+	Remote string
+	// CRM names the remote (and links it when a template is configured);
+	// an absent entry renders the raw number.
+	CRM CRMContacts
+	// Context is the CRM's published context, nil when nothing is known.
+	Context *CRMContext
+	Lang    Lang
+}
+
+// Empty reports whether the panel has anything to say. The handler uses it
+// to answer an empty body instead of rendering an empty aside.
+func (p LiveContextProps) Empty() bool {
+	return p.Remote == "" || (p.Context == nil && len(p.CRM) == 0)
+}
+
+templ LiveContextPanel(props LiveContextProps) {
+	if !props.Empty() {
+		<aside class="wp-live-context" aria-label={ T(props.Lang, "liveContext.label") }>
+			<div class="wp-live-context-head">
+				<span class="wp-crm-key">{ T(props.Lang, "liveContext.label") }</span>
+				@crmNameLink(props.Remote, props.CRM, props.Lang)
+			</div>
+			<div class="wp-crm-context">
+				@crmContextItems(props.Context, props.Lang)
+			</div>
+		</aside>
+	}
+}

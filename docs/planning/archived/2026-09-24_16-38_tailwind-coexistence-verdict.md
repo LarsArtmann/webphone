@@ -1,6 +1,6 @@
 # Tailwind-coexistence verdict — GREEN
 
-**Experiment:** plan M7 (`2026-09-24_13-33_SUPERB-stack-adoption-pareto.md`),
+**Experiment:** plan M7 (`docs/planning/archived/2026-09-24_13-33_SUPERB-stack-adoption-pareto.md`),
 audit finding #2. Question: can templ-components' Tailwind v4 CSS load
 beside webphone's unlayered token CSS (`app.css`) without breaking
 either side?

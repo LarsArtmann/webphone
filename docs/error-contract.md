@@ -15,8 +15,8 @@ only user feedback.
 | Other 4xx/5xx on htmx actions                                                                    | Banner (`.wp-error` selected) + generic toast "HTTP N"                                                                                                                                                                                                                                                                                                                                                                                                                                        | shell.js generic copy                                                                               | contract test (config markers)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | Network down (htmx)                                                                              | Toast: "Network request failed…"                                                                                                                                                                                                                                                                                                                                                                                                                                                              | shell.js                                                                                            | shell.test.mjs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | Version probe (`GET /version`)                                                                   | JSON: `version` (+ `commit`, `commitDate` when known — ldflags rev/dirtyRev + RFC 3339 date, or go-build vcs settings fallback; empty when unknown). Not an error surface: the enrichment kills the store-path chain-verification dance                                                                                                                                                                                                                                                       | server `versionHandler` + `buildCommitWith`/`buildCommitDateWith`                                   | `version_test.go` + smoke key-checks                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| Network down (island session POST)                                                               | Toast: "Could not reach the server…" + `#log` line                                                                                                                                                                                                                                                                                                                                                                                                                                            | island i18n `sessionNetFailed`                                                                      | session.test.mjs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| PBX rejects login (401 island REGISTER)                                                          | `loginError` inline + `reg-status` pill "registration rejected"                                                                                                                                                                                                                                                                                                                                                                                                                               | island i18n `loginError`/`regRejected`                                                              | i18n parity tests                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| Network down (login page POST)                                                                   | Inline `#login-error` on /login: "Could not reach the sign-in server; check your connection and try again." (the island no longer POSTs sessions — the front door owns the login)                                                                                                                                                                                                                                                                                                             | `assets/login/login-page.js` (English, D3)                                                          | login-page.test.mjs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| PBX rejects login (401)                                                                          | Inline `#login-error` on /login: "Wrong extension or password."; the island-side resume with since-changed credentials drops the session and redirects to `/login?error=…` (the alert names the rejection); `reg-status` pill stays "registration rejected" for the transport-class REGISTER refusal                                                                                                                                                                                          | `assets/login/login-page.js` + main.js resume redirect (English, D3)                                | login-page.test.mjs + resume.test.mjs + `TestLoginPageServesTheExtensionFormWhenPasskeyIsOff`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | SSE feed dead (3 consecutive errors)                                                             | One warn toast + pill label flips to "not connected"; the later reconnect announces "restored" once — only when the drop itself was announced (M17 J2)                                                                                                                                                                                                                                                                                                                                        | island i18n `sseDropped`/`ssePillDown`/`sseRestored`                                                | session.test.mjs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | Reply send transport failure (network / 5xx on htmx)                                             | Failed optimistic bubble (danger tint) with Retry + Dismiss buttons in the bubble; the exact draft is restored into the composer — retry resends it, dismiss keeps it editable (M17 J3/J4)                                                                                                                                                                                                                                                                                                    | shell.js §3e (English, D3)                                                                          | shell.test.mjs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | CRM call journal failed (502 / network)                                                          | Warn toast: "Call not recorded in the CRM (…) — you can log it manually." en/de                                                                                                                                                                                                                                                                                                                                                                                                               | island i18n `crmLogFailed`                                                                          | crm_test.go 502 contract + i18n parity tests                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
@@ -26,16 +26,38 @@ only user feedback.
 | Unknown path (404)                                                                               | Styled 404: shell + `views.NotFoundPanel` (literal 404, the requested path echoed back, link home, no reload button), `Cache-Control: no-store`, status stays 404. Covers `/health` + `/health/*` while the dashboard is off. Shape follows the request — see § "404 — one home, two shapes" below                                                                                                                                                                                            | server `error.notfound`, `error.notfound.title`, `error.notfound.back` (en/de)                      | `TestNotFoundPanelRendersTheContract`, `TestNotFoundPanelEscapesThePath`, `TestUnknownPathsAnswerTheStyledNotFoundPage`, `TestNotFoundPageOffersNoReloadButton`, `TestNotFoundPageIsNotCacheable`, `TestNotFoundAnswersHeadWithoutBody`, `TestNotFoundEchoesThePathWithoutTheQuery`, `TestNotFoundPageFollowsTheLanguage`, `TestMissingAssetAnswersStyledForNavigationsOnly`, `TestHTMXMissAnswersANoticeNotTheShell`, `TestDocumentMissOnAPartialURLAnswersTheShell`, `TestActionMissAnswersByRequestShape`, `TestStaleFaxDocumentLinkAnswersTheStyledPage`, `TestAttachmentMissKeepsTheTerseAnswer` |
 | Method mismatch on a known path (405)                                                            | Bare stdlib 405, deliberately: every unsafe method crosses the CSRF gate first (a tokenless POST is 403, not 405), so reaching it takes a signed-in, token-bearing, hand-crafted request — machine traffic, not a user surface. Wrapping the mux to restyle it would mean buffering every protected response (templ streams; `/api/export` is a zip) for a case no UI can produce                                                                                                             | net/http ServeMux                                                                                   | none (decision, not a gap); revisit only if the island ever issues a method-mismatched request                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | Handler panic                                                                                    | Recovery middleware logs stack + re-raises; user gets htmx/browser failure surface                                                                                                                                                                                                                                                                                                                                                                                                            | cqrshtmx.RecoveryMiddleware                                                                         | library + server middleware tests                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
-| Passkey login: unknown email / no credential (401)                                               | Inline `#passkey-login-error`: "No passkey matches this email — check the address or use extension and password below." — begin and finish answer the SAME body, no account oracle; the login flood bucket is shared with the extension login                                                                                                                                                                                                                                                 | server uniform 401 + island i18n `passkeyUnknown`                                                   | `TestPasskeyBeginIsUniformAgainstEnumeration` + passkey.test.mjs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
-| Passkey ceremony throttled (429)                                                                 | Inline `#passkey-login-error`: "Too many attempts — wait a minute, then try again."                                                                                                                                                                                                                                                                                                                                                                                                           | island i18n `passkeyThrottled`                                                                      | passkey.test.mjs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Passkey login: unknown email / no credential (401)                                               | The library page's `#lp-error` alert (library-owned copy) — begin and finish answer the SAME body, no account oracle; the login flood bucket is shared with the extension login                                                                                                                                                                                                                                                                                                               | server uniform 401 + the library page's own ceremony JS                                             | `TestPasskeyBeginIsUniformAgainstEnumeration`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| Passkey ceremony throttled (429)                                                                 | The library page's `#lp-error` alert (library-owned copy)                                                                                                                                                                                                                                                                                                                                                                                                                                     | server 429 + the library page's own ceremony JS                                                     | passkey.test.mjs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Voicemail recording fails to load (404/403/undecodable)                                          | One honest error toast per episode ("voicemail playback failed — the recording could not be loaded", deduped per element, re-armed after a success); the waveform-unavailable fallback still engages native controls but stays SILENT for the unreachable-recording class — its toast is for capability shortfalls only (no WebAudio / undecodable-but-fetchable bytes), so a dead player never shows two contradicting verdicts                                                              | shell.js §3i (`VM_PLAYBACK_FAILED_TEXT`, English D3)                                                | shell.test.mjs ("a failed recording surfaces one honest toast, deduped" + "a dead recording keeps one toast")                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
 | Passkey ceremony key malformed (400)                                                             | Plain-text 400: "user_id must be the session_key the begin step returned" — a garbage ceremony key is caller error, strictly ULID-parsed at the door (never silently hashed into a pseudo-user that would answer the unknown-account 401)                                                                                                                                                                                                                                                     | server `parsePasskeyUserID`                                                                         | `TestPasskeyFinishRejectsAMalformedUserID` + `TestPasskeyEnrollHandlersRejectMissingUserID`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
-| Passkey ceremony rejected (5xx: unmapped account, password-file missing/empty/unreadable, store) | Inline `passkeyFinishFailed`/`passkeyBeginFailed` "(HTTP N)" — operator-fixable states all answer 503 with the code in the journal (`userauth.*`), never the internal detail                                                                                                                                                                                                                                                                                                                  | server `passkeyServerError` + island i18n                                                           | `TestPasskeyFinishMintsTheSessionWithIdentity` class + userauth suite                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
-| Passkey prompt dismissed / timed out                                                             | Quiet: no error shown (the form is still there), `#log` keeps the class — dismissal is a user choice, not a failure                                                                                                                                                                                                                                                                                                                                                                           | passkey.js                                                                                          | passkey.test.mjs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| Passkey ceremony rejected (5xx: unmapped account, password-file missing/empty/unreadable, store) | The library page's `#lp-error` alert carries the verdict; operator-fixable states all answer 503 with the code in the journal (`userauth.*`), never the internal detail                                                                                                                                                                                                                                                                                                                       | server `passkeyServerError` + the library page's own ceremony JS                                    | `TestPasskeyFinishMintsTheSessionWithIdentity` class + userauth suite                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| Passkey prompt dismissed / timed out                                                             | Quiet: no error shown (the form is still there) — dismissal is a user choice, not a failure                                                                                                                                                                                                                                                                                                                                                                                                   | the library page's own ceremony JS                                                                  | library js_smoke_test + e2e                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | Enrollment token invalid / expired / already used (503)                                          | Inline `#enroll-error`: ONE message naming the fresh-link remedy — the token state (unknown vs used) is not distinguishable client-side; expired carries its own operator-log code only                                                                                                                                                                                                                                                                                                       | island i18n `enrollFailed`                                                                          | enroll.test.mjs + `TestPasskeyEnrollVerifyBurnsTheToken`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | Enrollment prompt cancelled                                                                      | Inline `#enroll-error`: "Passkey creation was cancelled — submit the token again to retry." (the token burned at verify; the copy is honest about it)                                                                                                                                                                                                                                                                                                                                         | island i18n `enrollDismissed`                                                                       | enroll.test.mjs                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
 | Passkey revoke failed (store error on `DELETE /api/passkeys/{id}`)                               | Error toast `passkeys.revokeFailed` ("Revoking the passkey failed — try again.", en/de) + the whole Settings partial re-renders with STORE truth — the list never shows a passkey the store still holds; detail goes to the journal (`safeDetail`), never the browser                                                                                                                                                                                                                         | server `revokePasskey` + island toast i18n                                                          | `TestPasskeySettingsListsAndRevokes` + i18n parity tests                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | Passkey revoke on an extension with no mapped identity account                                   | Plain-text 404 "no passkey account" (machine-facing state, unreachable through the UI — the section only renders when a mapping exists)                                                                                                                                                                                                                                                                                                                                                       | server `revokePasskey`                                                                              | `TestPasskeySettingsListsAndRevokes` (unmapped arm)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | Internal directory seam off (`GET /internal/directory/{extension}`)                              | Honest 404 — a disabled feature answers like a missing one (ASR-seam convention). Machine-facing (the stack's FS xml_curl bridge), never the browser: loopback + Bearer secret only (403 otherwise), invalid extension 400, unknown/session-less extension answers an EMPTY list so the bridge's static fallback keeps the lockout decision. Stack side — the bridge, fail-closed posture, <2-min rollback drill: nix-international-telephony `docs/ops-runbook.md` § "Dynamic SIP directory" | server `internalDirectory` (bare statuses like every gate — no `sipcred.*` codes, 2026-10-12 train) | `TestInternalDirectoryFailsClosedWithoutASecret` + `TestInternalDirectoryAnswersTheDerivedCredentials` + `TestInternalDirectoryRejectsBadSecrets` + `TestInternalDirectoryUnknownExtensionAnswersEmpty` + `TestInternalDirectoryInvalidExtensionIs400` + `TestInternalDirectoryLoopbackOnly`                                                                                                                                                                                                                                                                                                          |
+
+## Provider-failure terminality — the machine is already right; this states the rule (2026-11-08)
+
+An outbound send that reaches a provider verdict has THREE failure kinds
+(`domain.FailureKind`), and exactly one of them retries:
+
+- **`transient`** (gateway outage / transport 502): the ONLY retryable kind —
+  the bubble offers Retry, a later attempt may succeed.
+- **`rejected`** (the provider refused the send, its reason): terminal by
+  construction — a retry would fail identically, so none is offered.
+- **`provider`** (the provider's asynchronous webhook verdict said failed):
+  TERMINAL — the provider has spoken; no UI retry affordance exists
+  (`FailureKind.IsRetryable` keys the affordance, `internal/domain/delivery.go`)
+  and no later webhook can resurrect the row: out-of-order and replayed
+  verdicts cannot move a terminal state (the machine table's one-way moves,
+  AGENTS § Machine tables). The honest display of a terminal provider failure
+  is the failed bubble with its failure story — not a spinner, not a retry.
+
+The rule stated: **once the provider has answered, the answer is the
+truth.** Only a failure that never reached the provider (transport) may be
+attempted again.
 
 ## `/api` error bodies — plain text, RULED (2026-10-23)
 
@@ -198,7 +220,38 @@ marked by reasoned nolints where deliberate. Sentinels stay sentinels
 and take their family from registration (P3); classification never
 changes rendered strings (P4); codes are stable (P5). The seven
 principles and the per-seam table live in the error-excellence plan
-appendix (`docs/planning/2026-09-22_01-20_SUPERB-error-excellence.md`).
+appendix (`docs/planning/archived/2026-09-22_01-20_SUPERB-error-excellence.md`).
+
+## Detection — how anyone KNOWS it happened (the quiet classes, 2026-11-08)
+
+The table above answers "what does the USER see". Several real failure
+classes are QUIET for the user BY DESIGN (degraded answers are empty
+bodies, fire-and-forget lanes never block a request) — for those, the
+operator-side detection answer is the contract, and it lives here so a
+session debugging "is X working?" does not re-derive it. Every row names
+the FIRST place to look, not every place the signal lands.
+
+| Quiet class                                               | How anyone knows                                                                                                                                                                                                                                         | First place to look                                                                    |
+| --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| CRM seam down (names, context strips absent)              | `/healthz` answers 503 with `"crm":{"status":"fail"}` (the strict leg is DELIBERATE — it is the only alarm for a revoked token when the dashboard is off); a boot-time config problem WARNs naming the fence                                             | `/healthz` JSON, then the journal `crm.*` codes (`crm.http` splits 4xx/5xx at runtime) |
+| CRM context fetch failing per-contact (seam healthy)      | NO strip renders — absence is a state, not an error; the resolver logs one DEBUG line per failure class (no-context, unauthorized, transport) and does NOT cache transport failures (next open retries)                                                  | journal at DEBUG: `crm: context unauthorized/failed; no strip`                         |
+| Paperless archiver failing (inbound faxes still deliver)  | The fax tab and user surfaces show NOTHING (fire-and-forget after persist); the journal carries the `paperless.*` archive-error line per failure. The Settings row that would declare the seam is the T31 gap (decision brief: Settings row recommended) | journal grep `paperless`                                                               |
+| Push transports down (ntfy/FCM)                           | `/hooks/ring` still answers 202 (the dialplan must never depend on push health); the journal carries `push.ntfy_send`/`push.fcm_send`/`push.transport`; a device the transport reports unregistered is PRUNED on the spot (the journal names the prune)  | journal grep `push.`                                                                   |
+| Matrix/signal receiver loop down                          | Boot fails LOUD on wrong config (bad token); an unreachable peer only WARNs at boot, then the loop retries on the chatloop jitter ladder — a REJECTION (revoked token, refusing daemon) stops the loop with a loud `chatloop.Backoff` Error              | journal `chatloop` at Error; boot WARN lines                                           |
+| SSE stream dropped mid-tab                                | The green dot `#wp-sse-live` disappears and ONE polite announce fires (only after the 3-failure threshold, only after an ANNOUNCED drop); recovery announces once                                                                                        | the island's announce + the journal's `/events` request log                            |
+| Dial-gate store failing                                   | Dials proceed anyway (the gate ADVISES); the API answers 502 naming `dialgate`, and the journal carries the store error                                                                                                                                  | journal grep `dialgate`                                                                |
+| Blob store degraded (readiness probe)                     | `/healthz` answers 503 naming the failing check (`blob-dir`/`sqlite`); `/livez` stays fetch-free green — readiness degrades, liveness does not                                                                                                           | `/healthz` JSON                                                                        |
+| `/hooks/*` without a configured secret                    | Fail CLOSED (503) to the caller; the journal carries the fail-closed line — a dialplan depending on the hooks would see 202-less answers immediately                                                                                                     | journal + the caller's 503                                                             |
+| ASR provider failing                                      | The island's transcribe paths render the honest failure state (voicemail/MMS chips show the failed arm; live transcription surfaces the error); the server journal carries `asr.*` codes per failure class                                               | island state + journal grep `asr.`                                                     |
+| Flight-recorder seam off                                  | Plain 404 on `/internal/flightrecorder` (machine-facing, loopback-only when on) — a disabled debug seam answers like a missing path; NO journal noise (silence is the off state)                                                                         | the 404 itself                                                                         |
+| Passkey prompt dismissed/timed out                        | Quiet for the user (the form remains); `#log` keeps the class line — a dismissal is a choice, not a failure                                                                                                                                              | the island `#log`                                                                      |
+| Voicemail/MMS transcription skipped (already transcribed) | NOTHING renders (the once-per src+target cache is a feature); `#log` keeps the skip line                                                                                                                                                                 | the island `#log`                                                                      |
+
+Detection ABSENCE is also ruled: the latency classes (dial-press → first
+audio, ASR round trip) have NO detection today because nothing measures
+them — the measure-first design
+(`docs/planning/2026-11-08_latency-measure-first-design.md`) is the owed
+instrument, not a gap in this table.
 
 `Error()` renders `[family:code] message` and the handler logs add
 `error=`/`family=` fields, so these names are an operator- and
@@ -219,303 +272,374 @@ a deliberate code change, regenerate:
 
 <!-- error-code-registry: BEGIN (generated block; do not edit by hand; go test ./internal/arch -run TestErrorCodeRegistryIsFresh -update rewrites it) -->
 
-| Code                                         | Families                  | First site                         |
-| -------------------------------------------- | ------------------------- | ---------------------------------- |
-| admin.identities                             | Rejection                 | internal/admin/admin.go            |
-| admin.password_file.missing                  | Rejection                 | internal/admin/admin.go            |
-| agent.summarize                              | Transient                 | internal/server/api/review_api.go  |
-| api.note_save                                | Infrastructure            | internal/server/api/note_api.go    |
-| asr.decode                                   | Transient                 | internal/asr/asr.go                |
-| asr.empty                                    | Rejection                 | internal/asr/asr.go                |
-| asr.encode                                   | Infrastructure            | internal/asr/asr.go                |
-| asr.http                                     | Transient, runtime-split  | internal/asr/asr.go                |
-| asr.read                                     | Transient                 | internal/asr/asr.go                |
-| asr.request                                  | Infrastructure            | internal/asr/asr.go                |
-| asr.transport                                | Transient                 | internal/asr/asr.go                |
-| asr.url                                      | Rejection                 | internal/asr/asr.go                |
-| authmap.password_file.empty                  | Rejection                 | internal/authmap/authmap.go        |
-| authmap.password_file.missing                | Rejection                 | internal/authmap/authmap.go        |
-| authmap.password_file.read                   | Rejection                 | internal/authmap/authmap.go        |
-| blob.name                                    | Infrastructure            | internal/blob/store.go             |
-| blob.open                                    | Infrastructure            | internal/blob/store.go             |
-| blob.probe                                   | Infrastructure            | internal/blob/store.go             |
-| blob.remove                                  | Infrastructure            | internal/blob/store.go             |
-| blob.root                                    | Infrastructure            | internal/blob/store.go             |
-| blob.subdir                                  | Infrastructure            | internal/blob/store.go             |
-| blob.write                                   | Infrastructure            | internal/blob/store.go             |
-| config.addr                                  | Rejection                 | internal/config/config.go          |
-| config.asr.project                           | Rejection                 | internal/config/config.go          |
-| config.asr.provider                          | Rejection                 | internal/config/config.go          |
-| config.asr.url                               | Rejection                 | internal/config/config.go          |
-| config.auth.extension_password_files         | Rejection                 | internal/config/config.go          |
-| config.auth.oauth2.client_id                 | Rejection                 | internal/config/config.go          |
-| config.auth.oauth2.client_secret_file        | Rejection                 | internal/config/config.go          |
-| config.auth.oauth2.issuer                    | Rejection                 | internal/config/config.go          |
-| config.auth.oauth2.redirect_url              | Rejection                 | internal/config/config.go          |
-| config.auth.oauth2.scopes                    | Rejection                 | internal/config/config.go          |
-| config.auth.passkey.extension_password_files | Rejection                 | internal/config/config.go          |
-| config.auth.passkey.rp_id                    | Rejection                 | internal/config/config.go          |
-| config.auth.passkey.rp_origins               | Rejection                 | internal/config/config.go          |
-| config.auth.passkey.users                    | Rejection                 | internal/config/config.go          |
-| config.auth.users                            | Rejection                 | internal/config/config.go          |
-| config.contacts                              | Rejection                 | internal/config/config.go          |
-| config.crm.contact_url                       | Rejection                 | internal/config/config.go          |
-| config.crm.token                             | Rejection                 | internal/config/config.go          |
-| config.crm.token_file                        | Rejection                 | internal/config/config.go          |
-| config.crm.token_sources                     | Rejection                 | internal/config/config.go          |
-| config.crm.url                               | Rejection                 | internal/config/config.go          |
-| config.csrf.trusted_origins                  | Rejection                 | internal/config/config.go          |
-| config.csrf.trusted_proxies                  | Rejection                 | internal/config/config.go          |
-| config.data_dir                              | Rejection                 | internal/config/config.go          |
-| config.defaults                              | Orchestration             | internal/config/config.go          |
-| config.dial.cooldown                         | Rejection                 | internal/config/config.go          |
-| config.env                                   | Rejection                 | internal/config/config.go          |
-| config.file                                  | Rejection                 | internal/config/config.go          |
-| config.gateway.mode                          | Rejection                 | internal/config/config.go          |
-| config.gateway.webhook_url                   | Rejection                 | internal/config/config.go          |
-| config.gateway_secret_sources                | Rejection                 | internal/config/config.go          |
-| config.identities                            | Rejection                 | internal/config/config.go          |
-| config.matrix.access_token                   | Rejection                 | internal/config/config.go          |
-| config.matrix.homeserver                     | Rejection                 | internal/config/config.go          |
-| config.matrix.owner                          | Rejection                 | internal/config/config.go          |
-| config.matrix.user_id                        | Rejection                 | internal/config/config.go          |
-| config.paperless.token                       | Rejection                 | internal/config/config.go          |
-| config.paperless.url                         | Rejection                 | internal/config/config.go          |
-| config.push.fcm                              | Rejection                 | internal/push/fcm.go               |
-| config.push.ntfy.url                         | Rejection                 | internal/config/config.go          |
-| config.retention_days                        | Rejection                 | internal/config/config.go          |
-| config.session_max_ttl                       | Rejection                 | internal/config/config.go          |
-| config.session_ttl                           | Rejection                 | internal/config/config.go          |
-| config.signal.account                        | Rejection                 | internal/config/config.go          |
-| config.signal.attachments_dir                | Rejection                 | internal/config/config.go          |
-| config.signal.owner                          | Rejection                 | internal/config/config.go          |
-| config.signal.socket_path                    | Rejection                 | internal/config/config.go          |
-| config.sip.credential_secret_file            | Rejection                 | internal/config/config.go          |
-| config.sip.credential_secret_sources         | Rejection                 | internal/config/config.go          |
-| config.textagent.secret_file                 | Rejection                 | internal/config/config.go          |
-| config.textagent.url                         | Rejection                 | internal/config/config.go          |
-| config.timezone                              | Rejection                 | internal/config/config.go          |
-| config.turn_rest.dead_secret                 | Rejection                 | internal/config/config.go          |
-| config.turn_rest.ttl                         | Rejection                 | internal/config/config.go          |
-| config.unmarshal                             | Rejection                 | internal/config/config.go          |
-| config.webhook_secret_file                   | Rejection                 | internal/config/config.go          |
-| crm.call_log.failed                          | Transient                 | internal/crm/client.go             |
-| crm.call_log.rejected                        | Rejection                 | internal/crm/client.go             |
-| crm.context                                  | runtime-split             | internal/crm/context.go            |
-| crm.context_decode                           | Transient                 | internal/crm/context.go            |
-| crm.context_read                             | Transient                 | internal/crm/context.go            |
-| crm.decode                                   | Transient                 | internal/crm/client.go             |
-| crm.encode                                   | Infrastructure            | internal/crm/client.go             |
-| crm.health.failed                            | Transient                 | internal/crm/client.go             |
-| crm.health.unauthorized                      | Rejection                 | internal/crm/client.go             |
-| crm.http                                     | runtime-split             | internal/crm/client.go             |
-| crm.read                                     | Transient                 | internal/crm/client.go             |
-| crm.request                                  | Infrastructure            | internal/crm/client.go             |
-| crm.transport                                | Transient                 | internal/crm/client.go             |
-| crm.url                                      | Rejection                 | internal/crm/client.go             |
-| domain.address                               | Rejection                 | internal/domain/network.go         |
-| domain.channel                               | Rejection                 | internal/domain/message.go         |
-| domain.direction                             | Rejection                 | internal/domain/message.go         |
-| domain.disposition                           | Rejection                 | internal/domain/disposition.go     |
-| domain.extension                             | Rejection                 | internal/domain/ids.go             |
-| domain.fax_direction                         | Rejection                 | internal/domain/fax.go             |
-| domain.fax_status                            | Rejection                 | internal/domain/fax.go             |
-| domain.id                                    | Corruption                | internal/domain/ids.go             |
-| domain.network                               | Rejection                 | internal/domain/network.go         |
-| domain.outbound_status                       | Rejection                 | internal/domain/message.go         |
-| domain.phone                                 | Rejection                 | internal/domain/ids.go             |
-| domain.relpath                               | Rejection                 | internal/domain/relpath.go         |
-| gateway.form                                 | Infrastructure            | internal/gateway/webhook.go        |
-| gateway.receipt                              | Transient                 | internal/gateway/webhook.go        |
-| gateway.request                              | Infrastructure            | internal/gateway/webhook.go        |
-| gateway.transport                            | Transient                 | internal/gateway/webhook.go        |
-| matrix.attachment_read                       | Infrastructure            | internal/matrix/client.go          |
-| matrix.create_room                           | Infrastructure            | internal/matrix/client.go          |
-| matrix.decode                                | Infrastructure, Transient | internal/matrix/client.go          |
-| matrix.download                              | Rejection, Transient      | internal/matrix/client.go          |
-| matrix.empty                                 | Rejection                 | internal/matrix/client.go          |
-| matrix.encode                                | Rejection                 | internal/matrix/client.go          |
-| matrix.mxc                                   | Rejection                 | internal/matrix/client.go          |
-| matrix.network                               | Rejection                 | internal/matrix/client.go          |
-| matrix.request                               | Infrastructure, Transient | internal/matrix/client.go          |
-| matrix.send                                  | Infrastructure            | internal/matrix/client.go          |
-| matrix.token                                 | Rejection                 | internal/matrix/client.go          |
-| matrix.upload                                | Infrastructure, Transient | internal/matrix/client.go          |
-| messaging.sender_register                    | Rejection                 | internal/messaging/service.go      |
-| messaging.verdict                            | Rejection                 | internal/messaging/service.go      |
-| pbx.decode                                   | Transient                 | internal/pbx/client.go             |
-| pbx.encode                                   | Infrastructure            | internal/pbx/client.go             |
-| pbx.http                                     | runtime-split             | internal/pbx/client.go             |
-| pbx.request                                  | Infrastructure            | internal/pbx/client.go             |
-| pbx.transport                                | Transient                 | internal/pbx/client.go             |
-| pbx.url                                      | Rejection                 | internal/pbx/client.go             |
-| push.draft_devices                           | Infrastructure            | internal/server/api/summary_api.go |
-| push.draft_send                              | Infrastructure            | internal/server/api/summary_api.go |
-| push.fcm_send                                | Infrastructure, Rejection | internal/push/fcm.go               |
-| push.fcm_token                               | Infrastructure, Rejection | internal/push/fcm.go               |
-| push.ntfy_send                               | Infrastructure, Rejection | internal/push/ntfy.go              |
-| push.transport                               | Rejection                 | internal/push/push.go              |
-| readmodels.agent_audit_append                | Infrastructure            | internal/readmodels/agentaudit.go  |
-| readmodels.agent_audit_recent                | Infrastructure            | internal/readmodels/agentaudit.go  |
-| readmodels.agent_audit_trim                  | Infrastructure            | internal/readmodels/agentaudit.go  |
-| readmodels.close                             | Infrastructure            | internal/readmodels/readmodels.go  |
-| readmodels.contact_count                     | Infrastructure            | internal/readmodels/contacts.go    |
-| readmodels.contact_delete                    | Infrastructure            | internal/readmodels/contacts.go    |
-| readmodels.contact_list                      | Infrastructure            | internal/readmodels/contacts.go    |
-| readmodels.contact_list_full                 | Rejection                 | internal/readmodels/contacts.go    |
-| readmodels.contact_missing                   | Rejection                 | internal/readmodels/contacts.go    |
-| readmodels.contact_save                      | Infrastructure            | internal/readmodels/contacts.go    |
-| readmodels.dial_attempt                      | Infrastructure            | internal/readmodels/dialwindows.go |
-| readmodels.dial_override_arm                 | Infrastructure            | internal/readmodels/dialwindows.go |
-| readmodels.dial_override_consume             | Infrastructure            | internal/readmodels/dialwindows.go |
-| readmodels.dial_override_load                | Infrastructure            | internal/readmodels/dialwindows.go |
-| readmodels.dial_trim                         | Infrastructure            | internal/readmodels/dialwindows.go |
-| readmodels.dial_window_load                  | Infrastructure            | internal/readmodels/dialwindows.go |
-| readmodels.disposition_save                  | Infrastructure            | internal/readmodels/callnotes.go   |
-| readmodels.enroll_burn                       | Infrastructure            | internal/readmodels/enroll.go      |
-| readmodels.enroll_lookup                     | Infrastructure            | internal/readmodels/enroll.go      |
-| readmodels.enroll_mint                       | Infrastructure            | internal/readmodels/enroll.go      |
-| readmodels.enroll_sweep                      | Infrastructure            | internal/readmodels/enroll.go      |
-| readmodels.fax_by_ref                        | Infrastructure            | internal/readmodels/faxes.go       |
-| readmodels.fax_count                         | Infrastructure            | internal/readmodels/faxes.go       |
-| readmodels.fax_get                           | Infrastructure            | internal/readmodels/faxes.go       |
-| readmodels.fax_get_any                       | Infrastructure            | internal/readmodels/faxes.go       |
-| readmodels.fax_insert                        | Infrastructure            | internal/readmodels/faxes.go       |
-| readmodels.fax_list                          | Infrastructure            | internal/readmodels/faxes.go       |
-| readmodels.fax_list_all                      | Infrastructure            | internal/readmodels/faxes.go       |
-| readmodels.fax_missing                       | Rejection                 | internal/readmodels/faxes.go       |
-| readmodels.fax_sweep                         | Infrastructure            | internal/readmodels/faxes.go       |
-| readmodels.fax_update                        | Infrastructure            | internal/readmodels/faxes.go       |
-| readmodels.note_get                          | Infrastructure            | internal/readmodels/callnotes.go   |
-| readmodels.note_list_full                    | Conflict                  | internal/readmodels/callnotes.go   |
-| readmodels.note_save                         | Infrastructure            | internal/readmodels/callnotes.go   |
-| readmodels.open                              | Infrastructure            | internal/readmodels/readmodels.go  |
-| readmodels.ping                              | Infrastructure            | internal/readmodels/readmodels.go  |
-| readmodels.push_list                         | Infrastructure            | internal/readmodels/push.go        |
-| readmodels.push_list_full                    | Rejection                 | internal/readmodels/push.go        |
-| readmodels.push_remove                       | Infrastructure            | internal/readmodels/push.go        |
-| readmodels.push_upsert                       | Infrastructure            | internal/readmodels/push.go        |
-| readmodels.review_get                        | Infrastructure            | internal/readmodels/callreviews.go |
-| readmodels.review_list_full                  | Rejection                 | internal/readmodels/callreviews.go |
-| readmodels.review_save                       | Infrastructure            | internal/readmodels/callreviews.go |
-| readmodels.snippet_delete                    | Infrastructure            | internal/readmodels/snippets.go    |
-| readmodels.snippet_list                      | Infrastructure            | internal/readmodels/snippets.go    |
-| readmodels.snippet_list_full                 | Rejection                 | internal/readmodels/snippets.go    |
-| readmodels.snippet_missing                   | Rejection                 | internal/readmodels/snippets.go    |
-| readmodels.snippet_save                      | Infrastructure            | internal/readmodels/snippets.go    |
-| readmodels.transcript_append                 | Infrastructure            | internal/readmodels/transcripts.go |
-| readmodels.transcript_call                   | Infrastructure            | internal/readmodels/transcripts.go |
-| readmodels.transcript_count                  | Infrastructure            | internal/readmodels/transcripts.go |
-| readmodels.transcript_delete                 | Infrastructure            | internal/readmodels/transcripts.go |
-| readmodels.transcript_scan                   | Infrastructure            | internal/readmodels/transcripts.go |
-| readmodels.transcript_sweep                  | Infrastructure            | internal/readmodels/transcripts.go |
-| readmodels.transcript_trim                   | Infrastructure            | internal/readmodels/transcripts.go |
-| session.insert                               | Infrastructure            | internal/session/sqlite.go         |
-| session.migrate                              | Infrastructure            | internal/session/sqlite.go         |
-| session.migrate_login_email                  | Infrastructure            | internal/session/sqlite.go         |
-| session.nil_db                               | Infrastructure            | internal/session/sqlite.go         |
-| session.sweep                                | Infrastructure            | internal/session/sqlite.go         |
-| session.token                                | Infrastructure            | internal/session/service.go        |
-| session.ttl                                  | Infrastructure            | internal/session/sqlite.go         |
-| signal.attachment_read                       | Infrastructure            | internal/signal/client.go          |
-| signal.connect                               | Transient                 | internal/signal/client.go          |
-| signal.decode                                | Infrastructure            | internal/signal/client.go          |
-| signal.encode                                | Rejection                 | internal/signal/client.go          |
-| signal.network                               | Rejection                 | internal/signal/client.go          |
-| signal.rpc                                   | Rejection                 | internal/signal/client.go          |
-| signal.send                                  | Infrastructure            | internal/signal/client.go          |
-| signal.write                                 | Infrastructure, Transient | internal/signal/client.go          |
-| sso.attempt.missing                          | Rejection                 | internal/server/sso_api.go         |
-| sso.claims                                   | Rejection                 | internal/sso/sso.go                |
-| sso.client_id                                | Rejection                 | internal/sso/sso.go                |
-| sso.client_secret.empty                      | Rejection                 | internal/sso/sso.go                |
-| sso.client_secret.read                       | Rejection                 | internal/sso/sso.go                |
-| sso.client_secret_file                       | Rejection                 | internal/sso/sso.go                |
-| sso.code                                     | Rejection                 | internal/sso/sso.go                |
-| sso.discovery                                | Rejection                 | internal/sso/sso.go                |
-| sso.email_missing                            | Rejection                 | internal/sso/sso.go                |
-| sso.email_unverified                         | Rejection                 | internal/sso/sso.go                |
-| sso.exchange                                 | Rejection                 | internal/sso/sso.go                |
-| sso.groups_denied                            | Rejection                 | internal/sso/sso.go                |
-| sso.id_token                                 | Rejection                 | internal/sso/sso.go                |
-| sso.id_token.verify                          | Rejection                 | internal/sso/sso.go                |
-| sso.idp_error                                | Rejection                 | internal/server/sso_api.go         |
-| sso.issuer                                   | Rejection                 | internal/sso/sso.go                |
-| sso.mapping                                  | Rejection                 | internal/sso/sso.go                |
-| sso.nonce                                    | Infrastructure            | internal/sso/sso.go                |
-| sso.nonce.mismatch                           | Rejection                 | internal/sso/sso.go                |
-| sso.random_token                             | Infrastructure            | internal/sso/sso.go                |
-| sso.redirect_url                             | Rejection                 | internal/sso/sso.go                |
-| sso.state                                    | Infrastructure            | internal/sso/sso.go                |
-| sso.state.mismatch                           | Rejection                 | internal/server/sso_api.go         |
-| sso.unmapped_email                           | Rejection                 | internal/sso/sso.go                |
-| sso.userinfo                                 | Rejection                 | internal/sso/sso.go                |
-| sso.userinfo.claims                          | Rejection                 | internal/sso/sso.go                |
-| sso.verifier                                 | Infrastructure, Rejection | internal/sso/sso.go                |
-| store.attachment_get                         | Infrastructure            | internal/store/messages.go         |
-| store.attachment_get_any                     | Infrastructure            | internal/store/messages.go         |
-| store.attachment_insert                      | Infrastructure            | internal/store/messages.go         |
-| store.attachment_save                        | Infrastructure            | internal/messaging/service.go      |
-| store.attachment_scan                        | Infrastructure            | internal/store/messages.go         |
-| store.attachments_list                       | Infrastructure            | internal/store/messages.go         |
-| store.attachments_rows                       | Infrastructure            | internal/store/messages.go         |
-| store.close                                  | Infrastructure            | internal/store/db.go               |
-| store.count_archived                         | Infrastructure            | internal/store/messages.go         |
-| store.counts                                 | Infrastructure            | internal/store/sweep.go            |
-| store.exec                                   | Infrastructure            | internal/store/sweep.go            |
-| store.fax_create                             | Infrastructure            | internal/fax/service.go            |
-| store.fax_spool                              | Infrastructure            | internal/fax/service.go            |
-| store.flag_read                              | Infrastructure            | internal/store/legacy_contacts.go  |
-| store.flag_write                             | Infrastructure            | internal/store/legacy_contacts.go  |
-| store.message_append                         | Infrastructure            | internal/messaging/service.go      |
-| store.message_insert                         | Infrastructure            | internal/store/messages.go         |
-| store.message_scan                           | Infrastructure            | internal/store/messages.go         |
-| store.migrate                                | Infrastructure            | internal/store/db.go               |
-| store.open                                   | Infrastructure            | internal/store/db.go               |
-| store.outbound_status                        | Infrastructure            | internal/messaging/service.go      |
-| store.ping                                   | Infrastructure            | internal/store/db.go               |
-| store.query                                  | Infrastructure            | internal/store/db.go               |
-| store.sweep_scan                             | Infrastructure            | internal/store/sweep.go            |
-| store.thread_find                            | Infrastructure            | internal/store/messages.go         |
-| store.thread_flag                            | Infrastructure, Rejection | internal/store/messages.go         |
-| store.thread_get                             | Infrastructure            | internal/store/messages.go         |
-| store.thread_get_any                         | Infrastructure            | internal/store/messages.go         |
-| store.thread_insert                          | Infrastructure            | internal/store/messages.go         |
-| store.thread_lookup                          | Infrastructure            | internal/store/messages.go         |
-| store.thread_mark_read                       | Infrastructure            | internal/store/messages.go         |
-| store.thread_reread                          | Infrastructure            | internal/store/messages.go         |
-| store.thread_resolve                         | Infrastructure            | internal/messaging/service.go      |
-| store.thread_scan                            | Infrastructure            | internal/store/messages.go         |
-| store.thread_update                          | Infrastructure            | internal/store/messages.go         |
-| store.threads_list_all                       | Infrastructure            | internal/store/messages.go         |
-| store.tx_begin                               | Infrastructure            | internal/store/messages.go         |
-| store.tx_commit                              | Infrastructure            | internal/store/messages.go         |
-| textagent.badid                              | Rejection                 | internal/textagent/client.go       |
-| textagent.decode                             | Infrastructure            | internal/textagent/client.go       |
-| textagent.encode                             | Infrastructure            | internal/textagent/client.go       |
-| textagent.reach                              | Transient                 | internal/textagent/client.go       |
-| textagent.read                               | Transient                 | internal/textagent/client.go       |
-| textagent.request                            | Infrastructure            | internal/textagent/client.go       |
-| textagent.secret                             | Rejection                 | internal/textagent/client.go       |
-| userauth.close.db                            | Infrastructure            | internal/userauth/userauth.go      |
-| userauth.close.users                         | Infrastructure            | internal/userauth/userauth.go      |
-| userauth.config                              | Rejection                 | internal/userauth/userauth.go      |
-| userauth.db.open                             | Infrastructure            | internal/userauth/userauth.go      |
-| userauth.db.optimize                         | Infrastructure            | internal/userauth/userauth.go      |
-| userauth.enroll.entropy                      | Infrastructure            | internal/userauth/enroll.go        |
-| userauth.enroll.expired                      | Rejection                 | internal/userauth/enroll.go        |
-| userauth.enroll.invalid                      | Rejection                 | internal/userauth/enroll.go        |
-| userauth.enroll.userid                       | Corruption                | internal/userauth/enroll.go        |
-| userauth.mapping                             | Rejection                 | internal/userauth/userauth.go      |
-| userauth.passkey.bad_id                      | Rejection                 | internal/userauth/userauth.go      |
-| userauth.passkey.unmapped                    | Rejection                 | internal/userauth/userauth.go      |
-| userauth.register.exists_unreadable          | Infrastructure            | internal/userauth/userauth.go      |
-| userauth.unmapped_email                      | Rejection                 | internal/userauth/userauth.go      |
-| webhook.fax_pages                            | Rejection                 | internal/server/hooks/webhooks.go  |
-| webphone.cli.catalog                         | Infrastructure            | cmd/webphone/catalog.go            |
-| webphone.cli.contracts                       | Infrastructure            | cmd/webphone/contracts.go          |
-| webphone.server.openapi_render               | Infrastructure            | internal/server/apidocs.go         |
-| webphone.server.wire_render                  | Infrastructure            | internal/server/wirecontracts.go   |
+| Code                                         | Families                  | First site                        |
+| -------------------------------------------- | ------------------------- | --------------------------------- |
+| admin.identities                             | Rejection                 | internal/admin/admin.go           |
+| admin.password_file.missing                  | Rejection                 | internal/admin/admin.go           |
+| agent.summarize                              | Transient                 | internal/server/api/review_api.go |
+| api.note_save                                | Infrastructure            | internal/server/api/note_api.go   |
+| asr.decode                                   | Transient                 | internal/asr/google.go            |
+| asr.empty                                    | Rejection                 | internal/asr/client.go            |
+| asr.encode                                   | Infrastructure            | internal/asr/google.go            |
+| asr.http                                     | Transient, runtime-split  | internal/asr/transport.go         |
+| asr.read                                     | Transient                 | internal/asr/google.go            |
+| asr.request                                  | Infrastructure            | internal/asr/client.go            |
+| asr.transport                                | Transient                 | internal/asr/transport.go         |
+| asr.url                                      | Rejection                 | internal/asr/client.go            |
+| authmap.password_file.empty                  | Rejection                 | internal/authmap/authmap.go       |
+| authmap.password_file.missing                | Rejection                 | internal/authmap/authmap.go       |
+| authmap.password_file.read                   | Rejection                 | internal/authmap/authmap.go       |
+| blob.name                                    | Infrastructure            | internal/blob/store.go            |
+| blob.open                                    | Infrastructure            | internal/blob/store.go            |
+| blob.probe                                   | Infrastructure            | internal/blob/store.go            |
+| blob.remove                                  | Infrastructure            | internal/blob/store.go            |
+| blob.root                                    | Infrastructure            | internal/blob/store.go            |
+| blob.subdir                                  | Infrastructure            | internal/blob/store.go            |
+| blob.write                                   | Infrastructure            | internal/blob/store.go            |
+| config.addr                                  | Rejection                 | internal/config/config.go         |
+| config.asr.project                           | Rejection                 | internal/config/config.go         |
+| config.asr.provider                          | Rejection                 | internal/config/config.go         |
+| config.asr.url                               | Rejection                 | internal/config/config.go         |
+| config.auth.extension_password_files         | Rejection                 | internal/config/config.go         |
+| config.auth.oauth2.client_id                 | Rejection                 | internal/config/config.go         |
+| config.auth.oauth2.client_secret_file        | Rejection                 | internal/config/config.go         |
+| config.auth.oauth2.issuer                    | Rejection                 | internal/config/config.go         |
+| config.auth.oauth2.redirect_url              | Rejection                 | internal/config/config.go         |
+| config.auth.oauth2.scopes                    | Rejection                 | internal/config/config.go         |
+| config.auth.passkey.extension_password_files | Rejection                 | internal/config/config.go         |
+| config.auth.passkey.rp_id                    | Rejection                 | internal/config/config.go         |
+| config.auth.passkey.rp_origins               | Rejection                 | internal/config/config.go         |
+| config.auth.passkey.users                    | Rejection                 | internal/config/config.go         |
+| config.auth.users                            | Rejection                 | internal/config/config.go         |
+| config.contacts                              | Rejection                 | internal/config/config.go         |
+| config.crm.ca_file                           | Rejection                 | internal/config/config.go         |
+| config.crm.contact_url                       | Rejection                 | internal/config/config.go         |
+| config.crm.create_url                        | Rejection                 | internal/config/config.go         |
+| config.crm.token                             | Rejection                 | internal/config/config.go         |
+| config.crm.token_file                        | Rejection                 | internal/config/config.go         |
+| config.crm.token_sources                     | Rejection                 | internal/config/config.go         |
+| config.crm.url                               | Rejection                 | internal/config/config.go         |
+| config.csrf.trusted_origins                  | Rejection                 | internal/config/config.go         |
+| config.csrf.trusted_proxies                  | Rejection                 | internal/config/config.go         |
+| config.data_dir                              | Rejection                 | internal/config/config.go         |
+| config.defaults                              | Orchestration             | internal/config/config.go         |
+| config.dial.cooldown                         | Rejection                 | internal/config/config.go         |
+| config.env                                   | Rejection                 | internal/config/config.go         |
+| config.file                                  | Rejection                 | internal/config/config.go         |
+| config.gateway.mode                          | Rejection                 | internal/config/config.go         |
+| config.gateway.webhook_url                   | Rejection                 | internal/config/config.go         |
+| config.gateway_secret_sources                | Rejection                 | internal/config/config.go         |
+| config.identities                            | Rejection                 | internal/config/config.go         |
+| config.matrix.access_token                   | Rejection                 | internal/config/config.go         |
+| config.matrix.homeserver                     | Rejection                 | internal/config/config.go         |
+| config.matrix.owner                          | Rejection                 | internal/config/config.go         |
+| config.matrix.user_id                        | Rejection                 | internal/config/config.go         |
+| config.paperless.token                       | Rejection                 | internal/config/config.go         |
+| config.paperless.token_file                  | Rejection                 | internal/config/config.go         |
+| config.paperless.token_sources               | Rejection                 | internal/config/config.go         |
+| config.paperless.url                         | Rejection                 | internal/config/config.go         |
+| config.push.fcm                              | Rejection                 | internal/push/fcm.go              |
+| config.push.ntfy.url                         | Rejection                 | internal/config/config.go         |
+| config.reports.weekly_talk_budget            | Rejection                 | internal/config/config.go         |
+| config.retention_days                        | Rejection                 | internal/config/config.go         |
+| config.session_max_ttl                       | Rejection                 | internal/config/config.go         |
+| config.session_ttl                           | Rejection                 | internal/config/config.go         |
+| config.signal.account                        | Rejection                 | internal/config/config.go         |
+| config.signal.attachments_dir                | Rejection                 | internal/config/config.go         |
+| config.signal.owner                          | Rejection                 | internal/config/config.go         |
+| config.signal.socket_path                    | Rejection                 | internal/config/config.go         |
+| config.sip.credential_secret_file            | Rejection                 | internal/config/config.go         |
+| config.sip.credential_secret_sources         | Rejection                 | internal/config/config.go         |
+| config.textagent.secret_file                 | Rejection                 | internal/config/config.go         |
+| config.textagent.url                         | Rejection                 | internal/config/config.go         |
+| config.timezone                              | Rejection                 | internal/config/config.go         |
+| config.turn_rest.dead_secret                 | Rejection                 | internal/config/config.go         |
+| config.turn_rest.ttl                         | Rejection                 | internal/config/config.go         |
+| config.unmarshal                             | Rejection                 | internal/config/config.go         |
+| config.webhook_secret_file                   | Rejection                 | internal/config/config.go         |
+| cqrs.agent_audit_append                      | Infrastructure            | internal/cqrs/agentaudit.go       |
+| cqrs.agent_audit_fold                        | Corruption                | internal/cqrs/agentaudit.go       |
+| cqrs.agent_audit_recent                      | Infrastructure            | internal/cqrs/agentaudit.go       |
+| cqrs.agent_audit_register                    | Infrastructure            | internal/cqrs/agentaudit.go       |
+| cqrs.attachment_get                          | Infrastructure            | internal/cqrs/threadsadmin.go     |
+| cqrs.attachments_list                        | Infrastructure            | internal/cqrs/threadsreads.go     |
+| cqrs.attachments_sweep                       | Infrastructure            | internal/cqrs/threadssweep.go     |
+| cqrs.command_build                           | Infrastructure            | internal/cqrs/dialwindows.go      |
+| cqrs.contact_count                           | Infrastructure            | internal/cqrs/contacts.go         |
+| cqrs.contact_delete                          | Infrastructure            | internal/cqrs/contacts.go         |
+| cqrs.contact_fold                            | Corruption                | internal/cqrs/contacts.go         |
+| cqrs.contact_list                            | Infrastructure            | internal/cqrs/contacts.go         |
+| cqrs.contact_list_full                       | Rejection                 | internal/cqrs/contacts.go         |
+| cqrs.contact_missing                         | Rejection                 | internal/cqrs/contacts.go         |
+| cqrs.contact_register                        | Infrastructure            | internal/cqrs/contacts.go         |
+| cqrs.contact_save                            | Infrastructure            | internal/cqrs/contacts.go         |
+| cqrs.core_boot                               | Infrastructure            | internal/cqrs/threadsregister.go  |
+| cqrs.dial_attempt                            | Infrastructure            | internal/cqrs/dialwindows.go      |
+| cqrs.dial_fold                               | Corruption                | internal/cqrs/dial.go             |
+| cqrs.dial_override                           | Infrastructure            | internal/cqrs/dialwindows.go      |
+| cqrs.dial_register                           | Infrastructure            | internal/cqrs/dial.go             |
+| cqrs.dial_window_load                        | Infrastructure            | internal/cqrs/dialwindows.go      |
+| cqrs.disposition_save                        | Infrastructure            | internal/cqrs/callnotes.go        |
+| cqrs.dlq                                     | Infrastructure            | internal/app/cqrs.go              |
+| cqrs.engine                                  | Infrastructure            | internal/app/cqrs.go              |
+| cqrs.engine_count                            | Infrastructure            | internal/cqrs/engineaggregate.go  |
+| cqrs.enroll_boot                             | Infrastructure            | internal/cqrs/enroll.go           |
+| cqrs.enroll_burn                             | Infrastructure            | internal/cqrs/enroll.go           |
+| cqrs.enroll_fold                             | Corruption                | internal/cqrs/enroll.go           |
+| cqrs.enroll_lookup                           | Infrastructure            | internal/cqrs/enroll.go           |
+| cqrs.enroll_mint                             | Infrastructure            | internal/cqrs/enroll.go           |
+| cqrs.enroll_register                         | Infrastructure            | internal/cqrs/enroll.go           |
+| cqrs.enroll_sweep                            | Infrastructure            | internal/cqrs/enroll.go           |
+| cqrs.fax_advance                             | Infrastructure            | internal/cqrs/faxes.go            |
+| cqrs.fax_boot                                | Infrastructure            | internal/cqrs/faxesstore.go       |
+| cqrs.fax_by_ref                              | Infrastructure            | internal/cqrs/faxesstore.go       |
+| cqrs.fax_count                               | Infrastructure            | internal/cqrs/faxesstore.go       |
+| cqrs.fax_duplicate                           | Rejection                 | internal/cqrs/faxes.go            |
+| cqrs.fax_expunge                             | Infrastructure            | internal/cqrs/faxes.go            |
+| cqrs.fax_fold                                | Corruption                | internal/cqrs/faxes.go            |
+| cqrs.fax_get                                 | Infrastructure            | internal/cqrs/faxesstore.go       |
+| cqrs.fax_idem                                | Infrastructure            | internal/cqrs/faxesstore.go       |
+| cqrs.fax_list                                | Infrastructure            | internal/cqrs/faxesstore.go       |
+| cqrs.fax_list_all                            | Infrastructure            | internal/cqrs/faxesstore.go       |
+| cqrs.fax_missing                             | Rejection                 | internal/cqrs/faxes.go            |
+| cqrs.fax_record                              | Infrastructure            | internal/cqrs/faxes.go            |
+| cqrs.fax_register                            | Infrastructure            | internal/cqrs/faxes.go            |
+| cqrs.fax_stream                              | Rejection                 | internal/cqrs/faxesstore.go       |
+| cqrs.fax_sweep_scan                          | Infrastructure            | internal/cqrs/faxesstore.go       |
+| cqrs.fax_trim                                | Infrastructure            | internal/cqrs/faxesstore.go       |
+| cqrs.message_by_ref                          | Infrastructure            | internal/cqrs/threadsstore.go     |
+| cqrs.message_count                           | Infrastructure            | internal/cqrs/threadsreads.go     |
+| cqrs.message_lookup                          | Infrastructure            | internal/cqrs/threadsreads.go     |
+| cqrs.note_dispatch                           | Infrastructure            | internal/cqrs/callnotes.go        |
+| cqrs.note_fold                               | Corruption                | internal/cqrs/callnotes.go        |
+| cqrs.note_get                                | Infrastructure            | internal/cqrs/callnotes.go        |
+| cqrs.note_list_full                          | Conflict                  | internal/cqrs/callnotes.go        |
+| cqrs.note_register                           | Infrastructure            | internal/cqrs/callnotes.go        |
+| cqrs.note_save                               | Infrastructure            | internal/cqrs/callnotes.go        |
+| cqrs.open                                    | Infrastructure            | internal/app/cqrs.go              |
+| cqrs.owner_stream                            | Rejection                 | internal/cqrs/dialwindows.go      |
+| cqrs.push_device_fold                        | Corruption                | internal/cqrs/pushdevices.go      |
+| cqrs.push_device_list                        | Infrastructure            | internal/cqrs/pushdevices.go      |
+| cqrs.push_device_list_full                   | Rejection                 | internal/cqrs/pushdevices.go      |
+| cqrs.push_device_register                    | Infrastructure            | internal/cqrs/pushdevices.go      |
+| cqrs.push_device_remove                      | Infrastructure            | internal/cqrs/pushdevices.go      |
+| cqrs.push_device_save                        | Infrastructure            | internal/cqrs/pushdevices.go      |
+| cqrs.review_fold                             | Corruption                | internal/cqrs/callreviews.go      |
+| cqrs.review_get                              | Infrastructure            | internal/cqrs/callreviews.go      |
+| cqrs.review_list_full                        | Rejection                 | internal/cqrs/callreviews.go      |
+| cqrs.review_register                         | Infrastructure            | internal/cqrs/callreviews.go      |
+| cqrs.review_save                             | Infrastructure            | internal/cqrs/callreviews.go      |
+| cqrs.snippet_delete                          | Infrastructure            | internal/cqrs/snippets.go         |
+| cqrs.snippet_fold                            | Corruption                | internal/cqrs/snippets.go         |
+| cqrs.snippet_list                            | Infrastructure            | internal/cqrs/snippets.go         |
+| cqrs.snippet_list_full                       | Rejection                 | internal/cqrs/snippets.go         |
+| cqrs.snippet_missing                         | Rejection                 | internal/cqrs/snippets.go         |
+| cqrs.snippet_register                        | Infrastructure            | internal/cqrs/snippets.go         |
+| cqrs.snippet_save                            | Infrastructure            | internal/cqrs/snippets.go         |
+| cqrs.start                                   | Infrastructure            | internal/app/cqrs.go              |
+| cqrs.stream_ref                              | Rejection                 | internal/cqrs/visibility.go       |
+| cqrs.stream_tail                             | Infrastructure            | internal/cqrs/visibility.go       |
+| cqrs.thread_advance                          | Infrastructure            | internal/cqrs/threads.go          |
+| cqrs.thread_append                           | Infrastructure            | internal/cqrs/threads.go          |
+| cqrs.thread_count                            | Infrastructure            | internal/cqrs/threadsreads.go     |
+| cqrs.thread_delete                           | Infrastructure            | internal/cqrs/threads.go          |
+| cqrs.thread_duplicate_message                | Rejection                 | internal/cqrs/threads.go          |
+| cqrs.thread_find                             | Infrastructure            | internal/cqrs/threadsstore.go     |
+| cqrs.thread_flag                             | Infrastructure, Rejection | internal/cqrs/threads.go          |
+| cqrs.thread_fold                             | Corruption                | internal/cqrs/threadsstate.go     |
+| cqrs.thread_get_any                          | Infrastructure            | internal/cqrs/threadsadmin.go     |
+| cqrs.thread_identity                         | Rejection                 | internal/cqrs/threads.go          |
+| cqrs.thread_list                             | Infrastructure            | internal/cqrs/threadsreads.go     |
+| cqrs.thread_lookup                           | Infrastructure            | internal/cqrs/threadsstore.go     |
+| cqrs.thread_message_missing                  | Rejection                 | internal/cqrs/threads.go          |
+| cqrs.thread_messages                         | Infrastructure            | internal/cqrs/threadsreads.go     |
+| cqrs.thread_missing                          | Rejection                 | internal/cqrs/threads.go          |
+| cqrs.thread_read                             | Infrastructure            | internal/cqrs/threads.go          |
+| cqrs.thread_register                         | Infrastructure            | internal/cqrs/threadsregister.go  |
+| cqrs.thread_search                           | Infrastructure            | internal/cqrs/threadsreads.go     |
+| cqrs.thread_stream                           | Rejection                 | internal/cqrs/threadsregister.go  |
+| cqrs.thread_trim                             | Infrastructure            | internal/cqrs/threadssweep.go     |
+| cqrs.threads_boot                            | Infrastructure            | internal/cqrs/threadsregister.go  |
+| cqrs.threads_list_all                        | Infrastructure            | internal/cqrs/threadsadmin.go     |
+| cqrs.threads_sweep_scan                      | Infrastructure            | internal/cqrs/threadssweep.go     |
+| cqrs.transcript_append                       | Infrastructure            | internal/cqrs/transcriptsstore.go |
+| cqrs.transcript_call                         | Infrastructure            | internal/cqrs/transcriptsstore.go |
+| cqrs.transcript_count                        | Infrastructure            | internal/cqrs/transcriptsstore.go |
+| cqrs.transcript_delete                       | Infrastructure            | internal/cqrs/transcriptsstore.go |
+| cqrs.transcript_event                        | Infrastructure            | internal/cqrs/transcripts.go      |
+| cqrs.transcript_fold                         | Corruption                | internal/cqrs/transcripts.go      |
+| cqrs.transcript_register                     | Infrastructure            | internal/cqrs/transcripts.go      |
+| cqrs.transcript_scan                         | Infrastructure            | internal/cqrs/transcriptsstore.go |
+| cqrs.transcript_sweep                        | Infrastructure            | internal/cqrs/transcriptsstore.go |
+| cqrs.transcript_tail                         | Infrastructure            | internal/cqrs/transcriptsstore.go |
+| cqrs.worker_failed                           | Infrastructure            | internal/app/cqrs.go              |
+| cqrs.worker_lag                              | Infrastructure            | internal/app/cqrs.go              |
+| crm.ca_file                                  | Rejection                 | internal/crm/transport.go         |
+| crm.call_log.failed                          | Transient                 | internal/crm/client.go            |
+| crm.call_log.rejected                        | Rejection                 | internal/crm/client.go            |
+| crm.context                                  | runtime-split             | internal/crm/context.go           |
+| crm.context_decode                           | Transient                 | internal/crm/context.go           |
+| crm.context_read                             | Transient                 | internal/crm/context.go           |
+| crm.decode                                   | Transient                 | internal/crm/client.go            |
+| crm.encode                                   | Infrastructure            | internal/crm/client.go            |
+| crm.health.failed                            | Transient                 | internal/crm/client.go            |
+| crm.health.unauthorized                      | Rejection                 | internal/crm/client.go            |
+| crm.http                                     | runtime-split             | internal/crm/client.go            |
+| crm.read                                     | Transient                 | internal/crm/client.go            |
+| crm.request                                  | Infrastructure            | internal/crm/client.go            |
+| crm.too_large                                | Transient                 | internal/crm/client.go            |
+| crm.transport                                | Transient                 | internal/crm/client.go            |
+| crm.url                                      | Rejection                 | internal/crm/client.go            |
+| domain.address                               | Rejection                 | internal/domain/network.go        |
+| domain.channel                               | Rejection                 | internal/domain/message.go        |
+| domain.direction                             | Rejection                 | internal/domain/message.go        |
+| domain.disposition                           | Rejection                 | internal/domain/disposition.go    |
+| domain.extension                             | Rejection                 | internal/domain/ids.go            |
+| domain.fax_direction                         | Rejection                 | internal/domain/fax.go            |
+| domain.fax_status                            | Rejection                 | internal/domain/fax.go            |
+| domain.id                                    | Corruption                | internal/domain/ids.go            |
+| domain.network                               | Rejection                 | internal/domain/network.go        |
+| domain.outbound_status                       | Rejection                 | internal/domain/message.go        |
+| domain.phone                                 | Rejection                 | internal/domain/ids.go            |
+| domain.relpath                               | Rejection                 | internal/domain/relpath.go        |
+| gateway.form                                 | Infrastructure            | internal/gateway/webhook.go       |
+| gateway.receipt                              | Transient                 | internal/gateway/webhook.go       |
+| gateway.request                              | Infrastructure            | internal/gateway/webhook.go       |
+| gateway.transport                            | Transient                 | internal/gateway/webhook.go       |
+| matrix.attachment_read                       | Infrastructure            | internal/matrix/client.go         |
+| matrix.create_room                           | Infrastructure            | internal/matrix/client.go         |
+| matrix.decode                                | Infrastructure, Transient | internal/matrix/client.go         |
+| matrix.download                              | Rejection, Transient      | internal/matrix/client.go         |
+| matrix.empty                                 | Rejection                 | internal/matrix/client.go         |
+| matrix.encode                                | Rejection                 | internal/matrix/client.go         |
+| matrix.mxc                                   | Rejection                 | internal/matrix/client.go         |
+| matrix.network                               | Rejection                 | internal/matrix/client.go         |
+| matrix.request                               | Infrastructure, Transient | internal/matrix/client.go         |
+| matrix.send                                  | Infrastructure            | internal/matrix/client.go         |
+| matrix.token                                 | Rejection                 | internal/matrix/client.go         |
+| matrix.too_large                             | Transient                 | internal/matrix/client.go         |
+| matrix.upload                                | Infrastructure, Transient | internal/matrix/client.go         |
+| messaging.sender_register                    | Rejection                 | internal/messaging/service.go     |
+| messaging.verdict                            | Rejection                 | internal/messaging/service.go     |
+| pbx.decode                                   | Transient                 | internal/pbx/client.go            |
+| pbx.encode                                   | Infrastructure            | internal/pbx/client.go            |
+| pbx.http                                     | runtime-split             | internal/pbx/client.go            |
+| pbx.request                                  | Infrastructure            | internal/pbx/client.go            |
+| pbx.transport                                | Transient                 | internal/pbx/client.go            |
+| pbx.url                                      | Rejection                 | internal/pbx/client.go            |
+| push.fact                                    | Rejection                 | internal/push/push.go             |
+| push.fcm_send                                | Infrastructure, Rejection | internal/push/fcm.go              |
+| push.fcm_token                               | Infrastructure, Rejection | internal/push/fcm.go              |
+| push.ntfy_send                               | Infrastructure, Rejection | internal/push/ntfy.go             |
+| push.registry                                | Rejection                 | internal/push/push.go             |
+| push.transport                               | Rejection                 | internal/push/push.go             |
+| push.transport_parse                         | Rejection                 | internal/push/push.go             |
+| session.insert                               | Infrastructure            | internal/session/sqlite.go        |
+| session.migrate                              | Infrastructure            | internal/session/sqlite.go        |
+| session.migrate_login_email                  | Infrastructure            | internal/session/sqlite.go        |
+| session.nil_db                               | Infrastructure            | internal/session/sqlite.go        |
+| session.sweep                                | Infrastructure            | internal/session/sqlite.go        |
+| session.token                                | Infrastructure            | internal/session/service.go       |
+| session.ttl                                  | Infrastructure            | internal/session/sqlite.go        |
+| signal.attachment_read                       | Infrastructure            | internal/signal/client.go         |
+| signal.connect                               | Transient                 | internal/signal/client.go         |
+| signal.decode                                | Infrastructure            | internal/signal/client.go         |
+| signal.encode                                | Rejection                 | internal/signal/client.go         |
+| signal.network                               | Rejection                 | internal/signal/client.go         |
+| signal.rpc                                   | Rejection                 | internal/signal/client.go         |
+| signal.send                                  | Infrastructure            | internal/signal/client.go         |
+| signal.write                                 | Infrastructure, Transient | internal/signal/client.go         |
+| sso.attempt.missing                          | Rejection                 | internal/server/auth/sso_api.go   |
+| sso.claims                                   | Rejection                 | internal/sso/sso.go               |
+| sso.client_id                                | Rejection                 | internal/sso/sso.go               |
+| sso.client_secret.empty                      | Rejection                 | internal/sso/sso.go               |
+| sso.client_secret.read                       | Rejection                 | internal/sso/sso.go               |
+| sso.client_secret_file                       | Rejection                 | internal/sso/sso.go               |
+| sso.code                                     | Rejection                 | internal/sso/sso.go               |
+| sso.discovery                                | Rejection                 | internal/sso/sso.go               |
+| sso.email_missing                            | Rejection                 | internal/sso/sso.go               |
+| sso.email_unverified                         | Rejection                 | internal/sso/sso.go               |
+| sso.exchange                                 | Rejection                 | internal/sso/sso.go               |
+| sso.groups_denied                            | Rejection                 | internal/sso/sso.go               |
+| sso.id_token                                 | Rejection                 | internal/sso/sso.go               |
+| sso.id_token.verify                          | Rejection                 | internal/sso/sso.go               |
+| sso.idp_error                                | Rejection                 | internal/server/auth/sso_api.go   |
+| sso.issuer                                   | Rejection                 | internal/sso/sso.go               |
+| sso.mapping                                  | Rejection                 | internal/sso/sso.go               |
+| sso.nonce                                    | Infrastructure            | internal/sso/sso.go               |
+| sso.nonce.mismatch                           | Rejection                 | internal/sso/sso.go               |
+| sso.random_token                             | Infrastructure            | internal/sso/sso.go               |
+| sso.redirect_url                             | Rejection                 | internal/sso/sso.go               |
+| sso.state                                    | Infrastructure            | internal/sso/sso.go               |
+| sso.state.mismatch                           | Rejection                 | internal/server/auth/sso_api.go   |
+| sso.unmapped_email                           | Rejection                 | internal/sso/sso.go               |
+| sso.userinfo                                 | Rejection                 | internal/sso/sso.go               |
+| sso.userinfo.claims                          | Rejection                 | internal/sso/sso.go               |
+| sso.verifier                                 | Infrastructure, Rejection | internal/sso/sso.go               |
+| store.attachment_get                         | Infrastructure            | internal/store/messages.go        |
+| store.attachment_get_any                     | Infrastructure            | internal/store/messages.go        |
+| store.attachment_insert                      | Infrastructure            | internal/store/messages.go        |
+| store.attachment_save                        | Infrastructure            | internal/messaging/service.go     |
+| store.attachment_scan                        | Infrastructure            | internal/store/messages.go        |
+| store.attachments_list                       | Infrastructure            | internal/store/messages.go        |
+| store.attachments_rows                       | Infrastructure            | internal/store/messages.go        |
+| store.close                                  | Infrastructure            | internal/store/db.go              |
+| store.count_archived                         | Infrastructure            | internal/store/messages.go        |
+| store.counts                                 | Infrastructure            | internal/store/sweep.go           |
+| store.exec                                   | Infrastructure            | internal/store/sweep.go           |
+| store.fax_create                             | Infrastructure            | internal/fax/service.go           |
+| store.fax_spool                              | Infrastructure            | internal/fax/service.go           |
+| store.flag_read                              | Infrastructure            | internal/store/legacy_contacts.go |
+| store.flag_write                             | Infrastructure            | internal/store/legacy_contacts.go |
+| store.message_append                         | Infrastructure            | internal/messaging/service.go     |
+| store.message_insert                         | Infrastructure            | internal/store/messages.go        |
+| store.message_scan                           | Infrastructure            | internal/store/messages.go        |
+| store.migrate                                | Infrastructure            | internal/store/db.go              |
+| store.open                                   | Infrastructure            | internal/store/db.go              |
+| store.outbound_status                        | Infrastructure            | internal/messaging/service.go     |
+| store.ping                                   | Infrastructure            | internal/store/db.go              |
+| store.query                                  | Infrastructure            | internal/store/db.go              |
+| store.sweep_scan                             | Infrastructure            | internal/store/sweep.go           |
+| store.thread_find                            | Infrastructure            | internal/store/messages.go        |
+| store.thread_flag                            | Infrastructure, Rejection | internal/store/messages.go        |
+| store.thread_get                             | Infrastructure            | internal/store/messages.go        |
+| store.thread_get_any                         | Infrastructure            | internal/store/messages.go        |
+| store.thread_insert                          | Infrastructure            | internal/store/messages.go        |
+| store.thread_lookup                          | Infrastructure            | internal/store/messages.go        |
+| store.thread_mark_read                       | Infrastructure            | internal/store/messages.go        |
+| store.thread_reread                          | Infrastructure            | internal/store/messages.go        |
+| store.thread_resolve                         | Infrastructure            | internal/messaging/service.go     |
+| store.thread_scan                            | Infrastructure            | internal/store/messages.go        |
+| store.thread_update                          | Infrastructure            | internal/store/messages.go        |
+| store.threads_list_all                       | Infrastructure            | internal/store/messages.go        |
+| store.tx_begin                               | Infrastructure            | internal/store/messages.go        |
+| store.tx_commit                              | Infrastructure            | internal/store/messages.go        |
+| textagent.badid                              | Rejection                 | internal/textagent/client.go      |
+| textagent.decode                             | Infrastructure            | internal/textagent/client.go      |
+| textagent.encode                             | Infrastructure            | internal/textagent/client.go      |
+| textagent.reach                              | Transient                 | internal/textagent/client.go      |
+| textagent.read                               | Transient                 | internal/textagent/client.go      |
+| textagent.request                            | Infrastructure            | internal/textagent/client.go      |
+| textagent.secret                             | Rejection                 | internal/textagent/client.go      |
+| userauth.close.db                            | Infrastructure            | internal/userauth/userauth.go     |
+| userauth.close.users                         | Infrastructure            | internal/userauth/userauth.go     |
+| userauth.config                              | Rejection                 | internal/userauth/userauth.go     |
+| userauth.db.open                             | Infrastructure            | internal/userauth/userauth.go     |
+| userauth.db.optimize                         | Infrastructure            | internal/userauth/userauth.go     |
+| userauth.enroll.entropy                      | Infrastructure            | internal/userauth/enroll.go       |
+| userauth.enroll.expired                      | Rejection                 | internal/userauth/enroll.go       |
+| userauth.enroll.invalid                      | Rejection                 | internal/userauth/enroll.go       |
+| userauth.enroll.userid                       | Corruption                | internal/userauth/enroll.go       |
+| userauth.mapping                             | Rejection                 | internal/userauth/userauth.go     |
+| userauth.passkey.bad_id                      | Rejection                 | internal/userauth/userauth.go     |
+| userauth.passkey.unmapped                    | Rejection                 | internal/userauth/userauth.go     |
+| userauth.register.exists_unreadable          | Infrastructure            | internal/userauth/userauth.go     |
+| userauth.unmapped_email                      | Rejection                 | internal/userauth/userauth.go     |
+| webhook.fax_pages                            | Rejection                 | internal/server/hooks/webhooks.go |
+| webphone.cli.catalog                         | Infrastructure            | cmd/webphone/catalog.go           |
+| webphone.cli.contracts                       | Infrastructure            | cmd/webphone/contracts.go         |
+| webphone.server.openapi_render               | Infrastructure            | internal/server/apidocs.go        |
+| webphone.server.wire_render                  | Infrastructure            | internal/server/wirecontracts.go  |
 
 <!-- error-code-registry: END -->
 

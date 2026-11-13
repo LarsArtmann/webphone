@@ -236,7 +236,7 @@ func TestMessageStatusWebhookUpdatesTranscript(t *testing.T) {
 	if err != nil || len(threads) != 1 {
 		t.Fatalf("seeded threads: %d (err %v)", len(threads), err)
 	}
-	msgs, err := server.messages.ListMessages(context.Background(), owner, threads[0].Thread.ID, 10)
+	msgs, err := server.messages.ListMessages(context.Background(), owner, domain.MustThreadID(threads[0].ThreadID), 10)
 	if err != nil || len(msgs) != 1 || msgs[0].ProviderRef == "" {
 		t.Fatalf("seeded messages: %d (err %v)", len(msgs), err)
 	}

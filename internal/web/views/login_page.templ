@@ -1,0 +1,107 @@
+package views
+
+import (
+	"github.com/larsartmann/templ-components/display"
+	"github.com/larsartmann/templ-components/forms"
+	"github.com/larsartmann/templ-components/utils"
+)
+
+// LoginPageExtra is the consumer sign-in section the /login page hosts
+// inside the cqrs-htmx loginpage card (loginpage.Config.ExtraSection).
+// /login is THE auth front door in every mode: the library renders the
+// passkey ceremony when the identity layer is on, and this section
+// carries the rest — the OIDC (Pocket ID) door and the extension +
+// SIP-password form. The island card no longer renders any login form;
+// an anonymous root navigation redirects here.
+//
+// primary marks the extension form as the page's PRIMARY method (the
+// passkey-off deployment): bare form, no disclosure. With the passkey
+// ceremony on the page, the form is the break-glass lifeline one
+// disclosure away — signing into a phone must never depend on the IdP
+// or on a passkey being present.
+//
+// English-only copy: the login page is a server-rendered surface (the
+// library's own copy is English; D3 keeps shell copy English), and the
+// page carries no island runtime — its behavior lives in
+// /assets/login-page.js.
+templ LoginPageExtra(primary bool, sso bool) {
+	if sso {
+		<div class="space-y-2">
+			@display.Button(display.ButtonProps{
+				BaseProps: utils.BaseProps{
+					ID: "sso-login",
+				},
+				Text:    "Continue to Pocket ID",
+				Href:    "/api/auth/oauth2/begin",
+				Variant: display.ButtonSecondary,
+				Size:    display.ButtonSizeMD,
+			})
+		</div>
+		if primary {
+			<div class="lp-divider my-6 text-center text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500">
+				<div class="mb-2 border-t border-gray-200 dark:border-gray-700" aria-hidden="true"></div>
+				or
+			</div>
+		}
+	}
+	if primary {
+		@loginExtensionForm()
+	} else {
+		<details class="mt-4">
+			<summary class="cursor-pointer text-sm font-medium text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-50">Use extension and password instead</summary>
+			<div class="mt-4">
+				@loginExtensionForm()
+			</div>
+		</details>
+	}
+	<script src="/assets/login-page.js" defer></script>
+}
+
+// loginExtensionForm is the extension + SIP-password form. Its ids
+// (#login-form, #ext, #pass, #remember, #login-error) are the DOM
+// contract ids the island card carried; they moved here verbatim so the
+// stack E2E and the smoke keep one vocabulary. The submit is driven by
+// /assets/login-page.js (same-origin script — the nonce CSP lane allows
+// it without a nonce attribute).
+templ loginExtensionForm() {
+	<form id="login-form" class="space-y-4" autocomplete="off" novalidate aria-describedby="login-error">
+		@forms.Input(forms.InputProps{
+			BaseProps: utils.BaseProps{
+				ID:    "ext",
+				Attrs: templ.Attributes{"inputmode": "numeric"},
+			},
+			Type:         forms.InputText,
+			Name:         "extension",
+			Label:        "Extension",
+			Required:     true,
+			Placeholder:  "1000",
+			Autocomplete: forms.AutocompleteUsername,
+		})
+		@forms.Input(forms.InputProps{
+			BaseProps: utils.BaseProps{
+				ID: "pass",
+			},
+			Type:         forms.InputPassword,
+			Name:         "password",
+			Label:        "Password",
+			Required:     true,
+			Placeholder:  "••••••••",
+			Autocomplete: forms.AutocompleteCurrentPassword,
+		})
+		<label class="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300">
+			<input id="remember" type="checkbox" class="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 dark:border-gray-600 dark:bg-gray-800"></input>
+			<span>remember extension on this device (never the password)</span>
+		</label>
+		@display.Button(display.ButtonProps{
+			BaseProps: utils.BaseProps{
+				ID:    "login-btn",
+				Class: "w-full gap-2",
+			},
+			Type:    display.ButtonHTMLSubmit,
+			Text:    "Sign in",
+			Variant: display.ButtonPrimary,
+			Size:    display.ButtonSizeMD,
+		})
+	</form>
+	<p id="login-error" class="mt-3 hidden text-sm text-red-600 dark:text-red-400" role="alert"></p>
+}

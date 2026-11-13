@@ -123,16 +123,16 @@ session would rewrite something.
 
 **Tier 0 — close this train's own holes (~2 h)**
 
-| # | Task                                                                                                             | Min |
-| - | ---------------------------------------------------------------------------------------------------------------- | --- |
-| 1 | Add the "CRM context absent/unreachable" row to `error-contract.md` § Detection column (D2)                      | 10  |
-| 2 | Push Kith (`master` is 16 ahead) after its catalog gate is green, so the producer actually ships                 | 15  |
-| 3 | Kith CHANGELOG + wire-reference entry for `GET /api/contacts/{id}/context`                                       | 25  |
-| 4 | Delete or render `Context.Tags` / `Context.Name` (D3) — my default: delete, add back with the UI that needs them | 20  |
-| 5 | Add `FEATURES.md` rows for both capabilities (C5)                                                                | 15  |
-| 6 | Move the deferred tail from the plan doc into `TODO_LIST.md` (C5)                                                | 20  |
-| 7 | Fix the AGENTS citation `crm.outcomeForDisposition` → `crm.crmOutcome` (D8)                                      | 5   |
-| 8 | Test that `crmContextFor` refuses matrix/session addresses (the guard exists, nothing pins it)                   | 15  |
+| #     | Task                                                                                                                                                                                                                                                                                                                                                                     | Min   |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- |
+| 1     | Add the "CRM context absent/unreachable" row to `error-contract.md` § Detection column (D2)                                                                                                                                                                                                                                                                              | 10    |
+| 2     | Push Kith (`master` is 16 ahead) after its catalog gate is green, so the producer actually ships                                                                                                                                                                                                                                                                         | 15    |
+| 3     | Kith CHANGELOG + wire-reference entry for `GET /api/contacts/{id}/context`                                                                                                                                                                                                                                                                                               | 25    |
+| ~~4~~ | ~~Delete or render `Context.Tags` / `Context.Name` (D3) — my default: delete, add back with the UI that needs them~~ done — the DELETE half landed: the strip consumes CONTEXT ONLY, the producer's id/name/email/tags are deliberately NOT decoded (AGENTS § CRM seam 2026-11-06 ruling; the consumer fixture keeps them as unknown fields so forward-compat is a test) | 20    |
+| 5     | Add `FEATURES.md` rows for both capabilities (C5)                                                                                                                                                                                                                                                                                                                        | 15    |
+| 6     | Move the deferred tail from the plan doc into `TODO_LIST.md` (C5)                                                                                                                                                                                                                                                                                                        | 20    |
+| ~~7~~ | ~~Fix the AGENTS citation `crm.outcomeForDisposition` → `crm.crmOutcome` (D8)~~ done — landed — AGENTS § CRM seam cites crm.crmOutcome                                                                                                                                                                                                                                   | ~~5~~ |
+| 8     | Test that `crmContextFor` refuses matrix/session addresses (the guard exists, nothing pins it)                                                                                                                                                                                                                                                                           | 15    |
 
 **Tier 1 — make the new thing provable (~3 h)**
 
@@ -160,16 +160,16 @@ session would rewrite something.
 
 **Tier 3 — governance and tooling (~4 h)**
 
-| #  | Task                                                                                                       | Min |
-| -- | ---------------------------------------------------------------------------------------------------------- | --- |
-| 23 | Test: every registered error code appears in the detection table or an explicit loud list (e)              | 45  |
-| 24 | Run `nix flake check` as one gate and record the verdict (C6)                                              | 60  |
-| 25 | Kith buildflow + CI green (blocked on its catalog drift, which is another session's)                       | 45  |
-| 26 | NixOS module: derive `crm.contact_url` from a CRM vhost (owner Q2)                                         | 40  |
-| 27 | Module option for `crm.contact_url` + `webphone-module` stand-in update                                    | 30  |
-| 28 | Stack browser-E2E: re-run with the new ids (already a standing obligation)                                 | 60  |
-| 29 | Smoke lane with a CRM stub, so `webphone-smoke.py` exercises the strip                                     | 45  |
-| 30 | Record a `crm.*` metrics counter for context lookups (hit/absent/failure) so the quiet class is measurable | 30  |
+| #      | Task                                                                                                                                                                                                                   | Min |
+| ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
+| 23     | Test: every registered error code appears in the detection table or an explicit loud list (e)                                                                                                                          | 45  |
+| ~~24~~ | ~~Run `nix flake check` as one gate and record the verdict (C6)~~ — OWNED: TODO_LIST § CRM deferred tail item 4 (the KVM-gated legs verified individually when last changed; the ONE-gate run rides the release train) | 60  |
+| 25     | Kith buildflow + CI green (blocked on its catalog drift, which is another session's)                                                                                                                                   | 45  |
+| 26     | NixOS module: derive `crm.contact_url` from a CRM vhost (owner Q2)                                                                                                                                                     | 40  |
+| 27     | Module option for `crm.contact_url` + `webphone-module` stand-in update                                                                                                                                                | 30  |
+| 28     | Stack browser-E2E: re-run with the new ids (already a standing obligation)                                                                                                                                             | 60  |
+| 29     | Smoke lane with a CRM stub, so `webphone-smoke.py` exercises the strip                                                                                                                                                 | 45  |
+| 30     | Record a `crm.*` metrics counter for context lookups (hit/absent/failure) so the quiet class is measurable                                                                                                             | 30  |
 
 **Tier 4 — product depth (needs owner input, not mine)**
 

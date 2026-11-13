@@ -38,6 +38,11 @@ let
             type = lib.types.listOf lib.types.anything;
             default = [ ];
           };
+          # Same: the eval-time warning channel the metrics-fencing case reads.
+          warnings = lib.mkOption {
+            type = lib.types.listOf lib.types.str;
+            default = [ ];
+          };
         };
       }
     ]

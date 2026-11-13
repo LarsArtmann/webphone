@@ -2,6 +2,7 @@
 // Kept in memory only; never persisted.
 
 import { csrfToken } from "./csrf.js";
+import { t } from "./i18n.js";
 import { announce } from "./ui.js";
 
 /** @type {{ extension: string, password: string } | null} */
@@ -61,9 +62,9 @@ export async function authedFetch(path, options = {}) {
 export function noteThrottled(res, path) {
   if (res.status !== 429) return;
   const waitSeconds = Number.parseInt(res.headers.get("Retry-After") || "", 10);
-  const waitText = Number.isFinite(waitSeconds)
-    ? ` — retry in ${waitSeconds}s`
-    : "";
-  console.warn(`webphone: rate limited on ${path}${waitText}`);
-  announce(`Too many requests${waitText}`, "warn");
+  const wait = Number.isFinite(waitSeconds) ? waitSeconds : null;
+  console.warn(
+    `webphone: rate limited on ${path}${wait === null ? "" : ` — retry in ${wait}s`}`,
+  );
+  announce(t("rateLimited")(wait), "warn");
 }

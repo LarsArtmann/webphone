@@ -387,6 +387,15 @@ and the evidence. Newest last is NOT enforced — group by topic.
   suppresses nothing. `erraudit nolint-audit` caught 41 of 109
   directives stale within hours of the train; run it after any
   error-path refactor.
+- **A closed httptest server's port can rebind under its own helper**
+  (2026-11-10, `TestSummaryDraftOutageIs502`): the test closed its
+  fake ASR server, and the helper under test then started the REAL
+  provider on `httptest.NewUnstartedServer` — which grabbed the SAME
+  freed port, so the expected connection-refused became a live
+  handler and the assertion raced the listener's death. The fix
+  pattern generalizes: an always-refused address (`http://127.0.0.1:1`
+  — port 1 is reserved by definition) makes the outage deterministic;
+  never rely on a port you released, even one you owned a line ago.
 
 ## Telephony
 
@@ -441,7 +450,7 @@ and the evidence. Newest last is NOT enforced — group by topic.
   knob; webphone consumes it, serves its own same-origin
   `/assets/theme-preload.js` (which sets `data-theme` pre-paint — the
   library script never did), and dropped the hash plus the
-  `!important`s. Lesson: when a dependency forces a CSP exception, the
+  `!important` declarations. Lesson: when a dependency forces a CSP exception, the
   fix belongs upstream — and the exception class (hash pinning
   dependency bytes) was the real recurring cost, not the one-time pin.
 
@@ -594,8 +603,10 @@ the surface); probe aliases at `/health/{livez,readyz,startupz}` (SAME
 probe instance as the root triple). The dashboard registers in the
 container under the name `dashboard` (its pusher-staleness check shows
 as non-critical warn). CSP: subtree override via `httputil.Nonce` +
-`dashboard.RecommendedCSP(nonce)` — `unsafe-eval` scoped to `/health`
-ONLY (Datastar SDK compiles expressions); every other surface keeps the
+`dashboardCSP` (RecommendedCSP minus `'unsafe-eval'` — since dashboard
+v0.13.3 the page's data-nonce root lets the SDK compile without the
+Function path, browser-verified upstream, so /health needs no eval);
+every other surface keeps the
 strict app policy. Its stylesheet is its OWN scoped build
 `/assets/health.css` (prettier-formatted, treefmt owns it; regenerated
 from the go-health-dashboard + templ-components layout/display/
@@ -1015,3 +1026,207 @@ pushing.
   share a DID — inbound needs its own fax DID (the stack asserts
   `faxDid ≠ voice DID`), outbound needs a fax app + fax-enabled number
   or a bridge implementing `/fax`.
+
+### The dead play button and the two-verdict split brain (2026-11-10, voicemail playback)
+
+The play button on `pbx.artmann.tech/voicemail` did nothing visible: the
+`play()` rejection was swallowed (`started.catch(function () {})`) and the
+audio element carried no `error` listener, so a 404/403/undecodable
+recording answered NOTHING — the one feedback channel left was the
+waveform-fallback toast, which fired on the same root cause and said the
+opposite thing ("waveform unavailable — using built-in player controls"
+over a player that could not play). The fix order matters and is the
+lesson: first give the failure its OWN surface (one honest toast per
+episode, deduped per element, re-armed after a success), THEN audit every
+other surface that can fire on the same failure — the fallback's toast now
+stays silent for the unreachable-recording class (the discriminator is
+`recordingArrived`, set where the fetch actually runs, so the wave path
+and the player path cannot disagree), and keeps talking only for genuine
+capability shortfalls where playback still works. Two auto-surfaces on one
+failure episode are a split brain even when both are individually honest;
+the capability/failure class split must be decided at the detection site,
+not reconstructed at the display site. Pinned in shell.test.mjs ("a dead
+recording keeps one toast") and docs/error-contract.md.
+
+### The tracking-train process lessons (2026-11-10, prod UI-tracking continuation)
+
+- **Re-run a foreign red at CURRENT HEAD before diagnosing it.** The
+  plan's T01 ("fix the island-js toast red") dissolved on arrival: the
+  spec that failed at 13:50Z was another session's IN-FLIGHT voicemail
+  work, and their follow-up commits had already finished the intent —
+  328/328 green hours later, sandbox check included. Hours spent
+  reverse-engineering a half-landed change can be wasted by one
+  `node --test` at HEAD. Corollary: a reproduction probe must carry its
+  own hard timeout (`setTimeout(() => process.exit(1), N)`) — the prior
+  session's scratch probe hung and was killed, proving nothing; a probe
+  that cannot fail fast is not evidence, it is a second incident.
+- **The daemon commit race eats narrative messages, not content.** Two
+  planned narrative commits landed as `chore: auto-commit N changed
+  file(s)` because split add/commit calls lost the race (2026-10-17
+  lesson, re-proven twice on 2026-11-10). Stage + commit in ONE tool
+  call, and verify the WORK by reading the diff/tree, never by trusting
+  the message; the message is recoverable, silent content loss is not.
+- **A capture browser is a real SIP endpoint.** Every remote run takes
+  a genuine SIP registration over the deployment's bridged wss (the
+  shots are honest, the registration dies with the run) — so a tracked
+  capture of a live deployment is telephony activity, not a read-only
+  crawl: it can collide with the operator's own registration line and
+  it answers nothing but still REGISTERs. The release-runbook's E2E
+  obligations apply to remote runs the same way they apply to the stack
+  browser suite. (Cross-ref: docs/release-runbook.md; the harness
+  docstring § Remote/prod tracking extension.)
+- **Mixed-tree ritual: re-run foreign specs before pushing a shared
+  main.** This session pushed onto a main where another train had
+  landed commits minutes earlier; the safe sequence is `git log
+  origin/main..HEAD` → island/server suites at the merge state → then
+  push, and `gh run list` after (the 13:50Z red belonged to the other
+  train and self-healed — the verdict that matters is the run for YOUR
+  push sha).
+- **A helper server configured by a dying process dies with it.** The
+  fake Kith machine API behind the CRM-strip shot was started inside a
+  short-lived python snippet, so it vanished the moment the snippet
+  returned — the app then booted against a dead port, the CRM seam
+  failed closed, and two boots went by before the real bug was
+  visible: not the app, the harness setup. Every server the subject
+  depends on must be launched from a process that OUTLIVES the
+  verification (background shell, unit file, `nohup`), and a
+  "seam refused/unavailable" symptom must be answered by a liveness
+  probe of its dependencies before anything else is blamed.
+
+## Deployment truth (2026-11-10)
+
+- **A fix on main is not a fix in prod until `/version` matches.** The
+  voicemail-playback round landed on main 2026-11-09 (signed tests, the
+  proxy Range pin, the toast contract — every gate green), and the
+  2026-11-10 morning still found prod serving the old binary: the
+  operator clicked a dead voicemail button and the honest toast did not
+  exist in the served bytes, because the served bytes were `v2.12.0`.
+  Nothing in the fleet watched that gap — CI green, a pushed tag, and a
+  cut release are all statements about the REPO, never about the host.
+  Two closes: the release train now treats the deploy as a step with a
+  verification (B5: `/version` = the released version, then the
+  operator-facing surfaces re-shot on real data), and the watch lane's
+  third observer (`scripts/stale-prod-watch.sh`, 2026-11-10) compares
+  prod's public `/version` against the newest GitHub release every 15
+  minutes and files a `stale-prod` issue after 24 h of drift. The
+  companion trap: the stack lock "riding main" does NOT deploy anything
+  either — the relock only moves what a future `nixos-rebuild` WOULD
+  build; the rebuild itself is the fix.
+- **Release attempt ledger: batch the preflight, don't discover the
+  blockers serially.** v2.13.0 needed five release.sh attempts before
+  its first green pass through step 7: attempt 1 died on a test race
+  (a closed httptest server's port rebound by the helper's own ASR
+  provider — fixed by the always-refused `http://127.0.0.1:1`
+  convention), attempt 2 on a cqrs-lint critical (the wirefixture
+  password literal — fixed with the `//cqrs-lint:ignore(S001)`
+  directive at the site, enroll.go:25 precedent), attempt 3 on lychee
+  (private-repo excludes missing then), attempt 4 on the stack
+  lock-move-guard (the relock commit message lacked the ritual marker).
+  Every one of those was discoverable WITHOUT a tag: buildflow + the
+  race suite + lychee run locally in ~15 minutes against the working
+  tree. The next release runs the preflight batch BEFORE attempt 1, so
+  attempt 1 is the tag attempt. Corollary: a re-run needs
+  `WEBPHONE_RELEASE_SKIP_VERSION_GUARD=1` only while the version-bump
+  commit is untagged — after the tag is up, the guard passes on its own.
+- **The scoped BuildFlow verdict can be a cached finding set, not a
+  scan (2026-11-11, the cqrs-lint delta).** `buildflow -s cqrs-lint`
+  read 18 findings for an hour while the real CLI, the toolspec chain,
+  and even the PATH binary all read 12. Three hypotheses were
+  falsified with elaborate probes (stale binary predating the
+  comma-parsing era; a suppression-parsing gap; a bridge delta) before
+  the cache check landed: the result cache answers from the last
+  matching TREE STATE, not from disk. Bypass with
+  `BUILDFLOW_NO_RESULT_CACHE=1`. Corollary learned in the same hour:
+  the house gotchas had documented the bypass all along — read the
+  pins BEFORE debugging tool behavior; three of the four probe hours
+  were spent re-deriving a documented answer.
+- **A verifier scoped to tool A cannot adjudicate tool B's accepted
+  noise (2026-11-11 near-miss).** The scoped cqrs-lint run carried a
+  baseline-staleness alarm (its counts disagreed with the baseline
+  file that `.buildflow.yml` records for BRANCHING-FLOW), and the
+  reflex answer — regenerate the baseline — would have DELETED a live,
+  healthy baseline on a false signal from a tool that cannot see the
+  corpus the baseline governs. Adjudicate a baseline only with the
+  detector that wrote it (art-dupl at its pinned version), never with
+  a scoped verifier's side-channel counts.
+- **A module-graph delta without its vendorHash tail reds main at
+  the next push (2026-11-11, the loginpage v4.18.0 sweep).** The bump
+  rode a daemon commit (go.mod 4 lines) with no re-pin; the next CI
+  run failed nix build, webphone-smoke, go test -race and the
+  CHANGELOG gate downstream of one hash mismatch. The cheapest repair
+  is CI's own error line: the mismatch message prints the exact
+  expected hash — apply it to `nix/packages.nix` verbatim, build
+  `.#webphone.goModules` locally to confirm, push. The standing rule
+  (dependency bumps ride `buildflow update`, never the daemon) exists
+  for exactly this; the daemon's hookless commits remain the open
+  guard hole.
+- **A sibling library repo can be unbuildable in its own workspace —
+  build the module, not the workspace (2026-11-11, the loginpage
+  ExtraSection train).** cqrs-htmx's go.work replaces
+  `go-cqrs-lite/catalog/v4` with a sibling checkout whose `catalog/`
+  subdirectory no longer exists, so EVERY workspace-aware go command
+  fails with a replace-resolution error, and the repo's flake devshell
+  is independently broken (stale go-source hash on its fixed-output
+  derivation). The working recipe for single-module work there:
+  `cd <module> && GOWORK=off GOTOOLCHAIN=auto go test/build ./...` —
+  module-graph resolution through the proxy, workspace replaced
+  nothing. Do not "fix" the go.work on a drive-by: it is the repo
+  owner's dev setup and a fleet-wide policy call.
+- **cqrs-htmx's push gate enforces family-train alignment that its
+  commit gate only advises (2026-11-11).** The pre-commit hook runs the
+  release-train check `--advisory` (train-lag warnings only) while the
+  PRE-PUSH hook fails the push on lag > 0 — so a library feature can
+  sit committed-but-unpushable behind examples-module version lag that
+  has nothing to do with the change. The sanctioned path is bumping
+  the lagging requires (four go.mod lines in examples/system-demo +
+  systemadapter), not `--no-verify`; the gate's own output names the
+  advisory/enforcing split. Same repo: the default branch is `master`
+  (`git push origin main` silently matches nothing), and the
+  auto-commit daemon will sweep mid-edit files into "chore:" commits
+  while a failing pre-commit hook blocks YOUR narrative commit — the
+  tag then points at daemon-shaped history, which is fine ONLY because
+  the tag content (not the commit message) is what ships. Verify the
+  tag's tree with a test run, not with `git log`.
+
+## Detached-review shutdown race (accepted, 2026-11-11 owner ruling)
+
+`TestAutoReviewDispatchRoundTrip` failed ONCE under the buildflow sandbox
+(`sql: statement is closed`) and never since — plain AND `-race` runs stay
+green. Root cause: the automatic review dispatches its AI draft as a detached
+job (fire-and-forget goroutine, `context.WithoutCancel`, 15s budget — the same
+shape as the draft-push fan-out), and under sandbox CPU starvation that
+goroutine can still be mid-query when the test's engine cleanup closes the
+sqlite handle. VERDICT: ACCEPT AND DOCUMENT, no hardening train. The race is
+test-harness-only (prod shutdown drains HTTP → probe → container in order, and
+the goroutine's context budget outlives the request either way); a join-the-
+goroutine harness would wire test-only synchronization into a seam whose prod
+contract is deliberately detached. REOPEN TRIGGER: a second occurrence OUTSIDE
+the buildflow sandbox, or the same signature on a NON-test surface.
+
+## Plan says X, code pins Y — amend the same turn (2026-11-13, raceprobe #249)
+
+The raceprobe issue (#249) carried a repro expectation from the b1b01b87 era;
+by the time the train ran, the storage-ladder retirement had shifted fold
+timing and NOTHING reproduced (`-count=20`, `-count=10 -race`, package
+`-count=2`, all green). The train neither chased the ghost nor silently
+dropped the row: it amended the decision the same turn — implemented the
+cheap await-poll hardening anyway (defensive at 5 lines), closed the issue
+WITH the non-repro evidence, and recorded why no ci-flake-ledger row exists
+(the flake never red CI). The lesson: a plan's premise can rot while the work
+sits queued; when the code no longer exhibits the premise, AMEND the plan's
+verdict the same turn, with evidence, instead of executing a stale step or
+skipping it quietly.
+
+## New dataDir artifacts owe the backup path an adjudication (2026-11-13)
+
+The flight-recorder train added `<dataDir>/traces` under the data dir; the
+backup unit and the restore drill tar the WHOLE data dir
+(`scripts/webphone-backup-drill.py` `tar.add(src, arcname=".")`), so up to 20
+gzip'd trace snapshots silently ride every backup — count-bounded but
+size-unbounded per snapshot, and neither the train nor the backup docs ever
+decided that. Nothing broke (the drill passed; snapshots are gzip best-speed),
+which is exactly the danger: an artifact class entered the backup payload
+without a decision. Lesson: any new writer under dataDir adjudicates the
+backup tar + the VM-test fixtures AT introduction — include deliberately or
+exclude deliberately; "it's just a subdir" is how unbounded backup growth
+lands.

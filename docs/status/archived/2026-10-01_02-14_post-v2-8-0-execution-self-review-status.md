@@ -38,15 +38,15 @@ I added the owed CHANGELOG entry.
 
 ## b) PARTIALLY DONE
 
-| Item | What remains                                        |
-| ---- | --------------------------------------------------- |
-| ~~   | T01 release tail                                    |
-| ~~   | T02 SMS bridge                                      |
-| ~~   | T03 owner-calls                                     |
-| T14  | markdownlint posture = owner pick (briefing row 18) |
-| ~~   | T10.51                                              |
-| ~~   | TODO row 1 freshness                                |
-| ~~   | Render-diff TODO note                               |
+| Item  | What remains                                        |
+| ----- | --------------------------------------------------- |
+| ~~ ~~ | T01 release tail                                    |
+| ~~ ~~ | T02 SMS bridge                                      |
+| ~~ ~~ | T03 owner-calls                                     |
+| T14   | markdownlint posture = owner pick (briefing row 18) |
+| ~~ ~~ | T10.51                                              |
+| ~~ ~~ | TODO row 1 freshness                                |
+| ~~ ~~ | Render-diff TODO note                               |
 
 ## c) NOT STARTED (deliberately)
 

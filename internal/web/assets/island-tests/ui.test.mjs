@@ -6,7 +6,7 @@ import assert from "node:assert/strict";
 
 import { installBrowserGlobals } from "./helpers.mjs";
 
-installBrowserGlobals();
+const doc = installBrowserGlobals();
 const ui = await import("../island/app/ui.js");
 
 test("announce renders a toast element with kind and message", () => {
@@ -22,6 +22,24 @@ test("announce caps the stack at four and drops the oldest", () => {
   for (let i = 0; i < 6; i++) ui.announce(`m${i}`, "info");
   assert.equal(toasts.children.length, 4);
   assert.equal(toasts.children[0].textContent, "m2");
+});
+
+test("toast eviction never drops focus to the body (M42)", () => {
+  const toasts = document.getElementById("toasts");
+  toasts.replaceChildren();
+  ui.announce("anchored", "info");
+  const anchored = toasts.children[0];
+  doc.activeElement = anchored;
+  for (let i = 0; i < 4; i++) ui.announce(`n${i}`, "info");
+  assert.equal(toasts.children.includes(anchored), false, "the anchored toast was evicted");
+  const focusedSurvivor = toasts.children.find((node) => node.focused);
+  assert.ok(focusedSurvivor, "focus sits on a surviving toast");
+  assert.equal(
+    focusedSurvivor.textContent,
+    "n3",
+    "focus moved to the newest surviving toast, not the body",
+  );
+  doc.activeElement = null;
 });
 
 test("unknown kinds fall back to the info lifetime without crashing", () => {

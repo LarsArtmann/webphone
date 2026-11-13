@@ -224,7 +224,7 @@ stack-side follow-ups).
 ~~12. Add dashboard surfaces to docs/error-contract.md (or record the~~ not adopted — the deliberate exclusion stands; below the bar
 deliberate exclusion with rationale).
 ~~13. Record the openapi-boundary decision (dashboard out) in~~ not adopted — the boundary decision stands; below the bar
-docs/planning/2026-09-22_12-02 area or the spec's rationale comment.
+docs/planning/archived/2026-09-22_12-02 area or the spec's rationale comment.
 ~~14. Add an app test pinning probe refresh cadence when the dashboard is on~~ not adopted — below the bar
 (CachedResponse advances; startupz latches; dashboard warn before
 Start).

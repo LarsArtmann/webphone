@@ -143,7 +143,26 @@ test("hold UI shows the pending truth until the re-INVITE settles", async () => 
         },
       };
     }
-    invite() {
+    invite(opts) {
+      // The re-INVITE toggles carry a requestDelegate (the verdict
+      // lane): the stub fires onAccept/onReject instead of resolving.
+      if (opts?.requestDelegate) {
+        if (holdMode === "resolve") {
+          // Fire the delegate BEFORE the promise resolves: a post-resolve
+          // microtask can leak past this test's settle() into the next
+          // test file's DOM state (the shell dialer test caught it).
+          opts.requestDelegate.onAccept?.();
+          return Promise.resolve();
+        }
+        return new Promise((resolve, reject) =>
+          gates.push({
+            resolve,
+            reject,
+            accept: () => opts.requestDelegate.onAccept?.(),
+            refuse: () => opts.requestDelegate.onReject(),
+          }),
+        );
+      }
       if (holdMode === "resolve") return Promise.resolve();
       return new Promise((resolve, reject) => gates.push({ resolve, reject }));
     }
@@ -196,7 +215,7 @@ test("hold UI shows the pending truth until the re-INVITE settles", async () => 
   assert.equal(holdBtn.textContent, t("callHolding"));
   assert.equal(holdBtn.disabled, true, "no second toggle while in flight");
 
-  gates.pop().resolve();
+  gates.pop().accept();
   await settle();
   assert.equal(card.dataset.state, "held", "settled: actually on hold");
   assert.match(chipText(), /on hold/i);
@@ -210,7 +229,7 @@ test("hold UI shows the pending truth until the re-INVITE settles", async () => 
   assert.equal(holdBtn.textContent, t("callResuming"));
   assert.equal(holdBtn.disabled, true);
 
-  gates.pop().reject(new Error("boom"));
+  gates.pop().refuse();
   await settle();
   assert.equal(card.dataset.state, "held", "failure keeps the settled truth");
   assert.match(chipText(), /on hold/i);
@@ -248,7 +267,26 @@ test("a failed hold announces the hold direction", async () => {
         },
       };
     }
-    invite() {
+    invite(opts) {
+      // The re-INVITE toggles carry a requestDelegate (the verdict
+      // lane): the stub fires onAccept/onReject instead of resolving.
+      if (opts?.requestDelegate) {
+        if (holdMode === "resolve") {
+          // Fire the delegate BEFORE the promise resolves: a post-resolve
+          // microtask can leak past this test's settle() into the next
+          // test file's DOM state (the shell dialer test caught it).
+          opts.requestDelegate.onAccept?.();
+          return Promise.resolve();
+        }
+        return new Promise((resolve, reject) =>
+          gates.push({
+            resolve,
+            reject,
+            accept: () => opts.requestDelegate.onAccept?.(),
+            refuse: () => opts.requestDelegate.onReject(),
+          }),
+        );
+      }
       if (holdMode === "resolve") return Promise.resolve();
       return new Promise((resolve, reject) => gates.push({ resolve, reject }));
     }
@@ -373,6 +411,11 @@ test("sent DTMF tones pulse the key and collect a transient trail", async () => 
   const trail = doc.getElementById("wp-tones");
   assert.equal(trail.hidden, false);
   assert.equal(trail.textContent, "1", "the sent tone lands in the trail");
+  assert.equal(
+    trail.getAttribute("role"),
+    "status",
+    "the trail confirms digits to screen readers (M45)",
+  );
 
   await sendDtmf("#");
   assert.equal(trail.textContent, "1·#", "tones accumulate dot-separated");
@@ -400,7 +443,26 @@ test("a wish queued mid-flight replays after the in-flight toggle settles", asyn
         },
       };
     }
-    invite() {
+    invite(opts) {
+      // The re-INVITE toggles carry a requestDelegate (the verdict
+      // lane): the stub fires onAccept/onReject instead of resolving.
+      if (opts?.requestDelegate) {
+        if (holdMode === "resolve") {
+          // Fire the delegate BEFORE the promise resolves: a post-resolve
+          // microtask can leak past this test's settle() into the next
+          // test file's DOM state (the shell dialer test caught it).
+          opts.requestDelegate.onAccept?.();
+          return Promise.resolve();
+        }
+        return new Promise((resolve, reject) =>
+          gates.push({
+            resolve,
+            reject,
+            accept: () => opts.requestDelegate.onAccept?.(),
+            refuse: () => opts.requestDelegate.onReject(),
+          }),
+        );
+      }
       if (holdMode === "resolve") return Promise.resolve();
       return new Promise((resolve, reject) => gates.push({ resolve, reject }));
     }
@@ -432,13 +494,13 @@ test("a wish queued mid-flight replays after the in-flight toggle settles", asyn
 
   // The hold settles: held becomes true, and the queued resume REPLAYS
   // as a second re-INVITE (not silently dropped, not lost).
-  gates.shift().resolve();
+  gates.shift().accept();
   await settle();
   assert.equal(entry.held, true, "the in-flight hold settled first");
   assert.equal(entry.holdPending, "resuming", "the queued wish took over");
   assert.equal(gates.length, 1, "the replay issued its own re-INVITE");
 
-  gates.shift().resolve();
+  gates.shift().accept();
   await settle();
   assert.equal(entry.held, false, "the replayed resume settled");
   assert.equal(entry.holdPending, null);
@@ -452,7 +514,7 @@ test("a wish queued mid-flight replays after the in-flight toggle settles", asyn
   await settle();
   assert.equal(entry.holdPending, "holding");
   entry.holdQueued = true;
-  gates.shift().resolve();
+  gates.shift().accept();
   await settle();
   assert.equal(entry.held, true);
   assert.equal(entry.holdPending, null, "a matching wish never replays");

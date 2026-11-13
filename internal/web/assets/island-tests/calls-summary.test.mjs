@@ -291,9 +291,22 @@ test("an unknown SIP cause stays an honest failure class with the code", async (
   assert.match(reason.textContent, /code 555/, "the unknown cause carries its code");
 });
 
-test("close removes the ended card", async () => {
+test("close removes the ended card and re-dispatches wp:calls-changed", async () => {
   const entry = await endedEstablishedCall("call-s1");
   const card = entry.dom;
-  card.querySelector(".close-ended-btn").click();
+  let changed = 0;
+  const onChange = () => {
+    changed += 1;
+  };
+  document.addEventListener("wp:calls-changed", onChange);
+  try {
+    card.querySelector(".close-ended-btn").click();
+  } finally {
+    document.removeEventListener("wp:calls-changed", onChange);
+  }
   assert.equal(card.parent, null, "the card is gone on Close");
+  assert.ok(
+    changed > 0,
+    "Close must re-dispatch wp:calls-changed so the badge and the live-context slot drop the ended call",
+  );
 });

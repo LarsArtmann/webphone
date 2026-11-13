@@ -66,8 +66,8 @@ templ FaxPanel(props FaxPanelProps) {
 				})
 				<input type="file" name="document" required accept="application/pdf,.pdf" aria-label={ T(props.Lang, "fax.document.label") }></input>
 				@display.Button(display.ButtonProps{
-					Type:  display.ButtonHTMLSubmit,
-					Icon:  faxSendIndicator(),
+					Type: display.ButtonHTMLSubmit,
+					Icon: sendIndicator(),
 					Text:  T(props.Lang, "fax.send"),
 				})
 				<div class="wp-attach" hidden></div>
@@ -123,12 +123,6 @@ templ faxUnavailableNotice(lang Lang, key string) {
 }
 
 
-// faxSendIndicator is the send button's htmx spinner (the request
-// in-flight marker); Button renders it ahead of the label.
-templ faxSendIndicator() {
-	<span class="htmx-indicator" aria-hidden="true">…</span>
-}
-
 // FaxList renders the fax rows (or the empty state). It is the payload of
 // the SSE "fax" event, so it must stay swap-safe: no wrapper, no form. The
 // empty state names the capability because "send a PDF above" is a lie
@@ -136,7 +130,7 @@ templ faxSendIndicator() {
 // full render (the Notifier carries the same boot-time flags).
 templ FaxList(jobs []domain.FaxJob, contacts CRMContacts, cap FaxCapability, lang Lang) {
 	if len(jobs) == 0 {
-		@display.EmptyState(display.EmptyStateProps{Title: T(lang, faxEmptyKey(cap)), Icon: icons.Document})
+		@display.EmptyState(display.EmptyStateProps{Title: T(lang, faxEmptyKey(cap)), Icon: icons.Document, Class: "wp-empty-state"})
 	}
 	for _, job := range jobs {
 		@FaxRow(job, contacts, lang)
@@ -162,8 +156,8 @@ templ FaxRow(job domain.FaxJob, contacts CRMContacts, lang Lang) {
 	// wp-fax-row stays in the class list: it is the swap-safety contract
 	// the SSE fax-payload test greps for (TestSSEPushesSwapSafeFragments).
 	<article class={ "wp-row wp-fax-row", templ.KV("wp-fax-in", job.Direction == domain.FaxInbound) }>
-		<span class={ "wp-dir-chip", templ.KV("wp-dir-in", job.Direction == domain.FaxInbound) } aria-hidden="true">{ faxDirGlyph(job) }</span>
-		<span class="wp-thread-text" role="img" aria-label={ faxDirLabel(job, lang) }>
+		<span class={ "wp-dir-chip", templ.KV("wp-dir-in", job.Direction == domain.FaxInbound) } role="img" aria-label={ faxDirLabel(job, lang) }>@icons.Icon(faxDirGlyph(job), "wp-icon")</span>
+		<span class="wp-thread-text">
 			@remoteLabel(job.Remote.String(), contacts, lang)
 			<span class="wp-muted">
 				{ formatStamp(lang, job.CreatedAt) }
@@ -189,18 +183,18 @@ templ FaxRow(job domain.FaxJob, contacts CRMContacts, lang Lang) {
 					hx-swap="innerHTML"
 				>{ T(lang, "fax.resend") }</button>
 			}
-			if job.DocumentPath != "" {
+			if !job.DocumentPath.Empty() {
 				<a class="wp-mini" href={ "/fax/" + job.ID.String() + "/document" } download>{ T(lang, "fax.pdf") }</a>
 			}
 		</span>
 	</article>
 }
 
-func faxDirGlyph(job domain.FaxJob) string {
+func faxDirGlyph(job domain.FaxJob) icons.Name {
 	if job.Direction == domain.FaxInbound {
-		return "↓"
+		return icons.ArrowDown
 	}
-	return "↑"
+	return icons.ArrowUp
 }
 
 func faxDirLabel(job domain.FaxJob, lang Lang) string {

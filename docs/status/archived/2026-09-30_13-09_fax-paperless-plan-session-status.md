@@ -140,52 +140,52 @@ item already lives. Rows 25–44 were NOTICED this session (full TODO_LIST
 read) and are already routed there — listed so HARVEST doesn't duplicate
 them; the >25 extras are brainstorm-grade per the skill (ROADMAP fuel).
 
-| #  | Task | Impact                                                                                                    | Effort | Category | Routing       |
-| -- | ---- | --------------------------------------------------------------------------------------------------------- | ------ | -------- | ------------- |
-| ~~ | 1    | Answer (g) Q1–Q3 (go/no-go, Paperless hosting, v1 scope) — unblocks everything else in 1–24               | High   | S        | Decision      |
-| ~~ | 2    | Verify go-paperless publishability (`go list -m @latest` + git tags), pin the version in the plan doc     | High   | S        | Quality       |
-| ~~ | 3    | Check `docs/DOMAIN_LANGUAGE.md` for `Archiver`/`paperless` collisions before implementation               | Medium | S        | Quality       |
-| ~~ | 4    | Amend plan doc: CRM-parity items — smoke gate line, `environmentFile` token-at-rest, observability story  | Medium | S        | Documentation |
-| ~~ | 5    | Amend plan doc: extension in the provenance metadata (owner-DID scoping in Paperless)                     | Medium | S        | Documentation |
-| ~~ | 6    | Grep `fax.New(` call sites; confirm the signature-growth blast radius claimed by the sizing               | Medium | S        | Quality       |
-| ~~ | 7    | `Config.Paperless` block + env keys + both-or-neither + URL validation                                    | High   | S-M      | Feature       |
-| ~~ | 8    | `TestLoadValidatesPaperlessConfig` beside the CRM pin                                                     | High   | S        | Quality       |
-| ~~ | 9    | `fax.Archiver` interface in `internal/fax` + nil-safe service field + `fax.New` param                     | High   | S        | Feature       |
-| ~~ | 10   | Nil-archiver zero-delta test (every existing fax test passes untouched)                                   | High   | S        | Quality       |
-| ~~ | 11   | `internal/paperless` package skeleton: client construction from config                                    | High   | S        | Feature       |
-| ~~ | 12   | Lazily-cached `EnsureTag`/`EnsureDocumentType`/`EnsureCustomField` with stub-server test                  | High   | M        | Feature       |
-| ~~ | 13   | `ArchiveFax` upload: title format, `Created` from job, provenance field, ≤20 MiB buffer                   | High   | M        | Feature       |
-| ~~ | 14   | Fire-and-forget hook in `Receive` after persist+notify (detached goroutine, own timeout, WARN)            | High   | S        | Feature       |
-| ~~ | 15   | `internal/paperless/family_test.go` error-family pin (codes at origin, per the 2026-09-30 convention)     | High   | S        | Quality       |
-| ~~ | 16   | Adapter httptest stub: upload form fields + task-poll verdict + duplicate-refusal path                    | High   | M        | Quality       |
-| ~~ | 17   | Server `Deps` wiring (nil when config absent)                                                             | High   | S        | Feature       |
-| ~~ | 18   | vendorHash roundtrip same-breath as go.mod addition + `nix build` proof                                   | High   | S        | Feature       |
-| ~~ | 19   | Full gates: `nix develop -c go test -count=1 ./...` + buildflow                                           | High   | S        | Quality       |
-| ~~ | 20   | Config-off smoke zero-delta (fresh binary boots, fax lane unchanged)                                      | Medium | S        | Quality       |
-| ~~ | 21   | Decide upload-outcome metrics (`webphone_paperless_uploads_total{outcome}`) or reject with rationale      | Medium | S        | Decision      |
-| ~~ | 22   | Post-landing docs: AGENTS seam bullet + FEATURES row + CHANGELOG Unreleased                               | Medium | S        | Documentation |
-| ~~ | 23   | Verify NixOS module needs no change (`settings` freeform carries the new keys) — note the verdict         | Low    | S        | Documentation |
-| ~~ | 24   | Outbound-fax archiving on `transmitted` (same seam, direction-flavored title/tag)                         | Low    | M        | Feature       |
-| ~~ | 25   | `archive_status` column + boot-time sweep (self-healing upload queue; closes the SIGTERM gap)             | Low    | M-L      | Feature       |
-| ~~ | 26   | Retry-posture decision: SDK `WithRetry` wrapper vs fire-and-forget-forever for a routinely-down Paperless | Low    | S        | Decision      |
-| ~~ | 27   | Deep-link "open in Paperless" affordance from the fax panel (needs document ID round-trip — post-#25)     | Low    | M        | Feature       |
-| ~~ | 28   | v2.7.0+ release tail + deploy (OWNER terminal; everything release-ish queues behind it)                   | High   | S-M      | Release       |
-| ~~ | 29   | cqrs-htmx setup-shell adoption train (upstream gaps first)                                                | High   | L        | Feature       |
-| ~~ | 30   | Prod outbound-SMS 422 root cause (OWNER journal/ssh on pbx)                                               | High   | S        | Bug           |
-| ~~ | 31   | erraudit tier-2 re-measure (next due 2026-10-22; must stay 0)                                             | High   | S        | Quality       |
-| ~~ | 32   | Nix-review follow-ups batch (eval pins, VM asserts, release.sh preflight)                                 | High   | S-M      | Quality       |
-| ~~ | 33   | OWNER-calls batch session (~15+ pending decisions incl. release number)                                   | High   | S        | Decision      |
-| ~~ | 34   | Review-series deltas: `Receipt.Resolution` enum (kills the `*gateway.Loopback` type-assert)               | Medium | S        | Quality       |
-| ~~ | 35   | Review-series deltas: config fail-closed typing for `identities`/shared contacts                          | Medium | S        | Quality       |
-| ~~ | 36   | Review-series deltas: `schema_version` table before first ALTER (gated on its arrival)                    | Medium | S        | Quality       |
-| ~~ | 37   | Gateway honest-Content-Type follow-ups (header-block golden, compat matrix, webhook-mode smoke probe)     | Medium | S        | Quality       |
-| ~~ | 38   | `/version` enrichment via ldflags + vcs.buildinfo fallback                                                | Medium | M        | Feature       |
-| ~~ | 39   | internal/server god-package carve (trigger-based: next file added)                                        | Medium | M        | Cleanup       |
-| ~~ | 40   | templ-components release-gate leg (stack E2E rides the release tail)                                      | Medium | S        | Quality       |
-| ~~ | 41   | AGENTS.md compaction ≤377 lines (owner-permission gate)                                                   | Medium | M        | Documentation |
-| ~~ | 42   | Tooling hygiene batch (markdown-lint posture, codespell policy, render-diff script commit)                | Low    | S        | Cleanup       |
-| ~~ | 43   | Post release announcements (v2.1–v2.7 drafts exist)                                                       | Low    | S        | Documentation |
-| ~~ | 44   | Standing watches quarterly re-check (sip.js, templ-components, E2E budget; due 2026-12-20)                | Low    | S        | Quality       |
+| #     | Task | Impact                                                                                                    | Effort | Category | Routing       |
+| ----- | ---- | --------------------------------------------------------------------------------------------------------- | ------ | -------- | ------------- |
+| ~~ ~~ | 1    | Answer (g) Q1–Q3 (go/no-go, Paperless hosting, v1 scope) — unblocks everything else in 1–24               | High   | S        | Decision      |
+| ~~ ~~ | 2    | Verify go-paperless publishability (`go list -m @latest` + git tags), pin the version in the plan doc     | High   | S        | Quality       |
+| ~~ ~~ | 3    | Check `docs/DOMAIN_LANGUAGE.md` for `Archiver`/`paperless` collisions before implementation               | Medium | S        | Quality       |
+| ~~ ~~ | 4    | Amend plan doc: CRM-parity items — smoke gate line, `environmentFile` token-at-rest, observability story  | Medium | S        | Documentation |
+| ~~ ~~ | 5    | Amend plan doc: extension in the provenance metadata (owner-DID scoping in Paperless)                     | Medium | S        | Documentation |
+| ~~ ~~ | 6    | Grep `fax.New(` call sites; confirm the signature-growth blast radius claimed by the sizing               | Medium | S        | Quality       |
+| ~~ ~~ | 7    | `Config.Paperless` block + env keys + both-or-neither + URL validation                                    | High   | S-M      | Feature       |
+| ~~ ~~ | 8    | `TestLoadValidatesPaperlessConfig` beside the CRM pin                                                     | High   | S        | Quality       |
+| ~~ ~~ | 9    | `fax.Archiver` interface in `internal/fax` + nil-safe service field + `fax.New` param                     | High   | S        | Feature       |
+| ~~ ~~ | 10   | Nil-archiver zero-delta test (every existing fax test passes untouched)                                   | High   | S        | Quality       |
+| ~~ ~~ | 11   | `internal/paperless` package skeleton: client construction from config                                    | High   | S        | Feature       |
+| ~~ ~~ | 12   | Lazily-cached `EnsureTag`/`EnsureDocumentType`/`EnsureCustomField` with stub-server test                  | High   | M        | Feature       |
+| ~~ ~~ | 13   | `ArchiveFax` upload: title format, `Created` from job, provenance field, ≤20 MiB buffer                   | High   | M        | Feature       |
+| ~~ ~~ | 14   | Fire-and-forget hook in `Receive` after persist+notify (detached goroutine, own timeout, WARN)            | High   | S        | Feature       |
+| ~~ ~~ | 15   | `internal/paperless/family_test.go` error-family pin (codes at origin, per the 2026-09-30 convention)     | High   | S        | Quality       |
+| ~~ ~~ | 16   | Adapter httptest stub: upload form fields + task-poll verdict + duplicate-refusal path                    | High   | M        | Quality       |
+| ~~ ~~ | 17   | Server `Deps` wiring (nil when config absent)                                                             | High   | S        | Feature       |
+| ~~ ~~ | 18   | vendorHash roundtrip same-breath as go.mod addition + `nix build` proof                                   | High   | S        | Feature       |
+| ~~ ~~ | 19   | Full gates: `nix develop -c go test -count=1 ./...` + buildflow                                           | High   | S        | Quality       |
+| ~~ ~~ | 20   | Config-off smoke zero-delta (fresh binary boots, fax lane unchanged)                                      | Medium | S        | Quality       |
+| ~~ ~~ | 21   | Decide upload-outcome metrics (`webphone_paperless_uploads_total{outcome}`) or reject with rationale      | Medium | S        | Decision      |
+| ~~ ~~ | 22   | Post-landing docs: AGENTS seam bullet + FEATURES row + CHANGELOG Unreleased                               | Medium | S        | Documentation |
+| ~~ ~~ | 23   | Verify NixOS module needs no change (`settings` freeform carries the new keys) — note the verdict         | Low    | S        | Documentation |
+| ~~ ~~ | 24   | Outbound-fax archiving on `transmitted` (same seam, direction-flavored title/tag)                         | Low    | M        | Feature       |
+| ~~ ~~ | 25   | `archive_status` column + boot-time sweep (self-healing upload queue; closes the SIGTERM gap)             | Low    | M-L      | Feature       |
+| ~~ ~~ | 26   | Retry-posture decision: SDK `WithRetry` wrapper vs fire-and-forget-forever for a routinely-down Paperless | Low    | S        | Decision      |
+| ~~ ~~ | 27   | Deep-link "open in Paperless" affordance from the fax panel (needs document ID round-trip — post-#25)     | Low    | M        | Feature       |
+| ~~ ~~ | 28   | v2.7.0+ release tail + deploy (OWNER terminal; everything release-ish queues behind it)                   | High   | S-M      | Release       |
+| ~~ ~~ | 29   | cqrs-htmx setup-shell adoption train (upstream gaps first)                                                | High   | L        | Feature       |
+| ~~ ~~ | 30   | Prod outbound-SMS 422 root cause (OWNER journal/ssh on pbx)                                               | High   | S        | Bug           |
+| ~~ ~~ | 31   | erraudit tier-2 re-measure (next due 2026-10-22; must stay 0)                                             | High   | S        | Quality       |
+| ~~ ~~ | 32   | Nix-review follow-ups batch (eval pins, VM asserts, release.sh preflight)                                 | High   | S-M      | Quality       |
+| ~~ ~~ | 33   | OWNER-calls batch session (~15+ pending decisions incl. release number)                                   | High   | S        | Decision      |
+| ~~ ~~ | 34   | Review-series deltas: `Receipt.Resolution` enum (kills the `*gateway.Loopback` type-assert)               | Medium | S        | Quality       |
+| ~~ ~~ | 35   | Review-series deltas: config fail-closed typing for `identities`/shared contacts                          | Medium | S        | Quality       |
+| ~~ ~~ | 36   | Review-series deltas: `schema_version` table before first ALTER (gated on its arrival)                    | Medium | S        | Quality       |
+| ~~ ~~ | 37   | Gateway honest-Content-Type follow-ups (header-block golden, compat matrix, webhook-mode smoke probe)     | Medium | S        | Quality       |
+| ~~ ~~ | 38   | `/version` enrichment via ldflags + vcs.buildinfo fallback                                                | Medium | M        | Feature       |
+| ~~ ~~ | 39   | internal/server god-package carve (trigger-based: next file added)                                        | Medium | M        | Cleanup       |
+| ~~ ~~ | 40   | templ-components release-gate leg (stack E2E rides the release tail)                                      | Medium | S        | Quality       |
+| ~~ ~~ | 41   | AGENTS.md compaction ≤377 lines (owner-permission gate)                                                   | Medium | M        | Documentation |
+| ~~ ~~ | 42   | Tooling hygiene batch (markdown-lint posture, codespell policy, render-diff script commit)                | Low    | S        | Cleanup       |
+| ~~ ~~ | 43   | Post release announcements (v2.1–v2.7 drafts exist)                                                       | Low    | S        | Documentation |
+| ~~ ~~ | 44   | Standing watches quarterly re-check (sip.js, templ-components, E2E budget; due 2026-12-20)                | Low    | S        | Quality       |
 
 **HARVEST note:** items 1–6, 21, 26–27 are NOT yet routed anywhere durable
 (1 is answered by replying, 2–6/21 are plan-doc amendments, 26–27 are new).

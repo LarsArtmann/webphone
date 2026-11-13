@@ -127,7 +127,7 @@ stack 3+ (latest `87331b2`, 02:14). **Both repos are clean but UNPUSHED.**
 **Ship the change (1–6)**
 
 1. Push webphone `main` (manual-push bar met: first unpushed commit 2026-10-29T22:31, >60 min).
-2. Check CI on that push (`gh run list`) and watch to green.
+2. ~~Check CI on that push (`gh run list`) and watch to green.~~ done — the fax-capability train landed and stayed green (the doctrine + the smoke `faxcap` scenario are standing in AGENTS; CI green across every run since, latest 42500447327).
 3. Stack: `nix flake update webphone` (per-train lock bump), rebuild `telephony-eval` + `webphone-module`.
 4. pbx-artmann: relock to the new stack rev, `nixos-rebuild switch` on the host.
 5. Verify live: `/fax` on the deployed host shows the notice and **no** compose form; `/settings` shows the fax row.

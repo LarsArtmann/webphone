@@ -1,12 +1,15 @@
 package server
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"regexp"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/readmodels"
 )
 
@@ -170,7 +173,8 @@ func TestArchiveFlowViaActions(t *testing.T) {
 // flag), the 422s for empty and oversized bodies and the cap, delete
 // with its 404, and the settings partial re-render both answers carry.
 func TestSnippetActions(t *testing.T) {
-	server := newTestServer(t)
+	var snippets readmodels.SnippetGate
+	server := newTestServerWithPhoneAPI(t, "", func(d *Deps) { snippets = d.Snippets })
 	c := signIn(t, server)
 
 	save := func(body, quick string) (*http.Response, string) {
@@ -201,10 +205,19 @@ func TestSnippetActions(t *testing.T) {
 		t.Fatalf("oversized body: got %d %s, want 422", resp.StatusCode, body)
 	}
 
-	// The cap: fill to the store limit, then one more answers 422.
+	// The cap: fill to the store limit AT THE STORE (the contacts cap
+	// test's pattern — the HTTP lane rides the state bucket now, so a
+	// 100-save fill over HTTP would test the flood fence, not the cap),
+	// then one more over HTTP answers 422.
+	owner := domain.MustParseExtension("1001")
+	ctx := context.Background()
 	for i := 1; i < readmodels.SnippetsMaxPerExtension; i++ {
-		if resp, body := save("filler", ""); resp.StatusCode != http.StatusOK {
-			t.Fatalf("fill save %d: %d %s", i, resp.StatusCode, body)
+		err := snippets.Save(ctx, domain.Snippet{
+			ID: domain.GenerateSnippetID(), Owner: owner,
+			Body: "filler", CreatedAt: time.Now(),
+		})
+		if err != nil {
+			t.Fatalf("seed snippet %d: %v", i, err)
 		}
 	}
 	if resp, body := save("one too many", ""); resp.StatusCode != http.StatusUnprocessableEntity {

@@ -205,7 +205,13 @@ No other row in this doc was found to disagree with the code.
 - No stack browser E2E was run (that suite lives in the consuming repo). Served
   markup changed, so AGENTS' release-runbook obligation stands: the next stack
   session re-runs it.
-- The visual harness (`scripts/ui-capture.py`, 24 shots) was not re-run — it is
-  local-only by budget decision and needs chromium + selenium.
+- ~~The visual harness (`scripts/ui-capture.py`, 24 shots) was not re-run — it is
+  local-only by budget decision and needs chromium + selenium.~~
+  STRUCK 2026-11-10 (docs-health strike style, evidence at the site): the
+  harness HAS been re-run many times since — layout proof PASS at this
+  train's local runs (collapse, persistence, split threshold), and the
+  2026-11-10 tracking train verified the full matrix locally (26 shots,
+  2 tracked runs, real compare chain) plus 3 TLS-fronted runs; see
+  `ui-shots/127.0.0.1_18097/` and `ui-shots/webphone.test_18443/`.
 - `nix flake check` was run where feasible; the KVM-gated backup VM test was
   not.

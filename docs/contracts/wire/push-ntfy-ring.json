@@ -1,0 +1,1 @@
+{"topic":"fixture-topic","title":"Incoming call","message":"{\"event\":\"ring\",\"from\":\"+15550000001\",\"call_id\":\"call-fixture-1\"}","priority":5,"tags":["telephone"]}

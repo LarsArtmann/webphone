@@ -2,6 +2,7 @@ package hooks
 
 import (
 	"context"
+	"path/filepath"
 	"testing"
 	"time"
 
@@ -9,7 +10,7 @@ import (
 	idempotency "github.com/larsartmann/go-idempotency"
 	"github.com/larsartmann/go-idempotency/contract"
 
-	"github.com/larsartmann/webphone/internal/readmodels"
+	"github.com/larsartmann/webphone/internal/cqrs"
 )
 
 // contractWindow adapts the hooks.DedupWindow port (collection-named,
@@ -52,8 +53,9 @@ func (c contractWindow) CheckAndRecord(ctx context.Context, key string, ttl time
 	return nil
 }
 
-// engineWindow is the test-local port shim over the engine's native
-// DedupStore capability — the production twin lives in internal/app
+// engineWindow is the test-local port shim over the journal system's
+// dedup capability (sys.Dedup(), system.db's durable CAS window) —
+// the production twin lives in internal/app
 // (engineDedupWindow); this copy exists because app imports hooks, so
 // hooks cannot import app to reuse it.
 type engineWindow struct {
@@ -77,21 +79,27 @@ func (w engineWindow) Sweep(ctx context.Context, collection string, now time.Tim
 // TestDedupWindowSatisfiesIdempotencyContract runs the go-idempotency
 // contract suite (atomicity under concurrency, TTL expiry, duplicate
 // detection, key independence) against the REAL metaengine-backed
-// window — a fresh readmodels engine per subtest. A red here means the
+// window — a fresh journal system per subtest. A red here means the
 // idem-gate seam's semantics drifted from the standard idempotency
-// contract the webhook and call lanes depend on. TimingScale 3 keeps
-// the wall-clock expiry subtests honest on loaded CI runners.
+// contract the webhook and call lanes depend on. TimingScale 5 keeps
+// the wall-clock expiry subtests honest on loaded CI runners: the
+// NoopOnExistingKey assertion only holds while its two Record calls
+// land within the scaled shortTTL, and a -race scheduling stall
+// outlasting it makes the second Record legitimately re-claim the
+// expired window, which the assertion reads as an extension (run
+// 42407471289; ci-flake-ledger row). The durable fix is upstream — an
+// injectable clock instead of wall sleeps.
 func TestDedupWindowSatisfiesIdempotencyContract(t *testing.T) {
 	contract.RunTestsStrict(t, func(t *testing.T) idempotency.Store {
-		engine, err := readmodels.Open(t.TempDir())
+		sys, err := cqrs.NewCoreSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
 		if err != nil {
 			t.Fatal(err)
 		}
-		t.Cleanup(func() {
-			if err := engine.Shutdown(); err != nil {
-				t.Errorf("engine shutdown: %v", err)
-			}
-		})
-		return contractWindow{window: engineWindow{store: engine.DedupStore()}, coll: DedupCollection}
-	}, contract.Options{TimingScale: 3})
+		t.Cleanup(func() { _ = sys.Close() })
+		window, err := sys.Dedup()
+		if err != nil {
+			t.Fatalf("system dedup: %v", err)
+		}
+		return contractWindow{window: engineWindow{store: window}, coll: DedupCollection}
+	}, contract.Options{TimingScale: 5})
 }

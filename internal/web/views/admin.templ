@@ -6,8 +6,7 @@ import (
 	"github.com/larsartmann/templ-components/display"
 	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/pbx"
-	"github.com/larsartmann/webphone/internal/store"
+	"github.com/larsartmann/webphone/internal/readmodels"
 )
 
 // AdminPanel is the Admin tab: read-only visibility across EVERY line of
@@ -24,7 +23,7 @@ type AdminPanelProps struct {
 	Numbers []AdminNumberRow
 	// Threads is the cross-owner conversation inventory, newest first
 	// (archived threads included, badged).
-	Threads []store.ThreadSummary
+	Threads []readmodels.ThreadSummary
 	// ThreadsError degrades the section instead of dying the panel
 	// (the honest-degrade doctrine every panel follows).
 	ThreadsError string
@@ -44,7 +43,10 @@ type AdminPanelProps struct {
 	// CDRFailed lists the lines whose CDR page could not be fetched —
 	// one honest notice, the surviving lines still render.
 	CDRFailed []string
-	Lang      Lang
+	// Query echoes the admin find filter into the search input so a
+	// morph/swap keeps the typed text (the thread-search precedent).
+	Query string
+	Lang  Lang
 }
 
 // AdminUserRow is one account of the users inventory.
@@ -74,13 +76,38 @@ type AdminCallRow struct {
 
 // AdminCDRRow is one call record with the line it belongs to.
 type AdminCDRRow struct {
-	CDR       pbx.CDR
+	CDR       CDREntry
 	Extension string
 }
 
 templ AdminPanel(props AdminPanelProps) {
 	<section class="wp-panel" id="admin-panel">
 		@panelHead(props.Lang, "tab.admin", "admin.subtitle")
+		// M1: the read-only doctrine made visible — every affordance here
+		// is a read or a download; acting stays on each line's own login.
+		<p class="wp-muted">
+			<span class="wp-admin-chip">{ T(props.Lang, "admin.readonly") }</span>
+		</p>
+		// M1: the find filter narrows the data sections server-side; the
+		// pushed URL keeps a filtered view addressable (the History E2
+		// pattern).
+		<form
+			class="wp-filter"
+			hx-get="/partials/admin"
+			hx-target="#admin-panel"
+			hx-swap="outerHTML"
+			hx-trigger="submit"
+			hx-push-url="true"
+		>
+			<input
+				type="search"
+				name="q"
+				placeholder={ T(props.Lang, "admin.filter.ph") }
+				value={ props.Query }
+				aria-label={ T(props.Lang, "admin.filter.label") }
+			/>
+			<button type="submit" class="wp-mini">{ T(props.Lang, "admin.filter") }</button>
+		</form>
 		<h3 class="wp-settings-head" id="wp-admin-users">{ T(props.Lang, "admin.users.title") }</h3>
 		if len(props.Users) == 0 {
 			<p class="wp-empty">{ T(props.Lang, "admin.users.empty") }</p>
@@ -162,8 +189,8 @@ templ AdminPanel(props AdminPanelProps) {
 		}
 		for _, job := range props.Faxes {
 			<div class={ "wp-row wp-admin-fax-row", templ.KV("wp-fax-in", job.Direction == domain.FaxInbound) }>
-				<span class={ "wp-dir-chip", templ.KV("wp-dir-in", job.Direction == domain.FaxInbound) } aria-hidden="true">{ faxDirGlyph(job) }</span>
-				<span class="wp-thread-text" role="img" aria-label={ faxDirLabel(job, props.Lang) }>
+				<span class={ "wp-dir-chip", templ.KV("wp-dir-in", job.Direction == domain.FaxInbound) } role="img" aria-label={ faxDirLabel(job, props.Lang) }>@icons.Icon(faxDirGlyph(job), "wp-icon")</span>
+				<span class="wp-thread-text">
 					<span class="wp-admin-ext">{ job.Owner.String() }</span>
 					{ " " }
 					{ job.Remote.String() }
@@ -176,7 +203,7 @@ templ AdminPanel(props AdminPanelProps) {
 					</span>
 				</span>
 				<span class="wp-row-actions">
-					if job.DocumentPath != "" {
+					if !job.DocumentPath.Empty() {
 						<a class="wp-mini" href={ "/fax/" + job.ID.String() + "/document" } download>{ T(props.Lang, "fax.pdf") }</a>
 					}
 				</span>
@@ -226,10 +253,11 @@ templ AdminCDRRowView(row AdminCDRRow, lang Lang) {
 	<article class={ "wp-row wp-admin-cdr-row", templ.KV("wp-row-missed", cdrMissed(row.CDR)) }>
 		<span
 			class={ "wp-dir-chip", templ.KV("wp-dir-in", row.CDR.Context == "public"), templ.KV("wp-row-missed", cdrMissed(row.CDR)) }
-			aria-hidden="true"
-		>{ cdrDirGlyph(row.CDR) }</span>
-		<span class="wp-thread-text" role="img" aria-label={ cdrDirLabel(row.CDR, lang) }>
-			{ row.CDR.CallerIDNumber + " → " + row.CDR.DestinationNumber }
+			role="img"
+			aria-label={ cdrDirLabel(row.CDR, lang) }
+		>@icons.Icon(cdrDirGlyph(row.CDR), "wp-icon")</span>
+		<span class="wp-thread-text">
+			{ cdrParty(row.CDR) + " → " + row.CDR.DestinationNumber }
 			<span class="wp-muted">{ row.CDR.Start + " · " + durationLabel(row.CDR.Billsec) }</span>
 		</span>
 		<span class="wp-row-actions">

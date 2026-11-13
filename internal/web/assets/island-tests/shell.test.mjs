@@ -347,12 +347,85 @@ test("missed calls badge in the header and clear when History opens", () => {
 
   const historyNav = {
     closest: (sel) => (sel === "[data-tab='history']" ? historyNav : null),
+    hasAttribute: (name) => name === "data-tab",
   };
+  // M38: the click only ARMS the clear — a failed History swap must not
+  // erase counts the operator never saw. The arm is per-click: a spent
+  // arm does not clear on a later stray response; the retry's own click
+  // re-arms.
   doc.dispatch("click", { target: historyNav });
   assert.equal(
     actions.children.some((el) => el.id === "missed-badge"),
+    true,
+    "the click alone keeps the badge",
+  );
+  doc.dispatch("htmx:afterRequest", {
+    target: historyNav,
+    detail: { elt: historyNav, successful: false },
+  });
+  assert.equal(
+    actions.children.some((el) => el.id === "missed-badge"),
+    true,
+    "a failed History response keeps the badge",
+  );
+  doc.dispatch("htmx:afterRequest", {
+    target: historyNav,
+    detail: { elt: historyNav, successful: true },
+  });
+  assert.equal(
+    actions.children.some((el) => el.id === "missed-badge"),
+    true,
+    "a stray success after a spent arm clears nothing",
+  );
+  doc.dispatch("click", { target: historyNav });
+  doc.dispatch("htmx:afterRequest", {
+    target: historyNav,
+    detail: { elt: historyNav, successful: true },
+  });
+  assert.equal(
+    actions.children.some((el) => el.id === "missed-badge"),
     false,
-    "opening History clears the badge",
+    "the link's successful response clears the badge",
+  );
+
+  doc.querySelector = realQuerySelector;
+});
+
+// A4b: the badge also clears when the Recent calls PANEL lands, whatever
+// the door was — a swap whose target is #history-panel means the reads
+// are on screen. A failed load never reaches afterSwap, and a different
+// panel's swap must not clear anything.
+test("the missed badge clears when the history panel lands (any door)", () => {
+  const actions = doc.createElement();
+  actions.className = "wp-header-actions";
+  const realQuerySelector = doc.querySelector.bind(doc);
+  doc.querySelector = (selector) =>
+    selector === ".wp-header-actions" ? actions : realQuerySelector(selector);
+
+  doc.dispatch("wp:call-missed", {});
+  doc.dispatch("wp:call-missed", {});
+  assert.equal(
+    actions.children.some((el) => el.id === "missed-badge"),
+    true,
+    "two misses arm the badge",
+  );
+
+  doc.dispatch("htmx:afterSwap", {
+    detail: { target: { id: "messages-panel" } },
+  });
+  assert.equal(
+    actions.children.some((el) => el.id === "missed-badge"),
+    true,
+    "a different panel's swap keeps the badge",
+  );
+
+  doc.dispatch("htmx:afterSwap", {
+    detail: { target: { id: "history-panel" } },
+  });
+  assert.equal(
+    actions.children.some((el) => el.id === "missed-badge"),
+    false,
+    "the history panel landing clears the badge",
   );
 
   doc.querySelector = realQuerySelector;
@@ -361,6 +434,80 @@ test("missed calls badge in the header and clear when History opens", () => {
 // 3b-3. Thread-search guard: a live threads push must not stomp an
 // active search; it goes through once the box is empty again. The next
 // keystroke's debounced fetch re-renders the list, so nothing is lost.
+// A5: the thread search is shareable — a successful search-form fetch
+// pushes /messages?q=… (the server's panel route renders the same filter),
+// clearing pushes the bare /messages, a failed fetch pushes nothing, and
+// popstate restores the input and re-fetches WITHOUT creating a new entry.
+test("search deep-links the URL and unwinds on back", () => {
+  const pushed = [];
+  const triggered = [];
+  const realHistory = globalThis.window.history;
+  const realHtmx = globalThis.window.htmx;
+  // The stub mirrors browser truth: pushState changes the URL (and thus
+  // window.location.search), or the shell's already-there guard would
+  // never fire again.
+  globalThis.window.history = {
+    pushState: (_s, _t, url) => {
+      pushed.push(url);
+      globalThis.window.location.pathname = url.split("?")[0];
+      globalThis.window.location.search = url.includes("?") ? url.slice(url.indexOf("?")) : "";
+    },
+  };
+  globalThis.window.htmx = {
+    trigger: (_target, eventName) => triggered.push(eventName),
+  };
+  globalThis.window.location.pathname = "/messages";
+  globalThis.window.location.search = "";
+
+  const input = doc.getElementById("wp-thread-search-input");
+  const form = {
+    classList: { contains: (c) => c === "wp-thread-search" },
+    matches: () => false,
+    hasAttribute: () => false,
+  };
+  const realQuerySelector = doc.querySelector.bind(doc);
+  doc.querySelector = (selector) =>
+    selector === "form.wp-thread-search" ? form : realQuerySelector(selector);
+
+  input.value = "kilt";
+  doc.dispatch("htmx:afterRequest", {
+    target: form,
+    detail: { elt: form, successful: true },
+  });
+  assert.deepEqual(pushed, ["/messages?q=kilt"], "the query deep-links");
+
+  input.value = "";
+  doc.dispatch("htmx:afterRequest", {
+    target: form,
+    detail: { elt: form, successful: true },
+  });
+  assert.deepEqual(pushed[1], "/messages", "clearing pushes the bare path");
+
+  input.value = "strава";
+  globalThis.window.location.search = "?q=%D1%81%D1%82%D1%80%D0%B0%D0%B2%D0%B0";
+  // The window stub collects listeners: fire the shell's popstate arm.
+  for (const fn of globalThis.window.listeners.popstate ?? []) fn();
+  assert.equal(input.value, "страва", "popstate decodes the restored query");
+  assert.deepEqual(triggered, ["submit"], "popstate re-fetches via submit");
+
+  doc.dispatch("htmx:afterRequest", {
+    target: form,
+    detail: { elt: form, successful: true },
+  });
+  assert.equal(pushed.length, 2, "the restore does not push a new entry");
+
+  doc.dispatch("htmx:afterRequest", {
+    target: form,
+    detail: { elt: form, successful: false },
+  });
+  assert.equal(pushed.length, 2, "a failed fetch pushes nothing");
+
+  globalThis.window.history = realHistory;
+  globalThis.window.htmx = realHtmx;
+  globalThis.window.location.search = "";
+  doc.querySelector = realQuerySelector;
+});
+
 test("live threads pushes are cancelled while a search query is active", () => {
   const list = doc.createElement();
   list.className = "wp-thread-list";
@@ -596,7 +743,7 @@ test("Ctrl+K opens the palette, filters, runs, and closes", () => {
     });
     const overlay = findOverlay();
     assert.ok(overlay, "overlay created");
-    assert.equal(overlay.hidden, false);
+    assert.equal(overlay.open, true);
     const input = overlay.children[0];
     const list = overlay.children[1];
     assert.ok(list.children.length >= 4, "tabs plus shell actions listed");
@@ -611,7 +758,7 @@ test("Ctrl+K opens the palette, filters, runs, and closes", () => {
     fireOn(input, "input");
     fireOn(input, "keydown", { key: "Enter" });
     assert.deepEqual(clicked, ["messages"], "Enter runs the selected row");
-    assert.equal(overlay.hidden, true, "overlay closes after running");
+    assert.equal(overlay.open, false, "overlay closes after running");
   } finally {
     doc.querySelectorAll = realQuerySelectorAll;
   }
@@ -626,10 +773,10 @@ test("Escape closes the palette without running anything", () => {
       preventDefault: () => {},
     });
     const overlay = findOverlay();
-    assert.equal(overlay.hidden, false);
+    assert.equal(overlay.open, true);
     const input = overlay.children[0];
     fireOn(input, "keydown", { key: "Escape" });
-    assert.equal(overlay.hidden, true);
+    assert.equal(overlay.open, false);
   } finally {
     doc.querySelectorAll = realQuerySelectorAll;
   }
@@ -642,14 +789,14 @@ test("? opens the shortcut help outside typing fields", () => {
     preventDefault: () => {},
   });
   const overlay = findOverlay();
-  assert.equal(overlay.hidden, false);
+  assert.equal(overlay.open, true);
   const list = overlay.children[1];
   assert.ok(list.children.length >= 8, "every real binding is listed");
   assert.match(list.children[0].textContent, /Answer/);
 
   const input = overlay.children[0];
   fireOn(input, "keydown", { key: "Escape" });
-  assert.equal(overlay.hidden, true);
+  assert.equal(overlay.open, false);
 
   // Typing "?" inside a field must not hijack the key.
   doc.dispatch("keydown", {
@@ -757,7 +904,10 @@ test("a tab navigation stores the last-active tab (E3)", () => {
 test("a plain / load restores the remembered tab (E3)", () => {
   const calls = [];
   globalThis.window.htmx = {
-    ajax: (verb, url) => calls.push(url),
+    ajax: (verb, url) => {
+      calls.push(url);
+      return Promise.resolve();
+    },
   };
   globalThis.window.location = { pathname: "/" };
 
@@ -802,7 +952,12 @@ test("a plain / load restores the remembered tab (E3)", () => {
 
 test("restore never overrides a deep link, garbage, or the sign-in hint (E3)", () => {
   const calls = [];
-  globalThis.window.htmx = { ajax: (verb, url) => calls.push(url) };
+  globalThis.window.htmx = {
+    ajax: (verb, url) => {
+      calls.push(url);
+      return Promise.resolve();
+    },
+  };
   globalThis.window.location = { pathname: "/messages" };
   localStorage.setItem("wp-last-tab", "history");
 
@@ -842,7 +997,13 @@ test("restore never overrides a deep link, garbage, or the sign-in hint (E3)", (
 
 test("refreshNav scrolls the active tab back into view (E8)", () => {
   const calls = [];
-  globalThis.window.htmx = { ajax: (verb, url) => calls.push(url) };
+  // M23: htmx.ajax returns a promise; the .catch rides it.
+  globalThis.window.htmx = {
+    ajax: (verb, url) => {
+      calls.push(url);
+      return Promise.resolve();
+    },
+  };
   const link = doc.createElement();
   link.className = "wp-nav-link wp-active";
   // refreshNav reads the tab from dataset (disconnected from
@@ -875,6 +1036,148 @@ test("refreshNav scrolls the active tab back into view (E8)", () => {
 
   doc.querySelector = realQuerySelector;
   delete globalThis.window.htmx;
+});
+
+test("a failed nav refresh announces instead of half-applying (M23)", async () => {
+  let rejecter;
+  globalThis.window.htmx = {
+    ajax: () =>
+      new Promise((_resolve, reject) => {
+        rejecter = reject;
+      }),
+  };
+  const link = doc.createElement();
+  link.className = "wp-nav-link wp-active";
+  link.dataset.tab = "history";
+  const realQuerySelector = doc.querySelector;
+  doc.querySelector = (selector) =>
+    selector === "#wp-nav .wp-nav-link.wp-active" ? link : realQuerySelector.call(doc, selector);
+  doc.getElementById("toasts").replaceChildren();
+
+  // Earlier specs fired the throttled error toast — one through a
+  // FUTURE-shifted clock, so the module's lastErrorToast sits a minute
+  // ahead. Shift past it for this failure (the 8s window is module
+  // state; the clock seam is the one legitimate lever).
+  const realNow = shellApi.clock.now;
+  shellApi.clock.now = () => realNow() + 120_000;
+  try {
+    shellApi.refreshNav();
+    rejecter(new Error("network down"));
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const toast = doc.getElementById("toasts").children.at(-1);
+    assert.ok(
+      toast && toast.textContent.includes("tab strip could not refresh"),
+      `the failed refresh names itself, got ${toast && toast.textContent}`,
+    );
+  } finally {
+    shellApi.clock.now = realNow;
+    doc.querySelector = realQuerySelector;
+    delete globalThis.window.htmx;
+  }
+});
+
+// T24 V1: the M26 contract — a stale tab-error banner must not outlive
+// the request that supersedes it. A successful response clears the slot;
+// a failed response keeps it (the banner IS the failed request's
+// surface).
+test("a successful response clears the tab-error slot; a failed one keeps it", () => {
+  const slot = doc.getElementById("wp-tab-error");
+  const banner = doc.createElement();
+  banner.textContent = "could not load the tab";
+  slot.replaceChildren(banner);
+
+  doc.dispatch("htmx:afterRequest", {
+    target: doc.createElement(),
+    detail: { successful: false },
+  });
+  assert.ok(slot.children.includes(banner), "a failed response keeps its banner");
+
+  doc.dispatch("htmx:afterRequest", {
+    target: doc.createElement(),
+    detail: { successful: true },
+  });
+  assert.equal(slot.children.length, 0, "success supersedes the banner");
+});
+
+// T24 V5: the live-context ask runs ONCE per remote — repeated
+// wp:calls-changed events for the same call must not re-fetch (the CRM
+// race), and an empty remote clears without asking.
+test("the live context asks once per remote and clears on the last call end", () => {
+  const fetched = [];
+  globalThis.window.htmx = {
+    ajax: (verb, url) => {
+      fetched.push(url);
+      return Promise.resolve();
+    },
+  };
+  const slot = doc.getElementById("wp-live-context");
+  slot.replaceChildren();
+  const calls = doc.getElementById("calls");
+  const card = doc.createElement();
+  card.selector = ".call-card[data-remote]";
+  card.setAttribute("data-remote", "+49301234567");
+  calls.replaceChildren(card);
+
+  doc.dispatch("wp:calls-changed", {});
+  doc.dispatch("wp:calls-changed", {});
+  doc.dispatch("wp:calls-changed", {});
+  assert.deepEqual(
+    fetched,
+    ["/partials/live-context?remote=%2B49301234567"],
+    "one ask per remote, however often the event fires",
+  );
+
+  calls.replaceChildren();
+  doc.dispatch("wp:calls-changed", {});
+  assert.equal(slot.children.length, 0, "the last call end clears the slot");
+  assert.deepEqual(fetched.length, 1, "clearing never re-asks");
+
+  delete globalThis.window.htmx;
+});
+
+test("a rejected live-context fetch degrades silently (no banner mid-call)", async () => {
+  let rejecter;
+  globalThis.window.htmx = {
+    ajax: () =>
+      new Promise((_resolve, reject) => {
+        rejecter = reject;
+      }),
+  };
+  const slot = doc.getElementById("wp-live-context");
+  slot.replaceChildren();
+  doc.getElementById("toasts").replaceChildren();
+  const calls = doc.getElementById("calls");
+  const card = doc.createElement();
+  card.selector = ".call-card[data-remote]";
+  card.setAttribute("data-remote", "+49301234999");
+  calls.replaceChildren(card);
+
+  const unhandled = [];
+  const onUnhandled = (err) => unhandled.push(err);
+  process.on("unhandledRejection", onUnhandled);
+  try {
+    doc.dispatch("wp:calls-changed", {});
+    rejecter(new Error("network gone"));
+    await new Promise((resolve) => setImmediate(resolve));
+    await new Promise((resolve) => setImmediate(resolve));
+    assert.equal(unhandled.length, 0, "the rejection is handled — no unhandled-rejection noise");
+    assert.equal(
+      slot.children.length,
+      0,
+      "the slot stays empty — the doctrine forbids a banner during a live call",
+    );
+    assert.equal(
+      doc.getElementById("toasts").children.length,
+      0,
+      "no toast either — silence is the written degradation",
+    );
+  } finally {
+    process.off("unhandledRejection", onUnhandled);
+    calls.replaceChildren();
+    delete globalThis.window.htmx;
+  }
 });
 
 // --- voicemail player (M13 C1–C3/C9) ------------------------------------
@@ -955,6 +1258,76 @@ test("the play button drives the audio and falls back honestly", async () => {
   assert.equal(play.hidden, true, "the custom play button hides in the fallback");
   const toast = toasts().children.at(-1);
   assert.match(toast.textContent, /built-in player controls/);
+});
+
+// The silent-play defect: a failed recording (404/403/undecodable) used to
+// answer NOTHING — the play() rejection was swallowed. The element error and
+// the rejection now surface ONE honest toast per failure episode.
+test("a failed recording surfaces one honest toast, deduped", async () => {
+  const { audio, play } = makePlayerRow("u9");
+  const failedCount = () =>
+    toasts()
+      .children.map((toast) => toast.textContent)
+      .filter((text) => text.includes("playback failed")).length;
+  const before = failedCount();
+  audio.play = () => Promise.reject({ name: "NotSupportedError" });
+  doc.dispatch("click", { target: play });
+  const onError = audio.listeners.error[0];
+  onError();
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(
+    failedCount() - before,
+    1,
+    "the element error and the play() rejection dedup into one toast",
+  );
+  assert.match(toasts().children.at(-1).textContent, /could not be loaded/);
+});
+
+test("an interrupted play attempt stays silent (AbortError is benign)", async () => {
+  const { audio, play } = makePlayerRow("u10");
+  const failedCount = () =>
+    toasts()
+      .children.map((toast) => toast.textContent)
+      .filter((text) => text.includes("playback failed")).length;
+  const before = failedCount();
+  audio.play = () => Promise.reject({ name: "AbortError" });
+  doc.dispatch("click", { target: play });
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(failedCount() - before, 0, "an interruption is not a product failure");
+});
+
+// One honest toast per failure: an unreachable recording used to speak
+// TWICE — the playback-failed toast AND the "waveform unavailable"
+// fallback toast, a contradicting verdict on a dead player. The fallback
+// now stays silent when the recording fetch itself failed and the honest
+// toast owns the verdict.
+test("a dead recording keeps one toast — the fallback stays silent", async () => {
+  const { audio, play } = makePlayerRow("u11");
+  const realFetch = globalThis.fetch;
+  const realCtor = window.AudioContext;
+  globalThis.fetch = () => Promise.reject(new TypeError("Failed to fetch"));
+  window.AudioContext = function FakeAudioContext() {};
+  // Fresh host: earlier specs leave toasts behind and shellToast's
+  // identical-consecutive dedup would swallow this spec's honest toast
+  // after u9's look-alike — counting an EMPTY host makes the assertion
+  // absolute (exactly one toast, no fallback noise) instead of a delta.
+  toasts().children.length = 0;
+  try {
+    doc.dispatch("click", { target: play });
+    audio.listeners.error[0]();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+  } finally {
+    globalThis.fetch = realFetch;
+    if (realCtor === undefined) delete window.AudioContext;
+    else window.AudioContext = realCtor;
+  }
+  assert.equal(audio.controls, true, "native controls still engage for a broken row");
+  assert.equal(
+    toasts().children.length,
+    1,
+    "exactly one honest toast — no waveform-fallback noise",
+  );
+  assert.match(toasts().children.at(-1).textContent, /could not be loaded/);
 });
 
 test("playing marks the row, swaps the label, and clears unread + badge", () => {
@@ -1804,4 +2177,66 @@ test("the island toggle flips the root class, the stored preference and aria-exp
   assert.equal(html.classList.contains("wp-island-collapsed"), false);
   assert.equal(localStorage.getItem("wp-island-collapsed"), "0");
   assert.equal(toggle.getAttribute("aria-expanded"), "true");
+});
+
+// Train 3 (mobile dialer): the Phone tab is a JS-created VIEW toggle in
+// the strip — it focuses the island (root class) and clears on a real
+// tab click. The spec passes the strip to the install seam because the
+// stub's document.querySelector walks registry-root subtrees only (the
+// strip itself can never match); the fakes carry `selector` set to the
+// full delegated selector (the stub's exact-hit convention) so the
+// document-level cleanup listener finds the server tab.
+test("the Phone tab toggles the dialer focus and a real tab click leaves it", () => {
+  const nav = doc.getElementById("wp-nav");
+  nav.className = "wp-nav";
+  const serverTab = doc.createElement("");
+  serverTab.className = "wp-nav-link";
+  serverTab.selector = ".wp-nav-link[data-tab]";
+  serverTab.dataset = { tab: "messages" };
+  nav.append(serverTab);
+
+  const phone = shellApi.installPhoneTab(nav);
+  assert.ok(phone, "the tab installs into the strip");
+  assert.match(phone.className, /wp-nav-phone/);
+  assert.equal(phone.getAttribute("aria-pressed"), "false");
+
+  phone.listeners.click[0]();
+  assert.equal(
+    doc.documentElement.classList.contains("wp-phone-focus"),
+    true,
+    "tapping Phone focuses the dialer",
+  );
+  assert.equal(phone.getAttribute("aria-pressed"), "true");
+  assert.equal(
+    serverTab.classList.contains("wp-active"),
+    false,
+    "the server tab yields the active pill",
+  );
+
+  phone.listeners.click[0]();
+  assert.equal(
+    doc.documentElement.classList.contains("wp-phone-focus"),
+    false,
+    "tapping Phone again returns to the content",
+  );
+  assert.equal(phone.getAttribute("aria-pressed"), "false");
+
+  phone.listeners.click[0]();
+  doc.dispatch("click", { target: serverTab });
+  assert.equal(
+    doc.documentElement.classList.contains("wp-phone-focus"),
+    false,
+    "a real tab tap leaves the dialer focus",
+  );
+});
+
+test("installPhoneTab is idempotent and restores the focus state on recreate", () => {
+  const nav = doc.getElementById("wp-nav");
+  const before = nav.querySelectorAll(".wp-nav-phone").length;
+  shellApi.setPhonePressed(true);
+  shellApi.installPhoneTab(nav);
+  assert.equal(nav.querySelectorAll(".wp-nav-phone").length, before, "no duplicate tab");
+  const recreated = shellApi.installPhoneTab(nav);
+  assert.equal(recreated, undefined, "an existing tab blocks the install");
+  shellApi.setPhonePressed(false);
 });

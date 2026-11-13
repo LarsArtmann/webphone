@@ -47,9 +47,9 @@ type Archiver interface {
 }
 
 // Store is the fax-job persistence seam: the contract the SQL store
-// held and the read-model engine now serves (same methods, same
-// verdicts). AdvanceIdempotent is the webhook lane's in-process replay
-// guard — see readmodels.Faxes for the exact semantics.
+// held and the journal-backed cqrs backend now serves (same methods,
+// same verdicts). AdvanceIdempotent is the webhook lane's replay
+// guard — see cqrs.Faxes for the exact semantics.
 //
 // branching-flow IFACE_COMPLETE (baselined): single prod implementer BY
 // DESIGN — this consumer-side seam is what retired the SQL store
@@ -120,13 +120,24 @@ func (s *Service) Send(
 		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_spool", "spool pdf")
 	}
 
-	job := domain.NewOutboundFaxJob(domain.GenerateFaxID(), owner, to, path.String(), now)
+	job := domain.NewOutboundFaxJob(domain.GenerateFaxID(), owner, to, path, now)
 	if err := s.faxes.Create(ctx, job); err != nil {
+		s.unspool(path)
 		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_create", "persist fax job")
 	}
 	s.emit(ctx, domain.FaxAdvanced{Owner: owner, Fax: job.ID})
 
 	return s.drive(ctx, job)
+}
+
+// unspool removes a spooled document whose job row never persisted —
+// the compensating delete that keeps the blob tree owned by rows
+// (retention walks rows). Best-effort: the persist error stays the
+// verdict.
+func (s *Service) unspool(path domain.RelPath) {
+	if err := s.blobs.Remove(path); err != nil {
+		slog.Warn("fax: compensate spool remove", "error", err)
+	}
 }
 
 // drive submits one persisted queued job to the gateway and records the
@@ -143,7 +154,7 @@ func (s *Service) drive(ctx context.Context, job domain.FaxJob) (domain.FaxJob, 
 		err = rejection
 	} else {
 		receipt, err = s.gateway.SendFax(ctx, gateway.OutboundFax{
-			Owner: job.Owner, To: job.Remote, PDFPath: s.blobs.Abs(domain.MustParseRelPath(job.DocumentPath)),
+			Owner: job.Owner, To: job.Remote, PDFPath: s.blobs.Abs(job.DocumentPath),
 		})
 	}
 	if err != nil {
@@ -194,7 +205,7 @@ func (s *Service) Resend(ctx context.Context, owner domain.Extension, id domain.
 	// The document must still exist before a new job references it: a
 	// loopback gateway would otherwise "transmit" a resend whose PDF is
 	// gone (the probe is the honesty guard, drive never opens the file).
-	probe, err := s.blobs.Open(domain.MustParseRelPath(job.DocumentPath))
+	probe, err := s.blobs.Open(job.DocumentPath)
 	if err != nil {
 		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_spool", "reopen fax document")
 	}
@@ -221,8 +232,9 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundFax) (domai
 		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_spool", "spool inbound pdf")
 	}
 
-	job := domain.NewInboundFaxJob(domain.GenerateFaxID(), inbound.Owner, inbound.From, path.String(), inbound.ProviderRef, inbound.Pages, now)
+	job := domain.NewInboundFaxJob(domain.GenerateFaxID(), inbound.Owner, inbound.From, path, inbound.ProviderRef, inbound.Pages, now)
 	if err := s.faxes.Create(ctx, job); err != nil {
+		s.unspool(path)
 		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_create", "persist inbound fax")
 	}
 	s.emit(ctx, domain.FaxAdvanced{Owner: inbound.Owner, Fax: job.ID})
@@ -254,7 +266,7 @@ func (s *Service) archiveInbound(job domain.FaxJob) {
 	ctx, cancel := context.WithTimeout(context.Background(), archiveTimeout)
 	defer cancel()
 
-	file, err := s.blobs.Open(domain.MustParseRelPath(job.DocumentPath))
+	file, err := s.blobs.Open(job.DocumentPath)
 	if err != nil {
 		slog.Warn("fax: archive: open spooled pdf", "error", err, "fax_id", job.ID.String())
 		return
@@ -313,7 +325,7 @@ func (s *Service) Get(ctx context.Context, owner domain.Extension, id domain.Fax
 
 // Document streams a job's PDF.
 func (s *Service) Document(job domain.FaxJob) (io.ReadSeekCloser, error) {
-	return s.blobs.Open(domain.MustParseRelPath(job.DocumentPath))
+	return s.blobs.Open(job.DocumentPath)
 }
 
 func (s *Service) emit(ctx context.Context, e domain.Event) {

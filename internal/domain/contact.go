@@ -2,6 +2,13 @@ package domain
 
 import "time"
 
+// MaxContactNameLength caps one personal contact's display name. It is
+// the server-side twin of the save form's maxlength attribute (M5): a
+// rejection after submit is the punish-later UX the cap exists to
+// prevent. The vCard import lane stays uncapped — names there come
+// from the user's own address-book file, not a typed field.
+const MaxContactNameLength = 200
+
 // Contact is a personal contact saved by one extension. Shared contacts
 // come from server config and never live in the store.
 type Contact struct {
@@ -36,9 +43,11 @@ type ContactSaved struct {
 	CreatedAt time.Time
 }
 
-// ContactDeleted is the read-model fact removing one contact slot.
+// ContactDeleted is the read-model fact removing one contact slot. The
+// json tag pins the journal's wire key to today's Go field name —
+// byte-neutral now, rename-safe later.
 type ContactDeleted struct {
-	Key ContactKey
+	Key ContactKey `json:"Key"`
 }
 
 // SharedContact is an operator-provided contact from the server config,

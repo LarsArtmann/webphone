@@ -3,7 +3,33 @@
 Long-term direction and raw ideas not yet refined into actionable tasks.
 Actionable work lives in TODO_LIST.md; shipped work in FEATURES.md.
 
+## Event-sourcing doctrine (SUPERB, landed 2026-11-09)
+
+The product runs on ONE journal world: every domain aggregate (threads,
+faxes, dials, enroll, contacts, snippets, transcripts, call notes and
+reviews, agent audit, push devices) is command/event-sourced through
+go-cqrs-lite's system composition root into `system.db`; projections
+rebuild the read views and retention trims the journal bytes. The
+storage ladder is FROZEN (the death map and D-rulings live in
+[docs/planning/2026-11-09_storage-ladder-retirement.md](docs/planning/2026-11-09_storage-ladder-retirement.md)):
+sessions stay SQL (D2 — an ephemeral substrate with no domain
+invariants), the legacy tables stay as read-only import sources until
+the operator-gated DROP migration. New state grows as aggregates plus
+declarative projections, never as new SQL tables; releases cut at
+ship-visible boundaries (D4-amendment — a core swap ships its importer
+and retention or not at all).
+
 ## Open ideas
+
+- Observability depth (recorded 2026-11-13): the pieces now exist — /metrics
+  aggregate families, the opt-in flight recorder (slow/5xx trace windows with
+  a disk floor), the go-health dashboard (live check cards), per-surface
+  criticality grading — but nothing joins them. Raw direction: a
+  metrics→dashboard alert lane (threshold or anomaly on the existing
+  families), snapshot-trigger annotations on the dashboard's check trend, and
+  a trace-pivot view (which endpoints fed a slow snapshot). No demand event
+  yet; revisit when the operator opens /health unprompted or a production
+  incident needs the join.
 
 - Union test coverage (`-coverpkg=./...`) in the buildflow test-coverage
   step: per-package attribution hides cross-package coverage (tests in
@@ -185,6 +211,13 @@ the stack browser E2E passed on the bumped tree. What remains:
   `domain.RelPath` lands · a `config.Seam` helper for the four
   both-or-neither URL+secret pairs — revisit ONLY if a fifth pair
   appears (per-seam stays the owner ruling).
+- Data-model long shots, 2026-10-25 review cohort (4th data-model
+  review's open rows, ruled not baseline): `push.Transport` as a
+  defined type + `ParseTransport` for the Fanout registry/API · the
+  `sso.Finish` value object folded into Complete (carries the `auth:`
+  commit convention) · `FaxJob.DocumentPath` as `domain.RelPath` ·
+  asr/matrix wiring structs · `machineSurface` bool-last argument
+  order.
 
 ## Open questions (owner calls)
 
@@ -192,6 +225,43 @@ the stack browser E2E passed on the bumped tree. What remains:
   it and record accepted absence (memo with consequences appended to
   the file 2026-10-14, SUPERB train E2 — the declarative trains made
   its vocabulary load-bearing in code).
+- Should coverage have **teeth**? (routed 2026-11-06 from the
+  `docs/status/2026-09-18_16-52_tests-and-architecture-status.html` report,
+  whose §f obligations were harvested in its own session and whose one open
+  question was never homed.) The BuildFlow gate passes at ANY coverage level
+  today. Options: enforce a floor (e.g. fail below 50% hand-written union
+  coverage) or on any regression, versus staying informational. Fleet-wide
+  by nature (the step lives upstream) and it interacts with per-package vs
+  union attribution — see the `-coverpkg` idea above. Owner policy call.
+- **CI-bar subset policy for docs/test-only changes** (§g-Q1, raised
+  2026-10-06 in `docs/status/2026-10-06_04-12_round3-assistant-legs-brutal-review.md`
+  and re-surfaced in the 13:12 review; routed 2026-11-06 — it lived only in
+  timestamped reports). Which CI legs may be skipped for a docs-only or
+  test-only commit, and which must NEVER be (tonight's red argues the
+  formatter gate must never be the dropped subset)? Pairs with the session-exit
+  fmt-first checklist question in that same report.
+- **`--border-strong` vs WCAG 1.4.11** (routed 2026-11-06 from the
+  `docs/status/2026-10-04_19-42_cascade-fix-verification-t4-t8-status.md` §g.3;
+  it lived only in that timestamped report). The strong border token measures
+  1.86:1 (light) / 1.53:1 (dark) against its surface, below 1.4.11's 3:1 for
+  non-text UI. Decide: ACCEPT AND RECORD (the border is decorative separation,
+  the surrounding affordances carry the contrast) or RETUNE the token — the
+  retune touches every input/panel edge, so it is a visual-identity call, not a
+  colour tweak. Owner decision.
+- **Daemon-format coupling note home** (§g-Q3, same pair, routed 2026-11-06):
+  where does the note live that says the auto-commit daemon's reflow and the
+  gates' formatter are coupled — a test comment, the error-contract preamble,
+  or AGENTS? Three candidate homes, no decision.
+- Carrier-leg owner question (routed 2026-11-07 from the archived
+  `docs/planning/archived/2026-09-22_01-20_SUPERB-error-excellence.md`
+  T12, which this sweep's row pass found never confirmed anywhere): the
+  inbound-MMS isolation test (carrier phone → DID) and its Google Voice
+  verdict were never recorded, and the `+14084757593` ownership question
+  rode along un-answered. MMS inbound/outbound ship and are
+  webhook-tested today, so this is a verdict-recording call, not a
+  build gap: run the isolation test on a real carrier line and record
+  the GV verdict + number ownership in FEATURES/AGENTS, or close the
+  question as moot. Owner call (carrier phone required).
 - IO-storm source investigation (2026-10-14 go-modularize §f item 30,
   routed 2026-10-18): the box tripped the no-heavy-builds gate 6× in
   60 min (freeze #5/#25 class); a `/proc/pressure/io` watch during the
@@ -217,7 +287,7 @@ the stack browser E2E passed on the bumped tree. What remains:
 - GitHub Release objects per tag (notes/visibility) vs tags +
   CHANGELOG only (v2.0.0 has a tag, no Release object).
 - Go module-path policy for v2+ tags: `/v2` suffix vs NOT-DO record
-  (a flake-consumed app never `go get`s itself).
+  (a flake-consumed app never runs `go get` on itself).
 - Loopback gateway semantics: simulate `delivered` (like fax loopback
   resolves `transmitted`) or keep `sent` as the honest terminal state?
 - Handler gating: keep the deliberate dual layer (`requireSession`
@@ -288,12 +358,15 @@ the stack browser E2E passed on the bumped tree. What remains:
   or a task. (03:01 §g3)
 - Missed-call semantics: does a deliberately REJECTED incoming call
   count as missed (current: no — REJECT never dispatches
-  `wp:call-missed`), and should the badge also clear when the
-  island's _Recent calls_ panel opens (current: History tab click
-  only)? (21:43 §g2)
-- Search `?q=` URL semantics: should a typed query push `?q=` into
-  browser history (deep-linkable, back-button unwinds filters) or
-  stay ephemeral as implemented? (21:43 §g1)
+  `wp:call-missed`)? HALF-ANSWERED 2026-11-08 (pack A4b): the badge now
+  clears when the _Recent calls_ panel itself lands, whatever the door
+  (shell.js §2d afterSwap arm) — the REJECT-ratify half stays with the
+  owner sitting pack. (21:43 §g2)
+- Search `?q=` URL semantics: ANSWERED 2026-11-08 (pack A5, pushed):
+  the debounced fetch pushes `/messages?q=…`, so a typed search is
+  shareable and back unwinds the query stepwise (shell.js §3b-4; the
+  server's panel route already rendered `q` on full pages, so the rail
+  and the deep-link path agree). (21:43 §g1)
 - Store `Must*` panic policy: store scans call
   `MustParsePhone`/`MustContactID`/`MustParseExtension` on raw DB
   strings — a corrupted/hand-edited row panics the server at query
@@ -402,8 +475,9 @@ the 06-55 webphone-backlog residuals, routed here as ROADMAP fuel
 - TOTP/OAuth2 login modes (usermgmt supports TOTP; island + DOM
   contract work).
 - Membership-remap: replace `auth.passkey.users` with a usermgmt
-  relation; loginpage adoption ruling (standalone page vs island
-  no-reload) — written decision owed.
+  relation. (The loginpage adoption ruling RESOLVED 2026-11-11: the
+  standalone `/login` page won — it is the front door in every mode,
+  shipped in 2.14.0.)
 - `passwordFile` permission assertions in the webphone NixOS module
   (dataDir-style).
 - `/internal/directory` listing cap (5000-segment-style bound; currently
@@ -571,8 +645,8 @@ unshipped fuel — refine into TODO_LIST only on demand.
   only), debounce indicator (21:43 §e5/§f27-28).
 - Typeahead follow-ons: also search thread remotes (contacts only
   today), recent-calls recency boost in `rankContacts`.
-- Jump-chip coalescing of rapid pushes; hover `title`s for the nav
-  badge and voicemail rows too.
+- Jump-chip coalescing of rapid pushes; hover `title` tooltips on the
+  nav badge and voicemail rows too.
 - Missed-badge / jump-chip localization — only if the owner ever
   overturns the language-neutral-shell decision (D3).
 - Voicemail transcription (demand-gated; verify the phone API even
@@ -595,11 +669,16 @@ node:test suite plus the E2E caught everything).
 
 ## Test-infra follow-ups (from the 2026-09-20 testing train)
 
-- Long-tail coverage: `internal/blob` still has no direct tests
-  (exercised only through the server suite); `internal/fax` and
-  `internal/messaging` gained direct suites 2026-09-24 (family +
-  selfsend). `views` stays transitive BY DECISION (see
-  `docs/reviews/2026-09-20_coverage-baseline.md`).
+- Long-tail coverage (re-read 2026-11-06 against the live baseline): the
+  2026-09-20 note that `internal/blob` had "no direct tests" is SUPERSEDED —
+  blob reads 73.7% since the 2026-11-04 atomic-write train, fax 64.2%,
+  messaging 37.9% (thin by design: the sender registry's behavior is asserted
+  one level up). The remaining honest gaps are `internal/store` at 64.8%
+  (below the 75.3% its 2026-09-20 owner-scoping suite achieved — the admin
+  read seams, thread-flag columns and migration v5 outgrew their suites; the
+  test train is a TODO row) and `internal/server/api` at 7.1% (deliberate:
+  thin JSON writers, contract-pinned one level up). `views` stays transitive
+  BY DECISION (see `docs/reviews/2026-09-20_coverage-baseline.md` § 2026-11-06).
 - The fuzz target (`FuzzContactsAPISave`) runs its seed corpus in CI;
   a scheduled longer `-fuzztime` run (and more targets: message send
   bodies, vcard parser) is unstarted.
@@ -617,3 +696,23 @@ verdict with the threat model at
 `docs/planning/archived/2026-09-22_14-45_csrf-rotation-on-slide-verdict.md`
 (double-submit makes token-only leaks inert; both-halves theft is bounded
 by the absolute cap, not by rotation).
+
+## BuildFlow host-tooling hygiene (owner infra, harvested 2026-11-12 from the five-scoped-run triage)
+
+Owner-infrastructure actions — none executable from a webphone session while
+concurrent sessions hold in-flight files; each is bounded, with its trigger
+already firing:
+
+- **Rebuild + reinstall the BuildFlow binary** (`8936ca0` → `39c4789`; the
+  freshness advisory fires on every run; after reinstall check PATH precedence
+  — a stale `~/go/bin/buildflow` shadowing the profile binary is BuildFlow#81).
+- **BuildFlow state-DB purge decision** (0.90 GB state + 0.48 GB cache; the
+  cache VACUUM ran 2026-11-12; the state DB wants the post-purge GC or an
+  explicit call).
+- **io-history-ratchet `--profile-io` pass** (scoped runs hash wide file sets
+  by construction; confirm the memo layer is not regressed).
+- **dprint remote plugins → nix-store pin** (`nix build .#dprint-plugins` +
+  `BUILDFLOW_DPRINT_PLUGINS`; kills the cold-run fetch-hang class and the
+  recurring advisory).
+
+(repo: BuildFlow) — the fixes land in the BuildFlow repo/host, not here.

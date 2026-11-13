@@ -50,6 +50,17 @@
 # from a moved clone or CI, re-run `buildflow -s branching-flow
 # --save-baseline` (findings stay under the severity cap everywhere, so a
 # non-matching baseline warns, never gates).
+# STALENESS-WARNING GOTCHA (2026-11-10, nearly cost the file): the
+# "accepted-noise entries match nothing in each of the last 3 runs"
+# warning is measured per RUN'S OWN findings — a single-step `-s cqrs-lint`
+# run can NEVER match this branching-flow baseline, so three scoped runs
+# in a row fabricate a fully-stale verdict (68 of 157 entries matched a
+# full branching-flow run the same day; the file was deleted on the false
+# alarm and RESTORED from df4e4f2b). Trust the staleness verdict only
+# after a FULL run. Line-drift from landed edits retires individual ids
+# silently (warns, never gates) — do NOT refresh via --save-baseline to
+# silence it: a refresh snapshots EVERY tool's current findings (the
+# suppress-everything anti-pattern the 2026-10-28 retirement called out).
 baseline: .buildflow-baseline.json
 #
 # tool_paths: govulncheck must be built with the module's Go (1.27).
@@ -135,6 +146,47 @@ exclude:
 #     * F019 + F026 (readmodels contacts): REAL metaengine usage polish
 #       (Volume hints on query declarations, WithPrefetch on scans);
 #       rides the train's query-declaration work (TODO_LIST).
+#   2026-11-10 FULL TRIAGE (186 findings after the ONE-journal-world
+#   decider train): every rule now carries an explicit ruling. The
+#   PERMANENT-ARCHITECTURE declines moved to .cqrs-lint.json (rules.disable
+#   + machine-readable reasons; C044 prefixed-key symmetry, B004/B010
+#   cqrs-gen decline, B007 explicit route registrations, D005 detector
+#   misattribution, E014 D7 awaitOwnWrite, F003/F004/F007/F028 project
+#   facts). Per-SITE rulings live as //cqrs-lint:ignore(RULE) directives
+#   at the finding's line (A032 foreign-token/seam-minted transcript ids,
+#   F031 fetchSegments variadic hides the callers' explicit WithLimit,
+#   D014 DeliveryEvent/FaxEvent machine triggers, C009 boot-time
+#   fail-fast panics, C023/C015 best-effort closes). REAL FIXES landed
+#   same-day: C006 ver.Increment() everywhere, D013 WithSchemaVersion(1)
+#   on every event.New, C007 command-carried At stamps (notes/reviews
+#   deciders deterministic, pushdevices cmd.Now precedent), B005
+#   decider.StrictApply on all 11 folds via per-aggregate stream-vocab
+#   vars shared with the decls' Events, D014 exact-name json tags on the
+#   journaled tombstones (byte-neutral). STILL VISIBLE by choice (each
+#   must stay armed): C014 time.Local (deliberate boot-time zone), D006
+#   errTraceRequestFailed sentinel (recorder trigger vocabulary,
+#   erraudit-clean), E023 database/sql mixing (sessions SQL per the D2
+#   ruling + DLQ engine-tier exempt — the rule's own text), F009
+#   visibility poll time.After (the in-process D7 read-your-writes
+#   budget, not a durable timer), F021 fold-count advisories (deliberate
+#   view decomposition).
+# - io-surface: 6 findings, all info (2026-11-12 scoped sighting, was 6
+#   at earlier sightings): the io-in-loop heuristic over attachment
+#   fan-out — every flagged loop reads a DISTINCT file per iteration
+#   (gateway multipart assembly webhook.go, matrix Upload client.go,
+#   signal inbox scan receiver.go, the send-form upload funnel
+#   actions.go); N distinct files ARE the work, nothing to hoist or
+#   batch. ACCEPT (inherent per-item I/O); re-litigate only if a loop
+#   ever re-reads the SAME path per iteration.
+#   EXPECTED SCOPED COUNTS (2026-11-12; a scoped run reading MORE than
+#   these means a lost directive or a new finding — diff before
+#   assuming anything; the F031 loss hid because the total coincidentally
+#   stayed 12): cqrs-lint 11 (C014x2, D006, E023x4, F009, F021x3 — the
+#   armed keep-visible set), samber-linter 0, io-surface 6, jscpd 16
+#   (island-test fixtures, ACCEPT row in docs/dedup-registry.md),
+#   bandit furniture-only (real issues 0 — all six sites nosec'd; the
+#   ~244 text rows are the upstream #64-class parser disease, draft at
+#   docs/drafts/2026-10-11_buildflow-bandit-stdout-findings.md).
 # - nix-hash-fix: UNSKIPPED 2026-10-15 (owner decision). Its 10/10
 #   chronic failure is POST-BUMP-ONLY: the step computes the right
 #   vendorHash but never writes it in this repo layout, so with the pin
@@ -143,6 +195,16 @@ exclude:
 #   (placeholder hash → `nix build` → read `got:` → apply) stays in
 #   AGENTS.md. The real gate still exists: `nix flake check` builds in
 #   the sandbox.
+#   CONTRADICTION DECODED (2026-11-10, run of 16:09): a "failed" status
+#   beside "All 4 flake target(s) built successfully, 0 hashes changed"
+#   is the step's own lock-drift WARNING surfacing a GREEN build — its
+#   detector flagged "go.mod was modified after the hash was last set"
+#   while git proves the OPPOSITE order (go.mod 64c1c637 2026-11-08 <
+#   nix/packages.nix vendorHash 5c00b153 2026-11-10) and the FOD built
+#   green. The warning-as-finding is detector noise (upstream ordering
+#   bug), NOT tree drift: verify with the FOD recipe before believing
+#   the finding, and read the step's own diagnose lines ("build green
+#   but N lock-drift warning(s)") as the explanation.
 # - gomod-check: UNSKIPPED 2026-10-15 (owner decision). The 2026-10-04
 #   triage's 99 vendor-consistency false positives ("marked as explicit
 #   in vendor/modules.txt, but not explicitly required in go.mod" — Go's
@@ -162,6 +224,23 @@ exclude:
 #   untracked; do NOT hand-edit vendor markers. The real gate still
 #   exists: `nix flake check` builds in the sandbox — a go.mod lie fails
 #   the build.
+# - go-version-auto-configure: DELIBERATE NON-FIX (2026-11-10, verified).
+#   Its "go directive must be major.minor only" rule is UNSATISFIABLE in
+#   this graph: the cqrs-htmx family trains (loginpage v4.17.0 et al,
+#   deps sweep 2026-11-08) declare go 1.27.3 floors, and Go's own
+#   tooling enforces the directive at the graph maximum — with `go 1.27`
+#   hand-written, `go build` demands "updates to go.mod needed" and any
+#   `go mod tidy` (this session's or a concurrent one's) writes 1.27.3
+#   back. The finding is warning-severity and never gates. Revisit ONLY
+#   when the cqrs-htmx floors drop below the next patch release.
+# - vulnix: DELIBERATE ADVISORY (2026-11-10). BuildFlow's step scans the
+#   BUILD closure (bootstrap binutils/bison/cargo/brotli derivations) —
+#   this repo's documented triage policy owns the RUNTIME closure via
+#   `nix run .#vulnix` (webphone-vulnix-triage, gated in release.sh);
+#   build-closure advisories never deploy. The step is detect-only and
+#   warning-severity, so it never gates. Revisit ONLY if a runtime
+#   derivation ever appears in its findings — that belongs in the
+#   triage CLI's patch-set check, not a nixpkgs chase from this repo.
 # LOAD-BEARING POLICY (2026-10-08 incident): the single remaining skip
 # below is a reasoned suppression — a daemon commit once truncated 69
 # lines here and the missing skips re-failed the gate silently for

@@ -32,13 +32,26 @@
           # so bare gopls/golangci-lint fail every go list.
           pkgs.gopls
           pkgs.golangci-lint-langserver
-          pkgs.templ
+          # The PINNED templ (nix/packages.nix) — matches go.mod's library
+          # version, unlike nixpkgs' lagging pkgs.templ (pre-wave codegen).
+          config.packages.templ
           pkgs.golangci-lint
           pkgs.esbuild
           pkgs.jq
           pkgs.nil
           pkgs.oxlint
           pkgs.vulnix
+          # The docs-health battery (scripts/docs-gates.sh) — the SAME
+          # derivation CI uses, so a green run here means a green run there.
+          config.packages.docs-gates
+          # dprint formats the markdown/json/yaml the battery judges; the
+          # wrapper fail-closes when it is missing, and a CI runner has no
+          # host dprint to inherit (local shells silently borrow
+          # ~/.nix-profile). Pinning it HERE is what makes the battery
+          # runnable outside this host at all. Formatting behavior comes
+          # from the wasm plugins pinned in dprint.json, not the CLI, so
+          # the nixpkgs build cannot drift from the host one.
+          pkgs.dprint
           # go-licenses rebuilt on Go 1.27: the stock 2.0.1 rides go
           # 1.26.8, and its nixpkgs wrapper BAKES that GOROOT into the
           # binary — the package loader then dies (F1004, "crypto/mldsa
@@ -58,6 +71,11 @@
           pkgs.codespell
           pkgs.statix
           pkgs.deadnix
+          # The bandit triage runner, PINNED via this flake's locked
+          # nixpkgs (the gate-setup residue row: a bare `bandit` PATH hunt
+          # rode whatever the host had; 1.9.4 here matches BuildFlow's
+          # runner so findings agree).
+          pkgs.python312Packages.bandit
           # The island type gate: `tsc -p . --noEmit` inside the shell is
           # the only authority over the island tree — editors run
           # TypeScript 5.x and report phantom errors against a project
@@ -86,7 +104,7 @@
       # closure quickly.
       devShells.ci = pkgs.mkShellNoCC {
         packages = goTools ++ [
-          pkgs.templ
+          config.packages.templ
           pkgs.golangci-lint
         ];
         env = goEnv;

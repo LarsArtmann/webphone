@@ -1,7 +1,7 @@
 # go-filewatcher — library utilization audit
 
 **Verdict:** NO-GO — webphone has nothing to watch. Config is boot-immutable, secrets are per-use reads or systemd `LoadCredential`, rotation is restart-by-doctrine. **Adoption: n/a (absent, by decision).**
-**Pin:** none (absent from go.mod) · **Latest:** v2.4.3 (local checkout tag) · **Status:** not a dependency (fsnotify v1.10.1 rides indirect via koanf's file provider)
+**Pin:** none (absent from go.mod) · **Latest:** v2.5.0 (re-verified against remote tags 2026-11-13; the v2.4.3→v2.5.0 delta adds `Healthy()` + an introspectable circuit breaker — service-integration surface for hosts that run watchers; **the nothing-to-watch premise is unchanged**) · **Status:** not a dependency (fsnotify v1.10.1 rides indirect via koanf's file provider)
 **Audited:** 2026-11-04 · **Prior reports:** none (first audit).
 
 ## Status
@@ -24,7 +24,7 @@ High-level fsnotify wrapper: recursion, 17 composable filters (extensions, gitig
 
 ## Ruling
 
-**Decline.** The library is well-built for services that own watched workspaces (generated files, config dirs, inbox folders); webphone owns none. `fsnotify` stays indirect-only inside koanf. Re-open only if a feature genuinely needs filesystem reactivity (e.g. a drop-folder fax intake — for which a polling loop over the existing pbx/gateway seams is the more likely home anyway).
+**Decline.** The library is well-built for services that own watched workspaces (generated files, config dirs, inbox folders); webphone owns none — v2.5.0's `Healthy()`/circuit-breaker additions serve integrators with live watchers and move nothing here. `fsnotify` stays indirect-only inside koanf. Re-open only if a feature genuinely needs filesystem reactivity (e.g. a drop-folder fax intake — for which a polling loop over the existing pbx/gateway seams is the more likely home anyway).
 
 **Refresh trigger:** a drop-folder/intake feature; an operator demand for live config reload that outweighs the boot-fail doctrine.
 

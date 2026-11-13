@@ -3,7 +3,7 @@
 Date: 2026-10-11 10:47 · Train owner input: "FUCKING GO AND START
 FIXING ALL! PROPERLY" + "CHANGELOG should stay up to date!" (2026-10-11
 06:41); re-armed 10:47. Supersedes the execution lists of
-`docs/status/2026-10-11_09-38_*` §f (research window that produced the
+`docs/status/archived/2026-10-11_09-38_*` §f (research window that produced the
 classification this plan executes).
 
 ## Context (what this train fixes, and what it deliberately does NOT)

@@ -17,12 +17,6 @@
 interface IslandDomIds {
   "reg-status": HTMLElement;
   lang: HTMLSelectElement;
-  "login-view": HTMLElement;
-  "login-form": HTMLFormElement;
-  "login-error": HTMLElement;
-  ext: HTMLInputElement;
-  pass: HTMLInputElement;
-  remember: HTMLInputElement;
   "phone-view": HTMLElement;
   "whoami-ext": HTMLElement;
   logout: HTMLButtonElement;
@@ -55,7 +49,6 @@ interface IslandDomIds {
   "wp-adv-toggle": HTMLButtonElement;
   "wp-advanced": HTMLElement;
   "wp-devtest-btn": HTMLButtonElement;
-  "sso-error": HTMLElement;
   "audio-out-wrap": HTMLElement;
   "audio-output": HTMLSelectElement;
 }
@@ -91,6 +84,8 @@ interface IslandCallEntry {
   transferring?: boolean;
   /** The SIP status code that ended a failed outbound INVITE (0 = none). */
   rejectCause?: number;
+  /** The Q.850 cause parsed from that rejection's Reason header (0 = none). */
+  rejectQ850?: number;
   endedReasonShown?: boolean;
   announcedState?: IslandCallDockState;
   captionUnsub?: () => void;
@@ -99,6 +94,25 @@ interface IslandCallEntry {
   transcriptSaved?: number;
   transcriptSaveWarned?: boolean;
   transcriptSavedAnnounced?: boolean;
+  /**
+   * Measure-first latency stamps, OUTBOUND dial path only (t0 rides
+   * placeCall's options; inbound calls carry none — the interval is the
+   * dial-press → first-audio leg set).
+   */
+  latency?: IslandLatencyStamps;
+  /** The remote-audio RMS watcher's disposer (audio.js), torn down with the call. */
+  audioWatch?: () => void;
+}
+
+/** The dial_to_audio beacon's leg stamps (all Date.now() epoch ms). */
+interface IslandLatencyStamps {
+  t0: number;
+  invitedAt: number;
+  establishedAt: number;
+  playingAt: number;
+  firstAudioAt: number;
+  /** The beacon is sent exactly once per completed interval. */
+  beaconSent: boolean;
 }
 
 /** One persisted live-call transcript segment (POST /api/transcripts). */
@@ -109,6 +123,13 @@ interface IslandTranscriptSegment {
   startedAt: number;
   text: string;
 }
+
+/**
+ * The beacon intake's closed interval vocabulary (the server's
+ * islandLatencyLegs is the ONE authority; a new interval adds there
+ * first).
+ */
+type IslandLatencyInterval = "dial_to_audio" | "asr_round_trip";
 
 /** One unanswered inbound INVITE in the ringing queue. */
 interface IslandIncomingSession {
@@ -255,6 +276,19 @@ interface IslandEnrollDomIds {
 interface IslandEnrollVerifyBody {
   email: string;
   user_id: string;
+}
+
+// The dedicated login page's extension+password section (served at /login,
+// hosted inside the cqrs-htmx loginpage card by views.LoginPageExtra; its
+// behavior is login/login-page.js, no island runtime). Every mode renders
+// the form; #sso-login renders only when the OIDC seam is configured.
+interface LoginPageDomIds {
+  "login-form": HTMLFormElement;
+  ext: HTMLInputElement;
+  pass: HTMLInputElement;
+  remember: HTMLInputElement;
+  "login-error": HTMLElement;
+  "sso-login": HTMLAnchorElement;
 }
 
 /** The begin endpoint's answer: the ceremony options plus the session key

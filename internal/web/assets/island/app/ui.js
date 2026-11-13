@@ -3,7 +3,7 @@
 // contract — external E2E harnesses drive this page through them (see
 // AGENTS.md before renaming anything).
 
-import { sipDomain } from "./config.js";
+import { callerDisplay, sipDomain } from "./config.js";
 import { t } from "./i18n.js";
 import { state } from "./state.js";
 
@@ -22,12 +22,6 @@ export const $ = (id) =>
 export const els = {
   regStatus: $("reg-status"),
   lang: $("lang"),
-  loginView: $("login-view"),
-  loginForm: $("login-form"),
-  loginError: $("login-error"),
-  ext: $("ext"),
-  pass: $("pass"),
-  remember: $("remember"),
   phoneView: $("phone-view"),
   whoami: $("whoami-ext"),
   logout: $("logout"),
@@ -152,9 +146,11 @@ export function announce(message, kind = "info", { assertive = false } = {}) {
   toast.textContent = message;
   // Focusable so keyboard users can dismiss (Enter/Space/Escape); the
   // container's role="status" aria-live="polite" already announced it to
-  // screen readers — focus is never stolen on creation.
+  // screen readers — focus is never stolen on creation. The title is
+  // the visible-cursor's explanation (M25): click dismisses.
   toast.tabIndex = 0;
-  const dismiss = () => toast.remove();
+  toast.title = "Dismiss";
+  const dismiss = () => removeToast(toast);
   toast.addEventListener("click", dismiss);
   toast.addEventListener("keydown", (event) => {
     if (event.key === "Enter" || event.key === " " || event.key === "Escape") {
@@ -163,9 +159,28 @@ export function announce(message, kind = "info", { assertive = false } = {}) {
     }
   });
   els.toasts.append(toast);
-  while (els.toasts.children.length > TOAST_MAX)
-    els.toasts.firstChild?.remove();
+  while (els.toasts.children.length > TOAST_MAX) {
+    removeToast(/** @type {HTMLElement} */ (els.toasts.firstChild));
+  }
   setTimeout(dismiss, TOAST_MS[kind] ?? TOAST_MS.info);
+}
+
+// M42: a toast that held focus must not evict it to <body> when it is
+// removed — by expiry, by the stack cap, or by dismissal. Focus moves
+// to the newest surviving toast; with none left it lands on the host's
+// next focusable (the browser default for a removed focused node would
+// be the body, a dead end for keyboard users).
+/** @param {HTMLElement} toast */
+function removeToast(toast) {
+  const active = document.activeElement;
+  if (active && toast.contains(active)) {
+    const rest = /** @type {HTMLElement[]} */ (
+      Array.from(els.toasts.children)
+    ).filter((node) => node !== toast);
+    const next = rest.length ? rest[rest.length - 1] : null;
+    if (next) next.focus();
+  }
+  toast.remove();
 }
 
 /** @type {ReturnType<typeof setTimeout> | null} */
@@ -225,46 +240,107 @@ export function setIncomingSlotActions(actions) {
   slotActions = actions;
 }
 
+/**
+ * Keep keyboard focus with a surface an island transition is about to
+ * replace (F8): if the focused node sat inside `departing`, the helper
+ * runs `mutate` and then moves focus to whatever `target` resolves to
+ * afterwards; if focus was elsewhere, the mutation runs and nothing is
+ * disturbed. `target` resolves AFTER the mutation so it can find the
+ * replacement in the live DOM; resolve null to deliberately drop focus
+ * (the browser default).
+ * @param {Element} departing node the transition replaces or empties
+ * @param {() => HTMLElement | null} target focus destination post-mutate
+ * @param {() => void} mutate the replacement itself
+ * @returns {void}
+ */
+export function focusAfterReplace(departing, target, mutate) {
+  const active = document.activeElement;
+  const held =
+    !!active &&
+    typeof departing.contains === "function" &&
+    (departing === /** @type {Node} */ (active) ||
+      departing.contains(/** @type {Node} */ (active)));
+  mutate();
+  if (!held) return;
+  const next = target();
+  if (next && typeof next.focus === "function") next.focus();
+}
+
 export function renderIncomingSlots() {
   const queue = state.incomingSessions;
   if (!queue.length) return;
   els.incoming.hidden = false;
   setIncomingFocusMode(true);
-  els.incomingFrom.textContent = queue[0].from;
+  els.incomingFrom.textContent = callerDisplay(queue[0].from);
   if (!els.incomingQueue) return;
-  els.incomingQueue.replaceChildren();
-  for (let i = 1; i < queue.length; i += 1) {
-    const entry = queue[i];
-    const row = document.createElement("div");
-    row.className = "incoming-slot";
-    row.id = `wp-incoming-slot-${i}`;
-    const label = document.createElement("span");
-    label.className = "incoming-slot-from";
-    label.textContent = `${t("incoming")} ${entry.from}`;
-    const controls = document.createElement("div");
-    controls.className = "controls";
-    const answer = document.createElement("button");
-    answer.className = "primary";
-    answer.textContent = t("accept");
-    answer.addEventListener("click", () => {
-      if (slotActions) slotActions.answer(i);
-    });
-    const reject = document.createElement("button");
-    reject.className = "danger";
-    reject.textContent = t("reject");
-    reject.addEventListener("click", () => {
-      if (slotActions) slotActions.reject(i);
-    });
-    controls.append(answer, reject);
-    row.append(label, controls);
-    els.incomingQueue.append(row);
+  let heldSlotId = "";
+  const active = document.activeElement;
+  if (
+    active &&
+    typeof (/** @type {Element} */ (active).closest) === "function"
+  ) {
+    const slotRow = /** @type {Element} */ (active).closest(".incoming-slot");
+    if (slotRow) heldSlotId = slotRow.id || "";
   }
+  focusAfterReplace(
+    els.incomingQueue,
+    () => {
+      if (!heldSlotId) return null;
+      const row = document.getElementById(heldSlotId);
+      const button = /** @type {HTMLElement | null} */ (
+        row ? row.querySelector("button") : null
+      );
+      return button;
+    },
+    () => {
+      els.incomingQueue.replaceChildren();
+      for (let i = 1; i < queue.length; i += 1) {
+        const entry = queue[i];
+        const row = document.createElement("div");
+        row.className = "incoming-slot";
+        row.id = `wp-incoming-slot-${i}`;
+        const label = document.createElement("span");
+        label.className = "incoming-slot-from";
+        label.textContent = `${t("incoming")} ${callerDisplay(entry.from)}`;
+        const controls = document.createElement("div");
+        controls.className = "controls";
+        const answer = document.createElement("button");
+        answer.className = "primary";
+        answer.textContent = t("accept");
+        answer.addEventListener("click", () => {
+          if (slotActions) slotActions.answer(i);
+        });
+        const reject = document.createElement("button");
+        reject.className = "danger";
+        reject.textContent = t("reject");
+        reject.addEventListener("click", () => {
+          if (slotActions) slotActions.reject(i);
+        });
+        controls.append(answer, reject);
+        row.append(label, controls);
+        els.incomingQueue.append(row);
+      }
+    },
+  );
 }
 
 export function hideIncomingBanner() {
-  els.incoming.hidden = true;
-  setIncomingFocusMode(false);
-  if (els.incomingQueue) els.incomingQueue.replaceChildren();
+  focusAfterReplace(
+    els.incoming,
+    () => {
+      const live = /** @type {HTMLElement | null} */ (
+        document.querySelector(
+          ".call-card:not(.wp-ended-card) .controls button",
+        )
+      );
+      return live || els.dest;
+    },
+    () => {
+      els.incoming.hidden = true;
+      setIncomingFocusMode(false);
+      if (els.incomingQueue) els.incomingQueue.replaceChildren();
+    },
+  );
 }
 
 /** @param {string} number */

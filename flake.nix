@@ -13,6 +13,18 @@
       url = "github:numtide/treefmt-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # The docs-health battery (freshness / audit-all / annotate / routing /
+    # cadence) as ONE stdlib-only Go binary, built here so CI and the devShell
+    # cannot disagree about which rules ran. `flake = false` is deliberate:
+    # the upstream flake pulls a PRIVATE erraudit input over ssh, which a
+    # public-repo CI job cannot fetch, and this repo only needs the source
+    # tree. The rev is locked, so rule behaviour cannot drift under us; a
+    # deliberate bump is the only way the gates change.
+    docs-gates = {
+      url = "github:Artmann-Technologies/docs-gates/2278406afdfd1b8df7674e2e594b6ea880694c90";
+      flake = false;
+    };
   };
 
   outputs =
@@ -22,7 +34,7 @@
       # ldflags injection in one place. release.sh seds THIS binding
       # (grep "webphoneVersion = " flake.nix), so keep it in this file,
       # in this exact shape, in lockstep with the git tag at release.
-      webphoneVersion = "2.9.0";
+      webphoneVersion = "2.14.0";
     in
     flake-parts.lib.mkFlake { inherit inputs; } {
       systems = [

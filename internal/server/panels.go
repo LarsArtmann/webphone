@@ -11,13 +11,14 @@ import (
 	"time"
 
 	"github.com/a-h/templ"
-	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
+	"github.com/larsartmann/cqrs-htmx/v4/httperr"
 	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/httputil"
 
 	"github.com/larsartmann/webphone/internal/crm"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/pbx"
+	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/store"
 	"github.com/larsartmann/webphone/internal/textagent"
@@ -42,7 +43,7 @@ func (h *handlers) messagesPanelPrefilled(r *http.Request, sess session.Session,
 	query := strings.TrimSpace(r.URL.Query().Get("q"))
 	archived := r.URL.Query().Get("archived") == "1"
 	var (
-		threads       []store.ThreadSummary
+		threads       []readmodels.ThreadSummary
 		archivedCount int
 		err           error
 	)
@@ -61,18 +62,19 @@ func (h *handlers) messagesPanelPrefilled(r *http.Request, sess session.Session,
 			return nil, err //nolint:erraudit // context_loss FP: archivedCount is an OUT param, garbage exactly when the count failed
 		}
 	}
-	numbers := crmNumbers(threads, func(summary store.ThreadSummary) string { return crmNumberFor(summary.Thread.Remote) })
+	numbers := crmNumbers(threads, func(summary readmodels.ThreadSummary) string { return crmNumberFor(summary.Thread.Remote) })
 	reviews, draftsErr := h.textAgentReviews(r)
+	drafts := agentReviewsOf(reviews)
 	// The drafts panel shares the thread rows' name feed: every pending
 	// draft's contact resolves through the same CRM map.
-	if reviews != nil {
-		numbers = append(numbers, crmNumbers(reviews.Drafts, func(draft textagent.Draft) string { return draft.Contact })...)
+	if drafts != nil {
+		numbers = append(numbers, crmNumbers(drafts.Drafts, func(draft views.AgentDraft) string { return draft.Contact })...)
 	}
-	contacts := h.crmDirectory(r.Context(), numbers)
+	contacts := h.crmDirectory(r.Context(), sess.Extension, numbers)
 	return views.ThreadsPanel(views.ThreadsPanelProps{
 		Threads: threads, Query: query, Archived: archived, ArchivedCount: archivedCount,
 		Identity: h.identityFor(sess.Extension), CRM: contacts, Lang: h.lang(r),
-		TextAgent: h.textAgentOn(), Drafts: reviews, DraftsError: draftsErr, PrefillBody: prefillBody,
+		TextAgent: h.textAgentOn(), Drafts: drafts, DraftsError: draftsErr, PrefillBody: prefillBody,
 	}), nil
 }
 
@@ -110,9 +112,9 @@ func (h *handlers) threadPanelPrefilled(r *http.Request, sess session.Session, i
 	}
 	numbers := append(
 		[]string{thread.Remote.String()},
-		crmNumbers(rail, func(summary store.ThreadSummary) string { return crmNumberFor(summary.Thread.Remote) })...,
+		crmNumbers(rail, func(summary readmodels.ThreadSummary) string { return crmNumberFor(summary.Thread.Remote) })...,
 	)
-	contacts := h.crmDirectory(r.Context(), numbers)
+	contacts := h.crmDirectory(r.Context(), sess.Extension, numbers)
 	// Reply snippets feed the composer's chip lane + picker (M21);
 	// nil-safe: hand-composed test Deps may carry no snippet store.
 	var snippets []domain.Snippet
@@ -124,8 +126,9 @@ func (h *handlers) threadPanelPrefilled(r *http.Request, sess session.Session, i
 	return views.ThreadView(views.ThreadViewProps{
 		Thread: thread, Messages: msgs, Page: page, HasMore: hasMore, Snippets: snippets, Rail: rail,
 		Identity: h.identityFor(sess.Extension), CRM: contacts, Lang: h.lang(r),
-		CRMContext: h.crmContextFor(r.Context(), thread.Remote),
-		ASR:        h.asrOn(), TextAgent: h.textAgentOn(), PrefillDraft: prefillDraft,
+		CRMCreateURL: h.deps.Config.CRM.CreateURL,
+		CRMContext:   h.crmContextFor(r.Context(), thread.Remote),
+		ASR:          h.asrOn(), TextAgent: h.textAgentOn(), PrefillDraft: prefillDraft,
 	}), nil
 }
 
@@ -166,7 +169,7 @@ func (h *handlers) faxPanel(r *http.Request, sess session.Session) (templ.Compon
 		return nil, err
 	}
 	numbers := crmNumbers(jobs, func(job domain.FaxJob) string { return job.Remote.String() })
-	return views.FaxPanel(views.FaxPanelProps{Jobs: jobs, Capability: h.faxCapability(), Identity: h.identityFor(sess.Extension), CRM: h.crmDirectory(r.Context(), numbers), Lang: h.lang(r)}), nil
+	return views.FaxPanel(views.FaxPanelProps{Jobs: jobs, Capability: h.faxCapability(), Identity: h.identityFor(sess.Extension), CRM: h.crmDirectory(r.Context(), sess.Extension, numbers), Lang: h.lang(r)}), nil
 }
 
 // faxCapability mirrors the deployment's config.Fax into the view type —
@@ -187,9 +190,10 @@ func (h *handlers) voicemailPanel(r *http.Request, sess session.Session) (templ.
 			Enabled: true, Error: h.T(r, "vm.unreachable"), Lang: h.lang(r), ASR: h.asrOn(),
 		}), nil
 	}
+	vSummary, vItems := voicemailItems(summary, messages)
 	return views.VoicemailPanel(views.VoicemailPanelProps{
-		Enabled: true, Summary: summary, Messages: messages,
-		CRM: h.crmDirectory(r.Context(), crmNumbers(messages, func(msg pbx.VoicemailMessage) string { return msg.CIDNumber })), Lang: h.lang(r),
+		Enabled: true, Summary: vSummary, Messages: vItems,
+		CRM: h.crmDirectory(r.Context(), sess.Extension, crmNumbers(vItems, func(msg views.VoicemailItem) string { return msg.CIDNumber })), Lang: h.lang(r),
 		ASR: h.asrOn(),
 	}), nil
 }
@@ -207,6 +211,65 @@ func crmNumbers[T any](rows []T, number func(T) string) []string {
 	return numbers
 }
 
+// agentReviewsOf converts the textagent client's answer into the
+// view-owned drafts shape — the ONE boundary conversion (the templates
+// never speak the agent wire; the arch P2 ruling).
+func agentReviewsOf(reviews *textagent.Reviews) *views.AgentReviews {
+	if reviews == nil {
+		return nil
+	}
+	out := &views.AgentReviews{
+		Mode: reviews.Mode, ModeSource: reviews.ModeSource,
+		DefaultMode: reviews.DefaultMode, Modes: reviews.Modes,
+	}
+	for _, draft := range reviews.Drafts {
+		out.Drafts = append(out.Drafts, views.AgentDraft{
+			ID: draft.ID, Contact: draft.Contact, Trigger: draft.Trigger,
+			Text: draft.Text, EnGloss: draft.EnGloss, Language: draft.Language,
+			Confidence: draft.Confidence, CreatedAt: draft.CreatedAt,
+		})
+	}
+	for _, frozen := range reviews.Frozen {
+		out.Frozen = append(out.Frozen, views.AgentFrozen{Contact: frozen.Contact, Reason: frozen.Reason})
+	}
+	for _, suppressed := range reviews.Suppressed {
+		out.Suppressed = append(out.Suppressed, views.AgentSuppressed{Contact: suppressed.Contact, Keyword: suppressed.Keyword})
+	}
+	return out
+}
+
+// cdrEntries converts the PBX CDR feed into the view-owned rows — the
+// ONE boundary conversion for the history/admin call records.
+func cdrEntries(rows []pbx.CDR) []views.CDREntry {
+	out := make([]views.CDREntry, 0, len(rows))
+	for _, cdr := range rows {
+		out = append(out, views.CDREntry{
+			Context:           cdr.Context,
+			CallerIDNumber:    cdr.CallerIDNumber,
+			CallerIDName:      cdr.CallerIDName,
+			DestinationNumber: cdr.DestinationNumber,
+			Start:             cdr.Start,
+			Billsec:           cdr.Billsec,
+			HangupCause:       cdr.HangupCause,
+		})
+	}
+	return out
+}
+
+// voicemailItems converts the PBX voicemail feed into the panel's view
+// shapes — the ONE boundary conversion for the voicemail surface.
+func voicemailItems(summary pbx.VoicemailSummary, messages []pbx.VoicemailMessage) (views.VoicemailSummary, []views.VoicemailItem) {
+	out := views.VoicemailSummary{New: summary.New, Old: summary.Old}
+	items := make([]views.VoicemailItem, 0, len(messages))
+	for _, msg := range messages {
+		items = append(items, views.VoicemailItem{
+			UUID: msg.UUID, CIDNumber: msg.CIDNumber, CIDName: msg.CIDName,
+			Seconds: msg.Seconds, Created: msg.Created, Read: msg.Read, AudioURL: msg.AudioURL,
+		})
+	}
+	return out, items
+}
+
 func (h *handlers) fetchVoicemail(r *http.Request, creds pbx.Credentials) (pbx.VoicemailSummary, []pbx.VoicemailMessage, error) {
 	ctx := r.Context()
 	summary, err := h.deps.PhoneAPI.VoicemailSummary(ctx, creds)
@@ -220,18 +283,17 @@ func (h *handlers) fetchVoicemail(r *http.Request, creds pbx.Credentials) (pbx.V
 	return summary, page.Messages, nil
 }
 
-// crmDirectory resolves numbers against the optional CRM integration for
-// view props: the published name plus, when a deep-link template is
-// configured, the address of that contact in the CRM's own UI.
+// crmDirectory resolves numbers into view props for the session's owner:
+// the owner's personal contacts name a number first, the optional CRM
+// integration answers the rest (the published name plus, when a
+// deep-link template is configured, the address of that contact in the
+// CRM's own UI). One merge home: directoryFor — the SSE push lane reads
+// the same map, so a live morph cannot rename a row differently.
 //
-// A disabled (or nil) resolver returns nil, so the views' displayName
-// fallback renders raw numbers with no link: zero CRM config renders
-// byte-identically to the pre-integration product.
-func (h *handlers) crmDirectory(ctx context.Context, numbers []string) views.CRMContacts {
-	if len(numbers) == 0 {
-		return nil
-	}
-	return crmContacts(h.deps.CRM.People(ctx, numbers), h.deps.CRM)
+// Zero config on both seams renders raw numbers with no link:
+// byte-identical to the pre-integration product.
+func (h *handlers) crmDirectory(ctx context.Context, owner domain.Extension, numbers []string) views.CRMContacts {
+	return directoryFor(ctx, h.deps.Contacts, h.deps.CRM, owner, numbers)
 }
 
 // asrOn is the one gate every server-rendered transcribe affordance
@@ -270,14 +332,14 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 		// filter did not choose. The transcripts carry the answer.
 		return views.HistoryPanel(views.HistoryPanelProps{
 			Enabled: true, Disposition: disposition.String(), Lang: lang, Transcripts: transcripts,
-			CRM:          h.crmDirectory(r.Context(), transcriptNumbers),
+			CRM:          h.crmDirectory(r.Context(), sess.Extension, transcriptNumbers),
 			AgentEnabled: h.textAgentOn(),
 		}), nil
 	}
 	if !h.deps.PhoneAPI.Enabled() {
 		return views.HistoryPanel(views.HistoryPanelProps{
 			Lang: lang, Query: query, Transcripts: transcripts,
-			CRM:          h.crmDirectory(r.Context(), transcriptNumbers),
+			CRM:          h.crmDirectory(r.Context(), sess.Extension, transcriptNumbers),
 			AgentEnabled: h.textAgentOn(),
 		}), nil
 	}
@@ -293,15 +355,16 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 			AgentEnabled: h.textAgentOn(),
 		}), nil
 	}
-	entries := filterCDRs(page.Entries, query, dir, outcome)
-	if len(entries) > historyPageSize {
-		entries = entries[:historyPageSize]
+	filtered := filterCDRs(page.Entries, query, dir, outcome)
+	if len(filtered) > historyPageSize {
+		filtered = filtered[:historyPageSize]
 	}
+	entries := cdrEntries(filtered)
 	numbers := crmNumbers(entries, views.CDRDialTarget)
 	numbers = append(numbers, transcriptNumbers...)
 	return views.HistoryPanel(views.HistoryPanelProps{
 		Enabled: true, Entries: entries, Query: query, Dir: dir, Outcome: outcome,
-		CRM: h.crmDirectory(r.Context(), numbers), Lang: lang, Transcripts: transcripts,
+		CRM: h.crmDirectory(r.Context(), sess.Extension, numbers), Lang: lang, Transcripts: transcripts,
 		AgentEnabled: h.textAgentOn(),
 	}), nil
 }
@@ -451,6 +514,12 @@ const (
 // posture at a tighter budget: the CRM is a loopback/LAN service).
 const crmSettingsProbeTimeout = 2 * time.Second
 
+// agentPanelProbeTimeout bounds the Settings agent row's mode ask — the
+// same 3s fail-open budget the login lane's identity decoration rides
+// (the login lane's const moved with the auth package; this panel keeps
+// its own name so neither surface reaches across the seam).
+const agentPanelProbeTimeout = 3 * time.Second
+
 func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.Component, error) {
 	websocketURL := "wss://<this-host>" + h.deps.Config.WebsocketPath
 	// The snippets section is the tab's one managed list (M21); nil-safe
@@ -470,10 +539,12 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 	}
 	// The agent row (M17) renders only when the textagent seam is wired;
 	// the mode probe is the identity lane's bounded, fail-open ask — an
-	// unreachable agent still shows the row naming its home.
+	// unreachable agent still shows the row naming its home. The budget
+	// mirrors the login lane's probe (3s, fail-open) — a separate const
+	// per the one-home-per-fact rule: this is the SETTINGS panel's ask.
 	agentOn, agentMode := h.deps.TextAgent != nil, ""
 	if agentOn {
-		ctx, cancel := context.WithTimeout(r.Context(), agentModeProbeTimeout)
+		ctx, cancel := context.WithTimeout(r.Context(), agentPanelProbeTimeout)
 		if reviews, err := h.deps.TextAgent.Reviews(ctx); err == nil {
 			agentMode = reviews.Mode
 		}
@@ -543,7 +614,7 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 		SharedContacts: len(h.deps.Shared),
 		Snippets:       snippets,
 		AgentAuditRows: h.agentAuditRows(r, sess),
-		Passkeys:       h.passkeySectionProps(sess.Extension),
+		Passkeys:       h.authHub.PasskeySectionProps(sess),
 		Lang:           h.lang(r),
 	}), nil
 }
@@ -602,6 +673,8 @@ func (h *handlers) tabComponent(r *http.Request, tab views.Tab, sess session.Ses
 		return h.voicemailPanel(r, sess)
 	case views.TabHistory:
 		return h.historyPanel(r, sess)
+	case views.TabReports:
+		return h.reportsPanel(r, sess)
 	case views.TabContacts:
 		return h.contactsPanel(r, sess)
 	case views.TabAdmin:
@@ -629,7 +702,7 @@ func errorPanel(message string, lang views.Lang) templ.Component {
 // webhook bodies are byte-stable-pinned for providers.
 func (h *handlers) internalError(w http.ResponseWriter, r *http.Request, op string, err error) {
 	errorfamily.LogErrorContext(r.Context(), fmt.Errorf("%s: %w", op, err), nil)
-	http.Error(w, op+": "+cqrshtmx.SafeDetail(err, http.StatusInternalServerError, false), http.StatusInternalServerError)
+	http.Error(w, op+": "+httperr.SafeDetail(err, http.StatusInternalServerError, false), http.StatusInternalServerError)
 }
 
 func csrfToken(r *http.Request) string {

@@ -59,7 +59,7 @@ func fakeProvider(t *testing.T, status int, text string) (*httptest.Server, *pro
 
 func asrClientFor(t *testing.T, providerURL string) *asr.Client {
 	t.Helper()
-	client, err := asr.NewClient(providerURL, "", "")
+	client, err := asr.NewClient(asr.ClientConfig{BaseURL: providerURL})
 	if err != nil {
 		t.Fatal(err)
 	}

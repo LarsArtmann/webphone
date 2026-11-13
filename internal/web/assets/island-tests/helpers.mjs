@@ -19,7 +19,8 @@ export function installBrowserGlobals() {
   const matchesSelector = (node, selector) =>
     node.selector === selector ||
     node.className === selector ||
-    (selector.startsWith(".") && node.className.split(" ").includes(selector.slice(1)));
+    (selector.startsWith(".") && node.className.split(" ").includes(selector.slice(1))) ||
+    (selector.startsWith("#") && node.id === selector.slice(1));
   const makeEl = (id) => {
     const el = {
       id,
@@ -120,13 +121,28 @@ export function installBrowserGlobals() {
       focus() {
         this.focused = true;
       },
-      // Native <dialog> surface (the lightbox singleton): showModal/close
-      // are observable as flags on the stub.
+      // contains backs the island's focus-on-replace helper: it needs the
+      // real "is the focused node inside the departing subtree" walk.
+      contains(node) {
+        if (!node) return false;
+        const walk = (el) => {
+          for (const kid of el.children) {
+            if (kid === node || walk(kid)) return true;
+          }
+          return false;
+        };
+        return node === this || walk(this);
+      },
+      // Native <dialog> surface (the lightbox + the palette overlay):
+      // showModal/close are observable as BOTH flags — `opened` is the
+      // lightbox tests' legacy name, `open` is the real DOM property.
       showModal() {
         this.opened = true;
+        this.open = true;
       },
       close() {
         this.opened = false;
+        this.open = false;
       },
       style: {},
       dataset: {},
@@ -198,8 +214,33 @@ export function installBrowserGlobals() {
     // Minimal text node: only append() consumes it (merging the text into
     // the target element's textContent).
     createTextNode: (text) => ({ textNode: true, textContent: String(text) }),
-    querySelectorAll: () => [],
-    querySelector: () => null,
+    querySelectorAll(selector) {
+      const found = [];
+      for (const root of registry.values()) {
+        const sub = root.querySelectorAll(selector);
+        for (const node of sub) found.push(node);
+      }
+      return found;
+    },
+    // Scans the registered roots' SUBTREES (makeEl.querySelector answers
+    // exact-selector hits), so tests that plant nodes under registry
+    // elements can exercise document-level lookups like the drafts
+    // panel's open-edit guard. Registry-root semantics (cost a debug
+    // session once, §f-20): a root NEVER matches itself — only its
+    // descendants do; `html` and `body` are ordinary roots here, so a
+    // selector aimed at the body element itself answers null, and a node
+    // planted directly on a root still counts as "under" it only when the
+    // root's own subtree walk reaches it.
+    querySelector(selector) {
+      for (const root of registry.values()) {
+        const found = root.querySelector(selector);
+        if (found) return found;
+      }
+      return null;
+    },
+    // Tests assign this to simulate where keyboard focus sits; the island's
+    // focus-on-replace helper reads it.
+    activeElement: null,
     documentElement: makeEl("html"),
     body: makeEl("body"),
     addEventListener(type, fn) {

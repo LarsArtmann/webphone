@@ -35,7 +35,7 @@ Adoption stands as-is; the 09-24 score's deductions were premise-inverted (the h
 rg -n "type \w+ = id\.ID\[" internal/domain/ids.go        # expect 6 branded declarations
 rg -n "func parseID" internal/domain/ids.go              # expect 1 — the invariant owner (prefix + 21-char + Corruption)
 rg -n "MustThreadID|MustMessageID" internal/store/messages.go | wc -l   # expect > 5 (rows parse through the invariant)
-rg -n "\.Compare\(|\.Or\(" internal/ --type go | wc -l   # expect 0 (unused surface, ruled as-is)
+rg -n "\.Compare\(|\.Or\(" internal/ --type go | grep -vE "cmp\.|strings\.Compare|Date\.Compare|_test" | wc -l   # expect 0 (unused surface, ruled as-is; scope added 2026-11-09 — later trains brought stdlib cmp.Or/strings.Compare collisions into the tree, the branded surface itself stays uncalled)
 rg -n "go-branded-id" go.mod                             # DIRECT pin v0.7.1
 git -C /home/lars/projects/go-branded-id describe --tags --abbrev=0   # v0.7.1 vs pin v0.7.1
 ```

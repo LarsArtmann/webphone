@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"encoding/json/v2"
 	"fmt"
 	"mime/multipart"
@@ -27,6 +28,9 @@ import (
 	"github.com/larsartmann/webphone/internal/store"
 	"github.com/larsartmann/webphone/internal/web/assets"
 	"github.com/larsartmann/webphone/internal/web/views"
+
+	"github.com/larsartmann/go-cqrs-lite/system/v4"
+	cqrs "github.com/larsartmann/webphone/internal/cqrs"
 )
 
 // domContractIDs loads the island DOM-contract id list from
@@ -69,9 +73,9 @@ type testServer struct {
 	*httptest.Server
 	handler     http.Handler
 	hubs        *ExtensionHubs
-	messages    *store.Messages
-	faxes       *readmodels.Faxes
-	transcripts *readmodels.Transcripts
+	messages    readmodels.ThreadGate
+	faxes       *cqrs.Faxes
+	transcripts *cqrs.Transcripts
 	phoneAPI    *pbx.Client
 }
 
@@ -87,23 +91,24 @@ func newTestServerWithPhoneAPI(t testing.TB, phoneAPIURL string, mutate ...func(
 	return newTestServerWithConfig(t, phoneAPIURL, nil, mutate...)
 }
 
-// newTestEngine opens a throwaway read-model engine (the engine-side
-// read models live in readmodels.db since the T07/T09 swaps) and
-// registers its shutdown.
-func newTestEngine(t testing.TB) *readmodels.Engine {
+// newCoreSystem boots the throwaway journal system (every gate decl
+// registered) — the store-failure and direct-backend tests' helper.
+func newCoreSystem(t testing.TB) *system.System {
 	t.Helper()
-	engine, err := readmodels.Open(t.TempDir())
+	sys, err := cqrs.NewCoreSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = engine.Shutdown() })
-	return engine
+	t.Cleanup(func() { _ = sys.Close() })
+	return sys
 }
 
-// newTestReadmodels returns the throwaway engine's contacts read model
-// (the seam most tests exercise).
-func newTestReadmodels(t testing.TB) *readmodels.Contacts {
-	return newTestEngine(t).Contacts()
+// newTestReadmodels boots the throwaway journal system's contacts
+// backend (the cqrs backend is the one contacts implementation since
+// the engine store retired — 2026-11-11 ladder train C).
+func newTestReadmodels(t testing.TB) *cqrs.Contacts {
+	t.Helper()
+	return cqrs.NewContacts(newCoreSystem(t))
 }
 
 // newTestServerWithConfig additionally tweaks the config BEFORE the deps
@@ -129,7 +134,6 @@ func newTestServerWithConfig(
 	}
 
 	hubs := NewHubs()
-	engine := newTestEngine(t)
 	cfg := config.Config{
 		Addr: ":0", DataDir: t.TempDir(), WebsocketPath: "/sip",
 		SessionTTL: time.Hour,
@@ -138,16 +142,24 @@ func newTestServerWithConfig(
 	if tweakCfg != nil {
 		tweakCfg(&cfg)
 	}
+	// ONE journal system per composition: the notifier and the messaging
+	// service must share the same gate — a second system would split-brain
+	// the SSE pushes away from the writes (the seam's read path).
+	coreSys, err := cqrs.NewCoreSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = coreSys.Close() })
+	messages := cqrs.NewThreads(coreSys)
 	// The notifier reads the capability from the SAME config the panels
 	// do (mirroring app.go): a test that declares a fax lane off must get
 	// SSE payloads that agree with the full render.
-	notifier := NewNotifier(hubs, store.NewMessages(db), engine.Faxes(), nil, false, views.FaxCapability{
+	notifier := NewNotifier(hubs, messages, cqrs.NewFaxes(coreSys), nil, nil, false, views.FaxCapability{
 		Send:    cfg.Fax.SendEnabled(),
 		Receive: cfg.Fax.ReceiveEnabled(),
 	})
-	messages := store.NewMessages(db)
-	faxes := engine.Faxes()
-	transcripts := engine.Transcripts()
+	faxes := cqrs.NewFaxes(coreSys)
+	transcripts := cqrs.NewTranscripts(coreSys)
 	// SQLite session store (not the mem store): the /metrics aggregates
 	// count the sessions TABLE, which only the SQLite store's schema
 	// creates — TestMetricsServesAggregatesOnly pins that surface.
@@ -160,12 +172,12 @@ func newTestServerWithConfig(
 		Sessions:    sessions,
 		Messages:    messages,
 		Faxes:       faxes,
-		Contacts:    engine.Contacts(),
-		Snippets:    engine.Snippets(),
+		Contacts:    cqrs.NewContacts(coreSys),
+		Snippets:    cqrs.NewSnippets(coreSys),
 		Transcripts: transcripts,
-		Notes:       engine.Notes(),
-		Reviews:     engine.Reviews(),
-		Dials:       engine.DialWindows(),
+		Notes:       cqrs.NewNotes(coreSys),
+		Reviews:     cqrs.NewReviews(coreSys),
+		Dials:       cqrs.NewDialWindows(coreSys),
 		Messaging:   messaging.New(messages, blobs, gateway.NewMessageGateway(cfg.Gateway, gateway.DefaultClient()), notifier.Project, cfg.Identities),
 		Fax:         fax.New(faxes, blobs, gateway.NewFaxGateway(cfg.Gateway, gateway.DefaultClient()), notifier.Project, cfg.Identities, nil),
 		PhoneAPI:    phoneAPI,
@@ -340,6 +352,11 @@ func multipartBody(t *testing.T, fields map[string]string, files map[string]stru
 
 func TestServedPageHoldsTheDomContract(t *testing.T) {
 	c := newClient(t)
+	// The shell renders only for a session: an anonymous root navigation
+	// redirects to /login (the dedicated front door), so every shell id
+	// here is a signed-in fact. The /login page's own ids are pinned by
+	// login_page_test.go against their contract block in the same file.
+	c.login("1001", "pw")
 	resp, body := c.do(http.MethodGet, "/", nil, "")
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("page status %d", resp.StatusCode)
@@ -357,6 +374,19 @@ func TestServedPageHoldsTheDomContract(t *testing.T) {
 	}
 	if !strings.Contains(page, "WebPhone") {
 		t.Error("brand missing")
+	}
+	// F19: a signed-out page is a door, not a floor plan — the tab row
+	// renders only for a session that can use it. The anonymous shell
+	// (deep links keep the door; / redirects to the login page) keeps the
+	// #wp-nav region (the post-login re-fetch target) with zero links.
+	// A FRESH client: this test's own cookie jar holds the session above.
+	anon := newClient(t)
+	anonResp, anonBody := anon.do(http.MethodGet, "/messages", nil, "")
+	if anonResp.StatusCode != http.StatusOK {
+		t.Fatalf("anonymous deep link status %d", anonResp.StatusCode)
+	}
+	if strings.Contains(string(anonBody), "wp-nav-link") {
+		t.Error("anonymous page renders nav links — the signed-out shape is nav-free (F19)")
 	}
 	// The active tab is announced to screen readers with the spec-exact
 	// aria-current="page"; every other tab states "false" explicitly, so
@@ -396,6 +426,37 @@ func TestServedPageHoldsTheDomContract(t *testing.T) {
 	}
 }
 
+// TestAnonymousDeepLinksRenderTheDoorOnly pins the anonymous deep-link
+// shape: every tab URL answers 200 with the shell whose tab region is
+// the SignInHint door (the SPA-style entry the post-login island boot
+// expects), and NO tab content — panel rows and affordances are built
+// only inside the session block of renderShell, so an anonymous request
+// can neither leak data nor promise an affordance (the live deployment
+// answers /voicemail with this shape; pinned here so it stays a door,
+// never a floor plan).
+func TestAnonymousDeepLinksRenderTheDoorOnly(t *testing.T) {
+	c := newClient(t)
+	leaks := map[string]string{
+		"/messages":  "wp-thread-rowwrap",
+		"/voicemail": "wp-vm-play",
+		"/reports":   "wp-reports-totals",
+		"/settings":  "wp-settings-head",
+	}
+	for _, path := range []string{"/messages", "/messages/t1", "/fax", "/voicemail", "/history", "/reports", "/contacts", "/settings"} {
+		resp, body := c.do(http.MethodGet, path, nil, "")
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("anonymous %s: status %d, want 200 (the shell is the door)", path, resp.StatusCode)
+		}
+		page := string(body)
+		if !strings.Contains(page, "wp-welcome-hint") {
+			t.Errorf("anonymous %s lost the SignInHint door", path)
+		}
+		if marker := leaks[path]; marker != "" && strings.Contains(page, marker) {
+			t.Errorf("anonymous %s leaked panel markup (%s) — tab content must build only for a session", path, marker)
+		}
+	}
+}
+
 // TestServedPagePreloadsIslandGraph pins the head preload contract: one
 // modulepreload link per island ES module (the graph list is generated
 // from the embedded files — it can only drift if the rendering loop is
@@ -405,6 +466,9 @@ func TestServedPageHoldsTheDomContract(t *testing.T) {
 // parent (a 17-step waterfall).
 func TestServedPagePreloadsIslandGraph(t *testing.T) {
 	c := newClient(t)
+	// The shell renders only for a session (anonymous / redirects to the
+	// login page) — the graph is a signed-in fact.
+	c.login("1001", "pw")
 	resp, body := c.do(http.MethodGet, "/", nil, "")
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("page status %d", resp.StatusCode)
@@ -435,6 +499,9 @@ func TestServedPagePreloadsIslandGraph(t *testing.T) {
 // (the island's switch) → Accept-Language "de*" → English.
 func TestShellHtmlLangFollowsSessionLang(t *testing.T) {
 	c := newClient(t)
+	// Language negotiation is a shell fact; the shell renders only for a
+	// session (anonymous / redirects to the login page).
+	c.login("1001", "pw")
 	cases := []struct {
 		name   string
 		cookie string
@@ -503,6 +570,9 @@ func TestFaviconAnswersBothNames(t *testing.T) {
 // (without it browsers request /favicon.ico and 404).
 func TestServedPageSatisfiesStrictCSP(t *testing.T) {
 	c := newClient(t)
+	// The shell renders only for a session (anonymous / redirects to the
+	// login page, whose nonce lane has its own test).
+	c.login("1001", "pw")
 	resp, body := c.do(http.MethodGet, "/", nil, "")
 	if resp.StatusCode != http.StatusOK {
 		t.Fatalf("page status %d", resp.StatusCode)
@@ -551,7 +621,7 @@ func TestStaticAssetsServe(t *testing.T) {
 		"/htmx-ext.js":                    "Idiomorph",
 		"/assets/app.css":                 "--accent",
 		"/assets/shell.js":                "data-dial",
-		"/assets/island/app/main.js":      "loginForm",
+		"/assets/island/app/main.js":      "resumeSession",
 		"/assets/island/app/shortcuts.js": "MediaPlayPause",
 		"/assets/island/app/session.js":   "initSseLiveIndicator",
 		// The dial alphabet is a cross-side contract: the island regex must
@@ -562,6 +632,7 @@ func TestStaticAssetsServe(t *testing.T) {
 		"/assets/island/app/panels.js":     "replace(/[^\\d+*#a-zA-Z]/g, \"\")",
 		"/assets/island/style.css":         "#wp-sse-live",
 		"/assets/vendor/sip.min.js":        "UserAgent",
+		"/assets/login-page.js":            "api/session",
 		"/config.js":                       "window.PBX_CONFIG",
 		"/favicon.svg":                     "<svg",
 		"/assets/island/icon-192.png":      "\x89PNG\r\n\x1a\n",
@@ -685,8 +756,13 @@ func TestMetricsServesAggregatesOnly(t *testing.T) {
 		}
 	}
 	// AGGREGATES ONLY: a scraped metrics body must never carry
-	// per-extension or per-number data.
-	for _, leak := range []string{"1001", "+441632960961", "metric probe"} {
+	// per-extension or per-number data. The extension is asserted in its
+	// LABEL form only — a bare `1001` can legitimately appear inside a
+	// float's decimal digits (CI run 43159504844: a duration sum,
+	// 0.027210017000000003, happened to contain the digit sequence and
+	// red the suite as a phantom extension leak). The phone number and
+	// body text are not float-representable, so they stay whole-string.
+	for _, leak := range []string{`"1001"`, "+441632960961", "metric probe"} {
 		if strings.Contains(page, leak) {
 			t.Errorf("metrics leaks %q — aggregates only:\n%s", leak, page)
 		}
@@ -696,4 +772,28 @@ func TestMetricsServesAggregatesOnly(t *testing.T) {
 	if strings.Contains(page, "webphone_crm_lookups_total") {
 		t.Errorf("metrics publishes CRM lookups with the integration off:\n%s", page)
 	}
+}
+
+// threadGateForTest boots the journal-backed thread store (the notifier's
+// messages seam since SUPERB A34).
+func threadGateForTest(t testing.TB) readmodels.ThreadGate {
+	t.Helper()
+	sys, err := cqrs.NewThreadsSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = sys.Close() })
+	return cqrs.NewThreads(sys)
+}
+
+// faxGateForTest boots the journal-backed fax store (the notifier's
+// fax seam since SUPERB Phase 6).
+func faxGateForTest(t testing.TB) readmodels.FaxGate {
+	t.Helper()
+	sys, err := cqrs.NewFaxesSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = sys.Close() })
+	return cqrs.NewFaxes(sys)
 }

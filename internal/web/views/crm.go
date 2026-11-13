@@ -2,8 +2,11 @@ package views
 
 import (
 	"fmt"
+	"net/url"
 	"strings"
 	"time"
+
+	"github.com/dustin/go-humanize"
 )
 
 // CRMContact is the optional CRM integration's answer for one phone
@@ -55,6 +58,12 @@ type CRMContext struct {
 	NextTaskDue  time.Time
 	Overdue      bool
 	LastActivity time.Time
+	// ServedFromCache is true when the CRM answered this strip from its
+	// TTL cache, so the facts may be up to the context TTL (2 min) old.
+	// A muted chip names it (T11.4, the contacts mesh review): the
+	// operator sees the freshness instead of guessing. Live answers
+	// render no chip — freshness needs naming only when it is bounded.
+	ServedFromCache bool
 }
 
 // crmProfileURL is the number's CRM URL, or "" when the deployment
@@ -70,6 +79,13 @@ func crmProfileURL(number string, contacts CRMContacts) string {
 	return contact.URL
 }
 
+// crmCreateURLFor substitutes the {phone} placeholder in the deployment's
+// create-form template with the caller's dialable number, query-escaped
+// (the leading "+" is a query-param hazard, not decoration).
+func crmCreateURLFor(number, createURL string) string {
+	return strings.Replace(createURL, "{phone}", url.QueryEscape(number), 1)
+}
+
 // dealValue renders a deal's size without locale games: thousands counts
 // the cents the CRM journals, then the currency code. No symbol table, no
 // locale formatting — a wrong € for a £ is worse than a plain code.
@@ -81,43 +97,10 @@ func dealValue(deal CRMDeal) string {
 
 	major := deal.ValueCents / 100
 	if deal.ValueCents%100 != 0 {
-		return fmt.Sprintf("%s %s.%02d", currency, formatThousands(major), deal.ValueCents%100)
+		return fmt.Sprintf("%s %s.%02d", currency, humanize.Comma(major), deal.ValueCents%100)
 	}
 
-	return currency + " " + formatThousands(major)
-}
-
-// formatThousands groups an integer with no locale dependency (no i18n money
-// library in this build, and a wrong symbol is worse than a plain code). The
-// sign is stripped FIRST: grouping the sign as a digit produced "-,999".
-func formatThousands(n int64) string {
-	digits := fmt.Sprintf("%d", n)
-
-	sign := ""
-	if strings.HasPrefix(digits, "-") {
-		sign, digits = "-", digits[1:]
-	}
-
-	if len(digits) <= 3 {
-		return sign + digits
-	}
-
-	var b strings.Builder
-
-	head := len(digits) % 3
-	if head > 0 {
-		b.WriteString(digits[:head])
-	}
-
-	for i := head; i < len(digits); i += 3 {
-		if b.Len() > 0 {
-			b.WriteString(",")
-		}
-
-		b.WriteString(digits[i : i+3])
-	}
-
-	return sign + b.String()
+	return currency + " " + humanize.Comma(major)
 }
 
 // crmTaskDue is the strip's due phrase: "overdue" or "due 2 Nov". A plain
@@ -140,5 +123,8 @@ func crmTaskDue(ctx CRMContext, lang Lang) string {
 		return ""
 	}
 
+	if lang == LangDE {
+		return T(lang, "crm.duePrefix") + " " + fmtInt(ctx.NextTaskDue.Day()) + ". " + monthLabel(lang, ctx.NextTaskDue)
+	}
 	return T(lang, "crm.duePrefix") + " " + ctx.NextTaskDue.Format("2 Jan")
 }

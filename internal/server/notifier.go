@@ -11,7 +11,6 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/messaging"
 	"github.com/larsartmann/webphone/internal/readmodels"
-	"github.com/larsartmann/webphone/internal/store"
 	"github.com/larsartmann/webphone/internal/web/views"
 )
 
@@ -25,8 +24,9 @@ import (
 // sits in a composer outside the swapped region.
 type Notifier struct {
 	hubs     *ExtensionHubs
-	messages *store.Messages
-	faxes    *readmodels.Faxes
+	messages readmodels.ThreadGate
+	faxes    readmodels.FaxGate
+	contacts readmodels.ContactGate
 	crm      *crm.Resolver
 	asr      bool
 	faxLane  views.FaxCapability
@@ -34,13 +34,18 @@ type Notifier struct {
 
 // NewNotifier builds the change notifier. The resolver may be nil (CRM
 // integration off): fragments then render raw numbers, same as a miss.
-// asrOn rides thread pushes so audio-attachment transcribe buttons
-// survive SSE re-renders exactly when the seam is configured (a
-// boot-time flag, not a per-request read). faxLane does the same job for
-// the fax fragment's empty state: an SSE payload must not promise a send
-// affordance its deployment lacks (the panel keeps the same flags).
-func NewNotifier(hubs *ExtensionHubs, messages *store.Messages, faxes *readmodels.Faxes, crmResolver *crm.Resolver, asrOn bool, faxLane views.FaxCapability) *Notifier {
-	return &Notifier{hubs: hubs, messages: messages, faxes: faxes, crm: crmResolver, asr: asrOn, faxLane: faxLane}
+// The contacts gate may be nil (test compositions): personal names then
+// degrade away the same way. Both halves ride the ONE directoryFor merge
+// the request handlers use — a pushed list must never rename a row a
+// full render named differently, or a morph flips the name back to a
+// number on the next live push. asrOn rides thread pushes so
+// audio-attachment transcribe buttons survive SSE re-renders exactly
+// when the seam is configured (a boot-time flag, not a per-request
+// read). faxLane does the same job for the fax fragment's empty state:
+// an SSE payload must not promise a send affordance its deployment
+// lacks (the panel keeps the same flags).
+func NewNotifier(hubs *ExtensionHubs, messages readmodels.ThreadGate, faxes readmodels.FaxGate, contacts readmodels.ContactGate, crmResolver *crm.Resolver, asrOn bool, faxLane views.FaxCapability) *Notifier {
+	return &Notifier{hubs: hubs, messages: messages, faxes: faxes, contacts: contacts, crm: crmResolver, asr: asrOn, faxLane: faxLane}
 }
 
 // Project is the change-notification projection (train E1): each
@@ -102,9 +107,10 @@ func notifierProject(n *Notifier) func(context.Context, domain.Event) {
 // change catches up.
 func (n *Notifier) messagesChanged(ctx context.Context, owner domain.Extension, threadID domain.ThreadID) {
 	lang := n.hubs.Lang(owner)
-	if threads, err := n.messages.ListThreads(ctx, owner); err == nil {
-		numbers := crmNumbers(threads, func(summary store.ThreadSummary) string { return crmNumberFor(summary.Thread.Remote) })
-		n.publish(ctx, owner, sseEventThreads, views.ThreadsList(threads, crmContacts(n.crm.People(ctx, numbers), n.crm), lang))
+	if threadViews, err := n.messages.ListThreads(ctx, owner); err == nil {
+		threads := readmodels.SummariesOfView(threadViews)
+		numbers := crmNumbers(threads, func(summary readmodels.ThreadSummary) string { return crmNumberFor(summary.Thread.Remote) })
+		n.publish(ctx, owner, sseEventThreads, views.ThreadsList(threads, directoryFor(ctx, n.contacts, n.crm, owner, numbers), lang))
 	} else {
 		slog.Debug("sse: render thread list failed", "error", err)
 	}
@@ -126,7 +132,7 @@ func (n *Notifier) faxesChanged(ctx context.Context, owner domain.Extension) {
 		return
 	}
 	numbers := crmNumbers(jobs, func(job domain.FaxJob) string { return job.Remote.String() })
-	n.publish(ctx, owner, sseEventFax, views.FaxList(jobs, crmContacts(n.crm.People(ctx, numbers), n.crm), n.faxLane, n.hubs.Lang(owner)))
+	n.publish(ctx, owner, sseEventFax, views.FaxList(jobs, directoryFor(ctx, n.contacts, n.crm, owner, numbers), n.faxLane, n.hubs.Lang(owner)))
 }
 
 func (n *Notifier) publish(ctx context.Context, owner domain.Extension, event EventName, component templ.Component) {

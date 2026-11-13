@@ -1,8 +1,6 @@
 package hooks
 
 import (
-	"errors"
-	"log/slog"
 	"net/http"
 
 	"github.com/larsartmann/webphone/internal/push"
@@ -48,32 +46,15 @@ func (h *Handlers) hookRing(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if h.push == nil || !h.push.Enabled() || h.devices == nil {
+	if h.push == nil || !h.push.Enabled() {
 		// Inert ack: the lane exists (the dialplan configured it), the
-		// seam does not. Same answer as the no-devices case below.
+		// seam does not. Same answer as every per-device miss below.
 		w.WriteHeader(http.StatusAccepted)
 		return
 	}
-
-	targets, err := h.devices.List(r.Context(), owner)
-	if err != nil {
-		webhookFail(w, "ring-devices", err)
-		return
-	}
-	ring := push.Ring{Event: event, From: from.String(), CallID: payload.CallID}
-	for _, target := range targets {
-		if err := h.push.Send(r.Context(), target.Transport, target.Token, ring); err != nil {
-			if errors.Is(err, push.ErrUnregistered) {
-				if err := h.devices.Remove(r.Context(), owner, target.DeviceID); err != nil {
-					slog.Warn("push: prune dead device failed", "device", target.DeviceID, "err", err)
-				} else {
-					slog.Info("push: pruned dead device", "device", target.DeviceID, "transport", target.Transport)
-				}
-				continue
-			}
-			slog.Warn("push: ring fan-out failed",
-				"device", target.DeviceID, "transport", target.Transport, "event", event, "err", err)
-		}
-	}
+	// The delivery policy (detach, budget, prune-on-unregistered) lives
+	// in the fanout — the hook hands the fact and answers 202 without
+	// ever blocking on a transport.
+	_ = h.push.Fan(r.Context(), owner, push.Ring{Event: event, From: from.String(), CallID: payload.CallID})
 	w.WriteHeader(http.StatusAccepted)
 }

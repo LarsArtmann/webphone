@@ -16,6 +16,7 @@ import (
 
 	"github.com/larsartmann/webphone/internal/authmap"
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/server/auth"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/sso"
 )
@@ -65,7 +66,7 @@ func happySSOStub() *ssoStub {
 }
 
 func cookieFor(name, value string) *http.Cookie {
-	return &http.Cookie{Name: name, Value: value, Path: ssoCookiePath}
+	return &http.Cookie{Name: name, Value: value, Path: auth.SSOCallbackPath}
 }
 
 func TestSSOOffAnswersTheStyled404(t *testing.T) {
@@ -117,9 +118,9 @@ func TestSSOBeginParksTheAttemptAndRedirects(t *testing.T) {
 		cookies[cookie.Name] = cookie
 	}
 	for name, want := range map[string]string{
-		ssoStateCookie:    stub.challenge.State,
-		ssoNonceCookie:    stub.challenge.Nonce,
-		ssoVerifierCookie: stub.challenge.Verifier,
+		auth.SSOStateCookie:    stub.challenge.State,
+		auth.SSONonceCookie:    stub.challenge.Nonce,
+		auth.SSOVerifierCookie: stub.challenge.Verifier,
 	} {
 		cookie, ok := cookies[name]
 		if !ok {
@@ -128,7 +129,7 @@ func TestSSOBeginParksTheAttemptAndRedirects(t *testing.T) {
 		if cookie.Value != want {
 			t.Errorf("%s = %q, want %q", name, cookie.Value, want)
 		}
-		if !cookie.HttpOnly || cookie.MaxAge <= 0 || cookie.Path != ssoCookiePath {
+		if !cookie.HttpOnly || cookie.MaxAge <= 0 || cookie.Path != auth.SSOCallbackPath {
 			t.Errorf("%s cookie attributes = %+v", name, cookie)
 		}
 	}
@@ -153,9 +154,9 @@ func TestSSOCallbackMintsTheSession(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	request.AddCookie(cookieFor(ssoStateCookie, stub.challenge.State))
-	request.AddCookie(cookieFor(ssoNonceCookie, stub.challenge.Nonce))
-	request.AddCookie(cookieFor(ssoVerifierCookie, stub.challenge.Verifier))
+	request.AddCookie(cookieFor(auth.SSOStateCookie, stub.challenge.State))
+	request.AddCookie(cookieFor(auth.SSONonceCookie, stub.challenge.Nonce))
+	request.AddCookie(cookieFor(auth.SSOVerifierCookie, stub.challenge.Verifier))
 
 	resp, err := client.Do(request)
 	if err != nil {
@@ -184,7 +185,7 @@ func TestSSOCallbackMintsTheSession(t *testing.T) {
 	// The 303 clears the attempt cookies so a replay has nothing to use.
 	for _, cookie := range resp.Cookies() {
 		switch cookie.Name {
-		case ssoStateCookie, ssoNonceCookie, ssoVerifierCookie:
+		case auth.SSOStateCookie, auth.SSONonceCookie, auth.SSOVerifierCookie:
 			if cookie.MaxAge >= 0 {
 				t.Errorf("%s must be expired on the callback, got MaxAge=%d", cookie.Name, cookie.MaxAge)
 			}
@@ -203,17 +204,17 @@ func TestSSOCallbackStateMismatchReturnsToTheLoginCard(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	request.AddCookie(cookieFor(ssoStateCookie, stub.challenge.State))
-	request.AddCookie(cookieFor(ssoNonceCookie, stub.challenge.Nonce))
-	request.AddCookie(cookieFor(ssoVerifierCookie, stub.challenge.Verifier))
+	request.AddCookie(cookieFor(auth.SSOStateCookie, stub.challenge.State))
+	request.AddCookie(cookieFor(auth.SSONonceCookie, stub.challenge.Nonce))
+	request.AddCookie(cookieFor(auth.SSOVerifierCookie, stub.challenge.Verifier))
 
 	resp, err := client.Do(request)
 	if err != nil {
 		t.Fatalf("callback: %v", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
-	if got := resp.Header.Get("Location"); got != "/?sso_error=stale" {
-		t.Errorf("Location = %q, want the stale-attempt verdict", got)
+	if got := resp.Header.Get("Location"); got != "/login?sso_error=stale" {
+		t.Errorf("Location = %q, want the stale-attempt verdict on the login page", got)
 	}
 	if stub.gotCode != "" {
 		t.Error("a forged state must never reach the token exchange")
@@ -226,11 +227,11 @@ func TestSSOCallbackFailuresMapOntoTheLoginCardVocabulary(t *testing.T) {
 		err  error
 		want string
 	}{
-		{"unmapped email", errorfamily.NewRejection("sso.unmapped_email", "no mapping"), "/?sso_error=unmapped"},
-		{"unverified email", errorfamily.NewRejection("sso.email_unverified", "unverified"), "/?sso_error=unverified"},
-		{"bad secret", errorfamily.NewRejection("sso.client_secret.read", "gone"), "/?sso_error=config"},
-		{"idp down", errorfamily.NewRejection("sso.discovery", "unreachable"), "/?sso_error=unavailable"},
-		{"anything else", errorfamily.NewRejection("sso.code", "no code"), "/?sso_error=failed"},
+		{"unmapped email", errorfamily.NewRejection("sso.unmapped_email", "no mapping"), "/login?sso_error=unmapped"},
+		{"unverified email", errorfamily.NewRejection("sso.email_unverified", "unverified"), "/login?sso_error=unverified"},
+		{"bad secret", errorfamily.NewRejection("sso.client_secret.read", "gone"), "/login?sso_error=config"},
+		{"idp down", errorfamily.NewRejection("sso.discovery", "unreachable"), "/login?sso_error=unavailable"},
+		{"anything else", errorfamily.NewRejection("sso.code", "no code"), "/login?sso_error=failed"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			stub := happySSOStub()
@@ -244,9 +245,9 @@ func TestSSOCallbackFailuresMapOntoTheLoginCardVocabulary(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			request.AddCookie(cookieFor(ssoStateCookie, stub.challenge.State))
-			request.AddCookie(cookieFor(ssoNonceCookie, stub.challenge.Nonce))
-			request.AddCookie(cookieFor(ssoVerifierCookie, stub.challenge.Verifier))
+			request.AddCookie(cookieFor(auth.SSOStateCookie, stub.challenge.State))
+			request.AddCookie(cookieFor(auth.SSONonceCookie, stub.challenge.Nonce))
+			request.AddCookie(cookieFor(auth.SSOVerifierCookie, stub.challenge.Verifier))
 			resp, err := client.Do(request)
 			if err != nil {
 				t.Fatalf("callback: %v", err)
@@ -270,8 +271,8 @@ func TestSSOCallbackWithoutAttemptCookiesIsStale(t *testing.T) {
 		t.Fatalf("callback: %v", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
-	if got := resp.Header.Get("Location"); got != "/?sso_error=stale" {
-		t.Errorf("Location = %q, want the stale-attempt verdict", got)
+	if got := resp.Header.Get("Location"); got != "/login?sso_error=stale" {
+		t.Errorf("Location = %q, want the stale-attempt verdict on the login page", got)
 	}
 }
 
@@ -293,8 +294,8 @@ func TestSSOErrorCodeVocabulary(t *testing.T) {
 		"sso.id_token.verify":           "unavailable",
 		"sso.something.unclassified":    "failed",
 	} {
-		if got := ssoErrorCode(errorfamily.NewRejection(code, "x")); got != want {
-			t.Errorf("ssoErrorCode(%q) = %q, want %q", code, got, want)
+		if got := auth.SSOErrorCode(errorfamily.NewRejection(code, "x")); got != want {
+			t.Errorf("auth.SSOErrorCode(%q) = %q, want %q", code, got, want)
 		}
 	}
 }

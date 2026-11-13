@@ -9,6 +9,7 @@ package server
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log/slog"
 	"net"
 	"net/http"
@@ -20,6 +21,7 @@ import (
 
 	loginpage "github.com/larsartmann/cqrs-htmx/loginpage/v4"
 	cqrshtmx "github.com/larsartmann/cqrs-htmx/v4"
+	"github.com/larsartmann/cqrs-htmx/v4/htmx"
 	etag "github.com/larsartmann/go-etag/server"
 	"github.com/larsartmann/go-health"
 	"github.com/larsartmann/httputil"
@@ -37,9 +39,10 @@ import (
 	"github.com/larsartmann/webphone/internal/push"
 	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/server/api"
+	"github.com/larsartmann/webphone/internal/server/auth"
 	"github.com/larsartmann/webphone/internal/server/hooks"
+	"github.com/larsartmann/webphone/internal/server/platform"
 	"github.com/larsartmann/webphone/internal/session"
-	"github.com/larsartmann/webphone/internal/store"
 	"github.com/larsartmann/webphone/internal/textagent"
 	"github.com/larsartmann/webphone/internal/userauth"
 )
@@ -55,7 +58,8 @@ import (
 const contentSecurityPolicy = "default-src 'self'; " +
 	"script-src 'self'; style-src 'self'; " +
 	"img-src 'self' data:; media-src 'self'; connect-src 'self' wss:; " +
-	"frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+	"frame-ancestors 'none'; base-uri 'self'; form-action 'self'; " +
+	"report-uri /csp-report; report-to csp-endpoint"
 
 // Rate limits for the two flood-sensitive surfaces, per client IP:
 // login attempts (password guessing) and inbound webhooks (provider
@@ -76,6 +80,23 @@ const (
 	// client from hammering the directory, not an attacker.
 	switchLimit = 6
 	switchBurst = 3
+	// CSP violation reports: a tight bucket (real pages fire one report
+	// per violation; a hostile flood must not own the journal).
+	cspLimit = 30
+	cspBurst = 10
+	// Flight-recorder snapshots: each hit writes a full trace window to
+	// disk, so the bucket is tight (an operator debugging session asks
+	// a handful of times; a poller gets fenced).
+	traceLimit = 4
+	traceBurst = 2
+	// Templ form-POST buckets (2026-11-08): every write lane outside
+	// /api/* rides a keyed bucket now. Three classes by cost: the
+	// compose class (provider/paid surfaces) is tight, contacts and
+	// state toggles ride the contacts/hook grades. The rejection body
+	// carries a .wp-error element so htmx's responseHandling swaps the
+	// honest 429 into #wp-tab-error (shell copy stays English, D3).
+	composeLimit = 20
+	composeBurst = 10
 )
 
 // securityHeadersConfig is the single source for the security-header
@@ -120,6 +141,38 @@ func newKeyedRateLimiter(limit, burst uint) *httputil.KeyedRateLimiter {
 	})
 }
 
+// templRateLimitedMsg is the honest 429 copy for the templ form-POST
+// lanes. Shell copy stays English (D3); the element class is the htmx
+// responseHandling wire (the [45].. arm selects .wp-error into
+// #wp-tab-error), so a plain-text body would swap nothing.
+const templRateLimitedMsg = "Too many requests — wait a moment and try again."
+
+// newTemplRateLimiter is the templ form-POST bucket: the same keyed
+// shape as every flood budget, but the rejection body carries the
+// .wp-error element htmx selects, so a flooded lane says so inside the
+// tab instead of dying silently.
+func newTemplRateLimiter(limit, burst uint) *httputil.KeyedRateLimiter {
+	return httputil.NewKeyedRateLimiter(httputil.KeyedRateLimiterConfig{
+		Limit:        limit,
+		Window:       time.Minute,
+		Burst:        burst,
+		KeyExtractor: remoteHostKey,
+		RejectionHandler: func(w http.ResponseWriter, _ *http.Request, retryAfter string) {
+			w.Header().Set("Retry-After", retryAfter)
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			w.WriteHeader(http.StatusTooManyRequests)
+			_, _ = fmt.Fprintf(w, `<div class="wp-error" role="alert">%s</div>`, templRateLimitedMsg)
+		},
+	})
+}
+
+// sipDirectoryGate guards the internal directory endpoint with the
+// derivation secret (the bridge authenticates with the same secret the
+// server derives under — one secret, two sides of one seam).
+func (h *handlers) sipDirectoryGate(next http.Handler) http.Handler {
+	return hooks.BearerGate(h.deps.Config.SIP.CredentialSecret, "sip credentials not configured", next)
+}
+
 // remoteHostKey keys the bucket by the direct peer's host. The port MUST
 // be stripped: behind the consuming stack's TLS terminator every request
 // arrives from the proxy socket with an ephemeral source port, and a
@@ -143,35 +196,53 @@ func remoteHostKey(r *http.Request) string {
 type Deps struct {
 	Config   config.Config
 	Sessions session.Store
-	Messages *store.Messages
-	Faxes    *readmodels.Faxes
-	// Contacts is the metaengine-backed personal-contacts read model
-	// (readmodels.db) — same method contract the SQL store held.
-	Contacts *readmodels.Contacts
+	Messages readmodels.ThreadGate
+	Faxes    readmodels.FaxGate
+	// Contacts is the personal-contacts seam (the readmodels.ContactGate
+	// interface — engine-backed legacy/rollback lane, journal-backed
+	// since SUPERB Phase 4). Nil (test compositions): the surfaces
+	// degrade. Keep it a TRUE nil.
+	Contacts readmodels.ContactGate
 	// Snippets is the metaengine-backed reply-snippet read model
 	// (readmodels.db) — same method contract the SQL store held.
-	Snippets *readmodels.Snippets
+	// Snippets is the reply-snippet seam (the readmodels.SnippetGate
+	// interface — engine-backed legacy/rollback lane, journal-backed
+	// since SUPERB Phase 3). Nil (test compositions): the surfaces
+	// degrade. Keep it a TRUE nil.
+	Snippets readmodels.SnippetGate
 	// Transcripts persists live-call transcript segments (owner-scoped,
-	// rendered in the History tab). Nil (test compositions): the save
+	// rendered in the History tab) — the readmodels.TranscriptGate
+	// interface, journal-backed since SUPERB Phase 4 (the engine store
+	// is the import source). Nil (test compositions): the save
 	// endpoint answers 503 and the History section stays empty.
-	Transcripts *readmodels.Transcripts
+	Transcripts readmodels.TranscriptGate
 	// Reviews is the post-call-review store (owner-scoped, the
-	// automatic review's durable artifact slot, issue #8). Nil (test
+	// automatic review's durable artifact slot, issue #8) — the
+	// readmodels.ReviewsGate interface, journal-backed since SUPERB
+	// Phase 4 (the engine store is the import source). Nil (test
 	// compositions): the endpoints answer 503 and the job skips its
 	// writes.
-	Reviews *readmodels.Reviews
-	// Dials is the dial-cooldown window store (issue #7). Nil (test
-	// compositions): the gate answers 503.
-	Dials *readmodels.DialWindows
+	Reviews readmodels.ReviewsGate
+	// Dials is the dial-cooldown seam (issue #7): check+record attempt,
+	// arm the one-shot override, read active slots (the
+	// readmodels.DialGate interface — implemented by the engine-backed
+	// store, the legacy/rollback lane, and the dispatch-backed journal
+	// service, SUPERB Phase 2). Nil (test compositions): the gate
+	// answers 503. Keep this a TRUE nil: only ever assign a non-nil
+	// implementer.
+	Dials readmodels.DialGate
 	// Notes is the post-call-note store (owner-scoped, the History
-	// tab's note affordance). Nil (test compositions): the endpoints
+	// tab's note affordance) — the readmodels.NotesGate interface,
+	// journal-backed since SUPERB Phase 4 (the engine store is the
+	// import source). Nil (test compositions): the endpoints
 	// answer 503.
-	Notes *readmodels.Notes
+	Notes readmodels.NotesGate
 	// AgentAudit is the durable agent-action audit read model (D5):
 	// the journal line stays the grep surface, this store answers
 	// "who approved what, when" in Settings. Nil (test compositions):
-	// the dual-write degrades to the line alone.
-	AgentAudit *readmodels.AgentAudit
+	// the dual-write degrades to the line alone. Journal-backed since
+	// SUPERB Phase 3 (the engine store is the import source).
+	AgentAudit readmodels.AgentAuditGate
 	Messaging  *messaging.Service
 	Fax        *fax.Service
 	PhoneAPI   *pbx.Client
@@ -229,20 +300,24 @@ type Deps struct {
 	// SSO is the OPTIONAL OpenID Connect login seam (config-gated). Nil:
 	// the OIDC mode is off — the begin/callback routes 404 and the login
 	// card renders no SSO entry.
-	SSO SSOClient
+	SSO auth.SSOClient
 	// Trace is the OPTIONAL flight-recorder seam (operator opt-in, default
 	// off). Nil: no request observation and no snapshot endpoint. Non-nil:
 	// every request is reported and GET /internal/flightrecorder writes a
 	// trace window (loopback only).
-	Trace TraceRecorder
+	Trace platform.TraceRecorder
+	// TraceMetrics is the snapshot counter family the /metrics
+	// exposition renders; non-nil exactly when Trace is (the adapter
+	// owns both halves), nil-safe at the exposition.
+	TraceMetrics *platform.TraceSnapshotMetrics
 	// Push is the OPTIONAL push fanout behind ring-while-closed (the
 	// /hooks/ring lane and the /api/push-devices registry). Nil or
 	// disabled: the device API answers 404 and the ring hook
 	// acknowledges inertly.
 	Push *push.Fanout
-	// PushDevices is the registered-device store (readmodels-backed;
-	// present whenever the composition built the engine).
-	PushDevices *readmodels.PushDevices
+	// PushDevices is the registered-device store (journal-backed since
+	// SUPERB Phase 3; the engine store is the import source).
+	PushDevices readmodels.PushDeviceGate
 	// Admin is the admin surface's identity inventory (config-derived:
 	// the shared auth.users mapping + the identities feed). Nil (test
 	// compositions): every admin route answers the styled 404 and the
@@ -282,36 +357,73 @@ func New(deps Deps) http.Handler {
 	// cookie derives: behind the TLS-terminating proxy r.TLS is always
 	// nil, so Secure must come from the wired policy, not the request.
 	cookies := session.CookiePolicy{Secure: csrfCfg.Secure}
-	// The library passkey login page over the identity layer. Our config
-	// is constant (fixed paths, valid CSS URL), so a build failure is a
-	// wiring defect, not an operator state: log it loudly and leave the
-	// handler nil — /login then answers the styled 404 instead of a
+	// The library login page over the identity layer (when wired) plus
+	// webphone's own extension form + OIDC door (ExtraSection). It exists
+	// in EVERY mode — /login is the one auth front door; a build failure
+	// is a wiring defect, not an operator state: log it loudly and leave
+	// the handler nil — /login then answers the styled 404 instead of a
 	// half-built login surface.
 	var loginPage *loginpage.Handler
-	if deps.UserAuth != nil {
-		lp, err := newLoginPage(deps)
-		if err != nil {
-			slog.Error("webphone: login page build failed; /login answers the styled 404", "error", err)
-		} else {
-			loginPage = lp
-		}
+	if lp, err := auth.NewLoginPage(auth.Deps{
+		Config:    deps.Config,
+		Sessions:  deps.Sessions,
+		UserAuth:  deps.UserAuth,
+		SSO:       deps.SSO,
+		PhoneAPI:  deps.PhoneAPI,
+		TextAgent: deps.TextAgent,
+	}); err != nil {
+		slog.Error("webphone: login page build failed; /login answers the styled 404", "error", err)
+	} else {
+		loginPage = lp
+	}
+	// The island beacon intake is config-gated (metrics.island_beacon,
+	// default OFF): the API seam gets a true nil INTERFACE (the traceSeam
+	// typed-nil doctrine) so the handler's nil check holds — a nil
+	// *islandLatency wrapped into the interface would pass it and nil-
+	// dereference into a 500 (the smoke metrics scenario caught exactly
+	// that). The handlers' own field keeps the concrete type: nil-pointer
+	// comparison is what metrics.go checks.
+	var islandMetrics api.IslandBeaconSink
+	var islandRecorder *platform.IslandLatency
+	if deps.Config.Metrics.IslandBeacon {
+		islandRecorder = platform.NewIslandLatency()
+		islandMetrics = islandRecorder
 	}
 	h := &handlers{
-		deps:              deps,
-		loginLimiter:      newKeyedRateLimiter(loginLimit, loginBurst),
-		hookLimiter:       newKeyedRateLimiter(hookLimit, hookBurst),
-		eventsLimiter:     newKeyedRateLimiter(hookLimit, hookBurst),
-		csrfLimiter:       newKeyedRateLimiter(hookLimit, hookBurst),
-		contactsLimiter:   newKeyedRateLimiter(contactsLimit, contactsBurst),
-		switchLimiter:     newKeyedRateLimiter(switchLimit, switchBurst),
-		transcribeLimiter: newKeyedRateLimiter(hookLimit, hookBurst),
-		passkeyLimiter:    newKeyedRateLimiter(hookLimit, hookBurst),
-		loginPageHandler:  loginPage,
-		cookies:           cookies,
-		csrfCfg:           csrfCfg,
-		unread:            newUnreadCache(5 * time.Second),
-		latency:           newLatencyRecorder(),
+		deps:                 deps,
+		loginLimiter:         newKeyedRateLimiter(loginLimit, loginBurst),
+		hookLimiter:          newKeyedRateLimiter(hookLimit, hookBurst),
+		eventsLimiter:        newKeyedRateLimiter(hookLimit, hookBurst),
+		csrfLimiter:          newKeyedRateLimiter(hookLimit, hookBurst),
+		contactsLimiter:      newKeyedRateLimiter(contactsLimit, contactsBurst),
+		switchLimiter:        newKeyedRateLimiter(switchLimit, switchBurst),
+		cspLimiter:           newKeyedRateLimiter(cspLimit, cspBurst),
+		traceLimiter:         newKeyedRateLimiter(traceLimit, traceBurst),
+		composeLimiter:       newTemplRateLimiter(composeLimit, composeBurst),
+		contactsTemplLimiter: newTemplRateLimiter(contactsLimit, contactsBurst),
+		stateTemplLimiter:    newTemplRateLimiter(hookLimit, hookBurst),
+		transcribeLimiter:    newKeyedRateLimiter(hookLimit, hookBurst),
+		passkeyLimiter:       newKeyedRateLimiter(hookLimit, hookBurst),
+		cookies:              cookies,
+		csrfCfg:              csrfCfg,
+		unread:               newUnreadCache(5 * time.Second),
+		latency:              platform.NewLatencyRecorder(),
+		island:               islandRecorder,
 	}
+	// The carved auth surface (internal/server/auth): BOTH login modes,
+	// the ceremonies, the session spine and the library login page. The
+	// hub reaches the session gate and the render plumbing back through
+	// h (the auth.Shell seam), so the 401 wording and the render helpers
+	// keep their one home in this package.
+	authHub := auth.New(auth.Deps{
+		Config:    deps.Config,
+		Sessions:  deps.Sessions,
+		UserAuth:  deps.UserAuth,
+		SSO:       deps.SSO,
+		PhoneAPI:  deps.PhoneAPI,
+		TextAgent: deps.TextAgent,
+	}, h, cookies, csrfCfg, loginPage)
+	h.authHub = authHub
 	hooksHandlers := hooks.New(hooks.Deps{
 		Secret:    deps.Config.Gateway.WebhookSecret,
 		Messaging: deps.Messaging,
@@ -319,31 +431,63 @@ func New(deps Deps) http.Handler {
 		Unread:    h.unread,
 		Dedup:     deps.Dedup,
 		Push:      deps.Push,
-		Devices:   deps.PushDevices,
 	})
 	// The carved island JSON surface (internal/server/api): the hub
 	// implements the narrow Server seam (session gate + contacts nudge)
 	// so the 401 wording and the SSE push keep their one home here.
 	apiHandlers := api.New(api.Deps{
-		Server:       h,
-		Contacts:     deps.Contacts,
-		Shared:       deps.Shared,
-		CRM:          deps.CRM,
-		CallsIdem:    hooks.NewGate(deps.Dedup, hooks.CallIdempotencyTTL),
-		ASR:          deps.ASR,
-		Transcripts:  deps.Transcripts,
-		Reviews:      deps.Reviews,
-		Dials:        deps.Dials,
-		DialCooldown: deps.Config.Dial.Cooldown,
-		Notes:        deps.Notes,
-		TextAgent:    deps.TextAgent,
-		Push:         deps.Push,
-		Devices:      deps.PushDevices,
-		Notify:       notifierProject(deps.Notifier),
+		Server:        h,
+		Contacts:      deps.Contacts,
+		Shared:        deps.Shared,
+		CRM:           deps.CRM,
+		CallsIdem:     hooks.NewGate(deps.Dedup, hooks.CallIdempotencyTTL),
+		ASR:           deps.ASR,
+		Transcripts:   deps.Transcripts,
+		Reviews:       deps.Reviews,
+		Dials:         deps.Dials,
+		DialCooldown:  deps.Config.Dial.Cooldown,
+		IslandLatency: islandMetrics,
+		Notes:         deps.Notes,
+		TextAgent:     deps.TextAgent,
+		Push:          deps.Push,
+		Devices:       deps.PushDevices,
+		Notify:        notifierProject(deps.Notifier),
 	})
+
+	// The carved platform surface (internal/server/platform): the asset
+	// tree, /metrics, the CSP intake, the flight-recorder snapshot, the
+	// /phone-api proxy, the directory bridge, /config.js and the export.
+	// The hub reaches the session gate and the render/error plumbing back
+	// through h (the platform.Shell seam); the SSE nudge vocabulary keeps
+	// its one home in this package.
+	platformHub := platform.New(platform.Deps{
+		Version:      DisplayVersion(),
+		Config:       deps.Config,
+		DB:           deps.DB,
+		Sessions:     deps.Sessions,
+		Messages:     deps.Messages,
+		Faxes:        deps.Faxes,
+		Contacts:     deps.Contacts,
+		Transcripts:  deps.Transcripts,
+		CRM:          deps.CRM,
+		Shared:       deps.Shared,
+		PhoneAPI:     deps.PhoneAPI,
+		TextAgent:    deps.TextAgent,
+		ASR:          deps.ASR,
+		ASRLocality:  deps.ASRLocality,
+		Trace:        deps.Trace,
+		TraceMetrics: deps.TraceMetrics,
+		Latency:      h.latency,
+		Island:       h.island,
+	}, h)
 
 	csrf := httputil.CSRFMiddleware(csrfCfg)
 
+	// The registrations below ARE the route table (the B007 ruling,
+	// cqrs-lint triage 2026-11-11, declined: config): explicit rows keep
+	// every surface greppable and its gate visible at the site. Do not
+	// "fix" them into a loop over a data table — the table would just
+	// move the same rows one indirection away.
 	protected := http.NewServeMux()
 	protected.HandleFunc("GET /{$}", h.page)
 	protected.HandleFunc("GET /messages", h.tabPage)
@@ -351,6 +495,7 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("GET /fax", h.tabPage)
 	protected.HandleFunc("GET /voicemail", h.tabPage)
 	protected.HandleFunc("GET /history", h.tabPage)
+	protected.HandleFunc("GET /reports", h.tabPage)
 	protected.HandleFunc("GET /contacts", h.tabPage)
 	protected.HandleFunc("GET /settings", h.tabPage)
 	// The admin surface (read-only cross-line visibility): every route
@@ -365,34 +510,47 @@ func New(deps Deps) http.Handler {
 	protected.HandleFunc("GET /partials/fax", h.partialFax)
 	protected.HandleFunc("GET /partials/voicemail", h.partialVoicemail)
 	protected.HandleFunc("GET /partials/history", h.partialHistory)
+	protected.HandleFunc("GET /partials/reports", h.partialReports)
+	// The live call's CRM context (issue #10): a quiet fragment the shell
+	// swaps into the island's slot; every degraded answer is an empty body.
+	protected.HandleFunc("GET /partials/live-context", h.liveContextPartial)
 	protected.HandleFunc("GET /partials/contacts", h.partialContacts)
 	protected.HandleFunc("GET /partials/settings", h.partialSettings)
 	protected.HandleFunc("GET /partials/nav", h.partialNav)
-	protected.HandleFunc("POST /messages/{id}/read", h.markThreadRead)
+	protected.Handle("POST /messages/{id}/read", h.stateTemplLimiter.Middleware()(http.HandlerFunc(h.markThreadRead)))
 	// M22: one pattern route covers pin|archive|mute — the handler's
 	// action map rejects anything else with 404, and the literal "read"
 	// pattern above still wins for that exact segment.
-	protected.HandleFunc("POST /messages/{id}/{flag}", h.setThreadFlag)
-	protected.HandleFunc("POST /snippets/save", h.saveSnippet)
-	protected.HandleFunc("POST /snippets/delete", h.deleteSnippet)
-	protected.HandleFunc("POST /messages/send", h.sendMessage)
+	protected.Handle("POST /messages/{id}/{flag}", h.stateTemplLimiter.Middleware()(http.HandlerFunc(h.setThreadFlag)))
+	protected.Handle("POST /snippets/save", h.stateTemplLimiter.Middleware()(http.HandlerFunc(h.saveSnippet)))
+	protected.Handle("POST /snippets/delete", h.stateTemplLimiter.Middleware()(http.HandlerFunc(h.deleteSnippet)))
+	protected.Handle("POST /messages/send", h.composeLimiter.Middleware()(http.HandlerFunc(h.sendMessage)))
 	protected.HandleFunc("GET /partials/messages/drafts", h.partialDrafts)
-	protected.HandleFunc("POST /messages/drafts/mode", h.setDraftMode)
-	protected.HandleFunc("POST /messages/drafts/{id}/approve", h.approveDraft)
-	protected.HandleFunc("POST /messages/drafts/{id}/discard", h.discardDraft)
-	protected.HandleFunc("POST /messages/ai-draft", h.aiDraft)
-	protected.HandleFunc("POST /fax/send", h.sendFax)
-	protected.HandleFunc("POST /fax/{id}/resend", h.resendFax)
+	protected.Handle("POST /messages/drafts/mode", h.stateTemplLimiter.Middleware()(http.HandlerFunc(h.setDraftMode)))
+	protected.Handle("POST /messages/drafts/{id}/approve", h.composeLimiter.Middleware()(http.HandlerFunc(h.approveDraft)))
+	protected.Handle("POST /messages/drafts/{id}/discard", h.stateTemplLimiter.Middleware()(http.HandlerFunc(h.discardDraft)))
+	protected.Handle("POST /messages/ai-draft", h.composeLimiter.Middleware()(http.HandlerFunc(h.aiDraft)))
+	protected.Handle("POST /fax/send", h.composeLimiter.Middleware()(http.HandlerFunc(h.sendFax)))
+	protected.Handle("POST /fax/{id}/resend", h.composeLimiter.Middleware()(http.HandlerFunc(h.resendFax)))
 	protected.HandleFunc("GET /fax/{id}/document", h.faxDocument)
 	protected.HandleFunc("GET /attachments/{id}", h.attachment)
-	protected.HandleFunc("POST /voicemail/delete", h.deleteVoicemail)
-	protected.HandleFunc("POST /contacts/save", h.saveContact)
-	protected.HandleFunc("POST /contacts/delete", h.deleteContact)
-	protected.HandleFunc("POST /contacts/import", h.importContacts)
+	protected.Handle("POST /voicemail/delete", h.stateTemplLimiter.Middleware()(http.HandlerFunc(h.deleteVoicemail)))
+	protected.Handle("POST /contacts/save", h.contactsTemplLimiter.Middleware()(http.HandlerFunc(h.saveContact)))
+	protected.Handle("POST /contacts/delete", h.contactsTemplLimiter.Middleware()(http.HandlerFunc(h.deleteContact)))
+	protected.Handle("POST /contacts/import", h.contactsTemplLimiter.Middleware()(http.HandlerFunc(h.importContacts)))
 	protected.HandleFunc("GET /contacts/export", h.exportContacts)
 	protected.Handle("POST /api/session",
-		h.loginLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(h.createSession))))
-	// The passkey (WebAuthn) login + enrollment surface: registered ONLY
+		h.loginLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(authHub.CreateSession))))
+	// The login page front door — THE auth surface in every mode (the
+	// library passkey page when the identity layer is wired, webphone's
+	// extension form + OIDC door in its ExtraSection always). The nonce
+	// middleware mints the per-request CSP nonce; loginPage overrides the
+	// app-wide strict CSP for this surface alone (the library's inline
+	// ceremony scripts carry the nonce). Anonymous surface: the handler
+	// redirects a live session to the shell.
+	protected.Handle("GET /login",
+		httputil.Nonce(httputil.NonceConfig{})(http.HandlerFunc(authHub.LoginPage)))
+	// The passkey (WebAuthn) login + enrollment ceremonies: registered ONLY
 	// when the identity layer is wired (config-gated in the composition
 	// root) — a disabled deployment keeps answering the styled 404.
 	// Login ceremonies share the login flood budget (email probing is
@@ -400,13 +558,6 @@ func New(deps Deps) http.Handler {
 	// one-time token is the real gate, the bucket only fences runaway
 	// clients).
 	if deps.UserAuth != nil {
-		// The library login page's front door. The nonce middleware
-		// mints the per-request CSP nonce; loginPage overrides the
-		// app-wide strict CSP for this surface alone (the library's
-		// inline ceremony scripts carry the nonce). Anonymous surface:
-		// the handler redirects a live session to the shell.
-		protected.Handle("GET /login",
-			httputil.Nonce(httputil.NonceConfig{})(http.HandlerFunc(h.loginPage)))
 		// The passkey login ceremonies at the usermgmt-canonical paths
 		// the library page's JS drives (usermgmt's pinned wire
 		// contract; the handlers are webphone's session-minting own).
@@ -415,26 +566,26 @@ func New(deps Deps) http.Handler {
 		// (the one-time token is the real gate, the bucket only fences
 		// runaway clients).
 		protected.Handle("POST /api/auth/webauthn/login/begin",
-			h.loginLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(h.passkeyBeginLogin))))
+			h.loginLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(authHub.PasskeyBeginLogin))))
 		protected.Handle("POST /api/auth/webauthn/login/finish",
-			h.loginLimiter.Middleware()(httputil.MaxBodySize(maxPasskeyBodySize)(http.HandlerFunc(h.passkeyFinishLogin))))
+			h.loginLimiter.Middleware()(httputil.MaxBodySize(auth.MaxPasskeyBodySize)(http.HandlerFunc(authHub.PasskeyFinishLogin))))
 		protected.Handle("POST /api/auth/passkey/enroll/verify",
-			h.passkeyLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(h.passkeyEnrollVerify))))
+			h.passkeyLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(authHub.PasskeyEnrollVerify))))
 		protected.Handle("POST /api/auth/passkey/enroll/begin",
-			h.passkeyLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(h.passkeyEnrollBegin))))
+			h.passkeyLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(authHub.PasskeyEnrollBegin))))
 		protected.Handle("POST /api/auth/passkey/enroll/finish",
-			h.passkeyLimiter.Middleware()(httputil.MaxBodySize(maxPasskeyBodySize)(http.HandlerFunc(h.passkeyEnrollFinish))))
-		protected.HandleFunc("GET /enroll", h.enrollPage)
+			h.passkeyLimiter.Middleware()(httputil.MaxBodySize(auth.MaxPasskeyBodySize)(http.HandlerFunc(authHub.PasskeyEnrollFinish))))
+		protected.HandleFunc("GET /enroll", authHub.EnrollPage)
 		// The line switcher (D1): re-mints the session for another
 		// extension mapped to the signed-in user. Registered with the
 		// identity layer — a deployment without mapped logins has no
 		// session that could switch (the handler still self-gates).
 		protected.Handle("POST /api/session/switch",
-			h.switchLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(h.switchExtension))))
+			h.switchLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(authHub.SwitchExtension))))
 		// Settings-tab passkey management (A2): list lives in the
 		// settings partial; revoke is session-gated + CSRF-protected and
 		// owner-matched against the session extension's mapping.
-		protected.HandleFunc("DELETE /api/passkeys/{id}", h.revokePasskey)
+		protected.HandleFunc("DELETE /api/passkeys/{id}", authHub.RevokePasskey)
 	}
 	// The OIDC/SSO login surface (Pocket ID): registered ONLY when the
 	// seam is wired. GET-only navigations (the island's SSO link and the
@@ -442,15 +593,15 @@ func New(deps Deps) http.Handler {
 	// CSRF wrapper's safe-method pass-through — no form, no token.
 	if deps.SSO != nil {
 		protected.Handle("GET /api/auth/oauth2/begin",
-			h.loginLimiter.Middleware()(http.HandlerFunc(h.ssoBegin)))
+			h.loginLimiter.Middleware()(http.HandlerFunc(authHub.SSOBegin)))
 		protected.Handle("GET /api/auth/oauth2/callback",
-			h.loginLimiter.Middleware()(http.HandlerFunc(h.ssoCallback)))
+			h.loginLimiter.Middleware()(http.HandlerFunc(authHub.SSOCallback)))
 	}
 	// GET is the island's boot resume: a live cookie gets its SIP
 	// credentials back and the page opens signed-in, no form. Read-only
 	// (no CSRF surface), self-gated through RequireSession.
-	protected.HandleFunc("GET /api/session", h.getSession)
-	protected.HandleFunc("DELETE /api/session", h.destroySession)
+	protected.HandleFunc("GET /api/session", authHub.GetSession)
+	protected.HandleFunc("DELETE /api/session", authHub.DestroySession)
 	// JSON surface for the island's contact panel (same store as the
 	// Contacts tab; the island migrated off localStorage onto this).
 	protected.HandleFunc("GET /api/contacts", apiHandlers.ListContacts)
@@ -460,7 +611,7 @@ func New(deps Deps) http.Handler {
 	// and personal contact the signed-in extension owns (settings-tab
 	// download link). GET-only and read-only, so the session cookie alone
 	// is the right gate — no CSRF surface.
-	protected.HandleFunc("GET /api/export", h.exportData)
+	protected.HandleFunc("GET /api/export", platformHub.ExportData)
 	// The island's post-call report to the CRM integration: session-gated,
 	// CSRF via authedFetch, sharing the contacts write budget (same class:
 	// one island JSON POST per user action). A disabled CRM answers 204 —
@@ -487,8 +638,10 @@ func New(deps Deps) http.Handler {
 	// transaction per dial attempt, consulted BEFORE the SIP invite.
 	// A disabled cooldown answers 404 (the island dials without
 	// asking); a store failure answers 502 and the island dials anyway
-	// (the gate advises, it never traps).
-	protected.Handle("POST /api/dials", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.DialGate)))
+	// (the gate advises, it never traps). The body cap rides the same
+	// JSON mount discipline as every other /api surface — a hostile
+	// POST cannot stream an unbounded body into the decoder.
+	protected.Handle("POST /api/dials", h.contactsLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(apiHandlers.DialGate))))
 	// The typeahead's row decoration (issue #7): the owner's ACTIVE
 	// cooldown windows, newest first. Same disabled-seam 404; the
 	// island hides the decoration when this fails.
@@ -514,31 +667,36 @@ func New(deps Deps) http.Handler {
 	// (live calls, voicemail, MMS audio). A disabled seam answers 404.
 	protected.Handle("POST /api/transcribe", h.transcribeLimiter.Middleware()(httputil.MaxBodySize(api.TranscribeBodyLimit)(http.HandlerFunc(apiHandlers.Transcribe))))
 	protected.Handle("POST /api/transcripts", h.transcribeLimiter.Middleware()(httputil.MaxBodySize(api.TranscriptBodyLimit)(http.HandlerFunc(apiHandlers.SaveTranscript))))
+	// The island latency-beacon intake (measure-first latency design):
+	// session-gated like every island endpoint, hook-grade flood budget,
+	// its own 2 KiB cap. Registered unconditionally; the handler 404s
+	// when the seam is off (metrics.island_beacon, default OFF).
+	protected.Handle("POST /api/metrics/latency", h.transcribeLimiter.Middleware()(httputil.MaxBodySize(api.BeaconBodyLimit)(http.HandlerFunc(apiHandlers.LatencyBeacon))))
 	protected.Handle("DELETE /api/transcripts", h.transcribeLimiter.Middleware()(http.HandlerFunc(apiHandlers.DeleteTranscript)))
 	// GET /api/csrf shares the flood budget: the endpoint hands out masked
 	// tokens anonymously, so a client must not churn it unbounded. One
 	// per-peer-host bucket (60/min burst 60) is orders of magnitude above
 	// real traffic (one fetch per login rotation).
 	protected.Handle("GET /api/csrf", h.csrfLimiter.Middleware()(http.HandlerFunc(apiHandlers.RefreshCSRF)))
-	protected.Handle("/phone-api/", session.Require(h.deps.Sessions, http.HandlerFunc(h.proxyPhoneAPI), lifetime, cookies))
+	protected.Handle("/phone-api/", session.Require(h.deps.Sessions, http.HandlerFunc(platformHub.ProxyPhoneAPI), lifetime, cookies))
 	// Unknown paths render the styled 404 (shell + error panel), not Go's
 	// bare-text default — the catch-all sits inside the CSRF layer so the
 	// response shape matches every other full page.
 	protected.HandleFunc("/", h.notFoundPage)
 
 	open := http.NewServeMux()
-	open.Handle("/htmx.min.js", cqrshtmx.HTMXScriptHandler())
-	// One request serves both extensions (cqrshtmx.HTMXExtensionsHandler
+	open.Handle("/htmx.min.js", htmx.ScriptHandler())
+	// One request serves both extensions (htmx.ExtensionsHandler
 	// concatenates sse + idiomorph with per-extension version comments and a
 	// composite ETag) — the page loads exactly one script tag instead of two.
-	open.Handle("/htmx-ext.js", cqrshtmx.HTMXExtensionsHandler(cqrshtmx.HTMXExtSSE, cqrshtmx.HTMXExtIdiomorph))
-	open.Handle("/assets/", h.assets())
-	open.HandleFunc("GET /config.js", h.configJS)
-	open.HandleFunc("GET /favicon.svg", h.favicon)
+	open.Handle("/htmx-ext.js", htmx.ExtensionsHandler(htmx.ExtSSE, htmx.ExtIdiomorph))
+	open.Handle("/assets/", platformHub.Assets())
+	open.HandleFunc("GET /config.js", platformHub.ConfigJS)
+	open.HandleFunc("GET /favicon.svg", platformHub.Favicon)
 	// Browsers and hard-coded scrapers ask for /favicon.ico when no icon
 	// link is parsed; the modern SVG answers both names (content-type
 	// carries the format, and every current browser sniffs it fine).
-	open.HandleFunc("GET /favicon.ico", h.favicon)
+	open.HandleFunc("GET /favicon.ico", platformHub.Favicon)
 	// PWA-LITE install manifest (2026-10-23 decision: owner demand signal
 	// unlocked the parked manifest; the service-worker NOT-DO of the
 	// 2026-09-22 spike stands — no fetch interception, zero staleness
@@ -552,11 +710,11 @@ func New(deps Deps) http.Handler {
 	// middleware wraps, so session/credential/SSE surfaces are
 	// structurally untouched (pinned by TestConditionalGETRootDocuments).
 	conditionalGET := etag.New(etag.DefaultETagConfig())
-	open.Handle("GET /manifest.webmanifest", conditionalGET(http.HandlerFunc(h.manifest)))
+	open.Handle("GET /manifest.webmanifest", conditionalGET(http.HandlerFunc(platformHub.Manifest)))
 	// /metrics is the ops scrape surface: AGGREGATES only (counts +
 	// build facts, never per-extension data), fenced per-location by
 	// the module's vhost like the probe triple.
-	open.HandleFunc("GET /metrics", h.metrics)
+	open.HandleFunc("GET /metrics", platformHub.Metrics)
 	// GET /events is rate-limited like the other unauthenticated-by-secret
 	// surfaces: a reconnecting tab (or a broken client) must not churn
 	// unlimited streams. One bucket per peer host reuses the hook budget
@@ -700,15 +858,23 @@ func New(deps Deps) http.Handler {
 	open.Handle("GET /version", versionHandler())
 	open.Handle("GET /openapi.json", conditionalGET(http.HandlerFunc(openapiHandler)))
 	open.Handle("/hooks/", h.hookLimiter.Middleware()(hooksHandlers.SecretGate(http.HandlerFunc(hooksHandlers.Webhooks))))
+	// The CSP violation-report intake (session-free — the browser delivers
+	// without credentials; the bucket + the 4 KiB cap are the fences). One
+	// greppable journal line per accepted report makes a live XSS-class
+	// event observable instead of silent.
+	open.Handle("POST /csp-report", h.cspLimiter.Middleware()(http.HandlerFunc(platformHub.CSPReport)))
 	// The internal directory endpoint (the stack's FS directory bridge is
 	// the only consumer): outside CSRF/session (webhooks-class — secret
 	// gated), hook-grade flood budget, loopback-only posture in-handler.
 	open.Handle("GET /internal/directory/{extension}",
-		h.hookLimiter.Middleware()(h.sipDirectoryGate(http.HandlerFunc(h.internalDirectory))))
+		h.hookLimiter.Middleware()(h.sipDirectoryGate(http.HandlerFunc(platformHub.InternalDirectory))))
 	// The flight-recorder snapshot endpoint: machine-facing, registered
 	// unconditionally so the disabled seam answers the styled 404 rather
-	// than falling through the open mux; loopback-only in-handler.
-	open.HandleFunc("GET /internal/flightrecorder", h.traceSnapshot)
+	// than falling through the open mux; loopback-only in-handler, and
+	// the tight trace bucket fences a snapshot poller (each hit writes
+	// a full trace window to disk).
+	open.Handle("GET /internal/flightrecorder",
+		h.traceLimiter.Middleware()(http.HandlerFunc(platformHub.TraceSnapshot)))
 
 	root := http.NewServeMux()
 	root.Handle("/", session.Attach(h.deps.Sessions, csrf(protected), lifetime, cookies))
@@ -725,6 +891,7 @@ func New(deps Deps) http.Handler {
 	root.Handle("/version", open)
 	root.Handle("/openapi.json", open)
 	root.Handle("/hooks/", open)
+	root.Handle("/csp-report", open)
 	root.Handle("/internal/directory/", open)
 	root.Handle("/internal/flightrecorder", open)
 	root.Handle("/favicon.svg", open)
@@ -757,12 +924,13 @@ func New(deps Deps) http.Handler {
 		httputil.Metrics(httputil.MetricsConfig{Recorder: h.latency}),
 	}
 	if deps.Trace != nil {
-		middlewares = append(middlewares, traceMiddleware(deps.Trace))
+		middlewares = append(middlewares, platform.TraceMiddleware(deps.Trace))
 	}
 	middlewares = append(middlewares,
 		cqrshtmx.RequestLoggingSlog(slog.Default()),
 		servertiming.ServerTimingMiddlewareWhen(func(*http.Request) bool { return timingEnabled }),
 		security,
+		platform.ReportingEndpointsMiddleware,
 		cqrshtmx.RecoveryMiddleware,
 	)
 	return cqrshtmx.Chain(middlewares...)(root)

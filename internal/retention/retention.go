@@ -14,7 +14,6 @@ import (
 
 	"github.com/larsartmann/webphone/internal/blob"
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/readmodels"
 	"github.com/larsartmann/webphone/internal/store"
 )
 
@@ -22,11 +21,39 @@ import (
 // files were unlinked. It is the sweep log line's data and the
 // package tests' assertion surface.
 type sweepSummary struct {
-	messages    int64
-	faxes       int64
-	threads     int64
-	transcripts int64
-	blobs       int64
+	messages       int64
+	faxes          int64
+	journalFaxes   int64
+	threads        int64
+	journalThreads int64
+	transcripts    int64
+	blobs          int64
+}
+
+// ThreadSweeper is the threads journal leg's seam: the backend's
+// SweepBefore (paths out for unlinking, rows and journal bytes gone
+// before they return).
+type ThreadSweeper interface {
+	SweepBefore(ctx context.Context, cutoff time.Time) ([]string, int64, error)
+}
+
+// FaxSweeper is the faxes journal leg's seam (the same shape).
+type FaxSweeper interface {
+	SweepBefore(ctx context.Context, cutoff time.Time) ([]string, int64, error)
+}
+
+// TranscriptSweeper is the transcripts journal leg's seam (segments
+// carry no blobs; only the count returns).
+type TranscriptSweeper interface {
+	SweepBefore(ctx context.Context, cutoff time.Time) (int64, error)
+}
+
+// JournalSweepers bundles the journal-backed retention legs (ONE param
+// for the composition root instead of a growing positional list).
+type JournalSweepers struct {
+	Threads     ThreadSweeper
+	Faxes       FaxSweeper
+	Transcripts TranscriptSweeper
 }
 
 // Start runs one sweep immediately and then once a day until ctx ends.
@@ -34,10 +61,14 @@ type sweepSummary struct {
 // without spawning anything. Session rows are NOT touched here: the
 // session store already sweeps its own expiry lazily (on read and on
 // the next mint). engine is the read-model container: fax jobs and
-// call transcripts live in readmodels.db since the T11/T13 swaps, so
-// their retention legs ride the engine sweeps (fax documents come
-// back for unlinking; transcripts carry no blobs).
-func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readmodels.Engine, window time.Duration) {
+// call transcripts live in system.db since the 2026-11-09 journal
+// swap (readmodels.db before that, T11/T13), so their retention legs
+// ride the engine sweeps (fax documents come
+// back for unlinking; transcripts carry no blobs). threads is the
+// journal-backed core leg (A36): expired threads tombstone out of the
+// views AND the journal itself, so the GDPR arm deletes bytes, not
+// just rows.
+func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, journal JournalSweepers, window time.Duration) {
 	if window <= 0 {
 		return
 	}
@@ -49,7 +80,7 @@ func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readmodel
 				slog.Error("retention: sweep PANIC recovered; tick skipped, sweeper survives", "panic", rec)
 			}
 		}()
-		sweepOnce(ctx, db, blobs, engine, time.Now().Add(-window))
+		sweepOnce(ctx, db, blobs, journal, time.Now().Add(-window))
 	}
 	go func() {
 		run()
@@ -74,7 +105,7 @@ func Start(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readmodel
 // zero timing dependence. A store failure skips the pass entirely
 // (the next tick retries); fax and transcript failures degrade to a
 // logged zero, never a dropped store sweep.
-func sweepOnce(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readmodels.Engine, cutoff time.Time) sweepSummary {
+func sweepOnce(ctx context.Context, db *sql.DB, blobs *blob.Store, journal JournalSweepers, cutoff time.Time) sweepSummary {
 	var sum sweepSummary
 	res, err := store.Sweep(ctx, db, cutoff)
 	if err != nil {
@@ -83,19 +114,48 @@ func sweepOnce(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readm
 	}
 	sum.messages, sum.threads = res.Messages, res.Threads
 
-	faxPaths, faxesRemoved, err := engine.Faxes().SweepBefore(ctx, cutoff)
-	if err != nil {
-		slog.Error("retention: fax sweep failed", "error", err)
+	// The journal leg (A36): expired threads leave the views AND the
+	// journal (bytes gone); their blob paths join the faxes' in the one
+	// unlink loop. A nil seam skips the leg (pre-A36 test compositions)
+	// — never silently: the composition root always wires the real one.
+	threadPaths := []string{}
+	if journal.Threads != nil {
+		paths, journalRemoved, err := journal.Threads.SweepBefore(ctx, cutoff)
+		if err != nil {
+			slog.Error("retention: thread journal sweep failed", "error", err)
+		} else {
+			sum.journalThreads = journalRemoved
+			threadPaths = paths
+		}
 	}
-	sum.faxes = faxesRemoved
 
-	transcriptsRemoved, err := engine.Transcripts().SweepBefore(ctx, cutoff)
-	if err != nil {
-		slog.Error("retention: transcript sweep failed", "error", err)
+	// The faxes journal leg (Phase 6): expired jobs leave the views AND
+	// the journal (the readmodels engine's frozen lane retired with A43
+	// — system.db is the only fax home).
+	faxPaths := []string{}
+	if journal.Faxes != nil {
+		paths, journalFaxes, err := journal.Faxes.SweepBefore(ctx, cutoff)
+		if err != nil {
+			slog.Error("retention: fax journal sweep failed", "error", err)
+		} else {
+			sum.journalFaxes = journalFaxes
+			faxPaths = paths
+		}
 	}
-	sum.transcripts = transcriptsRemoved
+	sum.faxes = sum.journalFaxes
 
-	for _, path := range append(res.BlobPaths, faxPaths...) {
+	// The transcripts journal leg: segments carry no blobs, only the
+	// count reports (the Phase-4 swap's retention re-point — the engine
+	// leg had kept sweeping the frozen lane while the journal grew).
+	if journal.Transcripts != nil {
+		transcriptsRemoved, err := journal.Transcripts.SweepBefore(ctx, cutoff)
+		if err != nil {
+			slog.Error("retention: transcript sweep failed", "error", err)
+		}
+		sum.transcripts = transcriptsRemoved
+	}
+
+	for _, path := range append(append(res.BlobPaths, threadPaths...), faxPaths...) {
 		// A corrupt stored path skips its unlink (logged) instead of
 		// killing the sweep: retention is daily background hygiene, and
 		// one bad row must not protect every other blob from expiry.
@@ -114,7 +174,9 @@ func sweepOnce(ctx context.Context, db *sql.DB, blobs *blob.Store, engine *readm
 		"cutoff", cutoff.Format(time.RFC3339),
 		"messages", sum.messages,
 		"faxes", sum.faxes,
+		"journal_faxes", sum.journalFaxes,
 		"threads", sum.threads,
+		"journal_threads", sum.journalThreads,
 		"transcripts", sum.transcripts,
 		"blobs_removed", sum.blobs,
 	)

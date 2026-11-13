@@ -59,10 +59,14 @@ test("segment counter: non-GSM characters force UCS-2 70/67", () => {
 
   type("Grüße"); // ü and ß ARE GSM-7 — stays silent
   assert.ok(counter.hidden, "German umlauts stay in GSM-7");
+  type("★".repeat(70));
+  assert.ok(counter.hidden, "70 BMP non-GSM chars = 70 UTF-16 units = one segment");
+  type("😀".repeat(35));
+  assert.ok(counter.hidden, "35 emoji = 70 UTF-16 units (surrogate pairs billed) = one segment");
+  type("😀".repeat(36));
+  assert.equal(counter.textContent, "2 SMS", "36 emoji = 72 units spill into 67+5");
   type("😀".repeat(70));
-  assert.ok(counter.hidden, "70 UCS-2 chars is one segment");
-  type("😀".repeat(71));
-  assert.equal(counter.textContent, "2 SMS", "71 UCS-2 chars spill into 67+4");
+  assert.equal(counter.textContent, "3 SMS", "70 emoji = 140 units, not the code-point 70");
 });
 
 test("Enter sends the composer, Shift+Enter and IME composition do not", () => {
@@ -188,4 +192,37 @@ test("segment count and byte countdown combine", () => {
   doc.dispatch("input", { target: area });
 
   assert.match(counter.textContent, /SMS · 1502\/1600/, "both facts in one line");
+});
+
+test("double-Enter cannot double-send: a second in-flight submit is dropped", () => {
+  const { area } = composer();
+  const transcript = doc.getElementById("thread-transcript");
+  const form = doc.createElement();
+  form.selector = "form.wp-compose";
+  form.className = "wp-compose";
+  form.matches = (s) => s === form.selector;
+  form.append(area);
+  area.value = "hi";
+  const send = () => doc.dispatch("htmx:beforeRequest", { detail: { elt: form } });
+
+  send();
+  send();
+  assert.equal(
+    transcript.querySelectorAll(".wp-opt").length,
+    1,
+    "exactly one pending bubble exists after a double submit",
+  );
+  assert.ok(
+    transcript.querySelector(".wp-status-queued"),
+    "the surviving bubble is still the honest queued one",
+  );
+
+  doc.dispatch("htmx:afterRequest", { detail: { elt: form, successful: true } });
+  area.value = "again";
+  send();
+  assert.equal(
+    transcript.querySelectorAll(".wp-opt").length,
+    2,
+    "a settled send frees the composer for the next one",
+  );
 });

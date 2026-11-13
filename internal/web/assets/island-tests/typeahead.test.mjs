@@ -20,11 +20,16 @@ const CONTACTS = [
   { name: "Zoo Berlin", number: "+493087871" },
 ];
 
-globalThis.window = { PBX_CONFIG: { contacts: CONTACTS } };
+globalThis.window = { PBX_CONFIG: {} };
 
 const { els } = await import("../island/app/ui.js");
+const { setSharedContacts } = await import("../island/app/config.js");
 const { rankContacts, initDialTypeahead, relabelTypeahead, setExtraContacts } =
   await import("../island/app/typeahead.js");
+
+// The shared directory no longer rides /config.js (pre-auth surface):
+// tests seed it the way panels.js does after login.
+setSharedContacts(CONTACTS);
 
 const fire = (element, type, event = {}) => {
   for (const fn of element.listeners[type] ?? []) {

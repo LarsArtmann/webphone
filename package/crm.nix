@@ -73,6 +73,29 @@ in
         to every user on the machine.
       '';
     };
+
+    caFile = lib.mkOption {
+      type = lib.types.nullOr lib.types.str;
+      default = null;
+      example = "/etc/ssl/certs/crm-ca.pem";
+      description = ''
+        OPTIONAL host path of a PEM bundle that vouches for the CRM
+        vhost's TLS chain — the usual deployment, where the CRM sits
+        behind a private CA the PBX host does not trust.
+
+        The app extends the SYSTEM roots with this bundle for the CRM
+        client ALONE, so the trust boundary stays as narrow as the need:
+        host-wide `security.pki` trust (or a process-wide
+        `SSL_CERT_FILE`) would vouch for every TLS connection the
+        machine makes, including the OIDC issuer and the Paperless
+        archive.
+
+        Deliberately NOT a systemd credential (unlike `tokenFile`): a CA
+        certificate is public material, so the app reads it in place and
+        a Nix `path` value would be harmless — the option is a string
+        only for symmetry with `tokenFile`.
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -101,10 +124,10 @@ in
       ]
       ++ lib.optionals (!cfg.crm.enable) [
         {
-          assertion = cfg.crm.url == null && cfg.crm.tokenFile == null;
+          assertion = cfg.crm.url == null && cfg.crm.tokenFile == null && cfg.crm.caFile == null;
           message = ''
-            services.webphone.crm: set enable = true — url or tokenFile
-            without enable would silently do nothing.
+            services.webphone.crm: set enable = true — url, tokenFile or
+            caFile without enable would silently do nothing.
           '';
         }
       ];
@@ -113,10 +136,15 @@ in
     # key makes the eval fail with a conflict (one home per fact), and
     # when the typed lane is OFF this block is absent entirely — the
     # raw lane stays untouched.
-    services.webphone.settings.crm = lib.mkIf cfg.crm.enable {
-      url = cfg.crm.url;
-      token_file = crmSecretPath;
-    };
+    services.webphone.settings.crm = lib.mkMerge [
+      (lib.mkIf cfg.crm.enable {
+        url = cfg.crm.url;
+        token_file = crmSecretPath;
+      })
+      (lib.mkIf (cfg.crm.enable && cfg.crm.caFile != null) {
+        ca_file = cfg.crm.caFile;
+      })
+    ];
 
     systemd.services.webphone.serviceConfig.LoadCredential = lib.mkIf cfg.crm.enable [
       "${crmCredentialName}:${cfg.crm.tokenFile}"

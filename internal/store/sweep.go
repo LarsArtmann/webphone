@@ -20,9 +20,9 @@ type SweepResult struct {
 
 // Sweep deletes stored content older than the cutoff: messages (their
 // attachment rows cascade) and the threads left empty by those
-// deletions. Fax jobs and call transcripts ride the ENGINE sweep
-// (readmodels Faxes/Transcripts SweepBefore) since the T11/T13 swaps;
-// the caller composes all three.
+// deletions. Fax jobs and call transcripts ride the JOURNAL sweep
+// (cqrs SweepBefore legs, T11/T13 then the SUPERB journal swap); the
+// caller composes all three.
 // Attachment blob paths are collected BEFORE the rows go
 // and returned for unlinking — a crash between the SQL and the unlink
 // leaves an orphaned blob (harmless disk, cleaned by the next sweep of

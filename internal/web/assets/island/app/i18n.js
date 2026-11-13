@@ -32,21 +32,23 @@ const defineMessages = (table) => table;
 export const I18N = {
   en: defineMessages({
     regState: "Registration state",
-    signin: "Sign in to your extension",
-    extension: "Extension",
-    password: "Password",
-    remember: "remember extension on this device (never the password)",
-    connect: "Connect",
     signedInAs: "signed in as",
     signOut: "sign out",
     signOutTitle: "Unregister and sign out",
+    logoutLiveCall: "a call is live — click again to sign out and hang up",
     dialPlaceholder: "Number or extension",
+    dialDestLabel: "Number to call",
+    langLabel: "Language",
     call: "Call",
     hold: "Hold",
     resume: "Resume",
     focus: "Focus",
     mute: "Mute",
     unmute: "Unmute",
+    mutedAnnounce: "microphone muted",
+    unmutedAnnounce: "microphone live",
+    heldAnnounce: "call on hold",
+    resumedAnnounce: "call resumed",
     end: "End call",
     incoming: "Incoming call from",
     accept: "Accept",
@@ -78,6 +80,7 @@ export const I18N = {
     transferBlind: "Blind",
     transferAttended: "Attended",
     transferring: "transferring…",
+    transferEmpty: "enter a destination to transfer to",
     transferFailed: (detail) => `transfer failed: ${detail}`,
     transferNoPartner: "no second established call for an attended transfer",
     transferComplete: "transfer completed by the network",
@@ -95,6 +98,9 @@ export const I18N = {
     vmEmpty: "no messages",
     vmDelete: "delete",
     vmAuthFailed: "voicemail needs the operator API (not reachable)",
+    vmLoadFailed: (detail) => `could not load voicemail: ${detail}`,
+    historyLoadFailed: (detail) => `could not load call history: ${detail}`,
+    contactsLoadFailed: (detail) => `could not load contacts: ${detail}`,
     vmNewCount: (n) => `${n} new`,
     connectionQuality: "Connection quality",
     iceNoMedia:
@@ -105,32 +111,7 @@ export const I18N = {
     iceHost: "direct local-network path",
     iceLoss: (lost) => `${lost} packets lost on receive — network congestion?`,
     iceFailed: "connection failed — media blocked between the networks",
-    reconnecting: (delay, attempt) =>
-      `reconnecting in ${delay}s (try ${attempt})`,
-    loginError: (message) =>
-      `Could not connect: ${message}. Check extension/password and that your browser trusts the server certificate.`,
-    passkeySection: "Sign in with a passkey",
-    passkeySignin: "Sign in with passkey",
-    passkeyBreakglass: "Use extension and password instead",
-    ssoSection: "Sign in with Pocket ID",
-    ssoSignin: "Continue to Pocket ID",
-    ssoPasskeyHint:
-      "Passkeys and every other sign-in method your account has work in Pocket ID.",
-    ssoErrorUnmapped:
-      "Your Pocket ID account has no phone mapping here — ask the operator to add your email address.",
-    ssoErrorDirectory:
-      "Your phone account's password could not be verified — ask the operator to refresh it, then try again.",
-    ssoErrorUnverified:
-      "Your Pocket ID email is not verified — verify it in Pocket ID, then try again.",
-    ssoErrorGroups:
-      "Your Pocket ID account is missing the required access group for this phone — ask the operator to add it, then try again.",
-    ssoErrorStale: "That sign-in attempt expired — please start again.",
-    ssoErrorConfig:
-      "Sign-in is not configured correctly on the server — the operator finds the details in the journal.",
-    ssoErrorUnavailable:
-      "Pocket ID is not reachable right now — try again in a minute, or use extension and password.",
-    ssoErrorFailed:
-      "Sign-in with Pocket ID failed — try again, or use extension and password.",
+    reconnecting: (delay) => `reconnecting in ${delay}s…`,
     enrollVerified: (email) =>
       `Token verified for ${email}. Follow your device to create the passkey.`,
     enrollSuccess: "Passkey created. Go to the main page and sign in with it.",
@@ -158,19 +139,18 @@ export const I18N = {
     dtmfFailed: (detail) => `could not send tone: ${detail}`,
     vmDeleteFailed: (detail) => `could not delete message: ${detail}`,
     vmPlayFailed: (detail) => `could not play message: ${detail}`,
-    sessionFailed401:
-      "The server rejected the tab sign-in — check extension and password.",
-    sessionThrottled: "Too many attempts — wait a moment, then try again.",
-    sessionFailed: (status) =>
-      `Tab sign-in failed (HTTP ${status}) — calls keep working, tabs stay locked.`,
-    sessionNetFailed:
-      "Could not reach the server for tab sign-in — calls keep working.",
+    rateLimited: (seconds) =>
+      seconds === null
+        ? "Too many requests"
+        : `Too many requests — retry in ${seconds}s`,
     lineSwitchLabel: "Line",
     switchBlockedByCall: "End the call before switching lines.",
     switchFailed: (status) => `Could not switch lines (HTTP ${status}).`,
     switchDone: (line) => `Switched to line ${line}.`,
     cooldownNotice: (lastAgo, left) =>
-      `Last call ${lastAgo} ago — redial paused${left ? ` (${left} left)` : ""}.`,
+      lastAgo === "now"
+        ? `Last call just now — redial paused${left ? ` (${left} left)` : ""}.`
+        : `Last call ${lastAgo} ago — redial paused${left ? ` (${left} left)` : ""}.`,
     dialAnyway: "Dial anyway",
     cooldownOverrideFailed: "Could not override the cooldown — try again.",
     cooldownRow: (left) => `cooling down${left ? ` · ${left} left` : ""}`,
@@ -181,8 +161,6 @@ export const I18N = {
     ssePillDown: "Live tab updates: not connected",
     ssePillRetry: "Live tab updates: reconnecting…",
     resuming: "resuming session…",
-    resumeRejected: (message) =>
-      `Your saved sign-in was rejected (${message}) — the password may have changed. Sign in again.`,
     crmLogFailed: (detail) =>
       `Call not recorded in the CRM (${detail}) — you can log it manually.`,
     typeaheadLabel: "Contact suggestions",
@@ -231,6 +209,10 @@ export const I18N = {
     callUnreachable: "Unavailable — the far end did not answer.",
     callCancelled: "Cancelled before it connected.",
     callNoAnswer: "No answer in time.",
+    callRejectedRemote: "Rejected by the network before it connected.",
+    callNotAcceptable:
+      "No compatible audio path — the far end cannot take the call.",
+    callAuthFailed: "Sign-in refused — the credentials did not authenticate.",
     callFailedCode: (code) => `Call failed (code ${code}).`,
     callFailedUnknown: "The call failed before it connected.",
     summarizeSettled: "Draft in Messages",
@@ -249,33 +231,6 @@ export const I18N = {
   }),
   de: defineMessages({
     regState: "Registrierungsstatus",
-    signin: "Anmeldung an Ihrer Nebenstelle",
-    extension: "Nebenstelle",
-    password: "Passwort",
-    remember: "Nebenstelle auf diesem Gerät merken (niemals das Passwort)",
-    connect: "Verbinden",
-    passkeySection: "Mit Passkey anmelden",
-    passkeySignin: "Mit Passkey anmelden",
-    passkeyBreakglass: "Stattdessen Nebenstelle und Passwort verwenden",
-    ssoSection: "Mit Pocket ID anmelden",
-    ssoSignin: "Weiter zu Pocket ID",
-    ssoPasskeyHint:
-      "Passkeys und alle anderen Anmeldeverfahren Ihres Kontos funktionieren in Pocket ID.",
-    ssoErrorUnmapped:
-      "Ihr Pocket ID-Konto hat hier keine Telefon-Zuordnung — bitten Sie den Betreiber, Ihre E-Mail-Adresse einzutragen.",
-    ssoErrorDirectory:
-      "Das Passwort Ihres Telefon-Kontos konnte nicht verifiziert werden — bitten Sie den Betreiber, es zu erneuern, und versuchen Sie es erneut.",
-    ssoErrorUnverified:
-      "Ihre Pocket ID-E-Mail ist nicht bestätigt — bestätigen Sie sie in Pocket ID und versuchen Sie es erneut.",
-    ssoErrorGroups:
-      "Ihrem Pocket ID-Konto fehlt die erforderliche Zugriffsgruppe für dieses Telefon — bitten Sie den Betreiber, sie einzutragen, und versuchen Sie es erneut.",
-    ssoErrorStale: "Dieser Anmeldeversuch ist abgelaufen — bitte neu starten.",
-    ssoErrorConfig:
-      "Die Anmeldung ist serverseitig nicht korrekt konfiguriert — der Betreiber findet die Details im Journal.",
-    ssoErrorUnavailable:
-      "Pocket ID ist gerade nicht erreichbar — versuchen Sie es in einer Minute erneut oder nutzen Sie Nebenstelle und Passwort.",
-    ssoErrorFailed:
-      "Anmeldung mit Pocket ID fehlgeschlagen — erneut versuchen oder Nebenstelle und Passwort verwenden.",
     enrollVerified: (email) =>
       `Token verifiziert für ${email}. Folgen Sie Ihrem Gerät, um den Passkey zu erstellen.`,
     enrollSuccess:
@@ -289,13 +244,21 @@ export const I18N = {
     signedInAs: "angemeldet als",
     signOut: "abmelden",
     signOutTitle: "Abmelden und Registrierung lösen",
+    logoutLiveCall:
+      "ein Gespräch läuft — zum Abmelden und Auflegen erneut klicken",
     dialPlaceholder: "Nummer oder Durchwahl",
+    dialDestLabel: "Nummer zum Anrufen",
+    langLabel: "Sprache",
     call: "Anrufen",
     hold: "Halten",
     resume: "Fortsetzen",
     focus: "Aktivieren",
     mute: "Stumm",
-    unmute: "Stumm aus",
+    unmute: "Stumm aufheben",
+    mutedAnnounce: "Mikrofon stumm",
+    unmutedAnnounce: "Mikrofon offen",
+    heldAnnounce: "Gespräch gehalten",
+    resumedAnnounce: "Gespräch fortgesetzt",
     end: "Auflegen",
     incoming: "Eingehender Anruf von",
     accept: "Annehmen",
@@ -327,6 +290,7 @@ export const I18N = {
     transferBlind: "sofort",
     transferAttended: "Rückfrage",
     transferring: "wird weitergeleitet…",
+    transferEmpty: "geben Sie ein Weiterleitungsziel ein",
     transferFailed: (detail) => `Weiterleitung fehlgeschlagen: ${detail}`,
     transferNoPartner:
       "kein zweiter bestehender Anruf für Rückfrage-Weiterleitung",
@@ -339,12 +303,20 @@ export const I18N = {
     contactSaved: (n) => `Kontakt ${n} gespeichert`,
     contactSaveFailed: (detail) =>
       `Kontakt speichern fehlgeschlagen (${detail}); lokal behalten`,
-    contactsMigrated: (n) => `${n} lokale Kontakte auf den Server übernommen`,
+    contactsMigrated: (n) =>
+      n === 1
+        ? "1 lokalen Kontakt auf den Server übernommen"
+        : `${n} lokale Kontakte auf den Server übernommen`,
     voicemail: "Mailbox",
     vmRefresh: "Aktualisieren",
     vmEmpty: "keine Nachrichten",
     vmDelete: "löschen",
     vmAuthFailed: "Mailbox-API nicht erreichbar",
+    vmLoadFailed: (detail) => `Mailbox konnte nicht geladen werden: ${detail}`,
+    historyLoadFailed: (detail) =>
+      `Anruferliste konnte nicht geladen werden: ${detail}`,
+    contactsLoadFailed: (detail) =>
+      `Kontakte konnten nicht geladen werden: ${detail}`,
     vmNewCount: (n) => `${n} neu`,
     connectionQuality: "Verbindungsqualität",
     iceNoMedia:
@@ -356,10 +328,7 @@ export const I18N = {
     iceLoss: (lost) => `${lost} Pakete verloren — Netzüberlastung?`,
     iceFailed:
       "Verbindung fehlgeschlagen — Medien zwischen den Netzen blockiert",
-    reconnecting: (delay, attempt) =>
-      `Neuverbindung in ${delay}s (Versuch ${attempt})`,
-    loginError: (message) =>
-      `Verbindung fehlgeschlagen: ${message}. Prüfen Sie Nebenstelle/Passwort und ob Ihr Browser dem Serverzertifikat vertraut.`,
+    reconnecting: (delay) => `Neuverbindung in ${delay}s…`,
     callFailed: (detail) => `Anruf fehlgeschlagen: ${detail}`,
     callEnded: (dur) => `Anruf beendet · ${dur}`,
     missedCall: (from) => `verpasster Anruf von ${from}`,
@@ -381,14 +350,10 @@ export const I18N = {
       `Nachricht konnte nicht gelöscht werden: ${detail}`,
     vmPlayFailed: (detail) =>
       `Nachricht konnte nicht abgespielt werden: ${detail}`,
-    sessionFailed401:
-      "Die Server-Anmeldung wurde abgelehnt — Nebenstelle und Passwort prüfen.",
-    sessionThrottled:
-      "Zu viele Versuche — bitte kurz warten und erneut versuchen.",
-    sessionFailed: (status) =>
-      `Server-Anmeldung fehlgeschlagen (HTTP ${status}) — Anrufe funktionieren weiter, Tabs bleiben gesperrt.`,
-    sessionNetFailed:
-      "Server für die Tab-Anmeldung nicht erreichbar — Anrufe funktionieren weiter.",
+    rateLimited: (seconds) =>
+      seconds === null
+        ? "Zu viele Anfragen"
+        : `Zu viele Anfragen — erneuter Versuch in ${seconds}s`,
     lineSwitchLabel: "Nebenstelle",
     switchBlockedByCall:
       "Anruf beenden, bevor die Nebenstelle gewechselt wird.",
@@ -396,7 +361,9 @@ export const I18N = {
       `Nebenstellen-Wechsel fehlgeschlagen (HTTP ${status}).`,
     switchDone: (line) => `Auf Nebenstelle ${line} gewechselt.`,
     cooldownNotice: (lastAgo, left) =>
-      `Letzter Anruf vor ${lastAgo} — Wiederholen pausiert${left ? ` (noch ${left})` : ""}.`,
+      lastAgo === "now"
+        ? `Letzter Anruf gerade eben — Wiederholen pausiert${left ? ` (noch ${left})` : ""}.`
+        : `Letzter Anruf vor ${lastAgo} — Wiederholen pausiert${left ? ` (noch ${left})` : ""}.`,
     dialAnyway: "Trotzdem anrufen",
     cooldownOverrideFailed:
       "Abkühlung konnte nicht umgangen werden — erneut versuchen.",
@@ -408,8 +375,6 @@ export const I18N = {
     ssePillDown: "Live-Aktualisierungen: nicht verbunden",
     ssePillRetry: "Live-Aktualisierungen: verbinde neu…",
     resuming: "Sitzung wird fortgesetzt…",
-    resumeRejected: (message) =>
-      `Gespeicherte Anmeldung abgelehnt (${message}) — das Passwort hat sich möglicherweise geändert. Bitte erneut anmelden.`,
     crmLogFailed: (detail) =>
       `Anruf nicht im CRM erfasst (${detail}) — bitte manuell nachtragen.`,
     typeaheadLabel: "Kontaktvorschläge",
@@ -459,6 +424,11 @@ export const I18N = {
     callUnreachable: "Nicht verfügbar — die Gegenseite hat nicht geantwortet.",
     callCancelled: "Abgebrochen, bevor die Verbindung stand.",
     callNoAnswer: "Keine rechtzeitige Antwort.",
+    callRejectedRemote: "Vom Netz abgelehnt, bevor die Verbindung stand.",
+    callNotAcceptable:
+      "Kein kompatibler Audiopfad — die Gegenseite kann den Anruf nicht annehmen.",
+    callAuthFailed:
+      "Anmeldung abgelehnt — die Zugangsdaten wurden nicht akzeptiert.",
     callFailedCode: (code) => `Anruf fehlgeschlagen (Code ${code}).`,
     callFailedUnknown: "Der Anruf ist vor dem Verbinden fehlgeschlagen.",
     summarizeSettled: "Entwurf in Nachrichten",
@@ -491,10 +461,22 @@ function cookieLang() {
   return match ? /** @type {IslandLang} */ (match[1]) : "";
 }
 
+/** @returns {IslandLang | ""} */
+function storedLang() {
+  try {
+    return /** @type {IslandLang} */ (localStorage.getItem(LANG_KEY)) || "";
+  } catch {
+    // Browser privacy settings that block site data make the
+    // localStorage property itself THROW — a module-level throw would
+    // kill every translated string. Degrade to the navigator default.
+    return "";
+  }
+}
+
 /** @type {IslandLang} */
 let lang =
   cookieLang() ||
-  /** @type {IslandLang} */ (localStorage.getItem(LANG_KEY)) ||
+  storedLang() ||
   ((navigator.language || "en").toLowerCase().startsWith("de") ? "de" : "en");
 
 // The table value is a finished string OR the formatter for it, and the
@@ -519,7 +501,12 @@ export function getLang() {
 /** @param {IslandLang} next */
 export function setLang(next) {
   lang = next;
-  localStorage.setItem(LANG_KEY, lang);
+  try {
+    localStorage.setItem(LANG_KEY, lang);
+  } catch {
+    // Blocked site data: the in-memory language still applies for this
+    // page life; the persistence is best-effort.
+  }
   // Tell the server: tabs and SSE fragments render in the same language
   // (cookie read by every request; no reload — the island never unloads).
   document.cookie = `wp-lang=${lang}; path=/; samesite=strict; max-age=31536000`;
@@ -541,5 +528,12 @@ export function applyI18n() {
   document.querySelectorAll("[data-i18n-title]").forEach((node) => {
     const el = /** @type {HTMLElement} */ (node);
     el.title = t(/** @type {IslandI18nKey} */ (el.dataset.i18nTitle));
+  });
+  document.querySelectorAll("[data-i18n-arialabel]").forEach((node) => {
+    const el = /** @type {HTMLElement} */ (node);
+    el.setAttribute(
+      "aria-label",
+      t(/** @type {IslandI18nKey} */ (el.dataset.i18nArialabel)),
+    );
   });
 }

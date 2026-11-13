@@ -132,8 +132,15 @@ func TestAppDashboardMountsHealthSubtree(t *testing.T) {
 		t.Fatalf("/health: code %d", resp.StatusCode)
 	}
 	csp := resp.Header.Get("Content-Security-Policy")
-	if !strings.Contains(csp, "unsafe-eval") || !strings.Contains(csp, "nonce-") {
+	if !strings.Contains(csp, "nonce-") {
 		t.Fatalf("/health CSP is not the dashboard policy: %q", csp)
+	}
+	// v0.13.3's data-nonce root bridge (issue #23) retires 'unsafe-eval':
+	// the SDK compiles expressions without the Function path (browser-
+	// verified upstream by TestBrowser_StrictCSPNoEvalConnects), so the
+	// subtree must not grant eval the old RecommendedCSP carried.
+	if strings.Contains(csp, "unsafe-eval") {
+		t.Fatalf("/health CSP still grants 'unsafe-eval' — the data-nonce lane makes it unnecessary: %q", csp)
 	}
 	body, _ := io.ReadAll(resp.Body)
 	page := string(body)
@@ -260,15 +267,39 @@ func TestDashboardEnableWarnsTheFenceIsTheProxy(t *testing.T) {
 	}
 }
 
+// The flight recorder's opt-in must be VISIBLE in the boot journal: an
+// operator hunting the debug seam finds where snapshots land and what
+// the capture policy is, without reading source (the off state stays
+// silent — zero-cost default, nothing to report).
+func TestFlightRecorderEnableLogsTheSeam(t *testing.T) {
+	t.Setenv("WEBPHONE_DEBUG_FLIGHTRECORDER", "1")
+	var buf bytes.Buffer
+	application, err := New(testConfig(t, false), slog.New(slog.NewTextHandler(&buf, nil)))
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if err := application.Shutdown(); err != nil {
+		t.Fatalf("Shutdown: %v", err)
+	}
+	for _, want := range []string{"flight recorder enabled", "traces", "slow_request"} {
+		if !strings.Contains(buf.String(), want) {
+			t.Errorf("flight-recorder boot INFO missing %q; boot log:\n%s", want, buf.String())
+		}
+	}
+}
+
 // TestAppServesMainPageUnderStrictCSP guards the boundary: the shell
 // page keeps webphone's strict app-wide CSP (no unsafe-eval, no nonce)
 // — the relaxed dashboard policy applies to the /health subtree ONLY.
+// An anonymous root navigation now redirects to the login page (whose
+// nonce lane is BY DESIGN), so the probe reads an anonymous DEEP LINK,
+// which renders the same shell session-free.
 func TestAppServesMainPageUnderStrictCSP(t *testing.T) {
 	application := startApp(t, true)
 	server := httptest.NewServer(application.Handler)
 	t.Cleanup(server.Close)
 
-	resp, err := http.Get(server.URL + "/")
+	resp, err := http.Get(server.URL + "/messages")
 	if err != nil {
 		t.Fatal(err)
 	}

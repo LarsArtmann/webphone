@@ -24,24 +24,24 @@
 
 ## a) Triage — all 16 groups
 
-| #  | Sites | Verdict                                                               | Why                             |
-| -- | ----- | --------------------------------------------------------------------- | ------------------------------- |
-| ~~ | 1     | settings.templ:21+23 (dt/dd window)                                   | ACCEPT                          |
-| ~~ | 2     | layout.templ:135/137 + messages.templ:102 (`wp-nav-badge`)            | ACCEPT                          |
-| ~~ | 3     | layout.templ:152/193/198 + settings.templ:40 (T() paragraphs)         | ACCEPT                          |
-| ~~ | 4     | history.templ:46 + voicemail.templ:39 (error + needsAPI)              | EXTRACT (`panelError`) + ACCEPT |
-| ~~ | 5     | vcard.go:160/164 + i18n_test.go:78 (`i++`/`continue`)                 | ACCEPT                          |
-| ~~ | 6     | contacts.templ:58 + messages.templ:98/276                             | ACCEPT                          |
-| ~~ | 7     | idempotency.go:44/54                                                  | ACCEPT                          |
-| ~~ | 8     | fax.templ:40 + messages.templ:233 (`wp-attach`)                       | ACCEPT                          |
-| ~~ | 9     | messages.templ:143/235 (`wp-segcount`)                                | ACCEPT                          |
-| ~~ | 10    | messages.templ:176/179 (error + selfNotice)                           | EXTRACT (`panelError`) + ACCEPT |
-| ~~ | 11    | actions.go:231 + contacts_api.go:129 (`contactSaveFailed(w); return`) | ACCEPT                          |
-| ~~ | 12    | contacts.templ:45 + history.templ:53 (`wp-empty`)                     | ACCEPT                          |
-| ~~ | 13    | fax.templ:20 + messages.templ:31 (`@panelHead` + error, MEDIUM)       | EXTRACT (`panelError`)          |
-| ~~ | 14    | phone.templ:43/72 (`data-i18n` spans)                                 | ACCEPT                          |
-| ~~ | 15    | history.templ:68 + voicemail.templ:72 (row heads)                     | ACCEPT                          |
-| ~~ | 16    | contacts.templ:55/71 (shared vs personal rows)                        | ACCEPT                          |
+| #     | Sites | Verdict                                                               | Why                             |
+| ----- | ----- | --------------------------------------------------------------------- | ------------------------------- |
+| ~~ ~~ | 1     | settings.templ:21+23 (dt/dd window)                                   | ACCEPT                          |
+| ~~ ~~ | 2     | layout.templ:135/137 + messages.templ:102 (`wp-nav-badge`)            | ACCEPT                          |
+| ~~ ~~ | 3     | layout.templ:152/193/198 + settings.templ:40 (T() paragraphs)         | ACCEPT                          |
+| ~~ ~~ | 4     | history.templ:46 + voicemail.templ:39 (error + needsAPI)              | EXTRACT (`panelError`) + ACCEPT |
+| ~~ ~~ | 5     | vcard.go:160/164 + i18n_test.go:78 (`i++`/`continue`)                 | ACCEPT                          |
+| ~~ ~~ | 6     | contacts.templ:58 + messages.templ:98/276                             | ACCEPT                          |
+| ~~ ~~ | 7     | idempotency.go:44/54                                                  | ACCEPT                          |
+| ~~ ~~ | 8     | fax.templ:40 + messages.templ:233 (`wp-attach`)                       | ACCEPT                          |
+| ~~ ~~ | 9     | messages.templ:143/235 (`wp-segcount`)                                | ACCEPT                          |
+| ~~ ~~ | 10    | messages.templ:176/179 (error + selfNotice)                           | EXTRACT (`panelError`) + ACCEPT |
+| ~~ ~~ | 11    | actions.go:231 + contacts_api.go:129 (`contactSaveFailed(w); return`) | ACCEPT                          |
+| ~~ ~~ | 12    | contacts.templ:45 + history.templ:53 (`wp-empty`)                     | ACCEPT                          |
+| ~~ ~~ | 13    | fax.templ:20 + messages.templ:31 (`@panelHead` + error, MEDIUM)       | EXTRACT (`panelError`)          |
+| ~~ ~~ | 14    | phone.templ:43/72 (`data-i18n` spans)                                 | ACCEPT                          |
+| ~~ ~~ | 15    | history.templ:68 + voicemail.templ:72 (row heads)                     | ACCEPT                          |
+| ~~ ~~ | 16    | contacts.templ:55/71 (shared vs personal rows)                        | ACCEPT                          |
 
 Plus the unflagged family pre-judgment the 15:58 report asked for: **`wp-identity` ×3 extracted** (`identityLine`) — same optional-prologue-line shape, shared `identity.from` key, extraction strictly shortens all three sites; **fax.templ:76 `wp-error` span deliberately NOT folded in** — different element and context (per-job inline status inside a muted row, not a panel-level banner).
 

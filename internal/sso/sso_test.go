@@ -8,7 +8,7 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"encoding/base64"
-	"encoding/json"
+	"encoding/json/v2"
 	"log/slog"
 	"maps"
 	"math/big"
@@ -189,7 +189,7 @@ func (s *stubIDP) userinfo(w http.ResponseWriter, _ *http.Request) {
 func writeStubJSON(t *testing.T, w http.ResponseWriter, body any) {
 	t.Helper()
 	w.Header().Set("Content-Type", "application/json")
-	if err := json.NewEncoder(w).Encode(body); err != nil {
+	if err := json.MarshalWrite(w, body); err != nil {
 		t.Errorf("write JSON: %v", err)
 	}
 }
@@ -476,7 +476,7 @@ func TestTokenEndpointRequiresClientSecretBasic(t *testing.T) {
 	if err != nil {
 		t.Fatalf("post-form probe: %v", err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 	if resp.StatusCode != http.StatusUnauthorized {
 		t.Fatalf("client_secret_post must be refused with 401, got %d", resp.StatusCode)
 	}
@@ -493,7 +493,7 @@ func TestTokenEndpointRequiresClientSecretBasic(t *testing.T) {
 	if err != nil {
 		t.Fatalf("raw-secret probe: %v", err)
 	}
-	defer resp2.Body.Close()
+	defer func() { _ = resp2.Body.Close() }()
 	if resp2.StatusCode != http.StatusUnauthorized {
 		t.Fatalf("the raw (padded+newline) secret must be refused with 401, got %d", resp2.StatusCode)
 	}
@@ -579,9 +579,13 @@ func TestDiscoveryCacheExpiresAndFailuresStayUncached(t *testing.T) {
 // The groups claim is journal-only admission evidence (2026-10-24):
 // the audit line names who knocked with which groups, and the groups
 // NEVER reach the mapped identity or anything session-shaped.
+//
+// NOT parallel: the test swaps the PROCESS-GLOBAL default slog handler
+// to its own buffer. Under t.Parallel the sibling sso tests keep
+// logging their own "oidc login claims" lines THROUGH that buffer
+// while this test reads it — the data race run 42308961304 detected.
+// Sequential execution is the only sound way to own a global.
 func TestLoginClaimsAuditLineCarriesGroupsOnlyInTheJournal(t *testing.T) {
-	t.Parallel()
-
 	var buf bytes.Buffer
 	prev := slog.Default()
 	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))

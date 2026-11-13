@@ -51,6 +51,85 @@ cannot pass while the UI still lies about send/receive. Pair it with
 shot, or run the full matrix to see every surface as the off-deployment
 renders it.
 
+Remote/prod tracking extension (2026-11-10): `--base-url https://host`
+points the SAME harness at a RUNNING deployment instead of a local boot
+— no binary, no seeding; the session is minted over POST /api/session
+with WEBPHONE_CAPTURE_EXTENSION / WEBPHONE_CAPTURE_PASSWORD (the PBX
+directory verifies them for real; nothing is ever logged) and injected
+into the browser exactly like the seed cookie. Markers run LENIENT
+(warn + keep the shot) because real data legitimately lacks the seeded
+fixtures, styled-404 surfaces are skipped, and the thread surfaces
+become the first --threads (default 6) LIVE deep links off the real
+list. The browser takes a REAL SIP registration for the run (the wss is
+bridged on a deployed stack) — shots are honest, and the registration
+dies with the run. Shots carry REAL customer data: ui-shots/ is
+gitignored, keep it that way.
+
+Screenshot tracking (`--track`): each run lands in
+`<out-dir>/<host>/<UTC-stamp>/` (history is NEVER wiped), with a per-run
+gallery.html + summary.json (deployment /version, --label, shot ledger)
+and a host-level compare.html diffing the newest run against the
+previous one — per surface: previous | current | pixel-diff heat map
+(pillow; side-by-side only without it) with a changed-% badge. The WHOLE
+page is captured (CDP captureBeyondViewport), not just the 1280x900
+window, so below-the-fold layout rot is visible; `--viewport-only` opts
+out and `--viewport WxH` (repeatable) adds extra passes (e.g. 390x844
+for the mobile layout).
+
+Conditional surfaces (2026-11-10): the matrix follows the deployment, not
+a hardcoded list — `/enroll` joins the anonymous pass when the page
+actually renders the form (probe GET /enroll, never a guessed link),
+`admin` joins when the session's nav carries the admin link, and
+`crm-context` joins when a live thread fragment carries the CRM strip.
+Each conditional surface carries its own marker pin; the styled-404
+skip stays the backstop for capabilities withheld mid-run.
+
+Instrument honesty (2026-11-10): `--self-test` verifies every pure
+helper (shot keys, viewport parsing, link scraping, marker
+normalization, clip math, transcript probe words, prune retention, the
+partial-compare tolerance — pixel math too, when pillow is installed)
+without chromium; `--dry-run` logs in, resolves the surface list and
+exits BEFORE a browser starts (the credential/surface sanity lane);
+a ringing inbound call during a surface shot is detected (`#incoming-call`)
+and that shot is re-taken once after a settle wait, so a run never
+silently archives a banner shot as a clean matrix cell; tracked runs
+additionally snapshot the wire facts (`/config.js` + the Settings
+server section, verbatim) into `wire-facts.json`.
+
+Diff controls (2026-11-10, calibration pending real data — defaults
+preserve today's behavior): `--diff-threshold N` is the per-pixel
+delta bar (default 12), `--badge-bar PCT` the compare badge/noise bar
+(default 0.5%), and `--diff-clip N` enables the height-drift policy:
+when a full-page shot's height changed, both images are cropped to
+their common top N pixels and the diff runs on the clipped region
+(marked `clipped` in summary.json) instead of skipping to
+side-by-side.
+
+TLS smoke recipe (the passkey-smoke shape, local only): the binary
+serves PLAIN HTTP — put a TLS front in front of it
+(`nix shell nixpkgs#caddy`, a Caddyfile with `https://webphone.test:18443`
++ `tls internal` + `reverse_proxy 127.0.0.1:18097`), then run the REMOTE
+lane against it: `--base-url https://webphone.test:18443 --insecure
+--host-map webphone.test=127.0.0.1` (chrome gets the `acceptInsecureCerts`
+capability + a host-resolver rule; the HTTP probes skip verification
+and resolve through the same map). This is
+the only lane where verification may be skipped — NEVER point
+--insecure at a production host. Note the login lane answers 429 when
+rate limited and stays MANUAL by ruling: no auto-retry, a retry loop
+against the per-IP limiter locks the operator out.
+
+Fixture recipe (bare-boot remote lane): the local boot writes its
+config to `/tmp/wp-visual-data/ui-capture-config.json` and seeds
+extension 1001 with password `pw`; a manual boot with
+`WEBPHONE_CONFIG=/tmp/wp-visual-data/ui-capture-config.json` on the
+same port is a valid --base-url target for exercising the remote lane
+without touching a real deployment.
+
+Partial runs are compared gracefully (pinned by --self-test): a run
+dir missing shots (interrupted pass) diffs the shots it has and
+renders explicit `no previous`/`no current` boxes for the rest —
+an interrupted run never corrupts the chain.
+
 Budget decision (documented, 2026-10-02): this is a LOCAL harness, NOT a
 flake check — headless chromium cannot run inside a nix build sandbox
 without a KVM VM, and a KVM browser VM here would duplicate the stack's
@@ -60,26 +139,48 @@ relative times make byte-goldens flake by design.
 
 Run (from the repo root):
   nix build .#webphone --out-link /tmp/wp-visual-bin
-  nix shell nixpkgs#chromium nixpkgs#python312.withPackages(ps: [ ps.selenium ]) \\
+  nix shell nixpkgs#chromium nixpkgs#chromedriver \
+    nixpkgs#python312.withPackages(ps: [ ps.selenium ps.pillow ]) \
     --command python3 scripts/ui-capture.py --binary /tmp/wp-visual-bin/bin/webphone
 
-Output: ui-shots/<n>-<name>-<light|dark>.png (up to 24 files).
+Remote (prod) tracked run:
+  WEBPHONE_CAPTURE_EXTENSION=1001 WEBPHONE_CAPTURE_PASSWORD=... \
+  nix shell nixpkgs#chromium nixpkgs#chromedriver \
+    nixpkgs#python312.withPackages(ps: [ ps.selenium ps.pillow ]) \
+    --command python3 scripts/ui-capture.py --base-url https://pbx.artmann.tech --track
+
+Output: ui-shots/<n>-<name>-<light|dark>.png (up to 24 files); with
+--track: ui-shots/<host>/<UTC-stamp>/ plus gallery.html, summary.json
+and a host-level compare.html.
 """
 
 from __future__ import annotations
 
 import argparse
+import base64
 import glob
+import html
 import http.client
 import json
 import os
+import re
+import shutil
+import socket
+import ssl
 import subprocess  # nosec B404 - deliberately spawns the local webphone binary under test
 import sys
+import tempfile
 import threading
 import time
+import urllib.error
 import urllib.parse
 import urllib.request
+import webbrowser
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+# TLS verification context: None = verify (every real target). --insecure
+# swaps in an unverified context for the LOCAL TLS-front smoke only.
+_ssl_context: ssl.SSLContext | None = None
 
 SEED_THREADS = [
     ("+441632960961", "Contract question", "Can you send the revised contract?"),
@@ -118,6 +219,7 @@ TABS = [
     ("voicemail", "/voicemail"),
     ("history", "/history"),
     ("history-transcript", "/history?q=revenue"),  # seeded transcript search
+    ("reports", "/reports"),
     ("contacts", "/contacts"),
     ("settings", "/settings"),
     ("not-found", "/nope"),  # the styled 404: a real page, shot like any other
@@ -127,7 +229,9 @@ TABS = [
 # caught the thread deep link rendering the messages list — the shots
 # were byte-identical until the fix). A (selector, text) tuple also
 # pins rendered copy inside the surface.
-SURFACE_MARKERS = {
+SURFACE_MARKERS: dict[
+    str, str | tuple[str, str | None] | list[tuple[str, str | None]]
+] = {
     "messages": ".wp-thread-row",  # seeded threads render rows
     "thread": "#wp-thread-head",  # the open conversation head
     # The two halves of the CRM integration, asserted in the DOM: the caller
@@ -147,31 +251,94 @@ SURFACE_MARKERS = {
     "voicemail": "#voicemail-panel",
     "history": "#history-panel",
     "history-transcript": "[data-copy-transcript]",  # seeded transcript section
+    # Reports renders two honest shapes: the dashboard grid when the
+    # deployment fronts a phone API, the needsAPI notice when it does not
+    # (the local fixture has no CDR source — the grid's visual evidence
+    # rides a real-deployment --track run). Either satisfies the marker,
+    # the same stance the fax surface takes.
+    "reports": ".wp-reports-grid, .wp-empty",
     "contacts": ".wp-export-link",  # unconditional in the panel
     "settings": ("#settings-panel dd .wp-service-on", "openai-compatible"),
     "not-found": (".wp-panel.wp-notfound", "404 — page not found"),
 }
 
-# Anonymous surfaces (2026-10-25): shot per theme BEFORE the session'd
-# tabs, with the session cookie deleted — the login card only renders
-# pre-session, and /login bounces a live session home (303). Render-only
+# F20 split Settings into My preferences / My data / a COLLAPSED server
+# section. The server facts (the ASR provider row among them) are in the
+# DOM but not visible until the details expands — Selenium's .text sees
+# only visible text, so the copy assert needs the section opened first.
+SURFACE_EXPAND = {
+    "settings": "details.wp-settings-server > summary",
+}
+
+# Anonymous surfaces (2026-10-25; front-door update 2026-11-11): shot per
+# theme BEFORE the session'd tabs, with the session cookie deleted — the
+# anonymous root redirects to /login (the one front door; the island card
+# is gone), and /login bounces a live session home (303). Render-only
 # passkey config (see main()); no ceremony ever runs, so the rp_id never
 # faces a browser — it only has to pass boot validation.
-ANONYMOUS_SURFACES = [
-    ("login-card", "/"),
+ANONYMOUS_SURFACES: list[tuple[str, str | None]] = [
     ("login-page", "/login"),
+    ("login-extension-form", "/login"),
 ]
-ANONYMOUS_MARKERS = {
-    # The card's anchor text is the island i18n default (server-rendered,
-    # swapped client-side); the library page's copy is the library's —
-    # pin the WIRE id only, not prose we do not own.
-    "login-card": ("#passkey-login", "Sign in with passkey"),
+ANONYMOUS_MARKERS: dict[str, tuple[str, str | None]] = {
+    # The passkey ceremony section (library-owned markup, passkey-ON
+    # boots only) and webphone's own extension + password section
+    # (#login-form, present in EVERY mode) — pin the WIRE ids, not prose
+    # we do not own.
     "login-page": ("#lp-login-form", None),
+    "login-extension-form": ("#login-form", None),
+    # The token-gated enroll page (conditional: shot only when the
+    # deployment renders the form — see probe_enroll).
+    "enroll": ("#enroll-form", None),
 }
 # Selectors that must NOT exist on a surface. Only --fax-off populates
 # an entry (the fax surface must not carry the compose form while the
 # boot declares send=false); the loop asserts absence after the pins.
 SURFACE_ABSENT_MARKERS: dict[str, tuple[str, ...]] = {}
+
+# A ringing inbound call mid-pass (the island banner, hidden when idle):
+# the ring guard re-shoots the affected cell once instead of archiving
+# a banner shot as a clean matrix cell.
+RINGING_SELECTOR = "#incoming-call:not([hidden])"
+
+
+def ringing_detected(driver) -> bool:
+    """True when the inbound-call banner is visible in this driver."""
+    return bool(driver.find_elements("css selector", RINGING_SELECTOR))
+
+
+def ring_guard_reshoot(
+    driver,
+    shoot,
+    target: str,
+    full_page: bool,
+    ringing: bool | None = None,
+) -> None:
+    """The ring guard, in its ONE home: re-shoot the cell once when the
+    inbound-call banner was visible at capture time, then settle-wait so
+    the second shot outraces the banner (idle cells keep the first shot
+    untouched). `ringing` overrides the DOM probe for the self-test (a
+    forced guarded state without a real inbound call)."""
+
+    def probe(d) -> bool:
+        return ringing if ringing is not None else ringing_detected(d)
+
+    if not probe(driver):
+        return
+    print("warn: an inbound call is ringing — re-shooting once after a settle wait")
+    time.sleep(3)
+    shoot(driver, target, full_page)
+    if probe(driver):
+        print(
+            "warn: the banner is STILL up after the settle wait — the "
+            "re-shot cell is archived with the guard's warn in the log"
+        )
+
+
+# Remote-only conditional surfaces resolve markers at resolve time
+# (thread-NN, crm-context on real data); the admin panel's wire id is
+# unconditional markup of the admin surface itself.
+SURFACE_MARKERS["admin"] = "#admin-panel"
 
 
 FAKE_CRM_TOKEN = "ui-capture-crm-token"  # nosec B105 - LOCAL-ONLY visual harness; never a real credential
@@ -195,7 +362,7 @@ FAKE_CRM_CONTEXT = {
     "next_task": {"title": "Send the revised offer", "due_at": "2027-11-02T09:00:00Z"},
     "last_activity_at": "2026-10-24T11:03:00Z",
 }
-FAKE_CRM_LOOKUP = {
+FAKE_CRM_LOOKUP: dict[str, object] = {
     "results": [
         {
             "id": FAKE_CRM_CONTACT_ID,
@@ -270,9 +437,10 @@ def start_fake_crm() -> tuple[str, str]:
     """
     server = ThreadingHTTPServer(("127.0.0.1", 0), _FakeCRMHandler)
     threading.Thread(target=server.serve_forever, daemon=True).start()
-    host, port = server.server_address[0], server.server_address[1]
+    host, port = server.server_address[:2]
+    host_text = host if isinstance(host, str) else host.decode()
 
-    return f"http://{host}:{port}", FAKE_CRM_TOKEN
+    return f"http://{host_text}:{port}", FAKE_CRM_TOKEN
 
 
 def seed(base: str) -> tuple[str | None, str | None, str]:
@@ -364,17 +532,15 @@ def seed(base: str) -> tuple[str | None, str | None, str]:
     # Thread paths: the list page's deep links, first (newest of the two
     # plain threads) and last (the attachment thread).
     html = opener.open(base + "/messages").read().decode()
-    marker = 'hx-get="/partials/messages/'
-    starts = [m.start() for m in re.finditer(marker, html)]
+    links = scrape_thread_links(html)
 
     def link_at(idx: int) -> str | None:
         # Skips past 'hx-get="/partials' so the slice keeps the deep-link
         # shape "/messages/<thread-id>" (a leading slash driver.get needs).
-        start = starts[idx] + len('hx-get="/partials')
-        return html[start : html.find('"', start)]
+        return links[idx] if idx < len(links) else None
 
-    thread_path = link_at(0) if starts else None
-    attach_thread_path = link_at(-1) if len(starts) > 1 else None
+    thread_path = link_at(0) if links else None
+    attach_thread_path = link_at(-1) if len(links) > 1 else None
     # The minted session cookie rides back to the caller: the browser
     # gets it INJECTED (driver.add_cookie) instead of replaying the
     # island's login — the island gates its panel on the SIP WebSocket,
@@ -386,27 +552,762 @@ def seed(base: str) -> tuple[str | None, str | None, str]:
     return thread_path, attach_thread_path, session
 
 
-def capture(
+def login_remote(base: str, extension: str, password: str) -> str:
+    """Mint a session over POST /api/session (the island's own flow) and
+    return the webphone_session cookie value; "" on any refusal.
+
+    The credentials verify against the REAL PBX directory on a deployment,
+    so a wrong pair is a hard, named stop — never a retry loop (the login
+    lane is rate limited per IP and a loop would lock the operator out).
+    """
+    jar = urllib.request.HTTPCookieProcessor()
+    handler = (
+        urllib.request.HTTPSHandler(context=_ssl_context) if _ssl_context else None
+    )
+    opener = urllib.request.build_opener(*([handler] if handler else []), jar)
+    try:
+        page = opener.open(base + "/", timeout=30).read().decode("utf-8", "replace")
+    except (OSError, http.client.HTTPException) as exc:
+        print(f"login: cannot reach {base} ({exc})", file=sys.stderr)
+        return ""
+    token = re.search(r'name="csrf-token" content="([^"]+)"', page)
+    if token is None:
+        print(
+            f"login: {base}/ carries no csrf meta token — not a webphone page?",
+            file=sys.stderr,
+        )
+        return ""
+    body = json.dumps({"extension": extension, "password": password}).encode()
+    req = urllib.request.Request(base + "/api/session", data=body, method="POST")
+    req.add_header("Content-Type", "application/json")
+    req.add_header("X-CSRF-Token", token.group(1))
+    try:
+        opener.open(req, timeout=30)
+    except urllib.error.HTTPError as exc:
+        if exc.code in (401, 403):
+            print(
+                f"login: refused ({exc.code}): WEBPHONE_CAPTURE_EXTENSION / "
+                "WEBPHONE_CAPTURE_PASSWORD failed the directory verification",
+                file=sys.stderr,
+            )
+        elif exc.code == 429:
+            print(
+                "login: rate limited (429) — wait a minute and retry",
+                file=sys.stderr,
+            )
+        else:
+            print(f"login: HTTP {exc.code} from /api/session", file=sys.stderr)
+        return ""
+    for cookie in jar.cookiejar:
+        if cookie.name == "webphone_session" and cookie.value:
+            return cookie.value
+    print("login: no webphone_session cookie was minted", file=sys.stderr)
+    return ""
+
+
+def _get(base: str, path: str, session: str | None = None) -> str:
+    req = urllib.request.Request(base + path)
+    if session:
+        req.add_header("Cookie", f"webphone_session={session}")
+    with urllib.request.urlopen(req, timeout=30, context=_ssl_context) as resp:  # nosec B310 - read-only fetch of the server under capture
+        return resp.read().decode("utf-8", "replace")
+
+
+def resolve_remote_surfaces(base: str, session: str, threads_n: int) -> dict:
+    """Build the surface list from LIVE data: the first `threads_n` thread
+    deep links off the real list, plus the static tabs and the CONDITIONAL
+    surfaces the deployment proves (CRM strip in a thread fragment, admin
+    in the nav). Returns {"surfaces", "threads_found", "threads_requested"}
+    and prints the resolved notes so the operator sees exactly what will be
+    shot."""
+    links: list[str] = []
+    admin = False
+    try:
+        page = _get(base, "/messages", session)
+        links = scrape_thread_links(page)
+        admin = has_admin_nav(page)
+    except (OSError, http.client.HTTPException) as exc:
+        print(
+            f"resolve: /messages unreadable ({exc}) — thread surfaces skipped",
+            file=sys.stderr,
+        )
+    if admin:
+        print(
+            "admin: the session's nav carries the admin link — /admin joins the matrix"
+        )
+    if 0 < len(links) < threads_n:
+        print(
+            f"note: {len(links)} live thread(s) < --threads {threads_n} — shooting all of them"
+        )
+    surfaces: list[tuple[str, str | None]] = [("messages", "/messages")]
+    chosen = links[:threads_n]
+    for idx, link in enumerate(chosen, 1):
+        surfaces.append((f"thread-{idx:02d}", link))
+        # The open-conversation head is the same evidence pin the local
+        # "thread" surface uses — a live thread page must show it; when real
+        # data shifts beneath a tracked run, leniency degrades to a warning.
+        SURFACE_MARKERS[f"thread-{idx:02d}"] = "#wp-thread-head"
+    crm_link: str | None = None
+    for idx, link in enumerate(chosen, 1):
+        try:
+            fragment = _get(base, "/partials" + link, session)
+        except (OSError, http.client.HTTPException):
+            continue
+        if "data-transcribe-src" in fragment:
+            print(f"media: thread-{idx:02d} carries transcribable audio ({link})")
+        if crm_link is None and fragment_has_crm_strip(fragment):
+            crm_link = link
+    if crm_link:
+        # One home for the pin: the real CRM strip's wire id, selector-only
+        # (the local fixture's copy pins do not hold against real Kith data).
+        print(
+            f"crm: thread fragment {crm_link} carries #wp-crm-context — crm-context joins"
+        )
+        SURFACE_MARKERS["crm-context"] = "#wp-crm-context"
+    surfaces += [("fax", "/fax"), ("voicemail", "/voicemail"), ("history", "/history")]
+    surfaces += [("reports", "/reports")]
+    try:
+        history_html = _get(base, "/history", session)
+        if "data-copy-transcript" in history_html:
+            # A dense shot needs a q= that actually matches: scrape a word
+            # out of the first transcript body instead of guessing a term.
+            word = transcript_probe_word(history_html)
+            path = f"/history?q={urllib.parse.quote(word)}" if word else "/history"
+            surfaces.append(("history-transcript", path))
+            if word:
+                print(
+                    f"history: dense search rides q={word!r} (scraped from a live transcript)"
+                )
+        else:
+            print(
+                "note: no call transcripts on this deployment — "
+                "history-transcript skipped"
+            )
+    except (OSError, http.client.HTTPException):
+        pass
+    surfaces += [
+        ("contacts", "/contacts"),
+        ("settings", "/settings"),
+    ]
+    if crm_link:
+        surfaces.append(("crm-context", crm_link))
+    if admin:
+        surfaces.append(("admin", "/admin"))
+    surfaces += [("not-found", "/nope")]
+    print("surfaces: " + ", ".join(name for name, _ in surfaces))
+    return {
+        "surfaces": surfaces,
+        "threads_found": len(links),
+        "threads_requested": threads_n,
+    }
+
+
+def fetch_version_info(base: str) -> dict | None:
+    """The deployment's /version (open route) as {"version", "commit"};
+    None when fenced or absent."""
+    try:
+        with urllib.request.urlopen(
+            base + "/version", timeout=10, context=_ssl_context
+        ) as resp:  # nosec B310 - read-only version probe
+            payload = json.loads(resp.read())
+    except (OSError, ValueError, http.client.HTTPException):
+        return None
+    info = {"version": str(payload.get("version") or "") or None}
+    commit = str(payload.get("commit") or "").strip()
+    info["commit"] = commit[:12] if commit else None
+    return info if info["version"] or info["commit"] else None
+
+
+def apply_hover(driver, selector: str | None, where: str) -> None:
+    """Move the pointer onto the first selector match so :hover/:active
+    state layers land in the shot (--hover). A surface without a match is
+    a silent no-op — hover states are additive evidence, not assertions."""
+    if not selector:
+        return
+    try:
+        els = driver.find_elements("css selector", selector)
+        if els:
+            from selenium.webdriver.common.action_chains import ActionChains
+
+            ActionChains(driver).move_to_element(els[0]).perform()
+            time.sleep(0.15)  # settle: the layer's transition is 150ms
+    except Exception as exc:  # noqa: BLE001 - harness-grade: hover is best-effort
+        print(f"warn: {where}: hover {selector!r} skipped ({exc.__class__.__name__})")
+
+
+def apply_seed_class(driver, selector: str, cls: str, where: str) -> None:
+    """Add cls to the first selector match so a JS-created state (e.g. the
+    phone-tab focus class) renders in the shot without driving taps
+    (--seed-class). The class must be re-applied per shot: every navigation
+    rebuilds the DOM. A missing match is a printed warning — seeds are
+    additive evidence like hovers, not assertions."""
+    try:
+        els = driver.find_elements("css selector", selector)
+        if not els:
+            print(f"warn: {where}: seed-class {selector!r} matched nothing")
+            return
+        driver.execute_script("arguments[0].classList.add(arguments[1]);", els[0], cls)
+        time.sleep(0.1)  # settle: let the state's own transition start
+    except Exception as exc:  # noqa: BLE001 - harness-grade: seeds are best-effort
+        print(
+            f"warn: {where}: seed-class {selector!r} skipped ({exc.__class__.__name__})"
+        )
+
+
+def shoot(driver, target: str, full_page: bool) -> None:
+    """Save a screenshot; full_page captures the ENTIRE document via CDP
+    (captureBeyondViewport), not just the window — below-the-fold layout
+    rot is exactly what this harness exists to expose."""
+    if not full_page:
+        driver.save_screenshot(target)
+        return
+    shot = driver.execute_cdp_cmd(
+        "Page.captureScreenshot",
+        {"format": "png", "captureBeyondViewport": True},
+    )
+    with open(target, "wb") as fh:
+        fh.write(base64.b64decode(shot["data"]))
+
+
+def shot_key(path: str) -> str:
+    """`01-messages-light.png` -> `messages-light` — the STABLE compare key
+    (numbering drifts between runs, the surface name does not)."""
+    match = re.match(r"^\d+-(.+)\.png$", os.path.basename(path))
+    return match.group(1) if match else os.path.splitext(os.path.basename(path))[0]
+
+
+def pixel_diff(
+    prev_path: str,
+    cur_path: str,
+    diff_path: str,
+    threshold: int = 12,
+    clip: int | None = None,
+) -> tuple[float, bool] | None:
+    """Heat-map the changed pixels into diff_path; returns (changed
+    fraction, clipped) — or None without pillow / on an undiffable pair.
+    With --diff-clip set, a height drift crops both shots to their common
+    top-N region and diffs there (clipped=True, the summary marks it);
+    without the bar a size mismatch stays a skip (side-by-side carries it)."""
+    try:
+        from PIL import Image, ImageChops, ImageEnhance
+    except ImportError:
+        return None
+    prev = Image.open(prev_path).convert("RGB")
+    cur = Image.open(cur_path).convert("RGB")
+    box = clip_box(prev.size, cur.size, clip)
+    if box is None:
+        return None
+    clipped = prev.size != cur.size
+    if clipped:
+        prev = prev.crop((0, 0, box[0], box[1]))
+        cur = cur.crop((0, 0, box[0], box[1]))
+    grey = ImageChops.difference(prev, cur).convert("L")
+    hist = grey.histogram()
+    total = box[0] * box[1]
+    changed = sum(hist[threshold:]) / total
+    mask = grey.point(lambda v: 255 if v >= threshold else 0)
+    faded = ImageEnhance.Brightness(prev).enhance(0.35)
+    heat = Image.composite(Image.new("RGB", prev.size, (235, 20, 60)), faded, mask)
+    os.makedirs(os.path.dirname(diff_path), exist_ok=True)
+    heat.save(diff_path)
+    return changed, clipped
+
+
+_REPORT_CSS = """<!doctype html><html><head><meta charset="utf-8">
+<title>webphone shots</title><style>
+body{font:14px/1.4 system-ui,sans-serif;margin:16px;background:#111;color:#eee}
+h1{font-size:18px;margin:0 0 4px} p{color:#999;margin:4px 0 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:16px}
+figure{margin:0;background:#1c1c1c;padding:8px;border-radius:8px}
+img{width:100%;display:block;border:1px solid #333}
+figcaption{color:#bbb;padding-top:6px;font-size:12px}
+section{margin-bottom:24px}
+section h2{font-size:15px;margin:0 0 8px}
+.row{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.badge{background:#c8143c;color:#fff;border-radius:4px;padding:1px 6px;font-size:12px;margin-left:6px}
+.badge.new{background:#287f6c}
+.size{color:#8899a6;font-weight:normal;font-size:12px;margin-left:6px}
+.clipped{background:#8a6d1a;color:#fff;border-radius:4px;padding:1px 6px;font-size:12px;margin-left:6px}
+.missing{color:#666;border:1px dashed #444;border-radius:6px;padding:24px;text-align:center}
+</style></head><body>
+"""
+
+
+def build_gallery(
+    run_dir: str,
     base: str,
-    out_dir: str,
-    thread_path: str | None,
-    attach_thread_path: str | None,
-    session: str,
-    only: set[str] | None = None,
-    crm_on: bool = False,
-) -> int:
-    # Selenium lives only in the capture env (see the AGENTS run recipe
-    # and mypy.ini) — never in the lint shell.
+    version: str | None,
+    label: str | None,
+    wire_note: str | None = None,
+) -> None:
+    parts = [
+        f"<h1>{html.escape(base)}</h1><p>run {html.escape(os.path.basename(run_dir))}"
+    ]
+    if version:
+        parts.append(f" · {html.escape(version)}")
+    if label:
+        parts.append(f" · {html.escape(label)}")
+    if wire_note:
+        parts.append(f" · {html.escape(wire_note)}")
+    parts.append("</p>" + '<div class="grid">')
+    for path in sorted(glob.glob(os.path.join(run_dir, "*.png"))):
+        rel = os.path.basename(path)
+        key = shot_key(path)
+        parts.append(
+            f'<figure><a href="{html.escape(rel)}"><img src="{html.escape(rel)}" '
+            f'loading="lazy" alt="{html.escape(key)}"></a>'
+            f"<figcaption>{html.escape(key)}</figcaption></figure>"
+        )
+    parts.append("</div></body></html>")
+    with open(os.path.join(run_dir, "gallery.html"), "w", encoding="utf-8") as fh:
+        fh.write("".join(parts))
+
+
+def build_compare(
+    host_dir: str,
+    prev_dir: str,
+    cur_dir: str,
+    version: str | None,
+    label: str | None,
+    changed: dict[str, float],
+    badge_bar: float = 0.5,
+    clipped_keys: set[str] | None = None,
+) -> None:
+    """One compare.html per host: the newest run against the previous one,
+    per surface — previous | current | diff, worst offenders first, with
+    byte-size deltas and links into both run galleries."""
+
+    def _collect(run: str) -> dict[str, str]:
+        return {
+            shot_key(p): os.path.basename(p)
+            for p in glob.glob(os.path.join(run, "*.png"))
+        }
+
+    prev_files, cur_files = _collect(prev_dir), _collect(cur_dir)
+    clipped_keys = clipped_keys or set()
+    prev_version = None
+    try:
+        with open(os.path.join(prev_dir, "summary.json"), encoding="utf-8") as fh:
+            prev_version = json.load(fh).get("version")
+    except (OSError, ValueError):
+        pass
+
+    def _img(run: str, fname: str | None, caption: str) -> str:
+        if not fname:
+            return f'<div class="missing">no {html.escape(caption)}</div>'
+        src = html.escape(os.path.relpath(os.path.join(run, fname), host_dir))
+        return (
+            f'<figure><img src="{src}" loading="lazy" alt="{html.escape(caption)}">'
+            f"<figcaption>{html.escape(caption)}</figcaption></figure>"
+        )
+
+    def _badge(key: str, clipped: bool = False) -> str:
+        mark = '<span class="clipped">clipped</span>' if clipped else ""
+        if key not in prev_files:
+            return f'<span class="badge new">new</span>{mark}'
+        pct = changed.get(key)
+        if pct is not None and pct >= badge_bar:
+            return f'<span class="badge">{pct:.2f}%</span>{mark}'
+        return mark
+
+    def _sizes(key: str) -> str:
+        prev_f, cur_f = prev_files.get(key), cur_files.get(key)
+        if not prev_f or not cur_f:
+            return ""
+        prev_n = os.path.getsize(os.path.join(prev_dir, prev_f))
+        cur_n = os.path.getsize(os.path.join(cur_dir, cur_f))
+        delta = (cur_n - prev_n) / prev_n * 100 if prev_n else 0
+        return (
+            f'<span class="size">{_bytes_text(prev_n)} → {_bytes_text(cur_n)} '
+            f"({delta:+.1f}%)</span>"
+        )
+
+    keys = sorted(
+        set(prev_files) | set(cur_files),
+        key=lambda k: (-changed.get(k, 0.0), k),
+    )
+    head = (
+        f"<h1>UI diff — {html.escape(os.path.basename(prev_dir))} → "
+        f"{html.escape(os.path.basename(cur_dir))}</h1><p>"
+    )
+    versions = " · ".join(v for v in (prev_version, version) if v)
+    if versions:
+        head += html.escape(versions) + " · "
+    if label:
+        head += html.escape(label) + " · "
+    head += html.escape(os.path.basename(host_dir)) + "</p>"
+    head += (
+        f'<p><a href="{html.escape(os.path.relpath(prev_dir, host_dir))}/gallery.html">'
+        f'previous gallery</a> · <a href="{html.escape(os.path.relpath(cur_dir, host_dir))}'
+        f'/gallery.html">current gallery</a></p>'
+    )
+    sections = []
+    for key in keys:
+        diff_rel = f"diffs/{key}.png" if key in changed else None
+        sections.append(
+            f"<section><h2>{html.escape(key)}{_badge(key, key in clipped_keys)}{_sizes(key)}</h2>"
+            "<div class='row'>"
+            + _img(prev_dir, prev_files.get(key), "previous")
+            + _img(cur_dir, cur_files.get(key), "current")
+            + _img(cur_dir, diff_rel, "diff")
+            + "</div></section>"
+        )
+    with open(os.path.join(host_dir, "compare.html"), "w", encoding="utf-8") as fh:
+        fh.write(_REPORT_CSS + head + "".join(sections) + "</body></html>")
+
+
+def track(
+    run_dir: str,
+    base: str,
+    facts: dict | None,
+    label: str | None,
+    full_page: bool,
+    viewports: list[tuple[int, int]],
+    ledger: list[dict[str, str]] | None = None,
+    wire: dict[str, str | None] | None = None,
+    threads: dict | None = None,
+    diff_threshold: int = 12,
+    badge_bar: float = 0.5,
+    diff_clip: int | None = None,
+    prune_keep: int | None = None,
+) -> str | None:
+    """History + diff bookkeeping for --track runs: summary.json, the
+    per-run gallery, and the host-level compare against the previous run.
+    Version facts are fetched by main() while the server is still up (the
+    local boot is already torn down by the time this runs). Returns the
+    produced HTML path (compare when a previous run exists, else the
+    gallery) so --open can raise it."""
+    version = (facts or {}).get("version")
+    host_dir = os.path.dirname(run_dir)
+    runs = _run_dirs(host_dir)
+    run_id = os.path.basename(run_dir)
+    earlier = [d for d in runs if d < run_id]
+    prev_name = earlier[-1] if earlier else None
+    prev_dir = os.path.join(host_dir, prev_name) if prev_name else None
+    prev_by_key: dict[str, str] = {}
+    if prev_dir:
+        for path in glob.glob(os.path.join(prev_dir, "*.png")):
+            prev_by_key[shot_key(path)] = path
+    urls = {entry["key"]: entry["url"] for entry in ledger or []}
+    shots = []
+    diffed: list[tuple[str, float]] = []
+    clipped_keys: set[str] = set()
+    # The layout-proof artifact (zz-thread-collapsed) is evidence for the
+    # proof, not a matrix cell — it must not enter the diff ledger.
+    matrix = [
+        p
+        for p in sorted(glob.glob(os.path.join(run_dir, "*.png")))
+        if not os.path.basename(p).startswith("zz-")
+    ]
+    for path in matrix:
+        key = shot_key(path)
+        entry: dict[str, object] = {
+            "key": key,
+            "file": os.path.basename(path),
+            "url": urls.get(key),
+            "bytes": os.path.getsize(path),
+            "prev_file": None,
+            "changed_pct": None,
+            "diff_file": None,
+            "clipped": False,
+        }
+        prev_path = prev_by_key.get(key)
+        if prev_path:
+            entry["prev_file"] = os.path.relpath(prev_path, run_dir)
+            diff_path = os.path.join(run_dir, "diffs", f"{key}.png")
+            result = pixel_diff(
+                prev_path, path, diff_path, threshold=diff_threshold, clip=diff_clip
+            )
+            if result is None:
+                entry["size_match"] = False
+                print(
+                    f"diff: {key} — size mismatch beyond the clip bar; side-by-side only"
+                )
+            else:
+                changed_pct, clipped = result
+                entry["changed_pct"] = round(changed_pct * 100, 3)
+                entry["diff_file"] = os.path.relpath(diff_path, run_dir)
+                entry["size_match"] = True
+                entry["clipped"] = clipped
+                if clipped:
+                    clipped_keys.add(key)
+                    print(
+                        f"diff: {key} — height drifted; diffed the common top {diff_clip}px (clipped)"
+                    )
+                diffed.append((key, changed_pct * 100))
+        shots.append(entry)
+    if wire is not None:
+        with open(
+            os.path.join(run_dir, "wire-facts.json"), "w", encoding="utf-8"
+        ) as fh:
+            json.dump(wire, fh, indent=2, sort_keys=True)
+            fh.write("\n")
+    summary = {
+        "run": run_id,
+        "base": base,
+        "version": version,
+        "commit": (facts or {}).get("commit"),
+        "label": label,
+        "full_page": full_page,
+        "viewports": [f"{w}x{h}" for w, h in viewports],
+        "prev_run": prev_name,
+        "threads_requested": (threads or {}).get("threads_requested"),
+        "threads_found": (threads or {}).get("threads_found"),
+        "wire_facts": {
+            "config_js": wire is not None and wire.get("config_js") is not None,
+            "settings_server_html": wire is not None
+            and wire.get("settings_server_html") is not None,
+        },
+        "shots": shots,
+    }
+    with open(os.path.join(run_dir, "summary.json"), "w", encoding="utf-8") as fh:
+        json.dump(summary, fh, indent=2, sort_keys=True)
+        fh.write("\n")
+    wire_note = None
+    if wire is not None:
+        bits = ["config.js ✓" if wire.get("config_js") else "config.js —"]
+        bits.append(
+            "settings server section ✓"
+            if wire.get("settings_server_html")
+            else "settings server section —"
+        )
+        wire_note = "wire: " + ", ".join(bits)
+    build_gallery(run_dir, base, version, label, wire_note)
+    print(f"gallery: {os.path.join(run_dir, 'gallery.html')}")
+    produced = os.path.join(run_dir, "gallery.html")
+    if prev_dir:
+        build_compare(
+            host_dir,
+            prev_dir,
+            run_dir,
+            version,
+            label,
+            dict(diffed),
+            badge_bar=badge_bar,
+            clipped_keys=clipped_keys,
+        )
+        print(f"compare: {os.path.join(host_dir, 'compare.html')} (vs {prev_name})")
+        produced = os.path.join(host_dir, "compare.html")
+    else:
+        print("compare: no previous run — first run in this history")
+    diffed.sort(key=lambda pair: pair[1], reverse=True)
+    notable = [(key, pct) for key, pct in diffed if pct >= badge_bar]
+    print(f"track: {len(shots)} shot(s), {len(diffed)} differ from {prev_name or '—'}")
+    for key, pct in notable[:10]:
+        print(f"  changed {pct:5.2f}%  {key}")
+    if diffed and not notable:
+        print(f"  nothing above the {badge_bar:g}% noise bar")
+    print(f"history: {len(runs)} run(s) under {host_dir}")
+    if prune_keep is not None:
+        removed = prune_runs(host_dir, prune_keep)
+        if removed:
+            print(f"prune: removed {len(removed)} old run(s): {', '.join(removed)}")
+        else:
+            print(f"prune: nothing to remove (keep {prune_keep})")
+    return produced
+
+
+def _parse_viewport(text: str) -> tuple[int, int]:
+    width, _, height = text.lower().partition("x")
+    if not width.isdigit() or not height.isdigit():
+        raise SystemExit(
+            f"bad --viewport {text!r} (want WxH, e.g. 1280x900 or 390x844)"
+        )
+    return int(width), int(height)
+
+
+def _parse_hover_map(pairs: list[str]) -> dict[str, str]:
+    """`--hover-map SURFACE=SELECTOR` (repeatable) -> {surface: selector}.
+    Splits on the FIRST '=' so CSS selectors may carry their own '=';
+    a value without a surface key is a SystemExit — the key is the point.
+    Duplicate surfaces: last wins."""
+    mapping: dict[str, str] = {}
+    for pair in pairs:
+        surface, sep, selector = pair.partition("=")
+        if not sep or not surface or not selector:
+            raise SystemExit(
+                f"bad --hover-map {pair!r} (want SURFACE=SELECTOR, "
+                "e.g. 'messages=.wp-thread-rowwrap')"
+            )
+        mapping[surface] = selector
+    return mapping
+
+
+def _parse_class_seeds(pairs: list[str]) -> list[tuple[str, str]]:
+    """`--seed-class SELECTOR=CLASS` (repeatable) -> [(selector, class)] in
+    given order (order matters: later seeds can compose earlier states)."""
+    seeds: list[tuple[str, str]] = []
+    for pair in pairs:
+        selector, sep, cls = pair.partition("=")
+        if not sep or not selector or not cls:
+            raise SystemExit(
+                f"bad --seed-class {pair!r} (want SELECTOR=CLASS, "
+                "e.g. 'html=wp-phone-focus')"
+            )
+        seeds.append((selector, cls))
+    return seeds
+
+
+def _sanitize_dirname(base: str) -> str:
+    return re.sub(
+        r"[^A-Za-z0-9._-]+", "_", urllib.parse.urlsplit(base).netloc or "local"
+    )
+
+
+def scrape_thread_links(page: str) -> list[str]:
+    """The /messages deep links off a rendered list page, in list order,
+    deduped — the ONE link-scrape home (seed() and the remote resolver
+    share it)."""
+    marker = 'hx-get="/partials/messages/'
+    links: list[str] = []
+    for match in re.finditer(re.escape(marker), page):
+        start = match.start() + len('hx-get="/partials')
+        link = page[start : page.find('"', start)]
+        if link and link not in links:
+            links.append(link)
+    return links
+
+
+def normalize_pins(pins) -> list[tuple[str, str | None]]:
+    """A marker is a selector, a (selector, copy) tuple, or a LIST of
+    those pins — one normalized shape for the pin loop."""
+    if isinstance(pins, str):
+        return [(pins, None)]
+    if isinstance(pins, tuple):
+        return [pins]
+    return list(pins)
+
+
+def clip_box(
+    size_a: tuple[int, int], size_b: tuple[int, int], clip: int | None
+) -> tuple[int, int] | None:
+    """The common region two shots can be diffed on, or None when
+    unclip-able: equal sizes need no clip; any drift (height — full-page
+    content growth, or width — scrollbar/rounding drift) only diffs when
+    --diff-clip gave a bar, cropping BOTH shots to their common top-left
+    region (the clipped mark in the compare says so)."""
+    if size_a == size_b:
+        return size_a
+    if not clip or clip <= 0:
+        return None
+    return (min(size_a[0], size_b[0]), min(size_a[1], size_b[1], clip))
+
+
+def has_admin_nav(page: str) -> bool:
+    return 'href="/admin"' in page
+
+
+def fragment_has_crm_strip(fragment: str) -> bool:
+    return 'id="wp-crm-context"' in fragment
+
+
+def transcript_probe_word(page: str) -> str | None:
+    """A word scraped from the first transcript group body, for a
+    ?q= search that will actually match real data (the seeded q=revenue
+    only exists on the local fixture)."""
+    block = re.search(
+        r'<details class="wp-transcript-call".*?</details>', page, re.DOTALL
+    )
+    if not block:
+        return None
+    text = re.sub(r"<[^>]+>", " ", block.group(0))
+    for word in re.findall(r"[A-Za-z]{6,}", text):
+        return word
+    return None
+
+
+def probe_enroll(base: str) -> bool:
+    """True when the deployment renders the token-gated enroll form —
+    probed directly (the page is reached via distributed token links,
+    never linked from the login surface)."""
+    try:
+        return 'id="enroll-form"' in _get(base, "/enroll")
+    except (OSError, http.client.HTTPException, urllib.error.HTTPError):
+        return False
+
+
+def _run_dirs(host_dir: str) -> list[str]:
+    return sorted(
+        d
+        for d in os.listdir(host_dir)
+        if os.path.isdir(os.path.join(host_dir, d)) and re.match(r"^\d{8}T\d{6}Z$", d)
+    )
+
+
+def prune_runs(host_dir: str, keep: int) -> list[str]:
+    """Newest-N retention over one host's run history; returns the removed
+    run names. A keep < 1 refuses (a retention foot-gun is not a feature)."""
+    if keep < 1:
+        return []
+    runs = _run_dirs(host_dir)
+    doomed = runs[:-keep] if len(runs) > keep else []
+    for name in doomed:
+        shutil.rmtree(os.path.join(host_dir, name))
+    return doomed
+
+
+def snapshot_wire_facts(base: str, session: str | None) -> dict[str, str | None]:
+    """Verbatim wire facts for the run dir: /config.js (the island's whole
+    config surface) and the Settings server section (the service rows as
+    rendered). Raw text, not an interpretation — forensics, not claims."""
+    facts: dict[str, str | None] = {"config_js": None, "settings_server_html": None}
+    try:
+        facts["config_js"] = _get(base, "/config.js")
+    except (OSError, http.client.HTTPException, urllib.error.HTTPError):
+        pass
+    try:
+        page = _get(base, "/settings", session)
+        match = re.search(
+            r'<details class="wp-settings-server">.*?</details>', page, re.DOTALL
+        )
+        facts["settings_server_html"] = match.group(0) if match else None
+    except (OSError, http.client.HTTPException, urllib.error.HTTPError):
+        pass
+    return facts
+
+
+def _bytes_text(n: int) -> str:
+    if n < 1024:
+        return f"{n} B"
+    if n < 1024 * 1024:
+        return f"{n / 1024:.1f} KB"
+    return f"{n / (1024 * 1024):.2f} MB"
+
+
+def _apply_host_maps(mappings: list[str] | None) -> None:
+    """Point chrome AND the python HTTP lane at the same addresses: the
+    --host-map pairs patch socket.getaddrinfo (urllib resolves through
+    it; chrome gets --host-resolver-rules in capture())."""
+    mapped = {
+        host: ip
+        for host, sep, ip in (m.partition("=") for m in mappings or [])
+        if host and ip
+    }
+    if not mapped:
+        return
+    original = socket.getaddrinfo
+
+    def patched(host, *args, **kwargs):
+        return original(mapped.get(host, host), *args, **kwargs)
+
+    socket.getaddrinfo = patched  # type: ignore[assignment]
+
+
+def _make_driver(
+    insecure: bool = False,
+    host_maps: list[str] | None = None,
+    window: str = "1280x900",
+):
+    """One chromium options home for capture() and tap_through(): the NIX
+    chromium/chromedriver (Selenium Manager's downloaded driver is a
+    generic binary that cannot exec on nix; both come from the documented
+    nix shell, PATH discovery as fallback), fake media flags for the call
+    surfaces, and the TLS-smoke/host-map knobs."""
     from selenium import webdriver
     from selenium.webdriver.chrome.options import Options
-    from selenium.webdriver.support.ui import WebDriverWait
+    from selenium.webdriver.chrome.service import Service
 
     options = Options()
-    # The NIX chromium/chromedriver (Selenium Manager's downloaded driver
-    # is a generic binary that cannot exec on nix). Both come from the
-    # documented nix shell; fall back to PATH discovery.
-    import shutil
-
     chrome = shutil.which("chromium")
     if chrome:
         options.binary_location = chrome
@@ -415,155 +1316,290 @@ def capture(
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--use-fake-device-for-media-stream")
     options.add_argument("--use-fake-ui-for-media-stream")
-    options.add_argument("--window-size=1280,900")
+    options.add_argument(f"--window-size={window}")
+    if insecure:
+        # The LOCAL TLS-front smoke only (self-signed cert): the W3C
+        # capability is what chromedriver honors — the switch form is
+        # silently ignored.
+        options.set_capability("acceptInsecureCerts", True)
+    for mapping in host_maps or []:
+        host, _, ip = mapping.partition("=")
+        if host and ip:
+            options.add_argument(f"--host-resolver-rules=MAP {host} {ip}")
     driver_path = shutil.which("chromedriver")
-    from selenium.webdriver.chrome.service import Service
-
     service = Service(executable_path=driver_path) if driver_path else None
-    driver = webdriver.Chrome(service=service, options=options)
+    return webdriver.Chrome(service=service, options=options)
+
+
+def _inject_session(d, session: str, lang: str | None = None) -> None:
+    """The session cookie, injected (see seed()/login_remote()): the
+    server-rendered tabs ride it directly. The wp-lang cookie drives the
+    tab language (the same negotiation the island's switch writes) — the
+    DE stacked-table lane and localized captures ride it."""
+    d.add_cookie({"name": "webphone_session", "value": session})
+    if lang:
+        d.add_cookie({"name": "wp-lang", "value": lang})
+
+
+def capture(
+    base: str,
+    out_dir: str,
+    session: str,
+    surfaces: list[tuple[str, str | None]],
+    only: set[str] | None = None,
+    viewports: list[tuple[int, int]] | None = None,
+    full_page: bool = True,
+    lenient: bool = False,
+    layout_proof: bool = False,
+    anonymous_surfaces: list[tuple[str, str | None]] | None = None,
+    insecure: bool = False,
+    host_maps: list[str] | None = None,
+    hover: str | None = None,
+    hover_map: list[str] | None = None,
+    class_seeds: list[str] | None = None,
+    lang: str | None = None,
+) -> list[dict[str, str]]:
+    """Drive headless chromium through every (surface, theme, viewport)
+    cell and screenshot it; returns the shot LEDGER (key, file, url per
+    shot — the count is len()).
+
+    lenient=True (remote --base-url runs): a missing marker is a printed
+    warning and a KEPT shot, and a styled-404 page skips its surface —
+    real data legitimately lacks the seeded fixtures the strict pins
+    assume, and a capability a deployment withheld is honest UI, not a
+    broken run.
+    """
+    # Selenium lives only in the capture env (see the AGENTS run recipe
+    # and mypy.ini) — never in the lint shell.
+    from selenium.common.exceptions import WebDriverException
+    from selenium.webdriver.support.ui import WebDriverWait
+
+    viewports = viewports or [(1280, 900)]
+    driver = _make_driver(insecure=insecure, host_maps=host_maps)
+    hover_by_surface = _parse_hover_map(hover_map) if hover_map else {}
+    seeds = _parse_class_seeds(class_seeds) if class_seeds else []
     shots = 0
-    try:
-        driver.get(base + "/")
-        WebDriverWait(driver, 10).until(
-            lambda d: d.execute_script("return document.readyState") == "complete"
-        )
-        # The seed's session cookie, injected (see seed()): the
-        # server-rendered tabs ride it directly.
-        driver.add_cookie({"name": "webphone_session", "value": session})
-        for theme in ("light", "dark"):
-            # Theme pinned via the persisted key (theme-preload.js applies
-            # it pre-paint — no cycling the 3-state toggle from "auto").
-            driver.get(base + "/")
-            driver.execute_script(f"localStorage.setItem('wp-theme', '{theme}')")
-            # The library /login page follows prefers-color-scheme, not
-            # wp-theme (the documented forced-theme caveat) — emulate the
-            # media feature so the anonymous shots see exactly what a
-            # same-scheme OS user sees. Shell surfaces stay pinned via
-            # wp-theme, so this is a no-op for the tabs.
-            driver.execute_cdp_cmd(
-                "Emulation.setEmulatedMedia",
-                {"features": [{"name": "prefers-color-scheme", "value": theme}]},
+    ledger: list[dict[str, str]] = []
+    anonymous = (
+        anonymous_surfaces if anonymous_surfaces is not None else ANONYMOUS_SURFACES
+    )
+
+    def _target(name: str, theme: str, vp: tuple[int, int]) -> str:
+        suffix = "" if len(viewports) == 1 else f"-{vp[0]}x{vp[1]}"
+        return os.path.join(out_dir, f"{shots + 1:02d}-{name}-{theme}{suffix}.png")
+
+    def _marker_fail(surface: str, path: str, marker: str, text: str | None) -> None:
+        detail = (
+            f"surface {surface!r} at {path} is missing {marker!r}"
+            if text is None
+            else (
+                f"surface {surface!r} rendered without {text!r} "
+                "(the marker matched but the copy is wrong)"
             )
-            # Anonymous surfaces first: the login card renders pre-session
-            # and /login 303s a live session home — drop the cookie for
-            # these two shots, restore it after.
-            driver.delete_cookie("webphone_session")
-            for name, path in ANONYMOUS_SURFACES:
-                if only is not None and name not in only:
-                    continue
-                driver.get(base + path)
-                if name == "login-card":
-                    # The island reveals the card once the anonymous resume
-                    # probe fails — wait on the link itself (the surface's
-                    # whole point) instead of a fixed sleep.
-                    WebDriverWait(driver, 8).until(
-                        lambda d: d.find_elements("css selector", "#passkey-login")
-                    )
-                time.sleep(0.4)  # settle: theme script, fonts
-                marker, expected_text = ANONYMOUS_MARKERS[name]
-                if not driver.find_elements("css selector", marker):
-                    raise AssertionError(
-                        f"surface {name!r} at {path} is missing {marker!r} — "
-                        f"url={driver.current_url} — the shot would not be "
-                        "evidence; aborting"
-                    )
-                if (
-                    expected_text
-                    and expected_text
-                    not in driver.find_element("css selector", "body").text
-                ):
-                    raise AssertionError(
-                        f"surface {name!r} rendered without {expected_text!r} — "
-                        "the marker matched but the copy is wrong; aborting"
-                    )
-                target = os.path.join(out_dir, f"{shots + 1:02d}-{name}-{theme}.png")
-                driver.save_screenshot(target)
-                print(f"captured {target}")
-                shots += 1
-            driver.add_cookie({"name": "webphone_session", "value": session})
-            for name, path in TABS:
-                if only is not None and name not in only:
-                    continue
-                if name in ("thread", "crm-context"):
-                    path = thread_path
-                if name == "media-transcribe":
-                    path = attach_thread_path
-                if name == "crm-context" and not crm_on:
-                    # Without the seam there is nothing to prove: the strip
-                    # does not exist and the caller name is plain text. A
-                    # filtered run of this surface errors in main() instead.
-                    continue
-                if path is None:
-                    # An unresolved deep link (seed came up empty) skips
-                    # the surface rather than shooting an error page.
-                    continue
-                driver.get(base + path)
-                # The island reveals its call view only after the resume
-                # probe settles (login view stays hidden meanwhile); the
-                # loopback SIP refusal latency varies by pass, so wait on
-                # the view itself instead of a fixed sleep.
-                WebDriverWait(driver, 8).until(
-                    lambda d: (
-                        not d.find_element("css selector", "#phone-view").get_attribute(
-                            "hidden"
-                        )
-                    )
+        )
+        if lenient:
+            print(f"warn: {detail} — shot kept, marker unverified")
+            return
+        raise AssertionError(
+            f"{detail} — url={driver.current_url} — the shot would not be "
+            "evidence; aborting"
+        )
+
+    def _check_pins(name: str, path: str, pins) -> None:
+        # Strict mode raises inside _marker_fail; lenient mode warns and
+        # keeps going.
+        for marker, expected_text in normalize_pins(pins):
+            if not driver.find_elements("css selector", marker):
+                _marker_fail(name, path, marker, None)
+                return
+            if (
+                expected_text
+                and expected_text
+                not in driver.find_element("css selector", "body").text
+            ):
+                _marker_fail(name, path, marker, expected_text)
+                return
+
+    def _is_styled_404() -> bool:
+        return bool(driver.find_elements("css selector", ".wp-panel.wp-notfound"))
+
+    try:
+        for vp in viewports:
+            driver.set_window_size(*vp)
+            driver.get(base + "/")
+            WebDriverWait(driver, 10).until(
+                lambda d: d.execute_script("return document.readyState") == "complete"
+            )
+            # The session cookie, injected (see seed()/login_remote()): the
+            # server-rendered tabs ride it directly. Anonymous runs inject
+            # nothing (selenium rejects an empty cookie value).
+            if session:
+                _inject_session(driver, session, lang)
+            for theme in ("light", "dark"):
+                # Theme pinned via the persisted key (theme-preload.js applies
+                # it pre-paint — no cycling the 3-state toggle from "auto").
+                driver.get(base + "/")
+                driver.execute_script(f"localStorage.setItem('wp-theme', '{theme}')")
+                # The library /login page follows prefers-color-scheme, not
+                # wp-theme (the documented forced-theme caveat) — emulate the
+                # media feature so the anonymous shots see exactly what a
+                # same-scheme OS user sees. Shell surfaces stay pinned via
+                # wp-theme, so this is a no-op for the tabs.
+                driver.execute_cdp_cmd(
+                    "Emulation.setEmulatedMedia",
+                    {"features": [{"name": "prefers-color-scheme", "value": theme}]},
                 )
-                time.sleep(0.4)  # settle: relative times, panels
-                if name == "history-transcript":
-                    # Transcript groups ship as collapsed <details>; open
-                    # them so the shot carries the text, not just rows.
-                    driver.execute_script(
-                        "document.querySelectorAll('details.wp-transcript-call')"
-                        ".forEach((d) => d.setAttribute('open', ''))"
+                # Anonymous surfaces first: the login card renders pre-session
+                # and /login bounces a live session home (303). Drop the
+                # cookie for these shots, restore it after.
+                driver.delete_cookie("webphone_session")
+                for name, path in anonymous:
+                    if only is not None and name not in only:
+                        continue
+                    if path is None:
+                        # A conditional surface that resolved empty skips
+                        # rather than shooting an error page.
+                        continue
+                    driver.get(base + path)
+                    if name == "login-card":
+                        # The island reveals the card once the anonymous
+                        # resume probe fails — wait on the sign-in affordance
+                        # itself (the passkey link when the mode is on, the
+                        # classic form otherwise) instead of a fixed sleep.
+                        WebDriverWait(driver, 8).until(
+                            lambda d: (
+                                d.find_elements("css selector", "#passkey-login")
+                                or d.find_elements("css selector", "#login-form")
+                            )
+                        )
+                    time.sleep(0.4)  # settle: theme script, fonts
+                    if lenient and name != "not-found" and _is_styled_404():
+                        # The deliberate /nope surface IS the styled 404 and
+                        # must still be shot; this skip is for capabilities a
+                        # deployment withheld (e.g. /login without passkey).
+                        print(
+                            f"skip: {name} at {path} is the styled 404 "
+                            "(capability off on this deployment)"
+                        )
+                        continue
+                    _check_pins(name, path, ANONYMOUS_MARKERS[name])
+                    target = _target(name, theme, vp)
+                    shoot(driver, target, full_page)
+                    ring_guard_reshoot(driver, shoot, target, full_page)
+                    ledger.append(
+                        {
+                            "key": shot_key(target),
+                            "file": os.path.basename(target),
+                            "url": driver.current_url,
+                        }
                     )
-                # A marker is a selector, a (selector, copy) tuple, or a
-                # LIST of those pins (a surface that proves two things).
-                pins = SURFACE_MARKERS[name]
-                if isinstance(pins, str):
-                    pins = [(pins, None)]
-                elif isinstance(pins, tuple):
-                    pins = [pins]
-                for marker, expected_text in pins:
-                    if not driver.find_elements("css selector", marker):
-                        raise AssertionError(
-                            f"surface {name!r} at {path} is missing {marker!r} — "
-                            f"url={driver.current_url} anonymous_shell="
-                            f"{bool(driver.find_elements('id', 'login-form'))} — "
-                            "the shot would not be evidence; aborting"
+                    print(f"captured {target}")
+                    shots += 1
+                if session:
+                    _inject_session(driver, session, lang)
+                for name, path in surfaces:
+                    if only is not None and name not in only:
+                        continue
+                    if path is None:
+                        # An unresolved deep link (seed came up empty / the
+                        # deployment lacks the capability) skips the surface
+                        # rather than shooting an error page.
+                        continue
+                    driver.get(base + path)
+                    # The island reveals its call view only after the resume
+                    # probe settles (login view stays hidden meanwhile); the
+                    # SIP/WebSocket latency varies by pass, so wait on the
+                    # view itself instead of a fixed sleep.
+                    WebDriverWait(driver, 8).until(
+                        lambda d: (
+                            not d.find_element(
+                                "css selector", "#phone-view"
+                            ).get_attribute("hidden")
                         )
-                    if (
-                        expected_text
-                        and expected_text
-                        not in driver.find_element("css selector", "body").text
+                    )
+                    time.sleep(0.4)  # settle: relative times, panels
+                    if name == "history-transcript":
+                        # Transcript groups ship as collapsed <details>; open
+                        # them so the shot carries the text, not just rows.
+                        driver.execute_script(
+                            "document.querySelectorAll('details.wp-transcript-call')"
+                            ".forEach((d) => d.setAttribute('open', ''))"
+                        )
+                    if lenient and name != "not-found" and _is_styled_404():
+                        print(
+                            f"skip: {name} at {path} is the styled 404 "
+                            "(capability off on this deployment)"
+                        )
+                        continue
+                    for expand_sel in (
+                        [SURFACE_EXPAND[name]] if name in SURFACE_EXPAND else []
                     ):
-                        raise AssertionError(
-                            f"surface {name!r} rendered without {expected_text!r} — "
-                            "the marker matched but the copy is wrong; aborting"
-                        )
-                for absent in SURFACE_ABSENT_MARKERS.get(name, ()):
-                    if driver.find_elements("css selector", absent):
-                        raise AssertionError(
-                            f"surface {name!r} renders {absent!r} but the boot "
-                            "declared it away — the shot would prove a lie; "
-                            "aborting"
-                        )
-                target = os.path.join(out_dir, f"{shots + 1:02d}-{name}-{theme}.png")
-                driver.save_screenshot(target)
-                print(f"captured {target}")
-                shots += 1
-                if name == "thread" and theme == "light":
-                    # Layout facts belong here, not in a second script: a
-                    # screenshot proves a surface RENDERS, not that the
-                    # collapse reclaims width or that the master-detail split
-                    # flips at the container threshold. Measured as COMPUTED
-                    # STYLE, once per pass, on the surface that carries both
-                    # panes (2026-10-29 closeout; a standalone proof script
-                    # duplicated this config and hung for three hours).
-                    check_thread_layout(driver, base, thread_path, out_dir)
+                        expandable = driver.find_elements("css selector", expand_sel)
+                        if expandable and expandable[0].is_displayed():
+                            # Narrow viewports park collapsed sections under
+                            # the fixed bottom tab bar — scroll out first, and
+                            # fall back to a JS click when something still
+                            # overlays the summary.
+                            driver.execute_script(
+                                "arguments[0].scrollIntoView({block: 'center'});",
+                                expandable[0],
+                            )
+                            try:
+                                expandable[0].click()
+                            except WebDriverException:
+                                driver.execute_script(
+                                    "arguments[0].click();", expandable[0]
+                                )
+                    _check_pins(name, path, SURFACE_MARKERS.get(name, []))
+                    for absent in SURFACE_ABSENT_MARKERS.get(name, ()):
+                        if driver.find_elements("css selector", absent):
+                            message = (
+                                f"surface {name!r} renders {absent!r} but the boot "
+                                "declared it away — the shot would prove a lie"
+                            )
+                            if lenient:
+                                print(f"warn: {message}")
+                            else:
+                                raise AssertionError(message + "; aborting")
+                    target = _target(name, theme, vp)
+                    for seed_selector, seed_cls in seeds:
+                        apply_seed_class(driver, seed_selector, seed_cls, name)
+                    apply_hover(
+                        driver,
+                        hover_by_surface.get(name, hover),
+                        name,
+                    )
+                    shoot(driver, target, full_page)
+                    ring_guard_reshoot(driver, shoot, target, full_page)
+                    ledger.append(
+                        {
+                            "key": shot_key(target),
+                            "file": os.path.basename(target),
+                            "url": driver.current_url,
+                        }
+                    )
+                    print(f"captured {target}")
+                    shots += 1
+                    if (
+                        name == "thread"
+                        and theme == "light"
+                        and layout_proof
+                        and vp == (1280, 900)
+                    ):
+                        # Layout facts belong here, not in a second script: a
+                        # screenshot proves a surface RENDERS, not that the
+                        # collapse reclaims width or that the master-detail
+                        # split flips at the container threshold. Measured as
+                        # COMPUTED STYLE, once per pass, on the surface that
+                        # carries both panes (2026-10-29 closeout; a standalone
+                        # proof script duplicated this config and hung for
+                        # three hours). Remote runs skip it: a tracking pass
+                        # must not fail on layout claims, and it mutates the
+                        # collapsed preference mid-run.
+                        check_thread_layout(driver, base, path, out_dir)
     finally:
         driver.quit()
-    return shots
+    return ledger
 
 
 def check_thread_layout(driver, base: str, thread_path: str, out_dir: str) -> None:
@@ -698,9 +1734,364 @@ def check_thread_layout(driver, base: str, thread_path: str, out_dir: str) -> No
     print("layout: PASS (collapse, persistence, split threshold)")
 
 
+def tap_through(
+    base: str,
+    out_dir: str,
+    session: str,
+    viewport: tuple[int, int],
+    full_page: bool,
+    insecure: bool = False,
+    host_maps: list[str] | None = None,
+    lang: str | None = None,
+) -> int:
+    """Train-3 tap-through proof: tap Phone -> the island goes full-screen
+    (wp-phone-focus on <html>, the bottom-bar entry aria-pressed) -> a real
+    tab returns. Every state is ASSERTED in the DOM before its shot; a
+    failed assertion aborts the run non-zero — a flow that cannot be
+    re-asserted did not happen, and a shot of it would prove a lie."""
+    from selenium.webdriver.support.ui import WebDriverWait
+
+    driver = _make_driver(
+        insecure=insecure,
+        host_maps=host_maps,
+        window=f"{viewport[0]}x{viewport[1]}",
+    )
+    problems: list[str] = []
+
+    def expect(desc: str, ok: bool) -> None:
+        print(f"  {'ok  ' if ok else 'FAIL'} {desc}")
+        if not ok:
+            problems.append(desc)
+
+    def shoot_state(name: str) -> None:
+        shoot(driver, os.path.join(out_dir, f"tapthrough-{name}.png"), full_page)
+
+    try:
+        driver.get(base + "/")
+        _inject_session(driver, session, lang)
+        driver.get(base + "/")
+        WebDriverWait(driver, 15).until(
+            lambda d: d.find_elements("css selector", ".wp-nav-link[data-tab]")
+        )
+
+        # State 1 — a real tab is active (the seeded session lands on /messages).
+        expect(
+            "state 1: a real tab carries wp-active",
+            bool(
+                driver.find_elements("css selector", ".wp-nav-link[data-tab].wp-active")
+            ),
+        )
+        shoot_state("1-tab")
+
+        # State 2 — tap Phone: the focus class lands on <html>, the entry
+        # presses, the real tabs hand over their active class.
+        driver.find_element("css selector", ".wp-nav-phone").click()
+        WebDriverWait(driver, 8).until(
+            lambda d: d.execute_script(
+                "return document.documentElement.classList.contains('wp-phone-focus')"
+            )
+        )
+        expect(
+            "state 2: html.wp-phone-focus and Phone aria-pressed",
+            driver.find_element("css selector", ".wp-nav-phone").get_attribute(
+                "aria-pressed"
+            )
+            == "true",
+        )
+        shoot_state("2-phone-focus")
+
+        # State 3 — tap a real tab: focus leaves AND the tab re-activates
+        # (the nav fragment re-render carries wp-active; wait for BOTH so a
+        # half-settled swap cannot pass as the returned state).
+        driver.find_element("css selector", '.wp-nav-link[data-tab="messages"]').click()
+        WebDriverWait(driver, 8).until(
+            lambda d: (
+                not d.execute_script(
+                    "return document.documentElement"
+                    ".classList.contains('wp-phone-focus')"
+                )
+                and d.find_elements(
+                    "css selector",
+                    '.wp-nav-link[data-tab="messages"].wp-active',
+                )
+            )
+        )
+        expect("state 3: focus gone, messages re-activated", True)
+        shoot_state("3-returned")
+
+        if problems:
+            print(f"tap-through: {len(problems)} FAILURE(S): {'; '.join(problems)}")
+            return 1
+        print("tap-through: 3 states captured")
+        return 0
+    finally:
+        driver.quit()
+
+
+def discard_empty_run(out_dir: str) -> None:
+    """A crashed capture must not leave an EMPTY run dir in the history —
+    the next run's compare would silently treat the empty dir as its
+    "previous" and badge every surface "new" (observed live, 2026-11-10).
+    Only an empty dir is removed; a partial one stays (partial runs are
+    compared gracefully)."""
+    if not glob.glob(os.path.join(out_dir, "*.png")):
+        shutil.rmtree(out_dir, ignore_errors=True)
+        print(f"run discarded (no shots captured): {out_dir}")
+
+
+def open_target(produced: str | None, out_dir: str, has_display: bool) -> str | None:
+    """The --open decision: raise the track artifact (compare.html when a
+    previous run existed, else the run's gallery), falling back to the
+    out dir; None = no display on this host, nothing to open (the caller
+    prints the note). Pure so --self-test can pin it without a display."""
+    if not has_display:
+        return None
+    return "file://" + os.path.abspath(produced or out_dir)
+
+
+def self_test() -> int:
+    """Verify every pure helper this harness depends on — NO browser, NO
+    server. Pillow pixel math runs only when the capture env carries it;
+    everything else must pass everywhere. Non-zero exit on any failure."""
+    failures: list[str] = []
+
+    def check(name: str, ok: bool, detail: str = "") -> None:
+        if ok:
+            print(f"  ok   {name}")
+        else:
+            failures.append(name)
+            print(f"  FAIL {name}: {detail}")
+
+    # Ring guard, forced states (no real inbound call needed):
+    class _StubDriver:
+        def find_elements(self, _by, _sel):
+            return []  # idle: no banner in the DOM
+
+    class _StubRingingDriver:
+        def find_elements(self, _by, _sel):
+            return [object()]  # the guarded state, forced
+
+    _shots: list[str] = []
+
+    def _shoot(_driver, target, _full_page):
+        _shots.append(target)
+
+    _shots.clear()
+    ring_guard_reshoot(_StubDriver(), _shoot, "t.png", True)
+    check("ring guard idle keeps the shot", _shots == [])
+
+    _shots.clear()
+    ring_guard_reshoot(_StubRingingDriver(), _shoot, "t.png", True)
+    check(
+        "ring guard fires on the forced ringing state",
+        _shots == ["t.png"],
+        f"re-shots: {_shots}",
+    )
+
+    _shots.clear()
+    ring_guard_reshoot(_StubDriver(), _shoot, "t.png", True, ringing=True)
+    check(
+        "ring guard honors the forced-state override",
+        _shots == ["t.png"],
+        f"re-shots: {_shots}",
+    )
+
+    check(
+        "shot_key strips numbering",
+        shot_key("07-thread-01-dark.png") == "thread-01-dark",
+    )
+    check(
+        "shot_key unnumbered passthrough",
+        shot_key("zz-thread-collapsed.png") == "zz-thread-collapsed",
+    )
+    check("viewport parse", _parse_viewport("390x844") == (390, 844))
+    check("viewport parse caps", _parse_viewport("1280X900") == (1280, 900))
+    try:
+        _parse_viewport("wide")
+        check("viewport junk rejected", False, "no SystemExit")
+    except SystemExit:
+        check("viewport junk rejected", True)
+    check(
+        "hover map parse",
+        _parse_hover_map(["messages=.a", "phone=#b c"])
+        == {"messages": ".a", "phone": "#b c"},
+    )
+    check(
+        "hover map last wins",
+        _parse_hover_map(["a=.x", "a=.y"]) == {"a": ".y"},
+    )
+    try:
+        _parse_hover_map(["nosep"])
+        check("hover map junk rejected", False, "no SystemExit")
+    except SystemExit:
+        check("hover map junk rejected", True)
+    check(
+        "class seed parse",
+        _parse_class_seeds(["html=wp-phone-focus", ".island=island-x"])
+        == [("html", "wp-phone-focus"), (".island", "island-x")],
+    )
+    try:
+        _parse_class_seeds(["noclass"])
+        check("class seed junk rejected", False, "no SystemExit")
+    except SystemExit:
+        check("class seed junk rejected", True)
+    check(
+        "sanitize host",
+        _sanitize_dirname("https://pbx.artmann.tech") == "pbx.artmann.tech",
+    )
+    check(
+        "sanitize local",
+        _sanitize_dirname("http://127.0.0.1:18097") == "127.0.0.1_18097",
+    )
+
+    fixture = (
+        '<a hx-get="/partials/messages/t1">x</a>'
+        '<a hx-get="/partials/messages/t2">y</a>'
+        '<a hx-get="/partials/messages/t1">dup</a>'
+    )
+    check(
+        "thread scrape order + dedup",
+        scrape_thread_links(fixture) == ["/messages/t1", "/messages/t2"],
+        repr(scrape_thread_links(fixture)),
+    )
+    check("pins: str", normalize_pins(".a") == [(".a", None)])
+    check("pins: tuple", normalize_pins((".a", "txt")) == [(".a", "txt")])
+    check(
+        "pins: list",
+        normalize_pins([(".a", None), (".b", "x")]) == [(".a", None), (".b", "x")],
+    )
+
+    check("clip: equal sizes", clip_box((800, 900), (800, 900), None) == (800, 900))
+    check("clip: no bar refuses drift", clip_box((800, 900), (800, 1400), None) is None)
+    check(
+        "clip: bar bounds height", clip_box((800, 900), (800, 1400), 600) == (800, 600)
+    )
+    check(
+        "clip: width drift crops too",
+        clip_box((800, 900), (815, 900), 600) == (800, 600),
+    )
+
+    check("admin nav detected", has_admin_nav('<a href="/admin">Admin</a>'))
+    check("admin nav exact", not has_admin_nav('<a href="/admin2">x</a>'))
+    check("crm strip detected", fragment_has_crm_strip('<div id="wp-crm-context">'))
+    check("crm strip absent", not fragment_has_crm_strip("<div>nope</div>"))
+    word = transcript_probe_word(
+        '<details class="wp-transcript-call"><summary>s</summary>'
+        "<p>Quarterly revenue figures up</p></details>"
+    )
+    check("transcript probe word", word == "Quarterly", repr(word))
+    check("transcript probe absent", transcript_probe_word("<p>nothing</p>") is None)
+
+    with tempfile.TemporaryDirectory() as td:
+        prev = os.path.join(td, "20260101T000000Z")
+        cur = os.path.join(td, "20260102T000000Z")
+        os.makedirs(prev)
+        os.makedirs(cur)
+        with open(os.path.join(prev, "01-a-light.png"), "wb") as fh:
+            fh.write(b"png")
+        for name in ("01-a-light.png", "02-b-light.png"):
+            with open(os.path.join(cur, name), "wb") as fh:
+                fh.write(b"png")
+        build_compare(td, prev, cur, "vX", None, {}, badge_bar=0.5)
+        with open(os.path.join(td, "compare.html"), encoding="utf-8") as text_fh:
+            out = text_fh.read()
+        check(
+            "partial run compares gracefully",
+            "no previous" in out and "02-b-light" in out and "01-a-light" in out,
+        )
+
+    with tempfile.TemporaryDirectory() as td:
+        for stamp in ("20260101T000000Z", "20260102T000000Z", "20260103T000000Z"):
+            os.makedirs(os.path.join(td, stamp))
+        removed = prune_runs(td, 2)
+        check(
+            "prune keeps newest N",
+            removed == ["20260101T000000Z"]
+            and sorted(os.listdir(td)) == ["20260102T000000Z", "20260103T000000Z"],
+            repr(removed),
+        )
+        check("prune refuses keep<1", prune_runs(td, 0) == [])
+
+        empty = os.path.join(td, "20260104T000000Z")
+        os.makedirs(empty)
+        discard_empty_run(empty)
+        check("discard removes the EMPTY crashed run", not os.path.exists(empty))
+        keep = os.path.join(td, "20260105T000000Z")
+        os.makedirs(keep)
+        with open(os.path.join(keep, "01-a-light.png"), "wb") as fh:
+            fh.write(b"png")
+        discard_empty_run(keep)
+        check("discard keeps a run that has shots", os.path.exists(keep))
+
+    check(
+        "open raises the produced artifact",
+        open_target("runs/x/compare.html", "runs/x", True)
+        == "file://" + os.path.abspath("runs/x/compare.html"),
+    )
+    check(
+        "open falls back to the run dir",
+        open_target(None, "runs/first", True)
+        == "file://" + os.path.abspath("runs/first"),
+    )
+    check(
+        "open headless refuses",
+        open_target("runs/x/compare.html", "runs/x", False) is None,
+    )
+
+    try:
+        from PIL import Image
+    except ImportError:
+        print("  skip pixel_diff math (pillow not installed — capture env only)")
+    else:
+        with tempfile.TemporaryDirectory() as td:
+
+            def join(name: str) -> str:
+                return os.path.join(td, name)
+
+            Image.new("RGB", (10, 10), (0, 0, 0)).save(join("a.png"))
+            Image.new("RGB", (10, 10), (255, 255, 255)).save(join("b.png"))
+            Image.new("RGB", (10, 20), (0, 0, 0)).save(join("c.png"))
+            same = pixel_diff(
+                join("a.png"), join("a.png"), join("d0.png"), threshold=12
+            )
+            check(
+                "pixel: identical = 0%", same is not None and same[0] == 0.0, repr(same)
+            )
+            full = pixel_diff(
+                join("a.png"), join("b.png"), join("d1.png"), threshold=12
+            )
+            check(
+                "pixel: full change = 100%",
+                full is not None and abs(full[0] - 1.0) < 1e-9,
+                repr(full),
+            )
+            skip = pixel_diff(join("a.png"), join("c.png"), join("d2.png"))
+            check("pixel: height drift skips w/o clip", skip is None, repr(skip))
+            clipped = pixel_diff(join("a.png"), join("c.png"), join("d3.png"), clip=10)
+            check(
+                "pixel: clip path diffs top-N",
+                clipped is not None and clipped[1] is True,
+                repr(clipped),
+            )
+
+    if failures:
+        print(f"self-test: {len(failures)} FAILURE(S)")
+        return 1
+    print("self-test: all checks pass")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--binary", default="/tmp/webphone-bin")  # nosec B108 - LOCAL-ONLY visual harness by budget decision (AGENTS T23)
+    parser.add_argument(
+        "--base-url",
+        default=None,
+        metavar="URL",
+        help="capture a RUNNING deployment (e.g. https://pbx.artmann.tech) "
+        "instead of booting --binary; sign in via WEBPHONE_CAPTURE_EXTENSION "
+        "/ WEBPHONE_CAPTURE_PASSWORD; markers run lenient (warn, not abort)",
+    )
     parser.add_argument(
         "--crm",
         action="store_true",
@@ -727,137 +2118,487 @@ def main() -> int:
         # rejected below so a typo cannot silently shoot nothing.
         help="shoot only this surface (repeatable); default shoots the matrix",
     )
+    parser.add_argument(
+        "--track",
+        action="store_true",
+        help="history mode: the run lands in <out-dir>/<host>/<UTC-stamp>/ "
+        "(never wiped) with gallery.html + summary.json, and compare.html at "
+        "the host level diffs it against the previous run",
+    )
+    parser.add_argument(
+        "--threads",
+        type=int,
+        default=6,
+        metavar="N",
+        help="remote mode: capture the first N live thread deep links (default 6)",
+    )
+    parser.add_argument(
+        "--viewport",
+        action="append",
+        metavar="WxH",
+        default=None,
+        help="window size for the matrix (repeatable for extra passes, e.g. "
+        "390x844 for the mobile layout; default 1280x900)",
+    )
+    parser.add_argument(
+        "--hover",
+        default=None,
+        metavar="SELECTOR",
+        help="move the pointer onto the first CSS-selector match before "
+        "every surface shot so :hover/:active state layers land in the "
+        "picture (e.g. --hover .wp-thread-rowwrap); surfaces without a "
+        "match skip the hover silently",
+    )
+    parser.add_argument(
+        "--hover-map",
+        action="append",
+        default=None,
+        metavar="SURFACE=SELECTOR",
+        help="per-surface hover override (repeatable, wins over --hover "
+        "for that surface only; e.g. --hover-map messages=.wp-thread-rowwrap "
+        "--hover-map history=.wp-day-head)",
+    )
+    parser.add_argument(
+        "--seed-class",
+        action="append",
+        default=None,
+        metavar="SELECTOR=CLASS",
+        help="add a class to the first selector match before every shot "
+        "(repeatable, re-applied per shot because navigation rebuilds the "
+        "DOM; e.g. --seed-class html=wp-phone-focus seeds the dialer-focus "
+        "layout without taps)",
+    )
+    parser.add_argument(
+        "--tap-through",
+        action="store_true",
+        help="run ONLY the Train-3 tap-through proof (local boot + fixture): "
+        "tap Phone -> island full-screen -> a real tab returns, three "
+        "DOM-asserted shots (tapthrough-*.png); defaults to 390x844 unless "
+        "--viewport is given; non-zero exit on any failed assertion",
+    )
+    parser.add_argument(
+        "--lang",
+        choices=("de", "en"),
+        default=None,
+        help="inject the wp-lang cookie so the tabs render in that language "
+        "(e.g. --lang de exercises the German stacked-table lane); the "
+        "default keeps the server's own negotiation",
+    )
+    parser.add_argument(
+        "--viewport-only",
+        action="store_true",
+        help="capture just the window instead of the full page height",
+    )
+    parser.add_argument(
+        "--anonymous",
+        action="store_true",
+        help="remote mode: capture ONLY the anonymous surfaces (login card + "
+        "/login) — no credentials needed; the deployment's public face",
+    )
+    parser.add_argument(
+        "--label",
+        default=None,
+        help="free-text note stored in summary.json and the galleries",
+    )
+    parser.add_argument(
+        "--self-test",
+        action="store_true",
+        help="verify every pure helper (scrapes, clip math, prune, "
+        "partial-compare tolerance; pixel math when pillow is present) "
+        "without starting a browser; non-zero exit on any failure",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="log in, resolve the surface list and exit BEFORE a browser "
+        "starts — the credential/surface sanity lane",
+    )
+    parser.add_argument(
+        "--insecure",
+        action="store_true",
+        help="skip TLS verification (the LOCAL TLS-front smoke ONLY — "
+        "never point this at a production host)",
+    )
+    parser.add_argument(
+        "--host-map",
+        action="append",
+        metavar="HOST=IP",
+        default=None,
+        help="point chrome's DNS at an IP (repeatable; e.g. "
+        "webphone.test=127.0.0.1 for the local TLS front)",
+    )
+    parser.add_argument(
+        "--diff-threshold",
+        type=int,
+        default=12,
+        metavar="N",
+        help="per-pixel delta counted as changed (default 12)",
+    )
+    parser.add_argument(
+        "--badge-bar",
+        type=float,
+        default=0.5,
+        metavar="PCT",
+        help="compare badge / console noise bar in %% (default 0.5)",
+    )
+    parser.add_argument(
+        "--diff-clip",
+        type=int,
+        default=None,
+        metavar="N",
+        help="height-drift policy: diff the common top N pixels of "
+        "full-page pairs whose heights changed (default: skip to "
+        "side-by-side)",
+    )
+    parser.add_argument(
+        "--prune",
+        type=int,
+        default=None,
+        metavar="N",
+        help="with --track: keep only the newest N runs per host "
+        "(removes older run dirs after the compare is written)",
+    )
+    parser.add_argument(
+        "--open",
+        action="store_true",
+        help="open the produced compare/gallery HTML when the run ends "
+        "(no-op with a note on a headless host)",
+    )
     args = parser.parse_args()
 
-    data_dir = "/tmp/wp-visual-data"  # nosec B108 - LOCAL-ONLY visual harness by budget decision (AGENTS T23)
-    os.makedirs(data_dir, exist_ok=True)
-    os.makedirs(args.out_dir, exist_ok=True)
+    if args.self_test:
+        return self_test()
+    if args.insecure:
+        global _ssl_context
+        _ssl_context = ssl._create_unverified_context()  # nosec B323 - --insecure is the documented LOCAL-ONLY TLS-front smoke lane, never pointed at prod (AGENTS.md)
+        print("insecure: TLS verification OFF — local smoke lane only")
+    _apply_host_maps(args.host_map)
+
+    full_page = not args.viewport_only
+    if full_page:
+        print(
+            "caveat: full-page shots render position:fixed elements at the "
+            "ORIGINAL viewport's bottom (CDP captureBeyondViewport) — the "
+            "mobile tab bar / toasts appear mid-page, not pinned; use "
+            "--viewport for a true fold view"
+        )
+    viewports = (
+        [_parse_viewport(v) for v in args.viewport] if args.viewport else [(1280, 900)]
+    )
+    if args.tap_through and not args.viewport:
+        viewports = [(390, 844)]
+    remote = args.base_url is not None
+    base = (args.base_url or f"http://127.0.0.1:{args.port}").rstrip("/")
+    only = set(args.surface) if args.surface else None
+    threads_info: dict = {}
+    wire: dict[str, str | None] | None = None
+
+    if args.track:
+        # History lives under <out-dir>/<host>/<UTC-stamp>/ and is NEVER
+        # wiped — the diff chain (compare.html) is the whole point.
+        host = _sanitize_dirname(base)
+        run_id = time.strftime("%Y%m%dT%H%M%SZ", time.gmtime())
+        out_dir = os.path.join(args.out_dir, host, run_id)
+    else:
+        out_dir = args.out_dir
+    os.makedirs(out_dir, exist_ok=True)
     # A failed run must not leave a mixed matrix: stale shots from an
     # earlier pass masquerade as completeness (the 2026-10-18 settings
-    # abort left 10 fresh light shots beside 8 stale ones).
-    if not args.surface:
-        for stale in glob.glob(os.path.join(args.out_dir, "*.png")):
+    # abort left 10 fresh light shots beside 8 stale ones). Track mode
+    # never wipes: a run is history, not a working set.
+    if not args.surface and not args.track:
+        for stale in glob.glob(os.path.join(out_dir, "*.png")):
             os.remove(stale)
-    base = f"http://127.0.0.1:{args.port}"
-    # A CONFIG FILE, not env: the browser posts carry Origin/Referer, and
-    # the CSRF middleware only trusts them with the fronted shape
-    # (csrf.trusted_*) — the same configuration the NixOS module ships
-    # behind caddy and the smoke's boot_configured exercises.
-    config = {
-        "addr": f"127.0.0.1:{args.port}",
-        "data_dir": data_dir,
-        "gateway": {"webhook_secret": "devsecret"},  # nosec B105 - the documented dev-only secret (AGENTS smoke recipe uses the same value)
-        # ASR ON with an obviously-fake provider (M13): url alone turns
-        # the seam on (openai wire, BASE url — the client appends the
-        # endpoint path). shell.js auto-transcribes seen audio, so the
-        # call goes out and fails fast against the refused port; the
-        # settings row shows Describe(), the buttons carry
-        # data-transcribe-src.
-        "asr": {
-            "url": "http://127.0.0.1:9",
-            "model": "ui-capture-whisper",
-        },
-        "csrf": {
-            "trusted_proxies": ["127.0.0.1"],
-            "trusted_origins": [base],
-        },
-        # Passkey ON, render-only (2026-10-25): turns the mode on so the
-        # two anonymous login surfaces exist; no ceremony ever runs, so
-        # the rp_id never faces a browser — it only has to satisfy boot
-        # validation (hostname-shaped, host of every origin entry).
-        "auth": {
-            "passkey": {
-                "rp_id": "webphone.test",
-                "rp_origins": ["https://webphone.test"],
-                "users": {"ui-capture@example.com": {"extensions": ["1001"]}},
-                "extension_password_files": {
-                    "1001": os.path.join(data_dir, "ext1001.pass")
-                },
-            }
-        },
-    }
-    if args.fax_off:
-        config["fax"] = {"send": False, "receive": False}
-        # Tighten the fax pin from "form or notice" to notice-only, and
-        # forbid the form outright — the whole point of the off-state shot.
-        SURFACE_MARKERS["fax"] = [
-            (
-                ".wp-fax-off",
-                None,
-            ),
-        ]
-        SURFACE_ABSENT_MARKERS["fax"] = (".wp-compose-fax",)
-    if args.crm:
-        crm_url, crm_token = start_fake_crm()
-        config["crm"] = {
-            "url": crm_url,
-            "token": crm_token,
-            # The human UI lives on a different origin than the machine API in
-            # every real deployment, so the template is config, never inferred.
-            "contact_url": "https://crm.example/contacts/{id}",
-        }
-    with open(os.path.join(data_dir, "ext1001.pass"), "w", encoding="utf-8") as fh:
-        fh.write("ui-capture-fixture\n")  # nosec B105 - LOCAL-ONLY visual harness; never a real credential
-    config_path = os.path.join(data_dir, "ui-capture-config.json")
-    with open(config_path, "w", encoding="utf-8") as fh:
-        json.dump(config, fh)
-    env = dict(os.environ, WEBPHONE_CONFIG=config_path)
-    server = subprocess.Popen([args.binary], env=env)  # nosec B603 - argv-list (no shell) launch of the local binary under test
-    try:
-        for _ in range(50):
-            try:
-                urllib.request.urlopen(base + "/livez", timeout=1)  # nosec B310 - readiness probe of the local server under test
-                break
-            except (OSError, http.client.HTTPException):
-                time.sleep(0.2)
+
+    if remote:
+        anonymous = list(ANONYMOUS_SURFACES)
+        if probe_enroll(base):
+            print(
+                "enroll: the deployment renders the token-gated form — "
+                "/enroll joins the anonymous pass"
+            )
+            anonymous.append(("enroll", "/enroll"))
+        threads_info = {}
+        if args.anonymous:
+            surfaces = []
+            session = ""
+            version_facts = fetch_version_info(base)
         else:
-            print("server did not come up", file=sys.stderr)
-            return 1
-        thread_path, attach_thread_path, session = seed(base)
-        if not session:
-            print("seed did not mint a session cookie", file=sys.stderr)
-            return 1
-        only = set(args.surface) if args.surface else None
+            extension = os.environ.get("WEBPHONE_CAPTURE_EXTENSION")
+            password = os.environ.get("WEBPHONE_CAPTURE_PASSWORD")
+            if not extension or not password:
+                print(
+                    "remote capture needs credentials in the environment:\n"
+                    "  WEBPHONE_CAPTURE_EXTENSION  the extension to sign in as\n"
+                    "  WEBPHONE_CAPTURE_PASSWORD   that extension's directory password\n"
+                    "(they verify against the real PBX directory; neither is logged)\n"
+                    "or pass --anonymous to shoot only the login surfaces",
+                    file=sys.stderr,
+                )
+                return 2
+            try:
+                urllib.request.urlopen(
+                    base + "/livez", timeout=10, context=_ssl_context
+                )  # nosec B310 - readiness probe of the remote server under capture
+            except (OSError, http.client.HTTPException) as exc:
+                print(f"{base} is unreachable ({exc})", file=sys.stderr)
+                return 1
+            session = login_remote(base, extension, password)
+            if not session:
+                return 1
+            version_facts = fetch_version_info(base)
+            if version_facts:
+                commit = version_facts.get("commit") or "sha fenced"
+                print(f"deployment: {version_facts['version']} ({commit})")
+            resolved = resolve_remote_surfaces(base, session, args.threads)
+            surfaces = resolved["surfaces"]
+            threads_info = resolved
+        wire = snapshot_wire_facts(base, session) if args.track else None
         if only is not None:
             # A typo must fail loudly: a filtered run that matches nothing
             # would print "0 shots" and look like a clean pass.
-            known = {name for name, _ in TABS} | {
-                name for name, _ in ANONYMOUS_SURFACES
-            }
-            if "crm-context" in only and not args.crm:
-                print(
-                    "surface 'crm-context' needs --crm: without the fake CRM the "
-                    "strip does not exist and the shot would prove nothing",
-                    file=sys.stderr,
-                )
-
-                return 2
-            unknown = sorted(only - known)
+            unknown = sorted(
+                only - {name for name, _ in surfaces} - {name for name, _ in anonymous}
+            )
             if unknown:
                 print(
-                    f"unknown surface(s): {', '.join(unknown)}; known: "
-                    f"{', '.join(sorted(known))}",
+                    f"unknown surface(s): {', '.join(unknown)}; resolved: "
+                    f"{', '.join(name for name, _ in surfaces)}",
                     file=sys.stderr,
                 )
                 return 2
-        shots = capture(
-            base,
-            args.out_dir,
-            thread_path,
-            attach_thread_path,
-            session,
-            only,
-            crm_on=args.crm,
+        if args.dry_run:
+            print("dry-run: surfaces resolved; no browser started")
+            print("  anonymous: " + ", ".join(n for n, _ in anonymous))
+            print(
+                "  session:   "
+                + (", ".join(n for n, _ in surfaces) or "(anonymous mode)")
+            )
+            return 0
+        print(
+            "prod capture: shots carry REAL data — ui-shots/ is gitignored; "
+            "keep it that way"
         )
-        print(f"ui-capture: {shots} shots in {args.out_dir}/")
-        if only is not None:
-            # Every requested surface must have produced BOTH theme shots.
-            expected = len(only) * 2
-            return 0 if shots == expected else 1
-        return 0 if shots >= 22 else 1
-    finally:
-        server.terminate()
-        server.wait(timeout=10)
+        try:
+            ledger = capture(
+                base,
+                out_dir,
+                session,
+                surfaces,
+                only,
+                viewports=viewports,
+                full_page=full_page,
+                lenient=True,
+                anonymous_surfaces=anonymous,
+                insecure=args.insecure,
+                host_maps=args.host_map,
+                hover=args.hover,
+                hover_map=args.hover_map,
+                class_seeds=args.seed_class,
+                lang=args.lang,
+            )
+        except Exception:
+            if args.track:
+                discard_empty_run(out_dir)
+            raise
+        shots = len(ledger)
+        exit_code = 0 if shots > 0 else 1
+    else:
+        data_dir = "/tmp/wp-visual-data"  # nosec B108 - LOCAL-ONLY visual harness by budget decision (AGENTS T23)
+        os.makedirs(data_dir, exist_ok=True)
+        # A CONFIG FILE, not env: the browser posts carry Origin/Referer, and
+        # the CSRF middleware only trusts them with the fronted shape
+        # (csrf.trusted_*) — the same configuration the NixOS module ships
+        # behind caddy and the smoke's boot_configured exercises.
+        config = {
+            "addr": f"127.0.0.1:{args.port}",
+            "data_dir": data_dir,
+            "gateway": {"webhook_secret": "devsecret"},  # nosec B105 - the documented dev-only secret (AGENTS smoke recipe uses the same value)
+            # ASR ON with an obviously-fake provider (M13): url alone turns
+            # the seam on (openai wire, BASE url — the client appends the
+            # endpoint path). shell.js auto-transcribes seen audio, so the
+            # call goes out and fails fast against the refused port; the
+            # settings row shows Describe(), the buttons carry
+            # data-transcribe-src.
+            "asr": {
+                "url": "http://127.0.0.1:9",
+                "model": "ui-capture-whisper",
+            },
+            "csrf": {
+                "trusted_proxies": ["127.0.0.1"],
+                "trusted_origins": [base],
+            },
+            # Passkey ON, render-only (2026-10-25): turns the mode on so the
+            # two anonymous login surfaces exist; no ceremony ever runs, so
+            # the rp_id never faces a browser — it only has to satisfy boot
+            # validation (hostname-shaped, host of every origin entry).
+            "auth": {
+                "passkey": {
+                    "rp_id": "webphone.test",
+                    "rp_origins": ["https://webphone.test"],
+                    "users": {"ui-capture@example.com": {"extensions": ["1001"]}},
+                    "extension_password_files": {
+                        "1001": os.path.join(data_dir, "ext1001.pass")
+                    },
+                }
+            },
+        }
+        if args.fax_off:
+            config["fax"] = {"send": False, "receive": False}
+            # Tighten the fax pin from "form or notice" to notice-only, and
+            # forbid the form outright — the whole point of the off-state shot.
+            SURFACE_MARKERS["fax"] = [
+                (
+                    ".wp-fax-off",
+                    None,
+                ),
+            ]
+            SURFACE_ABSENT_MARKERS["fax"] = (".wp-compose-fax",)
+        if args.crm:
+            crm_url, crm_token = start_fake_crm()
+            config["crm"] = {
+                "url": crm_url,
+                "token": crm_token,
+                # The human UI lives on a different origin than the machine API in
+                # every real deployment, so the template is config, never inferred.
+                "contact_url": "https://crm.example/contacts/{id}",
+            }
+        with open(os.path.join(data_dir, "ext1001.pass"), "w", encoding="utf-8") as fh:
+            fh.write("ui-capture-fixture\n")  # nosec B105 - LOCAL-ONLY visual harness; never a real credential
+        config_path = os.path.join(data_dir, "ui-capture-config.json")
+        with open(config_path, "w", encoding="utf-8") as fh:
+            json.dump(config, fh)
+        env = dict(os.environ, WEBPHONE_CONFIG=config_path)
+        server = subprocess.Popen([args.binary], env=env)  # nosec B603 - argv-list (no shell) launch of the local binary under test
+        exit_code = 1
+        try:
+            for _ in range(50):
+                try:
+                    urllib.request.urlopen(base + "/livez", timeout=1)  # nosec B310 - readiness probe of the local server under test
+                    break
+                except (OSError, http.client.HTTPException):
+                    time.sleep(0.2)
+            else:
+                print("server did not come up", file=sys.stderr)
+                return 1
+            version_facts = fetch_version_info(base)
+            thread_path, attach_thread_path, session = seed(base)
+            if not session:
+                print("seed did not mint a session cookie", file=sys.stderr)
+                return 1
+            anonymous = list(ANONYMOUS_SURFACES)
+            if probe_enroll(base):
+                anonymous.append(("enroll", "/enroll"))
+            surfaces = []
+            for name, path in TABS:
+                if name == "thread":
+                    path = thread_path
+                elif name == "crm-context":
+                    # Without the seam there is nothing to prove: the strip
+                    # does not exist and the caller name is plain text. A
+                    # filtered run of this surface errors below instead.
+                    path = thread_path if args.crm else None
+                elif name == "media-transcribe":
+                    path = attach_thread_path
+                surfaces.append((name, path))
+            if only is not None:
+                # A typo must fail loudly: a filtered run that matches nothing
+                # would print "0 shots" and look like a clean pass.
+                known = {name for name, _ in TABS} | {name for name, _ in anonymous}
+                if "crm-context" in only and not args.crm:
+                    print(
+                        "surface 'crm-context' needs --crm: without the fake CRM the "
+                        "strip does not exist and the shot would prove nothing",
+                        file=sys.stderr,
+                    )
+
+                    return 2
+                unknown = sorted(only - known)
+                if unknown:
+                    print(
+                        f"unknown surface(s): {', '.join(unknown)}; known: "
+                        f"{', '.join(sorted(known))}",
+                        file=sys.stderr,
+                    )
+                    return 2
+            wire = snapshot_wire_facts(base, session) if args.track else None
+            if args.dry_run:
+                print("dry-run: fixture seeded, surfaces resolved; no browser started")
+                print("  anonymous: " + ", ".join(n for n, _ in anonymous))
+                print("  session:   " + ", ".join(n for n, _ in surfaces))
+                return 0
+            if args.tap_through:
+                return tap_through(
+                    base,
+                    out_dir,
+                    session,
+                    viewports[0],
+                    full_page,
+                    insecure=args.insecure,
+                    host_maps=args.host_map,
+                    lang=args.lang,
+                )
+            try:
+                ledger = capture(
+                    base,
+                    out_dir,
+                    session,
+                    surfaces,
+                    only,
+                    viewports=viewports,
+                    full_page=full_page,
+                    layout_proof=True,
+                    anonymous_surfaces=anonymous,
+                    insecure=args.insecure,
+                    host_maps=args.host_map,
+                    hover=args.hover,
+                    hover_map=args.hover_map,
+                    class_seeds=args.seed_class,
+                    lang=args.lang,
+                )
+            except Exception:
+                if args.track:
+                    discard_empty_run(out_dir)
+                raise
+            shots = len(ledger)
+            exit_code = 0 if shots >= 22 else 1
+        finally:
+            server.terminate()
+            server.wait(timeout=10)
+
+    print(f"ui-capture: {shots} shots in {out_dir}/")
+    if args.track:
+        produced = track(
+            out_dir,
+            base,
+            version_facts,
+            args.label,
+            full_page,
+            viewports,
+            ledger=ledger,
+            wire=wire,
+            threads=threads_info or None,
+            diff_threshold=args.diff_threshold,
+            badge_bar=args.badge_bar,
+            diff_clip=args.diff_clip,
+            prune_keep=args.prune,
+        )
+        if args.open:
+            shown = open_target(
+                produced,
+                out_dir,
+                bool(os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")),
+            )
+            if shown:
+                webbrowser.open(shown)
+            else:
+                print("--open: no display on this host — open the HTML manually")
+    if only is not None and not remote:
+        # Every requested surface must have produced BOTH theme shots
+        # (per viewport).
+        expected = len(only) * 2 * len(viewports)
+        return 0 if shots == expected else 1
+    return exit_code
 
 
 if __name__ == "__main__":

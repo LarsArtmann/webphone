@@ -6,6 +6,11 @@ on:
   pull_request:
   workflow_dispatch:
 
+# Fleet policy (cue-policy #CIWorkflow): CI workflows never publish, so
+# contents stays read; any additional scope must be declared explicitly.
+permissions:
+  contents: read
+
 jobs:
   # The forward-pin enabler: proves vendorHash + build of the exact rev.
   # Consumers relock this repo's main on trust; without this job "green
@@ -74,6 +79,14 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The docs-health battery's annotate gate resolves struck rows
+          # against git history (hash/tag verdict evidence); the default
+          # depth-1 checkout leaves ~2/3 of those references unresolvable
+          # and inflated the finding count from 205 (full history) to 373 —
+          # past the ratchet, red on every push. The changelog-guard job
+          # already needs full history for the same reason.
+          fetch-depth: 0
 
       - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
 
@@ -89,6 +102,37 @@ jobs:
           .#checks.x86_64-linux.deadnix
           .#checks.x86_64-linux.vulnix-triage
           .#checks.x86_64-linux.webphone-module
+
+      # The docs-health battery. Until 2026-11-07 it was a local habit that a
+      # session could skip entirely: the freshness gate could PASS a report
+      # with no §f at all, the CHANGELOG bar had no guard, and nothing reddened
+      # when the docs rotted. `--check` never mutates (a CI run that formatted
+      # first would certify the tree it had just repaired); the battery, the
+      # §f precondition and the markdown format check all run here. The
+      # table-damage gate SKIPs in CI (it needs the docs-health skill's
+      # annotate.go, a local fan-out file) and says so in its matrix.
+      - name: Docs-health battery (format + freshness + annotate + routing + cadence)
+        run: nix develop -c bash scripts/docs-gates.sh --check
+
+  # The CHANGELOG bar (RATIFIED 2026-10-11) had no guard: the metaengine
+  # per-group-cap train landed with no [Unreleased] line and every gate stayed
+  # green. PR-only, because the bar is about what a change SET claims; a push
+  # to main is already merged and cannot be re-drafted. The guard fails open
+  # (WARN + exit 0) when the base ref is unresolvable, so a shallow or
+  # first-push checkout cannot red the build for missing history.
+  changelog-guard:
+    name: CHANGELOG coverage
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Require an [Unreleased] line for product-code changes
+        run: bash scripts/changelog-guard.sh "${{ github.event.pull_request.base.sha }}..${{ github.event.pull_request.head.sha }}"
 
   # Ratified dedup ritual (2026-10-11): the -t 1 deep sweep's accepted
   # clones live in .art-dupl-baseline.json (86 groups, re-recorded

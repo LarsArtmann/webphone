@@ -12,15 +12,17 @@ import {
   ringbackStart,
   ringbackStop,
   ringToneStop,
+  watchRemoteAudio,
 } from "./audio.js";
 import {
   asrEnabled,
   asrLocality,
   agentEnabled,
+  callerDisplay,
   crmEnabled,
+  metricsBeacon,
   sipDomain,
 } from "./config.js";
-import { authedFetch } from "./auth.js";
 import {
   agoLabel,
   consultDialGate,
@@ -29,6 +31,7 @@ import {
   refreshDialSlots,
 } from "./dialgate.js";
 import { getLang, t } from "./i18n.js";
+import { sendLatencyBeacon } from "./latency.js";
 import { releaseWarmMic, warmMic } from "./mic.js";
 import {
   recordCrmCall,
@@ -36,7 +39,16 @@ import {
   refreshServerHistory,
   scheduleVoicemailRefresh,
 } from "./panels.js";
-import { titleFlashStop } from "./notify.js";
+import { restoreTitle, titleFlashStop } from "./notify.js";
+import {
+  dispatchAutoReview,
+  dispositionRow,
+  noteRow,
+  q850CauseOf,
+  showEndedReason,
+  summarizeButton,
+} from "./postcall.js";
+import { inviteVerdict } from "./sipverdict.js";
 import { applyTransition, sessions, state, viewStateOf } from "./state.js";
 import {
   CAPTION_LINE_CAP,
@@ -53,6 +65,7 @@ import {
   announce,
   els,
   errorMessage,
+  focusAfterReplace,
   hideIncomingBanner,
   log,
   renderIncomingSlots,
@@ -127,19 +140,29 @@ async function holdSession(id, hold) {
   if (!move.changed) return;
   entry.holdPending = hold ? "holding" : "resuming";
   renderCalls();
+  // The verdict lane (sipverdict): the re-INVITE verdict — not the
+  // send — settles the state. sip.js resolves invite() on SEND; a
+  // bare await would flip `held` before any 200 OK and strand the
+  // toggle on a refused re-INVITE with no error surface (the honesty
+  // contract's oldest gap, closed 2026-11-11).
   try {
-    await entry.session.invite();
-    entry.held = hold;
-    setTracks(entry, { recv: !hold, send: !hold && !entry.muted });
-    // A held call carries no audio either way — pause the capture so
-    // the provider never receives (and hallucinates on) silence.
-    pauseLiveTranscription(id, hold);
-  } catch (err) {
-    log(`hold toggle failed: ${errorMessage(err)}`, "error");
-    announce(
-      t(hold ? "holdFailed" : "resumeFailed")(errorMessage(err)),
-      "error",
-    );
+    const verdict = await inviteVerdict(entry.session);
+    if (verdict === "accepted") {
+      entry.held = hold;
+      setTracks(entry, { recv: !hold, send: !hold && !entry.muted });
+      // A held call carries no audio either way — pause the capture so
+      // the provider never receives (and hallucinates on) silence.
+      pauseLiveTranscription(id, hold);
+      // M22: the SETTLED state is the announcement (the pending chip text
+      // swaps silently) — the screen reader hears where the call landed.
+      announce(t(hold ? "heldAnnounce" : "resumedAnnounce"), "info");
+    } else {
+      // Keep the prior settled state; the failed-toggle announce names
+      // what happened (rejected / timed-out / send-failed all land here
+      // with the honest reason, never a silent stranded `held`).
+      log(`hold toggle ${verdict}`, "error");
+      announce(t(hold ? "holdFailed" : "resumeFailed")(verdict), "error");
+    }
   } finally {
     entry.holdPending = null;
     const queued = entry.holdQueued;
@@ -180,6 +203,7 @@ export function teardownSession(id) {
   if (!entry) return;
   stopLiveTranscription(id);
   if (entry.captionUnsub) entry.captionUnsub();
+  if (entry.audioWatch) entry.audioWatch();
   closeCallSegments(id);
   // The call's undelivered transcript segments get one last flush
   // attempt before the entry goes away (the queue drains in the
@@ -212,6 +236,15 @@ export function settleEndedCall(id) {
   if (!entry) return;
   stopLiveTranscription(id);
   if (entry.captionUnsub) entry.captionUnsub();
+  // The remote-audio watcher rides the LIVE stream (the audio-gap leg
+  // of the latency beacon); the call is over, so it dies here rather
+  // than polling a dead stream from the ended card (teardown would
+  // dispose it too, but a settled card can outlive the session table
+  // for a long time).
+  if (entry.audioWatch) {
+    entry.audioWatch();
+    entry.audioWatch = undefined;
+  }
   // The segment STORE dies with the live call (it feeds the next live
   // card's pre-render); the ended card's strip lines live in the DOM and
   // keep serving Copy/Clear after it. Closing, not clearing, is what
@@ -259,321 +292,43 @@ function morphToEndedCard(id, entry) {
   }
   const controls = card.querySelector(".controls");
   if (!controls) return;
-  controls.replaceChildren();
-  controls.append(noteRow(id));
-  if (crmEnabled) {
-    controls.append(dispositionRow(id, entry));
-  }
-  if (agentEnabled && entry.established) {
-    controls.append(summarizeButton(id));
-  }
-  const close = document.createElement("button");
-  close.className = "ghost close-ended-btn";
-  close.textContent = t("close");
-  close.addEventListener("click", () => card.remove());
-  controls.append(close);
-}
-
-// dispositionRow is the operator-confirm affordance (issue #6): three
-// chips answering "how did this call end" — the ONE authority that may
-// upgrade the auto-report's honest "unknown" to a claimed answer (the
-// island cannot see who picked up; only the human can). Success
-// collapses the row to the saved verdict; a failure keeps the chips
-// clickable (the server kept the verdict on 502 — only the CRM
-// correction is retryable; re-click re-POSTs the same verdict, which
-// the server dedupes per call+verdict).
-/** @param {string} id @param {IslandCallEntry} entry @returns {HTMLDivElement} */
-export function dispositionRow(id, entry) {
-  const row = document.createElement("div");
-  row.className = "disposition-row";
-  const ask = document.createElement("span");
-  ask.className = "disposition-ask";
-  ask.textContent = t("dispositionAsk");
-  row.append(ask);
-  /** @type {Array<[string, IslandMessageKey]>} */
-  const chips = [
-    ["answered", "dispositionAnswered"],
-    ["voicemail", "dispositionVoicemail"],
-    ["ivr", "dispositionIvr"],
-  ];
-  for (const [value, key] of chips) {
-    const chip = document.createElement("button");
-    chip.className = "ghost disposition-chip";
-    chip.dataset.disposition = value;
-    chip.textContent = t(key);
-    chip.addEventListener("click", () => {
-      confirmDisposition(row, id, entry, value, key).catch((err) =>
-        log(`disposition confirm failed: ${errorMessage(err)}`, "warn"),
-      );
-    });
-    row.append(chip);
-  }
-  return row;
-}
-
-/**
- * @param {HTMLElement} row
- * @param {string} id
- * @param {IslandCallEntry} entry
- * @param {string} value
- * @param {IslandMessageKey} labelKey
- * @returns {Promise<void>}
- */
-async function confirmDisposition(row, id, entry, value, labelKey) {
-  const chips = /** @type {NodeListOf<HTMLButtonElement>} */ (
-    row.querySelectorAll(".disposition-chip")
+  focusAfterReplace(
+    controls,
+    () =>
+      /** @type {HTMLElement | null} */ (
+        card.querySelector(".call-note-input") ||
+          card.querySelector(".close-ended-btn")
+      ),
+    () => {
+      controls.replaceChildren();
+      controls.append(noteRow(id));
+      if (crmEnabled) {
+        controls.append(dispositionRow(id, entry));
+      }
+      if (agentEnabled && entry.established) {
+        controls.append(summarizeButton(id));
+      }
+      const close = document.createElement("button");
+      close.className = "ghost close-ended-btn";
+      close.textContent = t("close");
+      // The settle path already emptied the session table and dispatched
+      // wp:calls-changed; Close is pure DOM removal PLUS a re-dispatch —
+      // a bare remove() would strand the live-call badge and the CRM
+      // context slot on a call the shell can no longer see.
+      close.addEventListener("click", () => {
+        card.remove();
+        document.dispatchEvent(new CustomEvent("wp:calls-changed"));
+      });
+      controls.append(close);
+    },
   );
-  for (const chip of chips) chip.disabled = true;
-  try {
-    const res = await authedFetch(
-      `/api/calls/${encodeURIComponent(id)}/disposition`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          disposition: value,
-          number: entry.target,
-          direction: entry.session instanceof SIP.Inviter ? "out" : "in",
-          seconds:
-            entry.startedAt > 0
-              ? Math.floor((Date.now() - entry.startedAt) / 1000)
-              : 0,
-        }),
-      },
-    );
-    if (!res.ok) {
-      for (const chip of chips) chip.disabled = false;
-      announce(t("dispositionFailed"), "warn");
-      return;
-    }
-    row.replaceChildren(
-      Object.assign(document.createElement("span"), {
-        className: "disposition-ask",
-        textContent: t("dispositionSaved")(t(labelKey)),
-      }),
-    );
-    announce(t("dispositionSaved")(t(labelKey)));
-  } catch (err) {
-    for (const chip of chips) chip.disabled = false;
-    announce(t("dispositionFailed"), "warn");
-    throw err;
-  }
 }
 
-// noteRow is the post-call note editor (issue #11): the hangup moment
-// gets the SAME note slot History renders later (PUT /api/calls/{id}/note),
-// so the conversation is written down with zero navigation. A 204
-// collapses the row to the saved line; the note-list-full 409 and any
-// other failure keep the draft in the editor (hand-written content is
-// never silently expunged); dismissing the card loses nothing already
-// saved.
-/** @param {string} id @returns {HTMLDivElement} */
-export function noteRow(id) {
-  const row = document.createElement("div");
-  row.className = "call-note-row";
-  const input = document.createElement("textarea");
-  input.className = "call-note-input";
-  input.placeholder = t("callNotePlaceholder");
-  input.maxLength = 4000;
-  input.rows = 3;
-  const save = document.createElement("button");
-  save.className = "ghost call-note-save";
-  save.textContent = t("callNoteSave");
-  save.addEventListener("click", () => {
-    saveCallNote(row, id, input.value).catch((err) =>
-      log(`note save failed: ${errorMessage(err)}`, "warn"),
-    );
-  });
-  row.append(input, save);
-  return row;
-}
-
-/**
- * @param {HTMLElement} row
- * @param {string} id
- * @param {string} body
- * @returns {Promise<void>}
- */
-async function saveCallNote(row, id, body) {
-  const save = /** @type {HTMLButtonElement | null} */ (
-    row.querySelector(".call-note-save")
-  );
-  const input = /** @type {HTMLTextAreaElement | null} */ (
-    row.querySelector(".call-note-input")
-  );
-  if (save) save.disabled = true;
-  try {
-    const res = await authedFetch(`/api/calls/${encodeURIComponent(id)}/note`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ body }),
-    });
-    if (!res.ok) {
-      if (save) save.disabled = false;
-      if (res.status === 409) announce(t("callNoteFull"), "warn");
-      else announce(t("callNoteFailed"), "warn");
-      return;
-    }
-    if (input) input.remove();
-    if (save) save.remove();
-    row.append(
-      Object.assign(document.createElement("span"), {
-        className: "call-note-saved",
-        textContent: t("callNoteSaved"),
-      }),
-    );
-    announce(t("callNoteSaved"));
-  } catch (err) {
-    if (save) save.disabled = false;
-    announce(t("callNoteFailed"), "warn");
-    throw err;
-  }
-}
-
-// failureReasonOf maps one call's outcome to a human reason line for
-// the ended card: the SIP cause first, then the missed-call class for
-// an inbound call that never connected. Established calls ended
-// normally and carry no reason. THE mapping (unknown stays a failure
-// class, never "answered") is the one TODO_LIST #6's disposition work
-// must align with.
-/** @param {IslandCallEntry} entry @returns {string | null} */
-function failureReasonOf(entry) {
-  if (entry.established) return null;
-  if (!(entry.session instanceof SIP.Inviter)) return t("callMissed");
-  const cause = entry.rejectCause || 0;
-  switch (cause) {
-    case 486:
-    case 600:
-    case 603:
-      return t("callBusy");
-    case 404:
-      return t("callNotFound");
-    case 403:
-    case 604:
-      return t("callBlocked");
-    case 480:
-    case 488:
-    case 502:
-    case 503:
-    case 504:
-      return t("callUnreachable");
-    case 487:
-      return t("callCancelled");
-    case 408:
-      return t("callNoAnswer");
-    default:
-      return cause ? t("callFailedCode")(cause) : t("callFailedUnknown");
-  }
-}
-
-// showEndedReason renders the failure reason line on the settled card
-// and announces it once. It runs one microtask after the Terminated
-// state change because the library fires the cause delegate
-// synchronously AFTER the state change this card settled in.
-/** @param {string} id @param {IslandCallEntry} entry */
-function showEndedReason(id, entry) {
-  queueMicrotask(() => {
-    if (entry.endedReasonShown) return;
-    const reason = failureReasonOf(entry);
-    if (!reason) return;
-    entry.endedReasonShown = true;
-    announce(reason, "warn");
-    const stateEl = entry.dom && entry.dom.querySelector(".call-state-text");
-    if (!stateEl || !stateEl.parentElement) return;
-    const line = document.createElement("div");
-    line.className = "call-reason-text";
-    line.textContent = reason;
-    stateEl.parentElement.insertBefore(line, stateEl.nextSibling);
-  });
-}
-
-// summarizeButton is the ended card's one AI affordance: the ask is
-// idempotent server-side, the busy state disables the row (a double
-// click must not double-speak), and every settle is honest — success
-// and duplicates point at Messages (nav nudge), a failure returns the
-// SETTLED retryable state with the reason as a toast.
-/** @param {string} id @returns {HTMLButtonElement} */
-function summarizeButton(id) {
-  const btn = document.createElement("button");
-  btn.className = "ghost summarize-btn";
-  btn.textContent = t("summarizeDraft");
-  btn.addEventListener("click", () => summarizeCall(id, btn));
-  return btn;
-}
-
-/** @param {string} id @param {HTMLButtonElement} btn @returns {Promise<void>} */
-async function summarizeCall(id, btn) {
-  btn.disabled = true;
-  btn.textContent = t("summarizing");
-  let status = 0;
-  let duplicate = false;
-  try {
-    const res = await authedFetch(
-      `/api/calls/${encodeURIComponent(id)}/summary-draft`,
-      { method: "POST" },
-    );
-    status = res.status;
-    if (res.ok) {
-      const body = await res.json().catch(() => ({}));
-      duplicate = body.duplicate === true;
-    }
-  } catch {
-    status = 0;
-  }
-  if (status === 200) {
-    announce(duplicate ? t("summarizeDuplicate") : t("summarizeReady"), "ok");
-    document.dispatchEvent(new CustomEvent("wp:drafts-changed"));
-    btn.textContent = t("summarizeSettled");
-    return;
-  }
-  btn.disabled = false;
-  btn.textContent = t("summarizeDraft");
-  if (status === 404) announce(t("summarizeNoTranscript"), "warn");
-  else if (status === 0) announce(t("summarizeOffline"), "warn");
-  else announce(t("summarizeFailed"), "error");
-}
-
-// dispatchAutoReview fires the AUTOMATIC review ask once per settle
-// (issue #8): the server detaches the job and answers 202 — duplicate
-// names the idem replay when the manual button won the race, or the
-// job is already running. The button is the status surface: queued
-// text while accepted, back to the manual affordance on failure (the
-// failure is the server's too — the job audited and stayed retryable).
-/** @param {string} id @param {HTMLButtonElement} btn @returns {Promise<void>} */
-async function dispatchAutoReview(id, btn) {
-  btn.disabled = true;
-  btn.textContent = t("summarizing");
-  let status = 0;
-  let duplicate = false;
-  try {
-    const res = await authedFetch(
-      `/api/calls/${encodeURIComponent(id)}/review`,
-      {
-        method: "POST",
-      },
-    );
-    status = res.status;
-    if (res.ok) {
-      const body = await res.json().catch(() => ({}));
-      duplicate = body.duplicate === true;
-    }
-  } catch {
-    status = 0;
-  }
-  if (status === 202) {
-    // A duplicate replay means the job was already queued (or the manual
-    // button won the race): say so instead of pretending it just started.
-    const label = t(duplicate ? "summarizeDuplicate" : "reviewQueued");
-    announce(label, "ok");
-    btn.textContent = label;
-    return;
-  }
-  btn.disabled = false;
-  btn.textContent = t("summarizeDraft");
-  if (status === 404) announce(t("summarizeNoTranscript"), "warn");
-  else if (status === 0) announce(t("summarizeOffline"), "warn");
-  else announce(t("summarizeFailed"), "error");
-}
+// DIAL_TIMEOUT_MS is the island's own no-verdict deadline: sip.js 0.21
+// has no INVITE timeout of its own in the browser, so a silent far end
+// would leave the card in Calling forever and the cause mapping would
+// never see a cause at all. 32s is Timer B's shape.
+const DIAL_TIMEOUT_MS = 32000;
 
 export function teardownAll() {
   [...sessions.keys()].forEach(teardownSession);
@@ -721,7 +476,7 @@ function chipAvatar(target) {
 function chipName(target) {
   const name = document.createElement("span");
   name.className = "wp-chip-name";
-  name.textContent = target;
+  name.textContent = callerDisplay(target);
   return name;
 }
 
@@ -781,7 +536,44 @@ export function renderCalls() {
   // the module-graph invariant the arch test enforces).
   document.dispatchEvent(new CustomEvent("wp:calls-changed"));
   if (outgoingCount() === 0) ringbackStop();
+  renderInCallTitle();
 }
+
+// M18: the tab title carries the live call — "what is my phone doing"
+// is answerable from any other tab. The 1s render tick IS the clock
+// (mm:ss from the oldest established call's start); notify.js's ring
+// flash owns the title while ringing, so this takes over only once
+// established and hands it back when the last call ends.
+let inCallTitle = false;
+function renderInCallTitle() {
+  /** @type {IslandCallEntry | undefined} */
+  let oldest;
+  sessions.forEach((entry) => {
+    if (
+      entry.session.state === SIP.SessionState.Established &&
+      (!oldest || entry.startedAt < oldest.startedAt)
+    ) {
+      oldest = entry;
+    }
+  });
+  if (oldest) {
+    document.title = `● ${t("inCall")} · ${durationLabel(oldest.startedAt)}`;
+    inCallTitle = true;
+  } else if (inCallTitle) {
+    restoreTitle();
+    inCallTitle = false;
+  }
+}
+
+// M17: closing the tab mid-call hangs up silently — make the browser
+// ask first. A live call is the only reason; closing an idle phone
+// must never nag.
+window.addEventListener("beforeunload", (event) => {
+  if (sessions.size > 0) {
+    event.preventDefault();
+    event.returnValue = "";
+  }
+});
 
 // announceCallState speaks only state TRANSITIONS through the toast
 // live region: the state text itself swaps silently, and once
@@ -805,6 +597,12 @@ function announceCallState(entry, dataState) {
 function addCallCard(id, target) {
   const card = document.createElement("div");
   card.className = "call-card";
+  // The remote party as data, not just text: the shell reads it to fetch
+  // the live call's CRM context beside the island (issue #10). The shell
+  // owns that fetch on purpose — it must work when the island scripts
+  // fail, and a data attribute is the one channel both sides share
+  // without importing each other.
+  card.dataset.remote = target;
   const head = document.createElement("div");
   head.className = "call-state";
   const targetEl = document.createElement("span");
@@ -836,6 +634,9 @@ function addCallCard(id, target) {
       if (!entry) return;
       entry.muted = !entry.muted;
       setTracks(entry, { send: !entry.held && !entry.muted });
+      // M22: the settled mute state announces — the button label swap
+      // is silent by design (announceCallState owns transitions).
+      announce(t(entry.muted ? "mutedAnnounce" : "unmutedAnnounce"), "info");
       renderCalls();
     }),
     mkBtn(t("hold"), "hold-btn", () => {
@@ -1133,12 +934,13 @@ function copyCardTranscript(target) {
 }
 
 // Transfer row: inline destination input with blind/attended actions.
-/** @param {HTMLElement} card @param {string} id */
-function toggleTransferRow(card, id) {
+// Returns the open row (null = the toggle closed an existing one).
+/** @param {HTMLElement} card @param {string} id @returns {HTMLElement | null} */
+export function toggleTransferRow(card, id) {
   const existing = card.querySelector(".transfer-row");
   if (existing) {
     existing.remove();
-    return;
+    return null;
   }
   const row = document.createElement("div");
   row.className = "transfer-row";
@@ -1154,12 +956,22 @@ function toggleTransferRow(card, id) {
   attended.textContent = t("transferAttended");
   blind.addEventListener("click", () => {
     const dest = input.value.trim();
-    if (dest) blindTransfer(id, dest);
+    if (dest) {
+      blindTransfer(id, dest);
+    } else {
+      // M24: an empty destination is a mistake to correct, not a no-op
+      // to swallow — the row stays open for editing.
+      announce(t("transferEmpty"), "warn");
+    }
   });
   attended.addEventListener("click", () => attendedTransfer(id));
+  input.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") row.remove();
+  });
   row.append(input, blind, attended);
   card.append(row);
   input.focus();
+  return row;
 }
 
 /** @param {SipNotification} notification */
@@ -1245,7 +1057,34 @@ async function attendedTransfer(id) {
 window.__pcs = window.__pcs || new Map();
 
 /** @param {SipSession} newSession @param {string} target */
-export function bindSession(newSession, target) {
+/**
+ * The dial_to_audio beacon fires once, when all four legs have stamped.
+ * @param {IslandCallEntry} entry
+ * @returns {void}
+ */
+function sendDialLatency(entry) {
+  const l = entry.latency;
+  if (!l || l.beaconSent) return;
+  if (!l.invitedAt || !l.establishedAt || !l.playingAt || !l.firstAudioAt)
+    return;
+  l.beaconSent = true;
+  sendLatencyBeacon("dial_to_audio", {
+    island_overhead: Math.max(0, l.invitedAt - l.t0),
+    signaling: Math.max(0, l.establishedAt - l.invitedAt),
+    media_attach: Math.max(0, l.playingAt - l.establishedAt),
+    audio_gap: Math.max(0, l.firstAudioAt - l.playingAt),
+  });
+}
+
+/**
+ * Registers one session in the table and wires its lifecycle listeners.
+ * @param {SipSession} newSession
+ * @param {string} target
+ * @param {{ latencyT0?: number }} [options] latencyT0 stamps the
+ *   dial_to_audio interval's t0 (outbound dials only)
+ * @returns {void}
+ */
+export function bindSession(newSession, target, options = {}) {
   newSession.stateChange.addListener((sessionState) => {
     if (sessionState === SIP.SessionState.Established) {
       const pc =
@@ -1268,6 +1107,19 @@ export function bindSession(newSession, target) {
     timer: null,
     dom: addCallCard(id, target),
   };
+  // The outbound dial path carries the dial-press t0 (the measure-first
+  // latency design); inbound calls get no interval — ring routing forks
+  // the inbound shape and is out of the note's scope.
+  if (typeof options.latencyT0 === "number") {
+    entry.latency = {
+      t0: options.latencyT0,
+      invitedAt: 0,
+      establishedAt: 0,
+      playingAt: 0,
+      firstAudioAt: 0,
+      beaconSent: false,
+    };
+  }
   sessions.set(id, entry);
   state.focusedId = state.focusedId || id;
   if (newSession instanceof SIP.Inviter) ringbackStart();
@@ -1316,8 +1168,42 @@ export function bindSession(newSession, target) {
     if (sessionState === SIP.SessionState.Established) {
       live.established = true;
       live.startedAt = Date.now();
+      if (live.latency) {
+        live.latency.establishedAt = Date.now();
+        // Media-attach leg: the first remote frame the shared element
+        // actually schedules for playback (established alone means the
+        // signaling succeeded, not that anything was heard).
+        els.remoteAudio.addEventListener(
+          "playing",
+          () => {
+            const current = sessions.get(id);
+            if (!current || !current.latency || current.latency.playingAt)
+              return;
+            current.latency.playingAt = Date.now();
+            sendDialLatency(current);
+          },
+          { once: true },
+        );
+      }
       if (!live.timer) live.timer = setInterval(renderCalls, 1000);
       focusSession(id);
+      if (live.latency && metricsBeacon) {
+        // Audio-gap leg: the first non-silent remote sample, watched on
+        // the shared graph (audio.js). The stream object is captured by
+        // reference, so a later focus steal does not retarget the watch.
+        const stream = /** @type {MediaStream | null} */ (
+          els.remoteAudio.srcObject
+        );
+        if (stream) {
+          live.audioWatch = watchRemoteAudio(stream, () => {
+            const current = sessions.get(id);
+            if (!current || !current.latency || current.latency.firstAudioAt)
+              return;
+            current.latency.firstAudioAt = Date.now();
+            sendDialLatency(current);
+          });
+        }
+      }
       // Auto-start (owner decision 2026-10-07): with the ASR seam on,
       // transcription begins with the call's media — the transcribe
       // button stays as the manual stop/restart override.
@@ -1425,9 +1311,13 @@ function noteToneSent(tone) {
     trail = document.createElement("p");
     trail.id = "wp-tones";
     trail.className = "wp-tones";
-    trail.setAttribute("aria-hidden", "true");
     els.keypad.append(trail);
   }
+  // M45: the trail is a status region — each sent digit is confirmed
+  // politely to screen readers. Set unconditionally (idempotent): a
+  // trail that arrived from anywhere else still becomes the one
+  // announcement surface.
+  trail.setAttribute("role", "status");
   tonesSent.push(tone);
   trail.textContent = tonesSent.slice(-12).join("·");
   trail.hidden = false;
@@ -1542,7 +1432,7 @@ function showDialCooldown(target, verdict) {
     const allowed = await overrideDialGate(target);
     if (allowed) {
       hideDialCooldown();
-      placeCall(target, { force: true });
+      placeCall(target, { force: true, latencyT0: Date.now() });
     } else {
       announce(t("cooldownOverrideFailed"), "warn");
       anyway.disabled = false;
@@ -1556,8 +1446,8 @@ function showDialCooldown(target, verdict) {
 // form can clear itself ONLY then (a validation error keeps the typed
 // text for editing). force skips the dial gate (the spent-override
 // re-run).
-/** @param {string} raw @param {{ force?: boolean }} [options] @returns {Promise<boolean>} */
-export async function placeCall(raw, { force = false } = {}) {
+/** @param {string} raw @param {{ force?: boolean, latencyT0?: number }} [options] @returns {Promise<boolean>} */
+export async function placeCall(raw, { force = false, latencyT0 } = {}) {
   // The dial click is a user gesture: unlock the shared AudioContext so
   // the ringback is audible (audio.js).
   resumeAudio().catch(() => {});
@@ -1609,7 +1499,7 @@ export async function placeCall(raw, { force = false } = {}) {
       constraints: { audio: true, video: false },
     },
   });
-  bindSession(inviter, target);
+  bindSession(inviter, target, latencyT0 === undefined ? {} : { latencyT0 });
   try {
     // A SIP rejection never rejects invite(): sip.js resolves once the
     // INVITE is sent, the verdict arrives through the requestDelegate.
@@ -1618,14 +1508,47 @@ export async function placeCall(raw, { force = false } = {}) {
     await inviter.invite({
       requestDelegate: {
         onReject: (
-          /** @type {{statusCode?: number} | null | undefined} */ res,
+          /** @type {{statusCode?: number, message?: {getHeader?: (name: string) => string | undefined}} | null | undefined} */ res,
         ) => {
           const entry = sessions.get(inviter.id);
-          if (entry)
-            entry.rejectCause = res && res.statusCode ? res.statusCode : 0;
+          if (!entry) return;
+          // First verdict wins: the watchdog's 408 (the island's own
+          // deadline) must not be overwritten by the far end's 487 to
+          // the CANCEL it caused.
+          if (res && res.statusCode && !entry.rejectCause)
+            entry.rejectCause = res.statusCode;
+          const q850 = q850CauseOf(
+            res && res.message && typeof res.message.getHeader === "function"
+              ? res.message.getHeader("Reason")
+              : undefined,
+          );
+          if (q850 && !entry.rejectQ850) entry.rejectQ850 = q850;
         },
       },
     });
+    // The INVITE is on the wire: the island-overhead leg closes here
+    // (everything before this line — gate consult, URI assembly — is
+    // overhead the dial-press paid).
+    const sent = sessions.get(inviter.id);
+    if (sent && sent.latency && !sent.latency.invitedAt) {
+      sent.latency.invitedAt = Date.now();
+    }
+    // The island owns the no-verdict deadline (DIAL_TIMEOUT_MS): the
+    // timer self-guards (only a call that is neither established nor
+    // already failed acts) so no explicit clear is needed; a settled
+    // call just lets it no-op 32s later. The cause is recorded BEFORE
+    // cancel() because a synchronous Terminated teardown could remove
+    // the entry out from under the assignment.
+    setTimeout(() => {
+      const waiting = sessions.get(inviter.id);
+      if (!waiting || waiting.established || waiting.rejectCause) return;
+      waiting.rejectCause = waiting.rejectCause || 408;
+      try {
+        inviter.cancel();
+      } catch {
+        // Already terminating — the verdict line below still lands.
+      }
+    }, DIAL_TIMEOUT_MS);
     return true;
   } catch (err) {
     log(`invite failed: ${errorMessage(err)}`, "error");

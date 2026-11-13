@@ -2,95 +2,16 @@ package matrix
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/v2"
 	"errors"
 	"log/slog"
 	"net/http"
-	"net/url"
-	"strconv"
 	"time"
 
 	"github.com/larsartmann/webphone/internal/chatloop"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/store"
 )
-
-// syncResponse is the slice of GET /sync this seam consumes: the
-// cursor, global account data (m.direct DM map), and the joined rooms'
-// timelines.
-type syncResponse struct {
-	NextBatch   string `json:"next_batch"`
-	AccountData struct {
-		Events []accountDataEvent `json:"events"`
-	} `json:"account_data"`
-	Rooms struct {
-		Join map[string]roomSync `json:"join"`
-	} `json:"rooms"`
-}
-
-type accountDataEvent struct {
-	Type    string         `json:"type"`
-	Content map[string]any `json:"content"`
-}
-
-type roomSync struct {
-	Timeline struct {
-		Events []roomEvent `json:"events"`
-	} `json:"timeline"`
-	// Ephemeral carries the room's read receipts (m.receipt): the
-	// peer's m.read marker on OUR event id is the outbound message's
-	// strongest delivery verdict (lane v2).
-	Ephemeral struct {
-		Events []ephemeralEvent `json:"events"`
-	} `json:"ephemeral"`
-}
-
-// ephemeralEvent is one room-ephemeral event; only m.receipt is
-// consumed, so the content stays raw until the type is known.
-type ephemeralEvent struct {
-	Type    string          `json:"type"`
-	Content json.RawMessage `json:"content"`
-}
-
-// receiptContent is m.receipt's nested map: event id → receipt type →
-// reader → metadata. Only the reader KEYS matter (self-reads are
-// skipped); the ts is parsed for shape honesty and unused.
-type receiptContent map[string]map[string]map[string]struct {
-	TS int64 `json:"ts"`
-}
-
-// brandid-lint:ignore(BD003) homeserver wire shape: matrix event ids are foreign tokens (strong-id wire ruling)
-type roomEvent struct {
-	Type           string `json:"type"`
-	Sender         string `json:"sender"`
-	EventID        string `json:"event_id"`
-	OriginServerTS int64  `json:"origin_server_ts"`
-	Content        struct {
-		MsgType string `json:"msgtype"`
-		Body    string `json:"body"`
-		URL     string `json:"url"`
-		Info    struct {
-			MimeType string `json:"mimetype"`
-		} `json:"info"`
-	} `json:"content"`
-}
-
-// Sync long-polls the homeserver: since="" performs the immediate
-// initial snapshot, otherwise the call holds up to timeout for new
-// events. The returned cursor (next_batch) is the caller's resume
-// point.
-func (c *Client) Sync(ctx context.Context, since string, timeout time.Duration) (syncResponse, error) {
-	query := url.Values{}
-	if since != "" {
-		query.Set("since", since)
-	}
-	query.Set("timeout", strconv.Itoa(int(timeout.Milliseconds())))
-	var out syncResponse
-	if err := c.do(ctx, http.MethodGet, "/_matrix/client/v3/sync?"+query.Encode(), nil, &out); err != nil {
-		return syncResponse{}, err
-	}
-	return out, nil
-}
 
 // peerRooms returns the current room→peer view of the DM map (the
 // inverse of m.direct): the receiver resolves which conversation a
@@ -179,6 +100,35 @@ func (r *Receiver) Run(ctx context.Context) error {
 			if ctx.Err() != nil {
 				return nil
 			}
+			// Self-heal arms (both self-limiting: they only fire on a
+			// RESUMED sync — since != "" — so a poisoned cursor can force
+			// at most one reset, and a fresh sync that still fails falls
+			// through to the ordinary ladder):
+			//   poisoned cursor: the homeserver refused the saved token
+			//     (400 Rejection) — the resume point is corrupt, so drop
+			//     it and take the next sync fresh (an auth failure is
+			//     NOT this: resetting cannot fix a bad token, so the
+			//     ordinary ladder still stops loudly on it);
+			//   oversized answer: the backlog this cursor resumes blew
+			//     the read cap — the same resume point reproduces the
+			//     same overflow forever, so drop it and re-sync fresh.
+			//     The reset rides the backoff ladder (a Transient) so a
+			//     pathological every-window-oversized homeserver cannot
+			//     hot-spin the loop.
+			if since != "" && poisonedCursor(err) {
+				r.resetCursor(ctx, "matrix: the homeserver refused the saved sync cursor — resuming from a fresh sync", err)
+				attempt = 1
+				continue
+			}
+			if since != "" && isTooLarge(err) {
+				r.resetCursor(ctx, "matrix: the sync answer exceeded the read cap — resetting to a fresh sync", err)
+				var alive bool
+				attempt, alive = chatloop.Backoff(ctx, r.log, "matrix: re-syncing fresh", err, attempt, 30*time.Second)
+				if !alive {
+					return nil
+				}
+				continue
+			}
 			var alive bool
 			attempt, alive = chatloop.Backoff(ctx, r.log, "matrix: sync", err, attempt, 30*time.Second)
 			if !alive {
@@ -191,6 +141,33 @@ func (r *Receiver) Run(ctx context.Context) error {
 		if err := r.cursor.Save(ctx, resp.NextBatch); err != nil {
 			r.log.Error("matrix: save sync cursor", "error", err)
 		}
+	}
+}
+
+// poisonedCursor reports a sync Rejection that names the CURSOR as the
+// problem: the homeserver refused a resumed sync with M_UNKNOWN over a
+// 400 (an unknown since-token). An auth failure (401 M_UNKNOWN_TOKEN)
+// is NOT a poisoned cursor — resetting cannot fix a bad token, and the
+// ordinary ladder must stop loudly on it.
+func poisonedCursor(err error) bool {
+	hs, ok := errors.AsType[*homeserverError](err)
+	return ok && hs.Status == http.StatusBadRequest && hs.ErrCode == "M_UNKNOWN"
+}
+
+// isTooLarge reports the oversized-answer verdict (matrix.too_large,
+// Transient): the resumed backlog is beyond the read cap and will
+// reproduce the overflow on every retry until the cursor resets.
+func isTooLarge(err error) bool {
+	_, ok := errors.AsType[oversizedError](err)
+	return ok
+}
+
+// resetCursor is the self-heal arms' ONE home: drop the poisoned
+// resume point so the next sync starts fresh (the Warn names why).
+func (r *Receiver) resetCursor(ctx context.Context, reason string, cause error) {
+	r.log.Warn(reason, "error", cause)
+	if err := r.cursor.Save(ctx, ""); err != nil {
+		r.log.Error("matrix: save empty cursor", "error", err)
 	}
 }
 

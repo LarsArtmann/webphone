@@ -1,0 +1,78 @@
+package platform
+
+import (
+	"encoding/json/v2"
+	"net"
+	"net/http"
+
+	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/sipcred"
+)
+
+// The internal directory endpoint: GET /internal/directory/{extension}
+// answers the derived REGISTER credentials of every LIVE session of that
+// extension. Consumer: the stack's FreeSWITCH directory bridge
+// (mod_xml_curl) — loopback + Bearer secret, never the browser. The
+// directory password itself never appears here; the credentials are
+// session-scoped derivations (sipcred), so logout/revocation is
+// inherent: a dead session's credential dies at the next REGISTER.
+
+// loopbackPeer is the machine-surface posture: the FreeSWITCH directory
+// bridge and the operator's flight-recorder probe both run on the same
+// host (the module wires them as local processes talking to the loopback
+// listener). A non-loopback peer is a misdeployment — fail closed before
+// any secret even matters.
+func loopbackPeer(r *http.Request) bool {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		host = r.RemoteAddr
+	}
+	ip := net.ParseIP(host)
+	return ip != nil && ip.IsLoopback()
+}
+
+// machineSurface is the loopback-only machine-surface prologue: a disabled
+// seam answers like a missing surface (missing picks that surface's own
+// 404), then a non-loopback peer is refused before any secret matters.
+func machineSurface(
+	w http.ResponseWriter, r *http.Request, missing func(http.ResponseWriter, *http.Request), enabled bool,
+) bool { //nolint:branching-flow // the enabled gate is the seam's whole contract; bool-last closes the 2026-10-25 roadmap item (position-capture traps die — the func reads `missing, then the gate`)
+	if !enabled {
+		missing(w, r)
+		return false
+	}
+	if !loopbackPeer(r) {
+		http.Error(w, "internal", http.StatusForbidden)
+		return false
+	}
+	return true
+}
+
+func (p *Hub) InternalDirectory(w http.ResponseWriter, r *http.Request) {
+	if !machineSurface(w, r, http.NotFound, p.deps.Config.SIP.DerivedCredentials()) {
+		return
+	}
+	extension, err := domain.ParseExtension(r.PathValue("extension"))
+	if err != nil {
+		http.Error(w, "invalid extension", http.StatusBadRequest)
+		return
+	}
+	credentials := []string{}
+	for _, token := range p.deps.Sessions.ActiveTokens(extension) {
+		credentials = append(credentials, sipcred.Derive(p.deps.Config.SIP.CredentialSecret, token.String()))
+	}
+	// Unknown or session-less extensions answer an EMPTY list (200): the
+	// bridge's static-password fallback owns the decision for anyone the
+	// webphone has no live session for.
+	writeJSON(w, http.StatusOK, map[string]any{"credentials": credentials})
+}
+
+// writeJSON is the server package's JSON writer (the auth and api
+// packages carry the same one-liner as their own writers; the carve
+// precedent accepts the per-package writer so no cross-package
+// unexported call survives).
+func writeJSON(w http.ResponseWriter, status int, payload any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.MarshalWrite(w, payload) //nolint:erraudit // best-effort write; the response is already committed
+}

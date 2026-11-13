@@ -2,6 +2,7 @@ package app
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/larsartmann/go-health"
@@ -22,13 +23,19 @@ var dashboardRateLimit = struct {
 }{60, time.Minute}
 
 // dashboardCSP sets the subtree's Content-Security-Policy: the
-// dashboard library's verified policy — everything self-hosted,
-// nonce'd inline scripts, 'unsafe-eval' ONLY because the Datastar SDK
-// compiles its data-* expressions with the Function constructor. This
-// OVERRIDES the app-wide strict CSP (which has no nonce and no
-// unsafe-eval) for the /health subtree alone; every other surface
-// keeps the stricter policy.
-func dashboardCSP(nonce string) string { return dashboard.RecommendedCSP(nonce) }
+// dashboard library's verified policy minus 'unsafe-eval'. Since
+// v0.13.3 the page stamps its nonce onto the <html> root (data-nonce,
+// upstream issue #23) and the Datastar SDK compiles expressions
+// WITHOUT the Function path under it — browser-verified end to end by
+// the library's TestBrowser_StrictCSPNoEvalConnects. The strip keeps
+// the library's RecommendedCSP the single source for every other
+// directive; a nonce'd script-src stays (per-request nonces are wired
+// via WithNonceExtractor). This OVERRIDES the app-wide strict CSP
+// (which has no nonce either) for the /health subtree alone; every
+// other surface keeps the stricter policy.
+func dashboardCSP(nonce string) string {
+	return strings.Replace(dashboard.RecommendedCSP(nonce), " 'unsafe-eval'", "", 1)
+}
 
 // newDashboard mounts the go-health-dashboard at /health: registers
 // the dashboard in the container (shutdown cascade + a non-critical

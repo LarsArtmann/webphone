@@ -39,8 +39,10 @@ const uploadBodyLimit = uploadLimit + 1<<20
 // back to content sniffing when the declaration is missing or is the
 // generic octet-stream default (browsers send real types for file
 // inputs; curl and programmatic posts do not). The inline image
-// thumbnails key on image/*, so a mislabeled upload would silently
-// lose its preview.
+// thumbnails key on the image MIME family, so a mislabeled upload would
+// silently lose its preview. (No star-slash in comments: cqrs-lint's
+// suppression scanner miscounts a slash-star inside a line comment as a
+// block-comment opener and goes inert for the rest of the file.)
 func attachmentMimeType(fh *multipart.FileHeader, content []byte) string {
 	declared := fh.Header.Get("Content-Type")
 	if declared != "" && declared != "application/octet-stream" {
@@ -92,6 +94,7 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		content, readErr := io.ReadAll(io.LimitReader(file, messaging.MaxAttachmentSize+1))
+		//cqrs-lint:ignore(C015,C023) best-effort close: nothing left to act on after the primary error surfaces below
 		_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
 		if readErr != nil || int64(len(content)) > messaging.MaxAttachmentSize {
 			h.renderPanelError(w, r, sess, views.TabMessages, http.StatusUnprocessableEntity, h.T(r, "err.attachmentLarge"))
@@ -147,6 +150,7 @@ func (h *handlers) sendFax(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	pdf, readErr := io.ReadAll(io.LimitReader(file, fax.MaxPDFSize+1))
+	//cqrs-lint:ignore(C015,C023) best-effort close: nothing left to act on after the primary error surfaces below
 	_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
 	if readErr != nil || int64(len(pdf)) > fax.MaxPDFSize {
 		h.renderPanelError(w, r, sess, views.TabFax, http.StatusUnprocessableEntity, h.T(r, "err.pdfLarge"))
@@ -292,6 +296,10 @@ func (h *handlers) saveContact(w http.ResponseWriter, r *http.Request) {
 	}
 	// FormValue transparently handles urlencoded AND multipart bodies.
 	name := r.FormValue("name")
+	if len(name) > domain.MaxContactNameLength {
+		http.Error(w, "the contact name is too long", http.StatusUnprocessableEntity)
+		return
+	}
 	phone, err := domain.ParsePhone(r.FormValue("number"))
 	if err != nil {
 		http.Error(w, "enter a valid number", http.StatusUnprocessableEntity)
@@ -325,6 +333,17 @@ func (h *handlers) NotifyContactsChanged(extension domain.Extension) {
 		return
 	}
 	h.deps.Hubs.Publish(extension, sseEventContacts, "")
+}
+
+// NotifyCallNotesChanged nudges the extension's surfaces with the
+// payload-less "notes" SSE event (the post-call note save path). Same shape as
+// the contacts nudge: the payload carries no note text, because the note is
+// reachable only through the owner's own session.
+func (h *handlers) NotifyCallNotesChanged(extension domain.Extension) {
+	if h.deps.Hubs == nil {
+		return
+	}
+	h.deps.Hubs.Publish(extension, sseEventNotes, "")
 }
 
 // deleteContact removes a personal contact.
@@ -361,7 +380,7 @@ func (h *handlers) saveSnippet(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "the snippet text is empty", http.StatusUnprocessableEntity)
 		return
 	}
-	if len(body) > messaging.MaxBodyLength {
+	if len(body) > domain.MaxBodyLength {
 		http.Error(w, "the snippet is too long", http.StatusUnprocessableEntity)
 		return
 	}
@@ -413,6 +432,11 @@ func (h *handlers) countUnread(r *http.Request, sess session.Session) int {
 	}
 	threads, err := h.deps.Messaging.Threads(r.Context(), sess.Extension)
 	if err != nil {
+		// Badge-only degradation: zero is the honest "cannot count" answer
+		// for a nav badge, but the failure is logged so a store outage is
+		// visible beyond a quietly dark badge (the error-path owner rule).
+		// The empty result is NOT cached — the next render recomputes.
+		slog.WarnContext(r.Context(), "unread badge count failed", "error", err)
 		return 0
 	}
 	total := 0
@@ -436,6 +460,9 @@ func (h *handlers) countVoicemail(r *http.Request, sess session.Session) int {
 	}
 	summary, err := h.deps.PhoneAPI.VoicemailSummary(r.Context(), sess.PBXCredentials())
 	if err != nil {
+		// Same badge-only degradation as countUnread: zero on failure, the
+		// failure logged, nothing cached.
+		slog.WarnContext(r.Context(), "voicemail badge count failed", "error", err)
 		return 0
 	}
 	return summary.New
@@ -553,10 +580,10 @@ func (h *handlers) markThreadRead(w http.ResponseWriter, r *http.Request) {
 
 // threadFlagActions maps the action path segment onto the store flag
 // (M22): one handler, three spellings, routed by POST /messages/{id}/{flag}.
-var threadFlagActions = map[string]store.ThreadFlag{
-	"pin":     store.FlagPinned,
-	"archive": store.FlagArchived,
-	"mute":    store.FlagMuted,
+var threadFlagActions = map[string]readmodels.ThreadFlag{
+	"pin":     readmodels.FlagPinned,
+	"archive": readmodels.FlagArchived,
+	"mute":    readmodels.FlagMuted,
 }
 
 // setThreadFlag pins, archives or mutes a thread — or clears the flag
@@ -601,7 +628,7 @@ func (h *handlers) setThreadFlag(w http.ResponseWriter, r *http.Request) {
 			h.notFound(w, r)
 			return
 		}
-		contacts := h.crmDirectory(r.Context(), []string{thread.Remote.String()})
+		contacts := h.crmDirectory(r.Context(), sess.Extension, []string{thread.Remote.String()})
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		if renderErr := views.ThreadHead(views.ThreadViewProps{
 			Thread: thread, CRM: contacts, Lang: h.lang(r),
@@ -707,6 +734,7 @@ func (h *handlers) importContacts(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	data, readErr := io.ReadAll(io.LimitReader(file, 5<<20))
+	//cqrs-lint:ignore(C015,C023) best-effort close: nothing left to act on after the primary error surfaces below
 	_ = file.Close() //nolint:erraudit // close-after-use: nothing left to do on failure
 	if readErr != nil {
 		h.renderPanelError(w, r, sess, views.TabContacts, http.StatusUnprocessableEntity, h.T(r, "contacts.readFailed"))

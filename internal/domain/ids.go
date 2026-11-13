@@ -6,6 +6,7 @@
 package domain
 
 import (
+	"encoding/json"
 	"strings"
 
 	id "github.com/larsartmann/go-branded-id"
@@ -44,6 +45,13 @@ func (e Extension) String() string { return e.value }
 // IsZero reports whether the extension is the zero value.
 func (e Extension) IsZero() bool { return e.value == "" }
 
+// MarshalJSON renders the raw extension (the id.ID doctrine: branded
+// values JSON-marshal their raw value, never a wrapper object). Under
+// encoding/json v2 semantics an unexported-only struct is a marshal
+// ERROR rather than `{}`, so identity shapes carrying Extensions need
+// this to stay serializable in both modes.
+func (e Extension) MarshalJSON() ([]byte, error) { return json.Marshal(e.String()) }
+
 // Phone is a sanitized remote number (digits with an optional leading +,
 // plus * and # which some dialplans use). The island's dial field uses the
 // same rule, so history rows and threads key identically.
@@ -74,6 +82,41 @@ func (p Phone) String() string { return p.value }
 // IsZero reports whether the phone is the zero value.
 func (p Phone) IsZero() bool { return p.value == "" }
 
+// keepRunes is the ONE home of the "keep only the runes of s for which
+// keep holds, order preserved" loop: the dialable sanitize, the contact
+// digit key and the avatar digit tail share the shape, and second
+// hand-kept copies drift the day one of them learns a new character class.
+func keepRunes(s string, keep func(rune) bool) string {
+	out := make([]rune, 0, len(s))
+	for _, r := range s {
+		if keep(r) {
+			out = append(out, r)
+		}
+	}
+	return string(out)
+}
+
+// isASCIIDigit reports whether r is one of '0'-'9'. Deliberately not
+// unicode.IsDigit: non-ASCII digit glyphs must never enter digit keys.
+func isASCIIDigit(r rune) bool { return r >= '0' && r <= '9' }
+
+// isDialable reports whether r is in the dialable alphabet (digits,
+// letters, +, *, #), exactly the island's
+// `raw.replace(/[^\d+*#a-zA-Z]/g, "")`.
+func isDialable(r rune) bool {
+	switch {
+	case isASCIIDigit(r), r == '+', r == '*', r == '#',
+		r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z':
+		return true
+	}
+	return false
+}
+
+// DigitsOf returns s reduced to its ASCII digits ('0'-'9'), order
+// preserved: the contact upsert key and the avatar digit tail are two
+// consumers of the same digits-only reduction, so one home carries the loop.
+func DigitsOf(s string) string { return keepRunes(s, isASCIIDigit) }
+
 // sanitizeDialable strips invisible Unicode direction marks and formatting
 // that pasted numbers carry, keeping only dialable characters. The
 // dialable alphabet (digits, letters, +, *, #) is exactly the island's
@@ -81,17 +124,7 @@ func (p Phone) IsZero() bool { return p.value == "" }
 // keeps letters, like this side — some PBXs use alphanumeric SIP user
 // parts). Both sides are pinned: this test file for Go, the served-asset
 // table in internal/server for the island literal.
-func sanitizeDialable(raw string) string {
-	clean := make([]rune, 0, len(raw))
-	for _, r := range raw {
-		switch {
-		case r >= '0' && r <= '9', r == '+', r == '*', r == '#',
-			r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z':
-			clean = append(clean, r)
-		}
-	}
-	return string(clean)
-}
+func sanitizeDialable(raw string) string { return keepRunes(raw, isDialable) }
 
 // ThreadBrand brands thread identifiers.
 type ThreadBrand struct{}

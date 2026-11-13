@@ -7,22 +7,13 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
-// authAudit is the ONE home of the semantic auth events (A3): one
-// greppable slog line per login, denied login, logout, passkey
-// enrollment and passkey revocation — the operator's audit trail over
-// the journal. It logs IDENTIFIERS only (extension, email, credential
-// name); never a password, a session token, a derived credential, or a
-// ceremony body (the request log middleware never sees those either —
-// bodies stay unparsed).
-func authAudit(event string, key, value, outcome string) {
-	slog.Info("auth "+event, key, value, "outcome", outcome)
-}
-
-// agentAudit is the agent-action branch of the same audit trail (M18):
+// agentAudit is the agent-action branch of the auth audit trail (M18):
 // one greppable slog line per drafts-panel action (approve, discard,
 // mode pin/reset — every path that changes what the agent may send or
 // HAS sent) with the acting extension, the draft id when the action
-// names one, and the outcome. Identifiers only, like authAudit.
+// names one, and the outcome. Identifiers only, like the auth events
+// (auth.AuthAudit — the semantic auth lines moved with the auth
+// package).
 //
 // The multi-user substrate (2026-10-28): actorEmail names the HUMAN
 // behind a passwordless session — with two people sharing one

@@ -24,7 +24,7 @@ templ ContactsPanel(props ContactsPanelProps) {
 		hx-get="/partials/contacts"
 		hx-trigger="sse:contacts"
 		hx-target="#tab-content"
-		hx-swap="morph:innerHTML show:window:top"
+		hx-swap="morph:innerHTML"
 	>
 		@panelHead(props.Lang, "tab.contacts", "contacts.subtitle")
 		<form
@@ -32,6 +32,7 @@ templ ContactsPanel(props ContactsPanelProps) {
 			hx-post="/contacts/save"
 			hx-target="#tab-content"
 			hx-swap="innerHTML"
+			hx-disabled-elt="find button[type=submit]"
 		>
 			@forms.Input(forms.InputProps{
 				BaseProps: utils.BaseProps{
@@ -41,6 +42,7 @@ templ ContactsPanel(props ContactsPanelProps) {
 				Name:        "name",
 				Placeholder: T(props.Lang, "contacts.name.ph"),
 				Required:    true,
+				MaxLength:   domain.MaxContactNameLength,
 			})
 			@forms.Input(forms.InputProps{
 				BaseProps: utils.BaseProps{
@@ -52,7 +54,7 @@ templ ContactsPanel(props ContactsPanelProps) {
 				Placeholder: T(props.Lang, "contacts.number.ph"),
 				Required:    true,
 			})
-			@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Text: T(props.Lang, "contacts.save")})
+			@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Icon: sendIndicator(), Text: T(props.Lang, "contacts.save")})
 		</form>
 		<div class="wp-compose">
 			<form
@@ -61,31 +63,36 @@ templ ContactsPanel(props ContactsPanelProps) {
 				hx-target="#tab-content"
 				hx-swap="innerHTML"
 				hx-encoding="multipart/form-data"
+				hx-disabled-elt="find button[type=submit]"
 			>
 				<input id="contact-import-file" type="file" name="vcard" accept=".vcf,text/vcard" required aria-label={ T(props.Lang, "contacts.importFile.label") }/>
-				@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Variant: display.ButtonSecondary, Text: T(props.Lang, "contacts.import")})
+				@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Variant: display.ButtonSecondary, Icon: sendIndicator(), Text: T(props.Lang, "contacts.import")})
 			</form>
 			<a class="wp-export-link" href="/contacts/export">{ T(props.Lang, "contacts.export") }</a>
 		</div>
 		if len(props.Personal) == 0 && len(props.Shared) == 0 {
-			@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, "contacts.empty"), Icon: icons.Users})
+			@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, "contacts.empty"), Icon: icons.Users, Class: "wp-empty-state"})
 		}
-		for _, contact := range props.Personal {
-			@ContactRow(contact, props.Lang)
-		}
-		for _, contact := range props.Shared {
-			<article class="wp-row">
-				<span class={ "wp-avatar", "wp-avatar-shared", avatarHueClass(contact.Name+contact.Number) } aria-hidden="true">{ avatarFor(contact.Name) }</span>
-				<span class="wp-thread-text">
-					<strong class="wp-thread-remote">{ contact.Name }</strong>
-					<span class="wp-muted">{ contact.Number }</span>
-				</span>
-				<span class="wp-shared-tag">{ T(props.Lang, "contacts.shared") }</span>
-				<span class="wp-row-actions">
-					<button class="wp-mini" data-dial={ contact.Number }>{ T(props.Lang, "contacts.call") }</button>
-				</span>
-			</article>
-		}
+		// Train 2 fitted layout: the book fills a responsive card grid at
+		// wide containers (auto-fill keeps one column below ~360px cells).
+		<div class="wp-contacts-grid">
+			for _, contact := range props.Personal {
+				@ContactRow(contact, props.Lang)
+			}
+			for _, contact := range props.Shared {
+				<article class="wp-row">
+					<span class={ "wp-avatar", "wp-avatar-shared", avatarHueClass(contact.Name+contact.Number) } aria-hidden="true">{ avatarFor(contact.Name) }</span>
+					<span class="wp-thread-text">
+						<strong class="wp-thread-remote">{ contact.Name }</strong>
+						<span class="wp-muted">{ contact.Number }</span>
+					</span>
+					<span class="wp-shared-tag">{ T(props.Lang, "contacts.shared") }</span>
+					<span class="wp-row-actions">
+						<button class="wp-mini" data-dial={ contact.Number }>{ T(props.Lang, "contacts.call") }</button>
+					</span>
+				</article>
+			}
+		</div>
 	</section>
 }
 

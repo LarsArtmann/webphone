@@ -2,15 +2,15 @@ package server
 
 import (
 	"context"
-	"encoding/json"
+	"encoding/json/v2"
 	"net/http"
-	"net/http/httptest"
 	"strings"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/push"
 	"github.com/larsartmann/webphone/internal/readmodels"
@@ -153,9 +153,12 @@ func TestSummaryDraftAgentVerdictPassesThrough(t *testing.T) {
 // verdict) answers 502 so the island toasts and the attempt stays
 // retryable (the idempotency key never recorded).
 func TestSummaryDraftOutageIs502(t *testing.T) {
-	dead := httptest.NewServer(http.NotFoundHandler())
-	dead.Close()
-	hc := clientFor(t, serverWithAgentAndASR(t, dead.URL))
+	// The dead agent rides the textagent convention (127.0.0.1:1, always
+	// refused): the previous close-for-a-free-port dance raced the helper's
+	// own ASR provider — httptest can rebind the just-freed port, the agent
+	// dial then reached that live provider and the "outage" answered
+	// non-502 (the 2026-11-10 release-attempt-1 flake).
+	hc := clientFor(t, serverWithAgentAndASR(t, "http://127.0.0.1:1"))
 	hc.login("1001", "pw")
 	if resp, _ := postTranscript(t, hc, "call-dead", "in", "+4989123456", "words"); resp.StatusCode != http.StatusNoContent {
 		t.Fatalf("seed transcript: %d", resp.StatusCode)
@@ -223,21 +226,41 @@ func waitForDrafts(t *testing.T, transport *recordingTransport, n int) []push.Dr
 }
 
 // summaryServerWithPush wires the full summarize chain plus a push
-// seam over the engine's device registry; the registry handle comes
+// seam over the journal device registry; the registry handle comes
 // back so a test can register devices directly.
-func summaryServerWithPush(t *testing.T, transport push.Sender) (*testServer, *client, *readmodels.PushDevices) {
+func summaryServerWithPush(t *testing.T, transport push.Sender) (*testServer, *client, readmodels.PushDeviceGate) {
 	t.Helper()
 	stub := newStubReviewAPI(t)
-	engine := newTestEngine(t)
-	fanout := push.NewFanout(map[string]push.Sender{transport.Describe(): transport})
+	devices := cqrs.NewPushDevices(newCoreSystem(t))
+	fanout := push.NewFanout(map[push.Transport]push.Sender{push.Transport(transport.Describe()): transport}, summaryFanRegistry{devices})
 	provider, _ := fakeProvider(t, http.StatusOK, "hi")
 	server := newTestServerWithPhoneAPI(t, "", func(deps *Deps) {
 		deps.ASR = asrClientFor(t, provider.URL)
 		deps.TextAgent = agentClientFor(t, stub.server.URL)
 		deps.Push = fanout
-		deps.PushDevices = engine.PushDevices()
+		deps.PushDevices = devices
 	})
-	return server, clientFor(t, server), engine.PushDevices()
+	return server, clientFor(t, server), devices
+}
+
+// summaryFanRegistry adapts the journal-backed device store to the
+// fanout's prune seam (test-side twin of app's pushRegistryAdapter).
+type summaryFanRegistry struct{ devices readmodels.PushDeviceGate }
+
+func (r summaryFanRegistry) List(ctx context.Context, owner domain.Extension) ([]push.Device, error) {
+	views, err := r.devices.List(ctx, owner)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]push.Device, 0, len(views))
+	for _, v := range views {
+		out = append(out, push.Device{DeviceID: v.DeviceID, Transport: push.Transport(v.Transport), Token: v.Token})
+	}
+	return out, nil
+}
+
+func (r summaryFanRegistry) Remove(ctx context.Context, owner domain.Extension, deviceID string) error {
+	return r.devices.Remove(ctx, owner, deviceID)
 }
 
 // TestSummaryDraftPushesOnlyWhenSeamOn: a fanout with no live transport

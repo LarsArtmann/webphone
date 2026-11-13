@@ -1,13 +1,22 @@
 /* WebPhone shell + tabs — the operator desk around the phone island.
  *
- * Design system: one accent (teal), one surface family, two themes.
- * The island stylesheet (loaded after this file) shares the token block
- * below; the tokens are mirrored in island/style.css — keep them in sync.
+ * Design system (2026-11-11 restyle, hue corrected same day): one
+ * accent (GREEN — the product's brand, owner ruling), one surface family,
+ * two themes. The island stylesheet (loaded after this file) shares the
+ * token block below; the tokens are mirrored in island/style.css — keep
+ * them in sync.
  *
- * Hierarchy model: the page background is quiet, panels are elevated
- * (surface + hairline + soft shadow), and everything inside a panel is
- * a flat row or input — never a box-in-box. Rows earn a border only on
- * hover/focus. */
+ * Hierarchy model: the page background is quiet with a faint accent wash
+ * at the top, panels are elevated (surface + hairline + soft shadow), and
+ * everything inside a panel is a flat row or input — never a box-in-box.
+ * Rows earn a border only on hover/focus.
+ *
+ * Ink discipline (measured 2026-11-11, WCAG AA): the dark theme fills
+ * with a BRIGHT green and paints DARK ink on it (--on-accent #0b0d11:
+ * 6.0:1 on --accent #17a467, 10.1:1 on hover #3fd694, 6.3:1 on --danger
+ * #ef6a5f — one token serves every fill). The light theme fills with a
+ * DEEP green and paints white (4.6:1 on #0e8752, better on hover
+ * #0a6e42). Never point a fill at the other theme's ink. */
 
 :root,
 :root[data-theme="dark"] {
@@ -23,17 +32,62 @@
   --accent: #17a467;
   --accent-strong: #3fd694;
   --accent-soft: rgb(63 214 148 / 13%);
-  --on-accent: #ffffff;
+  /* Dark ink on the bright dark-theme fills: white ink measured 3.2:1 on
+   * --accent and worse on hover — the fill family is bright by design, so
+   * the ink goes dark instead (see the ink-discipline note above). The
+   * light theme keeps white ink on its deeper accent (declared in the
+   * light blocks below). */
+  --on-accent: #0b0d11;
   --scrim: rgb(4 6 10 / 62%);
   --danger: #ef6a5f;
   --danger-soft: rgb(239 106 95 / 14%);
   --warn: #e0a63e;
   --ok: #3fd694;
-  --shadow: 0 1px 2px rgb(0 0 0 / 44%), 0 10px 30px rgb(0 0 0 / 32%);
+  /* Elevation ladder (destination §5): one meaning per level — 1 resting
+   * panels, 2 raised chrome (nav, jump chip, popovers), 3 overlays. The
+   * bare --shadow stays as the level-1 alias so existing call sites keep
+   * working; new work names the level. */
+  --shadow-1: 0 1px 2px rgb(0 0 0 / 40%), 0 10px 28px -12px rgb(0 0 0 / 46%);
+  --shadow-2: 0 2px 6px rgb(0 0 0 / 42%), 0 20px 48px -16px rgb(0 0 0 / 55%);
+  --shadow-3: 0 4px 10px rgb(0 0 0 / 45%), 0 28px 64px -18px rgb(0 0 0 / 62%);
+  --shadow: var(--shadow-1);
   --hairline: 1px solid var(--border);
-  --radius-sm: 6px;
-  --radius: 9px;
-  --radius-lg: 12px;
+  --radius-sm: 8px;
+  --radius: 12px;
+  --radius-lg: 16px;
+  /* Motion tokens (destination §5): every component transition references
+   * these, so the whole shell shares one feel; --ease is the M3 emphasized
+   * curve. Reduced motion still flattens everything globally. */
+  --dur-fast: 150ms;
+  --dur: 250ms;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  /* A press must answer inside ~100ms or it reads as lag — deliberately
+   * faster than --dur-fast. */
+  --dur-press: 80ms;
+  /* State layers (M3 idiom, destination §5): hover and press answer with
+   * translucent accent overlays at these strengths; focus answers with
+   * the ring — three channels, visibly distinct in combination. */
+  --state-hover: 8%;
+  --state-pressed: 12%;
+  --focus-ring: 2px solid var(--accent);
+  --focus-ring-offset: 2px;
+  /* F16/F17: the secondary type scale and the row/panel rhythms. The
+     corpus migrates opportunistically — new panels pick from these,
+     the sub-scale micro sizes catch up as their surfaces are touched. */
+  --text-xs: 0.8em;
+  --text-sm: 0.875em;
+  --text-md: 0.95em;
+  /* Ramp roles (destination §5): 17px emphasized body, then the two
+   * display sizes — the fluid M26 curves live INSIDE the tokens so the
+   * panel/page headings keep their raised presence from one home. */
+  --text-lg: 1.0625rem;
+  --text-xl: clamp(1.2rem, 1rem + 0.9vw, 1.5rem);
+  --text-2xl: clamp(1.35rem, 2.2vw, 1.7rem);
+  --panel-pad: 24px 26px 26px;
+  /* List rows sit on the 4px grid (destination §5): 12px both axes —
+   * the three row families (threads, faxes, live-context) share it. */
+  --row-pad: 12px;
+  --row-gap: 12px;
   /* Shell geometry (theme-invariant). The island's column bounds and the
    * content ceiling live here so the collapse (P2), the grid and the
    * Messages split cannot disagree — one number, one home. The collapsed
@@ -73,8 +127,14 @@
     --danger-soft: rgb(211 56 44 / 10%);
     --warn: #9a5b0a;
     --ok: #0e8752;
-    --shadow:
-      0 1px 2px rgb(16 24 32 / 6%), 0 12px 28px -6px rgb(16 24 32 / 10%);
+    --on-accent: #ffffff;
+    --shadow-1:
+      0 1px 2px rgb(16 24 32 / 6%), 0 8px 22px -10px rgb(16 24 32 / 12%);
+    --shadow-2:
+      0 2px 6px rgb(16 24 32 / 7%), 0 16px 36px -12px rgb(16 24 32 / 16%);
+    --shadow-3:
+      0 4px 10px rgb(16 24 32 / 8%), 0 24px 52px -14px rgb(16 24 32 / 22%);
+    --shadow: var(--shadow-1);
   }
 }
 
@@ -99,7 +159,14 @@
   --danger-soft: rgb(211 56 44 / 10%);
   --warn: #9a5b0a;
   --ok: #0e8752;
-  --shadow: 0 1px 2px rgb(16 24 32 / 6%), 0 12px 28px -6px rgb(16 24 32 / 10%);
+  --on-accent: #ffffff;
+  --shadow-1:
+    0 1px 2px rgb(16 24 32 / 6%), 0 8px 22px -10px rgb(16 24 32 / 12%);
+  --shadow-2:
+    0 2px 6px rgb(16 24 32 / 7%), 0 16px 36px -12px rgb(16 24 32 / 16%);
+  --shadow-3:
+    0 4px 10px rgb(16 24 32 / 8%), 0 24px 52px -14px rgb(16 24 32 / 22%);
+  --shadow: var(--shadow-1);
 }
 
 * {
@@ -191,6 +258,29 @@ h3 {
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
+  /* The accent wash below needs its own stacking context: a negative
+   * z-index child paints behind THIS element's content but in front of
+   * the body background only when an ancestor context exists. */
+  position: relative;
+  isolation: isolate;
+}
+
+/* Accent wash (2026-11-11 restyle): a faint indigo bloom behind the top
+ * of the shell gives the page depth without touching panel surfaces —
+ * the panels float over a tinted sky instead of flat ink. Static, so
+ * reduced motion is unaffected. */
+.wp-root::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 560px;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    1100px 460px at 28% -180px,
+    color-mix(in srgb, var(--accent) 16%, transparent),
+    transparent 72%
+  );
 }
 
 .wp-header {
@@ -207,10 +297,17 @@ h3 {
   z-index: 10;
 }
 
+/* M2: the brand is the page's h1 — the reset keeps the wordmark's
+ * exact look (the anchor inside carries the styles). */
+.wp-brand-h1 {
+  margin: 0;
+  font: inherit;
+}
+
 .wp-brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--row-gap);
   font-weight: 700;
   font-size: 1rem;
   letter-spacing: -0.02em;
@@ -233,7 +330,7 @@ h3 {
 
 .wp-signed-in {
   color: var(--muted);
-  font-size: 0.9em;
+  font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
   border: var(--hairline);
   border-radius: 999px;
@@ -249,7 +346,7 @@ h3 {
   margin-inline-start: auto;
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--row-gap);
 }
 
 .wp-theme-toggle {
@@ -257,18 +354,50 @@ h3 {
   background: var(--surface-2);
   color: var(--muted);
   font: inherit;
-  font-size: 0.85em;
+  font-size: var(--text-sm);
   padding: 4px 12px;
   border-radius: 999px;
   cursor: pointer;
   transition:
-    color 120ms ease,
-    border-color 120ms ease;
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
 }
 
 .wp-theme-toggle:hover {
   color: var(--text);
   border-color: var(--accent);
+}
+
+/* The command palette's coarse-pointer entry (F12): the keyboard owns
+   Ctrl/Cmd+K on a desktop, so the button exists only where a keyboard
+   cannot — touch. Hidden by default, revealed by pointer capability,
+   dressed in the theme-toggle's quiet pill grammar. */
+.wp-palette-open {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .wp-palette-open {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 34px;
+    height: 30px;
+    padding: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    color: var(--muted);
+    border-radius: 999px;
+    cursor: pointer;
+    transition:
+      color var(--dur-fast) var(--ease),
+      border-color var(--dur-fast) var(--ease);
+  }
+
+  .wp-palette-open:hover {
+    color: var(--text);
+    border-color: var(--accent);
+  }
 }
 
 /* Skip link (E4): the first tab stop jumps past the island straight to
@@ -325,6 +454,22 @@ h3 {
   container-name: tabcol;
 }
 
+/* F19: signed out, the column is a door — the welcome + login stack
+ * centers instead of filling a desk built for a session that does not
+ * exist yet (the tab row is server-side absent, so no dead chrome to
+ * push the stack around). */
+.wp-main-col.wp-signed-out {
+  justify-content: center;
+}
+
+.wp-main-col.wp-signed-out .wp-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 0;
+}
+
 /* --- collapsible island (P2) --------------------------------------------- */
 
 /* Desktop-only: on phones the island is part of the single-column flow and
@@ -375,12 +520,12 @@ h3 {
   background: transparent;
   color: var(--muted);
   font: inherit;
-  font-size: 0.85em;
+  font-size: var(--text-sm);
   cursor: pointer;
   transition:
-    color 120ms ease,
-    border-color 120ms ease,
-    background 120ms ease;
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
 }
 
 @media (min-width: 901px) {
@@ -414,43 +559,74 @@ h3 {
 
 /* --- navigation ---------------------------------------------------------- */
 
+/* Segmented pill bar (2026-11-11 restyle): the tab row reads as an app
+ * control, not a document strip — pills in a soft container, the active
+ * tab a filled pill with the LED glow. Wraps gracefully when the admin
+ * tab joins on narrow desktops. */
 .wp-nav {
   display: flex;
   gap: 2px;
   flex-wrap: wrap;
-  border-bottom: var(--hairline);
+  padding: 4px;
+  background: var(--surface);
+  border: var(--hairline);
+  border-radius: 999px;
+  box-shadow: var(--shadow-1);
 }
 
 .wp-nav-link {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
+  gap: clamp(4px, 0.5cqw, 7px);
+  padding: 8px clamp(8px, 1.1cqw, 15px);
   color: var(--muted);
-  font-weight: 500;
-  font-size: 0.95em;
+  font-weight: 550;
+  font-size: var(--text-md);
   text-decoration: none;
-  border-bottom: 2px solid transparent;
-  border-radius: 8px 8px 0 0;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  /* The Phone tab is a BUTTON in the same class (Train 3): the reset
+ * keeps the UA chrome out of the pill — anchors are unaffected. */
+  background-color: transparent;
+  font-family: inherit;
+  cursor: pointer;
   transition:
-    color 120ms ease,
-    background 120ms ease;
+    color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
 }
 
 .wp-nav-link:hover {
   color: var(--text);
-  background: var(--surface-2);
+  background: color-mix(in oklab, var(--text) 6%, transparent);
+}
+
+.wp-nav-link:active {
+  scale: 0.97;
 }
 
 .wp-nav-link.wp-active {
   color: var(--accent-strong);
   font-weight: 650;
-  border-bottom-color: var(--accent);
-  /* The line-light signature: the active tab's underline bleeds a
-   * faint LED glow onto the rail — the one decorated spot in the
-   * chrome (everything else stays quiet). */
-  box-shadow: 0 10px 18px -12px
-    color-mix(in srgb, var(--accent) 80%, transparent);
+  background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 32%, transparent);
+  /* The line-light signature: the active pill bleeds a faint LED glow —
+   * the one decorated spot in the chrome (everything else stays
+   * quiet). */
+  box-shadow: 0 8px 20px -12px
+    color-mix(in srgb, var(--accent) 75%, transparent);
+}
+
+/* The glyph leads the label (icons ship with the 2026-11-11 restyle:
+ * eight text-only tabs read as a spreadsheet, and on the mobile bottom
+ * bar the icon is what keeps the labels legible at their small size). */
+.wp-nav-ic {
+  display: inline-flex;
+}
+
+.wp-nav-ic .wp-icon {
+  width: 16px;
+  height: 16px;
 }
 
 .wp-nav-badge {
@@ -463,6 +639,42 @@ h3 {
   font-variant-numeric: tabular-nums;
 }
 
+/* Single-row fit (§f 12): the nav lives inside the tab column, so the
+ * pill paddings/gap scale with the CONTAINER (cqw of tabcol) instead of
+ * the viewport — with the island open at 1280 the row compacts fluidly
+ * instead of wrapping Settings onto a second line; the container step
+ * drops the label size last. */
+@container tabcol (max-width: 880px) {
+  .wp-nav-link {
+    font-size: var(--text-sm);
+  }
+}
+
+/* Train 3 (mobile dialer): the Phone tab is JS-created (shell.js) and
+ * exists ONLY on the mobile bottom bar — desktop's island already has
+ * its own column. The focus state makes the island the one body column:
+ * the dialer reads like an app tab (ring/dial reachable, content
+ * returns on the next real tab tap). */
+.wp-nav-phone {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .wp-nav-phone {
+    display: inline-flex;
+  }
+
+  /* Dialer focus hides the CONTENT region only: the nav stays — it IS the
+   * return affordance (tapping a real tab, or Phone again, leaves focus;
+   * shell.js §Train-3). Hiding .wp-main-col wholesale would hide the nav
+   * with it and strand the user in the focus state (the tap-through proof
+   * caught exactly that: state 3 could never click a tab). */
+  html.wp-phone-focus #tab-content,
+  html.wp-phone-focus #wp-tab-error {
+    display: none;
+  }
+}
+
 /* Live-call presence (shell.js mirrors the island's call count into the
  * header on every wp:calls-changed event; removed when no call runs). */
 .wp-call-badge {
@@ -471,7 +683,7 @@ h3 {
   gap: 0.45em;
   padding: 2px 10px;
   border-radius: 999px;
-  font-size: 0.78em;
+  font-size: var(--text-xs);
   font-weight: 600;
   color: var(--accent-strong);
   background: var(--accent-soft);
@@ -507,7 +719,7 @@ h3 {
   align-items: center;
   padding: 2px 10px;
   border-radius: 999px;
-  font-size: 0.78em;
+  font-size: var(--text-xs);
   font-weight: 600;
   color: var(--danger);
   background: color-mix(in srgb, var(--danger) 12%, transparent);
@@ -525,7 +737,7 @@ h3 {
   align-items: center;
   padding: 2px 10px;
   border-radius: 999px;
-  font-size: 0.78em;
+  font-size: var(--text-xs);
   font-weight: 600;
   color: var(--muted, var(--text));
   background: var(--surface-2);
@@ -564,12 +776,12 @@ h3 {
   border: var(--hairline);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow);
-  padding: 24px 26px 26px;
+  padding: var(--panel-pad);
   /* Panel entrance (F2): a short fade/slide when a fresh panel swaps
      in. Morph-driven updates reuse the existing nodes and never re-run
      the animation, so live pushes stay calm; reduced motion disables it
      with the global guard below. */
-  animation: wp-panel-in 160ms ease-out;
+  animation: wp-panel-in var(--dur) var(--ease);
 }
 
 @keyframes wp-panel-in {
@@ -587,8 +799,8 @@ h3 {
    is in flight (shell.js 3h). */
 .wp-skeleton {
   display: grid;
-  gap: 10px;
-  padding: 18px 16px;
+  gap: var(--row-gap);
+  padding: 16px;
 }
 
 .wp-skeleton[hidden] {
@@ -631,24 +843,26 @@ h3 {
 
 .wp-panel-head h2 {
   margin: 0;
-  /* Fluid display size (M26): tightens on phone widths, full size on
-   * desktop — without leaving the rem scale (root stays a percentage,
-   * so the user's browser font-size preference still wins). */
-  font-size: clamp(1.15rem, 1rem + 0.7vw, 1.32rem);
-  font-weight: 650;
+  /* Fluid display size (M26, raised 2026-11-11): tightens on phone
+   * widths, full size on desktop — without leaving the rem scale (root
+   * stays a percentage, so the user's browser font-size preference
+   * still wins). The restyle gives page titles real presence — a page
+   * should announce itself. */
+  font-size: var(--text-xl);
+  font-weight: 700;
   letter-spacing: -0.02em;
 }
 
 .wp-panel-sub {
   margin: 3px 0 0;
   color: var(--muted);
-  font-size: 0.85em;
+  font-size: var(--text-sm);
 }
 
 .wp-identity {
   margin: 10px 0;
   color: var(--muted);
-  font-size: 0.9em;
+  font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
 }
 
@@ -659,13 +873,46 @@ h3 {
 
 .wp-empty {
   color: var(--muted);
-  padding: 18px 16px;
+  padding: 28px 20px;
   text-align: center;
-  border: 1px dashed var(--border-strong);
-  border-radius: var(--radius);
-  background: transparent;
+  border: var(--hairline);
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
   margin: 0;
-  font-size: 0.92em;
+  font-size: var(--text-md);
+}
+
+/* The library EmptyState (templ-components) inside shell panels: the
+ * stock gray tile takes the accent tonal fill and becomes a circle, the
+ * icon inks accent, and the block left-aligns into the list's own
+ * rhythm (destination §6). Scoped via the component's Class prop —
+ * the library markup itself stays stock. */
+.wp-empty-state {
+  text-align: start;
+}
+
+.wp-empty-state > div {
+  margin: 0;
+  max-width: none;
+}
+
+.wp-empty-state > div > div:first-child {
+  margin-inline: 0;
+  border-radius: 999px;
+  background: var(--accent-soft);
+}
+
+.wp-empty-state svg {
+  color: var(--accent-strong);
+}
+
+.wp-empty-state h3 {
+  color: var(--text);
+  font-size: var(--text-lg);
+}
+
+.wp-empty-state p {
+  color: var(--muted);
 }
 
 .wp-error {
@@ -695,7 +942,7 @@ h3 {
     Consolas,
     Liberation Mono,
     monospace;
-  font-size: 0.9em;
+  font-size: var(--text-sm);
 }
 
 .wp-notfound-back {
@@ -712,7 +959,7 @@ h3 {
 .wp-notice {
   margin: 10px 0 0;
   color: var(--warn);
-  font-size: 0.9em;
+  font-size: var(--text-sm);
 }
 
 /* Durable inline error slot (layout.templ): the htmx responseHandling
@@ -735,6 +982,15 @@ h3 {
   color: var(--muted);
 }
 
+/* A remote party the phone alphabet cannot read (not a number, the PBX
+ * gave us garbage): render it honestly as machine output, not as a
+ * phone-number-shaped strong. Tokens only, like every other label. */
+.wp-mono {
+  font-family:
+    ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: var(--text-xs);
+}
+
 .wp-link {
   color: var(--accent-strong);
 }
@@ -748,7 +1004,7 @@ h3 {
 
 .wp-welcome-title {
   margin: 0;
-  font-size: clamp(1.35rem, 2.2vw, 1.7rem);
+  font-size: var(--text-2xl);
   font-weight: 750;
   letter-spacing: -0.025em;
   max-width: 18em;
@@ -772,7 +1028,7 @@ h3 {
   padding: 9px 0;
   border-top: var(--hairline);
   color: var(--text);
-  font-size: 0.95em;
+  font-size: var(--text-md);
 }
 
 .wp-welcome-points li:first-child {
@@ -798,6 +1054,15 @@ h3 {
   background: var(--accent-soft);
   color: var(--accent-strong);
   font-weight: 550;
+}
+
+/* The hint's sign-in link (the auth-front-door train): the login card
+   left the island, so the door's one action navigates to /login. */
+.wp-welcome-signin {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /* M18: once dismissed (per browser) the welcome collapses to a single
@@ -878,7 +1143,7 @@ h3 {
  * language-neutral by design, so both UI locales read it the same. */
 .wp-segcount {
   color: var(--muted);
-  font-size: 0.85em;
+  font-size: var(--text-sm);
   font-variant-numeric: tabular-nums;
 }
 
@@ -913,7 +1178,7 @@ h3 {
   border-radius: 999px;
   background: var(--surface-2);
   color: var(--text);
-  font-size: 0.85em;
+  font-size: var(--text-sm);
   max-width: 100%;
   overflow-wrap: anywhere;
 }
@@ -929,7 +1194,16 @@ h3 {
   padding: 0;
   cursor: pointer;
   font: inherit;
-  font-size: 0.9em;
+  font-size: var(--text-sm);
+  /* F14: the glyph stays 18px but the finger gets 24 — the invisible
+   * ::after extends the hit area without touching the layout. */
+  position: relative;
+}
+
+.wp-chip-x::after {
+  content: "";
+  position: absolute;
+  inset: -3px;
 }
 
 .wp-chip-x:hover {
@@ -940,7 +1214,7 @@ h3 {
   flex: 1 1 220px;
   min-width: 0;
   color: var(--muted);
-  font-size: 0.9em;
+  font-size: var(--text-sm);
 }
 
 .wp-compose form.wp-compose {
@@ -953,15 +1227,15 @@ button.wp-danger {
   border: 1px solid var(--border);
   background: var(--surface-2);
   color: var(--text);
-  border-radius: var(--radius);
+  border-radius: 999px;
   padding: 9px 16px;
   cursor: pointer;
   font: inherit;
   font-weight: 550;
   transition:
-    background 120ms ease,
-    border-color 120ms ease,
-    color 120ms ease;
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
 }
 
 /* The composer's Send button (and the load-older button) are adopted
@@ -977,7 +1251,7 @@ button.wp-primary {
   border-color: var(--accent);
   color: var(--on-accent);
   font-weight: 600;
-  padding: 9px 18px;
+  padding: 9px 20px;
 }
 
 button.wp-primary:hover {
@@ -1001,18 +1275,18 @@ button.wp-danger:hover {
   border: 1px solid var(--border);
   background: transparent;
   color: var(--muted);
-  border-radius: var(--radius-sm);
+  border-radius: 999px;
   padding: 5px 12px;
   cursor: pointer;
   font: inherit;
-  font-size: 0.85em;
+  font-size: var(--text-sm);
   font-weight: 550;
   text-decoration: none;
   white-space: nowrap;
   transition:
-    background 120ms ease,
-    border-color 120ms ease,
-    color 120ms ease;
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
 }
 
 .wp-mini:hover {
@@ -1037,6 +1311,44 @@ button.wp-danger:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Ghost row actions (destination §6): minis inside LIST rows drop their
+ * border and read as quiet text-buttons — a wall of outlined keys reads
+ * as chrome, not actions, and on a phone it strangles the row's own
+ * content. Hover/focus brings the accent state layer back; the flags'
+ * quieting below stays on top. */
+.wp-row-actions .wp-mini,
+.wp-thread-rowwrap .wp-mini {
+  border-color: transparent;
+}
+
+.wp-row-actions .wp-mini:hover,
+.wp-thread-rowwrap .wp-mini:hover {
+  border-color: transparent;
+  background: color-mix(
+    in oklab,
+    var(--accent) var(--state-hover),
+    transparent
+  );
+}
+
+/* Press answers deeper than hover (12% layer) plus a micro-scale; the
+ * keyboard channel keeps the global focus ring, not a background flip. */
+.wp-row-actions .wp-mini:active,
+.wp-thread-rowwrap .wp-mini:active {
+  border-color: transparent;
+  scale: 0.96;
+  background: color-mix(
+    in oklab,
+    var(--accent) var(--state-pressed),
+    transparent
+  );
+}
+
+.wp-row-actions .wp-mini:focus-visible,
+.wp-thread-rowwrap .wp-mini:focus-visible {
+  border-color: transparent;
 }
 
 /* Inline SVG icons (rendered by the templ-components icons package —
@@ -1079,7 +1391,7 @@ button .wp-icon {
  * we cannot restyle, so the button must not shout next to it. */
 input[type="file"]::file-selector-button {
   font: inherit;
-  font-size: 0.85em;
+  font-size: var(--text-sm);
   font-weight: 550;
   color: var(--muted);
   background: var(--surface-2);
@@ -1089,8 +1401,8 @@ input[type="file"]::file-selector-button {
   margin-inline-end: 12px;
   cursor: pointer;
   transition:
-    background 120ms ease,
-    color 120ms ease;
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
 }
 
 input[type="file"]::file-selector-button:hover {
@@ -1107,7 +1419,7 @@ select {
   border-radius: var(--radius-sm);
   padding: 9px 12px;
   font: inherit;
-  transition: border-color 120ms ease;
+  transition: border-color var(--dur-fast) var(--ease);
 }
 
 input::placeholder,
@@ -1129,8 +1441,8 @@ select:focus-visible,
 summary:focus-visible,
 button:focus-visible,
 a:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline: var(--focus-ring);
+  outline-offset: var(--focus-ring-offset);
 }
 
 /* Thread search (Messages tab): full-width box above the list. The form
@@ -1142,6 +1454,8 @@ a:focus-visible {
 
 .wp-thread-search input[type="search"] {
   width: 100%;
+  border-radius: 999px;
+  padding-inline: 16px;
 }
 
 /* --- rows: threads, contacts, fax, voicemail, history ---------------------- */
@@ -1171,14 +1485,14 @@ a:focus-visible {
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
-  padding: 10px 12px;
+  padding: var(--row-pad);
   border: 1px solid transparent;
   border-radius: var(--radius);
   text-decoration: none;
   color: var(--text);
   transition:
-    border-color 120ms ease,
-    background 120ms ease;
+    border-color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
 }
 
 .wp-thread-row:hover {
@@ -1201,7 +1515,7 @@ a:focus-visible {
 
 .wp-thread-preview {
   color: var(--muted);
-  font-size: 0.9em;
+  font-size: var(--text-sm);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1209,14 +1523,18 @@ a:focus-visible {
 
 .wp-thread-side {
   display: flex;
-  align-items: center;
+  align-items: baseline;
   gap: 8px;
   align-self: start;
 }
 
+.wp-thread-side .wp-mini {
+  align-self: center;
+}
+
 .wp-thread-when {
   color: var(--muted);
-  font-size: 0.82em;
+  font-size: var(--text-xs);
   white-space: nowrap;
   font-variant-numeric: tabular-nums;
 }
@@ -1244,7 +1562,7 @@ a:focus-visible {
   border-radius: 50%;
   background: oklch(0.55 0.09 var(--av-h, 160) / 0.16);
   color: oklch(0.78 0.11 var(--av-h, 160));
-  font-size: 0.78em;
+  font-size: var(--text-xs);
   font-weight: 650;
   letter-spacing: 0.02em;
   font-variant-numeric: tabular-nums;
@@ -1381,13 +1699,13 @@ a:focus-visible {
   grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
-  padding: 10px 12px;
+  padding: var(--row-pad);
   border: 1px solid transparent;
   border-inline-start: 3px solid transparent;
   border-radius: var(--radius);
   transition:
-    border-color 120ms ease,
-    background 120ms ease;
+    border-color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
 }
 
 .wp-row:hover {
@@ -1395,7 +1713,7 @@ a:focus-visible {
 }
 
 .wp-row .wp-muted {
-  font-size: 0.88em;
+  font-size: var(--text-sm);
 }
 
 .wp-row-actions {
@@ -1416,7 +1734,7 @@ a:focus-visible {
   border-radius: 999px;
   background: var(--surface-3);
   color: var(--muted);
-  font-size: 0.8em;
+  font-size: var(--text-xs);
   white-space: nowrap;
 }
 
@@ -1459,7 +1777,7 @@ a:focus-visible {
   gap: 4px 18px;
   padding-top: 10px;
   border-top: var(--hairline);
-  font-size: 0.875em;
+  font-size: var(--text-sm);
 }
 
 .wp-crm-item {
@@ -1471,7 +1789,7 @@ a:focus-visible {
 
 .wp-crm-key {
   color: var(--muted);
-  font-size: 0.85em;
+  font-size: var(--text-sm);
   letter-spacing: 0.03em;
   text-transform: uppercase;
   white-space: nowrap;
@@ -1492,7 +1810,7 @@ a:focus-visible {
   border-radius: 50%;
   background: var(--surface-3);
   color: var(--muted);
-  font-size: 0.95em;
+  font-size: var(--text-md);
 }
 
 .wp-dir-chip.wp-dir-in {
@@ -1515,13 +1833,174 @@ a:focus-visible {
   border-inline-start-color: var(--warn);
 }
 
+/* Train 2: the CDR list is a real TABLE (destination §6/§7) — sticky
+ * column heads, right-aligned tabular When/Duration columns, day groups
+ * as tbody sections. The wrapper is the scroll region (sticky heads
+ * need it); below the tab-column split the stack lane turns rows into
+ * labeled cards (thead hidden, td labels injected via data-label —
+ * i18n lives in the markup, CSP forbids nothing here). */
+.wp-table-wrap {
+  overflow: auto;
+  max-height: 70vh;
+  border-radius: var(--radius);
+}
+
+/* The scroll wrapper is keyboard-focusable (tabindex="0", §f-22): the
+ * sticky heads clip an outset ring, so the ring paints INSIDE the
+ * rounded wrapper. */
+.wp-table-wrap:focus-visible {
+  outline: var(--focus-ring);
+  outline-offset: -2px;
+}
+
+.wp-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Sticky-head stacking ruling (§f-35, 2026-11-12): the root context ladder
+ * is thead 1 < header 10 < snippet picker 30 < mobile island 50 < mobile
+ * nav 90 < skip links + #toasts 100 < palette 200. The wrap below is
+ * overflow-only (no z-index/transform), so the head's 1 participates in
+ * the ROOT context — a toast (fixed, 100) or the palette (200) crossing a
+ * scrolled table always paints above it, and the head can never bleed into
+ * an overlay. The one equal pair (skip link vs toasts at 100) resolves by
+ * DOM order (toasts render last) and never overlaps in practice. */
+.wp-table thead th {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  background: var(--surface);
+  padding: 8px 12px;
+  border-bottom: var(--hairline);
+  text-align: start;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.wp-table td {
+  padding: var(--row-pad);
+  border-bottom: var(--hairline);
+  vertical-align: middle;
+}
+
+.wp-table-remote {
+  min-width: 0;
+}
+
+.wp-table-num {
+  text-align: end;
+  white-space: nowrap;
+  color: var(--muted);
+  font-size: var(--text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+/* In the separate-borders model TR borders do not render — the missed
+ * row's danger edge rides the first cell instead. */
+.wp-table tr.wp-row-missed td:first-child {
+  box-shadow: inset 3px 0 0 var(--danger);
+}
+
+/* The CDR table's day head carries its OWN class (wp-table-day-head): the
+ * transcript separator (.wp-day-head) is a flex row, and a table th must
+ * keep its table-cell display — one class, two semantics was a split
+ * brain (§f-21); the split is the fix, not the counter-rule. */
+.wp-table-day-head th {
+  display: table-cell;
+  padding: 14px 12px 6px;
+  text-align: start;
+  white-space: nowrap;
+}
+
+.wp-table-day-head .wp-day-count {
+  margin-inline-start: 8px;
+}
+
+@container tabcol (max-width: 560px) {
+  .wp-table thead {
+    display: none;
+  }
+
+  .wp-table,
+  .wp-table tbody,
+  .wp-table tr {
+    display: block;
+  }
+
+  .wp-table tr {
+    padding: 10px 0;
+    border-bottom: var(--hairline);
+  }
+
+  .wp-table td,
+  .wp-table-day-head th {
+    display: block;
+    padding: 0;
+    border-bottom: none;
+    box-shadow: none;
+  }
+
+  .wp-table-day-head th {
+    padding: 12px 0 2px;
+  }
+
+  .wp-table-dir {
+    display: inline-block;
+    margin-inline-end: 8px;
+    vertical-align: middle;
+  }
+
+  .wp-table-remote {
+    display: inline-block;
+    vertical-align: middle;
+  }
+
+  .wp-table-num {
+    text-align: start;
+    margin-top: 2px;
+  }
+
+  .wp-table-num::before {
+    content: attr(data-label) ": ";
+    color: var(--muted);
+    font-size: var(--text-xs);
+  }
+
+  .wp-table-actions {
+    margin-top: 6px;
+  }
+
+  .wp-table-actions .wp-row-actions {
+    justify-content: flex-start;
+  }
+
+  .wp-table tr.wp-row-missed {
+    border-inline-start: 3px solid var(--danger);
+    padding-inline-start: 8px;
+  }
+}
+
 .wp-fax-in {
   border-inline-start-color: var(--accent);
 }
 
 .wp-fax-dir {
   color: var(--muted);
-  font-size: 0.9em;
+  font-size: var(--text-sm);
+}
+
+/* Train 2 fitted layout: the contacts book fills a responsive card grid
+ * (auto-fill collapses to one column on narrow containers by itself). */
+.wp-contacts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 8px 12px;
 }
 
 .wp-shared-tag {
@@ -1556,7 +2035,7 @@ a:focus-visible {
   flex: 1 1 auto;
   min-width: 80px;
   height: 28px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   touch-action: none;
 }
@@ -1574,7 +2053,7 @@ a:focus-visible {
     Consolas,
     Liberation Mono,
     monospace;
-  font-size: 0.8em;
+  font-size: var(--text-xs);
   color: var(--muted);
   white-space: nowrap;
 }
@@ -1638,7 +2117,7 @@ a:focus-visible {
   color: var(--accent-strong);
   text-decoration: none;
   white-space: nowrap;
-  font-size: 0.9em;
+  font-size: var(--text-sm);
 }
 
 /* --- messages master–detail (P1) ------------------------------------------ */
@@ -1689,7 +2168,7 @@ a:focus-visible {
 .wp-rail-row {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 10px;
+  gap: var(--row-gap);
   align-items: center;
   padding: 8px 10px;
   border-radius: var(--radius);
@@ -1697,13 +2176,17 @@ a:focus-visible {
   color: inherit;
   text-decoration: none;
   transition:
-    background 120ms ease,
-    border-color 120ms ease;
+    background var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
 }
 
 .wp-rail-row:hover {
   background: var(--surface-2);
   border-color: var(--border);
+}
+
+.wp-rail-row:active {
+  background: color-mix(in oklab, var(--text) 6%, transparent);
 }
 
 /* The open conversation is a SELECTED row, not a hovered one: accent-soft
@@ -1736,7 +2219,7 @@ a:focus-visible {
   flex: 1 1 auto;
   min-width: 0;
   font-weight: 600;
-  font-size: 0.92em;
+  font-size: var(--text-md);
   color: var(--text);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1760,11 +2243,12 @@ a:focus-visible {
 .wp-rail-preview {
   flex: 1 1 auto;
   min-width: 0;
-  font-size: 0.82em;
+  font-size: var(--text-xs);
   color: var(--muted);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 /* The rail's when-stamp matches the thread list's voice but never eats the
@@ -1805,10 +2289,10 @@ a:focus-visible {
   padding: 5px 14px;
   cursor: pointer;
   font: inherit;
-  font-size: 0.85em;
+  font-size: var(--text-sm);
   font-weight: 600;
   font-variant-numeric: tabular-nums;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow-2);
   white-space: nowrap;
 }
 
@@ -1831,8 +2315,6 @@ a:focus-visible {
   margin: 10px 0 6px;
   font-size: 0.72rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   color: var(--muted);
   font-variant-numeric: tabular-nums;
 }
@@ -1848,13 +2330,11 @@ a:focus-visible {
 .wp-unread-divider {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--row-gap);
   margin: 8px 0;
   color: var(--accent-strong);
   font-size: 0.72rem;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1867,12 +2347,23 @@ a:focus-visible {
 
 .wp-bubble {
   max-width: min(78%, 34rem);
-  padding: 9px 13px;
-  border-radius: var(--radius);
-  border-bottom-left-radius: 4px;
+  padding: 10px 14px;
+  border-radius: var(--radius-lg);
+  border-bottom-left-radius: 6px;
   background: var(--surface-2);
-  border: 1px solid var(--border);
   align-self: flex-start;
+}
+
+/* Burst grouping (destination §6): consecutive bubbles ride tight so a
+ * burst reads as one utterance; a polarity change breathes at the
+ * container's full gap — CSS-only via the adjacent-sibling pair. */
+.wp-bubble + .wp-bubble {
+  margin-top: -4px;
+}
+
+.wp-bubble + .wp-bubble.wp-out,
+.wp-bubble.wp-out + .wp-bubble:not(.wp-out) {
+  margin-top: 4px;
 }
 
 /* Outbound polarity is carried by FILL, not tint: the sent voice is a
@@ -1882,8 +2373,8 @@ a:focus-visible {
   background: var(--accent);
   border-color: transparent;
   color: var(--on-accent);
-  border-bottom-left-radius: var(--radius);
-  border-bottom-right-radius: 4px;
+  border-bottom-left-radius: var(--radius-lg);
+  border-bottom-right-radius: 6px;
 }
 
 .wp-bubble.wp-out .wp-bubble-meta {
@@ -2039,7 +2530,7 @@ a:focus-visible {
    replaces it; a failed send keeps text and attachments visible with a
    danger tint so the retry never loses context. */
 .wp-bubble.wp-opt {
-  border-style: dashed;
+  border: 1px dashed var(--border-strong);
   opacity: 0.75;
 }
 
@@ -2079,7 +2570,7 @@ a:focus-visible {
 .wp-export-link {
   align-self: center;
   color: var(--accent-strong);
-  font-size: 0.9em;
+  font-size: var(--text-sm);
   text-decoration: none;
 }
 
@@ -2139,10 +2630,17 @@ a:focus-visible {
     gap: 16px;
   }
 
-  /* Signed out, the login card is the only actionable thing on the
-   * page — it leads. Signed in, the tab content leads. */
-  .wp-island:has(#login-view:not([hidden])) {
+  /* Content-first (2026-11-11 restyle): signed in, the tab content
+   * leads on a phone — messages and history are why the phone comes
+   * out of the pocket, and the dialer island sat between the user and
+   * every conversation. Signed out, the login card is the only
+   * actionable thing on the page — it wins. A live call beats both. */
+  .wp-main-col {
     order: -1;
+  }
+
+  .wp-island:has(#login-view:not([hidden])) {
+    order: -2;
   }
 
   .wp-island {
@@ -2152,7 +2650,7 @@ a:focus-visible {
   /* A live call pulls the island to the front (I1): sticky at the top,
    * it stays on screen while the tabs scroll underneath. */
   .wp-island:has(.call-card) {
-    order: -1;
+    order: -3;
     position: sticky;
     top: 8px;
     z-index: 50;
@@ -2170,22 +2668,63 @@ a:focus-visible {
     flex-wrap: nowrap;
     justify-content: space-around;
     padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
-    background: var(--surface);
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
     border-top: var(--hairline);
-    border-bottom: none;
-    box-shadow: 0 -4px 16px rgb(3 10 12 / 25%);
+    border-radius: 0;
+    box-shadow: 0 -6px 24px rgb(3 10 12 / 30%);
   }
 
+  /* Icon-over-label items (2026-11-11 restyle): eight text labels
+   * across a 390px screen forced either a scroll strip or unreadable
+   * type; the stacked glyph keeps every slot a real app-bar item. The
+   * label ellipsizes ("Nachrichten" at 0.66rem fits the flex slot) —
+   * the icon carries the identity, the label confirms it. */
   .wp-nav-link {
+    position: relative;
     flex: 1;
+    /* Release the automatic minimum: without it the label's min-content
+     * floors each slot (~43-63px, 435px total) and eight tabs overflow a
+     * 375px bar — the Phone tab lands off-screen (probe: scrollW 435 vs
+     * nav 360). The inner span's ellipsis carries the shrink. */
+    min-width: 0;
+    flex-direction: column;
     justify-content: center;
-    min-height: 44px;
-    border-radius: 8px;
+    gap: 3px;
+    min-height: 52px;
+    padding: 6px 2px;
+    border-radius: var(--radius);
+    font-size: 0.66rem;
+    font-weight: 600;
+    line-height: 1.15;
   }
 
-  .wp-nav-link.wp-active {
-    border-bottom-color: transparent;
-    background: var(--accent-soft);
+  .wp-nav-link > span:not(.wp-nav-ic):not(.wp-nav-badge) {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .wp-nav-ic .wp-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* The badge becomes a corner pip instead of an inline chip — the
+   * column layout has no room beside the label. */
+  .wp-nav-badge {
+    position: absolute;
+    top: 3px;
+    right: 12%;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 
   /* I5: comfortable tap targets on the mini row buttons. */
@@ -2201,13 +2740,57 @@ a:focus-visible {
   .wp-row-actions {
     justify-content: flex-start;
   }
+
+  /* Phone rows keep the two essentials only (destination §6): the call
+   * affordance stays; the pin/mute/archive flags drop off the ROW —
+   * they remain one tap away on the open thread's head, exactly the
+   * Google-apps trade (row = scan, detail = act). Four 44px targets
+   * were eating the preview's width and strangling it to a stub. */
+  .wp-thread-rowwrap .wp-thread-flag {
+    display: none;
+  }
+
+  /* The compose stacks on a phone: the address gets its own full-width
+   * line, message + send share the next — the two-across row clipped
+   * its own placeholder at 390px. */
+  .wp-compose > input {
+    flex-basis: 100%;
+  }
+
+  /* The settings definition grid collapses to one column: the desktop
+   * `auto 1fr` pair sizes the label column to its content, and a long
+   * German label ("Anrufe werden auf diesem Server transkribiert") is
+   * wider than a 390px viewport — the page overflowed horizontally by
+   * ~50px (caught by the 2026-11-11 mobile capture pass; label-above-
+   * value is also the denser mobile reading order). */
+  .wp-settings {
+    grid-template-columns: 1fr;
+    gap: 2px 0;
+  }
+
+  .wp-settings dd {
+    margin: 0 0 12px;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  /* View Transitions (2026-11-11): htmx wraps every tab swap in
+   * document.startViewTransition (shell.js sets globalViewTransitions)
+   * so navigating tabs cross-fades like a page change. A cross-fade is
+   * pure motion — reduced motion must remove it entirely, and the
+   * pseudo-elements live OUTSIDE the document tree, so the `*` guard
+   * above cannot reach them. */
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 }
 
@@ -2224,19 +2807,15 @@ a:focus-visible {
   background: var(--scrim);
 }
 
-.wp-overlay[hidden] {
-  display: none;
-}
-
 .wp-overlay-input {
   width: 100%;
   max-width: 480px;
-  padding: 10px 14px;
+  padding: 12px 16px;
   font: inherit;
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--border-strong);
-  border-radius: var(--radius);
+  border-radius: 999px;
 }
 
 .wp-overlay-list {
@@ -2249,8 +2828,8 @@ a:focus-visible {
   overflow: auto;
   background: var(--surface);
   border: var(--hairline);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-3);
 }
 
 .wp-overlay-item {
@@ -2258,6 +2837,10 @@ a:focus-visible {
   border-radius: var(--radius-sm);
   cursor: pointer;
   color: var(--text);
+}
+
+.wp-overlay-item:hover {
+  background: color-mix(in oklab, var(--text) 6%, transparent);
 }
 
 .wp-overlay-item.wp-selected {
@@ -2273,12 +2856,12 @@ a:focus-visible {
   text-align: center;
   font-family:
     ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  font-size: 0.8em;
+  font-size: var(--text-xs);
   color: var(--text);
   background: var(--surface-2);
   border: 1px solid var(--border-strong);
   border-bottom-width: 2px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
 }
 
 .wp-settings-head {
@@ -2290,6 +2873,17 @@ a:focus-visible {
   color: var(--muted);
 }
 
+/* F20: the "This server" group is the one collapsed region — the
+ * disclosure marker stays (it is the affordance), only the pointer
+ * and the inner spacing change. */
+.wp-settings-server > summary.wp-settings-head {
+  cursor: pointer;
+}
+
+.wp-settings-server[open] > summary.wp-settings-head {
+  margin-bottom: 12px;
+}
+
 /* Admin tab (read-only cross-line inventory): the extension/line chip
  * (mono, the ids ARE the vocabulary), the quiet Admin/Archived badge,
  * and the expandable transcript groups. Tokens only, like every other
@@ -2298,12 +2892,12 @@ a:focus-visible {
 .wp-admin-ext {
   flex: none;
   padding: 0.1em 0.55em;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--surface-3);
   color: var(--muted);
   font-family:
     ui-monospace, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
-  font-size: 0.82em;
+  font-size: var(--text-xs);
   white-space: nowrap;
 }
 
@@ -2313,7 +2907,7 @@ a:focus-visible {
   border-radius: 999px;
   background: var(--surface-3);
   color: var(--muted);
-  font-size: 0.8em;
+  font-size: var(--text-xs);
   white-space: nowrap;
 }
 
@@ -2325,7 +2919,7 @@ details.wp-admin-call-row {
   margin: 6px 0 0;
   padding-inline-start: 20px;
   color: var(--muted);
-  font-size: 0.92em;
+  font-size: var(--text-md);
   display: grid;
   gap: 4px;
 }
@@ -2342,7 +2936,7 @@ details.wp-admin-call-row {
 .htmx-request.htmx-indicator {
   opacity: 1;
   visibility: visible;
-  transition: opacity 200ms ease-in;
+  transition: opacity var(--dur) var(--ease);
 }
 
 /* ==================================================================
@@ -2382,7 +2976,7 @@ a.wp-thread-row.wp-pinned {
 .wp-archived-toggle {
   display: inline-block;
   margin: 4px 0 2px;
-  font-size: 0.9em;
+  font-size: var(--text-sm);
   color: var(--muted);
   text-decoration: none;
 }
@@ -2412,12 +3006,12 @@ a.wp-thread-row.wp-pinned {
   border-radius: 999px;
   padding: 3px 10px;
   font: inherit;
-  font-size: 0.85em;
+  font-size: var(--text-sm);
   cursor: pointer;
   transition:
-    background 120ms ease,
-    color 120ms ease,
-    border-color 120ms ease;
+    background var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease);
 }
 
 .wp-chip:hover {
@@ -2428,7 +3022,7 @@ a.wp-thread-row.wp-pinned {
 
 .wp-snippet-picker {
   position: relative;
-  font-size: 0.85em;
+  font-size: var(--text-sm);
 }
 
 .wp-snippet-picker summary {
@@ -2468,8 +3062,8 @@ a.wp-thread-row.wp-pinned {
   padding: 6px;
   background: var(--surface);
   border: var(--hairline);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-2);
 }
 
 .wp-snippet-item {
@@ -2552,7 +3146,7 @@ a.wp-thread-row.wp-pinned {
   display: flex;
   align-items: center;
   gap: 6px;
-  font-size: 0.9em;
+  font-size: var(--text-sm);
   color: var(--muted);
   cursor: pointer;
 }
@@ -2569,6 +3163,7 @@ dialog.wp-lightbox {
 
 dialog.wp-lightbox::backdrop {
   background: var(--scrim);
+  backdrop-filter: blur(2px);
 }
 
 dialog.wp-lightbox img {
@@ -2700,4 +3295,259 @@ dialog.wp-lightbox img {
 
 .wp-call-note .wp-mini {
   align-self: flex-start;
+}
+
+/* --- Reports tab (issue #12): the call log's arithmetic ------------- *
+ * The tab answers "what is this adding up to", so it reads as numbers
+ * first and rows second: a week headline with an optional budget bar, a
+ * six-cell totals grid, then narrow ladders for days, hours and the
+ * contacts that consumed the time. Bars ride native <meter> elements —
+ * CSP forbids inline style, so a bar drawn with a width attribute would
+ * be a rule we cannot keep. */
+.wp-reports-week {
+  padding: 14px 16px;
+  border: var(--hairline);
+  border-radius: var(--radius);
+  background: var(--surface-2);
+  margin-bottom: 0;
+}
+
+/* Train 2 dashboard arrangement: the sections form two columns once the
+ * tab column is wide enough — hero + totals full-width, the day/hour
+ * ladders side by side, contacts across the bottom. */
+.wp-reports-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.wp-reports-grid > .wp-reports-week,
+.wp-reports-grid > .wp-reports-totals {
+  margin-bottom: 0;
+}
+
+@container tabcol (min-width: 1000px) {
+  .wp-reports-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+
+  .wp-reports-grid > .wp-reports-week,
+  .wp-reports-grid > .wp-reports-totals,
+  .wp-reports-grid > .wp-reports-undated,
+  .wp-reports-grid > .wp-reports-top {
+    grid-column: 1 / -1;
+  }
+
+  .wp-reports-grid > .wp-reports-days {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .wp-reports-grid > .wp-reports-hours {
+    grid-column: 2;
+    grid-row: 3;
+  }
+}
+
+.wp-reports-head {
+  margin: 0 0 8px;
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.wp-reports-figure {
+  display: flex;
+  align-items: baseline;
+  gap: var(--row-gap);
+  flex-wrap: wrap;
+  margin: 0;
+}
+
+.wp-reports-big {
+  font-size: clamp(1.6rem, 1.2rem + 1.6vw, 2.2rem);
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+
+.wp-budget {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+}
+
+.wp-budget-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 0.86em;
+  font-variant-numeric: tabular-nums;
+}
+
+.wp-budget-meter,
+.wp-bar {
+  inline-size: 100%;
+  block-size: 8px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--surface-3);
+  overflow: hidden;
+}
+
+.wp-budget-meter::-webkit-meter-bar,
+.wp-bar::-webkit-meter-bar {
+  background: var(--surface-3);
+  border: 0;
+  border-radius: 999px;
+}
+
+.wp-budget-meter::-webkit-meter-optimum-value,
+.wp-budget-meter::-webkit-meter-suboptimum-value,
+.wp-budget-meter::-webkit-meter-even-less-good-value,
+.wp-bar::-webkit-meter-optimum-value,
+.wp-bar::-webkit-meter-suboptimum-value,
+.wp-bar::-webkit-meter-even-less-good-value {
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.wp-budget-over::-webkit-meter-even-less-good-value {
+  background: var(--danger);
+}
+
+.wp-budget-meter::-moz-meter-bar,
+.wp-bar::-moz-meter-bar {
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.wp-budget-over::-moz-meter-bar {
+  background: var(--danger);
+}
+
+.wp-budget-over::-webkit-meter-optimum-value {
+  background: var(--danger);
+}
+
+.wp-reports-totals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: var(--row-gap);
+  margin-bottom: 18px;
+}
+
+.wp-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 12px 14px;
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: var(--surface-2);
+}
+
+.wp-stat-value {
+  font-size: 1.2rem;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.wp-stat-label {
+  font-size: var(--text-xs);
+  color: var(--muted);
+}
+
+/* Only a NON-ZERO missed count earns the accent: a red zero would train
+ * the reader to ignore the colour entirely. */
+.wp-stat-alert .wp-stat-value {
+  color: var(--danger);
+}
+
+.wp-reports-section {
+  margin-bottom: 16px;
+}
+
+.wp-reports-row {
+  display: grid;
+  grid-template-columns: minmax(6.5rem, auto) minmax(0, 1fr) minmax(4rem, 8rem);
+  gap: var(--row-gap);
+  align-items: center;
+  padding: 5px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.wp-reports-row:last-child {
+  border-bottom: 0;
+}
+
+.wp-reports-day {
+  font-variant-numeric: tabular-nums;
+  font-weight: 550;
+}
+
+.wp-reports-day-meta {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.wp-reports-contact {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wp-reports-undated {
+  margin: 0;
+  font-size: var(--text-xs);
+}
+
+/* The hour and contact ladders carry no bar (an hour is a label, not a
+ * share), so they collapse to two columns instead of leaving an empty
+ * track where the day rows draw theirs. */
+.wp-reports-row-pair {
+  grid-template-columns: minmax(6.5rem, auto) minmax(0, 1fr);
+}
+
+/* --- Live-call context beside the island (issue #10) --------------- *
+ * The slot sits under the phone in the island column: the most valuable
+ * pixels in a phone app are the ones next to a live call, and a caller's
+ * outstanding work belongs there rather than behind a tab. It borrows the
+ * CRM strip's flat-row language (the same facts, the same rendering) and
+ * adds only the head line that names WHO is on the line: inside the
+ * island column there is no panel head to carry that. */
+.wp-live-context {
+  margin-top: 12px;
+  padding: var(--row-pad);
+  border: var(--hairline);
+  border-radius: var(--radius);
+  background: var(--surface);
+  font-size: var(--text-sm);
+}
+
+.wp-live-context-head {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 6px;
+}
+
+.wp-live-context-head .wp-thread-remote {
+  font-size: 1.05em;
+}
+
+/* The strip inside the slot is an in-place continuation, not a second
+ * box: drop its own top hairline so the head and the facts read as one
+ * block. */
+.wp-live-context .wp-crm-context {
+  border-top: 0;
+  padding-top: 0;
 }

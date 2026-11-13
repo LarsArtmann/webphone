@@ -6,6 +6,12 @@
 # the watcher itself is broken, not main.
 name: watch
 
+# The displayTitle a name-less `gh run list` shows: without this, the
+# scheduled green rows masquerade as CI verdicts (the 2026-11-09
+# misread-green class — scripts/ci-verdict.sh is the workflow-aware
+# reader; this label makes the lane honest even in a naive list).
+run-name: watch (scheduled observer lane, NOT a CI verdict)
+
 on:
   schedule:
     - cron: "*/15 * * * *"
@@ -42,3 +48,6 @@ jobs:
 
       - name: daemon-audit (guarded files / drift in the tip auto-commit)
         run: scripts/daemon-audit.sh --file-issue
+
+      - name: stale-prod-watch (prod /version vs the newest release)
+        run: scripts/stale-prod-watch.sh

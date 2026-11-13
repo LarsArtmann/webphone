@@ -5,34 +5,17 @@ import (
 	"testing"
 )
 
-// TestLoginCardAdaptsToPasskeyMode pins the login card's two shapes:
-// off (the default) renders EXACTLY the extension login — no passkey
-// ids anywhere — while on renders the /login front-door link (the
-// cqrs-htmx loginpage owns the ceremony; the island card only links to
-// it) and demotes the extension login into the break-glass disclosure
-// without losing a single one of its DOM-contract ids.
-func TestLoginCardAdaptsToPasskeyMode(t *testing.T) {
-	off := renderComponent(t, PhoneIsland(PhoneIslandProps{}))
-	on := renderComponent(t, PhoneIsland(PhoneIslandProps{Passkey: true}))
-
-	link := `id="passkey-login"`
-	if strings.Contains(off, link) {
-		t.Errorf("passkey-off card renders %s — a disabled deployment must stay byte-shaped like the pre-passkey card", link)
-	}
-	if !strings.Contains(on, link) {
-		t.Errorf("passkey-on card lacks %s — the /login front door is incomplete:\n%s", link, on)
-	}
-	if !strings.Contains(on, `id="passkey-login" class="primary wp-passkey-link" href="/login"`) {
-		t.Errorf("passkey-on card must link to /login (the library login page):\n%s", on)
-	}
-
-	// The hand-rolled ceremony form is DEAD: its ids must never come
-	// back on either shape (the library page owns the lp-* contract).
-	for _, dead := range []string{`id="passkey-login-form"`, `id="passkey-email"`, `id="passkey-login-error"`} {
-		if strings.Contains(off, dead) || strings.Contains(on, dead) {
-			t.Errorf("dead hand-rolled id %s rendered — the library login page owns the ceremony UI", dead)
-		}
-	}
+// TestLoginPageExtraAdaptsToPasskeyMode pins the /login page's consumer
+// section (views.LoginPageExtra, hosted inside the cqrs-htmx loginpage
+// card) in its shapes: passkey-off renders the extension login as the
+// PRIMARY method (bare form), passkey-on demotes it into the break-glass
+// disclosure, and the SSO door renders above either shape without losing
+// a single DOM-contract id. The island card no longer renders any login
+// form — /login is the one front door.
+func TestLoginPageExtraAdaptsToPasskeyMode(t *testing.T) {
+	primary := renderComponent(t, LoginPageExtra(true, false))
+	breakglass := renderComponent(t, LoginPageExtra(false, false))
+	withSSO := renderComponent(t, LoginPageExtra(false, true))
 
 	extensionIds := []string{
 		`id="login-form"`,
@@ -42,17 +25,35 @@ func TestLoginCardAdaptsToPasskeyMode(t *testing.T) {
 		`id="login-error"`,
 	}
 	for _, id := range extensionIds {
-		if !strings.Contains(off, id) || !strings.Contains(on, id) {
-			t.Errorf("extension login %s must survive in BOTH shapes (off=%v on=%v)", id,
-				strings.Contains(off, id), strings.Contains(on, id))
+		if !strings.Contains(primary, id) || !strings.Contains(breakglass, id) {
+			t.Errorf("extension login %s must survive in BOTH shapes (primary=%v breakglass=%v)", id,
+				strings.Contains(primary, id), strings.Contains(breakglass, id))
 		}
 	}
 
-	if !strings.Contains(on, "passkey-breakglass") {
-		t.Error("passkey-on card lacks the break-glass disclosure around the extension login")
+	if !strings.Contains(breakglass, "Use extension and password instead") {
+		t.Error("passkey-on page lacks the break-glass disclosure around the extension login")
 	}
-	if strings.Contains(off, "passkey-breakglass") {
-		t.Error("passkey-off card carries a break-glass disclosure with nothing to break glass for")
+	if strings.Contains(primary, "Use extension and password instead") {
+		t.Error("passkey-off page hides its PRIMARY sign-in method behind a disclosure")
+	}
+
+	if !strings.Contains(withSSO, `id="sso-login"`) {
+		t.Errorf("SSO variant lacks the Pocket ID door:\n%s", withSSO)
+	}
+	if !strings.Contains(withSSO, `href="/api/auth/oauth2/begin"`) {
+		t.Errorf("SSO door must navigate into the OIDC begin route:\n%s", withSSO)
+	}
+	if !strings.Contains(primary, `src="/assets/login-page.js"`) {
+		t.Error("the section must load its standalone module (same-origin 'self' script, no nonce needed)")
+	}
+
+	// The hand-rolled ceremony form is DEAD: its ids must never come
+	// back on any shape (the library page owns the lp-* contract).
+	for _, dead := range []string{`id="passkey-login-form"`, `id="passkey-email"`, `id="passkey-login-error"`} {
+		if strings.Contains(primary, dead) || strings.Contains(withSSO, dead) {
+			t.Errorf("dead hand-rolled id %s rendered — the library login page owns the ceremony UI", dead)
+		}
 	}
 }
 

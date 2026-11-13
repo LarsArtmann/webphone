@@ -7,8 +7,826 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The digits-only rune reduction has ONE home (`domain.DigitsOf`),
+  shared by the contact upsert key, the dialable sanitize and the
+  avatar digit tail; the CRM context strip's muted meta lines render
+  through one `crmMutedItem` component. Pure dedup, no behavior
+  change (clone-gate baseline 110 → 109 groups).
+- The shared contact directory no longer rides the pre-auth
+  `/config.js` (the island boot surface any anonymous fetcher could
+  read): the payload drops the `contacts` key and the island adopts
+  the directory post-login from the session-gated `GET /api/contacts`
+  answer (`{shared}`). Stack fixtures updated in the same train.
+- The catalog dependency rides v4.15.0 (the release tag needed a
+  same-day fix upstream: the published `catalog/v4/v4.15.0` shape is
+  inert to Go's tag mapping, so the proxy could not serve the release;
+  the correctly-shaped `catalog/v4.15.0` tag landed on the same verified
+  commit). Generated contracts and the catalog render are byte-identical
+- `scripts/fleet-tags.sh` checks the ONE Go-resolvable tag form
+  (`<module-path-minus-major-suffix>/vX.Y.Z`): a release tagged only in
+  the suffixed shape is now FLAGGED instead of silently read as tagged
+  (the heuristic that missed the catalog v4.15.0 incident)
+
+- The flight-recorder debug seam is a declared module surface
+  (`debug.flightrecorder.enable` sets the env gate), its snapshot
+  endpoint is rate-limited (tight bucket: each hit writes a trace
+  window), enabling it logs the seam's directory and capture policy at
+  boot, its snapshot writes fold into a `/metrics` counter family
+  (`webphone_flightrecorder_snapshots_total` by outcome + byte total),
+  and a 1 GiB free-disk floor guards every capture path so a
+  pathological upstream cannot fill the disk.
+- Island hardening: the dial form guards double submits (two rapid
+  Enters no longer race two gate consults into two INVITEs), the tab
+  restore and live-context `htmx.ajax` promises carry rejections (a
+  failed restore toasts once; a failed live-context fetch degrades to
+  the empty slot, the doctrine's mid-call silence), and specs pin all
+  three paths.
+- The call-note cap now counts characters, not bytes: the server's
+  4000 bound matches its own "max 4000 chars" wire doc and the
+  editors' `maxLength=4000`, so a 4000-character CJK note is accepted
+  instead of rejected at the byte comparison (multibyte pins in
+  `TestCallNoteGuards`).
+- Storage guards on the `/login` page script and the island's language
+  module: browser privacy settings that block site data make the
+  `localStorage` property itself throw — the boot reads and writes now
+  degrade (no remember, navigator-default language) instead of killing
+  the sign-in handler and every translated string (specs pin the
+  throwing-storage class).
+- `/health` CSP drops `'unsafe-eval'`: the go-health-dashboard v0.13.3
+  bump ships the `data-nonce` root bridge (upstream issue #23), letting
+  the Datastar SDK compile its expressions without the Function path —
+  the subtree now serves `script-src 'self' 'nonce-…'` with no eval
+  grant, browser-verified upstream and pinned by the app tests and the
+  smoke's inverted `dashboard nonce csp` check.
+
+- **Six oversized Go files split along their natural seams** (the
+  file-size gate's 350-line cap): the session API becomes login /
+  switch / identity+mint files, the ASR seam separates its contract,
+  OpenAI-compatible client and shared transport tail, the server shell
+  moves the 404 pair and the auth seam wrappers into their own files,
+  the transcript and CRM-view test suites split by concern, and the
+  matrix receiver's `/sync` wire surface (response shapes + the
+  long-poll) moves to `sync.go`, leaving the loop in `receiver.go`.
+  Served behavior, wire bytes and error-code vocabulary are unchanged;
+  the error registry's seam-file column was regenerated for the moved
+  ASR code sites.
+- **The island's inline-row icons are SVG, not platform glyphs.** The
+  history row's redial/save buttons and the contacts row's call/remove
+  buttons render the same `wp-icon` SVG vocabulary as the rest of the
+  island, so they stop reading as OS-dependent decoration.
+- **The island's post-call card family moved to its own module**
+  (`postcall.js`: the ended-reason line, note editor, disposition
+  chips, and AI-draft affordances) — calls.js sheds ~340 lines and
+  keeps the settle machinery; served behavior is unchanged (the
+  import closure and the 336-spec island suite pin it).
+- **Admin call records show the caller's name when the PBX carried
+  one** (the raw number stays the fallback), matching the History row's
+  party vocabulary; the section's three-state ladder (phone API off /
+  per-line fetch failure / empty) is pinned by a structural view test.
+- **Visual craft + token pass across the shell and the island.** A typed
+  token ramp (`--text-lg/xl/2xl`, hover/pressed state layers, visible
+  focus rings, press duration, one easing vocabulary) now drives both
+  stylesheets; nav links compact fluidly instead of wrapping, message
+  bubbles group into bursts, the rail preview clamps to two lines, list
+  empty states carry the brand accent, toasts slide in, and the
+  lightbox backdrop blurs. Reduced motion hardens
+  (`animation-iteration-count: 1`).
+- **History, Reports and Contacts restructure.** History renders as a
+  real table (sticky column heads, right-aligned tabular When/Duration,
+  day sections; on narrow columns it stacks via `data-label` cells);
+  Reports gains a dashboard grid (day/hour ladders side by side at
+  wide tab columns); Contacts lays out in a fitted grid (two-up on
+  desktop, one column narrow).
+- **Capture harness per-surface controls.** `--hover-map SURFACE=SELECTOR`
+  varies the hover lane per shot, `--seed-class SELECTOR=CLASS` pre-seeds
+  a class (the dialer-focus layout is capturable without taps),
+  `--lang de|en` shoots localized surfaces, and `--tap-through` proves
+  the mobile Phone→island→tab-return flow (asserts all three states in
+  the DOM before each shot, exits non-zero on a miss). The History
+  day-head row class split (`wp-table-day-head`) separates the CDR
+  table lane from the transcript lane that keeps `wp-day-head`.
+- **The scrollable table wrapper answers keyboard focus** with a
+  visible ring (`:focus-visible`, offset inside the sticky-head clip),
+  and the app's z-index ladder is commented at the sticky-head rule.
+- **go-paperless bumped to v0.5.2** (fleet-currency train; the consumed
+  adapter surface is unchanged — fire-and-forget archiving reads
+  nothing the two minors touched).
+
 ### Added
 
+- **The Phone tab (mobile):** a strip button that focuses the island as
+  the one body column for dialing — clears on any real tab tap,
+  re-installs after nav morphs, `aria-pressed` carries the state.
+- **Capture harness `--hover SELECTOR`** (interactive states are now
+  capturable) and a **pre-commit Python syntax gate** (`py_compile`
+  over staged `scripts/*.py` blobs).
+
+### Fixed
+
+- **The matrix receiver self-heals a poisoned or oversized sync
+  instead of wedging.** A saved sync cursor the homeserver refuses
+  (400 M_UNKNOWN) used to stop the loop loudly on a self-inflicted
+  Rejection, and a resumed backlog beyond the 1 MiB answer cap used to
+  fail forever as a confusing decode error; the cap now sits at 16 MiB
+  with its own `matrix.too_large` verdict, and both arms reset the
+  cursor and re-sync fresh (bounded by the backoff ladder).
+- **The FCM sender no longer replays a refused access token.** A 401/403
+  on `messages:send` now drops the cached OAuth grant, so the next ring
+  mints a fresh one instead of failing until the nominal expiry.
+- **The CRM lookup and context reads are capped** (1 MiB, a distinct
+  `crm.too_large` Transient) — a broken or hostile CRM can no longer
+  balloon the process through the render-time enrichment path.
+- **The mobile Phone focus no longer traps navigation.** The
+  dialer-focus rule hid `.wp-main-col` — which contains the tab nav,
+  the only way back out of island focus. It now hides `#tab-content`
+  and `#wp-tab-error` only; the nav stays reachable and the
+  `--tap-through` capture proves the return (found by that proof
+  2026-11-12).
+- **Passkey Settings is the session's OWN account.** The Settings passkey
+  list/revoke resolved the owner through the shared-extension fallback
+  (MappedByExtension), so on a shared line a classic extension-password
+  login could view and revoke the sorted-first human's passkeys. Both
+  surfaces now resolve through the session's login identity
+  (MappedByLogin); a line-password session has no own passkeys — the
+  section renders nothing and revocation answers the uniform 404.
+  (2026-11-11 full-code-review C7, verified; session suite green.)
+- **The ended-call Close button no longer strands the call badge and CRM
+  context.** Close removed only the card DOM node without the
+  wp:calls-changed re-dispatch, leaving "on call" and the live-context
+  slot on a call the shell could no longer see. Close now re-dispatches
+  (pinned by the island test), and the settle path disposes the
+  remote-audio watcher instead of polling a dead stream from the ended
+  card.
+- **The admin thread inventory actually shows the most recent threads.**
+  ListAllThreads sorted AFTER the engine-side limit cut, so the Admin
+  tab's 50-thread window was an arbitrary slice of the fleet, not the
+  newest one. The sort now runs engine-side (last_activity), matching
+  Faxes.ListAll.
+- **The transcript retention sweep can no longer spin.** Its page walk
+  lacked the enroll sweep's per-page termination guard: a page whose
+  expunges all applied as no-ops (projection lag already removed them)
+  rescanned the same window forever. Guard added per page.
+- **Summarize verdict statuses ride an allowlist.** The textagent's HTTP
+  status passed straight through; only actionable verdicts
+  (409/422/429/503) do now — auth/404-shaped agent internals collapse
+  to 502 like the unreachable arm.
+- **The textagent client owns its connection pool** (httpclient.Isolated)
+  instead of contending over http.DefaultTransport — the last seam
+  outside the 2026-11-08 per-client pool ruling.
+- **The dial-gate POST caps its body** (api.JSONBodyLimit mount), the
+  last /api JSON surface without one; badge-count failures are logged
+  instead of silently swallowed; the note textarea carries the server's
+  4000-char maxlength; five comment sites stop describing the retired
+  readmodels.db world as live.
+
+### Changed
+
+- **One credential-answer policy (`sessionAnswer`).** The passkey
+  finish and resume mint paths built their post-mint credential
+  responses by hand; both now answer through one home that owns the
+  SIP derived-credential + identity shape, so a policy change cannot
+  fork between the login lanes.
+- **One push delivery policy (`push.Fanout.Fan`).** Ring hooks and
+  draft notifications each hand-rolled their detach-and-budget
+  goroutine; `Fan(ctx, owner, fact)` is now the single fire path
+  (`context.WithoutCancel` + 15s budget + prune-on-unregistered), and
+  the per-site loops are deleted.
+- **Thread vocabulary lives in readmodels.** `ThreadSummary`/`ThreadFlag`
+  — the row shapes the UI actually renders — moved next to their
+  projection; the store's SQL-ladder spellings are unexported with a
+  dated retirement note, ending the two-sources-of-truth for the
+  thread-list shape.
+- **The auth surface is its own package (`internal/server/auth`).** Both
+  login lanes (extension+password, passkey ceremony+enrollment), the
+  OIDC dance, the library `/login` page and the session spine
+  (create/resume/destroy/switch) moved out of the server god-package
+  behind a narrow `auth.Shell` seam — the session gate and the render
+  helpers keep their one home in the server package. Wire behavior is
+  byte-identical (route table, flood budgets, nonce CSP lane untouched);
+  the error-code registry and the i18n key-scan now cover the new home.
+  (The 2026-10-17 carve adjudication's reopen trigger — the next
+  auth-surface change — fired with the login-page front-door train.)
+- **The machine surfaces are their own package (`internal/server/platform`).**
+  The asset tree, /metrics and its recorders, the CSP report intake, the
+  flight-recorder seam (+ `platform.TraceRecorder`'s new home), the
+  /phone-api proxy, the directory bridge, /config.js and the data export
+  moved out of the server god-package behind a narrow `platform.Shell`
+  seam; the voicemail SSE nudge and the directory bearer gate keep their
+  one home in the server package. Same byte-identical wire contract.
+- **The templates speak view-owned shapes.** The voicemail feed
+  (`VoicemailItem`/`VoicemailSummary`), the agent review queue
+  (`AgentReviews`/`AgentDraft` + frozen/suppressed mirrors) and the call
+  records (`CDREntry`) convert once at the server boundary
+  (`voicemailItems`/`agentReviewsOf`/`cdrEntries` — the arch review's
+  P2 reach-through resolved), and the compose cap moved to
+  `domain.MaxBodyLength` (one home for the validation rule and the
+  rendered maxlength). views now imports only domain, readmodels and
+  reports — the two ratified shape homes.
+- **Package depth is a budget, not a narrative** (`depthbudget_test.go`):
+  every `internal/` package fits 1 500 hand-written LOC / 60 exports or
+  carries a named, measured pin (cqrs/domain/server/api/store/app);
+  raising a pin is a ratchet act with its reason in the same commit.
+  Mutation-proven on a planted 170-export package.
+
+### Fixed
+
+- **Hold settles on the far-end verdict, not the send.** The hold/resume
+  toggle committed `held` when the re-INVITE left the browser; a dead
+  link now shows the truth. `sipverdict.js` (`inviteVerdict`) wraps the
+  re-INVITE in a requestDelegate and settles on onAccept/onReject
+  (accepted/rejected/send-failed/timeout, 30s cap); failed toggles
+  return the SETTLED prior state.
+- **Admin call-record rows prefer the caller's name.** The admin CDR
+  rows rendered only the raw caller number even when the PBX carried a
+  CallerIDName, so named callers read as bare numbers where the History
+  tab already showed the name. `cdrParty` (name → number → unknown) is
+  now the one fallback home, and a structural view test pins the whole
+  section ladder: phone-API-off explains itself, a failed line is named
+  while surviving lines still render, and an empty page gets the honest
+  empty state.
+
+## [2.14.0] - 2026-11-11
+
+### Changed
+
+- **Visual craft pass (UI/UX destination Train 1, plan:
+  `docs/planning/2026-11-11_15-11_ui-ux-destination.md`).** The shell gets
+  an elevation ladder (`--shadow-1/2/3`: resting panels, raised chrome,
+  overlays — one meaning per level), motion tokens (`--dur-fast/--dur/
+  --ease`, the M3 emphasized curve) on every component transition, and a
+  control radius bump to 12px with PILL actions: primary/danger buttons,
+  row minis, the thread search field, and the island's keys all read as
+  the Google pill idiom (the dial-pad keys stay keycaps). List-row actions
+  become ghost text-buttons — the wall of outlined keys is gone, and on
+  phones the pin/mute/archive flags leave the row entirely (they stay on
+  the thread head), so the preview finally gets its width back and the
+  compose form stacks one field per line. Bubbles reshape to the
+  asymmetric 16px/6px scheme with a borderless inbound tint; empty states
+  trade their dashed boxes for tonal surfaces; Reports stat cards go
+  tonal; the island's status/language pills gain fills and the offline
+  banner loses its hard rail for a tonal container. tw.css/login.css
+  re-pinned to the 12px radius and rebuilt after the shell edits
+  (login.css inlines app.css, so every later shell edit re-lands there).
+- **Visible redesign: green identity kept, icon navigation, content-first
+  mobile.** The 2026-11-07 UX review validated the design against its own
+  craft bar while the owner kept asking for a different look — this train
+  changes what you see, not just what audits green. The GREEN accent
+  family stays (owner ruling 2026-11-11: green is the brand; the train's
+  first indigo draft was vetoed same-day and reverted before release);
+  what changed is structure and presence: the tab strip is a segmented
+  pill bar with per-tab icons (inbox, printer, microphone, clock, chart,
+  users, settings, shield); the mobile bottom bar stacks icon-over-label
+  so eight tabs fit a 390px screen; phones put tab content BEFORE the
+  dialer island (a live call still jumps to the front); page titles carry
+  real display weight (1.5rem/700); the shell gets a faint accent wash
+  behind the header; panels get deeper elevation (radius 16, layered
+  shadows); and tab swaps cross-fade via View Transitions
+  (`htmx.config.globalViewTransitions`, reduced motion removes them
+  entirely). tw.css/login.css radii re-pinned to the new scale.
+- **Auth is ONE dedicated page.** `/login` — the cqrs-htmx loginpage
+  library page (v4.18.0, new `Config.ExtraSection` seam) — is now the
+  front door in EVERY deployment mode: it carries the extension +
+  password form (`views.LoginPageExtra`, break-glass disclosure under
+  the passkey ceremony, primary method when the identity layer is off)
+  and the Pocket ID door; an anonymous root navigation redirects there
+  (303) and the island login card is gone. Signing in redirects home,
+  where the island's boot probe resumes and REGISTERs — the passkey
+  lane's proven path. SSO failures land on `/login?sso_error=` and the
+  page translates the reason into its alert; the island-side
+  `ssoerror.js` and its toast vocabulary are retired. Deep links keep
+  the SignInHint door (now linking to `/login`); `/login` serves the
+  form's standalone module at `/assets/login-page.js` (same-origin
+  script — no nonce needed).
+
+### Added
+
+- The ended call card names WHY a dial failed, per verdict: the trunk's
+  live signature — a 403 carrying `Q.850;cause=21` — reads as a network
+  rejection instead of a block (the Reason header's Q.850 cause outranks
+  the SIP code), 488 gets its own incompatible-audio line, 401/407 name
+  the credential refusal, and a silent far end now has an island-owned
+  deadline: 32 s (Timer B's shape) cancels the hanging INVITE, records
+  408, and renders "No answer in time." (`calls.js` `failureReasonOf`,
+  i18n keys in both maps, `calls-reason.test.mjs`).
+- The Reports tab answers WHY the outbound calls never connected: the
+  fold buckets each never-connected outbound's FreeSWITCH hangup cause
+  verbatim (`Report.NoAnswerByCause`, empty cause counts as UNKNOWN)
+  and a subline under the No answer card ranks them loudest-first
+  (`noAnswerCausesLine`, i18n both maps).
+- The watch lane's third observer, `scripts/stale-prod-watch.sh`: prod's
+  public /version against the newest GitHub release; drift past 24 h
+  files a `stale-prod` issue carrying the evidence and the deploy path —
+  the 2026-11-09/10 lesson (a fix on main is not a fix in prod until
+  /version matches) now has an owner. Prod unreachable stays the
+  trunk-watch's signal, not this one's.
+
+### Removed
+
+- The LAST two prod-dead `readmodels` engine stores (push devices and
+  agent audit): the journal backends are the one implementation behind
+  `readmodels.PushDeviceGate`/`AgentAuditGate` â gates + view types are
+  all the package holds now, and a new arch test pins that purity (no
+  sqliteengine import, no engine constructor â the second storage brain
+  can never grow back). The five consumer test sites boot the journal
+  backends, and both write doors carry the D7 `awaitOwnWrite`
+  read-your-writes beat (the engine folded synchronously; the ring
+  prune flaked 1/5 without the await). `internal/cqrs` is now the ONE
+  home of the sqlite engine-driver registration â the deleted
+  readmodels.go silently carried it, so without the new blank import
+  every `system.New` boot (prod included) would have died
+  unknown-driver. 10 `readmodels.push_*` / `readmodels.agent_audit_*`
+  error codes leave the contract table.
+- The prod-dead `readmodels` contacts, snippets and dial-cooldown
+  stores: the engine-backed twins (prod has answered all three from
+  the cqrs journal since the SUPERB swaps) are deleted; `readmodels`
+  keeps only the gate/view surface (`ContactGate`/`ContactView`,
+  `SnippetGate`/`SnippetView`, `DialGate`/`DialWindowView`/
+  `DialOverrideView`/`ActiveSlot` with the cap constants and
+  sentinels). The server test harness and the fuzz/cap/store-failure
+  pins drive the journal-backed backends (the throwaway journal boots
+  through one `newCoreSystem` helper); the live-engine delete-miss
+  envelope pins retire with the stores â the cqrs backends' own
+  delete tests carry the contract. Also retires the now-userless
+  `readmodels.notFound` envelope helper.
+- The prod-dead `readmodels` call-note and call-review stores: the
+  engine-backed `Notes`/`Reviews` twins (prod has answered both from
+  the cqrs journal since Phase 4) are deleted; `readmodels` keeps only
+  the gate/view surface (`NotesGate`/`CallNoteView`,
+  `ReviewsGate`/`CallReviewView`, the cap constants and sentinels).
+  The two missing slot-shape pins port to the cqrs backend tests, and
+  both backends' write doors now carry the D7 `awaitOwnWrite`
+  read-your-writes beat (the engine store's synchronous fold used to
+  provide it; the History panel re-fetches right behind the SSE
+  nudge). 7 retired `readmodels.note_*` / `readmodels.review_*` /
+  `readmodels.disposition_*` error codes leave the contract table.
+- The prod-dead `readmodels` transcript store: the engine-backed
+  `Transcripts` (prod has answered transcripts from the cqrs journal
+  since A27) is deleted; the server test harness drives the
+  journal-backed backend directly and `readmodels` keeps only the
+  gate/view surface (`TranscriptGate`, `TranscriptSegmentView`, the
+  retention-cap constants, `ReassembleTranscripts` in
+  transcriptsgate.go). The window/cap/owner-scope/concurrency
+  coverage ports to the cqrs backend tests. 8 retired
+  `readmodels.transcript_*` error codes leave the contract table.
+- The prod-dead `readmodels` fax store and enrollment-token store: the
+  engine-backed `Faxes` (prod has answered faxes from the cqrs journal
+  since P7) and `EnrollTokens` (the CLI journal swap made them
+  test-only twins) are deleted; the fax tests drive the journal-backed
+  backend directly and `readmodels` keeps only the shared fold types
+  (`FaxView`, `FaxesProjection`, `FaxJobOfView`) and the gate
+  interfaces (`FaxGate`, `EnrollGate`). 14 retired `readmodels.fax_*` /
+  `readmodels.enroll_*` error codes leave the contract table.
+
+### Changed
+
+- Every outbound HTTP seam (pbx proxy, ASR providers, matrix, push
+  transports, crm) now mints its client through the one home
+  `httpclient.Isolated`: each client owns a private clone of the default
+  transport instead of sharing the process-global connection pool, which
+  a parallel test's httptest.Server.Close could retire mid-roundtrip
+  (the flake class the 2026-11-08 crm repair killed at one seam;
+  production behavior unchanged).
+- Event-sourcing hygiene across every cqrs decider (the cqrs-lint triage
+  train): event versions now advance through the library's own
+  `Version.Increment()` arithmetic instead of hand-counted literals, every
+  new event carries an explicit schema-version stamp, the note and review
+  deciders take their timestamps FROM the command (`At`, stamped once at the
+  service seam) so a replay can never reorder a journal, every fold applies
+  through `decider.StrictApply` (an unknown stream event type is corruption,
+  loudly), and the journaled thread-tombstone facts carry exact-name JSON
+  tags (byte-neutral on the wire). No observable behavior changes — this is
+  the replay-safety and future-proofing floor under the one-journal-world
+  design.
+- The PBX proxy's URL builder is named for what it returns
+  (`pbx.Client.UpstreamURL`, was `ResolvePath`): join path and query
+  separately, one home, same bytes.
+- The visual harness's `--open` decision is a pure helper (`open_target`)
+  and, with the EMPTY-run discard guard, carries `--self-test` cases — the
+  crashed-capture bug that once let an empty run hijack the next compare's
+  "previous" cannot silently return (35 checks, both environments).
+- UI-hygiene fixes from the whole-TODO-list pass: the drafts panel's 30 s
+  poll now pauses while an open editor has unsaved keystrokes (a WeakSet
+  dirty flag beside the `[open]` guard — a poll mid-typing could swap the
+  list and drop the draft), the message typeahead's initial aria-label
+  rides the i18n dictionary instead of a hardcoded English string, and
+  the remaining hard-coded 6px/8px corner radii move onto the shared
+  radius tokens (byte-identical CSS output).
+
+## [2.13.0] - 2026-11-10
+
+### Added
+
+- Consumer wire fixtures under `docs/contracts/wire/` (rendered by the
+  same `webphone contracts` command, freshness-gated with the asyncapi
+  document): byte-pinned payload examples for the push facts on both
+  transports (ring/ring_end/draft_ready — FCM data envelope and ntfy
+  publish body), both `sessionIdentity` credential arms, and the
+  push-device registration request. The Android shell vendors these
+  into its JVM tests, so a renamed key reds a local test on either
+  side instead of surfacing at the first device boot (the shell's
+  `sip_domain`/`sip_password` field drift — the bug this exists for —
+  was caught and fixed at landing). The push payload builders were
+  extracted into pure functions shared by the senders and the renderer,
+  so fixture truth cannot diverge from wire truth.
+- Prod screenshot tracking in the visual harness (`scripts/ui-capture.py`):
+  `--base-url <deployment>` points the existing 24-shot matrix at a LIVE
+  instance (session minted over the session API from env credentials, live
+  thread deep links resolved off the real list, markers degraded to
+  warnings instead of aborts) and `--track` keeps timestamped history runs
+  under `ui-shots/<host>/` with a per-run gallery + summary and a
+  `compare.html` that pixel-diffs the newest run against the previous one.
+  Shots are full-page by default (CDP captureBeyondViewport), extra
+  `--viewport WxH` passes cover the mobile layout, and `--anonymous`
+  shoots the deployment's login surfaces without credentials.
+- The Reports tab names the top talkers from the operator's own address
+  book first (the CRM answers the numbers nobody saved, and both lanes —
+  full render and SSE push — merge through one home so a live update can
+  never rename a row differently), and its totals grid accounts for the
+  outbound calls that never connected: a neutral "No answer" card appears
+  only when the window held one, so 73 calls minus 24 answered no longer
+  silently vanish.
+
+### Fixed
+
+- The Reports tab stopped lying about time: FreeSWITCH writes CDR
+  `start_stamp` with seconds (`%Y-%m-%d %T`) but the projection parsed
+  minute-only, so every live record landed in "unreadable timestamp" and the
+  tab headline read "This week — 0 calls" beside an empty By-day ladder. The
+  parser now accepts the real wire format (a minute-only timestamp still
+  degrades to the counted-undated state, never a guess), and a window whose
+  records all fail the parse renders an honest "Time views unavailable" state
+  — totals, the undated count and the contact ranking — instead of a fake
+  quiet week; in a mixed window the caveat sits under the temporal sections
+  it explains, and renders through one home (`reportsUndatedNote`) behind a
+  single temporal guard — byte-identical output, proven by render diff.
+- Voicemail play failures are no longer silent: a recording that fails to
+  load (404/403/undecodable) now surfaces one honest toast per failure
+  episode instead of a dead button — the `play()` rejection is no longer
+  swallowed and the audio element carries an `error` listener (benign
+  `AbortError` interruptions stay silent), and the waveform-unavailable
+  fallback toast stays silent when the recording itself could not be
+  fetched, so a dead player never shows two contradicting verdicts. The
+  `/phone-api` proxy now also forwards the browser's `Range` header
+  upstream and passes `Accept-Ranges`/`Content-Range` back, so the
+  operator's 206 range support engages through the app path
+  (Safari-class browsers refuse a 200-full-body stream; seek works
+  everywhere).
+
+## [2.12.0] - 2026-11-09
+
+### Changed
+
+- **ONE journal world — the SUPERB unification lands** (Phase 7 /
+  A41-A45): the read-model engine left the composition root, the backup
+  set and the drill. `readmodels.db` stopped opening at boot (an inert
+  orphan on upgraded deployments — safe to delete by hand); every seam
+  it served answers from `system.db`, and the dedup windows
+  (`hooksIdem`/`CallsIdem`, riding the same CAS capability as the fax
+  replay guard) resolve from the system now — one dedup home. The
+  retention pass re-pointed its transcripts leg journal-side (the
+  Phase-4 gap: the engine leg had kept sweeping the frozen lane while
+  the journal grew — expired journal segments delete again, pinned by
+  the retention suite). The storage ladder is FROZEN (store/db.go
+  header): sessions stay SQL per the D2 ruling (ephemeral auth
+  substrate, no domain invariants — the ruling + the table death map:
+  docs/planning/2026-11-09_storage-ladder-retirement.md). Upgrade
+  chain: v2.12.0 requires passing through v2.10.0/v2.11.0 first on
+  deployments with pre-SUPERB data (the one-time importers lived in
+  those releases); fresh installs need nothing. Wire contracts, the
+  OpenAPI surface and the EventCatalog export verified drift-free in
+  the same train.
+
+### Fixed
+
+- **`-enroll-passkey` minted into the wrong database** (P7 residue,
+  caught by the consuming stack's enroll-verify VM check as a
+  fresh-token 503): the operator CLI kept writing through the retired
+  readmodels engine while the server verifies from `system.db` — a
+  cross-process split-brain. The CLI now boots the minimal enroll-only
+  journal system over the same `system.db`, and the mint awaits its
+  own projection fold before the process exits, so a freshly minted
+  token verifies immediately (local end-to-end proof: fresh 200,
+  burned 503). Affected every 2.1x deployment using passkey enrollment
+  via the CLI since the engine's retirement.
+
+## [2.11.0] - 2026-11-09
+
+### Changed
+
+- **Fax jobs are event-sourced** (SUPERB Phase 6 / A39-A40): one
+  journal stream per fax job answers the whole lane — sends, receipts,
+  status verdicts and the admin reads. `faxMoves` stays the ONE
+  legality home (the decider judges every lifecycle move; the inbound
+  "received" fact is terminal; same-status verdicts legally refresh
+  with richer payloads), duplicate job ids are decision Rejections,
+  and the webhook replay guard became DURABLE: `sys.Dedup()` in
+  system.db supersedes the engine's readmodels.db-scoped
+  ApplyIdempotent (a crash between dispatch and record re-dispatches
+  and converges by the same-status doctrine). The server's seam is
+  `readmodels.FaxGate` (the engine-backed store kept as import source
+  and rollback lane); a one-time marker-gated importer ports every job
+  as ONE `FaxReceipted` fact carrying its settled row image, pinned by
+  a dual-run parity diff at honest microsecond stamps (the journal's
+  CBOR epoch quantizes time by ~200 ns — the recorded constraint).
+  Retention gained the faxes journal leg (tombstone, TrimStream,
+  document paths back for unlinking — only the swept job's own). The
+  paperless archive seam, the fax capability declaration and every
+  panel/SSE pin are untouched; the faxcap smoke scenario passes
+  unchanged.
+
+## [2.10.0] - 2026-11-08
+
+One catch-up release carrying SUPERB Phases 2-5 (dial windows, small
+aggregates, medium aggregates, THE conversation core) plus the island
+latency beacon. Per D4 as amended by this train: releases cut at
+ship-visible boundaries, and the core swap ships COMPLETE — aggregate,
+swap, importer and retention in one releasable story, never a seam
+that undercounts its own history.
+
+### Changed
+
+- **The conversation core is event-sourced** (SUPERB Phase 5 / A31-A38):
+  threads, messages and attachments answer from per-thread journal
+  streams in system.db. `domain.AppendToThread` and the delivery
+  machine stay the ONE legality homes (the decider consumes them
+  verbatim; `deliveryMoves` judges at the decision), duplicate message
+  ids are Rejections by decision (importer retries and webhook replays
+  converge instead of double-appending), and the server's seam is
+  `readmodels.ThreadGate` (the SQL store kept as import source and
+  rollback lane). A one-time importer ports webphone.db history with
+  the legacy list's own ordering and stamps (every fact carries the
+  FINAL legacy summary image — read receipts and organization flags
+  are row state the message sequence cannot re-derive), pinned by a
+  dual-run row-by-row diff against the legacy lane; message-less
+  legacy threads drop by design (no thread exists until a message
+  lands). Retention journal-side: expired threads tombstone out of the
+  views AND their journal bytes trim to zero (blob paths return for
+  unlinking — only the swept thread's own), pinned by the deletion gate
+  (journal empty, views gone, fresh replay rebuilds without the
+  content); `webphone_threads_total`/`webphone_messages_total` sum the
+  legacy tables with the journal until the importer's marker flips,
+  then the journal is the one count. D8 snapshots tuned from the A38
+  perf data (EveryNEvents 200 + read-pressure 50): measured — append
+  dispatch ~0.22 ms/op on a fresh thread (budget < 2 ms), the awaited
+  send lane ~0.84 ms/op steady-state on a 1400-event single-thread
+  grind, and the thread-list read ~0.11-0.14 ms vs the legacy SQL's
+  ~0.18-0.20 ms (the projection beats the query it replaced).
+- The go-cqrs-lite pins ride the journal-trim + cap-lock-order upstream
+- wave (metaengine v4.22.0 → v4.23.0, metaengine/sqliteengine v4.7.0 →
+- v4.8.0, system v4.17.0 → v4.18.0): the EnforceCap fold-lock/connection
+- deadlock that Phase 4's batteries surfaced is fixed upstream (the trim
+- now takes the engine transaction before the query's fold lock; the
+- backends' await-first posture stays as defense in depth), and the
+- journal byte-erasure primitives webphone's Phase-5 retention gate
+- needs (`System.TrimStream` for GDPR erasure, `TrimJournalBefore` for
+- age sweeps, with snapshot co-trim in the same transaction) are
+- released and pinned.
+
+### Added
+
+- Contacts, call transcripts, call notes and call reviews answer from
+  the event-sourced journal (SUPERB Phase 4 / A26–A28): the 500-contact
+  and 2000-note caps now REJECT from the DECISION on per-owner streams
+  (the readmodels ErrListFull / ErrNoteListFull contracts survive
+  verbatim, the note cap surfacing as the same 409 Conflict), transcript
+  segments reassemble newest-call-first with the 1500-per-call floor and
+  the 5000-per-owner trim enforced journal-side, and notes/reviews carry
+  their merge semantics (a disposition save keeps the body and vice
+  versa) and wholesale-replace review semantics in the decisions. The
+  `readmodels.ContactGate`/`TranscriptGate`/`NotesGate`/`ReviewsGate`
+  interfaces are the seams (engine-backed stores kept as import sources
+  and rollback lanes); all four legacy row families import once at boot
+  with the crash-safe marker discipline. Fixed on the way (found by the
+  new aggregate batteries, which are now the definition of
+  code-complete): a negative-capacity panic on a transcript stream's
+  first append, and an upstream metaengine lock-order inversion where
+  `EnforceCap` could deadlock permanently against a concurrent
+  projection fold batch on a bounded pool (go-cqrs-lite #123, fix
+  de39a43a9 — webphone's backends await projection visibility FIRST and
+  bound the trim call with a 5 s budget until the bump rides it).
+- The island's latency is now MEASURABLE (the measure-first latency
+  design, docs/planning/2026-11-08_latency-measure-first-design.md):
+  with `metrics.island_beacon` on, the island posts one fire-and-forget
+  beacon per completed interval — dial-press → first remote audio split
+  into island_overhead/signaling/media_attach/audio_gap (the audio-gap
+  leg comes from an AnalyserNode RMS watcher, so ringback vs
+  instant-audio deployments separate honestly), and a spoken ASR
+  segment → text on screen split into capture_to_post,
+  post_to_first_byte, first_byte_to_complete, parse_to_insert with the
+  segment size on its own histogram. `POST /api/metrics/latency`
+  (session-gated, 2 KiB cap, hook-grade budget) folds the fixed leg
+  vocabulary into `webphone_island_latency_seconds{interval,leg}` and
+  `webphone_island_asr_segment_bytes` on /metrics; a failed or
+  malformed beacon is a silent 204 by design (instrumentation never
+  alerts on itself), and the flag-off product stays byte-identical
+  (no route family, no config.js key, no island POSTs). Pinned by the
+  island latency specs (5) and the smoke `metrics` scenario.
+- Enroll tokens, agent-audit rows and registered push devices answer
+  from the event-sourced journal (SUPERB Phase 3 / A22–A24): per-stream
+  commands and decisions own the semantics — consume-once burns decide
+  inert no-ops for unknown/already-burned hashes (expiry classification
+  stays at the userauth door; the mint-side opportunistic sweep is now
+  burn commands on each expired token's own stream), audit rows land on
+  a per-owner append-only stream carrying actor (`user:<email>`) and
+  command-causation event metadata with the 500-row window trim inside
+  the same event batch, and the device registry's 8-per-owner cap and
+  rotation-replaces semantics live in the decision (the wake token
+  stays write-only; the LIST wire shape is unchanged). The
+  `readmodels.EnrollGate`/`AgentAuditGate`/`PushDeviceGate` interfaces
+  are the seams (engine-backed stores kept as import sources and
+  rollback lanes); agent-audit and push-device rows import once at boot
+  with the crash-safe marker discipline (enroll tokens are EXEMPT —
+  the 15-minute TTL re-mint doctrine). Passkey enrollment, Settings'
+  recent-actions and the ring lane behave identically.
+- The reply-snippet list answers from the event-sourced journal (SUPERB
+  Phase 3 / A21): save/list/delete ride per-owner snippet streams, the
+  replace-keeps-creation-time semantics and the 100-per-owner cap for
+  new ids now live in the DECISION, and the ErrSnippetListFull contract
+  survives verbatim. The server's snippet seam is the
+  `readmodels.SnippetGate` interface (engine-backed store kept as
+  import source and rollback lane); a one-time importer ports legacy
+  rows with the same crash-safe marker discipline as the dial import.
+  Found + recorded: journal CBOR time encoding quantizes `time.Time`
+  payloads by ~200 ns (float64 epoch) — bounded, invisible here, and a
+  recorded constraint for Phase 5's ordering fidelity.
+- The dial gate answers from the event-sourced journal (SUPERB Phase 2,
+  2026-11-08): the cooldown decision (allow / deny-in-window / spend the
+  one-shot override) is a DECIDER on a per-owner stream in system.db —
+  the 500-slot per-owner cap enforced by the decision (expunge facts,
+  no post-write sweep), denied attempts still record nothing, and the
+  verdict answers from the decision itself (no read-your-write wait).
+  The server's dial seam is now an interface (`readmodels.DialGate`)
+  with the engine-backed store kept as the import source and rollback
+  lane; `/api/dials`, `/config.js` semantics and every TestDialGate pin
+  are unchanged. A one-time importer ports legacy engine rows into the
+  journal with original timestamps (crash-safe per-stream tail sync,
+  app_flags marker, second boot appends nothing). Measured on this
+  host: attempt dispatch ~0.8 ms/op vs the engine path's ~0.45 ms,
+  deny (decision-only) ~0.03 ms, projection read ~0.08 ms.
+- The go-cqrs-lite system composition root rides the container (SUPERB
+  Phase 1, 2026-11-08): `system/v4 v4.17.0` (with `metaengine v4.22.0`)
+  lands as ONE named eager service (`"cqrs"`) inside the samber/do
+  injector — its own `system.db` journal (source-of-truth + projections
+  instances on one sqlite engine, WAL), started with the app's boot,
+  drained by the container cascade (`GracefulClose` under a 10s bound).
+  The projection host carries a persistent dead-letter store (poison
+  events dead-letter after 3 failures instead of wedging the worker;
+  test-pinned), and `/healthz` gains an optional non-critical `cqrs`
+  leg that names a failed or lagging projection worker. Zero routes
+  change; the only new observable is the `system.db` file and the
+  health leg. The backup oneshot, drill, VM assertions, module check
+  and README restore path all carry `system.db` from this train on.
+- The CRM new-contact template key (`crm.create_url`) and the
+  "New contact in the CRM" affordance are documented and translated
+  (2026-11-08), completing the CRM create-link train's dictionary and
+  operator-doc halves.
+- The thread search is shareable (2026-11-08, pack A5): the debounced
+  search fetch pushes `/messages?q=…`, so a typed query survives a
+  share or refresh (the server's full-page render already filtered on
+  `q`) and the back button unwinds the query stepwise; a failed fetch
+  pushes nothing, and the popstate restore re-fetches without
+  creating the entry it just unwound.
+- The missed-calls badge clears when the Recent calls panel lands
+  (2026-11-08, pack A4b): the History panel's arrival now clears the badge
+  whatever the door was (nav link, palette entry, language re-fetch) —
+  the panel opening IS the review happening. The M38 honesty arm keeps
+  its home: a failed History load clears nothing.
+- Templ form-POST rate buckets (2026-11-08): every write lane outside
+  `/api/*` now rides a keyed bucket by cost class — compose (messages/fax
+  send, resend, AI draft, draft approve) at 20/min, contacts forms at the
+  import grade, state toggles (flags, snippets, read, voicemail delete,
+  draft mode/discard) at the hook grade. The 429 carries
+  `Retry-After` and a `.wp-error` element, so htmx swaps the honest copy
+  into the tab instead of discarding it.
+- Metrics fencing in the NixOS module (2026-11-08): a non-loopback
+  `settings.addr` with the generated Caddy vhost disabled now emits an
+  eval-time warning naming the exposed monitoring surfaces
+  (`/metrics`, `/version`, `/openapi.json`, the health probes) and the two
+  closes — `caddy.enable` or a loopback bind. Loopback defaults and caddied
+  shapes stay silent; pinned by the `metrics-fencing` module check.
+- Freeform literal-secret guard in the NixOS module (2026-11-08): a
+  secret-shaped `settings` key (`*secret*`/`*token*`/`*password*`/…) carrying
+  an inline value now fails the deployment's eval, naming the key — inline
+  secrets used to render straight into the world-readable config JSON. The
+  sanctioned lanes (`*_file` keys, `/run/…` values, `environmentFile`) stay
+  clean; pinned by the `literal-secret-guard` module check.
+- CSP violation reporting (2026-11-08): the strict CSP now carries `report-uri
+  /csp-report` + `report-to csp-endpoint` (with the matching
+  `Reporting-Endpoints` header on every response), and `POST /csp-report`
+  journals one greppable `csp_report` line per accepted report — a live
+  XSS-class event becomes observable instead of silent. Session-free by
+  design (the browser delivers without credentials); the fences are a tight
+  per-host bucket (30/min, burst 10), a 4 KiB body cap (honest 413), and
+  best-effort 204 for malformed reports.
+- `paperless.token_file` (2026-11-07): the inbound-fax archive's bearer can now
+  come from a runtime file via the same systemd `LoadCredential` lane as
+  `crm.token_file`, so the token never has to sit in the config JSON. The field
+  previously did not exist — a deployment setting it got the key silently
+  dropped and a misleading "token is set without paperless.url" boot failure.
+- Documentation health is now enforced, not remembered (2026-11-07): the
+  docs gates are a pinned flake package present in the devShell CI enters and
+  run as their own CI step, so a docs drift reds the build instead of waiting
+  for a session to volunteer. The wrapper also refuses to certify the newest
+  status report when it carries no harvest section, closing the "fresh" verdict
+  that a report with nothing to check used to earn.
+- CHANGELOG coverage is checked (2026-11-07): a pull request that changes
+  product code without an `[Unreleased]` line now fails a dedicated job, so the
+  ratified bar has teeth instead of being a preference nobody could verify.
+- The frontend-UX fix train (2026-11-07): the UX review's 67 findings land
+  as one train — the dark accent ink now passes WCAG AA, the signed-out
+  page drops the tab row and centers the login, Settings reads in three
+  audiences, archive asks once, double submits are guarded (login,
+  composer, contacts), a live call protects itself in the tab title and
+  on beforeunload/logout, focus survives the swaps that replace nodes,
+  the palette works from a touch button, the ring and dock render
+  contact names, missed-call counts survive a failed History load, the
+  Admin tab gains a find filter and its read-only badge, forms carry
+  maxlength/spinners/disabled buttons, the DTMF trail and the reconnect
+  pill speak honestly, and the type scale and geometry collapsed onto
+  tokens. Findings: docs/review/2026-11-07_01-51_frontend-design-ux-review.html.
+- Declarative per-owner retention caps (2026-11-06): the dial windows and call
+  transcripts now declare their per-extension bound instead of hand-looping an
+  expunge after every write, which is what let one owner's flood compete with
+  another's rows. The per-call transcript floor stays a loop, because a cap
+  still addresses one group and the floor needs owner-and-call nesting.
+- Typed response headers in the API contract (2026-11-06): the 17 throttling
+  responses now declare `Retry-After` as a header in `/openapi.json` instead of
+  only describing it in prose, so a generated client can read the wait time.
+
+### Changed
+
+- CRM machine calls now ask for JSON explicitly (2026-11-07): the client states
+  an `Accept` header, so a proxy in front of a CRM that shares an origin with
+  its human UI can no longer answer HTML that then reads as a decode bug.
+- A saved post-call note now refreshes every open tab (2026-11-07): the save
+  publishes a payload-less live-update nudge the way reviews already did, so a
+  second tab showing the same call stops holding a stale note box. The
+  generated wire contract also declares the review nudge it had shipped
+  undeclared.
+- The command palette's touch button now announces its state: it names the
+  dialog it opens and reports whether the palette is showing, so a screen
+  reader user is no longer told the palette is closed while it covers the page.
+- Panel load failures speak (M20): a failed voicemail reload no longer
+  shows the auth-failure line for a network error — it names the real
+  cause — and the call-history and contacts loads announce a warning
+  toast on failure instead of silently leaving the panel stale.
+- The JSON contracts ride catalog v4.13: the transcript upload declares its
+  multipart body, and the fabricated server entry that the asyncapi export
+  used to invent is gone.
+- The Reports tab's stat cards render through one `reportsStat` component
+  (2026-11-06): the six hand-rolled card blocks in the totals grid collapsed
+  into a single home, render-diff-proven byte-identical, so a future card
+  change cannot miss one of six copies. Pinning view tests added.
+- One-command documentation health check (2026-11-06): `scripts/docs-gates.sh`
+  runs the documentation ritual in the order that actually works — format
+  first, then the issue gates (harvest freshness, struck-verdict evidence,
+  routing, archive cadence), then a damage detector for the table-shape rot a
+  formatter pass can leave behind. Thresholds live in `.docs-gates.json` and
+  are ratchets: each pins today's measured backlog so a NEW problem turns the
+  check red while the old one drains, and they can only be lowered.
+  `scripts/status-index.py` now formats its own output, so regenerating the
+  report index no longer leaves the tree dirty.
+- Live-call context beside the island (2026-11-06, issue #10): while a
+  call is up, the phone column shows who is on the line and what is
+  outstanding with them in the CRM — the same company/deals/follow-up line
+  the conversation strip renders, from the same helper. The shell asks once
+  per remote and empties the slot when the last call ends; every degraded
+  answer (seam off, unknown number, CRM down) is an empty body, so the slot
+  never holds an empty shell, a spinner or an error. Session-gated, because
+  the answer is resolved with the server's CRM token.
+- Ring tones follow the audio output picker (2026-11-06, issue #10): the
+  chosen device now carries both halves of call audio — the remote stream
+  and the locally generated ring — through WebAudio's `setSinkId`
+  (feature-detected). On a multi-output desk the ring lands where the
+  operator's headset is instead of on the system speaker, and choosing
+  "Default" now moves the call audio back (it was silently skipped).
+  Browsers without the WebAudio half keep the room alarm.
+- Reports tab (2026-11-06, issue #12): the call log's arithmetic beside
+  the log itself. A pure projection (`internal/reports`) over the same
+  CDR page History lists — total talk time, calls split by direction and
+  outcome (two independent axes, so an outbound call that never
+  connected is neither), a per-day talk-time ladder, the busiest hour
+  buckets, and the contacts that consumed the most time, CRM-named when
+  the integration is configured. The current ISO week is measured
+  against the new optional `reports.weekly_talk_budget` as one bar,
+  flagged when the week overspends. Nothing is stored and nothing is
+  reconstructed: the same records always reproduce the same numbers, and
+  records whose start timestamp cannot be parsed still count in the
+  totals (reported as "without a readable timestamp") so the ladders are
+  never silently short.
+- `crm.ca_file` (2026-11-06, issue #9's in-repo half): an optional
+  PEM bundle that vouches for the CRM vhost's TLS chain, trusted by the
+  CRM client ALONE. A private-CA CRM (the usual `*.cloud` vhost) no
+  longer forces host-wide `security.pki` trust or a process-wide
+  `SSL_CERT_FILE` — both of which would vouch for every TLS connection
+  the machine makes, the OIDC issuer included. The bundle is additive
+  (system roots stay valid), read and parsed at boot, refuses the boot
+  with `crm.ca_file` when missing or certificate-free, and the NixOS
+  module gains the matching `services.webphone.crm.caFile` (a plain
+  host path: a CA certificate is public material, so it never rides
+  `LoadCredential`). Zero config stays byte-identical.
 - History review-state SSE nudge (2026-11-05, F89): every call-review
   artifact save (pending at dispatch, present when the AI draft lands,
   failed on a refusal/outage) publishes one payload-less `review` SSE
@@ -51,6 +869,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The note-dispatch error code is registry-visible again (2026-11-08):
+  the shared dispatch-error helper passed its `<seam>.<op>` code as a
+  function parameter, which the arch registry scan cannot resolve, so
+  `TestErrorCodeRegistryIsFresh` went red. The two write doors now share
+  one scanner-resolved const (`cqrs.note_dispatch`) — the failing
+  operation is the dispatch, not a door's save — and the decision
+  verdicts and per-door codes on the build path are unchanged.
+- A flaky CRM transport under parallel tests (2026-11-08): the
+  no-CA client rode the process-global `http.DefaultTransport`, and
+  every `httptest.Server.Close` in the test binary closes idle
+  connections on exactly that global transport, so one test's cleanup
+  could break another test's in-flight round trip
+  (`TestContactContextFailureClassesStayDistinct`). The client now
+  clones the default transport (the CA path already did), giving the
+  seam its own connection pool; production behavior is unchanged.
+- A red-main loop between the openapi golden test and dprint
+  (2026-11-08): the wire render carries no trailing newline but dprint
+  requires one, so the two gates could never both pass — the test now
+  pins the document bytes and tolerates exactly that one EOF newline,
+  and `-update` seeds the golden dprint-canonically.
+- The docs-health battery's CI leg red-ed twice on its first day
+  (2026-11-07), both times only off this workstation: the wrapper
+  fail-closes on a missing dprint that the devShell borrowed from the
+  host PATH (now `pkgs.dprint` rides the shell itself, formatting pinned
+  by the wasm plugins in dprint.json), and the annotate gate then counted
+  373 findings against a ratchet pinned at 205 because the default
+  depth-1 checkout left most git-history references unresolvable (the
+  fast-checks checkout now fetches full history, like the changelog-guard
+  job already did).
 - A voicemail caller carrying only a withheld-name (CIDName, no CID
   number) rendered `Name ()` with an empty parenthesised number — the
   bare name is the row label now (2026-11-05).
@@ -1966,7 +2813,7 @@ Ships together with the never-separately-tagged [2.7.0] content below
 ### Added (2026-09-22 error-excellence train)
 
 - Typed error families at the two outbound seams (plan:
-  `docs/planning/2026-09-22_01-20_SUPERB-error-excellence.md`):
+  `docs/planning/archived/2026-09-22_01-20_SUPERB-error-excellence.md`):
   gateway transport/receipt failures classify as Transient, form-build
   and store failures as Infrastructure, validation and provider 4xx
   answers as Rejection (`github.com/larsartmann/go-error-family` —
@@ -2630,7 +3477,10 @@ island-tests/` (a sibling of the served tree, never embedded) and run
   toast styling — same DOM contract as before (see AGENTS.md).
 - `package/update.sh` for repinning the bundled sip.js tarball.
 
-[Unreleased]: https://github.com/LarsArtmann/webphone/compare/v2.9.0...HEAD
+[Unreleased]: https://github.com/LarsArtmann/webphone/compare/v2.12.0...HEAD
+[2.12.0]: https://github.com/LarsArtmann/webphone/compare/v2.11.0...v2.12.0
+[2.11.0]: https://github.com/LarsArtmann/webphone/compare/v2.10.0...v2.11.0
+[2.10.0]: https://github.com/LarsArtmann/webphone/compare/v2.9.0...v2.10.0
 [2.9.0]: https://github.com/LarsArtmann/webphone/compare/v2.8.0...v2.9.0
 [2.8.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.8.0
 [2.7.0]: https://github.com/LarsArtmann/webphone/releases/tag/v2.8.0

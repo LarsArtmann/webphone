@@ -53,11 +53,16 @@ globalThis.fetch = async (url, opts) => {
       ok: true,
       status: 200,
       json: async () => ({
+        // The real begin wire nests the ceremony dictionary under
+        // "publicKey" (go-webauthn's CredentialCreation shape); the stub
+        // matches the real wire so it can never disagree with production.
         options: {
-          challenge: "AAAAAQ",
-          rp: { id: "pbx.example.org", name: "WebPhone" },
-          user: { id: "AQIDBA", name: "lars@example.com", displayName: "Lars" },
-          pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+          publicKey: {
+            challenge: "AAAAAQ",
+            rp: { id: "pbx.example.org", name: "WebPhone" },
+            user: { id: "AQIDBA", name: "lars@example.com", displayName: "Lars" },
+            pubKeyCredParams: [{ type: "public-key", alg: -7 }],
+          },
         },
         session_key: "ceremony-1",
       }),

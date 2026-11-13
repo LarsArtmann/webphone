@@ -1,14 +1,14 @@
 package views
 
 import (
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/larsartmann/templ-components/display"
 	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/store"
-	"github.com/larsartmann/webphone/internal/textagent"
+	"github.com/larsartmann/webphone/internal/readmodels"
 )
 
 // ThreadsPanel is the Messages tab's landing view: the thread list plus a
@@ -16,7 +16,7 @@ import (
 // sse-swap="threads" — a live push refreshes the rows without wiping a
 // draft half-typed into the composer.
 type ThreadsPanelProps struct {
-	Threads []store.ThreadSummary
+	Threads []readmodels.ThreadSummary
 	// Query is the active thread-search filter ("" = unfiltered list);
 	// the search input echoes it so a morph swap keeps the typed text.
 	Query string
@@ -37,7 +37,7 @@ type ThreadsPanelProps struct {
 	// Drafts is the review-list payload rendered into the drafts panel;
 	// nil with DraftsError empty means the seam is off, nil with a
 	// non-empty DraftsError is an unreachable agent (honest degrade).
-	Drafts      *textagent.Reviews
+	Drafts      *AgentReviews
 	DraftsError string
 	// PrefillBody carries an AI-drafted reply into the new-conversation
 	// composer (the ai-draft round trip re-renders this panel).
@@ -103,6 +103,7 @@ templ ThreadsPanel(props ThreadsPanelProps) {
 				@display.EmptyState(display.EmptyStateProps{
 					Title: T(props.Lang, "threads.noMatch.pre") + "“" + props.Query + "”" + T(props.Lang, "threads.noMatch.post"),
 					Icon:  icons.Search,
+					Class: "wp-empty-state",
 				})
 			} else {
 				@ThreadsList(props.Threads, props.CRM, props.Lang)
@@ -119,16 +120,16 @@ templ ThreadsPanel(props ThreadsPanelProps) {
 // ThreadsList renders the thread rows (or the empty state). It is the
 // payload of the SSE "threads" event, so it must stay swap-safe: no
 // wrapper element, no composer.
-templ ThreadsList(threads []store.ThreadSummary, contacts CRMContacts, lang Lang) {
+templ ThreadsList(threads []readmodels.ThreadSummary, contacts CRMContacts, lang Lang) {
 	if len(threads) == 0 {
-		@display.EmptyState(display.EmptyStateProps{Title: T(lang, "threads.empty"), Icon: icons.Inbox})
+		@display.EmptyState(display.EmptyStateProps{Title: T(lang, "threads.empty"), Icon: icons.Inbox, Class: "wp-empty-state"})
 	}
 	for _, summary := range threads {
 		@ThreadRow(summary, contacts, lang)
 	}
 }
 
-templ ThreadRow(summary store.ThreadSummary, contacts CRMContacts, lang Lang) {
+templ ThreadRow(summary readmodels.ThreadSummary, contacts CRMContacts, lang Lang) {
 	// The wrapper carries the STABLE id (design D14): idiomorph persists
 	// nodes by id, and the row grows stateful flag buttons (M22) — without
 	// the id a live push could rebuild the row mid-click.
@@ -178,11 +179,11 @@ templ ThreadRow(summary store.ThreadSummary, contacts CRMContacts, lang Lang) {
 		// (the row renders the flip of its current state). The archived
 		// view offers only the way back — the filing cabinet keeps no pins.
 		if summary.Thread.Archived {
-			@threadFlagButton(summary.Thread.ID, "archive", T(lang, "threads.unarchive"), icons.ArchiveBox, 0)
+			@threadFlagButton(summary.Thread.ID, "archive", T(lang, "threads.unarchive"), "", icons.ArchiveBox, 0)
 		} else {
-			@threadFlagButton(summary.Thread.ID, "pin", flagLabel(lang, !summary.Thread.Pinned, "threads.pin", "threads.unpin"), icons.Bookmark, wantInt(!summary.Thread.Pinned))
-			@threadFlagButton(summary.Thread.ID, "mute", flagLabel(lang, !summary.Thread.Muted, "threads.mute", "threads.unmute"), muteIcon(summary.Thread.Muted), wantInt(!summary.Thread.Muted))
-			@threadFlagButton(summary.Thread.ID, "archive", T(lang, "threads.archive"), icons.ArchiveBox, 1)
+			@threadFlagButton(summary.Thread.ID, "pin", flagLabel(lang, !summary.Thread.Pinned, "threads.pin", "threads.unpin"), "", icons.Bookmark, wantInt(!summary.Thread.Pinned))
+			@threadFlagButton(summary.Thread.ID, "mute", flagLabel(lang, !summary.Thread.Muted, "threads.mute", "threads.unmute"), "", muteIcon(summary.Thread.Muted), wantInt(!summary.Thread.Muted))
+			@threadFlagButton(summary.Thread.ID, "archive", T(lang, "threads.archive"), T(lang, "threads.archiveConfirm"), icons.ArchiveBox, 1)
 		}
 	</div>
 }
@@ -191,33 +192,62 @@ templ ThreadRow(summary store.ThreadSummary, contacts CRMContacts, lang Lang) {
 // DESIRED state; the SSE threads nudge re-renders the list, so the
 // button itself swaps nothing (hx-swap none, 204 by responseHandling).
 // Icons are inline SVG strokes (templ-components icons) — platform
-// emoji rendered differently on every OS and read as decoration.
-templ threadFlagButton(id domain.ThreadID, flag, labelKey string, icon icons.Name, on int) {
-	<button
-		type="button"
-		class="wp-mini wp-thread-flag"
-		aria-label={ labelKey }
-		title={ labelKey }
-		hx-post={ flagURL(id, flag, on) }
-		hx-swap="none"
-	>@icons.Icon(icon, "wp-icon")</button>
+// emoji rendered differently on every OS and read as decoration. F3:
+// the archive move is the trash-adjacent misfire risk — it wears the
+// danger tint and asks once (a non-empty confirm) before moving the
+// thread; every other toggle stays one-click.
+templ threadFlagButton(id domain.ThreadID, flag, labelKey, confirm string, icon icons.Name, on int) {
+	if confirm != "" {
+		<button
+			type="button"
+			class="wp-mini wp-thread-flag wp-danger"
+			aria-label={ labelKey }
+			title={ labelKey }
+			hx-post={ flagURL(id, flag, on) }
+			hx-swap="none"
+			hx-confirm={ confirm }
+		>@icons.Icon(icon, "wp-icon")</button>
+	} else {
+		<button
+			type="button"
+			class="wp-mini wp-thread-flag"
+			aria-label={ labelKey }
+			title={ labelKey }
+			hx-post={ flagURL(id, flag, on) }
+			hx-swap="none"
+		>@icons.Icon(icon, "wp-icon")</button>
+	}
 }
 
 // headFlagButton is threadFlagButton aimed at the head itself (M22): a
 // head toggle swaps the header outerHTML — the response is the freshly
 // rendered head with the confirmed state — while the transcript, the
 // scroll place and any reply draft stay untouched. The row variant
-// (above) swaps nothing and rides the SSE list nudge instead.
-templ headFlagButton(id domain.ThreadID, flag, labelKey string, icon icons.Name, on int) {
-	<button
-		type="button"
-		class="wp-mini wp-thread-flag"
-		aria-label={ labelKey }
-		title={ labelKey }
-		hx-post={ flagURL(id, flag, on) }
-		hx-target="#wp-thread-head"
-		hx-swap="outerHTML"
-	>@icons.Icon(icon, "wp-icon")</button>
+// (above) swaps nothing and rides the SSE list nudge instead. F3: the
+// same archive confirm/danger ruling as the row variant.
+templ headFlagButton(id domain.ThreadID, flag, labelKey, confirm string, icon icons.Name, on int) {
+	if confirm != "" {
+		<button
+			type="button"
+			class="wp-mini wp-thread-flag wp-danger"
+			aria-label={ labelKey }
+			title={ labelKey }
+			hx-post={ flagURL(id, flag, on) }
+			hx-target="#wp-thread-head"
+			hx-swap="outerHTML"
+			hx-confirm={ confirm }
+		>@icons.Icon(icon, "wp-icon")</button>
+	} else {
+		<button
+			type="button"
+			class="wp-mini wp-thread-flag"
+			aria-label={ labelKey }
+			title={ labelKey }
+			hx-post={ flagURL(id, flag, on) }
+			hx-target="#wp-thread-head"
+			hx-swap="outerHTML"
+		>@icons.Icon(icon, "wp-icon")</button>
+	}
 }
 
 // ThreadHead is the open conversation's header: the way back, the
@@ -236,13 +266,13 @@ templ ThreadHead(props ThreadViewProps) {
 			hx-swap="innerHTML show:window:top"
 			hx-push-url="/messages"
 		>← All messages</a>
-		<h2>{ networkLabel(props.Thread.Remote.Network()) }@crmNameLink(props.Thread.Remote.String(), props.CRM, props.Lang)</h2>
+		<h2>{ networkLabel(props.Thread.Remote.Network()) }@crmNameLink(props.Thread.Remote.String(), props.CRM, props.Lang)@crmCreateLink(props.Thread.Remote.String(), props.CRMCreateURL, props.CRM, props.Lang)</h2>
 		if props.Thread.Archived {
-			@headFlagButton(props.Thread.ID, "archive", T(props.Lang, "threads.unarchive"), icons.ArchiveBox, 0)
+			@headFlagButton(props.Thread.ID, "archive", T(props.Lang, "threads.unarchive"), "", icons.ArchiveBox, 0)
 		} else {
-			@headFlagButton(props.Thread.ID, "pin", flagLabel(props.Lang, !props.Thread.Pinned, "threads.pin", "threads.unpin"), icons.Bookmark, wantInt(!props.Thread.Pinned))
-			@headFlagButton(props.Thread.ID, "mute", flagLabel(props.Lang, !props.Thread.Muted, "threads.mute", "threads.unmute"), muteIcon(props.Thread.Muted), wantInt(!props.Thread.Muted))
-			@headFlagButton(props.Thread.ID, "archive", T(props.Lang, "threads.archive"), icons.ArchiveBox, 1)
+			@headFlagButton(props.Thread.ID, "pin", flagLabel(props.Lang, !props.Thread.Pinned, "threads.pin", "threads.unpin"), "", icons.Bookmark, wantInt(!props.Thread.Pinned))
+			@headFlagButton(props.Thread.ID, "mute", flagLabel(props.Lang, !props.Thread.Muted, "threads.mute", "threads.unmute"), "", muteIcon(props.Thread.Muted), wantInt(!props.Thread.Muted))
+			@headFlagButton(props.Thread.ID, "archive", T(props.Lang, "threads.archive"), T(props.Lang, "threads.archiveConfirm"), icons.ArchiveBox, 1)
 		}
 		if props.Thread.Remote.Network() == domain.NetworkSMS {
 			@display.Button(display.ButtonProps{
@@ -286,7 +316,7 @@ func flagLabel(lang Lang, state bool, action, reverse string) string {
 // prefixes the text (M21.2) so a photo thread reads as one at a glance.
 // The prefix is a small inline SVG (not the paperclip emoji it replaced)
 // and renders in the row, not here — this stays a pure text one-liner.
-func threadPreview(summary store.ThreadSummary, lang Lang) string {
+func threadPreview(summary readmodels.ThreadSummary, lang Lang) string {
 	return preview(summary.LastBody, summary.LastChannel, lang)
 }
 
@@ -322,6 +352,7 @@ templ composeBody(lang Lang, placeholderKey string, prefill string) {
 		name="body"
 		class="wp-compose-body"
 		rows="1"
+		maxlength={ strconv.Itoa(domain.MaxBodyLength) }
 		placeholder={ T(lang, placeholderKey) }
 		aria-label={ T(lang, "compose.body.label") }
 	>
@@ -344,6 +375,10 @@ templ NewMessageForm(prefillTo string, prefillBody string, lang Lang, textAgent 
 		enctype="multipart/form-data"
 		hx-disabled-elt="find button[type=submit]"
 	>
+		// M14: the to-field deliberately has NO inputmode — it accepts SMS
+		// numbers, Matrix addresses (@name:server) and Session hex (05…),
+		// so no keyboard variant is a complete fit; the default text
+		// keyboard is the honest one and the typeahead carries the rest.
 		<input
 			name="to"
 			required
@@ -356,7 +391,7 @@ templ NewMessageForm(prefillTo string, prefillBody string, lang Lang, textAgent 
 		if textAgent {
 			@aiDraftButton(lang, "", "innerHTML")
 		}
-		@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Text: T(lang, "compose.send")})
+		@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Icon: sendIndicator(), Text: T(lang, "compose.send")})
 	</form>
 }
 
@@ -381,7 +416,7 @@ templ snippetPicker(snippets []domain.Snippet, lang Lang) {
 				<button type="button" class="wp-snippet-item" data-snippet={ snippet.Body } title={ snippet.Body }>
 					{ chipLabel(snippet.Body) }
 					if snippet.Quick {
-						<span class="wp-snippet-quick" aria-hidden="true">⚡</span>
+						<span class="wp-snippet-quick" aria-hidden="true">@icons.Icon(icons.Bolt, "wp-icon")</span>
 					}
 				</button>
 			}
@@ -425,7 +460,7 @@ type ThreadViewProps struct {
 	// renders, the split stays stacked, and nothing is lost — a failed
 	// list read degrades to the pre-split single-column shape instead of
 	// hiding the conversation behind an error.
-	Rail []store.ThreadSummary
+	Rail []readmodels.ThreadSummary
 	// Snippets are the owner's reply snippets (M21): quick ones render
 	// as chips, all of them sit behind the picker — above the REPLY
 	// composer only (a new conversation never needs canned answers).
@@ -439,6 +474,11 @@ type ThreadViewProps struct {
 	// speech-to-text seam: with no provider configured the affordance
 	// must not exist.
 	ASR bool
+	// CRMCreateURL is the optional new-contact form template (config
+	// crm.create_url): an unknown caller's head renders the add-to-CRM
+	// affordance from it; empty renders nothing, which is the zero-config
+	// product.
+	CRMCreateURL string
 	// TextAgent gates the reply composer's AI-draft button on the
 	// supervised-agent seam (same rule as ASR: no client, no button).
 	TextAgent bool
@@ -487,7 +527,7 @@ templ ThreadView(props ThreadViewProps) {
 // the head must re-render, and the transcript must be re-read owner-scoped.
 // Targeting only the detail column would leave a stale aria-current
 // behind — the honest cost is one list re-read per switch.
-templ ConversationRail(rail []store.ThreadSummary, current domain.ThreadID, contacts CRMContacts, lang Lang) {
+templ ConversationRail(rail []readmodels.ThreadSummary, current domain.ThreadID, contacts CRMContacts, lang Lang) {
 	<nav class="wp-msg-rail" id="wp-conversation-rail" aria-label={ T(lang, "threads.rail") }>
 		for _, summary := range rail {
 			<a
@@ -577,7 +617,7 @@ templ ThreadDetail(props ThreadViewProps) {
 					@Transcript(props.Messages, props.Lang, props.ASR)
 				}
 			</div>
-			<button type="button" class="wp-jump-latest" hidden aria-label="jump to the latest messages"></button>
+			<button type="button" class="wp-jump-latest" hidden aria-label={ T(props.Lang, "thread.jumpLatest.label") }></button>
 		</div>
 		@identityLine(props.Lang, props.Identity)
 		<form
@@ -607,13 +647,13 @@ templ ThreadDetail(props ThreadViewProps) {
 				name="attachment"
 				multiple
 				accept="image/jpeg,image/png,image/gif,image/bmp,image/webp,image/tiff,audio/mpeg,audio/wav,audio/amr,audio/ogg,video/mp4,video/3gpp,video/quicktime,application/pdf,text/vcard,.vcf"
-				aria-label="Attachments"
+				aria-label={ T(props.Lang, "compose.attach.label") }
 			></input>
 			<span class="wp-segcount" hidden aria-live="polite"></span>
 			if props.TextAgent {
 				@aiDraftButton(props.Lang, props.Thread.ID.String(), "innerHTML show:window:bottom")
 			}
-			@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Text: T(props.Lang, "compose.send")})
+			@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Icon: sendIndicator(), Text: T(props.Lang, "compose.send")})
 			<div class="wp-attach" hidden></div>
 		</form>
 }
@@ -662,7 +702,7 @@ templ dayHead(lang Lang, at time.Time, count int) {
 }
 
 templ unreadDivider(lang Lang, unread int) {
-	<div class="wp-unread-divider" role="separator" aria-label={ fmtInt(unread) + T(lang, "thread.unread.post") }>
+	<div class="wp-unread-divider" role="separator" aria-label={ fmtInt(unread) + " " + T(lang, "thread.unread.aria") }>
 		{ T(lang, "thread.unread.pre") + fmtInt(unread) + T(lang, "thread.unread.post") }
 	</div>
 }
@@ -699,7 +739,7 @@ templ Bubble(msg domain.Message, lang Lang, asr bool) {
 						data-transcribe-target={ "att-transcript-" + att.ID.String() }
 						aria-label={ T(lang, "media.transcribe") }
 					>{ T(lang, "media.transcribe") }</button>
-					<div class="wp-attachment-transcript" id={ "att-transcript-" + att.ID.String() } hidden></div>
+					<div class="wp-attachment-transcript" id={ "att-transcript-" + att.ID.String() } aria-live="polite" hidden></div>
 				}
 			}
 		}
@@ -839,7 +879,7 @@ func dayHeadLabel(lang Lang, t time.Time) string {
 // conversations and opt-outs (compact, honest), or the unreachable
 // state.
 type DraftsPanelProps struct {
-	Drafts *textagent.Reviews
+	Drafts *AgentReviews
 	Error  string
 	// CRM carries the optional CRM integration's answers (same feed as the
 	// thread rows); unresolved numbers render verbatim.
@@ -857,9 +897,9 @@ func contactLabel(contacts CRMContacts, contact string) string {
 
 // draftsNote is the ONE home of the drafts footer's note shape: marker,
 // linked contact, state label, and a state-specific tail.
-templ draftsNote(marker string, contacts CRMContacts, contact string, lang Lang, label string, tail string) {
+templ draftsNote(marker icons.Name, contacts CRMContacts, contact string, lang Lang, label string, tail string) {
 	<p class="wp-drafts-note">
-		{ marker } @crmDraftContact(contacts, contact, lang): { label }{ tail }
+		@icons.Icon(marker, "wp-icon") @crmDraftContact(contacts, contact, lang): { label }{ tail }
 	</p>
 }
 
@@ -868,20 +908,20 @@ templ draftsNote(marker string, contacts CRMContacts, contact string, lang Lang,
 // crmDraftContact rewiring made them token-identical and the detector
 // called the clone; one merged list is the ruling.
 type draftNoteItem struct {
-	marker  string
+	marker  icons.Name
 	contact string
 	label   string
 	tail    string
 }
 
-func draftNotes(reviews *textagent.Reviews, lang Lang) []draftNoteItem {
+func draftNotes(reviews *AgentReviews, lang Lang) []draftNoteItem {
 	if reviews == nil {
 		return nil
 	}
 	items := make([]draftNoteItem, 0, len(reviews.Frozen)+len(reviews.Suppressed))
 	for _, frozen := range reviews.Frozen {
 		items = append(items, draftNoteItem{
-			marker:  "⚠",
+			marker:  icons.ExclamationTriangle,
 			contact: frozen.Contact,
 			label:   T(lang, "drafts.frozen"),
 			tail:    " · " + frozen.Reason,
@@ -889,7 +929,7 @@ func draftNotes(reviews *textagent.Reviews, lang Lang) []draftNoteItem {
 	}
 	for _, suppressed := range reviews.Suppressed {
 		items = append(items, draftNoteItem{
-			marker:  "⊗",
+			marker:  icons.NoSymbol,
 			contact: suppressed.Contact,
 			label:   T(lang, "drafts.suppressed"),
 			tail:    " (" + suppressed.Keyword + ")",
@@ -907,7 +947,7 @@ func draftNotes(reviews *textagent.Reviews, lang Lang) []draftNoteItem {
 // draftModeOptions turns the agent's supported modes into picker rows.
 // The rows render through the shared filterOptions component; this
 // function only maps the agent's vocabulary onto it.
-func draftModeOptions(reviews *textagent.Reviews) []filterOption {
+func draftModeOptions(reviews *AgentReviews) []filterOption {
 	options := make([]filterOption, 0, len(reviews.Modes))
 	for _, mode := range reviews.Modes {
 		options = append(options, filterOption{Value: mode, Label: mode, Selected: mode == reviews.Mode})
@@ -928,7 +968,7 @@ templ DraftsPanel(props DraftsPanelProps) {
 		<h2 class="wp-drafts-head">
 			{ T(props.Lang, "drafts.title") }
 			if props.Drafts != nil && len(props.Drafts.Drafts) > 0 {
-				<span class="wp-nav-badge" id="wp-draft-count" aria-label={ T(props.Lang, "drafts.title") }>{ fmtInt(len(props.Drafts.Drafts)) }</span>
+				<span class="wp-nav-badge" id="wp-draft-count" aria-label={ badgeCount(props.Lang, len(props.Drafts.Drafts), "drafts.countLabel") }>{ fmtInt(len(props.Drafts.Drafts)) }</span>
 			}
 			if props.Drafts != nil && props.Drafts.Mode != "" {
 				<span class="wp-drafts-mode">
@@ -980,7 +1020,7 @@ templ DraftsPanel(props DraftsPanelProps) {
 						<span class="wp-draft-meta" title={ draft.CreatedAt }>
 							{ draftMeta(draft, time.Now()) }
 							if draft.Trigger != "" && strings.HasPrefix(draft.Trigger, "missedcall") {
-								<span class="wp-draft-flag">☎</span>
+								<span class="wp-draft-flag">@icons.Icon(icons.Phone, "wp-icon")</span>
 							}
 						</span>
 					</header>

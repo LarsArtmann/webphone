@@ -1,0 +1,111 @@
+# Prod UI-tracking continuation — the loop is trusted, the gates are green
+
+> **ARCHIVED 2026-11-11 (docs-health cadence sweep, paired with the 15-08 filing):** all rows adjudicated in-session — §a/§b done with evidence, §c carries its triggers, §d owned + healed; harvested into TODO_LIST where still live. Gates at archive time: `annotate check-rows --strict` + `bare-rows` both green.
+
+> Claims verified as of 18:40. Continuation of the 14:42 screenshot-tracking
+> train, executing the Pareto plan (docs/planning/2026-11-10_15-05_SUPERB-
+> prod-ui-tracking-pareto-plan.md). The plan's Ledger section carries the
+> per-task evidence rows; this report is the snapshot.
+
+## Done (T01–T04, T09–T30 minus owner-gated)
+
+- **Gates green (T01–T03)**: the island-js red dissolved — it was the
+  other session's in-flight spec, finished by their own follow-up
+  commits (328/328 at HEAD, `island-js` sandbox green, CI success on
+  run 42832784499). `nix-hash-fix` decoded: its lock-drift warning
+  fires on a GREEN build with a factually-backwards premise (go.mod
+  11-08 is OLDER than the vendorHash pin 11-10); mechanism + verify
+  recipe recorded in `.buildflow.yml`. Upstream finding = the owner's
+  own tool, noted not filed.
+- **TLS-front smoke (T04)**: caddy `tls internal` (18443) → binary
+  (18097); the remote lane ran `--dry-run` plus three full tracked
+  runs through it. `add_cookie` under the Secure mint proven by real
+  session surfaces. Two gotchas are now harness features: chromedriver
+  honors the `acceptInsecureCerts` CAPABILITY only (the switch form is
+  silently ignored), and the python HTTP lane shares `--host-map` via a
+  `socket.getaddrinfo` patch.
+- **Instrument v2 (T09–T14, T19–T20, T26–T28)**: `--diff-threshold` /
+  `--badge-bar` (defaults preserved), `--diff-clip` (verified on real
+  drifted pairs — 10.372%/7.849% clipped where pairs used to skip),
+  `--self-test` (29 checks, green in both envs), `--dry-run` (verified
+  over TLS), the ring guard (negative-tested on an idle boot),
+  per-shot URLs + deployment commit in summary.json, wire-facts.json,
+  byte-size deltas + gallery cross-links in compare.html, `--prune N`
+  (verified live: removed exactly the two empty crashed-attempt dirs),
+  partial-run compare tolerance (self-test-pinned), `nix run
+  .#ui-track` flake app. Discovered live and fixed: a crashed capture
+  left EMPTY run dirs that hijacked the next compare's "previous"
+  (`discard_empty_run`).
+- **Conditional surfaces (T15–T18)**: `/enroll` probed anonymously and
+  joined on the fixture boot; the dense `history-transcript` q= word is
+  scraped from the first live transcript; CRM-strip detection verified
+  LIVE against a real fake-Kith boot (`crm-context` joined the matrix);
+  admin detection implemented + self-tested, then hit a PRODUCT WALL:
+  `isAdminSession` needs `sess.LoginEmail`, which the extension-password
+  capture lane never has — a credential-lane session can never be
+  admin. Documented, detection stays dormant-but-correct.
+- **Docs (T21, T22, T29, T30)**: .gitignore truth-up (track history
+  persists; `--prune` is the only retention), mypy.ini PIL mirror,
+  AGENTS "24 shots" → deployment-following matrix + the instrument
+  honesty one-liner, the 2026-10-29 plan's stale "harness not re-run"
+  row struck with evidence, lessons.md § tracking-train process lessons
+  (4 entries: re-run foreign reds at HEAD, the daemon narrative race,
+  capture browsers are real SIP endpoints, the mixed-tree push ritual),
+  the harness docstring carries the TLS recipe, the bare-boot fixture
+  recipe and the 429-stays-manual ruling. CHANGELOG `[Unreleased]` line
+  added.
+
+## Rulings recorded (T23, T24)
+
+- **a11y emulation axes: DEFERRED.** Technically trivial (same CDP
+  command the runs already use), but each axis doubles the matrix and
+  the ugliness inventory (T05) is still owner-pending. Opt-in design
+  noted in the plan ledger.
+- **lighthouse-style scores: NO-GO recommendation** (evaluation only
+  per the task's scope): npm/chrome-launcher brittleness, nix name
+  collision, and the layout signal already covered better by full-page
+  shots + DOM pins + the layout proof. OG-2 stays with the owner.
+
+## Blocked (owner-gated)
+
+- **T05–T08 (OG-1)**: the authenticated prod capture needs
+  `WEBPHONE_CAPTURE_EXTENSION` / `WEBPHONE_CAPTURE_PASSWORD` — asked
+  twice, still unanswered. Everything the credentials unlock (the
+  ranked ugliness inventory, the first UI fix, the mobile pass, the
+  first real prod diff) is staged behind them.
+- **OG-3 (shot storage/retention)**: `--prune` exists; the WHERE ruling
+  is the owner's.
+
+## Noise facts for calibration (T07/T09/T25 input)
+
+Two local runs 3 minutes apart over identical seeds: 22/26 pairs above
+zero, MAX 2.5% (thread surfaces — relative timestamps are the noise
+source). TLS runs 90s apart: 28/28 above the 0.5% bar, same cause. The
+0.5% badge bar is optimistic on this product; expect 2–3% after real
+calibration.
+
+## f) NEXT (ranked, roughly Pareto-ordered)
+
+1. T05 — the authenticated prod capture (OG-1 creds still owed); one
+   command ready: `nix run .#ui-track -- --base-url https://pbx.artmann.tech --track`.
+2. Owner gallery walkthrough over that run → the ranked top-5 ugliness
+   inventory written into docs/planning/ (T05 act 2).
+3. T06 — first UI fix from the inventory, proven by a before/after
+   tracked run.
+4. T07 — the second authenticated prod run → the first REAL prod
+   compare chain; judge badges/byte-deltas/clipped marks in anger.
+5. T09/T10 — calibration VALUES on real prod data (threshold + badge
+   bar; the 0.5% bar is optimistic — local identical-seed runs peaked
+   at 2.5% on relative timestamps).
+6. T08 — the mobile prod pass (`--viewport 390x844`) and the default-
+   or-on-demand ruling.
+7. T15 — admin surfaces need an identity-carrying capture lane (the
+   extension-password lane can never be admin; a passkey lane is
+   owner-gated by design).
+8. T25 — night-run stability calibration (a quiet-window run pair on
+   real data; schedule on the next overnight laptop session).
+9. OG-3 — the shot-storage/retention ruling (`--prune` exists for
+   whichever verdict lands).
+10. Upstream: buildflow's nix-hash-fix lock-drift warning fires on a
+    green build with a backwards premise (go.mod older than the hash
+    pin) — an issue on LarsArtmann/buildflow when the owner wants it.

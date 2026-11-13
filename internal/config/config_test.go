@@ -602,10 +602,30 @@ func TestLoadValidatesCRMConfig(t *testing.T) {
 			wantErr: "not an absolute http(s) URL template",
 		},
 		{
+			// A trust anchor for a CRM this deployment cannot query is a
+			// credential with nowhere to go (issue #9's CA lane).
+			name: "ca file without a crm",
+			env: map[string]string{
+				"WEBPHONE_CRM__CA_FILE": "/etc/webphone/crm-ca.pem",
+			},
+			wantErr: "crm.ca_file is set without crm.url",
+		},
+		{
 			name: "valid crm section loads",
 			env: map[string]string{
 				"WEBPHONE_CRM__URL":   "https://crm.example.org",
 				"WEBPHONE_CRM__TOKEN": "sekrit",
+			},
+		},
+		{
+			// The CA's CONTENT is validated where it is used (a readable
+			// file with no certificate is a runtime fact, not a shape), so
+			// a configured path alone loads.
+			name: "valid crm section with a private ca bundle",
+			env: map[string]string{
+				"WEBPHONE_CRM__URL":     "https://crm.example.org",
+				"WEBPHONE_CRM__TOKEN":   "sekrit",
+				"WEBPHONE_CRM__CA_FILE": "/etc/webphone/crm-ca.pem",
 			},
 		},
 		{
@@ -634,6 +654,9 @@ func TestLoadValidatesCRMConfig(t *testing.T) {
 				}
 				if cfg.CRM.ContactURL != tc.env["WEBPHONE_CRM__CONTACT_URL"] {
 					t.Errorf("crm.contact_url = %q, want %q", cfg.CRM.ContactURL, tc.env["WEBPHONE_CRM__CONTACT_URL"])
+				}
+				if cfg.CRM.CAFile != tc.env["WEBPHONE_CRM__CA_FILE"] {
+					t.Errorf("crm.ca_file = %q, want %q", cfg.CRM.CAFile, tc.env["WEBPHONE_CRM__CA_FILE"])
 				}
 				return
 			}
@@ -683,6 +706,53 @@ func TestLoadResolvesCRMTokenFile(t *testing.T) {
 
 	// Both sources: the drift rejection fires BEFORE the read.
 	t.Setenv("WEBPHONE_CRM__TOKEN", "inline")
+	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "at most one of token / token_file") {
+		t.Fatalf("both sources: %v, want the token_sources rejection", err)
+	}
+}
+
+// TestLoadResolvesPaperlessTokenFile pins the archive seam's credential
+// form at the same bar as the CRM pin above: the file resolves into
+// Token (whitespace trimmed), both sources together are the one-fact
+// drift rejection, and an empty or missing file fails the boot loudly.
+// (The field shipped unresolved — a token_file-only deployment used to
+// fail the both-or-neither validation with a misleading "token is set
+// without paperless.url" message.)
+func TestLoadResolvesPaperlessTokenFile(t *testing.T) {
+	scrubEnv(t)
+	tokenFile := filepath.Join(t.TempDir(), "paperless-token")
+	t.Setenv("WEBPHONE_CONFIG", absentConfigFile(t))
+
+	// Missing file: loud boot failure naming the setting.
+	t.Setenv("WEBPHONE_PAPERLESS__URL", "http://127.0.0.1:2280")
+	t.Setenv("WEBPHONE_PAPERLESS__TOKEN_FILE", tokenFile)
+	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "paperless.token_file") {
+		t.Fatalf("missing token file: %v, want a paperless.token_file rejection", err)
+	}
+
+	// Empty file: same loud failure.
+	if err := os.WriteFile(tokenFile, []byte("   \n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "is empty") {
+		t.Fatalf("empty token file: %v, want the empty rejection", err)
+	}
+
+	// Valid file: resolves into Token (trimmed), and the both-or-neither
+	// validation passes because the seam now reads as fully configured.
+	if err := os.WriteFile(tokenFile, []byte("  sekrit-from-credential \n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("Load with token file: %v", err)
+	}
+	if cfg.Paperless.Token != "sekrit-from-credential" {
+		t.Fatalf("resolved token: %q", cfg.Paperless.Token)
+	}
+
+	// Both sources: the drift rejection fires BEFORE the read.
+	t.Setenv("WEBPHONE_PAPERLESS__TOKEN", "inline")
 	if _, err := Load(); err == nil || !strings.Contains(err.Error(), "at most one of token / token_file") {
 		t.Fatalf("both sources: %v, want the token_sources rejection", err)
 	}

@@ -231,12 +231,12 @@ func TestTransportFailureIsWrapped(t *testing.T) {
 	}
 }
 
-func TestResolvePathKeepsQuery(t *testing.T) {
+func TestUpstreamURLKeepsQuery(t *testing.T) {
 	client, err := NewClient("https://pbx.example.com")
 	if err != nil {
 		t.Fatal(err)
 	}
-	got := client.ResolvePath("/voicemail/1001/messages", "limit=5")
+	got := client.UpstreamURL("/voicemail/1001/messages", "limit=5")
 	if got != "https://pbx.example.com/phone-api/voicemail/1001/messages?limit=5" {
 		t.Errorf("resolved %q", got)
 	}

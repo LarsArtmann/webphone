@@ -1,10 +1,12 @@
 // main.js boot resume under node:test — the two failure classes of a
-// resumed session's SIP connect. A REGISTER the server refuses means
-// the stored credentials are stale: the session is dropped and the
-// login form returns. A transport failure (PBX/WebSocket down at load)
-// is NOT a stale session: the cookie is KEPT, the phone shows its
-// honest offline state, and the reconnect backoff owns recovery — the
-// tabs stay usable. Found live by the T23 visual harness: the
+// resumed session's SIP connect, AFTER the auth-front-door train. A
+// REGISTER the server refuses means the stored credentials are stale:
+// the session is dropped QUIETLY and the browser goes back to the /login
+// front door (the ?error= query carries the reason; the island has no
+// login form to show anymore). A transport failure (PBX/WebSocket down
+// at load) is NOT a stale session: the cookie is KEPT, the phone shows
+// its honest offline state, and the reconnect backoff owns recovery —
+// the tabs stay usable. Found live by the T23 visual harness: the
 // bare-boot island deleted its injected session within a second of
 // every page load.
 import test from "node:test";
@@ -24,7 +26,7 @@ globalThis.window.addEventListener = (type, fn) => {
 };
 
 let scenario = "transport";
-const calls = { fetches: [] };
+const calls = { fetches: [], replaces: [] };
 
 class StubRegisterer {
   constructor() {
@@ -104,8 +106,21 @@ globalThis.fetch = async (url, opts = {}) => {
   return { ok: true, status: 204, json: async () => ({}) };
 };
 
+// window.location.replace is the island's ONLY navigation primitive now
+// (the front door owns the login surface); record where it sends the
+// browser instead of following.
+globalThis.window.location = {
+  replace(url) {
+    calls.replaces.push(String(url));
+  },
+};
+
+// The login page's submit requests notification permission under its own
+// gesture; the boot states the RESULT in #log (the stub answers
+// "granted" — the assertion pins the line's presence, not the verdict).
+globalThis.Notification = { permission: "granted" };
+
 const phoneHidden = () => doc.getElementById("phone-view").hidden;
-const loginHidden = () => doc.getElementById("login-view").hidden;
 const bannerHidden = () => doc.getElementById("offline-banner").hidden;
 const logTexts = () => doc.getElementById("log").children.map((li) => li.textContent);
 const flushes = async (rounds = 12) => {
@@ -117,7 +132,6 @@ test("resume over a dead transport KEEPS the session and shows the offline phone
   await import("../island/app/main.js?case=transport");
   await flushes();
   assert.equal(phoneHidden(), false, "phone view visible");
-  assert.equal(loginHidden(), true, "login stays hidden");
   assert.equal(bannerHidden(), false, "offline banner up (honest state)");
   assert.ok(
     !calls.fetches.some((c) => c.startsWith("DELETE")),
@@ -127,20 +141,109 @@ test("resume over a dead transport KEEPS the session and shows the offline phone
     logTexts().some((line) => line.includes("SIP unreachable")),
     "the kept-session reason is logged",
   );
+  assert.ok(
+    logTexts().some((line) => line.includes("notifications: granted")),
+    "the boot states the notification-permission result in #log",
+  );
+  assert.equal(
+    calls.replaces.length,
+    0,
+    "a transport failure must NOT bounce the browser to the login page — the session is good",
+  );
 });
 
-test("resume with a refused REGISTER drops the stale session and returns the login", async () => {
+test("resume with a refused REGISTER drops the stale session and returns to the front door", async () => {
   scenario = "rejected";
   await import("../island/app/main.js?case=rejected");
   await flushes();
-  assert.equal(loginHidden(), false, "login visible");
   assert.ok(
     calls.fetches.some((c) => c.startsWith("DELETE /api/session")),
     "stale credentials drop the session",
   );
-  assert.equal(
-    doc.getElementById("login-error").hidden,
-    false,
-    "the rejection reason is shown where the user looks",
+  assert.ok(
+    calls.replaces.some((url) => url.startsWith("/login?error=")),
+    "the browser goes back to /login, carrying the reason for its alert",
   );
+});
+
+// T19 logout arm: a live call forces the two-click move — the first
+// click warns, the armed click tears down nothing. The confirmed click
+// and the idle one-click path run destroySession → page reload, which
+// the stub harness bans by design.
+const { sessions } = await import("../island/app/state.js");
+const { t } = await import("../island/app/i18n.js");
+const lastToast = () => doc.getElementById("toasts").children.at(-1);
+
+test("logout with a live call is a two-click move", async () => {
+  scenario = "guards";
+  await import("../island/app/main.js?case=guards");
+  await flushes();
+  sessions.set("live-1", { session: { bye: async () => {} } });
+  doc.getElementById("phone-view").hidden = false;
+  const logout = doc.getElementById("logout");
+  const logoutClick = () => logout.listeners.click.at(-1)({});
+  const fetchesBefore = calls.fetches.length;
+
+  logoutClick();
+  assert.equal(lastToast().textContent, t("logoutLiveCall"), "the first click warns");
+  assert.equal(
+    doc.getElementById("phone-view").hidden,
+    false,
+    "the first click does not tear down",
+  );
+  assert.equal(calls.fetches.length, fetchesBefore, "the armed click drops no server session");
+  sessions.clear();
+});
+
+test("a double submit places exactly one dial (the pending guard)", async () => {
+  scenario = "transport";
+  const realFetch = globalThis.fetch;
+  // placeCall unlocks the shared AudioContext on the dial click; the
+  // harness ships no WebAudio, so a minimal resume() stub stands in.
+  const realAudio = globalThis.AudioContext;
+  globalThis.AudioContext = class {
+    resume() {
+      return Promise.resolve();
+    }
+  };
+  let gateCalls = 0;
+  let releaseGate;
+  globalThis.fetch = async (url, opts = {}) => {
+    calls.fetches.push(`${opts.method ?? "GET"} ${url}`);
+    if (String(url).endsWith("/api/dials") && opts.method === "POST") {
+      gateCalls++;
+      return new Promise((resolve) => {
+        releaseGate = () =>
+          resolve({
+            ok: true,
+            status: 200,
+            json: async () => ({ allowed: false, last_at: 1, window: 3600 }),
+          });
+      });
+    }
+    return realFetch(url, opts);
+  };
+  try {
+    await import("../island/app/main.js?case=dblsubmit");
+    await flushes(4);
+    const form = doc.getElementById("dial-form");
+    doc.getElementById("dest").value = "+1715";
+    const fire = () => form.listeners.submit.at(-1)({ preventDefault() {} });
+    const first = fire();
+    const second = fire();
+    await flushes(4);
+    assert.equal(
+      gateCalls,
+      1,
+      "the second submit while the gate consult is pending is a no-op — one INVITE race, one consult",
+    );
+    assert.ok(releaseGate, "the first dial reached the gate");
+    releaseGate();
+    await Promise.allSettled([first, second]);
+    assert.equal(gateCalls, 1, "the parked second submit never re-fires after the first settles");
+  } finally {
+    globalThis.fetch = realFetch;
+    if (realAudio === undefined) delete globalThis.AudioContext;
+    else globalThis.AudioContext = realAudio;
+  }
 });

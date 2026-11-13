@@ -55,7 +55,14 @@ re-run the formatter if it moved styled files.
    tag (verify with `git ls-remote` — the daemon may have pushed
    already).
 5. **Link check**: `nix run nixpkgs#lychee -- .` — after the push, so
-   the new tag link resolves.
+   the new tag link resolves. The repo-root `lychee.toml` carries the
+   private-repo `exclude` set — each exclusion must carry its own
+   verified-live evidence in a header comment (the unauthenticated
+   checker 404s private repos; the `gh` credentials verify them
+   elsewhere). The v2.13.0 train killed by exactly one dead link here
+   (an archived report's `../planning/` hop left one level short by the
+   archive `git mv`) — after ANY archive move, re-run lychee before
+   the release attempt.
 6. **Stack bump** (`~/projects/nix-international-telephony`):
    `nix flake lock --update-input webphone`, commit the lock.
 7. **Stack gates**: `nix build -L .#telephony-browser` (browser E2E,
@@ -159,6 +166,32 @@ re-run the formatter if it moved styled files.
   contended host, plan MANUAL re-execution of the tail steps rather
   than arming background retries.
 
+## webphone-android wire-fixture re-vendor leg (2026-11-10)
+
+The Android call shell (`~/projects/webphone-android`) vendors
+`docs/contracts/wire/*.json` into its JVM tests — the drift tripwire
+for every seam it mirrors (`sessionIdentity`, push-device registration,
+the ring/draft facts on both transports). It does NOT consume the
+binary or the module, so it rides NO pin and NO relock ritual; the only
+obligation fires when the wire itself moves:
+
+1. A change touching `internal/push` payload construction,
+   `sessionIdentity`, `api.PushDeviceRegisterRequest`, or the fixture
+   renderers MUST run `nix develop -c go run ./cmd/webphone contracts`
+   (the `contracts-fresh` gate reds otherwise) and land the regenerated
+   `wire/` files in the SAME commit.
+2. Then re-vendor: `scripts/sync-wire-fixtures.sh` in the android repo
+   (run there; it copies from this checkout, `WEBPHONE_DIR` overridable)
+   and land `testDebugUnitTest` green — a red there means the Kotlin
+   mirror broke, which is exactly what the fixtures exist to catch
+   BEFORE a device boot.
+3. Field-drift precedent (why this leg exists): the shell shipped
+   reading `sip_domain`/`sip_password`/`websocket_url` from
+   `/api/session` — keys the server never sent (real wire:
+   `password`|`sip_credential`; domain/websocket live in `/config.js`)
+   — and the SIP REGISTER silently ran on empty credentials until the
+   fixtures pinned it (fixed 2026-11-10).
+
 ## pbx-artmann relock ritual (2026-09-21/22)
 
 The stack is consumed by pbx-artmann via a rev pin in its flake.nix
@@ -197,3 +230,61 @@ it byte-for-byte. Two mitigations now exist; use both:
   READS it. Before claiming any new config lane is live, grep the
   deployed `/fax` (or the lane's surface) for the markup only the new
   binary renders — the eval alone is exactly the lie this trap is.
+
+### The worktree-release-interleave pattern (2026-11-09, the P6/2.11 trains)
+
+A release train holds the checkout for 1–2 h (gates + tag + stack legs).
+Develop the NEXT phase in a `git worktree` (`git worktree add -b <train>
+/tmp/wp-<n> HEAD`) — the auto-commit daemon does not sweep worktrees, so
+the isolation is also protection against mid-train sweeps of in-flight
+edits. Two cautions from the field: docs-gates needs the main checkout's
+`.git` (it fails under /tmp worktrees — run doc batteries in the main
+tree), and the worktree + branch must be cleaned up once the merge is
+CI-verified (`git worktree remove` + `git branch -d`), or the residue
+collects (2026-11-09: three stale worktrees pruned).
+
+### Verdicts ride rc files, never pipe tails (2026-11-09, two sessions' scar)
+
+`nix flake check | tail && echo` swallows the check's exit code — BOTH
+release trains of 2026-11-08/09 "passed" stack gates this way while
+flake check was red on stale VM tests. Capture each leg's rc explicitly
+(`{ cmd > log 2>&1; echo $? > rc; }`) and read the rc files; the tails
+lie. The same class killed CI verdicts: every push owes its `gh run
+watch`, not a glance at the last lines.
+
+### Train-hygiene rules from the v2.13.0 seven-attempt war (2026-11-10/11)
+
+- **Run the docs battery in `--check` mode as the pre-push verdict.**
+  The mutating battery (`scripts/docs-gates.sh` without `--check`) runs
+  dprint fmt BEFORE counting, so rule-F damage (spaces stripped around
+  inline code spans) is repaired pre-count and the local run goes green
+  while CI's `--check` mode counts the RAW bytes and goes red — the
+  v2.13.0 attempt-7 annotate regression. The surviving fix for rule-F
+  is rewording code spans away from wrap points; restoring the space is
+  undone by the next fmt.
+- **Assert the HEAD sha inside the same tool call as the push.** The
+  daemon sweeps every ~2 min and can commit foreign in-flight work
+  between your verification and your push (28 swept files published
+  once, 2026-10-27; again observed 2026-11-11). Capture
+  `git rev-parse HEAD`, run the gates, then push only after asserting
+  the sha is unchanged — or accept that what lands is the swept tip and
+  say so in the claim.
+- **Archive one gate-clean report in the same push that files a new
+  one.** Cadence is a budget (`max_unarchived: 65`): filing without
+  archiving spends a slot you may not have, and the slot is only
+  refilled by a gates-first archive (`annotate check-rows --strict` +
+  `annotate bare-rows` BEFORE the `git mv`).
+- **Release logs are ephemeral by contract; the verdict is the
+  evidence.** POLICY (2026-11-12, after all seven
+  `/tmp/release-2.13.0-*.log` files were purged by tmpfiles while the
+  session idled overnight): raw attempt logs stay OUT of git; at each
+  attempt's completion, copy the verdict TAIL (the step matrix +
+  failure lines, ≤40 lines) into the release's filing status report
+  under `docs/status/`, and record the verdict line in the CHANGELOG.
+  Never plan to "archive the log later" — `/tmp` will not keep it.
+- **A partial fix is not a pushable fix.** When the red tip's repair is
+  entangled with another session's unpushed commits (2026-11-11: the
+  island-js red needed BOTH the shell.js guard change and a test-file
+  fix that landed three commits later in their train), no prefix of the
+  branch heals main — pushing a middle commit re-reds CI on a different
+  test. Leave the train to its owner; monitor, don't race.

@@ -26,7 +26,13 @@ const (
 	sseEventFax       EventName = "fax"
 	sseEventVoicemail EventName = "voicemail"
 	sseEventContacts  EventName = "contacts"
-	sseEventReview    EventName = "review"
+	// sseEventNotes is the payload-less nudge a post-call NOTE save
+	// publishes (P2-3): the note slot belongs to one (owner, call) pair, so a
+	// second open tab showing the same call would otherwise keep a stale box
+	// until it reloaded. Payload-less by design — the receiving tab re-fetches
+	// through its own session, exactly like the contacts nudge.
+	sseEventNotes  EventName = "notes"
+	sseEventReview EventName = "review"
 )
 
 // ExtensionHubs gives every signed-in extension its own broadcast hub, so

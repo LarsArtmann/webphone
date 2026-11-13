@@ -148,6 +148,13 @@ type migration struct {
 	stmts    []string
 }
 
+// LADDER FREEZE (SUPERB A45, 2026-11-09): this chain accepts NO new
+// steps for domain data — every domain fact lands in system.db through
+// a cqrs aggregate now. The surviving tables are the sessions home
+// (the D2 ruling: docs/planning/2026-11-09_storage-ladder-retirement.md
+// §2) and the frozen import-only families the retention sweep empties
+// (their DROP is the ladder's one allowed LAST act, §5 of that doc).
+//
 // migrations is the ordered chain from an empty database to
 // schemaVersion. Fresh and legacy databases walk the SAME chain — v1
 // recreates the historical shape, later steps evolve it — so there is

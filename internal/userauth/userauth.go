@@ -42,7 +42,7 @@ const dbDriver = "sqlite"
 type Service struct {
 	users  *usermgmt.Service
 	db     *sql.DB
-	enroll *readmodels.EnrollTokens
+	enroll readmodels.EnrollGate
 	mapped *authmap.Map
 	cfg    PasskeyRuntime
 	log    *slog.Logger
@@ -70,13 +70,14 @@ type MappedUser = authmap.User
 
 // New opens (creating if needed) <dataDir>/usermgmt.db and wires the
 // usermgmt service: SQL event store + SQL read models + the WebAuthn
-// provider. Enrollment tokens live in the metaengine store the caller
-// hands over (engine.EnrollTokens()) — the wp_enroll_tokens SQL table
+// provider. Enrollment tokens live behind the EnrollGate the caller
+// hands over (the journal-backed service since SUPERB Phase 3; the
+// engine store is the test seam) — the wp_enroll_tokens SQL table
 // is gone (the 15-minute TTL means an upgrade carries no continuity;
 // in-flight links get re-minted). The journal is tiny; startup drains
 // projections synchronously (the default) so a broken store fails the
 // boot instead of the login.
-func New(ctx context.Context, cfg PasskeyRuntime, dataDir string, enroll *readmodels.EnrollTokens, log *slog.Logger) (*Service, error) {
+func New(ctx context.Context, cfg PasskeyRuntime, dataDir string, enroll readmodels.EnrollGate, log *slog.Logger) (*Service, error) {
 	if log == nil {
 		log = slog.Default()
 	}

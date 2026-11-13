@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/webphone/internal/config"
+	cqrs "github.com/larsartmann/webphone/internal/cqrs"
 )
 
 func newDialGateClient(t *testing.T) *client {
@@ -21,7 +22,7 @@ func newDialGateClient(t *testing.T) *client {
 		// api.Deps the same way the composition root's would.
 		cfg.Dial.Cooldown = time.Hour
 	}, func(deps *Deps) {
-		deps.Dials = newTestEngine(t).DialWindows()
+		deps.Dials = cqrs.NewDialWindows(newCoreSystem(t))
 	})
 	c := clientFor(t, server)
 	c.login("1001", "pw")

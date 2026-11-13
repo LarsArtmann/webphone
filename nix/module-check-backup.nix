@@ -56,6 +56,10 @@ in
         && lib.hasInfix "snapshots" retentionScript
         && lib.hasInfix "--link-dest" retentionScript
         && lib.hasInfix "-mtime +7" retentionScript
+        # The system journal database rides BOTH branches (guarded-if,
+        # same posture as readmodels.db — SUPERB A07).
+        && lib.hasInfix "system.db" plainScript
+        && lib.hasInfix "system.db" retentionScript
       then
         "backup retention branch renders per option"
       else

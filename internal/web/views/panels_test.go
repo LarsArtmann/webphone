@@ -9,9 +9,7 @@ import (
 
 	"github.com/a-h/templ"
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/pbx"
-	"github.com/larsartmann/webphone/internal/store"
-	"github.com/larsartmann/webphone/internal/textagent"
+	"github.com/larsartmann/webphone/internal/readmodels"
 )
 
 // hostile doubles as content and escaping probe: every panel must render
@@ -99,8 +97,8 @@ func TestPanelsRenderTheSharedErrorAndIdentityNodes(t *testing.T) {
 // instead of silently drifting six panels.
 func TestPanelHeadPinsBothLanguages(t *testing.T) {
 	cases := map[Lang]string{
-		LangEN: `<header class="wp-panel-head"><h2>Fax</h2><p class="wp-panel-sub">Send PDFs as faxes; received faxes land here.</p></header>`,
-		LangDE: `<header class="wp-panel-head"><h2>Fax</h2><p class="wp-panel-sub">PDFs als Faxe senden; empfangene Faxe erscheinen hier.</p></header>`,
+		LangEN: `<header class="wp-panel-head"><h2 tabindex="-1">Fax</h2><p class="wp-panel-sub">Send PDFs as faxes; received faxes land here.</p></header>`,
+		LangDE: `<header class="wp-panel-head"><h2 tabindex="-1">Fax</h2><p class="wp-panel-sub">PDFs als Faxe senden; empfangene Faxe erscheinen hier.</p></header>`,
 	}
 	for lang, want := range cases {
 		if got := renderComponent(t, panelHead(lang, "tab.fax", "fax.subtitle")); got != want {
@@ -238,8 +236,8 @@ func TestSignInHintRendersDismissAndCompactLineBothLanguages(t *testing.T) {
 // suppressed badge with its state glyph, and the archived row's
 // unarchive-only shape — in both UI languages.
 func TestThreadRowFlagControlsBothLanguages(t *testing.T) {
-	newSummary := func(flags domain.Thread) store.ThreadSummary {
-		return store.ThreadSummary{Thread: flags}
+	newSummary := func(flags domain.Thread) readmodels.ThreadSummary {
+		return readmodels.ThreadSummary{Thread: flags}
 	}
 	plain := newSummary(domain.Thread{
 		ID: domain.GenerateThreadID(), Remote: domain.MustParseAddress(domain.NetworkSMS, "+441632960961"), Unread: 2,
@@ -394,8 +392,8 @@ func TestSettingsSnippetsSection(t *testing.T) {
 	if !strings.Contains(with, `class="wp-snippet-quick"`) || !strings.Contains(with, `<svg class="wp-icon"`) {
 		t.Errorf("quick marker missing on the first snippet: %s", with)
 	}
-	if got := strings.Count(with, "<dl"); got != 2 {
-		t.Errorf("settings must render exactly two dls (facts + shortcuts), got %d: %s", got, with)
+	if got := strings.Count(with, "<dl"); got != 3 {
+		t.Errorf("settings must render exactly three dls (my data + server + shortcuts), got %d: %s", got, with)
 	}
 	if got := strings.Count(with, ">Keyboard shortcuts</h3>"); got != 1 {
 		t.Errorf("shortcuts head must render exactly once, got %d", got)
@@ -433,8 +431,8 @@ func TestSettingsPushSection(t *testing.T) {
 	if !strings.Contains(on, "Registered devices") || !strings.Contains(on, "pixel-9a01abc") || !strings.Contains(on, "ntfy · 2026-10-25") {
 		t.Errorf("device list missing its rows: %s", on)
 	}
-	if got := strings.Count(on, "<dl"); got != 2 {
-		t.Errorf("settings must render exactly two dls (facts + shortcuts), got %d", got)
+	if got := strings.Count(on, "<dl"); got != 3 {
+		t.Errorf("settings must render exactly three dls (my data + server + shortcuts), got %d", got)
 	}
 	empty := renderComponent(t, SettingsPanel(SettingsPanelProps{Push: true, Lang: LangEN}))
 	if !strings.Contains(empty, "No devices registered yet — the mobile app registers itself at sign-in.") {
@@ -540,7 +538,7 @@ var idAttrRe = regexp.MustCompile(`id="(att-transcript-[^"]+)"`)
 // TestVoicemailRowTranscribeButtonGatedOnASR mirrors the attachment gate
 // for the voicemail player row.
 func TestVoicemailRowTranscribeButtonGatedOnASR(t *testing.T) {
-	msg := pbx.VoicemailMessage{UUID: "u1", Seconds: 12, AudioURL: "/phone-api/voicemail/1001/messages/u1/audio"}
+	msg := VoicemailItem{UUID: "u1", Seconds: 12, AudioURL: "/phone-api/voicemail/1001/messages/u1/audio"}
 	on := renderComponent(t, VoicemailRow(msg, nil, LangEN, true))
 	if !strings.Contains(on, "data-transcribe-src") || !strings.Contains(on, "vm-transcript-u1") {
 		t.Errorf("asr on: voicemail transcribe affordance missing: %s", on)
@@ -616,8 +614,8 @@ func TestHistoryTranscriptDispositionBadgeGuard(t *testing.T) {
 // CreatedAt omits the age without breaking the panel (foreign-wire
 // tolerance).
 func TestDraftsPanelShowsPendingAge(t *testing.T) {
-	reviews := func(created string) *textagent.Reviews {
-		return &textagent.Reviews{Drafts: []textagent.Draft{{
+	reviews := func(created string) *AgentReviews {
+		return &AgentReviews{Drafts: []AgentDraft{{
 			ID: "d-1", Contact: "4989123456", Text: "Guten Morgen", Language: "de",
 			Confidence: 90, CreatedAt: created,
 		}}}
@@ -672,11 +670,20 @@ func TestHistoryTranscriptReviewStates(t *testing.T) {
 	if failed := render(group("failed", "", 0), true); !strings.Contains(failed, "failed") {
 		t.Errorf("failed review must name its state: %s", failed)
 	}
-	if chip := render(group("", "", 0), false); !strings.Contains(chip, "not configured") {
+	chip := render(group("", "", 0), false)
+	if !strings.Contains(chip, "not configured") {
 		t.Errorf("no review + seam off must render the not-configured chip: %s", chip)
 	}
 	if silent := render(group("", "", 0), true); strings.Contains(silent, "wp-call-review") || strings.Contains(silent, "not configured") {
 		t.Errorf("no review + seam on must render nothing (nobody asked): %s", silent)
+	}
+	// The note's AI-prefill button rides the same gate (F6, the review's
+	// prefill-GAP): the affordance exists only when the seam can answer.
+	if !strings.Contains(present, "data-note-draft") {
+		t.Errorf("seam on must offer the note prefill button: %s", present)
+	}
+	if strings.Contains(chip, "data-note-draft") {
+		t.Errorf("seam off must not promise the note prefill: %s", chip)
 	}
 }
 
@@ -738,5 +745,90 @@ func TestHistoryVerdictFilterRendersEveryOption(t *testing.T) {
 	// operator filters for — it must not become a row.
 	if strings.Contains(rendered, `value="unknown"`) {
 		t.Errorf("the verdict filter must not offer the unknown disposition; rendered:\n%s", rendered)
+	}
+}
+
+// TestUnreadDividerAriaNamesTheCountWithoutTheDashes pins the DE-locale
+// honesty fix: the divider's aria-label announces the count through the
+// dedicated vocabulary — no em-dashes (a separator role reading "dash
+// 3 unread dash" is noise), and the same clean sentence in both
+// languages.
+func TestUnreadDividerAriaNamesTheCountWithoutTheDashes(t *testing.T) {
+	msgs := []domain.Message{}
+	for i := range 3 {
+		msgs = append(msgs, domain.NewInboundMessage(
+			domain.GenerateMessageID(), domain.ThreadID{}, domain.MustParseExtension("1001"),
+			domain.MustParseAddress(domain.NetworkSMS, "+491711"), "m", 0,
+			time.Now().Add(time.Duration(i)*time.Minute),
+		))
+	}
+	for lang, want := range map[Lang]string{
+		LangEN: `aria-label="2 unread messages"`,
+		LangDE: `aria-label="2 ungelesene Nachrichten"`,
+	} {
+		rendered := renderComponent(t, TranscriptAt(msgs, lang, 2, false))
+		if !strings.Contains(rendered, want) {
+			t.Errorf("%s: divider aria missing %q; rendered:\n%.600s", lang, want, rendered)
+		}
+		// The LEAK check: the aria VALUE itself — the visible text
+		// keeps its em-dashes on purpose; only the announcement must be
+		// clean. The divider's aria is the FIRST aria-label from the
+		// divider tag onward.
+		if at := strings.Index(rendered, "wp-unread-divider"); at >= 0 {
+			segment := rendered[at:]
+			open := strings.Index(segment, `aria-label="`)
+			if open < 0 {
+				t.Fatalf("%s: divider carries no aria-label:\n%.600s", lang, segment)
+			}
+			valueAt := open + len(`aria-label="`)
+			end := strings.Index(segment[valueAt:], `"`)
+			aria := segment[valueAt : valueAt+end]
+			if strings.Contains(aria, "\u2014") {
+				t.Errorf("%s: the aria label carries the em-dash leak: %q", lang, aria)
+			}
+		}
+	}
+}
+
+// T17 (F48): the admin CDR row prefers the CallerIDName over the raw
+// number (cdrParty is the ONE fallback home; the History row's
+// vocabulary), so a named caller is never rendered as a bare number.
+func TestAdminCDRRowViewPrefersThePartyName(t *testing.T) {
+	named := renderComponent(t, AdminCDRRowView(AdminCDRRow{
+		CDR:       CDREntry{Context: "public", CallerIDNumber: "+4989123456", CallerIDName: "Acme GmbH", DestinationNumber: "+491512345678", Start: "2026-11-12 10:00:00", Billsec: 42},
+		Extension: "1001",
+	}, LangEN))
+	if !strings.Contains(named, "Acme GmbH → +491512345678") {
+		t.Errorf("a named party must lead the pair; rendered:\n%s", named)
+	}
+	bare := renderComponent(t, AdminCDRRowView(AdminCDRRow{
+		CDR:       CDREntry{Context: "public", CallerIDNumber: "+4989123456", DestinationNumber: "+491512345678", Start: "2026-11-12 10:00:00", Billsec: 42},
+		Extension: "1001",
+	}, LangEN))
+	if !strings.Contains(bare, ">+4989123456 → +491512345678 ") {
+		t.Errorf("a nameless party falls back to the raw number; rendered:\n%s", bare)
+	}
+}
+
+// T17 (F48): the admin CDR ladder is structural — a disabled phone API
+// explains the missing section and renders no rows; a failed line is
+// NAMED while surviving lines still render; an empty healthy page gets
+// the honest empty state.
+func TestAdminCDRSectionLadderIsStructural(t *testing.T) {
+	row := AdminCDRRow{CDR: CDREntry{Context: "public", CallerIDNumber: "+4989123456", DestinationNumber: "+491512345678", Billsec: 42}, Extension: "1001"}
+
+	off := renderComponent(t, AdminPanel(AdminPanelProps{CDROff: true, Lang: LangEN}))
+	if !strings.Contains(off, "Call records need the phone API") || strings.Contains(off, "wp-admin-cdr-row") {
+		t.Errorf("a disabled phone API must explain itself and render no CDR rows; rendered:\n%s", off)
+	}
+
+	failed := renderComponent(t, AdminPanel(AdminPanelProps{CDRFailed: []string{"1002"}, CDRs: []AdminCDRRow{row}, Lang: LangEN}))
+	if !strings.Contains(failed, "Call records unavailable") || !strings.Contains(failed, "1002") || !strings.Contains(failed, "wp-admin-cdr-row") {
+		t.Errorf("a failed line must be named while surviving lines still render; rendered:\n%s", failed)
+	}
+
+	none := renderComponent(t, AdminPanel(AdminPanelProps{Lang: LangEN}))
+	if !strings.Contains(none, "No call records.") || strings.Contains(none, "wp-admin-cdr-row") {
+		t.Errorf("an empty healthy page gets the empty state and no rows; rendered:\n%s", none)
 	}
 }

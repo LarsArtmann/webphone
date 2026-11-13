@@ -1,11 +1,20 @@
-// Audio output picker: route the REMOTE call audio to a chosen speaker
-// via setSinkId. Feature-detected end to end — a browser without
-// setSinkId (Safari), without mediaDevices enumeration, or with fewer
-// than two DISTINCT physical outputs never sees the picker. Ring tones
-// stay room-alarms by decision: only the remote audio element is routed.
-// All failures log and keep the picker hidden; a dead picker must never
+// Audio output picker: route the call audio to a chosen speaker via
+// setSinkId. Feature-detected end to end — a browser without setSinkId
+// (Safari), without mediaDevices enumeration, or with fewer than two
+// DISTINCT physical outputs never sees the picker.
+//
+// The choice carries BOTH halves of "call audio": the remote media
+// element AND every locally generated tone (ringback, the incoming-call
+// ring) through AudioContext.setSinkId. Owner decision 2026-11-06 (issue
+// #10) replaced the earlier "rings stay room alarms" ruling: on a
+// multi-output desk the device the operator wears is the phone, and a
+// ring that lands on a different speaker is a missed call. Where the
+// WebAudio half is unsupported the ring still sounds on the default
+// output — the picker never claims a routing it could not perform.
+// All failures log and keep the picker honest; a dead picker must never
 // break a call.
 
+import { setToneSink } from "./audio.js";
 import { t } from "./i18n.js";
 import { $, els, errorMessage, log } from "./ui.js";
 
@@ -67,7 +76,11 @@ export function initAudioOutput() {
 
   /** @param {string} deviceId */
   const apply = (deviceId) => {
-    if (!deviceId) return;
+    // Both halves follow the same choice, and "" (the browser default) is
+    // a REAL pick: choosing Default after a device must move the audio
+    // back, not silently stay on the last speaker (the pre-2026-11-06
+    // picker skipped this and reset nothing).
+    setToneSink(deviceId);
     const verdict = audio.setSinkId(deviceId);
     if (verdict && typeof verdict.then === "function") {
       verdict.catch((err) =>
@@ -106,7 +119,7 @@ export function initAudioOutput() {
           ? chosen
           : "";
         wrap.hidden = false;
-        if (select.value) apply(select.value);
+        apply(select.value);
       })
       .catch(() => {
         // Device enumeration failure: hide the picker; audio still plays

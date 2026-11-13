@@ -1,5 +1,6 @@
 // Package push is the server-side push seam behind ring-while-closed:
-// the registered-device registry (readmodels.PushDevices) holds one
+// the registered-device registry (readmodels.PushDeviceGate, answered
+// by the journal backend) holds one
 // wake address per install, and this package ships the inbound-call
 // fact to it over every configured transport. Two transports exist by
 // owner decision (2026-10-23): ntfy (self-hosted, no Google, the
@@ -16,10 +17,13 @@ package push
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/larsartmann/go-error-family"
+	"github.com/larsartmann/webphone/internal/domain"
 )
 
 func init() {
@@ -33,10 +37,30 @@ func init() {
 // Transport names — the vocabulary the device registry and the fanout
 // route on. Foreign protocol vocabulary, deliberately raw strings on
 // the wire (the strong-id ruling's foreign-token carve-out).
+// Transport names one wake wire (the fanout's map key and the device
+// row's vocabulary). ParseTransport is the door — raw strings never
+// become Transport values, so a client typo dies at the registration
+// boundary instead of stranding a device behind a lookup that can
+// never hit.
+type Transport string
+
 const (
-	TransportNtfy = "ntfy"
-	TransportFcm  = "fcm"
+	TransportNtfy Transport = "ntfy"
+	TransportFcm  Transport = "fcm"
 )
+
+// ParseTransport resolves the wire vocabulary; anything outside it is a
+// Rejection (the registration API answers 400, the family test pins the
+// shape).
+func ParseTransport(raw string) (Transport, error) {
+	switch t := Transport(raw); t {
+	case TransportNtfy, TransportFcm:
+		return t, nil
+	default:
+		return "", errorfamily.Newf(errorfamily.Rejection, "push.transport_parse",
+			"%q is not a push transport (ntfy or fcm)", raw)
+	}
+}
 
 // statusOK reports a 2xx transport answer — the one success every push
 // provider promises (the bodies differ beyond that).
@@ -102,23 +126,54 @@ type Sender interface {
 	SendDraft(ctx context.Context, target string, draft Draft) error
 }
 
-// Fanout routes a ring to the sender its transport names. The
-// zero Fanout (and a nil pointer) is the disabled seam.
+// Fanout routes a fact to the sender its transport names and owns the
+// whole delivery policy: detach from the caller's context (a hook's
+// client hangup must never kill a fan mid-flight), one bounded budget,
+// prune-on-unregistered. The zero Fanout (and a nil pointer) is the
+// disabled seam.
 type Fanout struct {
-	senders map[string]Sender
+	senders  map[Transport]Sender
+	registry DeviceRegistry
+}
+
+// Device is one registered wake address, flattened for the fanout (the
+// read model's view carries owner/updatedAt the fanout never needs).
+type Device struct {
+	DeviceID  string
+	Transport Transport
+	Token     string
+}
+
+// DeviceRegistry is the fanout's prune seam: the registered-device
+// store it lists from and prunes dead rows out of. Satisfied by an
+// adapter over readmodels.PushDeviceGate at the composition root — the
+// fanout stays dependency-light (domain only).
+type DeviceRegistry interface {
+	List(ctx context.Context, owner domain.Extension) ([]Device, error)
+	Remove(ctx context.Context, owner domain.Extension, deviceID string) error
 }
 
 // NewFanout builds the fanout from transport name to sender; nil and
 // disabled senders are dropped (a half-built transport never silently
-// receives traffic).
-func NewFanout(senders map[string]Sender) *Fanout {
-	live := make(map[string]Sender, len(senders))
+// receives traffic). The registry may be nil — Fan then refuses (a
+// fan without a registry has nothing to fan to); the composition root
+// arms it once the device store resolves.
+func NewFanout(senders map[Transport]Sender, registry DeviceRegistry) *Fanout {
+	live := make(map[Transport]Sender, len(senders))
 	for transport, sender := range senders {
 		if sender != nil && sender.Enabled() {
 			live[transport] = sender
 		}
 	}
-	return &Fanout{senders: live}
+	return &Fanout{senders: live, registry: registry}
+}
+
+// WithRegistry arms (or replaces) the prune seam — the composition
+// root's hook for the registry that resolves after the senders do.
+func (f *Fanout) WithRegistry(registry DeviceRegistry) {
+	if f != nil {
+		f.registry = registry
+	}
 }
 
 // Enabled reports whether any transport is live.
@@ -127,7 +182,7 @@ func (f *Fanout) Enabled() bool { return f != nil && len(f.senders) > 0 }
 // Knows reports whether a transport would actually carry — the device
 // registration API's honest signal (registering a transport the server
 // cannot send to would strand the device).
-func (f *Fanout) Knows(transport string) bool {
+func (f *Fanout) Knows(transport Transport) bool {
 	return f != nil && f.senders[transport] != nil
 }
 
@@ -138,35 +193,90 @@ func (f *Fanout) Describe() string {
 	}
 	names := make([]string, 0, len(f.senders))
 	for name := range f.senders {
-		names = append(names, name)
+		names = append(names, string(name))
 	}
 	sort.Strings(names)
 	return strings.Join(names, "+")
 }
 
-// Send routes one ring fact to the sender its transport names. An
-// unknown transport is a Rejection (the registry and the fanout
-// disagreed — an operator problem, not a transport outage).
-func (f *Fanout) Send(ctx context.Context, transport, target string, ring Ring) error { //nolint:branching-flow // push.Transport defined type is a recorded open-roadmap item (2026-10-25 review)
+// fanBudget bounds one whole fan (list + every device's send): the
+// transports' own per-request timeouts sit under it, and the callers'
+// answers never wait — Fan detaches before the budget even starts.
+const fanBudget = 15 * time.Second
+
+// Fan fans one fact (Ring or Draft) to every registered device of the
+// owner — the ONE home of the delivery policy. Fire-and-forget: the
+// caller's answer never waits on push health (the ring hook's
+// 202-inert doctrine), so Fan validates synchronously (disabled seam,
+// unknown fact, missing registry — the caller's own bugs, answered
+// immediately) and detaches everything else: WithoutCancel so a hook's
+// client hangup cannot kill rings mid-flight, one bounded budget, the
+// transports' own timeouts underneath. A transport reporting a device
+// dead prunes the registration on the spot; every other per-device
+// failure is a greppable Warn, never a caller error.
+func (f *Fanout) Fan(ctx context.Context, owner domain.Extension, fact any) error {
 	if !f.Enabled() {
 		return ErrDisabled
 	}
-	sender, ok := f.senders[transport]
-	if !ok {
-		return errorfamily.Newf(errorfamily.Rejection, "push.transport", "no sender configured for transport %q", transport)
+	switch fact.(type) {
+	case Ring, Draft:
+	default:
+		return errorfamily.Newf(errorfamily.Rejection, "push.fact", "fan: unsupported fact %T", fact)
 	}
-	return sender.Send(ctx, target, ring)
+	if f.registry == nil {
+		return errorfamily.Newf(errorfamily.Rejection, "push.registry", "fan: no device registry wired")
+	}
+	detached := context.WithoutCancel(ctx)
+	go func() {
+		// Goroutine containment (owner ruling 2026-10-27): RecoveryMiddleware
+		// cannot see this goroutine, so a panicking transport or registry
+		// would take the whole process down. Recover, log greppably, survive.
+		defer func() {
+			if rec := recover(); rec != nil {
+				slog.Error("push: fan-out PANIC recovered; goroutine contained, process survives",
+					"panic", rec, "extension", owner.String())
+			}
+		}()
+		fctx, cancel := context.WithTimeout(detached, fanBudget)
+		defer cancel()
+		devices, err := f.registry.List(fctx, owner)
+		if err != nil {
+			slog.Warn("push: fan-out aborted; devices unreachable",
+				"error", err, "extension", owner.String())
+			return
+		}
+		for _, device := range devices {
+			if err := f.route(fctx, device, fact); err != nil {
+				if errors.Is(err, ErrUnregistered) {
+					if rmErr := f.registry.Remove(fctx, owner, device.DeviceID); rmErr != nil {
+						slog.Warn("push: prune dead device failed", "device", device.DeviceID, "err", rmErr)
+					} else {
+						slog.Info("push: pruned dead device", "device", device.DeviceID, "transport", device.Transport)
+					}
+					continue
+				}
+				slog.Warn("push: fan send failed",
+					"device", device.DeviceID, "transport", device.Transport, "err", err)
+			}
+		}
+	}()
+	return nil
 }
 
-// SendDraft routes one draft-ready fact to the sender its transport
-// names (the same routing contract as Send).
-func (f *Fanout) SendDraft(ctx context.Context, transport, target string, draft Draft) error { //nolint:branching-flow // push.Transport defined type is a recorded open-roadmap item (2026-10-25 review)
-	if !f.Enabled() {
-		return ErrDisabled
-	}
-	sender, ok := f.senders[transport]
+// route sends one fact to one device through the sender its transport
+// names. An unknown transport is a Rejection (the registry and the
+// fanout disagreed — an operator problem, not a transport outage).
+func (f *Fanout) route(ctx context.Context, device Device, fact any) error {
+	sender, ok := f.senders[device.Transport]
 	if !ok {
-		return errorfamily.Newf(errorfamily.Rejection, "push.transport", "no sender configured for transport %q", transport)
+		return errorfamily.Newf(errorfamily.Rejection, "push.transport", "no sender configured for transport %q", device.Transport)
 	}
-	return sender.SendDraft(ctx, target, draft)
+	switch fact := fact.(type) {
+	case Ring:
+		return sender.Send(ctx, device.Token, fact)
+	case Draft:
+		return sender.SendDraft(ctx, device.Token, fact)
+	default:
+		return errorfamily.Newf(errorfamily.Rejection, "push.fact", "route: unsupported fact %T", fact)
+	}
 }

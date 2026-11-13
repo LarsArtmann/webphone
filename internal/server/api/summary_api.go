@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"slices"
 	"strings"
 	"time"
 
@@ -24,10 +25,15 @@ const summaryDraftTimeout = 95 * time.Second
 // the store scan (a malformed path is a client bug, not a lookup).
 const summaryCallIDMax = 128
 
-// draftPushTimeout bounds one fire-and-forget draft fan-out: the
-// summarize answer never waits on push health, so the goroutine owns
-// its own budget (the transports' own timeouts sit under it).
-const draftPushTimeout = 15 * time.Second
+// agentStatusPassthrough is the allowlist of agent verdict codes this
+// browser surface forwards verbatim (see the passthrough arm in the
+// summarize handler).
+var agentStatusPassthrough = []int{
+	http.StatusConflict,            // a draft conflict the retry advice addresses
+	http.StatusUnprocessableEntity, // a bad ask the composer can fix
+	http.StatusTooManyRequests,     // rate pressure: retry later is the fix
+	http.StatusServiceUnavailable,  // the agent's honest unavailable
+}
 
 // SummaryDraftRequest is the POST /api/calls/{id}/summary-draft wire
 // shape — the call id rides the path, the body is empty. Named (not
@@ -100,7 +106,19 @@ func (h *Handlers) SummaryDraft(w http.ResponseWriter, r *http.Request) {
 		if isAgentErr {
 			slog.Warn("summary: agent refused the draft",
 				"status", agentErr.Status, "detail", agentErr.Message, "extension", sess.Extension.String())
-			http.Error(w, agentErr.Message, agentErr.Status)
+			// Status passthrough is an ALLOWLIST: only verdicts the
+			// browser can act on ride the agent's own code (a draft
+			// conflict, a bad ask, rate pressure, the agent's honest
+			// unavailable). Everything else — auth/404-shaped agent
+			// internals, gateway oddities — collapses to 502 exactly
+			// like the unreachable arm below (the transcribe seam's
+			// credential-collision ruling: the operator never debugs
+			// the agent's internals through this browser surface).
+			status := agentErr.Status
+			if !slices.Contains(agentStatusPassthrough, status) {
+				status = http.StatusBadGateway
+			}
+			http.Error(w, agentErr.Message, status)
 			h.recordReviewArtifact(sess.Extension, callID, domain.ReviewFailed, "", "", "", 0)
 			return
 		}
@@ -119,52 +137,17 @@ func (h *Handlers) SummaryDraft(w http.ResponseWriter, r *http.Request) {
 	writeJSONBody(w, SummaryDraftResponse{ID: draft.ID, Contact: draft.Contact, Text: draft.Text})
 }
 
-// notifyDraftReady fans the draft-ready fact out to the owner's
-// registered push devices — fire-and-forget: the summarize answer must
-// never wait on push health (the ring hook's 202-inert doctrine), and
-// the disabled seam is simply nothing. The contact is the CALL's remote
-// (the handler resolved it from the owner-scoped transcript — the one
-// truth), not the agent's echo; a transport reporting the device dead
-// prunes the registration on the spot, exactly like the ring lane.
+// notifyDraftReady hands the draft-ready fact to the fanout — the
+// delivery policy (detach, budget, prune-on-unregistered) lives there
+// now, so this caller is three lines: the summarize answer never waits
+// on push health, and the disabled seam is simply nothing. The contact
+// is the CALL's remote (the handler resolved it from the owner-scoped
+// transcript — the one truth), not the agent's echo.
 func (h *Handlers) notifyDraftReady(ctx context.Context, owner domain.Extension, draftID, contact string) {
-	if h.deps.Push == nil || !h.deps.Push.Enabled() || h.deps.Devices == nil {
+	if h.deps.Push == nil || !h.deps.Push.Enabled() {
 		return
 	}
-	ctx = context.WithoutCancel(ctx)
-	go func() {
-		// Goroutine containment (owner ruling 2026-10-27): RecoveryMiddleware
-		// cannot see this goroutine, so a panicking transport or registry
-		// would take the whole process down. Recover, log greppably, survive.
-		defer func() {
-			if rec := recover(); rec != nil {
-				slog.Error("push: draft fan-out PANIC recovered; goroutine contained, process survives",
-					"panic", rec, "draft", draftID, "extension", owner.String())
-			}
-		}()
-		ctx, cancel := context.WithTimeout(ctx, draftPushTimeout)
-		defer cancel()
-		fact := push.Draft{Event: push.EventDraftReady, Contact: contact, DraftID: draftID}
-		targets, err := h.deps.Devices.List(ctx, owner)
-		if err != nil {
-			wrapped := errorfamily.WrapInfrastructuref(err, "push.draft_devices", "list draft push targets")
-			slog.Warn("push: draft fan-out aborted", "error", wrapped, "extension", owner.String())
-			return
-		}
-		for _, target := range targets {
-			if err := h.deps.Push.SendDraft(ctx, target.Transport, target.Token, fact); err != nil {
-				if errors.Is(err, push.ErrUnregistered) {
-					if rmErr := h.deps.Devices.Remove(ctx, owner, target.DeviceID); rmErr != nil {
-						slog.Warn("push: prune dead device failed", "device", target.DeviceID, "err", rmErr)
-					} else {
-						slog.Info("push: pruned dead device", "device", target.DeviceID, "transport", target.Transport)
-					}
-					continue
-				}
-				wrapped := errorfamily.WrapInfrastructuref(err, "push.draft_send", "ship draft-ready to %s", target.DeviceID)
-				slog.Warn("push: draft fan-out failed", "error", wrapped, "device", target.DeviceID, "transport", target.Transport)
-			}
-		}
-	}()
+	_ = h.deps.Push.Fan(ctx, owner, push.Draft{Event: push.EventDraftReady, Contact: contact, DraftID: draftID})
 }
 
 // recordSummaryIdem marks a summarize attempt processed (successes

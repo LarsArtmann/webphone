@@ -8,7 +8,6 @@ import (
 	"github.com/larsartmann/templ-components/display"
 	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/pbx"
 )
 
 // HistoryPanel shows the extension's server-side call records (CDR) from
@@ -16,7 +15,7 @@ import (
 // phone panel — this tab is the operator's view.
 type HistoryPanelProps struct {
 	Enabled bool
-	Entries []pbx.CDR
+	Entries []CDREntry
 	Error   string
 	// Current filters (echoed back into the form after a re-render).
 	Query   string
@@ -49,12 +48,16 @@ templ HistoryPanel(props HistoryPanelProps) {
 		id="history-panel"
 		hx-get="/partials/history"
 		hx-include="#history-panel form.wp-filter"
-		hx-trigger="sse:review"
+		hx-trigger="sse:review, sse:notes"
 		hx-target="#history-panel"
 		hx-swap="outerHTML"
 	>
 		// F89: a saved review nudges this panel (payload-less "review"
-		// SSE event, the voicemail/contacts pattern). The include carries
+		// SSE event, the voicemail/contacts pattern). P2-3: a saved post-call
+		// NOTE nudges it too ("notes"), so a second tab showing the same call
+		// picks up the edit instead of holding a stale box; both are
+		// payload-less and re-fetched through this tab's own session.
+		// The include carries
 		// the live filter form so a background refresh keeps the reader's
 		// active filters instead of resetting them.
 		@panelHead(props.Lang, "tab.history", "history.subtitle")
@@ -77,7 +80,7 @@ templ HistoryPanel(props HistoryPanelProps) {
 					value={ props.Query }
 					aria-label={ T(props.Lang, "history.filter.label") }
 				/>
-				<select name="dir" aria-label={ T(props.Lang, "history.filter.label") }>
+				<select name="dir" aria-label={ T(props.Lang, "history.dir.label") }>
 					<option value="" selected?={ props.Dir == "" }>{ T(props.Lang, "history.dir.any") }</option>
 					<option value="in" selected?={ props.Dir == "in" }>{ T(props.Lang, "history.dir.in") }</option>
 					<option value="out" selected?={ props.Dir == "out" }>{ T(props.Lang, "history.dir.out") }</option>
@@ -115,15 +118,39 @@ templ HistoryPanel(props HistoryPanelProps) {
 			@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, emptyKey), Icon: icons.Clock})
 		}
 		// D9: rows group under calendar-day heads (Today / Yesterday /
-		// weekday + date, with the group count) — the same separator
-		// vocabulary the message transcript established.
-		for _, group := range groupCDRsByDay(props.Entries) {
-			if group.Key != "" {
-				@dayHead(props.Lang, group.Day, len(group.Rows))
-			}
-			for _, cdr := range group.Rows {
-				@CDRRow(cdr, props.CRM, props.Lang)
-			}
+		// weekday + date, with the group count) — Train 2 renders the CDR
+		// list as a scannable TABLE (sticky column heads, right-aligned
+		// tabular When/Duration columns; day groups ride tbody sections),
+		// the same separator vocabulary otherwise.
+		if len(props.Entries) > 0 {
+			<div class="wp-table-wrap" role="region" tabindex="0" aria-label={ T(props.Lang, "history.table.label") }>
+				<table class="wp-table">
+				<thead>
+					<tr>
+						<th scope="col" class="wp-sr-only">{ T(props.Lang, "history.dir.label") }</th>
+						<th scope="col">{ T(props.Lang, "history.col.contact") }</th>
+						<th scope="col" class="wp-table-num">{ T(props.Lang, "history.col.when") }</th>
+						<th scope="col" class="wp-table-num">{ T(props.Lang, "history.col.duration") }</th>
+						<th scope="col" class="wp-sr-only">{ T(props.Lang, "history.col.actions") }</th>
+					</tr>
+				</thead>
+				for _, group := range groupCDRsByDay(props.Entries) {
+					<tbody>
+						if group.Key != "" {
+							<tr class="wp-table-day-head">
+								<th colspan="5" scope="colgroup">
+									<span>{ dayHeadLabel(props.Lang, group.Day) }</span>
+									<span class="wp-day-count">· { fmtInt(len(group.Rows)) }</span>
+								</th>
+							</tr>
+						}
+						for _, cdr := range group.Rows {
+							@CDRRow(cdr, props.CRM, props.Lang)
+						}
+					</tbody>
+				}
+				</table>
+			</div>
 		}
 		if len(props.Transcripts) > 0 {
 			@TranscriptSection(props)
@@ -171,9 +198,9 @@ templ TranscriptSection(props HistoryPanelProps) {
 				<summary>
 					<span aria-hidden="true">
 						if group.Direction == "in" {
-							↓
+							@icons.Icon(icons.ArrowDown, "wp-icon")
 						} else {
-							↑
+							@icons.Icon(icons.ArrowUp, "wp-icon")
 						}
 					</span>
 					<strong>{ displayName(group.Remote, props.CRM) }</strong>
@@ -216,7 +243,7 @@ templ TranscriptSection(props HistoryPanelProps) {
 					data-copy-transcript
 					aria-label={ T(props.Lang, "history.transcript.copy") }
 					title={ T(props.Lang, "history.transcript.copy") }
-				>⧉</button>
+				>@icons.Icon(icons.Clipboard, "wp-icon")</button>
 				// Download affordance (#40): same row-locality — shell.js
 				// builds a text/plain blob from the rendered transcript and
 				// triggers one file save named after the call.
@@ -225,13 +252,14 @@ templ TranscriptSection(props HistoryPanelProps) {
 					data-download-transcript={ group.CallID }
 					aria-label={ T(props.Lang, "history.transcript.download") }
 					title={ T(props.Lang, "history.transcript.download") }
-				>↓</button>
+				>@icons.Icon(icons.Download, "wp-icon")</button>
 				// End-user erasure (GDPR leg): confirm-gated delete of the
 				// whole call. The button only carries data — shell.js owns
 				// the confirm + DELETE + row removal (the shell works when
-				// island scripts fail).
+				// island scripts fail). F3: the danger tint marks the one
+				// destructive action among this row's quiet mini buttons.
 				<button
-					class="wp-mini"
+					class="wp-mini wp-danger"
 					data-delete-transcript={ group.CallID }
 					data-confirm={ T(props.Lang, "history.transcript.deleteConfirm") }
 					aria-label={ T(props.Lang, "history.transcript.delete") }
@@ -241,12 +269,17 @@ templ TranscriptSection(props HistoryPanelProps) {
 				// is inert markup until shell.js wires it (without JS the
 				// buttons do nothing, the transcript stays readable) — the
 				// AI-prefill button rides the summarize chain and inserts
-				// the draft text for a HUMAN edit before saving.
+				// the draft text for a HUMAN edit before saving. The gate
+				// is the same AgentEnabled prop as the not-configured
+				// chip above: the affordance must not promise what the
+				// seam cannot answer (capability DECLARED, never
+				// discovered as a failed action).
 				<div class="wp-call-note">
 					<label class="wp-muted" for={ "wp-note-body-" + group.CallID }>{ T(props.Lang, "history.note.edit") }</label>
 					<textarea
 						id={ "wp-note-body-" + group.CallID }
 						data-note-body={ group.CallID }
+						maxlength="4000"
 						rows="3"
 					>{ group.Note }</textarea>
 					<button
@@ -255,12 +288,14 @@ templ TranscriptSection(props HistoryPanelProps) {
 						aria-label={ T(props.Lang, "history.note.save") }
 						title={ T(props.Lang, "history.note.save") }
 					>{ T(props.Lang, "history.note.save") }</button>
-					<button
-						class="wp-mini"
-						data-note-draft={ group.CallID }
-						aria-label={ T(props.Lang, "history.note.aiDraft") }
-						title={ T(props.Lang, "history.note.aiDraft") }
-					>{ T(props.Lang, "history.note.aiDraft") }</button>
+					if props.AgentEnabled {
+						<button
+							class="wp-mini"
+							data-note-draft={ group.CallID }
+							aria-label={ T(props.Lang, "history.note.aiDraft") }
+							title={ T(props.Lang, "history.note.aiDraft") }
+						>{ T(props.Lang, "history.note.aiDraft") }</button>
+					}
 				</div>
 			</details>
 		}
@@ -274,14 +309,14 @@ type cdrDayGroup struct {
 	// under a wrong label).
 	Key  string
 	Day  time.Time
-	Rows []pbx.CDR
+	Rows []CDREntry
 }
 
 // groupCDRsByDay buckets consecutive records by their Start date. The
 // phone API's start is "YYYY-MM-DD HH:MM", so the bucket key is the
 // 10-byte prefix; a short or unparsable start lands in the headless
 // group keyed "".
-func groupCDRsByDay(entries []pbx.CDR) []cdrDayGroup {
+func groupCDRsByDay(entries []CDREntry) []cdrDayGroup {
 	groups := make([]cdrDayGroup, 0, len(entries))
 	for _, cdr := range entries {
 		key := ""
@@ -296,35 +331,41 @@ func groupCDRsByDay(entries []pbx.CDR) []cdrDayGroup {
 			groups[len(groups)-1].Rows = append(groups[len(groups)-1].Rows, cdr)
 			continue
 		}
-		groups = append(groups, cdrDayGroup{Key: key, Day: day, Rows: []pbx.CDR{cdr}})
+		groups = append(groups, cdrDayGroup{Key: key, Day: day, Rows: []CDREntry{cdr}})
 	}
 	return groups
 }
 
-templ CDRRow(cdr pbx.CDR, contacts CRMContacts, lang Lang) {
-	<article class={ "wp-row", templ.KV("wp-row-missed", cdrMissed(cdr)) }>
-		<span
-			class={ "wp-dir-chip", templ.KV("wp-dir-in", cdr.Context == "public"), templ.KV("wp-dir-missed", cdrMissed(cdr)) }
-			aria-hidden="true"
-		>{ cdrDirGlyph(cdr) }</span>
-		<span class="wp-thread-text" role="img" aria-label={ cdrDirLabel(cdr, lang) }>
+templ CDRRow(cdr CDREntry, contacts CRMContacts, lang Lang) {
+	<tr class={ templ.KV("wp-row-missed", cdrMissed(cdr)) }>
+		<td class="wp-table-dir">
+			<span
+				class={ "wp-dir-chip", templ.KV("wp-dir-in", cdr.Context == "public"), templ.KV("wp-dir-missed", cdrMissed(cdr)) }
+				role="img"
+				aria-label={ cdrDirLabel(cdr, lang) }
+			>@icons.Icon(cdrDirGlyph(cdr), "wp-icon")</span>
+		</td>
+		<td class="wp-table-remote">
 			@remoteLabel(cdrTarget(cdr), contacts, lang)
-			<span class="wp-muted">{ cdr.Start } · { durationLabel(cdr.Billsec) }</span>
-		</span>
-		if dial := CDRDialTarget(cdr); dial != "" {
-			<span class="wp-row-actions">
-				<button class="wp-mini" data-dial={ dial }>{ T(lang, "contacts.call") }</button>
-				<button class="wp-mini" data-sms={ dial }>{ T(lang, "contacts.sms") }</button>
-				<button
-					class="wp-mini"
-					data-save-contact={ dial }
-					data-name={ firstNonEmpty(cdr.CallerIDName, displayName(cdrTarget(cdr), contacts)) }
-					aria-label={ T(lang, "contacts.saveAs") }
-					title={ T(lang, "contacts.saveAs") }
-				>☆</button>
-			</span>
-		}
-	</article>
+		</td>
+		<td class="wp-table-num wp-table-when" data-label={ T(lang, "history.col.when") }>{ cdr.Start }</td>
+		<td class="wp-table-num wp-table-dur" data-label={ T(lang, "history.col.duration") }>{ durationLabel(cdr.Billsec) }</td>
+		<td class="wp-table-actions">
+			if dial := CDRDialTarget(cdr); dial != "" {
+				<span class="wp-row-actions">
+					<button class="wp-mini" data-dial={ dial }>{ T(lang, "contacts.call") }</button>
+					<button class="wp-mini" data-sms={ dial }>{ T(lang, "contacts.sms") }</button>
+					<button
+						class="wp-mini"
+						data-save-contact={ dial }
+						data-name={ firstNonEmpty(cdr.CallerIDName, displayName(cdrTarget(cdr), contacts)) }
+						aria-label={ T(lang, "contacts.saveAs") }
+						title={ T(lang, "contacts.saveAs") }
+					>@icons.Icon(icons.Star, "wp-icon")</button>
+				</span>
+			}
+		</td>
+	</tr>
 }
 
 // dispositionConfirmed reports whether a transcript group carries an
@@ -347,17 +388,17 @@ func dispositionConfirmed(raw string) bool {
 	return err == nil && disposition != domain.DispositionUnknown
 }
 
-func cdrDirGlyph(cdr pbx.CDR) string {
+func cdrDirGlyph(cdr CDREntry) icons.Name {
 	if cdrMissed(cdr) {
-		return "✖"
+		return icons.XCircle
 	}
 	if cdr.Context == "public" {
-		return "↓"
+		return icons.ArrowDown
 	}
-	return "↑"
+	return icons.ArrowUp
 }
 
-func cdrDirLabel(cdr pbx.CDR, lang Lang) string {
+func cdrDirLabel(cdr CDREntry, lang Lang) string {
 	if cdrMissed(cdr) {
 		return T(lang, "history.missed")
 	}
@@ -369,15 +410,22 @@ func cdrDirLabel(cdr pbx.CDR, lang Lang) string {
 
 // cdrMissed: an inbound leg that never carried media (billsec 0) — the
 // caller rang, nobody answered.
-func cdrMissed(cdr pbx.CDR) bool {
+func cdrMissed(cdr CDREntry) bool {
 	return cdr.Context == "public" && cdr.Billsec == 0
 }
 
-func cdrTarget(cdr pbx.CDR) string {
+func cdrTarget(cdr CDREntry) string {
 	if cdr.Context == "public" {
 		return firstNonEmpty(cdr.CallerIDNumber, cdr.CallerIDName, "unknown")
 	}
 	return firstNonEmpty(cdr.DestinationNumber, "unknown")
+}
+
+// cdrParty is the display name of the REMOTE party: the CallerIDName
+// when the PBX carried one, the raw number otherwise — the admin CDR
+// rows and the History rows read identically.
+func cdrParty(cdr CDREntry) string {
+	return firstNonEmpty(cdr.CallerIDName, cdr.CallerIDNumber, "unknown")
 }
 
 // CDRDialTarget returns the dialable number for a call record (the CID
@@ -385,7 +433,7 @@ func cdrTarget(cdr pbx.CDR) string {
 // outbound legs) or "" when the record carries none — the dial button
 // renders only when a real number exists. Exported: the history panel
 // collects the same numbers for CRM name resolution.
-func CDRDialTarget(cdr pbx.CDR) string {
+func CDRDialTarget(cdr CDREntry) string {
 	if cdr.Context == "public" {
 		return cdr.CallerIDNumber
 	}

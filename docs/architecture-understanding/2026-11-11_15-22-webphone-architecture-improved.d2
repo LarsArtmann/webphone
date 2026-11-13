@@ -1,0 +1,203 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    theme-id: 200
+  }
+}
+
+classes: {
+  actor: {
+    style: {
+      fill: "#f4d35e"
+      stroke: "#f4d35e"
+      font-color: "#0e0e10"
+      bold: true
+    }
+  }
+  front: {
+    style: {
+      fill: "#6eb5ff"
+      stroke: "#6eb5ff"
+      font-color: "#0e0e10"
+      bold: true
+    }
+  }
+  surface: {
+    style: {
+      fill: "#ffb347"
+      stroke: "#ffb347"
+      font-color: "#0e0e10"
+    }
+  }
+  service: {
+    style: {
+      fill: "#1d1d24"
+      stroke: "#ffb347"
+      font-color: "#f4f4f0"
+    }
+  }
+  seam: {
+    style: {
+      fill: "#1d1d24"
+      stroke: "#6eb5ff"
+      font-color: "#f4f4f0"
+    }
+  }
+  base: {
+    style: {
+      fill: "#101014"
+      stroke: "#4a4a55"
+      font-color: "#c9c9d4"
+    }
+  }
+  external: {
+    style: {
+      fill: "#26262e"
+      stroke: "#8a8a96"
+      stroke-dash: 4
+      font-color: "#f4f4f0"
+    }
+  }
+  delta: {
+    style: {
+      fill: "#101014"
+      stroke: "#f4d35e"
+      stroke-width: 2
+      font-color: "#f4d35e"
+      bold: true
+    }
+  }
+}
+
+direction: down
+
+operator: Operator (browser) {
+  class: actor
+  island: SIP island
+  tabs: HTMX tabs
+  login: "/login front door"
+}
+
+front: TLS front — Caddy (stack module) {
+  class: front
+  style.stroke-dash: 4
+  web: reverse_proxy + /events unbuffered
+  sip: /sip WSS bridge
+}
+
+webphone: webphone single binary — target state {
+  style: {
+    stroke: "#ffb347"
+    stroke-width: 2
+    font-color: "#ffb347"
+    bold: true
+  }
+
+  cmd: cmd/webphone — process lifecycle {
+    class: base
+  }
+
+  app: internal/app — composition root (samber/do v2) {
+    class: surface
+  }
+
+  http: HTTP surface — carved by concern (delta) {
+    class: surface
+    wiring: wiring — Deps · chain · mount (thin)
+    auth: "server/auth — login · session · passkey · sso (delta)"
+    html: "server/html — pages · panels · actions · SSE (delta)"
+    platform: "server/platform — assets · metrics · csp · trace · proxy (delta)"
+    api: server/api — JSON endpoints (carved 2026-10-17)
+    hooks: server/hooks — webhook ingest (carved 2026-10-17)
+  }
+
+  identity: identity {
+    class: seam
+    userauth: userauth — in-process usermgmt v4
+    authmap: authmap
+    sipcred: sipcred
+    admin: admin
+  }
+
+  comms: comms services {
+    class: service
+    messaging: messaging.Service
+    matrix: matrix
+    signal: signal
+    chatloop: chatloop
+    faxsvc: fax.Service
+    gateway: gateway — loopback | webhook
+  }
+
+  operator_services: operator services {
+    class: service
+    crmres: crm.Resolver
+    textagent: textagent
+    asr: asr.Client
+    push: push — ntfy + FCM
+    reports: reports — CDR projection
+    blob: blob
+  }
+
+  journal: ONE journal world {
+    class: seam
+    cqrs: cqrs — deciders + projections
+    readmodels: readmodels — gate interfaces + views
+    sessions: "store → sessions-only (delta: ladder retired empty)"
+  }
+
+  domain: internal/domain — zero internal imports {
+    class: base
+  }
+
+  views: "web/views — templ surfaces; props typed in-domain (delta: no store/pbx reach-through)" {
+    class: delta
+  }
+}
+
+sysdb: system.db {
+  shape: cylinder
+  class: base
+}
+usermgmtdb: usermgmt.db {
+  shape: cylinder
+  class: base
+}
+
+pbxstack: FreeSWITCH PBX {
+  class: external
+}
+bridge: telnyx-webhooks bridge {
+  class: external
+}
+kith: Kith CRM {
+  class: external
+}
+pocketid: Pocket ID {
+  class: external
+}
+
+operator -> front: "HTTPS · WSS /sip"
+front.web -> webphone.http.wiring: proxies
+front.sip -> pbxstack: "SIP over WSS"
+
+webphone.cmd -> webphone.app: lifecycle
+webphone.app -> webphone.http: wires
+webphone.http.wiring -> webphone.http.auth: mounts
+webphone.http.wiring -> webphone.http.html: mounts
+webphone.http.wiring -> webphone.http.platform: mounts
+webphone.http.auth -> webphone.identity.userauth: ceremonies
+webphone.http.html -> webphone.views: renders
+webphone.http.html -> webphone.journal.readmodels: "reads views, not stores (delta)"
+webphone.views -> webphone.domain: "types only (delta)"
+webphone.http.api -> webphone.identity: session gate
+webphone.http.hooks -> webphone.comms.messaging: Receive
+webphone.comms.messaging -> webphone.journal.cqrs: commands
+webphone.comms.gateway -> bridge: "multipart + Bearer"
+bridge -> webphone.http.hooks: "/hooks/*"
+pbxstack -> webphone.http.hooks: "/hooks/ring"
+webphone.operator_services.crmres -> kith: bearer
+webphone.identity.userauth -> usermgmtdb: journal
+webphone.journal.cqrs -> sysdb: "events + projections"
+webphone.journal.readmodels -> sysdb: views
+webphone.journal.sessions -> sysdb: sessions

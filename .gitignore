@@ -1,8 +1,15 @@
-result
-result-*
+# ROOT-ANCHORED (2026-11-07): a name-based rule matches a directory of that
+# name at ANY depth, so an unanchored `result` would also ignore
+# `internal/result/` — the exact class that once dropped `internal/reports`
+# from history. `internal/arch/gitignore_test.go` walks `go list ./...` and
+# fails when any package directory is ignored, which is the standing guard
+# for rules the buildflow-managed block below re-generates (`build/`,
+# `dist/`, `vendor/` … cannot be edited here without being overwritten).
+/result
+/result-*
 .pre-commit-config.yaml
-.devenv
-.direnv
+/.devenv
+/.direnv
 
 # >>> buildflow-managed (.gitignore) >>>
 # Auto-managed by buildflow. Edit outside these markers; this block is regenerated on `buildflow --fix`.
@@ -46,7 +53,13 @@ workflow-audit-log.*
 
 ## Reports and coverage
 /coverage
-reports/
+# ROOT-ANCHORED on purpose: this ignores the tooling's generated report
+# output at the repo root, never a source package. The unanchored form
+# (`reports/`) silently swallowed `internal/reports/` — the Reports tab's
+# projection package — so a whole package was invisible to git while every
+# local build passed and the sandbox build (which only sees tracked files)
+# failed with "no required module provides package".
+/reports/
 
 ## Go
 *.exe
@@ -100,11 +113,10 @@ htmlcov/
 /webphone
 
 # Visual-harness output (scripts/ui-capture.py). LOCAL-ONLY by budget
-# decision and regenerated from scratch on every run — the harness deletes
-# the directory before shooting, so tracking these was 24 blobs rewritten
-# and re-committed per visual pass (untracked 2026-10-29). The shots are
-# eyeball material; the assertions that make them evidence live in
-# check_thread_layout() and the per-surface DOM markers.
+# decision. NON-track runs regenerate their working set; a --track run
+# NEVER wipes — history is the product (timestamped run dirs, gallery/
+# compare/wire-facts ride along) and retention is the operator's --prune
+# call. Remote shots carry REAL data; keep this gitignored.
 /ui-shots/
 /ui-shots-fax-off/
 

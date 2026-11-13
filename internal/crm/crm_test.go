@@ -54,7 +54,7 @@ func newStubServer(t *testing.T, stub *stubCRM) *httptest.Server {
 }
 
 func TestClientDisabledByDefault(t *testing.T) {
-	client, err := NewClient("", "token")
+	client, err := NewClient("", "token", "")
 	if err != nil {
 		t.Fatalf("NewClient empty: %v", err)
 	}
@@ -95,7 +95,7 @@ func TestLookupByPhone(t *testing.T) {
 	}
 	srv := newStubServer(t, stub)
 
-	client, err := NewClient(srv.URL, "sekrit")
+	client, err := NewClient(srv.URL, "sekrit", "")
 	if err != nil {
 		t.Fatalf("NewClient: %v", err)
 	}
@@ -115,7 +115,7 @@ func TestLookupByPhone(t *testing.T) {
 		t.Fatalf("miss: want ErrNotFound, got %v", err)
 	}
 
-	bad, err := NewClient(srv.URL, "wrong")
+	bad, err := NewClient(srv.URL, "wrong", "")
 	if err != nil {
 		t.Fatalf("NewClient wrong: %v", err)
 	}
@@ -128,7 +128,7 @@ func TestLogCall(t *testing.T) {
 	stub := &stubCRM{logStatus: http.StatusNoContent}
 	srv := newStubServer(t, stub)
 
-	client, err := NewClient(srv.URL, "sekrit")
+	client, err := NewClient(srv.URL, "sekrit", "")
 	if err != nil {
 		t.Fatalf("NewClient: %v", err)
 	}
@@ -172,7 +172,7 @@ func TestClientHealthCheck(t *testing.T) {
 	newStub := func(status int) (*stubCRM, *Client) {
 		stub := &stubCRM{lookupStatus: status}
 		srv := newStubServer(t, stub)
-		client, err := NewClient(srv.URL, "sekrit")
+		client, err := NewClient(srv.URL, "sekrit", "")
 		if err != nil {
 			t.Fatalf("NewClient: %v", err)
 		}
@@ -228,7 +228,7 @@ func TestResolverCachesLookups(t *testing.T) {
 	}
 	srv := newStubServer(t, stub)
 
-	client, err := NewClient(srv.URL, "sekrit")
+	client, err := NewClient(srv.URL, "sekrit", "")
 	if err != nil {
 		t.Fatalf("NewClient: %v", err)
 	}
@@ -263,7 +263,7 @@ func TestResolverDegradesQuietly(t *testing.T) {
 	}))
 	t.Cleanup(srv.Close)
 
-	client, err := NewClient(srv.URL, "sekrit")
+	client, err := NewClient(srv.URL, "sekrit", "")
 	if err != nil {
 		t.Fatalf("NewClient: %v", err)
 	}
@@ -285,7 +285,7 @@ func TestResolveSingleFlightsConcurrentLookups(t *testing.T) {
 	}
 	srv := newStubServer(t, stub)
 
-	client, err := NewClient(srv.URL, "sekrit")
+	client, err := NewClient(srv.URL, "sekrit", "")
 	if err != nil {
 		t.Fatalf("NewClient: %v", err)
 	}
@@ -322,7 +322,7 @@ func TestResolverLookupCounters(t *testing.T) {
 	}
 	srv := newStubServer(t, stub)
 
-	client, err := NewClient(srv.URL, "sekrit")
+	client, err := NewClient(srv.URL, "sekrit", "")
 	if err != nil {
 		t.Fatalf("NewClient: %v", err)
 	}

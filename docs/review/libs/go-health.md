@@ -6,12 +6,12 @@
 
 ## Status
 
-|                |                                                                                                                               |
-| -------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Module         | `github.com/larsartmann/go-health`                                                                                            |
-| Pinned         | v0.10.0 direct (bumped 2026-11-05; v0.9.0 on 2026-11-04)                                                                      |
+|                |                                                                                                                                                                                 |
+| -------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Module         | `github.com/larsartmann/go-health`                                                                                                                                              |
+| Pinned         | v0.10.0 direct (bumped 2026-11-05; v0.9.0 on 2026-11-04)                                                                                                                        |
 | Latest release | v0.10.0 (release/CI tooling + docs over v0.9.0; API surface unchanged) — v0.9.0 branded `InstanceID`, `CoerceValidUTF8` (successor of `SanitizeResponse`), `StatusSince` rename |
-| Usage          | internal/app/app.go (probe construction + lifecycle), internal/server/server.go (livez/startupz fallback)                     |
+| Usage          | internal/app/app.go (probe construction + lifecycle), internal/server/server.go (livez/startupz fallback)                                                                       |
 
 ## What the library offers
 

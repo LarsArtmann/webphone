@@ -39,7 +39,7 @@ func wireChatNetworks(
 	messagingSvc := do.MustInvoke[*messaging.Service](injector)
 
 	if cfg.Matrix.Enabled() {
-		client := matrix.New(cfg.Matrix.Homeserver, cfg.Matrix.UserID, cfg.Matrix.AccessToken)
+		client := matrix.New(matrix.ClientConfig{Homeserver: cfg.Matrix.Homeserver, UserID: cfg.Matrix.UserID, Token: cfg.Matrix.AccessToken})
 		bootCtx, cancel := context.WithTimeout(context.Background(), chatBootTimeout)
 		if err := client.Whoami(bootCtx); err != nil {
 			cancel()

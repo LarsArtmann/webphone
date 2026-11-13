@@ -4,45 +4,97 @@ import (
 	"context"
 	"net/http"
 	"net/http/httptest"
+	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
+	"github.com/larsartmann/go-cqrs-lite/system/v4"
+
+	"github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/push"
 	"github.com/larsartmann/webphone/internal/readmodels"
 )
 
-// fakeTransport records the rings shipped to it.
+// fakeTransport records the rings shipped to it. Mutex-guarded: the
+// fanout delivers from a detached goroutine, so the test's polling
+// reads race with the sends.
 type fakeTransport struct {
 	enabled bool
-	rings   []push.Ring
 	err     error
+
+	mu    sync.Mutex
+	rings []push.Ring
 }
 
 func (f *fakeTransport) Enabled() bool    { return f.enabled }
 func (f *fakeTransport) Describe() string { return "fake" }
 func (f *fakeTransport) Send(_ context.Context, _ string, ring push.Ring) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	f.rings = append(f.rings, ring)
 	return f.err
 }
 func (f *fakeTransport) SendDraft(_ context.Context, _ string, draft push.Draft) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	f.rings = append(f.rings, push.Ring{Event: draft.Event, From: draft.Contact})
 	return f.err
 }
+func (f *fakeTransport) count() int {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return len(f.rings)
+}
+func (f *fakeTransport) snapshot() []push.Ring {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return append([]push.Ring(nil), f.rings...)
+}
 
-func newRingHandlers(t *testing.T, transport *fakeTransport) (*Handlers, *readmodels.PushDevices) {
+// fanRegistry adapts the journal-backed device store to the fanout's
+// prune seam (the same conversion the composition root performs in
+// prod; push.DeviceRegistry's List flattens the view).
+type fanRegistry struct{ devices readmodels.PushDeviceGate }
+
+func (r fanRegistry) List(ctx context.Context, owner domain.Extension) ([]push.Device, error) {
+	views, err := r.devices.List(ctx, owner)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]push.Device, 0, len(views))
+	for _, v := range views {
+		out = append(out, push.Device{DeviceID: v.DeviceID, Transport: push.Transport(v.Transport), Token: v.Token})
+	}
+	return out, nil
+}
+
+func (r fanRegistry) Remove(ctx context.Context, owner domain.Extension, deviceID string) error {
+	return r.devices.Remove(ctx, owner, deviceID)
+}
+
+// newRingCoreSystem boots the throwaway journal system (every gate
+// decl registered) — hooks cannot reuse package server's newCoreSystem
+// (different package; server imports hooks, never the reverse).
+func newRingCoreSystem(t *testing.T) *system.System {
 	t.Helper()
-	engine, err := readmodels.Open(t.TempDir())
+	sys, err := cqrs.NewCoreSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = engine.Shutdown() })
-	devices := engine.PushDevices()
-	fanout := push.NewFanout(map[string]push.Sender{push.TransportNtfy: transport})
+	t.Cleanup(func() { _ = sys.Close() })
+	return sys
+}
+
+func newRingHandlers(t *testing.T, transport *fakeTransport) (*Handlers, readmodels.PushDeviceGate) {
+	t.Helper()
+	devices := cqrs.NewPushDevices(newRingCoreSystem(t))
+	fanout := push.NewFanout(map[push.Transport]push.Sender{push.TransportNtfy: transport}, fanRegistry{devices: devices})
 	handlers := New(Deps{
-		Secret:  "hook-secret",
-		Push:    fanout,
-		Devices: devices,
+		Secret: "hook-secret",
+		Push:   fanout,
 	})
 	return handlers, devices
 }
@@ -60,7 +112,7 @@ func TestHookRingFansOutToRegisteredDevices(t *testing.T) {
 	transport := &fakeTransport{enabled: true}
 	handlers, devices := newRingHandlers(t, transport)
 	owner := domain.MustParseExtension("1001")
-	if err := devices.Upsert(context.Background(), owner, "device-aaaa", push.TransportNtfy, "wp-topic"); err != nil {
+	if err := devices.Upsert(context.Background(), owner, "device-aaaa", string(push.TransportNtfy), "wp-topic"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -68,10 +120,14 @@ func TestHookRingFansOutToRegisteredDevices(t *testing.T) {
 	if rec.Code != http.StatusAccepted {
 		t.Fatalf("status %d, want 202 (body %q)", rec.Code, rec.Body.String())
 	}
-	if len(transport.rings) != 1 {
-		t.Fatalf("transport rings %d, want 1", len(transport.rings))
+	deadline := time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) && transport.count() < 1 {
+		time.Sleep(5 * time.Millisecond)
 	}
-	got := transport.rings[0]
+	if transport.count() != 1 {
+		t.Fatalf("transport rings %d, want 1", transport.count())
+	}
+	got := transport.snapshot()[0]
 	if got.Event != push.EventRing || got.From != "+15550000001" || got.CallID != "fs-1" {
 		t.Fatalf("ring = %+v", got)
 	}
@@ -81,8 +137,12 @@ func TestHookRingFansOutToRegisteredDevices(t *testing.T) {
 	if rec.Code != http.StatusAccepted {
 		t.Fatalf("end status %d", rec.Code)
 	}
-	if len(transport.rings) != 2 || transport.rings[1].Event != push.EventRingEnd {
-		t.Fatalf("rings after end = %+v", transport.rings)
+	deadline = time.Now().Add(2 * time.Second)
+	for time.Now().Before(deadline) && transport.count() < 2 {
+		time.Sleep(5 * time.Millisecond)
+	}
+	if transport.count() != 2 || transport.snapshot()[1].Event != push.EventRingEnd {
+		t.Fatalf("rings after end = %+v", transport.snapshot())
 	}
 }
 
@@ -105,8 +165,8 @@ func TestHookRingValidatesAndStaysInert(t *testing.T) {
 			t.Fatalf("%s: status %d, want %d", tc.name, rec.Code, tc.code)
 		}
 	}
-	if len(transport.rings) != 0 {
-		t.Fatalf("no ring may ship from a rejected payload, got %+v", transport.rings)
+	if transport.count() != 0 {
+		t.Fatalf("no ring may ship from a rejected payload, got %+v", transport.snapshot())
 	}
 
 	// No devices registered: inert 202, nothing shipped.
@@ -114,8 +174,8 @@ func TestHookRingValidatesAndStaysInert(t *testing.T) {
 	if rec.Code != http.StatusAccepted {
 		t.Fatalf("no-devices status %d, want 202", rec.Code)
 	}
-	if len(transport.rings) != 0 {
-		t.Fatalf("no-devices shipped %+v", transport.rings)
+	if transport.count() != 0 {
+		t.Fatalf("no-devices shipped %+v", transport.snapshot())
 	}
 }
 
@@ -125,7 +185,7 @@ func TestHookRingPrunesDeadDevices(t *testing.T) {
 	transport := &fakeTransport{enabled: true, err: push.ErrUnregistered}
 	handlers, devices := newRingHandlers(t, transport)
 	owner := domain.MustParseExtension("1001")
-	if err := devices.Upsert(context.Background(), owner, "device-aaaa", push.TransportNtfy, "wp-topic"); err != nil {
+	if err := devices.Upsert(context.Background(), owner, "device-aaaa", string(push.TransportNtfy), "wp-topic"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -133,9 +193,20 @@ func TestHookRingPrunesDeadDevices(t *testing.T) {
 	if rec.Code != http.StatusAccepted {
 		t.Fatalf("status %d, want 202", rec.Code)
 	}
-	views, err := devices.List(context.Background(), owner)
-	if err != nil {
-		t.Fatal(err)
+	// The fan is detached: the prune happens in its goroutine, so poll
+	// the store instead of asserting synchronously.
+	deadline := time.Now().Add(2 * time.Second)
+	var views []readmodels.PushDeviceView
+	var err error
+	for time.Now().Before(deadline) {
+		views, err = devices.List(context.Background(), owner)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if len(views) == 0 {
+			break
+		}
+		time.Sleep(5 * time.Millisecond)
 	}
 	if len(views) != 0 {
 		t.Fatalf("dead device not pruned: %+v", views)

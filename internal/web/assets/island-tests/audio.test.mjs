@@ -32,6 +32,11 @@ globalThis.AudioContext = class {
     this.state = "running";
     return Promise.resolve();
   }
+  setSinkId(deviceId) {
+    this.sinkCalls = this.sinkCalls || [];
+    this.sinkCalls.push(deviceId);
+    return Promise.resolve();
+  }
 };
 
 const loadAudio = (tag) => import(`../island/app/audio.js?case=${tag}`);
@@ -63,4 +68,45 @@ test("resumeAudio brings a suspended context to running, once", async () => {
   assert.equal(ctx.resumeCalls, 1);
   await audio.resumeAudio();
   assert.equal(ctx.resumeCalls, 1, "no duplicate resume once running");
+});
+
+test("setToneSink routes the tone context to the picker's device", async () => {
+  const before = contexts.length;
+  const audio = await loadAudio("sink-applied");
+  audio.setToneSink("spk-1");
+  assert.equal(
+    contexts.length,
+    before,
+    "remembering a device must not create the context (apps pay for silence)",
+  );
+  audio.ringToneStart();
+  const sinkCtx = contexts.at(-1);
+  assert.deepEqual(
+    sinkCtx.sinkCalls,
+    ["spk-1"],
+    "the remembered device applies the moment the context exists",
+  );
+  audio.setToneSink("");
+  assert.deepEqual(
+    sinkCtx.sinkCalls,
+    ["spk-1", ""],
+    "the browser default is a real pick, not a no-op",
+  );
+  audio.ringToneStop();
+});
+
+test("a browser without AudioContext.setSinkId keeps the room alarm", async () => {
+  const saved = AudioContext.prototype.setSinkId;
+  delete AudioContext.prototype.setSinkId;
+  try {
+    const audio = await loadAudio("sink-unsupported");
+    audio.setToneSink("spk-1");
+    assert.doesNotThrow(
+      () => audio.ringToneStart(),
+      "an unsupported sink must never break the ring",
+    );
+    audio.ringToneStop();
+  } finally {
+    AudioContext.prototype.setSinkId = saved;
+  }
 });

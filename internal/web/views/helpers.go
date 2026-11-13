@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/larsartmann/webphone/internal/domain"
-	"github.com/larsartmann/webphone/internal/textagent"
 )
 
 // fmtInt renders counts for templ (templ children cannot call strconv
@@ -61,19 +60,14 @@ func avatarFor(nameOrNumber string) string {
 		return "?"
 	}
 	if runes[0] == '+' || (runes[0] >= '0' && runes[0] <= '9') {
-		digits := make([]rune, 0, len(runes))
-		for _, r := range runes {
-			if r >= '0' && r <= '9' {
-				digits = append(digits, r)
-			}
-		}
+		digits := domain.DigitsOf(trimmed)
 		switch len(digits) {
 		case 0:
 			return "+"
 		case 1:
-			return string(digits)
+			return digits
 		default:
-			return string(digits[len(digits)-2:])
+			return digits[len(digits)-2:]
 		}
 	}
 	letters := make([]rune, 0, 2)
@@ -175,6 +169,17 @@ func formatFor(lang Lang, t time.Time, de, en string) string {
 	return t.Local().Format(en)
 }
 
+// monthLabel renders a month abbreviation for the UI language — the
+// same posture as the transcripts' weekdayLabel (Go's Format spells
+// English in both UI languages): the CRM due phrase ("2 Jan") would
+// name the English month on a German desk.
+func monthLabel(lang Lang, t time.Time) string {
+	if lang != LangDE {
+		return t.Format("Jan")
+	}
+	return [...]string{"Jan.", "Feb.", "Mär", "Apr", "Mai", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dez"}[int(t.Month())-1]
+}
+
 // formatClock renders a wall-clock time for bubble meta: German gets
 // the 24h convention ("16:09"), English the meridiem form
 // ("4:09PM") it has always shown.
@@ -183,10 +188,11 @@ func formatClock(lang Lang, t time.Time) string {
 }
 
 // formatStamp renders a beyond-24h timestamp for row meta: German gets
-// the numeric date convention ("22.09. 16:09"), English its
-// existing "Sep 22, 16:09".
+// the numeric date convention ("22.09. 16:09"), English its meridiem
+// form ("Sep 22, 4:09PM") — the same clock formatClock speaks, so an
+// English page never mixes 24h row meta with 12h bubble meta.
 func formatStamp(lang Lang, t time.Time) string {
-	return formatFor(lang, t, "02.01. 15:04", "Jan 2, 15:04")
+	return formatFor(lang, t, "02.01. 15:04", "Jan 2, 3:04PM")
 }
 
 // fullStamp renders the unambiguous absolute moment (date, year, time)
@@ -229,7 +235,7 @@ func draftAge(created string, now time.Time) string {
 // timestamp parses. Composing in Go keeps the templ fragment flat (the
 // conditional separator was a detector clone of the mode-runtime line)
 // and gives the shape one tested home.
-func draftMeta(draft textagent.Draft, now time.Time) string {
+func draftMeta(draft AgentDraft, now time.Time) string {
 	meta := draft.Language + " · " + fmtInt(draft.Confidence) + "%"
 	if age := draftAge(draft.CreatedAt, now); age != "" {
 		meta += " · " + age
