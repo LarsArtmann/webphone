@@ -62,6 +62,12 @@ type SummaryDraftResponse struct {
 //   - 503 when the transcript store is nil (test compositions).
 //   - 502/agent-status on agent failure; the idempotency key records
 //     only on success, so a failed attempt stays retryable.
+//
+// The producer lane audits through the Server seam (event "summarize",
+// the manual counterpart of the detached job's "auto_review"): one
+// greppable line per agent ask — refused, failed, ok — with the acting
+// session's identity. The duplicate replay audits nothing (the first
+// attempt already did; a replay never reaches the agent).
 func (h *Handlers) SummaryDraft(w http.ResponseWriter, r *http.Request) {
 	sess, ok := h.deps.Server.RequireSession(w, r)
 	if !ok {
@@ -85,6 +91,10 @@ func (h *Handlers) SummaryDraft(w http.ResponseWriter, r *http.Request) {
 	if h.deps.CallsIdem.Seen(idemKey) {
 		writeJSONBody(w, SummaryDraftResponse{Duplicate: true})
 		return
+	}
+
+	auditSummarize := func(subject, outcome string) {
+		h.deps.Server.AuditAgent("summarize", sess.LoginEmail, sess.Extension.String(), subject, outcome)
 	}
 
 	transcript, err := h.deps.Transcripts.Call(r.Context(), sess.Extension, callID)
@@ -119,6 +129,7 @@ func (h *Handlers) SummaryDraft(w http.ResponseWriter, r *http.Request) {
 				status = http.StatusBadGateway
 			}
 			http.Error(w, agentErr.Message, status)
+			auditSummarize(callID, "refused")
 			h.recordReviewArtifact(sess.Extension, callID, domain.ReviewFailed, "", "", "", 0)
 			return
 		}
@@ -127,6 +138,7 @@ func (h *Handlers) SummaryDraft(w http.ResponseWriter, r *http.Request) {
 		wrapped := errorfamily.WrapTransientf(err, "agent.summarize", "summarize call %s", callID)
 		slog.Warn("summary: agent unreachable", "error", wrapped, "extension", sess.Extension.String())
 		http.Error(w, "the AI agent is unreachable right now", http.StatusBadGateway)
+		auditSummarize(callID, "failed")
 		h.recordReviewArtifact(sess.Extension, callID, domain.ReviewFailed, "", "", "", 0)
 		return
 	}
@@ -134,6 +146,7 @@ func (h *Handlers) SummaryDraft(w http.ResponseWriter, r *http.Request) {
 	h.recordSummaryIdem(idemKey)
 	h.recordReviewArtifact(sess.Extension, callID, domain.ReviewPresent, draft.ID, draft.Text, draft.Language, draft.Confidence)
 	h.notifyDraftReady(r.Context(), sess.Extension, draft.ID, transcript.Remote) //nolint:branching-flow // contact display string: the agent's echo of the call remote, not a domain Phone
+	auditSummarize(draft.ID, "ok")
 	writeJSONBody(w, SummaryDraftResponse{ID: draft.ID, Contact: draft.Contact, Text: draft.Text})
 }
 

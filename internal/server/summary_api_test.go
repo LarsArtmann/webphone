@@ -1,8 +1,10 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json/v2"
+	"log/slog"
 	"net/http"
 	"strings"
 	"sync"
@@ -166,6 +168,58 @@ func TestSummaryDraftOutageIs502(t *testing.T) {
 	resp, _ := postSummaryDraft(t, hc, "call-dead")
 	if resp.StatusCode != http.StatusBadGateway {
 		t.Fatalf("dead agent: %d, want 502", resp.StatusCode)
+	}
+}
+
+// TestSummaryDraftAuditsTheProducerLine pins the manual summarize
+// producer's audit vocabulary (the counterpart of the detached job's
+// auto_review): one greppable "agent summarize" line per agent ask —
+// ok carries the draft id as the subject, refused names the call —
+// while the idem replay audits nothing (a replay never reaches the
+// agent, and the first attempt already audited its ok).
+func TestSummaryDraftAuditsTheProducerLine(t *testing.T) {
+	var buf bytes.Buffer
+	prev := slog.Default()
+	slog.SetDefault(slog.New(slog.NewTextHandler(&buf, nil)))
+	t.Cleanup(func() { slog.SetDefault(prev) })
+
+	stub := newStubReviewAPI(t)
+	c := clientFor(t, serverWithAgentAndASR(t, stub.server.URL))
+	c.login("1001", "pw")
+	if resp, _ := postTranscript(t, c, "call-audit", "in", "+4989123456", "words"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("seed transcript: %d", resp.StatusCode)
+	}
+
+	if resp, _ := postSummaryDraft(t, c, "call-audit"); resp.StatusCode != http.StatusOK {
+		t.Fatalf("summary draft: %d, want 200", resp.StatusCode)
+	}
+	out := buf.String()
+	if !strings.Contains(out, "agent summarize") || !strings.Contains(out, `draft=d-ond`) ||
+		!strings.Contains(out, `extension=1001`) || !strings.Contains(out, `outcome=ok`) {
+		t.Errorf("journal missing the ok producer line:\n%s", out)
+	}
+	if strings.Contains(out, "Guten Morgen") {
+		t.Errorf("the journal must never carry draft body text:\n%s", out)
+	}
+
+	buf.Reset()
+	stub.status.Store(http.StatusServiceUnavailable)
+	if resp, _ := postTranscript(t, c, "call-audit-2", "in", "+4989123456", "words"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("seed second transcript: %d", resp.StatusCode)
+	}
+	if resp, _ := postSummaryDraft(t, c, "call-audit-2"); resp.StatusCode != http.StatusServiceUnavailable {
+		t.Fatalf("agent verdict: %d, want 503 passthrough", resp.StatusCode)
+	}
+	if !strings.Contains(buf.String(), "agent summarize") || !strings.Contains(buf.String(), `outcome=refused`) {
+		t.Errorf("journal missing the refused producer line:\n%s", buf.String())
+	}
+
+	buf.Reset()
+	if resp, _ := postSummaryDraft(t, c, "call-audit"); resp.StatusCode != http.StatusOK {
+		t.Fatalf("idem replay: %d, want 200", resp.StatusCode)
+	}
+	if strings.Contains(buf.String(), "agent summarize") {
+		t.Errorf("the duplicate replay must audit nothing:\n%s", buf.String())
 	}
 }
 
