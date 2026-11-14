@@ -84,7 +84,15 @@ front matter does not carry their history (one home per fact, per the rule above
 The five-file split train closed 2026-11-12; the sixth file
 (`internal/matrix/receiver.go`, #248) was split 2026-11-13 (`sync.go`
 wire-surface carve, byte-pure motion, package + arch suites green) and
-`buildflow -s file-size-check` reads exit 0. This section holds the
+`buildflow -s file-size-check` reads exit 0 — SCOPED-ONLY truth
+(2026-11-14 correction): a FULL-tree scoped run with
+`BUILDFLOW_NO_RESULT_CACHE=1` flags 44 Go files over the 350-line
+default cap (config.go 1354, server.go 1060, i18n.go 730, … mostly the
+depth-budget NAMED-pin packages), reproduced on the pre-train tree
+b09f70c5 — the §D10 posture call (split-on-sight vs raise-cap vs
+warn-only) is what decides whether the full `buildflow` findings_gate
+can ever go green; the CLI gate (not the tool step, which exits 0 with
+findings) is the thing that fails the run. This section holds the
 report's still-open §f rows.
 
 - [x] **Raceprobe fix decision** (#249, High): ~~await-poll vs
