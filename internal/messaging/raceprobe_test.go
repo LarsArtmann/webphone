@@ -1,13 +1,19 @@
 // The concurrent first-sight probe (TODO_LIST full-code-review row): two
-// simultaneous Receive lanes for the same unseen (owner, remote) both
-// miss FindThread's projection scan and answer different fresh thread
-// ids. The probe pins what actually happens next: both appends target
-// the SAME journal stream (ThreadStreamKey is owner|network|remote), the
-// first adopter wins the thread identity, and the decider's
-// cqrs.thread_identity rejection refuses the loser — one thread, never
-// two. The loser's message is recoverable by a re-delivery (the webhook
-// lane's provider retry / the receiver loop's retry), which this probe
-// also pins: the retried append resolves the winner's thread and lands.
+// simultaneous Receive lanes for the same unseen (owner, remote) race
+// FindThread's projection scan. BOTH outcomes are legal, and the probe
+// accepts either: (a) the fold lands between the two scans — the second
+// lane RESOLVES the first lane's thread and appends to it, zero
+// refusals; (b) both lanes miss — each mints a fresh thread identity,
+// both appends target the SAME journal stream (ThreadStreamKey is
+// owner|network|remote), the first adopter wins the thread identity,
+// and the decider's cqrs.thread_identity rejection refuses the loser.
+// The invariant is interleaving-independent: ONE thread, never two,
+// and the refused message stays recoverable by a re-delivery (the
+// webhook lane's provider retry / the receiver loop's retry), which
+// this probe also pins: the retried append resolves the winner's
+// thread and lands. The original probe demanded outcome (b) exactly
+// and flapped under -shuffle and suite parallelism when the scheduler
+// produced (a).
 package messaging_test
 
 import (
@@ -112,7 +118,10 @@ func TestConcurrentFirstSightYieldsOneThread(t *testing.T) {
 		t.Fatalf("races settled without a verdict: %d winners, %d losers", len(winners), len(losers))
 	}
 
-	awaitThreadFold(t, svc, owner, 1)
+	// The settle assert counts LANDED messages (len(winners)), not
+	// racers: under outcome (a) both lanes landed, under (b) exactly
+	// one did. len(threads) == 1 is the no-split invariant either way.
+	awaitThreadFold(t, svc, owner, len(winners))
 
 	for _, err := range losers {
 		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
@@ -120,6 +129,9 @@ func TestConcurrentFirstSightYieldsOneThread(t *testing.T) {
 
 	// The loser's message is recoverable by re-delivery: the retried
 	// Receive resolves the winner's thread and both messages share it.
+	if len(winners) == 0 {
+		t.Fatalf("every racer was refused; nothing adopted the thread identity")
+	}
 	retried, err := svc.Receive(ctx, domain.InboundMessage{
 		Owner: owner, From: remote, Body: "retried re-delivery", ReceivedAt: time.Now(),
 	})
@@ -130,5 +142,5 @@ func TestConcurrentFirstSightYieldsOneThread(t *testing.T) {
 		t.Fatalf("re-delivery landed on thread %s, winner holds %s", retried.ThreadID, winners[0].ThreadID)
 	}
 
-	awaitThreadFold(t, svc, owner, 2)
+	awaitThreadFold(t, svc, owner, len(winners)+1)
 }
