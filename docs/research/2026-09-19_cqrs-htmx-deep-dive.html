@@ -882,6 +882,17 @@
             <div class="eyebrow">LIBRARY DEEP DIVE &middot; 2026-09-19</div>
             <h1>cqrs-htmx — Adoption &amp; Utilization Audit</h1>
             <p class="subtitle">
+              [SUPERSEDED 2026-11-14 &mdash; the state of record for this library is the
+              round-3 audit at v4.16.0+ (score 71/100 over 5 adopted modules):
+              docs/research/2026-10-25_cqrs-htmx-deep-dive.html; its three
+              opportunities all SHIPPED the same day (projection readiness check,
+              the identity train, ExtensionHubs.Shutdown pre-drain). The findings
+              below were executed at the v4.9.0 era (request-ID enrichment,
+              hardened CSRF builders + rotation, the idiomorph extension,
+              Server-Timing middleware, the toast alias — all landed and are now
+              baseline). Read this report for the 2026-09-19 snapshot only.]
+            </p>
+            <p class="subtitle">
               Does <code>webphone</code> use <code>github.com/larsartmann/cqrs-htmx/v4</code>
               — including its auth surface — fully and properly, and does it
               integrate the library well with the frontend parts? Verdict: the

@@ -1191,6 +1191,17 @@ retention      &rarr; blob, store
           is the rationale snapshot. No P0/P1: no structural debt is actively blocking
           or accumulating fast.
         </p>
+        <p>
+          [Resolved &mdash; verified 2026-11-14 by the docs-health sweep: all four rows
+          are closed in code. The server carve SHIPPED (internal/server/api and
+          internal/server/hooks exist; the trigger fired long ago). The fax
+          receipt-verbosity seam shipped 2026-10-14 as gateway.Resolution
+          (ResolutionImmediate/ResolutionDeferred; the type-assert is gone,
+          TestDriveBranchesOnReceiptResolution pins it). config.Load() fail-closed
+          typing shipped (identities keys through ParseExtension, shared contacts
+          through ParsePhone). The VERSIONED migration ladder in store/db.go owns
+          schema_version.]
+        </p>
 
         <h2 id="verify"><span class="num">07</span>Verification</h2>
         <div class="strengths">

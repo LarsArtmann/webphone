@@ -1172,6 +1172,7 @@ has no dialable characters
           <div class="migration-content">
             <h4>config.Load() fail-closed typing</h4>
             <p>ParseExtension over identities keys, ParsePhone over shared contacts, Rejection family errors naming the offender. New config tests boot with a bad key and a bad number and assert the messages. S&ndash;M effort; closes this review's findings #2+#3 and the architecture review's finding #3.</p>
+            <p>[Resolved &mdash; verified 2026-11-14 by the docs-health sweep: internal/config/config.go validates identities extensions (ParseExtension), identity DIDs and shared-contact numbers (ParsePhone) at load; the boot rejects the offending key. Findings #2 and #3 are closed in code.]</p>
           </div>
         </div>
         <div class="migration-step">
@@ -1179,6 +1180,7 @@ has no dialable characters
           <div class="migration-content">
             <h4>schema_version before the first ALTER</h4>
             <p>Version table + a one-statement migration runner home in store/db.go when (and only when) an altering migration is actually authored. S effort, gated on that day.</p>
+            <p>[Resolved &mdash; verified 2026-11-14 by the docs-health sweep: store/db.go grew the VERSIONED migration ladder (schema_version steps; the first altering migrations, threads-network v5 and the session login_email column, landed under it). The "no version home" state this item describes is gone.]</p>
           </div>
         </div>
 

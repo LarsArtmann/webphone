@@ -1209,6 +1209,19 @@ island JS: main → calls / panels / connection → ice, notify, audio
           </div>
         </div>
 
+        <p>
+          [Annotation 2026-11-14 (docs-health sweep): the action roadmap above is
+          CLOSED. (1) island invariant drift: calls.js no longer imports
+          connection.js — the state/auth rule holds verbatim today. (2) config +
+          gateway webhook tests: shipped (config 85%, gateway 80% direct in the
+          coverage baseline). (3) import-direction enforcement: internal/arch
+          runs in every suite. (4) cqrs-lint skip: superseded — the tool was
+          UNSKIPPED 2026-10-15 and fully triaged 2026-11-11 (186 findings → 12
+          deliberate). (5) pbx error paths: client_test.go carries them.
+          (6) vendorHash extraction: advisory, declined by the nix/ split's
+          shape. Read the roadmap as the 2026-09-18 snapshot it is.]
+        </p>
+
         <footer class="footer">
           Generated 2026-09-18 &middot; Dependency graph, coverage profiles, and
           lint findings all captured this session; companion report:
