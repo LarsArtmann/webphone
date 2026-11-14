@@ -953,6 +953,9 @@
     // gone); an empty agent_mode (seam turned off) removes it, exactly
     // like the boot path.
     var refreshAgentMode = function () {
+      // The stub environments some surfaces run in have no fetch at all;
+      // a refresh is best-effort decoration, never a thrower.
+      if (typeof fetch !== "function") return;
       fetch("/api/session", { credentials: "same-origin" })
         .then(function (res) {
           if (!res.ok) return null;

@@ -2240,3 +2240,158 @@ test("installPhoneTab is idempotent and restores the focus state on recreate", (
   assert.equal(recreated, undefined, "an existing tab blocks the install");
   shellApi.setPhonePressed(false);
 });
+
+test("the pill carries per-mode semantics in its tooltip and aria-label", () => {
+  const { actions, restore } = pillHeader();
+  try {
+    doc.dispatch("wp:session-opened", { detail: {} });
+    doc.dispatch("wp:session-opened", {
+      detail: {
+        agentMode: "drafts",
+        agentModeSource: "config",
+        agentDefaultMode: "drafts",
+        agentModes: ["off", "drafts"],
+      },
+    });
+    const pill = actions.children.find((el) => el.id === "agent-mode-pill");
+    assert.match(
+      String(pill.title),
+      /suggestions are drafted, nothing sends itself/,
+      "the tooltip decodes the mode's jargon",
+    );
+    assert.match(String(pill.title), /press D to cycle/);
+    assert.match(
+      String(pill.getAttribute("aria-label")),
+      /AI drafts mode: drafts — suggestions are drafted/,
+      "the aria-label names the mode and what it means",
+    );
+    assert.match(String(pill.getAttribute("aria-label")), /Activate to cycle/);
+
+    // An unknown future mode still renders a sane label (never undefined).
+    doc.dispatch("wp:session-opened", {
+      detail: {
+        agentMode: "wild-future-mode",
+        agentModeSource: "config",
+        agentDefaultMode: "drafts",
+        agentModes: ["wild-future-mode"],
+      },
+    });
+    assert.match(
+      String(actions.children.find((el) => el.id === "agent-mode-pill").title),
+      /draft autonomy mode/,
+    );
+  } finally {
+    restore();
+  }
+});
+
+test("wp:drafts-changed refreshes the pill from the live identity", async () => {
+  const { actions, restore } = pillHeader();
+  const realFetch = globalThis.fetch;
+  const gets = [];
+  globalThis.fetch = async (url, options = {}) => {
+    if (url === "/api/session") {
+      gets.push(options.method || "GET");
+      return {
+        ok: true,
+        status: 200,
+        json: async () => ({
+          agent_mode: "full",
+          agent_mode_source: "runtime",
+          agent_default_mode: "drafts",
+          agent_modes: ["off", "drafts", "after-hours", "full"],
+        }),
+      };
+    }
+    return { ok: false, status: 404 };
+  };
+  try {
+    doc.dispatch("wp:session-opened", { detail: {} });
+    doc.dispatch("wp:session-opened", {
+      detail: {
+        agentMode: "drafts",
+        agentModeSource: "config",
+        agentDefaultMode: "drafts",
+        agentModes: ["off", "drafts", "after-hours", "full"],
+      },
+    });
+    await settle();
+    assert.match(
+      actions.children.find((el) => el.id === "agent-mode-pill").textContent,
+      /AI drafts: drafts/,
+      "boot state before the nudge",
+    );
+
+    // Another tab pinned "full": the nudge re-reads the identity and the
+    // pill follows (pin + reset chip included).
+    doc.dispatch("wp:drafts-changed", {});
+    await settle();
+    const pill = actions.children.find((el) => el.id === "agent-mode-pill");
+    assert.match(pill.textContent, /AI drafts: full · pinned/);
+    assert.ok(gets.every((m) => m === "GET"), "the refresh is read-only");
+
+    // A failed refresh keeps the current pill (stale beats gone).
+    globalThis.fetch = async () => ({ ok: false, status: 503 });
+    doc.dispatch("wp:drafts-changed", {});
+    await settle();
+    assert.match(
+      actions.children.find((el) => el.id === "agent-mode-pill").textContent,
+      /AI drafts: full · pinned/,
+      "a failed refresh must not blank the pill",
+    );
+  } finally {
+    globalThis.fetch = realFetch;
+    restore();
+  }
+});
+
+test("D cycles the AI drafts mode; typing in a field is inert", async () => {
+  const { actions, restore } = pillHeader();
+  const posts = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, options = {}) => {
+    if (url === "/messages/drafts/mode") {
+      posts.push(options.body);
+      return { ok: true, status: 200 };
+    }
+    return { ok: false, status: 404 };
+  };
+  try {
+    doc.dispatch("wp:session-opened", { detail: {} });
+    doc.dispatch("wp:session-opened", {
+      detail: {
+        agentMode: "drafts",
+        agentModeSource: "config",
+        agentDefaultMode: "drafts",
+        agentModes: ["off", "drafts", "after-hours"],
+      },
+    });
+
+    doc.dispatch("keydown", { key: "d", preventDefault() {} });
+    await settle();
+    assert.deepEqual(posts, ["mode=after-hours"], "lowercase d cycles");
+
+    doc.dispatch("keydown", { key: "D", preventDefault() {} });
+    await settle();
+    assert.deepEqual(posts, ["mode=after-hours", "mode=off"], "shifted D cycles too");
+
+    // Typing guard: a keydown from inside a composer does nothing.
+    const typingEl = { closest: () => ({}) };
+    doc.dispatch("keydown", {
+      key: "d",
+      target: typingEl,
+      preventDefault() {},
+    });
+    await settle();
+    assert.equal(posts.length, 2, "typing target swallows the shortcut");
+
+    // No pill, no cycle: the shortcut is inert without the seam.
+    doc.dispatch("wp:session-opened", { detail: {} });
+    doc.dispatch("keydown", { key: "d", preventDefault() {} });
+    await settle();
+    assert.equal(posts.length, 2, "no pill: no ask");
+  } finally {
+    globalThis.fetch = realFetch;
+    restore();
+  }
+});
