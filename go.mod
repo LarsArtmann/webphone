@@ -49,9 +49,9 @@ require (
 	github.com/onsi/ginkgo/v2 v2.34.0
 	github.com/onsi/gomega v1.44.0
 	github.com/samber/do/v2 v2.1.0
-	github.com/sixafter/nanoid v1.66.0
-	golang.org/x/oauth2 v0.37.0
-	modernc.org/sqlite v1.61.1
+	github.com/sixafter/nanoid v1.67.0
+	golang.org/x/oauth2 v0.38.0
+	modernc.org/sqlite v1.62.0
 )
 
 require (
@@ -125,8 +125,8 @@ require (
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/samber/go-type-to-string v1.8.0 // indirect
 	github.com/segmentio/asm v1.2.1 // indirect
-	github.com/sixafter/aes-ctr-drbg v1.21.0 // indirect
-	github.com/sixafter/prng-chacha v1.18.0 // indirect
+	github.com/sixafter/aes-ctr-drbg v1.22.0 // indirect
+	github.com/sixafter/prng-chacha v1.19.0 // indirect
 	github.com/sony/gobreaker v1.0.0 // indirect
 	github.com/tinylib/msgp v1.6.5 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
@@ -144,11 +144,11 @@ require (
 	golang.org/x/mod v0.42.0 // indirect
 	golang.org/x/net v0.62.0 // indirect
 	golang.org/x/sync v0.24.0 // indirect
-	golang.org/x/sys v0.49.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
 	golang.org/x/text v0.43.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
 	golang.org/x/tools v0.52.0 // indirect
-	modernc.org/libc v1.80.0 // indirect
+	modernc.org/libc v1.80.1 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.12.1 // indirect
 )
