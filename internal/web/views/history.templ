@@ -211,6 +211,12 @@ templ TranscriptSection(props HistoryPanelProps) {
 					if dispositionConfirmed(group.Disposition) {
 						<span class="wp-disposition-chip">{ T(props.Lang, "history.disposition."+group.Disposition) }</span>
 					}
+					// Glanceable "noted" chip: renders ONLY when the slot
+					// carries prose (an empty body renders nothing — never a
+					// badge for an empty slot).
+					if group.Note != "" {
+						<span class="wp-noted-chip">{ T(props.Lang, "history.note.chip") }</span>
+					}
 					<span class="wp-muted">{ formatStamp(props.Lang, group.StartedAt) }</span>
 				</summary>
 				<p class="wp-transcript-text">{ strings.Join(group.Lines, " ") }</p>

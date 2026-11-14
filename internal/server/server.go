@@ -648,6 +648,9 @@ func New(deps Deps) http.Handler {
 	protected.Handle("GET /api/dials", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.DialSlots)))
 	protected.Handle("GET /api/calls/{id}/note", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.GetCallNote)))
 	protected.Handle("PUT /api/calls/{id}/note", h.contactsLimiter.Middleware()(httputil.MaxBodySize(api.TranscriptBodyLimit)(http.HandlerFunc(apiHandlers.SetCallNote))))
+	// The 409 remedy made real: deleting a slot outright frees the
+	// per-owner cap (the empty-body PUT keeps the slot).
+	protected.Handle("DELETE /api/calls/{id}/note", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.DeleteCallNote)))
 	// The operator's post-call disposition verdict (issue #6): the one
 	// authority that may claim "answered", persisted on the call's
 	// review slot and corrected upstream in the same awaited write.
