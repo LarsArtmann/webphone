@@ -234,6 +234,13 @@ the stack browser E2E passed on the bumped tree. What remains:
 
 ## Open questions (owner calls)
 
+- **Native Linux desktop app still wanted?** (routed 2026-11-14 from
+  docs/status/2026-10-27_16-35_typescript-plan-session-status-and-self-review.md
+  §g2 — the question sat only in that report): the 2026-10-23 demand said
+  "native Linux and Android", but the shipped P1 path delivers Android
+  only and KMP was rejected partly because the Linux WebRTC leg is weak.
+  If Linux desktop remains a requirement, the platform decision must be
+  re-run with it in front (does a browser tab count as "the Linux app"?).
 - **QMD indexing of webphone docs** (routed 2026-11-14 from owner briefing
   row 20, docs/planning/2026-09-22_13-50_owner-calls-briefing.md; the row
   was never homed and the sitting pack folds briefing rows without this
