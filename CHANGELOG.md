@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- Passkey enrollment now unwraps the WebAuthn `{publicKey}` envelope on BOTH
+  sides of the ceremony (upstream issue #120, go-cqrs-lite 2026-11-11 wave):
+  `prepareRegistrationOptions` opens `begun.Options` and asserts
+  `publicKey.challenge` is a non-empty string (the Go test walks the REAL
+  wrapped wire), the island stub carries a challenge like userauth's stub
+  instead of the flat lying shape, and the node:test suites
+  (`webauthn.test.mjs` + `enroll.test.mjs`, 13/13) pin the corrected wire.
+  Full `go test ./...` re-verified green (37 packages) alongside the row.
+
 ### Changed
 
 - `push.Fanout.Settle` awaits the detached delivery goroutines, and the
