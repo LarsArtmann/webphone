@@ -171,7 +171,10 @@ func decideSaveDisposition(s notesState, ver event.Version, cmd SaveCallDisposit
 
 func decideDeleteNote(s notesState, ver event.Version, cmd DeleteCallNote) ([]event.Event, error) {
 	if _, ok := s.Slots[cmd.CallID]; !ok {
-		return nil, errorfamily.NewRejection("cqrs.note_missing", fmt.Sprintf("note slot %s", cmd.CallID))
+		// The sentinel wrap (the cap verdict's pattern): the handler's
+		// errors.Is mapping keys on readmodels.ErrNoteMissing while the
+		// code stays greppable.
+		return nil, errorfamily.WrapRejectionf(readmodels.ErrNoteMissing, "cqrs.note_missing", "note slot %s", cmd.CallID)
 	}
 	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.CallNoteDeleted{})), cmd.StreamID(), NotesStreamType, ver.Increment(), domain.CallNoteDeleted{
 		Key: domain.CallNoteKey{Owner: cmd.Owner, CallID: cmd.CallID},

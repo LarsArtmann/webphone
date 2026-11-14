@@ -160,3 +160,83 @@ func TestCallNoteSaveNudgesHistory(t *testing.T) {
 	case <-time.After(200 * time.Millisecond):
 	}
 }
+
+// deleteCallNote is the explicit DELETE lane's wire (the 409 remedy).
+func deleteCallNote(t *testing.T, c *client, callID string) (*http.Response, []byte) {
+	t.Helper()
+	return c.do(http.MethodDelete, "/api/calls/"+callID+"/note", nil, "")
+}
+
+// TestCallNoteDeleteFreesTheSlot pins the delete contract end to end:
+// 204 removes the slot outright (a later read is empty AND a re-save is
+// a fresh save), a missing slot is the 404 (another extension's call id
+// included), and the empty-body PUT's slot is NOT gone — the two arms
+// of "clear" must stay distinguishable.
+func TestCallNoteDeleteFreesTheSlot(t *testing.T) {
+	c := newClient(t)
+	c.login("1001", "pw")
+
+	if resp, _ := putCallNote(t, c, "call-del", "to be deleted"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("seed note: %d", resp.StatusCode)
+	}
+	if resp, _ := deleteCallNote(t, c, "call-del"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("delete: %d, want 204", resp.StatusCode)
+	}
+	_, body := getCallNote(t, c, "call-del")
+	if strings.Contains(string(body), "to be deleted") {
+		t.Fatalf("the deleted note must read empty: %s", body)
+	}
+	// The slot is freed: a fresh save works and is NOT a resurrection.
+	if resp, _ := putCallNote(t, c, "call-del", "fresh"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("re-save after delete: %d", resp.StatusCode)
+	}
+	_, body = getCallNote(t, c, "call-del")
+	if !strings.Contains(string(body), "fresh") {
+		t.Fatalf("fresh save must land: %s", body)
+	}
+
+	// A missing slot (and another extension's call id) is the same 404.
+	if resp, _ := deleteCallNote(t, c, "call-never-was"); resp.StatusCode != http.StatusNotFound {
+		t.Errorf("missing-slot delete: %d, want 404", resp.StatusCode)
+	}
+	other := newClient(t)
+	other.login("2002", "pw")
+	if resp, _ := deleteCallNote(t, other, "call-del"); resp.StatusCode != http.StatusNotFound {
+		t.Errorf("another owner's delete: %d, want 404", resp.StatusCode)
+	}
+
+	// The nil-seam composition answers the honest 503.
+	dsrv := newTestServerWithPhoneAPI(t, "", func(d *Deps) { d.Notes = nil })
+	dc := clientFor(t, dsrv)
+	dc.login("1001", "pw")
+	if resp, _ := deleteCallNote(t, dc, "call-del"); resp.StatusCode != http.StatusServiceUnavailable {
+		t.Errorf("nil-seam delete: %d, want 503", resp.StatusCode)
+	}
+}
+
+// TestCallNoteDeleteNudgesHistory: the delete fires the same payload-less
+// "notes" nudge the save does (other tabs must re-fetch a removed box).
+func TestCallNoteDeleteNudgesHistory(t *testing.T) {
+	srv := newTestServer(t)
+	c := clientFor(t, srv)
+	c.login("1001", "pw")
+
+	if resp, _ := putCallNote(t, c, "call-del-nudge", "gone soon"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("seed note: %d", resp.StatusCode)
+	}
+	owner := domain.MustParseExtension("1001")
+	events := srv.hubs.get(owner).Hub().Subscribe()
+	t.Cleanup(func() { srv.hubs.get(owner).Hub().Unsubscribe(events) })
+
+	if resp, _ := deleteCallNote(t, c, "call-del-nudge"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("delete: %d", resp.StatusCode)
+	}
+	select {
+	case ev := <-events:
+		if ev.Event != "notes" {
+			t.Fatalf("nudge event = %q, want \"notes\"", ev.Event)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("no notes nudge after the delete — a second tab would keep a stale box")
+	}
+}

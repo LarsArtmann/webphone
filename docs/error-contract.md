@@ -277,6 +277,7 @@ a deliberate code change, regenerate:
 | admin.identities                             | Rejection                 | internal/admin/admin.go           |
 | admin.password_file.missing                  | Rejection                 | internal/admin/admin.go           |
 | agent.summarize                              | Transient                 | internal/server/api/review_api.go |
+| api.note_delete                              | Infrastructure            | internal/server/api/note_api.go   |
 | api.note_save                                | Infrastructure            | internal/server/api/note_api.go   |
 | asr.decode                                   | Transient                 | internal/asr/google.go            |
 | asr.empty                                    | Rejection                 | internal/asr/client.go            |
@@ -410,10 +411,13 @@ a deliberate code change, regenerate:
 | cqrs.message_by_ref                          | Infrastructure            | internal/cqrs/threadsstore.go     |
 | cqrs.message_count                           | Infrastructure            | internal/cqrs/threadsreads.go     |
 | cqrs.message_lookup                          | Infrastructure            | internal/cqrs/threadsreads.go     |
+| cqrs.note_count                              | Infrastructure            | internal/cqrs/callnotes.go        |
+| cqrs.note_delete                             | Infrastructure            | internal/cqrs/callnotes.go        |
 | cqrs.note_dispatch                           | Infrastructure            | internal/cqrs/callnotes.go        |
 | cqrs.note_fold                               | Corruption                | internal/cqrs/callnotes.go        |
 | cqrs.note_get                                | Infrastructure            | internal/cqrs/callnotes.go        |
 | cqrs.note_list_full                          | Conflict                  | internal/cqrs/callnotes.go        |
+| cqrs.note_missing                            | Rejection                 | internal/cqrs/callnotes.go        |
 | cqrs.note_register                           | Infrastructure            | internal/cqrs/callnotes.go        |
 | cqrs.note_save                               | Infrastructure            | internal/cqrs/callnotes.go        |
 | cqrs.open                                    | Infrastructure            | internal/app/cqrs.go              |
