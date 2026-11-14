@@ -235,3 +235,86 @@ func TestNoteVerdictFirstAndClearedBody(t *testing.T) {
 		time.Sleep(5 * time.Millisecond)
 	}
 }
+
+// awaitNoteGone waits until the slot reads nil (the delete's fold beat).
+func awaitNoteGone(t *testing.T, s *Notes, owner domain.Extension, callID string) {
+	t.Helper()
+	deadline := time.Now().Add(5 * time.Second)
+	for {
+		view, err := s.Get(context.Background(), owner, callID)
+		if err != nil {
+			t.Fatalf("Get: %v", err)
+		}
+		if view == nil {
+			return
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("note for %s never left", callID)
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+}
+
+// TestNoteDeleteFreesTheCapSlot pins the explicit DELETE lane: the slot
+// leaves the store AND the per-owner cap (the empty-body clear keeps
+// the slot — this one frees it); a missing slot is the ErrNoteMissing
+// Rejection the handler maps to 404; Count tracks the open slots.
+func TestNoteDeleteFreesTheCapSlot(t *testing.T) {
+	s := bootNotes(t, t.TempDir())
+	ctx := context.Background()
+	owner := mustExt(t, "1001")
+
+	if err := s.Set(ctx, owner, "call-a", "keep me or delete me"); err != nil {
+		t.Fatalf("Set: %v", err)
+	}
+	awaitNote(t, s, owner, "call-a")
+	if n, err := s.Count(ctx, owner); err != nil || n != 1 {
+		t.Fatalf("Count after one save: %d %v", n, err)
+	}
+
+	// Missing slot: the Rejection verdict (404 at the handler).
+	if err := s.Delete(ctx, owner, "call-never-was"); !errors.Is(err, readmodels.ErrNoteMissing) {
+		t.Fatalf("delete of a missing slot: %v, want ErrNoteMissing", err)
+	}
+
+	if err := s.Delete(ctx, owner, "call-a"); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+	awaitNoteGone(t, s, owner, "call-a")
+	if n, err := s.Count(ctx, owner); err != nil || n != 0 {
+		t.Fatalf("Count after delete: %d %v", n, err)
+	}
+
+	// The freed slot is RECLAIMABLE: a new note for the same call is a
+	// fresh save, not a resurrection.
+	if err := s.Set(ctx, owner, "call-a", "fresh prose"); err != nil {
+		t.Fatalf("reclaim: %v", err)
+	}
+	awaitNote(t, s, owner, "call-a")
+}
+
+// TestNoteDeleteFreesCapPressure pins the cap interplay end to end:
+// with the owner one slot from the cap, the delete of another slot
+// makes room where the save alone would answer the 409 Conflict.
+func TestNoteDeleteFreesCapPressure(t *testing.T) {
+	s := bootNotes(t, t.TempDir())
+	ctx := context.Background()
+	owner := mustExt(t, "1001")
+
+	for i := range readmodels.NotesMaxPerExtension {
+		if err := s.Set(ctx, owner, fmt.Sprintf("call-%03d", i), "filler"); err != nil {
+			t.Fatalf("fill %d: %v", i, err)
+		}
+	}
+	if err := s.Set(ctx, owner, "call-new", "one past the cap"); !errors.Is(err, readmodels.ErrNoteListFull) {
+		t.Fatalf("cap: %v, want ErrNoteListFull", err)
+	}
+	if err := s.Delete(ctx, owner, "call-000"); err != nil {
+		t.Fatalf("free a slot: %v", err)
+	}
+	awaitNoteGone(t, s, owner, "call-000")
+	if err := s.Set(ctx, owner, "call-new", "one past the cap"); err != nil {
+		t.Fatalf("the freed slot must admit the new note: %v", err)
+	}
+	awaitNote(t, s, owner, "call-new")
+}
