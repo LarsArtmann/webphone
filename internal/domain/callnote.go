@@ -35,3 +35,12 @@ type CallNoteSaved struct {
 	Disposition Disposition
 	UpdatedAt   time.Time
 }
+
+// CallNoteDeleted is the read-model fact removing one call's note slot
+// (the explicit DELETE lane — the empty-body clear keeps the slot, the
+// delete frees the per-owner cap). The json tag pins the journal's
+// wire key to today's Go field name, byte-neutral now and rename-safe
+// later (the SnippetDeleted precedent).
+type CallNoteDeleted struct {
+	Key CallNoteKey `json:"Key"`
+}

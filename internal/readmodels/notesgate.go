@@ -32,9 +32,16 @@ const NotesMaxPerExtension = 2000
 // is the honest family.
 var ErrNoteListFull = errors.New("call note list full")
 
+// ErrNoteMissing is returned when a DELETE names a slot the owner does
+// not hold. Classified Rejection (the snippet-delete precedent): the
+// ask cannot be accepted because its subject does not exist — the HTTP
+// surface maps it to the 404.
+var ErrNoteMissing = errors.New("call note not found")
+
 func init() {
 	errorfamily.RegisterClassifications(map[error]errorfamily.Family{
 		ErrNoteListFull: errorfamily.Conflict,
+		ErrNoteMissing:  errorfamily.Rejection,
 	})
 }
 
@@ -54,10 +61,20 @@ type CallNoteView struct {
 }
 
 // NotesGate is the post-call-note seam as the server surfaces see it
-// (slot read, note upsert, disposition upsert). The journal-backed
-// service (internal/cqrs) is the implementation.
+// (slot read, note upsert, disposition upsert, slot delete, slot
+// count). The journal-backed service (internal/cqrs) is the
+// implementation.
 type NotesGate interface {
 	Get(ctx context.Context, owner domain.Extension, callID string) (*CallNoteView, error)
 	Set(ctx context.Context, owner domain.Extension, callID, body string) error
 	SetDisposition(ctx context.Context, owner domain.Extension, callID string, disposition domain.Disposition) error
+	// Delete removes one call's note slot outright (the explicit
+	// DELETE lane — the empty-body clear keeps the slot, the delete
+	// frees the per-owner cap). A missing slot is the ErrNoteMissing
+	// Rejection (the handler's 404 mapping; the snippet-delete
+	// precedent); owner scoping rides the store key.
+	Delete(ctx context.Context, owner domain.Extension, callID string) error
+	// Count answers how many note slots the owner holds (the Settings
+	// cap-visibility row). Infrastructure failure wraps and returns.
+	Count(ctx context.Context, owner domain.Extension) (int, error)
 }

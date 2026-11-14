@@ -63,6 +63,16 @@ type SaveCallDisposition struct {
 	At          time.Time // stamped at the service seam; the decision stays deterministic
 }
 
+// DeleteCallNote removes one call's note slot outright (the explicit
+// DELETE lane — the empty-body clear keeps the slot, the delete frees
+// the per-owner cap). A missing slot answers the ErrNoteMissing
+// Rejection (the snippet-delete precedent; the handler maps it 404).
+type DeleteCallNote struct {
+	*command.BasicCommand
+	Owner  string
+	CallID string
+}
+
 // noteSlot is one call's note-slot state.
 type noteSlot struct {
 	Body        string
@@ -82,6 +92,7 @@ func (notesState) initial() notesState { return notesState{Slots: map[string]not
 // type on the stream fails replay loudly instead of silently skipping).
 var notesStreamEventTypes = []event.Type{
 	event.Type(metaengine.EventTypeName(domain.CallNoteSaved{})),
+	event.Type(metaengine.EventTypeName(domain.CallNoteDeleted{})),
 }
 
 func applyNotesState(s notesState, evt event.Event) (notesState, error) {
@@ -96,6 +107,12 @@ func applyNotesState(s notesState, evt event.Event) (notesState, error) {
 			Disposition: fact.Disposition,
 			UpdatedAt:   fact.UpdatedAt.Unix(),
 		}
+	case event.Type(metaengine.EventTypeName(domain.CallNoteDeleted{})):
+		fact, err := event.DecodePayloadAuto[domain.CallNoteDeleted](evt)
+		if err != nil {
+			return s, errorfamily.WrapCorruptionf(err, "cqrs.note_fold", "decode CallNoteDeleted")
+		}
+		delete(s.Slots, fact.Key.CallID)
 	}
 	return s, nil
 }
@@ -152,6 +169,19 @@ func decideSaveDisposition(s notesState, ver event.Version, cmd SaveCallDisposit
 	return []event.Event{evt}, nil
 }
 
+func decideDeleteNote(s notesState, ver event.Version, cmd DeleteCallNote) ([]event.Event, error) {
+	if _, ok := s.Slots[cmd.CallID]; !ok {
+		return nil, errorfamily.NewRejection("cqrs.note_missing", fmt.Sprintf("note slot %s", cmd.CallID))
+	}
+	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.CallNoteDeleted{})), cmd.StreamID(), NotesStreamType, ver.Increment(), domain.CallNoteDeleted{
+		Key: domain.CallNoteKey{Owner: cmd.Owner, CallID: cmd.CallID},
+	}, event.WithSchemaVersion(1))
+	if err != nil {
+		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.note_delete", "build CallNoteDeleted")
+	}
+	return []event.Event{evt}, nil
+}
+
 // RegisterNotes wires the call-notes aggregate into a System.
 func RegisterNotes(sys *system.System) error {
 	if err := system.RegisterDecider[notesState](sys, NotesStreamType, decider.Decider[notesState]{
@@ -178,6 +208,15 @@ func RegisterNotes(sys *system.System) error {
 		}); err != nil {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.note_register", "register note.disposition_save")
 	}
+	if err := system.RegisterCommand[*DeleteCallNote, notesState](sys, "note.delete",
+		func(_ context.Context, cmd *DeleteCallNote) system.Op[notesState] {
+			return system.Execute[notesState](context.Background(), cmd.StreamID(), NotesStreamType,
+				func(state notesState, ver event.Version) ([]event.Event, error) {
+					return decideDeleteNote(state, ver, *cmd)
+				})
+		}); err != nil {
+		return errorfamily.WrapInfrastructuref(err, "cqrs.note_register", "register note.delete")
+	}
 	return nil
 }
 
@@ -203,6 +242,7 @@ func notesProjection() metaengine.QueryDecl[notesKeyInput, readmodels.CallNoteVi
 					UpdatedAt:   e.UpdatedAt.Unix(),
 				}
 			}),
+		metaengine.OnRecord(domain.CallNoteDeleted{}, metaengine.Remove[readmodels.CallNoteView]()),
 		metaengine.FilterOnField[readmodels.CallNoteView]("owner", metaengine.FilterEq),
 		metaengine.SortOnField[readmodels.CallNoteView]("updated_at", false),
 		metaengine.Volume(humanScaleVolume),
@@ -309,4 +349,36 @@ func (s *Notes) SetDisposition(ctx context.Context, owner domain.Extension, call
 	}
 	awaitOwnWrite(ctx, s.sys, NotesStreamType, owner.String(), notesCollection, s.vers)
 	return nil
+}
+
+// Delete removes one call's note slot outright: the per-owner cap
+// counts open slots, so freeing one is the 409 remedy made real. A
+// missing slot answers the ErrNoteMissing Rejection (the handler's
+// 404). The D7 await keeps the read-your-writes beat for the follow-up
+// read.
+func (s *Notes) Delete(ctx context.Context, owner domain.Extension, callID string) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if err := dispatchOwnerCommand(ctx, s.sys, "note.delete", owner.String(),
+		func(base *command.BasicCommand) *DeleteCallNote {
+			return &DeleteCallNote{BasicCommand: base, Owner: owner.String(), CallID: callID}
+		}); err != nil {
+		return noteDispatchError(err, "note.delete")
+	}
+	awaitOwnWrite(ctx, s.sys, NotesStreamType, owner.String(), notesCollection, s.vers)
+	return nil
+}
+
+// Count answers how many note slots the owner holds (the Settings
+// cap-visibility row reads it).
+func (s *Notes) Count(ctx context.Context, owner domain.Extension) (int, error) {
+	views, err := s.reader.Scan(ctx,
+		metaengine.WithFilter("owner", metaengine.FilterEq, owner.String()),
+		metaengine.WithLimit(notesMaxPerOwner+1),
+	)
+	if err != nil {
+		return 0, errorfamily.WrapInfrastructuref(err, "cqrs.note_count", "list note slots for %s", owner.String())
+	}
+	return len(views), nil
 }

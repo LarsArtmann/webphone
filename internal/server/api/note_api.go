@@ -10,7 +10,6 @@ import (
 	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/readmodels"
 )
-
 // noteBodyMax bounds one call note: the transcript segment's own text
 // budget — a post-call note is a paragraph, not a document.
 const noteBodyMax = 4000
@@ -116,6 +115,39 @@ func (h *Handlers) SetCallNote(w http.ResponseWriter, r *http.Request) {
 	// The save succeeded: nudge every surface the owner has open. The nudge is
 	// payload-less (no note text on the wire) and fires only on success, so a
 	// conflict or a store failure leaves other tabs alone.
+	h.deps.Server.NotifyCallNotesChanged(sess.Extension)
+	w.WriteHeader(http.StatusNoContent)
+}
+
+// DeleteCallNote removes one call's note slot outright (the 409 remedy
+// made real: the cap counts open slots, and freeing one is the way out
+// it names). 204 on the deleted slot, 404 when the owner holds no such
+// slot (another extension's call id is the same 404 — owner scoping at
+// the store key), same store-failure vocabulary as the PUT.
+func (h *Handlers) DeleteCallNote(w http.ResponseWriter, r *http.Request) {
+	sess, ok := h.deps.Server.RequireSession(w, r)
+	if !ok {
+		return
+	}
+	if h.deps.Notes == nil {
+		http.Error(w, "note storage is unavailable", http.StatusServiceUnavailable)
+		return
+	}
+	callID := r.PathValue("id")
+	if !validNoteCallID(callID) {
+		http.Error(w, "invalid call id", http.StatusBadRequest)
+		return
+	}
+	if err := h.deps.Notes.Delete(r.Context(), sess.Extension, callID); err != nil {
+		if errors.Is(err, readmodels.ErrNoteMissing) {
+			http.Error(w, "no note for that call", http.StatusNotFound)
+			return
+		}
+		wrapped := errorfamily.WrapInfrastructuref(err, "api.note_delete", "delete call note")
+		slog.Warn("note delete failed", "error", wrapped, "extension", sess.Extension.String())
+		http.Error(w, "could not delete the note", http.StatusInternalServerError)
+		return
+	}
 	h.deps.Server.NotifyCallNotesChanged(sess.Extension)
 	w.WriteHeader(http.StatusNoContent)
 }
