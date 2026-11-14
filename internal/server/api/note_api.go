@@ -10,6 +10,7 @@ import (
 	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/webphone/internal/readmodels"
 )
+
 // noteBodyMax bounds one call note: the transcript segment's own text
 // budget — a post-call note is a paragraph, not a document.
 const noteBodyMax = 4000

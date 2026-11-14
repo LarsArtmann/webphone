@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `DELETE /api/calls/{id}/note` — the note slot's explicit delete, the
+  409 remedy made real: the per-owner cap counts open slots, and
+  freeing one is the way out the conflict message names. An
+  event-sourced tombstone (`CallNoteDeleted`) removes the slot from
+  the projection and the decision state; the Settings panel gains a
+  "Noted calls N / 2000" row (fail-open), and History transcript rows
+  show a glanceable "Noted" chip when a slot carries prose.
+
 ### Fixed
 
 - The ended call card's "Summarize → draft SMS" button no longer renders

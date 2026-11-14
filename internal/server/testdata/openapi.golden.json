@@ -272,6 +272,64 @@
             "cookieAuth": []
           }
         ]
+      },
+      "delete": {
+        "tags": [
+          "webphone machine API"
+        ],
+        "summary": "Delete Call Note",
+        "description": "Delete one call's note slot outright, scoped to the session's extension — the 409 remedy made real (the per-owner cap counts open slots; freeing one is the way out it names). An empty-body PUT keeps the slot; this frees it.",
+        "operationId": "deleteCallsNotedelete",
+        "deprecated": false,
+        "responses": {
+          "204": {
+            "description": "No response body. Slot deleted.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/query.calls.noteDelete.response.204"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Malformed call id."
+          },
+          "401": {
+            "description": "No live session."
+          },
+          "403": {
+            "description": "CSRF token missing or invalid."
+          },
+          "404": {
+            "description": "Unknown call id (or another extension's note)."
+          },
+          "429": {
+            "description": "Per-client write flood budget exhausted (shares the contacts budget); the answer carries a Retry-After header naming the seconds until the bucket refills.",
+            "headers": {
+              "Retry-After": {
+                "description": "Seconds until the flood bucket refills (see the response description).",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Note store failure."
+          },
+          "503": {
+            "description": "Note storage unavailable (test compositions)."
+          }
+        },
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "The call's island Call-ID (the transcript's key).",
+            "required": true
+          }
+        ]
       }
     },
     "/api/calls/{id}/review": {
@@ -1946,6 +2004,12 @@
         "required": [
           "slots"
         ],
+        "type": "object"
+      },
+      "query.calls.noteDelete": {
+        "type": "object"
+      },
+      "query.calls.noteDelete.response.204": {
         "type": "object"
       },
       "query.calls.noteGet": {
