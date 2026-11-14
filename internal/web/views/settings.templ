@@ -68,6 +68,14 @@ type SettingsPanelProps struct {
 	PushDevices []PushDeviceRow
 	ICEServers     int
 	SharedContacts int
+	// NotedCalls is the owner's open note-slot count and NotedCallsCap
+	// the per-extension bound (readmodels.NotesMaxPerExtension, passed
+	// so the view stays gate-free): the Settings cap-visibility row
+	// answers "how much hand-written content is mine, and how close is
+	// the cap" — the 409 remedy's delete advice is actionable only when
+	// the owner can see the pressure.
+	NotedCalls    int
+	NotedCallsCap int
 	// Snippets are the owner's reply snippets (M21), oldest first.
 	Snippets []domain.Snippet
 	// AgentAuditRows feeds AgentAuditSection (D5): the owner's newest
@@ -288,6 +296,7 @@ func settingsFaxKey(cap FaxCapability) string {
 func myDataItems(props SettingsPanelProps) []display.DefinitionItem {
 	return []display.DefinitionItem{
 		{Term: T(props.Lang, "settings.export"), DetailComponent: exportLink(T(props.Lang, "settings.exportLink"))},
+		{Term: T(props.Lang, "settings.notedCalls"), Detail: fmtInt(props.NotedCalls) + " / " + fmtInt(props.NotedCallsCap)},
 	}
 }
 
