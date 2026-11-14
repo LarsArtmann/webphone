@@ -41,4 +41,20 @@ Not yet observed red in CI (the go-tests workflow runs without
 `-count`), but any `-count>1`, `-race`, or full-buildflow test step can
 red on it spuriously.
 
+## Resolution
+
+Both shapes are closed (2026-11-13 await-poll for the unread-3 shape;
+2026-11-14 fe7f5a0b for the third shape this tracker predates): the
+probe's remaining premise — that BOTH racers miss the FindThread scan —
+was itself an unguaranteed interleaving. Under `-shuffle` go runs
+(buildflow's test-coverage/test-race steps shuffle), the projection fold
+can land between the two scans; the second racer then RESOLVES the
+first racer's thread, appends to it, and there is no loser at all — the
+probe red ("unread 2" at the first await) on a correct system. The
+probe now asserts the interleaving-independent invariant (one thread
+carrying exactly `len(winners)` messages; refusal family pinned only
+when a loser exists; re-delivery recovery derived from `len(winners)`).
+Evidence: 12× `-race -shuffle` green, shuffled full-suite green, TODO_LIST
+full-code-review row.
+
 💘 Generated with Crush
