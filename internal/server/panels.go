@@ -592,6 +592,16 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 			crmState = settingsCRMAuthFailed
 		}
 	}
+	// The Settings cap-visibility row (notes micro-cluster): the
+	// owner's open note-slot count against the per-extension bound.
+	// Fail-open like every Settings decoration — a store failure renders
+	// 0, never blocks the panel.
+	notedCalls := 0
+	if h.deps.Notes != nil {
+		if n, err := h.deps.Notes.Count(r.Context(), sess.Extension); err == nil {
+			notedCalls = n
+		}
+	}
 	return views.SettingsPanel(views.SettingsPanelProps{
 		SIPDomain:      h.deps.Config.SIPDomain,
 		WebsocketURL:   websocketURL,
@@ -612,6 +622,8 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 		PushDevices:    pushDevices,
 		ICEServers:     len(h.deps.Config.ICEServers),
 		SharedContacts: len(h.deps.Shared),
+		NotedCalls:     notedCalls,
+		NotedCallsCap:  readmodels.NotesMaxPerExtension,
 		Snippets:       snippets,
 		AgentAuditRows: h.agentAuditRows(r, sess),
 		Passkeys:       h.authHub.PasskeySectionProps(sess),
