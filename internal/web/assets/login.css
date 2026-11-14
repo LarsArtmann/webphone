@@ -3208,6 +3208,16 @@ a:focus-visible {
   font-size: var(--text-xs);
   white-space: nowrap;
 }
+.wp-noted-chip {
+  flex: none;
+  align-self: center;
+  padding: 0.1em 0.55em;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
 .wp-crm-link {
   color: inherit;
   text-decoration: none;

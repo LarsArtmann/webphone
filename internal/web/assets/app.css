@@ -1738,6 +1738,20 @@ a:focus-visible {
   white-space: nowrap;
 }
 
+/* Glanceable "noted" chip (notes micro-cluster): the row carries
+ * hand-written prose. Same muted metadata posture as the disposition
+ * chip; an empty note slot renders NO chip. */
+.wp-noted-chip {
+  flex: none;
+  align-self: center;
+  padding: 0.1em 0.55em;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--muted);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
 /* Optional CRM integration (P4/P5): a resolved caller's name becomes a link
  * into the CRM's own contact page, and the open conversation gains a context
  * line (company, deals in flight, the follow-up that is due, the last touch).
