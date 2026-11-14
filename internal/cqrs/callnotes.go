@@ -306,12 +306,12 @@ const (
 	NoteDispatchCode = "cqrs.note_dispatch"
 )
 
-// noteDispatchError keeps the decision's coded cap verdict (the 409
-// Conflict contract passes through verbatim) and codes every other
-// dispatch failure as the seam's Infrastructure wrap — both write
-// doors share it.
+// noteDispatchError keeps the decision's coded verdicts verbatim (the
+// 409 Conflict cap contract AND the missing-slot Rejection the delete
+// door's 404 mapping keys on) and codes every other dispatch failure
+// as the seam's Infrastructure wrap — all three doors share it.
 func noteDispatchError(err error, op string) error {
-	if errors.Is(err, readmodels.ErrNoteListFull) {
+	if errors.Is(err, readmodels.ErrNoteListFull) || errors.Is(err, readmodels.ErrNoteMissing) {
 		return err
 	}
 	return errorfamily.WrapInfrastructuref(err, NoteDispatchCode, "dispatch %s", op)
