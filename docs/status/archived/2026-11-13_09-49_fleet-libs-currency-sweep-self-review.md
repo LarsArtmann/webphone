@@ -1,3 +1,6 @@
+> ARCHIVED 2026-11-14 (docs-health v12 sweep): §f table is ledger-exempt and gates green (check-rows --strict + bare-rows at archive time); archived to bring the unarchived count back under the cadence ratchet (66 → 65, threshold 65)
+> Live remainder: nothing exclusive — §f row 1 (dashboard v0.13.3 + unsafe-eval drop) landed 2026-11-13 per the AGENTS currency block; rows 2–10 stay harvest inventory in the ledger table below; §c's "headroom spent" warning is the reason this archive exists.
+
 # Fleet-libs currency sweep (2026-11-13) — self-review: what I forgot, what nearly went wrong
 
 _Snapshot: claims verified as of 09:49 CET, 2026-11-13. Push/CI statements rot fastest; the shas and run ids are inline. Scope: the paste's 24-family utilization-audit refresh (docs/review/libs/) plus the gates it tripped. No code paths touched — docs, index, one archive, one push._
