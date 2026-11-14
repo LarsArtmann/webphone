@@ -100,7 +100,9 @@ and retention or not at all).
 - Summarize UX polish (routed 2026-11-14 from the 2026-10-27 multicall
   report §f17/§f40): deep-link the settled "Draft in Messages" state
   into the drafts panel (today toast + nav nudge only); cap stacked
-  ended cards on a busy day (oldest auto-dismiss past N).
+  ended cards on a busy day (oldest auto-dismiss past N);
+  `duplicate:true` summarize answers could carry the original draft id
+  (same report §f44 — the island could link it; the wire drops it today).
 - Session persistence: RESOLVED — SQLite-backed store shipped (2.5.0:
   sessions survive restarts) plus sliding TTL (7d idle / 30d absolute);
   the spike verdict lives at
