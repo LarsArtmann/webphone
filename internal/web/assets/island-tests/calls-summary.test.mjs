@@ -9,7 +9,14 @@ import assert from "node:assert/strict";
 import { installBrowserGlobals } from "./helpers.mjs";
 
 const doc = installBrowserGlobals();
-globalThis.window.PBX_CONFIG = { agent: true, sipDomain: "sip.test" };
+// agent AND asr both on: the summarize arm needs both seams (the
+// transcript seam produces what the agent summarizes; agent-only boots
+// render no button — calls-summary-noasr.test.mjs pins that).
+globalThis.window.PBX_CONFIG = {
+  agent: true,
+  asr: true,
+  sipDomain: "sip.test",
+};
 
 globalThis.SIP = {
   SessionState: {

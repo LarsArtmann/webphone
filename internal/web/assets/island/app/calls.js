@@ -258,8 +258,10 @@ export function settleEndedCall(id) {
   // the review job server-side (202, detached, idempotent with the
   // manual button) — the operator stops clicking for the standard path.
   // The button is the status surface: queued while the job runs,
-  // back to the manual affordance on failure.
-  if (agentEnabled && entry.established) {
+  // back to the manual affordance on failure. ASR gates this too: with
+  // the transcript seam off no transcript can exist, so the ask would
+  // only ever 404 (the summarize micro-cluster's hiding rule).
+  if (agentEnabled && asrEnabled && entry.established) {
     const card = entry.dom;
     const summarizeBtn = /** @type {HTMLButtonElement | null} */ (
       card ? card.querySelector(".summarize-btn") : null
@@ -305,7 +307,9 @@ function morphToEndedCard(id, entry) {
       if (crmEnabled) {
         controls.append(dispositionRow(id, entry));
       }
-      if (agentEnabled && entry.established) {
+      // ASR gates the summarize row with the agent seam (see
+      // settleEndedCall): no transcript seam, no transcript, no ask.
+      if (agentEnabled && asrEnabled && entry.established) {
         controls.append(summarizeButton(id));
       }
       const close = document.createElement("button");
