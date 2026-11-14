@@ -52,6 +52,12 @@ state and is superseded for Option B; Option A (stack-side fleet
 federation) REMAINS an open owner call (ROADMAP § Health-surface long
 shots).
 
+[UPDATE 2026-11-14 (docs-health sweep): the eval token is GONE —
+dashboard v0.13.3's data-nonce root (upstream issue #23) let the
+`/health` lane drop `unsafe-eval` entirely on 2026-11-13; the nonce
+lane carries no eval today, so even the scoped relaxation above is
+superseded. Option A remains the open owner call.]
+
 ~~**What would have to change to adopt it:** either (a) the owner relaxes the
 CSP stance explicitly (accept `unsafe-eval` on a dedicated path — CSP is
 response-header based, not per-path, so this means weakening the whole

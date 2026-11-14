@@ -142,6 +142,10 @@ runbook § "Webphone error contract" side.
 One sitting, briefing ready at
 `docs/planning/2026-09-22_13-50_owner-calls-briefing.md` (~15 original
 
+[Pointer 2026-11-14: the briefing is superseded — answer in the sitting
+pack `docs/planning/2026-11-07_21-30_owner-sitting-pack.md` (58 rulings,
+the briefing folded into its §F).]
+
 - 3 CRM + the newer g1/g2/g3/art-dupl/webhook/idem additions).
   Decisions land back into TODO_LIST.
 

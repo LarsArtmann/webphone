@@ -70,3 +70,10 @@ still sound, the v2.8.0 permission hardening improved the at-rest position,
 and the only open item (existing prod files keeping pre-hardening modes) is
 already an owner-calls row (briefing row 28), not a code debt. Next re-review:
 on the next session-storage change, or 2026-12-30 whichever comes first.
+
+> **Trigger note 2026-11-14 (docs-health sweep):** the re-review is OWED —
+> a session-storage change landed after this review's snapshot (2026-10-28:
+> the `login_email` column via the guarded idempotent ALTER, plus the
+> identity-layer session rows minting through the same store). The re-review
+> row lives in TODO_LIST (2026-11-14 September-corpus sweep residue);
+> 2026-12-30 remains the fallback date.

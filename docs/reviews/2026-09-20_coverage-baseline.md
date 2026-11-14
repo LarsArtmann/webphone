@@ -156,3 +156,25 @@ asserted over HTTP responses). Decision (2026-09-20): accept transitive
 coverage; revisit only if a view grows real logic (loops with
 computation, conditionals that encode business rules) — and then
 extract that logic into helpers WITH tests, not render snapshots.
+
+## 2026-11-14 re-run — HEAD `65f8b9be` (docs-health sweep; the file's own per-release rule owed three entries: v2.12.0, v2.13.0, v2.14.0)
+
+Same command (`nix develop -c go test -count=1 -cover ./...`), same host; island JS separately → **340 specs, 340 pass, 0 fail** (was 289 on 2026-11-06). The sweep also re-derived the deltas the ladder closeout produced.
+
+Movers worth reading (everything else is ±2 pp noise):
+
+| Package                    | 2026-11-14 | 2026-11-06/07 | Why it moved                                                                                                                                     |
+| -------------------------- | ---------- | ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `internal/readmodels`      | 11.1%      | 73.2%         | The ladder closeout DELETED the engine — the package is gates+views only now; its old tests died with the engine they tested                     |
+| `internal/cqrs`            | 78.9%      | (new row)     | The ONE engine-driver home inherited the projections the retirement moved                                                                        |
+| `internal/messaging`       | 54.6%      | 37.9%         | The orphan-rollback train's `rollbackSaved` tests + sender-registry pins                                                                         |
+| `internal/app`             | 65.8%      | 56.5%         | Composition-root wiring tests grew with the platform carves                                                                                      |
+| `internal/store`           | 71.4%      | 82.4%         | The 2026-11-07 figure rode `legacy_import_test.go`; the ladder closeout deleted the boot importers that test exercised (the reads moved to cqrs) |
+| `internal/server`          | 83.2%      | 81.9%         | Denominator grew again (platform/reports surfaces), coverage held                                                                                |
+| `internal/httpclient`      | 100.0%     | (new row)     | New leaf package                                                                                                                                 |
+| `internal/server/platform` | 27.5%      | (new row)     | Thin platform surface; behavior asserted one level up (the `server/api` precedent)                                                               |
+| `internal/retention`       | 82.7%      | 80.0%         | Tombstone/trim gates                                                                                                                             |
+| `internal/domain`          | 78.4%      | 81.9%         | Denominator growth (network/address + DigitsOf), tests held                                                                                      |
+| `internal/server/hooks`    | 52.8%      | 53.8%         | Ring/draft fan-out grew, suites kept pace roughly                                                                                                |
+
+**Honest reading (2026-11-14):** the two big movers are STRUCTURAL, not regressions — `readmodels` collapsed because the engine (and its tests) moved to `cqrs` (78.9% on a much larger body), and `store` gave back the legacy-import points those importers' deletion retired. The 2026-09-20 rule stands: percentages measure STATEMENTS, not error paths; `server/api` 7.2% and `server/platform` 27.5% stay fine because their bytes are contract-pinned one level up.

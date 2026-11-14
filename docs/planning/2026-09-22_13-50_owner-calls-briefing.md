@@ -1,5 +1,13 @@
 # Owner-Calls Briefing — the Sitting Decisions (SUPERB T11)
 
+> **SUPERSEDED 2026-11-08 — the ONE answer surface is the sitting pack:**
+> [docs/planning/2026-11-07_21-30_owner-sitting-pack.md](2026-11-07_21-30_owner-sitting-pack.md)
+> (58 rulings + the §F bulk table folding this briefing's 38 rows). Answer
+> THERE. This file is kept for evidence only; many rows were since decided by
+> standing rulings recorded in AGENTS.md/TODO_LIST (the `-t 1` ratification,
+> the 60-minute manual-push bar, v2.8.0's cut, the single-go.mod NOT-DO, the
+> CI-verdict bar) — re-asking them here would re-litigate settled calls.
+
 - **Date:** 2026-09-22 13:50 CEST, updated 2026-09-30 14:00 CEST (rows
   15–28 = everything accumulated since; rows 15/16 ratify autonomous
   calls already executed under the 2026-09-30 full-execution GO)
