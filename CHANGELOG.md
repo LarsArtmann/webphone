@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The ended call card's "Summarize → draft SMS" button no longer renders
+  when the ASR seam is off — with no transcript seam no transcript can
+  exist, so the button could only ever 404 into an announce. The gate
+  now requires agent AND ASR AND media (`calls.js`); the manual
+  summarize producer audits its agent asks through the Server audit
+  seam (event `summarize`, outcomes ok/refused/failed — the manual
+  counterpart of the detached job's `auto_review`), pinned by a new
+  journal-shape test.
 - Passkey enrollment now unwraps the WebAuthn `{publicKey}` envelope on BOTH
   sides of the ceremony (upstream issue #120, go-cqrs-lite 2026-11-11 wave):
   `prepareRegistrationOptions` opens `begun.Options` and asserts
