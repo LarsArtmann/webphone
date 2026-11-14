@@ -229,9 +229,7 @@ func (f *Fanout) Fan(ctx context.Context, owner domain.Extension, fact any) erro
 		return errorfamily.Newf(errorfamily.Rejection, "push.registry", "fan: no device registry wired")
 	}
 	detached := context.WithoutCancel(ctx)
-	f.fans.Add(1)
-	go func() {
-		defer f.fans.Done()
+	f.fans.Go(func() {
 		// Goroutine containment (owner ruling 2026-10-27): RecoveryMiddleware
 		// cannot see this goroutine, so a panicking transport or registry
 		// would take the whole process down. Recover, log greppably, survive.
@@ -263,7 +261,7 @@ func (f *Fanout) Fan(ctx context.Context, owner domain.Extension, fact any) erro
 					"device", device.DeviceID, "transport", device.Transport, "err", err)
 			}
 		}
-	}()
+	})
 	return nil
 }
 
