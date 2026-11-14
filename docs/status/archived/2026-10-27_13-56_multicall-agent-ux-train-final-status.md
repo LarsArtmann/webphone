@@ -48,7 +48,7 @@ buildflow's race step — details in §d.
 
 ## b) PARTIALLY DONE
 
-~~1. **Remote CI verification** — `gh` (run list AND api) returns exit 0~~ done 2026-11-14 — scripts/ci-verdict.sh e6da8ab answers RED at the sha (the docs-cadence class, healed by this file's own archive run); v2.9.0–v2.14.0 all shipped through verified CI
+~~1. **Remote CI verification** — `gh` (run list AND api) returns exit 0~~ done 2026-11-14 — scripts/ci-verdict.sh e6da8ab answers RED at the sha [CORRECTED 2026-11-14 11:29 — the first verdict here GUESSED the docs-cadence class; the API shows the failing job was `art-dupl check (new clones only)`, healed when the templ clones dissolved at their sites in the 2026-11-11 train]; v2.9.0–v2.14.0 all shipped through verified CI
 with EMPTY output from this shell; every local equivalent of the CI
 checks passed, but **no commit since `3f04aae` (2026-10-26 ~20:30)
 has a verified remote CI verdict**. That is ~30 commits across two
@@ -153,7 +153,7 @@ silent edit losses in one train is a pattern other sessions will hit.
 
 ## f) NEXT 50 (priority-ordered; ★ = needs you / other repo)
 
-~~1. ★ **CI verdict** for `3f04aae..e6da8ab` from a working `gh` shell~~ done 2026-11-14 — ci-verdict.sh e6da8ab answers RED at the sha (docs-cadence class, healed by this archive run); v2.9.0–v2.14.0 shipped through verified CI
+~~1. ★ **CI verdict** for `3f04aae..e6da8ab` from a working `gh` shell~~ done 2026-11-14 — ci-verdict.sh e6da8ab answers RED at the sha [CORRECTED 2026-11-14 11:29 — the failing job was `art-dupl check (new clones only)` (not the docs-cadence class first guessed here); healed 2026-11-11 when the templ clones dissolved at their sites]; v2.9.0–v2.14.0 shipped through verified CI
 (§g Q1) — first thing, before anything else rides main.
 ~~2. **Stack browser E2E re-run** (~445 s; known flake mode: re-run once~~ routed — the release runbook owns it; re-ran at the v2.9.0–v2.14.0 trains
 on the ~90 s transfer-step death).
@@ -257,7 +257,7 @@ work) so the trigger outlives the TODO_LIST sweep.
 
 ## g) THREE QUESTIONS I CANNOT ANSWER MYSELF
 
-~~1. **CI verdict:** can you run `gh run list` (or check the Actions tab)~~ done 2026-11-14 — ci-verdict.sh answers for the window: e6da8ab RED at the sha (docs-cadence class, healed by this archive run)
+~~1. **CI verdict:** can you run `gh run list` (or check the Actions tab)~~ done 2026-11-14 — ci-verdict.sh answers for the window: e6da8ab RED at the sha [CORRECTED 2026-11-14 11:29 — the failing job was `art-dupl check (new clones only)` (not the docs-cadence class first guessed here); healed 2026-11-11 when the templ clones dissolved at their sites]
 for the commits `3f04aae..e6da8ab` and tell me whether anything is
 red? My shell's `gh` silently returns nothing, and ~30 commits have
 no verified remote verdict — if something is red I need the failing
