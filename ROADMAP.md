@@ -97,6 +97,10 @@ and retention or not at all).
 
 ## WORTH_CONSIDERING cluster (one-line specs, SUPERB plan P26 2026-09-19)
 
+- Summarize UX polish (routed 2026-11-14 from the 2026-10-27 multicall
+  report §f17/§f40): deep-link the settled "Draft in Messages" state
+  into the drafts panel (today toast + nav nudge only); cap stacked
+  ended cards on a busy day (oldest auto-dismiss past N).
 - Session persistence: RESOLVED — SQLite-backed store shipped (2.5.0:
   sessions survive restarts) plus sliding TTL (7d idle / 30d absolute);
   the spike verdict lives at
@@ -140,6 +144,13 @@ re-check:
 
 - sip.js: revisit on a 0.22 release, a reconnect-hang fix, or a
   security advisory (evaluation: `docs/reviews/archived/2026-09-18_sip-js-0.22-evaluation.md`).
+- Attended-transfer GO day (M19 re-open trigger, routed 2026-11-14 from
+  docs/status/2026-10-27_13-56_multicall-agent-ux-train-final-status.md
+  §f5/§f50): a stack FS lab with Replaces dialplan handling plus an
+  attended-REFER-with-Replaces VM scenario; the island consult-flow
+  sketch waits in
+  `docs/research/2026-10-27_attended-transfer-spike.md`. Until that day
+  attended transfer stays NO-GO.
 - templ-components ThemeScript knob: DONE 2026-09-22 — shipped upstream
   as `PageProps.NoThemeScript` (v1.19.2); this repo consumes it and
   dropped the CSP hash pin plus the app.css `!important` color-scheme
@@ -221,6 +232,13 @@ the stack browser E2E passed on the bumped tree. What remains:
 
 ## Open questions (owner calls)
 
+- **QMD indexing of webphone docs** (routed 2026-11-14 from owner briefing
+  row 20, docs/planning/2026-09-22_13-50_owner-calls-briefing.md; the row
+  was never homed and the sitting pack folds briefing rows without this
+  one): index docs/status + docs/planning + docs/reviews into the
+  knowledge base for prior-ruling recall — only `cv` is indexed today,
+  and the go-cqrs-lite question cost a full session a search would have
+  answered.
 - Domain-language glossary: ratify `docs/DOMAIN_LANGUAGE.md` or delete
   it and record accepted absence (memo with consequences appended to
   the file 2026-10-14, SUPERB train E2 — the declarative trains made
