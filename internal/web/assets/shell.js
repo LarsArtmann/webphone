@@ -817,6 +817,22 @@
       live.textContent = "";
       live.textContent = text;
     };
+    // AGENT_MODE_HELP decodes the agent's jargon modes into one sentence
+    // each (the pill's tooltip + aria-label — the raw mode names alone
+    // tell an operator nothing about what the agent may now do).
+    var AGENT_MODE_HELP = {
+      off: "nothing is drafted automatically",
+      drafts: "suggestions are drafted, nothing sends itself",
+      "after-hours": "outside business hours a confident draft may send itself",
+      full: "a confident draft may send itself at any time",
+    };
+    /** @param {string} mode @returns {string} */
+    var agentModeHelp = function (mode) {
+      return (
+        AGENT_MODE_HELP[/** @type {keyof typeof AGENT_MODE_HELP} */ (mode)] ||
+        "draft autonomy mode"
+      );
+    };
     var renderAgentPill = function () {
       var actions = document.querySelector(".wp-header-actions");
       if (!actions) return;
@@ -843,6 +859,20 @@
       agentPill.classList.toggle("pinned", pinned);
       agentPill.textContent =
         "AI drafts: " + agentModeState.mode + (pinned ? " · pinned" : "");
+      // Per-mode semantics (agent-pill trio): the raw mode name is
+      // jargon — the tooltip + aria-label say what the agent may do
+      // now, and the label names the cycle so screen readers hear the
+      // affordance, not just the state.
+      var help = agentModeHelp(agentModeState.mode);
+      agentPill.title = "AI drafts " + help + ". Click or press D to cycle.";
+      agentPill.setAttribute(
+        "aria-label",
+        "AI drafts mode: " +
+          agentModeState.mode +
+          " — " +
+          help +
+          ". Activate to cycle.",
+      );
       if (pinned) {
         if (!agentReset) {
           agentReset = document.createElement("button");
@@ -915,6 +945,38 @@
       renderAgentPill();
     };
     document.addEventListener("wp:session-opened", agentModeOpened);
+
+    // Stale-pill guard (agent-pill trio): another tab's mode change
+    // cannot reach this tab through the session-opened event — when any
+    // drafts activity fires, the pill re-reads the live identity and
+    // re-renders. A failed read keeps the current pill (stale beats
+    // gone); an empty agent_mode (seam turned off) removes it, exactly
+    // like the boot path.
+    var refreshAgentMode = function () {
+      fetch("/api/session", { credentials: "same-origin" })
+        .then(function (res) {
+          if (!res.ok) return null;
+          return res.json();
+        })
+        .then(function (identity) {
+          if (!identity) return;
+          agentModeOpened(
+            /** @type {CustomEvent} */ (
+              /** @type {unknown} */ ({
+                detail: {
+                  agentMode: identity.agent_mode,
+                  agentModeSource: identity.agent_mode_source,
+                  agentDefaultMode: identity.agent_default_mode,
+                  agentModes: identity.agent_modes,
+                },
+              })
+            ),
+          );
+        })
+        .catch(function () {});
+    };
+    document.addEventListener("wp:drafts-changed", refreshAgentMode);
+    document.addEventListener("wp:session-opened", refreshAgentMode);
 
     // 2e. Reply snippets (M21): a chip or picker button carries the body
     //     itself (data-snippet). The fill REPLACES the reply textarea's
@@ -2382,6 +2444,7 @@
       ["H", "Hang up the focused call"],
       ["M", "Mute / unmute the focused call"],
       ["P", "Hold / resume the focused call"],
+      ["D", "Cycle the AI drafts mode"],
       ["Esc", "Reject incoming, or hang up"],
       ["[ / ]", "Switch between live calls"],
       ["Enter", "Send the message you are typing"],
@@ -2686,6 +2749,29 @@
           return;
         event.preventDefault();
         openOverlay("help");
+        return;
+      }
+      // D cycles the AI drafts mode (agent-pill trio): the shell owns
+      // the pill, so its shortcut lives here and works even when the
+      // island's scripts fail. Same typing guard as "?"; no modifiers
+      // (those belong to the browser).
+      if (
+        (event.key === "d" || event.key === "D") &&
+        !event.ctrlKey &&
+        !event.metaKey &&
+        !event.altKey
+      ) {
+        var dTarget = eventElement(event);
+        if (
+          hasMethod(dTarget, "closest") &&
+          closestHTMLElement(
+            dTarget,
+            "input, textarea, select, [contenteditable='true']",
+          )
+        )
+          return;
+        event.preventDefault();
+        cycleAgentMode();
       }
     });
 
