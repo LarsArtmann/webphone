@@ -307,9 +307,10 @@
             machine.succeed(
                 "test -f /run/credentials/webphone.service/webphone-oidc-client-secret"
             )
-            machine.succeed(
-                "test \"$(stat -c %a /run/credentials/webphone.service/webphone-oidc-client-secret)\" = 400"
-            )
+            cred_mode = machine.succeed(
+                "stat -c %a /run/credentials/webphone.service/webphone-oidc-client-secret"
+            ).strip()
+            assert cred_mode == "400", f"credential mode is {cred_mode!r}, expected 400"
             machine.succeed(
                 "grep -q 'oidc-vm-secret' /run/credentials/webphone.service/webphone-oidc-client-secret"
             )
