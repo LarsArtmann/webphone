@@ -139,8 +139,8 @@ report's still-open §f rows.
 - [ ] **Record the CUE ruling durably** (REJECTED; schema-export
       deferred with a named trigger) as an owner decision line, and
       park the cuelang.org/go cost measurement next to it.
-- [ ] **Schema-export spike**: settings schema GENERATED from the
-      config structs (the openapi.json doctrine applied to settings).
+~~- [ ] **Schema-export spike**: settings schema GENERATED from the
+      config structs (the openapi.json doctrine applied to settings).~~ → done 2026-11-14 — verdict: reflection walk over internal/config into JSON Schema draft 2020-12 rendered by extending `webphone contracts` + the existing contracts-fresh gate (pointer-bools = `default: true` + `x-unset-means-on`; time.Duration → string; pinned enums); deliverable `docs/contracts/config.schema.json`, NOT an HTTP route (a route would publish internal shape incl. secret field names for no consumer). One home: docs/planning/2026-11-14_t12-settings-schema-spike.md.
 
 ### OIDC lane residuals (routed 2026-11-13 from the archived 2026-10-25 15-16 report)
 
@@ -702,11 +702,17 @@ Deferred engineering findings (each verified at HEAD 2026-11-05; none urgent):
 4. **The templ form-POST surface has no rate bucket**: `/messages/send`, `/fax/send`,
    contacts import, snippets, flags are unlimited — only the `/api/*` lanes are
    bucketed. Decide: bucket them or document the session gate as the bound.
-5. **`server.Deps` grows a field per read model** (seven read-model fields, each with
+5. ~~**`server.Deps` grows a field per read model** (seven read-model fields, each with
    a nil-means-503 convention riding every test composition) — DESIGNED 2026-11-08:
    docs/planning/2026-11-08_server-deps-accessor-collapse-design.md owns the shape,
    the migration order, and the test-composition impact. EXECUTE only when the
-   eighth read model lands (the note's trigger).
+   eighth read model lands (the note's trigger).~~ →
+   closed 2026-11-14 — post-ladder audit pins the surface DELIBERATE: the trigger fired
+   twice over (Messages/Faxes re-typed journal-backed + PushDevices; 10 readmodels.*
+   gates now) and the collapse has no target — readmodels.Handle was to wrap the
+   readmodels.db engine the 2026-11-11 ladder retirement (A43) deleted. One home for
+   the ruling: docs/planning/2026-11-14_t19-deps-post-ladder-audit.md (residue: two
+   missing `var _` gate pins and the Contacts/Snippets nil-doc drift)
 
 ### Fleet-libs closeout residue (2026-11-04, the SUPERB closeout train)
 
@@ -757,17 +763,22 @@ swap, fax badge, 2 empty states) lives in CHANGELOG + the per-library reports �
       webphone migrates last. Evidence: docs/review/libs/go-appkit.md § the open-mind
       pass (issue links inline).
 - [ ] **Adopt `appkit/flightrecorderhealth` (first go-appkit MODULE adoption; framework stays NO-GO)** —
-      wire `frhealth.NewTrigger(rec, WithCooldown, WithTriggerFunc(fr.OnError))` into
+      wire `frhealth.NewTrigger(rec, WithCooldown(30s), WithTriggerFunc(trace.trigger))` into
       `health.New` via go-health's `WithHealthRecorder` (options.go:127 in the pinned
-      v0.10.0) where app.go already builds both the probe and the recorder: health-batch
-      failure auto-captures a trace snapshot (cooldown-hardened, non-blocking, race-safe
-      — all pinned by the module's own tests), covering wedges that never surface as a
-      traced request (the dashboard's 1s loop failing with nobody polling /healthz) and
-      adding the cooldown the un-cooled 5xx snapshot arm lacks. Both hard deps already
-      pinned (go-flightrecorder v0.2.1, go-health v0.10.0); standalone constructor — no
-      injector-doctrine conflict. Demand-gated: the first wedge incident the
-      request-trigger misses, or ride the next flight-recorder train. Evidence:
-      docs/review/libs/go-appkit.md § module table (2026-11-12).
+      v0.10.0) — order-flip app.go so the recorder builds before the probe. Surface VERIFIED
+      2026-11-15 (flightrecorderhealth@v0.1.7 adapter.go: the Trigger runs the batch itself,
+      cooldown-gated, non-blocking `SnapshotIfAsync`, nil-rec = pass-through; standalone
+      constructor, no injector-doctrine conflict; go-health v0.10.0 honors the recorder on
+      the injector path only — webphone's path). NOT dedup: webphone has no health-batch→snapshot
+      glue today (request-trigger arm + manual endpoint only), so this is NEW capability.
+      Sharpened demand: the always-on wedge detector exists only when the dashboard is ON
+      (probeRefreshIf = 1s loop, default-OFF) — dashboard-off, the lane fires only on an actual
+      /healthz poll. Cooldown correction: it hardens the NEW lane only, not the un-cooled 5xx arm.
+      Demand-gated: the first wedge incident the request-trigger misses (dashboard-on wedge, or
+      any /healthz poll during an incident), or the next flight-recorder train. Evidence:
+      docs/review/libs/go-appkit.md § module table (2026-11-12) +
+      docs/planning/2026-11-14_t23-appkit-flightrecorderhealth.md (2026-11-15 verification).
+
 
 ### Fleet-libs reopen-trigger registry (2026-11-04, T25 — the ONE table)
 
@@ -1121,6 +1132,19 @@ per-row.
    confidence-gated autopilot (L3, shipped agent-side). Lives in the
    stack's textagent (send policy) — webphone side only surfaces age +
    countdown (the age substrate landed). Owner GO + stack train.
+   DESIGN 2026-11-14: docs/planning/2026-11-14_t21-d2-veto-window.md — 5th stack
+   mode `veto`; held draft = stack-side `Status:"held"` + absolute `send_after`
+   deadline + `sent_by` (stack owns the timer; the draft rides the existing review
+   queue, no new webphone store); webphone renders a per-draft countdown chip in
+   `#wp-drafts` (poll tightens to 5s while a hold is live) + `veto · n held` on
+   the mode pill; Veto (no confirm) returns the draft to `pending`; the human veto
+   rides the unchanged `textAgentPanelAction`/agentAudit shapes as `agent veto`,
+   expiry journals `agent expire` observed-once per draft; after-hours supersedes
+   veto. Stack asks: `veto` in the /mode vocabulary, held status + `send_after` +
+   `sent_by` on Draft JSON, `POST /reviews/{id}/veto`, stack-side deadline
+   persistence + send-time audit. Owner questions parked in the memo: T default,
+   veto→pending vs discard, read-activity veto, after-hours interaction,
+   expiry-audit transport.
 3. **Agent registry + scoped machine tokens (D3)**: today ONE machine
    actor (the textagent bearer secret, loopback). Named agents with
    scopes (draft/read/send) + per-agent audit prefixes + an API-token
@@ -1138,6 +1162,16 @@ per-row.
    textagent is the only one) — the registry's value materializes when
    one does, so the security review can also rule "defer until the
    second agent is real".
+   STACK-CONTRACT DESIGN 2026-11-14: docs/planning/2026-11-14_t21-d3-agent-registry.md
+   — the registry lives STACK-side; tokens are opaque per-agent bearers
+   (`wat_v1_<agent-id>_<random>`, secret FILE per agent, never rendered config),
+   scopes `draft-only | send-allowed | audit-read` (scope is a ceiling — mode gates
+   still decide send policy), revocation via a registry allowlist under a ≤60s
+   verification cache, per-request contract = constant-time hash compare +
+   server-side scope→route-family enforcement + `X-Agent-Name` stamped for the
+   existing `actor=agent:<name>` audit lines. Webphone enforcement UNCHANGED from
+   the V1 DESIGN above; hand the memo to the security review, which may still rule
+   defer-until-second-agent.
 4. **Delegation + roles (D4)**: approve-on-behalf-of, per-contact scopes,
    admin/member split — needs the actor substrate (shipped) AND a second
    real user first. Owner call. UPDATE 2026-11-04: the READ-ONLY half of
@@ -1561,10 +1595,15 @@ ceiling) + markdownlint posture execution (post-sitting row-18 verdict). Plan:
 
 ### 18-08 report drain harvest — open rows (2026-11-11, the archive-drain routes)
 
-- **Flight-recorder + metrics hardening cluster** (routed from the 18-08 report's f26/f38/f39/f40/f41/f42/f47/f49, e6/e8/e10): trace observation vs the `/metrics` exclusion alignment; a NixOS-module declared surface for the env-only recorder; a rate limit on `/internal/flightrecorder`; a snapshots-taken metric (count + bytes); a startup log line when the recorder is on; disk-aware `maxBytes`; an arch test pinning `h.notFound` as the only HTML-router 404 writer; a quarterly re-rule of the remaining `http.NotFound` sites; the `ResponseRecorder` sendfile cost on downloads; an IPv6-loopback (`::1`) pinned case; the route-family test's say-so where it lives.
-- **Traces-in-backup ruling (owner)** (routed from f22/f23, d4, g1): should `<dataDir>/traces` ride the backup set or be excluded from the module's backup unit + documented. The 2026-11-09 journal swap moved the db backup set to system.db; the traces directory question was left unanswered by it.
-- **Observability docs rows** (routed from f32/f33, c5): FEATURES.md owes the `/metrics` histogram wording (the row still says "build info, uptime, table counts") and flight-recorder rows; ROADMAP.md owes an observability-depth entry. Grep-verified absent 2026-11-11.
+~~- **Flight-recorder + metrics hardening cluster** (routed from the 18-08 report's f26/f38/f39/f40/f41/f42/f47/f49, e6/e8/e10): trace observation vs the `/metrics` exclusion alignment; a NixOS-module declared surface for the env-only recorder; a rate limit on `/internal/flightrecorder`; a snapshots-taken metric (count + bytes); a startup log line when the recorder is on; disk-aware `maxBytes`; an arch test pinning `h.notFound` as the only HTML-router 404 writer; a quarterly re-rule of the remaining `http.NotFound` sites; the `ResponseRecorder` sendfile cost on downloads; an IPv6-loopback (`::1`) pinned case; the route-family test's say-so where it lives.~~ → adjudicated 2026-11-14 (docs/planning/2026-11-14_t22-obs-cluster-audit.md): 6 of 11 legs landed — the module's `debug.flightrecorder.enable` env surface (f38, module-check `flightrecorder-env`), the `traceLimiter` 4/min burst 2 fence on `/internal/flightrecorder` (f39), the `webphone_flightrecorder_snapshots_total{outcome}` + snapshot-bytes counters rendered only when the seam is on (f40), the boot Info line naming dir + capture policy (f41), the 1 GiB `diskHasRoom` Statfs floor composing into trigger and manual snapshot paths (f42), and the route-family test's say-so comment (e10). The five open legs keep their own rows below.
+~~- **Traces-in-backup ruling (owner)** (routed from f22/f23, d4, g1): should `<dataDir>/traces` ride the backup set or be excluded from the module's backup unit + documented. The 2026-11-09 journal swap moved the db backup set to system.db; the traces directory question was left unanswered by it.~~ → ANSWERED 2026-11-13 — traces RIDE the whole-data-dir backup tar (count-bounded, size-unbounded; scripts/webphone-backup-drill.py and docs/lessons.md carry the ruling). Obsolete, not scheduled.
+~~- **Observability docs rows** (routed from f32/f33, c5): FEATURES.md owes the `/metrics` histogram wording (the row still says "build info, uptime, table counts") and flight-recorder rows; ROADMAP.md owes an observability-depth entry. Grep-verified absent 2026-11-11.~~ → done 2026-11-14 — FEATURES.md carries the histogram wording + flight-recorder rows (FEATURES.md ~202-203) and ROADMAP.md the observability-depth entry (~24-28). Verified by the T22 cluster audit.
 - **Lessons candidates** (routed from f35, e3, e4): the "plan says X, the code pins Y — amend the plan in the same turn" lesson; the "check the backup/test-path consequence of every new on-disk artifact under dataDir" process lesson; the phase-gate `-race` lesson (run `go test -race ./<touched-pkg>/` at every task commit, not only at train end — docs/status/2026-10-27_13-56 §e1, where a timing-dependent fan-out spec survived ~12 h); the synchronize-before-assert + fixture-first craft lessons (same report §e2/§e4). Grep-verified absent from docs/lessons.md 2026-11-11; the daemon-attribution lesson (f34) ALREADY landed (lessons line ~1062) and is not part of this row.
+- **Trace observation vs the `/metrics` exclusion alignment** (T22 open leg f26): `TraceMiddleware` observes every request including `/metrics` self-scrapes while only the latency histogram excludes them — rule it: skip `/metrics` in the trace middleware or strike wont-implement (a fast 200 scrape can never fire the 2s/5xx trigger, so the observation is dead weight at most); it needs a recorded verdict, not silence.
+- **Arch test: `h.notFound` the only HTML-router 404 writer** (T22 open leg f47): one arch test asserting every HTML-router miss routes through `h.notFound` (the rule currently lives only in prose at notfound.go/actions.go; the route-family test covers known families, not new ones).
+- **Quarterly re-rule of the remaining `http.NotFound` sites** (T22 open leg f49): ~16 sites remain, all JSON/machine lanes by design (`api/contacts_api.go`, `api/transcribe.go`, `api/transcripts_api.go`, `api/latency_api.go`, `api/push_api.go`, `hooks/webhooks.go`, `actions.go`, `auth/sso_api.go`, `platform/assets.go`, `platform/internal_directory.go`) — standing cadence row to re-enumerate and re-rule them quarterly.
+- **`ResponseRecorder` sendfile cost on downloads** (T22 open leg e6): `httputil@v1.8.0`'s recorder forwards Flusher/Hijacker but not `ReaderFrom`, so downloads ride `io.Copy` under the always-on latency wrapper; owner-gated measure-or-wont-implement (the fix would be a `ReadFrom` forward upstream, not a webphone fork).
+- **IPv6-loopback (`::1`) pinned case** (T22 open leg e8): one pinned case with `RemoteAddr = "[::1]:x"` through `machineSurface` — the positive loopback path is only ever exercised on implicit 127.0.0.1 today; `loopbackPeer`'s `net.IP.IsLoopback` handles `::1` but no test proves it.
 - **go-appkit report refresh trigger fired** (routed from f37): the report's flight-recorder fact says "indirect dep"; the seam is a DIRECT dep since the 2026-10-23 train (AGENTS flight-recorder bullet). Re-scoring rides the report's own refresh trigger, not a re-litigation.
 - **Cadence drain continuation + ratchet re-measure** (the 2026-11-11 13-54 report's §f): re-measure the annotate_max pin at the next sweep (the 18-08 + two-candidate archives moved corpus counts; ratchets move DOWN only, so a lower measured count is the expected direction); drain-train the next-oldest DIRTY candidates from `scripts/cadence-candidates.sh` output before their 45-day age thresholds; decide heal-or-wait for the active login-page train's docs-gate reds (the 12-31 report's missing §f + dprint format) if that session idles. That train LANDED 2026-11-11: the island suite (330/330) + smoke pins (54/54) healed, the art-dupl templ clones dissolved at the sites (baseline untouched, registry sweep log appended), and the fold shipped in 2.14.0.
 
@@ -1612,11 +1651,12 @@ T01–T16 are done (strikes live in the plan file + the 2026-11-12 status report
 6. **AGENTS.md b5 one-liner (owner call)** — one sentence on the per-site cqrs-lint directive convention in the strong-id bullet (2026-11-11 triage report §b5; the 203/377 line cap has room).
 
 - [ ] **Delete the dead sibling legacy readers** (Medium): `legacy_faxes.go` / `legacy_snippets.go` / `legacy_threads.go` / `legacy_transcripts.go` are the same prod-dead class as the contacts reader deleted in `4fb24b61` — zero production callers, and the retention sweep only deletes legacy threads/messages. One deletion pass + FEATURES/docs sync; KEEP the app-flag helpers (matrix/signal sync cursors live there). Evidence: the death-map correction addendum in `docs/planning/2026-11-09_storage-ladder-retirement.md`.
-- [ ] **Design the §5 export-or-confirm tooling before any DROP window** (Medium): the legacy contacts table DROP (§5, operator-gated migration) would delete rows that NO retention sweep covers — the death-map correction pins this; the migration window needs export-or-confirm tooling first (dump the table, or record explicit owner confirmation per row class). Evidence: `docs/planning/2026-11-09_storage-ladder-retirement.md` correction addendum; contacts-plan follow-up 23.
+~~- [ ] **Design the §5 export-or-confirm tooling before any DROP window** (Medium): the legacy contacts table DROP (§5, operator-gated migration) would delete rows that NO retention sweep covers — the death-map correction pins this; the migration window needs export-or-confirm tooling first (dump the table, or record explicit owner confirmation per row class). Evidence: `docs/planning/2026-11-09_storage-ladder-retirement.md` correction addendum; contacts-plan follow-up 23.~~ → done 2026-11-14 — design memo docs/planning/2026-11-14_t14-export-or-confirm-design.md: pre-server one-shot `webphone export-legacy -table contacts -format json|csv` (raw read-only sqlite, sha256+count archive) + `-check` row classification by `domain.DigitsOf(phone)` under (owner, …) + the DROP-window checklist (archived dump, per-owner written loss confirmations, new-world ≥ legacy − confirmed-losses).
 
 ### 2026-11-14 September-corpus sweep residue (docs-health AUDIT over every live 2026-09 report; harvest ledger in the session log)
 
-- [ ] **Sessions at-rest re-review** (owed by the 2026-09-30 sessions at-rest review in docs/reviews/ — its own trigger is "the next session-storage change", and the `login_email` column plus the identity-layer session rows landed 2026-10-28, after its snapshot): re-verify the at-rest table shape, the sweep-on-read invariants and the residual-risk paragraph against current HEAD; the calendar date 2026-12-30 is the fallback.
+- [ ] **Implement the §5 export-or-confirm tool** (Medium): a pre-server one-shot in `cmd/webphone` — `webphone export-legacy -table contacts -format json|csv` (raw read-only sqlite SELECT, sha256 + count header, archived per deployment) plus `-check` (classifies legacy rows against the journal projection by digit-string key; in-both / legacy-only / unparseable / new-world totals; nonzero exit while unconfirmed legacy-only rows exist). Gates the §5 DROP per the checklist in docs/planning/2026-11-14_t14-export-or-confirm-design.md (§4 per-owner written confirmations, §5 counts invariant). Contacts first; `-table` extends to the same-class snippets/transcripts. Evidence: storage-ladder correction addendum; memo 2026-11-14.
+~~- [ ] **Sessions at-rest re-review** (owed by the 2026-09-30 sessions at-rest review in docs/reviews/ — its own trigger is "the next session-storage change", and the `login_email` column plus the identity-layer session rows landed 2026-10-28, after its snapshot): re-verify the at-rest table shape, the sweep-on-read invariants and the residual-risk paragraph against current HEAD; the calendar date 2026-12-30 is the fallback.~~ → done 2026-11-14 — re-review appended to docs/reviews/2026-09-30_sessions-credentials-at-rest-review.md: every 09-30 claim re-verified (table shape + login_email ALTER sqlite.go:29-71, sweep invariants 85-89/129-139), identity-layer rows = ONE birth path with login_email persisted (passkey/OIDC) and NO agent_mode at rest; residual risk LOW, posture accepted unchanged. Next re-review: next session-storage change or 2026-12-30.
 - [ ] **Agent-pill UX trio** (docs/status/2026-10-27_13-56_multicall-agent-ux-train-final-status.md §f25/26/46): per-mode aria/tooltip semantics (off/drafts/after-hours/full are jargon today), pill refresh on `wp:drafts-changed` (another tab can change the mode; the pill goes stale), a keyboard shortcut to cycle the mode.
 - [ ] **Notes micro-cluster** (same report §f21/22/23/24): explicit note-slot delete API (only an empty-body clear exists today; the 409 remedy names a delete that is not there), a glanceable "noted" chip on History rows, note bodies in the transcript search corpus, Settings visibility for the 2000-cap count.
 - [ ] **Summarize micro-cluster** (same report §f18/33/34/45/47 + the ring_test shape): hide the ended-card Summarize button when ASR is off (no transcript can exist; today the button 404s into an announce); `agentAudit` vocabulary for the summarize producer lane (the api package logs plain warns); pin that a transcript deleted mid-idem-window leaves the key unrecorded (retryability after deletion); error-context.py --self-test + docs/error-contract.md prose for the `push.draft_*` / `readmodels.note_*` / `agent.summarize` verdict-passthrough families; ring_test's fakeTransport records drafts natively instead of mapping them onto Ring; pin the duplicate-replay → no-second-push implication; extract the server test harness (fakeProvider/stubReviewAPI/asrClientFor/recordingTransport) into one helpers file; FCM `SendDraft` wire test (ntfy has one, FCM's draft shape is untested).

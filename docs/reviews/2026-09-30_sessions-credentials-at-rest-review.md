@@ -77,3 +77,34 @@ on the next session-storage change, or 2026-12-30 whichever comes first.
 > identity-layer session rows minting through the same store). The re-review
 > row lives in TODO_LIST (2026-11-14 September-corpus sweep residue);
 > 2026-12-30 remains the fallback date.
+
+## Re-review 2026-11-14 (the login_email trigger)
+
+**Trigger honored:** the 2026-10-28 multi-user substrate landed the
+`login_email` column and the identity-layer session rows — exactly the
+"next session-storage change" the 09-30 verdict named. Every claim below
+re-verified against current HEAD (`go test ./internal/session/...` green).
+
+### Per-claim verification
+
+| 09-30 claim | Still true | Evidence (file:line) |
+| --- | --- | --- |
+| `sessions` table: token PK, extension, password, created_at, expires_at | Yes — plus the new `login_email` column (NOT NULL DEFAULT '') | internal/session/sqlite.go:29-36 |
+| Sessions table lives OUTSIDE the store/db.go ladder; package owns its DDL at open | Yes — ladder holds threads/messages/attachments/fax_jobs/contacts/snippets/call_transcripts/app_flags only | internal/store/db.go:163-283; sqlite.go:62-66 |
+| `login_email` upgrade is a guarded idempotent ALTER (duplicate-column = already migrated) | Yes | sqlite.go:45, 67-71 |
+| Bulk sweep of expired rows on every Create | Yes | sqlite.go:85-89 |
+| Lazy delete of an expired row on read | Yes | sqlite.go:129-131 |
+| Logout deletes the row | Yes | sqlite.go:137-139 |
+| Plaintext password is load-bearing: feeds the `/phone-api` proxy | Yes — method renamed `Credentials()` → `PBXCredentials()` | service.go:77-79; internal/server/panels.go:186, internal/server/actions.go:280,461 |
+| `GET /api/session` resumes with SIP credentials (requireSession-gated, no-store) | Yes — now split: derived `sip_credential` (HMAC of token; secret outside the DB) when `sip.derived_credentials` is on, raw `password` only when off | internal/server/auth/session_api.go:73-87; internal/server/auth/session_identity.go:86-95 |
+| Sliding renewal, idle 7d / absolute 30d defaults | Yes | sqlite.go:145-162; internal/server/server.go:343; internal/config/config.go:683-684 |
+| Token strength: 256-bit crypto-rand, no sequential IDs | Yes | service.go:34-35, 176-182 |
+| UMask=0077 + StateDirectoryMode=0750 both units, eval-time pinned | Yes | package/nixos-module.nix:253-254,303-304; nix/module-check.nix:123-130; SECURITY.md:39 |
+
+Identity-layer rows verified: ONE birth path `mintSession` → `Create(extension, password, loginEmail)` (session_identity.go:67-75); passkey persists `mapped.Email` (passkey_api.go:115), OIDC the same (sso_api.go:84), extension logins keep `""` byte-parity (session_api.go:55). NO `agent_mode` at rest — that field is a per-request, best-effort decoration of the identity response (session_identity.go:118-121, 152-167), never a column.
+
+### Residual risk, rewritten against the identity-layer reality
+
+Read access to `webphone.db` now discloses more than directory passwords: each row also carries `login_email`, the plaintext WHO behind a passkey/OIDC session (service.go:62-73) — a multi-user audit trail in miniature. The credential core is unchanged: identity-layer sessions still carry the extension's directory password (file-sourced at mint, passkey_api.go:104; sso_api.go:73), because the `/phone-api` proxy consumes it regardless of brokering — credential brokering only keeps the password off the BROWSER wire, not out of the row. The accepted equation therefore stands: host read access = PBX account compromise per stored extension, plus disclosure of which humans share those lines. Mitigations grown since 09-30: brokering exists as a deploy-time option, the file-permission hardening is eval-time pinned (module-check.nix:123-130), and both password and email age out with their row (sweeps + logout). Single-tenant household scope unchanged; host compromise still implies PBX compromise independently. Rotating one extension's directory password still fails closed at the next directory verify.
+
+**RE-REVIEW COMPLETE 2026-11-14 — residual risk: LOW because the accepted 09-30 posture holds unchanged under the identity layer (plaintext directory passwords remain the deliberate, proxy-load-bearing payload; the only new at-rest content is low-sensitivity login emails that age out with their rows), the protective perimeter grew (credential-brokering option, eval-pinned file-permission hardening), and the original acceptance — host read access already implies call-control compromise in this single-tenant deployment — was not weakened by the change.** Next re-review: next session-storage change, or 2026-12-30, whichever first.
