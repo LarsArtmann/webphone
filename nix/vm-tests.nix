@@ -268,9 +268,14 @@
               services.webphone = {
                 enable = true;
                 package = self'.packages.webphone;
+                # The generated vhost is the natural deployment shape —
+                # and both eval-time derivations (callback, passkey rp)
+                # key on it.
+                caddy.enable = true;
+                caddy.hostName = "phone.example.org";
                 oauth2 = {
                   enable = true;
-                  issuer = "http://127.0.0.1:9999"; # a stub issuer: the assert is the app's redirect, never the IdP's answer
+                  issuer = "https://idp.example.org"; # a stub issuer: the assert is the app's redirect, never the IdP's answer (discovery stays lazy)
                   clientId = "webphone-vm";
                   clientSecretFile = "/etc/webphone-oidc-source";
                 };
@@ -330,7 +335,7 @@
                 "curl -s -o /dev/null -w '%{redirect_url}' "
                 "http://127.0.0.1:8080/api/auth/oauth2/begin"
             )
-            assert "http://127.0.0.1:9999" in location, f"begin did not redirect to the issuer: {location}"
+            assert "https://idp.example.org" in location, f"begin did not redirect to the issuer: {location}"
             assert "client_id=webphone-vm" in location, f"begin lost the client id: {location}"
 
             # The chain FAILS CLOSED: remove the operator's source file
