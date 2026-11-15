@@ -119,15 +119,23 @@
     restore fixed it.
 11. If the red names MY surfaces: fix-forward; if it names the rail
     session's surfaces: their train (the §g-1 question below).
-12. T18 F83: stage the quiet-window overnight `--track` run command.
-13. T18 F84: define "stable" (pass count + duration band).
-14. T18 F85: the ring-guard positive path (a real ring during --track).
-15. T18 F86: run once; record in the harness docs.
-16. T18 F87: strike/update rows 221+240.
-17. T17 F79: re-derive the package import graph (`go list`).
-18. T17 F80: update the d2 sources (dated generations).
-19. T17 F81: render SVGs; keep old files (snapshot convention).
-20. T17 F82: strike row 1668 with the new paths.
+12. T18 F83: stage the quiet-window overnight `--track` run command (the
+    night-run stability pair's first half).
+13. T18 F84: define "stable" — pass count + duration band — for the
+    night-run stability pair.
+14. T18 F85: wire the ring-guard positive path (a real ring during
+    `--track`, the quiet-window harness's ring arm).
+15. T18 F86: run the ring-guard positive path once; record the evidence
+    in the capture-harness docs.
+16. T18 F87: strike/update TODO rows 221+240 (the night-run stability
+    pair ledger rows) with the run evidence.
+17. T17 F79: re-derive the package import graph (`go list`) for the
+    architecture-understanding diagrams.
+18. T17 F80: update the d2 sources (two dated generations, the
+    38-package reality).
+19. T17 F81: render the architecture-understanding SVGs; keep the old
+    files (the dated-snapshot convention).
+20. T17 F82: strike TODO row 1668 with the new file paths.
 21. File a tracker issue for the 13:39 placeholder stomp IF §g-1 says
     daemon defect (else: adopt the ritual, write it into AGENTS).
 22. Sweep TODO_LIST for the strike-evidence rows T01–T11 (all eleven

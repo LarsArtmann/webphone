@@ -258,8 +258,8 @@ the `art-dupl` job is **green**.
 
 | Job                 | Failure                                                                                     | Owner                                                                                                   |
 | ------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `fast flake checks` | `treefmt-check` wants to reformat `internal/server/server.go`                               | the concurrent session is editing that file right now (it is +26/−? lines past HEAD in my working tree) |
-| `go test -race`     | `TestErrorCodeRegistryIsFresh`: new error codes from the same train are not in the contract | same train; regenerating the registry now would describe code that is not in HEAD                       |
+| `fast flake checks` | ~~`treefmt-check` wants to reformat `internal/server/server.go`~~ → done 2026-11-15 — healed the same day: the owning train landed its server.go edit and the gate went green; the P1 fix this report's §6.2 recommended (whitespace-drift.sh formatter-awareness) is the shipped tool of record (selftest-pinned, GATE 1 of .githooks/pre-commit) | the concurrent session is editing that file right now (it is +26/−? lines past HEAD in my working tree) |
+| `go test -race`     | ~~`TestErrorCodeRegistryIsFresh`: new error codes from the same train are not in the contract~~ → done 2026-11-15 — healed by the same train's registry `-update` landing WITH the codes (the documented same-push rule); the freshness test is green at every HEAD since | same train; regenerating the registry now would describe code that is not in HEAD                       |
 
 Concrete in-flight signals in the working tree at 10:55 CET — none of them mine:
 
