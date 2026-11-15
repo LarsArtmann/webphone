@@ -2328,7 +2328,10 @@ test("wp:drafts-changed refreshes the pill from the live identity", async () => 
     await settle();
     const pill = actions.children.find((el) => el.id === "agent-mode-pill");
     assert.match(pill.textContent, /AI drafts: full · pinned/);
-    assert.ok(gets.every((m) => m === "GET"), "the refresh is read-only");
+    assert.ok(
+      gets.every((m) => m === "GET"),
+      "the refresh is read-only",
+    );
 
     // A failed refresh keeps the current pill (stale beats gone).
     globalThis.fetch = async () => ({ ok: false, status: 503 });
