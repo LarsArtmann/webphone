@@ -1,6 +1,6 @@
 package views
 
-import 	"github.com/larsartmann/templ-components/layout"
+import "github.com/larsartmann/templ-components/layout"
 
 // EnrollProps carries the standalone passkey-enrollment page's needs.
 type EnrollProps struct {
@@ -42,11 +42,11 @@ templ EnrollPage(props EnrollProps) {
 					<form id="enroll-form" autocomplete="off" aria-describedby="enroll-error">
 						<label>
 							<span>{ T(props.Lang, "enroll.token.label") }</span>
-							<input id="enroll-token" name="token" autocomplete="one-time-code" required></input>
+							<input id="enroll-token" name="token" autocomplete="one-time-code" required/>
 						</label>
 						<label>
 							<span>{ T(props.Lang, "enroll.credential.label") }</span>
-							<input id="enroll-credential-name" name="credential_name" placeholder="laptop" inputmode="text"></input>
+							<input id="enroll-credential-name" name="credential_name" placeholder="laptop" inputmode="text"/>
 						</label>
 						<button type="submit" class="primary">{ T(props.Lang, "enroll.submit") }</button>
 					</form>
@@ -67,6 +67,6 @@ templ EnrollPage(props EnrollProps) {
 // modules, discovered at the single script tag at the end of body.
 templ enrollHead(props EnrollProps) {
 	<script src="/assets/theme-preload.js"></script>
-	<link rel="stylesheet" href="/assets/island/style.css"></link>
-	<meta name="csrf-token" content={ props.CSRFToken }></meta>
+	<link rel="stylesheet" href="/assets/island/style.css"/>
+	<meta name="csrf-token" content={ props.CSRFToken }/>
 }

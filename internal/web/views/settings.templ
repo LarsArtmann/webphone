@@ -16,13 +16,13 @@ import (
 // about what is configured. The snippets section (M21) is the one
 // exception: reply snippets are the user's own data, managed here.
 type SettingsPanelProps struct {
-	SIPDomain      string
-	WebsocketURL   string
-	GatewayMode    string
+	SIPDomain    string
+	WebsocketURL string
+	GatewayMode  string
 	// Fax is the deployment's declared fax reachability (config.Fax). The
 	// row renders ONLY when a direction is missing, and names that half —
 	// the gateway-mode row ("webhook") never did.
-	Fax     FaxCapability
+	Fax      FaxCapability
 	PhoneAPI bool
 	// CRMState is the Settings row's honest CRM rendering (T7): "unset"
 	// (no seam — the historical off path), "connected" (bounded probe
@@ -34,8 +34,8 @@ type SettingsPanelProps struct {
 	// ASRLocality carries the config-honest trust label (M17: "local" =
 	// loopback/private provider, "remote" = external) that names WHERE
 	// caller audio goes; empty when the seam is off.
-	ASR        bool
-	ASRDetail  string
+	ASR         bool
+	ASRDetail   string
 	ASRLocality string
 	// Paperless reports the optional inbound-fax archive (config-fax
 	// audit T7, 2026-10-30): the row renders ONLY when the seam is
@@ -49,7 +49,7 @@ type SettingsPanelProps struct {
 	// otherwise — the row still renders, naming the seam's home). The
 	// review API is a loopback stack service by doctrine, so the row
 	// names the processing location config-honestly: it runs HERE.
-	Agent    bool
+	Agent     bool
 	AgentMode string
 	// ChatMatrix/ChatSignal report the optional chat-network lanes. The
 	// rows render ONLY when the lane is configured (passkey-style
@@ -65,7 +65,7 @@ type SettingsPanelProps struct {
 	// PushDevices feeds PushDevicesSection (the session extension's
 	// registered devices, newest first); the wake address (token) is
 	// write-only and never reaches any view.
-	PushDevices []PushDeviceRow
+	PushDevices    []PushDeviceRow
 	ICEServers     int
 	SharedContacts int
 	// NotedCalls is the owner's open note-slot count and NotedCallsCap
@@ -122,17 +122,28 @@ templ SettingsPanel(props SettingsPanelProps) {
 		</details>
 		<h3 class="wp-settings-head">{ T(props.Lang, "shortcuts.title") }</h3>
 		<dl class="wp-settings wp-shortcuts">
-			<dt><kbd>A</kbd></dt><dd>{ T(props.Lang, "shortcuts.a") }</dd>
-			<dt><kbd>H</kbd></dt><dd>{ T(props.Lang, "shortcuts.h") }</dd>
-			<dt><kbd>M</kbd></dt><dd>{ T(props.Lang, "shortcuts.m") }</dd>
-			<dt><kbd>P</kbd></dt><dd>{ T(props.Lang, "shortcuts.p") }</dd>
-			<dt><kbd>D</kbd></dt><dd>{ T(props.Lang, "shortcuts.d") }</dd>
-			<dt><kbd>Esc</kbd></dt><dd>{ T(props.Lang, "shortcuts.esc") }</dd>
-			<dt><kbd>[</kbd>/<kbd>]</kbd></dt><dd>{ T(props.Lang, "shortcuts.cycle") }</dd>
-			<dt><kbd>Enter</kbd></dt><dd>{ T(props.Lang, "shortcuts.enter") }</dd>
-			<dt><kbd>Shift</kbd>+<kbd>Enter</kbd></dt><dd>{ T(props.Lang, "shortcuts.shiftEnter") }</dd>
-			<dt><kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>K</kbd></dt><dd>{ T(props.Lang, "shortcuts.palette") }</dd>
-			<dt><kbd>?</kbd></dt><dd>{ T(props.Lang, "shortcuts.help") }</dd>
+			<dt><kbd>A</kbd></dt>
+			<dd>{ T(props.Lang, "shortcuts.a") }</dd>
+			<dt><kbd>H</kbd></dt>
+			<dd>{ T(props.Lang, "shortcuts.h") }</dd>
+			<dt><kbd>M</kbd></dt>
+			<dd>{ T(props.Lang, "shortcuts.m") }</dd>
+			<dt><kbd>P</kbd></dt>
+			<dd>{ T(props.Lang, "shortcuts.p") }</dd>
+			<dt><kbd>D</kbd></dt>
+			<dd>{ T(props.Lang, "shortcuts.d") }</dd>
+			<dt><kbd>Esc</kbd></dt>
+			<dd>{ T(props.Lang, "shortcuts.esc") }</dd>
+			<dt><kbd>[</kbd>/<kbd>]</kbd></dt>
+			<dd>{ T(props.Lang, "shortcuts.cycle") }</dd>
+			<dt><kbd>Enter</kbd></dt>
+			<dd>{ T(props.Lang, "shortcuts.enter") }</dd>
+			<dt><kbd>Shift</kbd>+<kbd>Enter</kbd></dt>
+			<dd>{ T(props.Lang, "shortcuts.shiftEnter") }</dd>
+			<dt><kbd>Ctrl</kbd>/<kbd>Cmd</kbd>+<kbd>K</kbd></dt>
+			<dd>{ T(props.Lang, "shortcuts.palette") }</dd>
+			<dt><kbd>?</kbd></dt>
+			<dd>{ T(props.Lang, "shortcuts.help") }</dd>
 		</dl>
 		<p class="wp-empty">
 			{ T(props.Lang, "settings.themeNote") }
@@ -166,7 +177,7 @@ type AgentAuditRow struct {
 	Event   string
 	Subject string
 	Outcome string
-	At     time.Time
+	At      time.Time
 }
 
 templ AgentAuditSection(rows []AgentAuditRow, lang Lang) {
@@ -403,7 +414,7 @@ templ serviceDetailExtra(on bool, extra, connected, unset string) {
 		if on {
 			{ connected }
 			if extra != "" {
-				<span class="wp-muted"> · { extra }</span>
+				<span class="wp-muted">· { extra }</span>
 			}
 		} else {
 			{ unset }
@@ -488,9 +499,9 @@ templ SnippetsSection(snippets []domain.Snippet, lang Lang) {
 			Placeholder: T(lang, "snippets.body"),
 		})
 		<label class="wp-snippet-quick-label">
-			<input type="checkbox" name="quick" value="1"></input>
+			<input type="checkbox" name="quick" value="1"/>
 			{ T(lang, "snippets.quick") }
 		</label>
 		@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Icon: sendIndicator(), Text: T(lang, "snippets.add")})
 	</form>
-	}
+}

@@ -85,8 +85,8 @@ func TestSettingsPanelReadsInThreeAudiences(t *testing.T) {
 	if end := strings.Index(shortcuts, "</dl>"); end >= 0 {
 		shortcuts = shortcuts[:end]
 	}
-	if got := strings.Count(shortcuts, "<dt>"); got != 10 {
-		t.Errorf("shortcut rows = %d, want 10 (A H M P Esc [ ] Enter Shift+Enter Ctrl/Cmd+K ?)", got)
+	if got := strings.Count(shortcuts, "<dt>"); got != 11 {
+		t.Errorf("shortcut rows = %d, want 11 (A H M P D Esc [ ] Enter Shift+Enter Ctrl/Cmd+K ?)", got)
 	}
 }
 

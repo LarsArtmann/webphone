@@ -109,12 +109,14 @@ templ HistoryPanel(props HistoryPanelProps) {
 			// must not claim nothing was ever recorded. The disposition
 			// filter gets its own message — it speaks about verdicts, not
 			// records.
-			{{ emptyKey := "history.empty"
-			   if props.Disposition != "" {
-			     emptyKey = "history.emptyDisposition"
-			   } else if props.Outcome != "" {
-			     emptyKey = "history.emptyFiltered"
-			   } }}
+			{{
+				emptyKey := "history.empty"
+				if props.Disposition != "" {
+					emptyKey = "history.emptyDisposition"
+				} else if props.Outcome != "" {
+					emptyKey = "history.emptyFiltered"
+				}
+			}}
 			@display.EmptyState(display.EmptyStateProps{Title: T(props.Lang, emptyKey), Icon: icons.Clock})
 		}
 		// D9: rows group under calendar-day heads (Today / Yesterday /
@@ -125,30 +127,30 @@ templ HistoryPanel(props HistoryPanelProps) {
 		if len(props.Entries) > 0 {
 			<div class="wp-table-wrap" role="region" tabindex="0" aria-label={ T(props.Lang, "history.table.label") }>
 				<table class="wp-table">
-				<thead>
-					<tr>
-						<th scope="col" class="wp-sr-only">{ T(props.Lang, "history.dir.label") }</th>
-						<th scope="col">{ T(props.Lang, "history.col.contact") }</th>
-						<th scope="col" class="wp-table-num">{ T(props.Lang, "history.col.when") }</th>
-						<th scope="col" class="wp-table-num">{ T(props.Lang, "history.col.duration") }</th>
-						<th scope="col" class="wp-sr-only">{ T(props.Lang, "history.col.actions") }</th>
-					</tr>
-				</thead>
-				for _, group := range groupCDRsByDay(props.Entries) {
-					<tbody>
-						if group.Key != "" {
-							<tr class="wp-table-day-head">
-								<th colspan="5" scope="colgroup">
-									<span>{ dayHeadLabel(props.Lang, group.Day) }</span>
-									<span class="wp-day-count">· { fmtInt(len(group.Rows)) }</span>
-								</th>
-							</tr>
-						}
-						for _, cdr := range group.Rows {
-							@CDRRow(cdr, props.CRM, props.Lang)
-						}
-					</tbody>
-				}
+					<thead>
+						<tr>
+							<th scope="col" class="wp-sr-only">{ T(props.Lang, "history.dir.label") }</th>
+							<th scope="col">{ T(props.Lang, "history.col.contact") }</th>
+							<th scope="col" class="wp-table-num">{ T(props.Lang, "history.col.when") }</th>
+							<th scope="col" class="wp-table-num">{ T(props.Lang, "history.col.duration") }</th>
+							<th scope="col" class="wp-sr-only">{ T(props.Lang, "history.col.actions") }</th>
+						</tr>
+					</thead>
+					for _, group := range groupCDRsByDay(props.Entries) {
+						<tbody>
+							if group.Key != "" {
+								<tr class="wp-table-day-head">
+									<th colspan="5" scope="colgroup">
+										<span>{ dayHeadLabel(props.Lang, group.Day) }</span>
+										<span class="wp-day-count">· { fmtInt(len(group.Rows)) }</span>
+									</th>
+								</tr>
+							}
+							for _, cdr := range group.Rows {
+								@CDRRow(cdr, props.CRM, props.Lang)
+							}
+						</tbody>
+					}
 				</table>
 			</div>
 		}
@@ -220,27 +222,27 @@ templ TranscriptSection(props HistoryPanelProps) {
 					<span class="wp-muted">{ formatStamp(props.Lang, group.StartedAt) }</span>
 				</summary>
 				<p class="wp-transcript-text">{ strings.Join(group.Lines, " ") }</p>
-			// The automatic review's durable artifact (issue #8, T13): the
-			// AI's assessment renders under the transcript in its lifecycle
-			// state. A row with NO review renders the not-configured chip
-			// only when the seam is off (T14 — the absence is visible,
-			// never silent); with the seam on, no review just means nobody
-			// asked for one.
-			if group.ReviewState == "present" {
-				<div class="wp-call-review">
-					<p class="wp-review-label wp-muted">{ T(props.Lang, "history.review.label") }</p>
-					<p class="wp-review-text">{ group.ReviewText }</p>
-					if group.ReviewConfidence > 0 {
-						<p class="wp-muted">{ T(props.Lang, "history.review.confidence") } { fmt.Sprintf("%d%%", group.ReviewConfidence) }</p>
-					}
-				</div>
-			} else if group.ReviewState == "pending" {
-				@reviewStatusLine(props.Lang, "history.review.pending")
-			} else if group.ReviewState == "failed" {
-				@reviewStatusLine(props.Lang, "history.review.failed")
-			} else if !props.AgentEnabled {
-				<p class="wp-muted wp-review-unconfigured">{ T(props.Lang, "history.review.notConfigured") }</p>
-			}
+				// The automatic review's durable artifact (issue #8, T13): the
+				// AI's assessment renders under the transcript in its lifecycle
+				// state. A row with NO review renders the not-configured chip
+				// only when the seam is off (T14 — the absence is visible,
+				// never silent); with the seam on, no review just means nobody
+				// asked for one.
+				if group.ReviewState == "present" {
+					<div class="wp-call-review">
+						<p class="wp-review-label wp-muted">{ T(props.Lang, "history.review.label") }</p>
+						<p class="wp-review-text">{ group.ReviewText }</p>
+						if group.ReviewConfidence > 0 {
+							<p class="wp-muted">{ T(props.Lang, "history.review.confidence") } { fmt.Sprintf("%d%%", group.ReviewConfidence) }</p>
+						}
+					</div>
+				} else if group.ReviewState == "pending" {
+					@reviewStatusLine(props.Lang, "history.review.pending")
+				} else if group.ReviewState == "failed" {
+					@reviewStatusLine(props.Lang, "history.review.failed")
+				} else if !props.AgentEnabled {
+					<p class="wp-muted wp-review-unconfigured">{ T(props.Lang, "history.review.notConfigured") }</p>
+				}
 				// Copy affordance: the button only marks the row — shell.js
 				// owns the clipboard write + toast (works when island scripts
 				// fail; label localized here, toast English by D3).

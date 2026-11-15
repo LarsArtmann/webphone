@@ -9,9 +9,7 @@ package views
 import "github.com/a-h/templ"
 import templruntime "github.com/a-h/templ/runtime"
 
-import (
-	"github.com/larsartmann/templ-components/icons"
-)
+import "github.com/larsartmann/templ-components/icons"
 
 // PhoneIsland is the SIP call island, ported verbatim from the static
 // site's index.html: every id, class and data-i18n attribute is part of the

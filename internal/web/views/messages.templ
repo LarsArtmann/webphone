@@ -72,7 +72,7 @@ templ ThreadsPanel(props ThreadsPanelProps) {
 					value={ props.Query }
 					placeholder={ T(props.Lang, "threads.search.ph") }
 					aria-label={ T(props.Lang, "threads.search.label") }
-				></input>
+				/>
 			</form>
 		}
 		// The archived toggle (design D6): only rendered when there is
@@ -146,11 +146,11 @@ templ ThreadRow(summary readmodels.ThreadSummary, contacts CRMContacts, lang Lan
 			<span class="wp-thread-text">
 				<span class="wp-thread-remote">{ networkLabel(summary.Thread.Remote.Network()) }{ displayName(summary.Thread.Remote.String(), contacts) }</span>
 				<span class="wp-thread-preview">
-				if summary.LastAttachment {
-					@icons.Icon(icons.Document, "wp-icon wp-icon-text")
-				}
-				{ threadPreview(summary, lang) }
-			</span>
+					if summary.LastAttachment {
+						@icons.Icon(icons.Document, "wp-icon wp-icon-text")
+					}
+					{ threadPreview(summary, lang) }
+				</span>
 			</span>
 			<span class="wp-thread-side">
 				<span
@@ -385,7 +385,7 @@ templ NewMessageForm(prefillTo string, prefillBody string, lang Lang, textAgent 
 			placeholder={ T(lang, "compose.to.ph") }
 			aria-label={ T(lang, "compose.to.label") }
 			value={ prefillTo }
-		></input>
+		/>
 		@composeBody(lang, "compose.body.ph", prefillBody)
 		<span class="wp-segcount" hidden aria-live="polite"></span>
 		if textAgent {
@@ -574,88 +574,86 @@ templ ConversationRail(rail []readmodels.ThreadSummary, current domain.ThreadID,
 // separately readable — and so a future detail-only swap has a component
 // boundary to target.
 templ ThreadDetail(props ThreadViewProps) {
-		@ThreadHead(props)
-
-		@crmContextStrip(props.CRMContext, props.Lang)
-
-		@panelError(props.Error)
-		if isSelfThread(props.Identity, props.Thread.Remote) {
-			<p class="wp-notice" role="note">{ T(props.Lang, "thread.selfNotice") }</p>
-		}
-		if props.HasMore {
-			<form
-				class="wp-older"
-				hx-get={ "/partials/messages/" + props.Thread.ID.String() + "?older=" + fmtInt(props.Page+1) }
-				hx-target="#tab-content"
-				hx-swap="innerHTML show:window:top"
-				hx-trigger="submit"
-			>
-				@display.Button(display.ButtonProps{
-					Type:    display.ButtonHTMLSubmit,
-					Variant: display.ButtonSecondary,
-					Size:    display.ButtonSizeSM,
-					Text:    T(props.Lang, "thread.loadOlder"),
-				})
-			</form>
-		}
-		<div class="wp-transcript-wrap">
-			<div
-				class="wp-transcript"
-				id="thread-transcript"
-				sse-swap="thread"
-				hx-swap="morph:innerHTML"
-				data-page={ fmtInt(props.Page) }
-				data-thread={ props.Thread.ID.String() }
-			>
-				if props.Page == 0 {
-					// Page 0 renders the unread divider (the thread's Unread
-					// was captured before the handler marked it read); older
-					// pages hold no unread bubbles — a top divider there
-					// would lie about where they live.
-					@TranscriptAt(props.Messages, props.Lang, props.Thread.Unread, props.ASR)
-				} else {
-					@Transcript(props.Messages, props.Lang, props.ASR)
-				}
-			</div>
-			<button type="button" class="wp-jump-latest" hidden aria-label={ T(props.Lang, "thread.jumpLatest.label") }></button>
-		</div>
-		@identityLine(props.Lang, props.Identity)
+	@ThreadHead(props)
+	@crmContextStrip(props.CRMContext, props.Lang)
+	@panelError(props.Error)
+	if isSelfThread(props.Identity, props.Thread.Remote) {
+		<p class="wp-notice" role="note">{ T(props.Lang, "thread.selfNotice") }</p>
+	}
+	if props.HasMore {
 		<form
-			class="wp-compose"
-			hx-post={ "/messages/send?thread=" + props.Thread.ID.String() }
+			class="wp-older"
+			hx-get={ "/partials/messages/" + props.Thread.ID.String() + "?older=" + fmtInt(props.Page+1) }
 			hx-target="#tab-content"
-			hx-swap="innerHTML show:window:bottom"
-			hx-encoding="multipart/form-data"
-			enctype="multipart/form-data"
-			hx-disabled-elt="find button[type=submit]"
+			hx-swap="innerHTML show:window:top"
+			hx-trigger="submit"
 		>
-			// No hidden "to": the reply lane derives the destination from the
-			// stored thread (?thread= above) — never from a client string.
-			// The snippet lane (M21): quick chips plus the full picker, above
-			// the reply textarea and INSIDE the form so shell.js's delegated
-			// data-snippet fill finds the compose box via closest(). Buttons
-			// are type=button — they fill, never submit.
-			if len(props.Snippets) > 0 {
-				<div class="wp-snippet-bar">
-					@SnippetChips(props.Snippets)
-					@snippetPicker(props.Snippets, props.Lang)
-				</div>
-			}
-			@composeBody(props.Lang, "compose.reply.ph", props.PrefillDraft)
-			<input
-				type="file"
-				name="attachment"
-				multiple
-				accept="image/jpeg,image/png,image/gif,image/bmp,image/webp,image/tiff,audio/mpeg,audio/wav,audio/amr,audio/ogg,video/mp4,video/3gpp,video/quicktime,application/pdf,text/vcard,.vcf"
-				aria-label={ T(props.Lang, "compose.attach.label") }
-			></input>
-			<span class="wp-segcount" hidden aria-live="polite"></span>
-			if props.TextAgent {
-				@aiDraftButton(props.Lang, props.Thread.ID.String(), "innerHTML show:window:bottom")
-			}
-			@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Icon: sendIndicator(), Text: T(props.Lang, "compose.send")})
-			<div class="wp-attach" hidden></div>
+			@display.Button(display.ButtonProps{
+				Type:    display.ButtonHTMLSubmit,
+				Variant: display.ButtonSecondary,
+				Size:    display.ButtonSizeSM,
+				Text:    T(props.Lang, "thread.loadOlder"),
+			})
 		</form>
+	}
+	<div class="wp-transcript-wrap">
+		<div
+			class="wp-transcript"
+			id="thread-transcript"
+			sse-swap="thread"
+			hx-swap="morph:innerHTML"
+			data-page={ fmtInt(props.Page) }
+			data-thread={ props.Thread.ID.String() }
+		>
+			if props.Page == 0 {
+				// Page 0 renders the unread divider (the thread's Unread
+				// was captured before the handler marked it read); older
+				// pages hold no unread bubbles — a top divider there
+				// would lie about where they live.
+				@TranscriptAt(props.Messages, props.Lang, props.Thread.Unread, props.ASR)
+			} else {
+				@Transcript(props.Messages, props.Lang, props.ASR)
+			}
+		</div>
+		<button type="button" class="wp-jump-latest" hidden aria-label={ T(props.Lang, "thread.jumpLatest.label") }></button>
+	</div>
+	@identityLine(props.Lang, props.Identity)
+	<form
+		class="wp-compose"
+		hx-post={ "/messages/send?thread=" + props.Thread.ID.String() }
+		hx-target="#tab-content"
+		hx-swap="innerHTML show:window:bottom"
+		hx-encoding="multipart/form-data"
+		enctype="multipart/form-data"
+		hx-disabled-elt="find button[type=submit]"
+	>
+		// No hidden "to": the reply lane derives the destination from the
+		// stored thread (?thread= above) — never from a client string.
+		// The snippet lane (M21): quick chips plus the full picker, above
+		// the reply textarea and INSIDE the form so shell.js's delegated
+		// data-snippet fill finds the compose box via closest(). Buttons
+		// are type=button — they fill, never submit.
+		if len(props.Snippets) > 0 {
+			<div class="wp-snippet-bar">
+				@SnippetChips(props.Snippets)
+				@snippetPicker(props.Snippets, props.Lang)
+			</div>
+		}
+		@composeBody(props.Lang, "compose.reply.ph", props.PrefillDraft)
+		<input
+			type="file"
+			name="attachment"
+			multiple
+			accept="image/jpeg,image/png,image/gif,image/bmp,image/webp,image/tiff,audio/mpeg,audio/wav,audio/amr,audio/ogg,video/mp4,video/3gpp,video/quicktime,application/pdf,text/vcard,.vcf"
+			aria-label={ T(props.Lang, "compose.attach.label") }
+		/>
+		<span class="wp-segcount" hidden aria-live="polite"></span>
+		if props.TextAgent {
+			@aiDraftButton(props.Lang, props.Thread.ID.String(), "innerHTML show:window:bottom")
+		}
+		@display.Button(display.ButtonProps{Type: display.ButtonHTMLSubmit, Icon: sendIndicator(), Text: T(props.Lang, "compose.send")})
+		<div class="wp-attach" hidden></div>
+	</form>
 }
 
 // Transcript renders the message bubbles, oldest first, with day
@@ -764,7 +762,7 @@ templ Bubble(msg domain.Message, lang Lang, asr bool) {
 					hx-encoding="multipart/form-data"
 					hx-disabled-elt="find button[type=submit]"
 				>
-					<input type="hidden" name="body" value={ msg.Body }></input>
+					<input type="hidden" name="body" value={ msg.Body }/>
 					<button type="submit" class="wp-mini">{ T(lang, "retry") }</button>
 				</form>
 			}
@@ -774,16 +772,16 @@ templ Bubble(msg domain.Message, lang Lang, asr bool) {
 
 templ OutboundStatusBadge(status domain.OutboundStatus, lang Lang) {
 	switch status {
-	case domain.StatusQueued:
-		<span class="wp-status wp-status-queued">{ T(lang, "status.sending") }</span>
-	case domain.StatusSent:
-		<span class="wp-status wp-status-sent">{ T(lang, "status.sent") }</span>
-	case domain.StatusDelivered:
-		<span class="wp-status wp-status-delivered"><span aria-hidden="true">✓ </span>{ T(lang, "status.delivered") }</span>
-	case domain.StatusFailed:
-		<span class="wp-status wp-status-failed">{ T(lang, "status.failed") }</span>
-	default:
-		<span></span>
+		case domain.StatusQueued:
+			<span class="wp-status wp-status-queued">{ T(lang, "status.sending") }</span>
+		case domain.StatusSent:
+			<span class="wp-status wp-status-sent">{ T(lang, "status.sent") }</span>
+		case domain.StatusDelivered:
+			<span class="wp-status wp-status-delivered"><span aria-hidden="true">✓ </span>{ T(lang, "status.delivered") }</span>
+		case domain.StatusFailed:
+			<span class="wp-status wp-status-failed">{ T(lang, "status.failed") }</span>
+		default:
+			<span></span>
 	}
 }
 
@@ -883,8 +881,8 @@ type DraftsPanelProps struct {
 	Error  string
 	// CRM carries the optional CRM integration's answers (same feed as the
 	// thread rows); unresolved numbers render verbatim.
-	CRM CRMContacts
-	Lang  Lang
+	CRM  CRMContacts
+	Lang Lang
 }
 
 // contactLabel renders a draft's contact with the CRM name when known.

@@ -1,8 +1,8 @@
 package views
 
-import 	"github.com/larsartmann/templ-components/icons"
-import 	"github.com/larsartmann/templ-components/layout"
-import 	"github.com/larsartmann/webphone/internal/web/assets"
+import "github.com/larsartmann/templ-components/icons"
+import "github.com/larsartmann/templ-components/layout"
+import "github.com/larsartmann/webphone/internal/web/assets"
 
 // Tab is one switchable content region; navigation swaps them with HTMX
 // partial requests so the SIP island never unloads mid-call.
@@ -17,9 +17,9 @@ const (
 	// records History lists (issue #12): talk time, direction and
 	// outcome, the daily shape, the busiest hours and the contacts that
 	// consumed the time.
-	TabReports   Tab = "reports"
-	TabContacts  Tab = "contacts"
-	TabSettings  Tab = "settings"
+	TabReports  Tab = "reports"
+	TabContacts Tab = "contacts"
+	TabSettings Tab = "settings"
 	// TabAdmin is the cross-line admin surface (read-only visibility
 	// over every owner's messages, faxes, calls, users and numbers). It
 	// renders ONLY for admin sessions — NavLinks skips it otherwise, so
@@ -130,8 +130,8 @@ templ Shell(props ShellProps) {
 		// Locale becomes the html lang attribute — the per-extension
 		// session language, so screen readers and hyphenation follow en/de
 		// instead of the library's hardcoded "en" default.
-		Locale:         string(props.Lang),
-		SEO:            layout.SEOMeta{NoIndex: true},
+		Locale: string(props.Lang),
+		SEO:    layout.SEOMeta{NoIndex: true},
 		// NoThemeScript: the library's inline dark-mode preload violates the
 		// zero-inline-script CSP — the same job is done pre-paint by the
 		// same-origin /assets/theme-preload.js loaded in headExtras below.
@@ -161,16 +161,18 @@ templ ShellBody(props ShellProps) {
 					<rect width="32" height="32" rx="7" class="wp-mark-bg"></rect>
 					<path
 						d="M9 7h4l2 5-2.5 2a12 12 0 0 0 5.5 5.5L20 17l5 2v4a2 2 0 0 1-2.2 2A17.8 17.8 0 0 1 7 9.2 2 2 0 0 1 9 7z"
-						class="wp-mark-fg"></path>
+						class="wp-mark-fg"
+					></path>
 				</svg>
 				<span>WebPhone</span>
 			</a>
 		</h1>
 		<div class="wp-header-actions">
 			if props.SignedIn != "" {
-				<span class="wp-signed-in">{ props.SignedIn }
+				<span class="wp-signed-in">
+					{ props.SignedIn }
 					if props.SignedInDID != "" {
-						<span class="wp-signed-in-did"> · { props.SignedInDID }</span>
+						<span class="wp-signed-in-did">· { props.SignedInDID }</span>
 					}
 				</span>
 			}
@@ -395,27 +397,27 @@ templ headExtras(csrfToken string) {
 	// Chromium — the on-screen keyboard resizes the LAYOUT viewport, so
 	// the sticky composer stays above the keyboard instead of hiding
 	// under it. Browsers without the key ignore it (no fork of Base).
-	<meta name="viewport" content="interactive-widget=resizes-content"></meta>
+	<meta name="viewport" content="interactive-widget=resizes-content"/>
 	<script src="/assets/theme-preload.js"></script>
-	<link rel="manifest" href="/manifest.webmanifest"></link>
+	<link rel="manifest" href="/manifest.webmanifest"/>
 	// Warm the island's script payloads from the head: the ESM graph
 	// (modulepreload — fetch AND compile while the body still parses; the
 	// entry tag sits at the end of body) and the one big classic script
 	// (sip.min.js, discovered just as late without this hint). The graph
 	// list is generated from the embedded files, so it can never drift.
 	for _, module := range assets.IslandModules() {
-		<link rel="modulepreload" href={ module }></link>
+		<link rel="modulepreload" href={ module }/>
 	}
-	<link rel="preload" as="script" href="/assets/vendor/sip.min.js"></link>
-	<meta name="csrf-token" content={ csrfToken }></meta>
+	<link rel="preload" as="script" href="/assets/vendor/sip.min.js"/>
+	<meta name="csrf-token" content={ csrfToken }/>
 	<meta
 		name="htmx-config"
 		content='{"includeIndicatorStyles":false,"responseHandling":[{"code":"204","swap":false},{"code":"[23]..","swap":true},{"code":"401","swap":false,"error":true},{"code":"[45]..","swap":true,"error":true,"target":"#wp-tab-error","select":".wp-error"}]}'
-	></meta>
+	/>
 	<script src="/htmx.min.js" defer></script>
 	<script src="/htmx-ext.js" defer></script>
-	<link rel="stylesheet" href="/assets/island/style.css"></link>
-	<link rel="stylesheet" href="/assets/tw.css"></link>
+	<link rel="stylesheet" href="/assets/island/style.css"/>
+	<link rel="stylesheet" href="/assets/tw.css"/>
 	<script src="/assets/shell.js" defer></script>
 }
 

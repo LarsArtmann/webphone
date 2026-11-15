@@ -281,7 +281,11 @@ func TestSettingsNamesTheAgentRowWhenSeamIsOn(t *testing.T) {
 	plain := newTestServer(t)
 	other := signIn(t, plain)
 	_, obody := other.do(http.MethodGet, "/partials/settings", nil, "")
-	if opage := string(obody); strings.Contains(opage, "AI drafts") {
+	// The row TITLE, not the bare phrase: the shortcut table legitimately
+	// says "Cycle the AI drafts mode" in every build, so matching "AI
+	// drafts" alone failed on a healthy page (pre-existing red, fixed
+	// 2026-11-15 while the sidebar-rail train ran).
+	if opage := string(obody); strings.Contains(opage, "AI drafts (textagent)") {
 		t.Errorf("no agent row without the seam:\n%s", opage)
 	}
 }

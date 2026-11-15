@@ -104,8 +104,10 @@ templ reportsUndatedNote(lang Lang, undated int) {
 // at least one datable record — without that guard an all-undated window
 // would headline a week of zeros that looks like a quiet week.
 templ reportsWeek(props ReportsPanelProps) {
-	{{ week := props.Report.ThisWeek
-	   showWeek := !week.Start.IsZero() && len(props.Report.Days) > 0 }}
+	{{
+		week := props.Report.ThisWeek
+		showWeek := !week.Start.IsZero() && len(props.Report.Days) > 0
+	}}
 	if showWeek {
 		<section class="wp-reports-week">
 			<h3 class="wp-reports-head">{ T(props.Lang, "reports.week") }</h3>
