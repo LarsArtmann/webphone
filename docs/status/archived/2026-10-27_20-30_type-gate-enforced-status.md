@@ -25,6 +25,7 @@ measured locally, and names what was **not** run (§8).
 ---
 
 ## 0. The four numbers
+
 <!-- check-rows:ledger -->
 
 | Metric                                                 | Before this session  | Now                      |
@@ -55,20 +56,22 @@ Three artifacts, each verified by running it:
    instead of being trusted. **Proven to bite**: a one-character identifier typo in a checked
    module failed the check with 26 errors; reverting made it green.
 2. **`internal/web/assets/typecheck_pin_test.go`** — five assertions, each **proven to bite**:
-   | Assertion                                              | How it was proven                     |
-   | ------------------------------------------------------ | ------------------------------------- |
-   | `checkJs`/`strict`/`noEmit`/`allowJs` still true       | flipped `checkJs` to false → FAIL     |
-   | every `include` entry resolves to ≥1 file              | ran before the include matched → FAIL |
-   | the include's **import closure is closed**             | new assertion; see §4                 |
-   | `typecheckDebt` == (asset tree − include)              | dropped a name → FAIL                 |
-   | no bare `@ts-ignore`/`@ts-nocheck`                     | appended one → FAIL                   |
-   | the nix check reads `tsconfig.json`, never `.all.json` | static check                          |
+   | ~~Assertion~~                                              | ~~How it was proven~~                     |
+   | ---------------------------------------------------------- | ----------------------------------------- |
+   | ~~`checkJs`/`strict`/`noEmit`/`allowJs` still true~~       | ~~flipped `checkJs` to false → FAIL~~     |
+   | ~~every `include` entry resolves to ≥1 file~~              | ~~ran before the include matched → FAIL~~ |
+   | ~~the include's **import closure is closed**~~             | ~~new assertion; see §4~~                 |
+   | ~~`typecheckDebt` == (asset tree − include)~~              | ~~dropped a name → FAIL~~                 |
+   | ~~no bare `@ts-ignore`/`@ts-nocheck`~~                     | ~~appended one → FAIL~~                   |
+   | ~~the nix check reads `tsconfig.json`, never `.all.json`~~ | ~~static check~~                          |
 3. **`nix/devshell.nix`** — `typescript` + `nodejs` in the default shell, so the gate is one
    command for the next person.
 
 ---
 
 ## 2. Per-file ledger
+
+<!-- check-rows:ledger -->
 
 | File                                        | Started |    Now | Gate                                                         |
 | ------------------------------------------- | ------: | -----: | ------------------------------------------------------------ |
@@ -220,6 +223,8 @@ AGENTS is T21 and is now overdue — it cost attention every single file.
 
 ## 6. What is left in `shell.js` (79 errors, grouped by fix shape)
 
+<!-- check-rows:ledger -->
+
 | Cluster                                                                    | ~Count | Fix                                                                                              |
 | -------------------------------------------------------------------------- | -----: | ------------------------------------------------------------------------------------------------ |
 | voicemail media/canvas (`vm*`, `audio`, `canvas`, `peaks`)                 |     30 | type the id lookups as `HTMLAudioElement`/`HTMLCanvasElement`; `vmBuildWave(uuid, audio)` params |
@@ -236,6 +241,7 @@ None of these is a design question. It is one focused sitting.
 ---
 
 ## 7. Plan tasks not started
+
 <!-- check-rows:ledger -->
 
 VERDICT 2026-11-15 (archive adjudication): every row here completed the SAME DAY — the
@@ -243,6 +249,8 @@ campaign finished 26/26 files at 0 errors (T19 include flip, T20 errorMessage sw
 `ui.test` micro-test, T21 the AGENTS § island TYPE gate bullet, T22 docs wiring,
 T23 ROADMAP/errata, T26 the full battery re-run green). T24/T25/T27–T29 keep their own
 trigger rows in TODO_LIST (typed-rejection design, retrofit report, android KMP).
+
+<!-- check-rows:ledger -->
 
 | Task                                                                                     | State                                                                                             |
 | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
@@ -260,6 +268,7 @@ trigger rows in TODO_LIST (typed-rejection design, retrofit report, android KMP)
 ---
 
 ## 8. Unverified — stated plainly
+
 <!-- check-rows:ledger -->
 
 | Claim                                              | Status                                                 |

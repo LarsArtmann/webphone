@@ -20,6 +20,7 @@ over the remaining 10 and is NOT yet wired into `nix flake check`.
 ---
 
 ## 0. The two numbers that matter
+
 <!-- check-rows:ledger -->
 
 | Metric                                                                    | Value                                                                                                                                                                                               |
@@ -111,7 +112,7 @@ audioout, session ×2, calls (partial). **Not yet covered by an island test** (l
 ### 1.7 The P0 documentation repairs (all five, verified)
 
 | ~~#~~ | ~~Repair~~                                                                                                                                                                         | ~~State~~                                     |
-| - | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------- |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
 | ~~1~~ | ~~Plan §11 acceptance criterion: "`nix fmt` clean" → the truth that `tsconfig.json` + `types/*.d.ts` are **oxfmt/BuildFlow-owned** (treefmt's prettier `includes` match neither)~~ | ~~DONE, with an inline "Erratum 2026-10-27"~~ |
 | ~~2~~ | ~~Plan §06 **T26** split into (a) codec+digest → `commonMain`, (b) `SipEngine` behind `expect`/`actual`; estimate 100 + 180 min~~                                                  | ~~DONE~~                                      |
 | ~~3~~ | ~~Plan **F103** re-estimated 15 → 180 min and reworded (the row contradicted T26)~~                                                                                                | ~~DONE~~                                      |
@@ -133,7 +134,7 @@ audioout, session ×2, calls (partial). **Not yet covered by an island test** (l
 ## 2. b) PARTIALLY DONE
 
 | ~~#~~  | ~~Item~~                          | ~~What is missing~~                                                                                                                                                                                                                                                                                            |
-| -- | ----------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ------ | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | ~~1~~  | ~~The campaign itself~~           | ~~**10 of 26 files, 680 of the original 949 errors.** shell.js alone is 41 % of the residue~~                                                                                                                                                                                                                  |
 | ~~2~~  | ~~`nix` wiring (plan T05)~~       | ~~No `island-typecheck` check, no `typescript` in `nix/devshell.nix`. The gate today runs only via the store path `/nix/store/…-typescript-7.0.2/bin/tsc`~~                                                                                                                                                    |
 | ~~3~~  | ~~Progress pin (plan T06)~~       | ~~Not written. Nothing yet stops a future commit from deleting `types/*.d.ts`, dropping a file from `include`, or adding a bare `@ts-ignore`~~                                                                                                                                                                 |
@@ -251,6 +252,7 @@ Impact **C**ritical / **H**igh / **M**edium / **L**ow · Effort **S** (<1 h) / *
 **L** (multi-session).
 
 ### P0 — repair this session's own damage (all S)
+
 <!-- check-rows:ledger -->
 
 | # | Task                                                                                                                            | Impact | Effort |
@@ -263,6 +265,7 @@ Impact **C**ritical / **H**igh / **M**edium / **L**ow · Effort **S** (<1 h) / *
 | 6 | Check that `errorMessage`'s new `ui.js → audio.js` import edge keeps the arch test happy                                        | H      | S      |
 
 ### P1 — finish the campaign (dependency order; ~560 of the 680 errors)
+
 <!-- check-rows:ledger -->
 
 | #  | Task                                                                                  | Impact | Effort |
@@ -281,6 +284,7 @@ Impact **C**ritical / **H**igh / **M**edium / **L**ow · Effort **S** (<1 h) / *
 | 18 | Flip the whole tree green and record the final count in the plan                      | C      | S      |
 
 ### P2 — make it a real gate (the plan's T05/T06, now the highest-value work)
+
 <!-- check-rows:ledger -->
 
 | #  | Task                                                                                         | Impact | Effort |
@@ -295,6 +299,7 @@ Impact **C**ritical / **H**igh / **M**edium / **L**ow · Effort **S** (<1 h) / *
 | 26 | Note the LSP divergence in `docs/lessons.md` (vtsls stale + no arrow-const `@template`)      | M      | S      |
 
 ### P3 — docs + doctrine (plan T23/T24)
+
 <!-- check-rows:ledger -->
 
 | #  | Task                                                                                    | Impact | Effort |
@@ -311,6 +316,7 @@ Impact **C**ritical / **H**igh / **M**edium / **L**ow · Effort **S** (<1 h) / *
 | 36 | Record in `docs/dedup-registry.md` that `errorMessage` is the ONE catch-narrowing home  | M      | S      |
 
 ### P4 — campaign hygiene
+
 <!-- check-rows:ledger -->
 
 | #  | Task                                                                                                  | Impact | Effort |
@@ -326,6 +332,7 @@ Impact **C**ritical / **H**igh / **M**edium / **L**ow · Effort **S** (<1 h) / *
 | 45 | Sweep the plan's remaining "~N h" estimates and label them as estimates                               | M      | S      |
 
 ### P5 — process / multi-session
+
 <!-- check-rows:ledger -->
 
 | #  | Task                                                                                                          | Impact | Effort |
@@ -365,6 +372,7 @@ Deleting or compressing either is an owner-shaped memory decision, not mine.
 ---
 
 ## 8. Brutal self-review — the 11 questions
+
 <!-- check-rows:ledger -->
 
 | Question                               | Answer                                                                                                                                                                                                                |
