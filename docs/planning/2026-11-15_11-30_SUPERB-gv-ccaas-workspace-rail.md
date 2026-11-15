@@ -56,14 +56,14 @@ mid-function and an unreadable grid is an unmaintainable one.
 
 ## 3. Shipped in this train
 
-| File                                          | Change                                                          |
-| --------------------------------------------- | --------------------------------------------------------------- |
-| `internal/web/views/layout.templ`             | rail aside, grouped `NavLinks`, `wp-rail-toggle`, dock reorder  |
-| `internal/web/views/i18n.go`                  | group labels + rail toggle, en + de                             |
-| `internal/web/assets/app.css`                 | rail/workspace/dock grid, compact rail, mobile bottom-bar reuse |
-| `internal/web/assets/theme-preload.js`        | pre-paint `wp-rail-collapsed`                                   |
-| `internal/web/assets/shell.js`                | rail toggle, persisted, aria-expanded in step                   |
-| `internal/web/views/layout_rail_test.go`      | rail/group/route/signed-out pins                                |
+| File                                     | Change                                                          |
+| ---------------------------------------- | --------------------------------------------------------------- |
+| `internal/web/views/layout.templ`        | rail aside, grouped `NavLinks`, `wp-rail-toggle`, dock reorder  |
+| `internal/web/views/i18n.go`             | group labels + rail toggle, en + de                             |
+| `internal/web/assets/app.css`            | rail/workspace/dock grid, compact rail, mobile bottom-bar reuse |
+| `internal/web/assets/theme-preload.js`   | pre-paint `wp-rail-collapsed`                                   |
+| `internal/web/assets/shell.js`           | rail toggle, persisted, aria-expanded in step                   |
+| `internal/web/views/layout_rail_test.go` | rail/group/route/signed-out pins                                |
 
 Two pre-existing red tests were repaired on the way (both confirmed red at the
 pre-train commit): the settings agent-row assertion matched the shortcut table's
