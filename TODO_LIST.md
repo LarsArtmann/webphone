@@ -148,8 +148,8 @@ report's still-open §f rows.
       systemd `LoadCredential` lands, mode 0400, the app actually
       reads the credential at login) — the eval-time assertions +
       `module-check-oauth2` cases are the current fence.
-- [ ] **Second module-check golden with `oauth2.enable`** (exact
-      rendered JSON, mirroring the zero-config golden).
+      ~~- [ ] **Second module-check golden with `oauth2.enable`** (exact
+      rendered JSON, mirroring the zero-config golden).~~ → done 2026-11-15 (plan T10): `nix/module-output-oauth2.nix` is the single source (same recipe as the zero-config golden), `nix/module-output-oauth2.golden` pins the full three-section rendering of one bootable SSO config — the settings JSON carries the callback (`https://phone.example.org/api/auth/oauth2/callback`) and passkey `rp_id`/`rp_origins` derived from `caddy.hostName`, so the F48 derivation assertion IS the fixture's own bytes; the `oauth2-enabled-output-golden` case diffs it (35 check cases green).
 - [ ] **Typed passkey options** in the module (passkey-only configs
       get derived rp the same way the OIDC lane derives them).
 
