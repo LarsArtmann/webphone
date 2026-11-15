@@ -609,66 +609,66 @@ What remains, each with its ONE home:
         `TestCallNoteSaveNudgesHistory` (exactly one payload-less nudge to the
         owner's hub).
 14. ~~**`scripts/templ-generate.sh` wrapper**~~ — done (landed 2026-11-07 by the sibling session; verified in-sync at templ v0.3.1100 today) — reads the pin from go.mod, warns on a disagreeing PATH templ, `--check` snapshots + regenerates + restores
-15. **Attended-transfer UI vs the NO-GO ruling** — `FEATURES.md` claimed the row
+    ~~15. **Attended-transfer UI vs the NO-GO ruling** — `FEATURES.md` claimed the row
     FULLY_FUNCTIONAL while `docs/research/2026-10-27_attended-transfer-spike.md` says
     the bridge is UNVERIFIED (the stack has no Replaces dialplan handling); the status
     is now PARTIALLY_FUNCTIONAL. Decide whether the dock's "Attended" button should be
-    hidden until a FreeSWITCH lab proves `Replaces` — the island's honesty contract
+    hidden until a FreeSWITCH lab proves `Replaces`~~ → ALREADY HONEST (verified 2026-11-14) — FEATURES carries the PARTIALLY_FUNCTIONAL row with the NO-GO spike link; the hide-the-button owner call lives in the owner-gated register (the GO sketch waits on a FreeSWITCH lab). — the island's honesty contract
     forbids a 200-OK that silently does nothing.
-16. [x] **`reverseLines` → `slices.Reverse` — DONE 2026-11-07 (P2-5)**: the
+15. [x] **`reverseLines` → `slices.Reverse` — DONE 2026-11-07 (P2-5)**: the
         hand-rolled two-pointer helper in `internal/readmodels/transcripts.go` is
         gone; its only caller now uses `slices.Reverse`, which also retires the
         `//nolint:branching-flow` the helper's own arithmetic needed. Behavior is
         identical (newest-first per call) and the readmodels suite is green.
 
-17. **Make freshness WARN on a §f-less newest report** — the gate PASSED on the
-    2026-11-06 10:45 report because it carried no §f at all ("nothing to check"),
-    so the ritual certified nothing (the vacuous-PASS class). A newest report
-    without §f should be a finding, not a green.
+~~17. **Make freshness WARN on a §f-less newest report** — the gate PASSED on the
+2026-11-06 10:45 report because it carried no §f at all ("nothing to check"),
+so the ritual certified nothing (the vacuous-PASS class). A newest report
+without §f should be a finding, not a green.~~ → SHIPPED — the wrapper's `status_f_gate` (the vacuous-pass kill): a newest status report without an §f section is itself the finding; verified in the 2026-11-14 sweep.
 18. ~~**Enforce CHANGELOG coverage for code-path commits**~~ — done (landed by the sibling session): `scripts/changelog-guard.sh` (+ selftest) — product-code deltas without a CHANGELOG.md change exit 1, tooling/tests/docs exempt per the ratified bar
 19. **Record the DF-brittleness + standalone-verb gotchas UPSTREAM** (docs-gates
-    repo, Artmann-Technologies): `audit_max` shifts with living-doc growth because
-    "generic" is a document-frequency threshold (observed 330 → 331 from one
-    CHANGELOG paragraph, then 354 → 360 in one session); **LOCAL CALIBRATION
-    2026-11-07 (P1-4 tail)**: `generic_df` is now 16 in `.docs-gates.json`
-    (**the rule: a token on more than ~0.5 % of the living corpus's lines is too
-    common to prove a harvest**, so it is re-derived from the line count each
-    sweep) instead of the upstream default 8, which alone dropped the residue
-    360 → 71 — the sweep of values (8→360, 12→181, 16→101, 20→76, 22→71, 30→40)
-    is the evidence, and a planted nonsense §f item is still flagged. Upstream should scale the default with corpus size
-    and expose it on the CLI (it is config-file-only today). Also: a standalone
-    verb ignores `.docs-gates.json`'s ratchets while `run` honors them.
+repo, Artmann-Technologies): `audit_max` shifts with living-doc growth because
+"generic" is a document-frequency threshold (observed 330 → 331 from one
+CHANGELOG paragraph, then 354 → 360 in one session); **LOCAL CALIBRATION
+2026-11-07 (P1-4 tail)**: `generic_df` is now 16 in `.docs-gates.json`
+(**the rule: a token on more than ~0.5 % of the living corpus's lines is too
+common to prove a harvest**, so it is re-derived from the line count each
+sweep) instead of the upstream default 8, which alone dropped the residue
+360 → 71 — the sweep of values (8→360, 12→181, 16→101, 20→76, 22→71, 30→40)
+is the evidence, and a planted nonsense §f item is still flagged. Upstream should scale the default with corpus size
+and expose it on the CLI (it is config-file-only today). Also: a standalone
+verb ignores `.docs-gates.json`'s ratchets while `run` honors them.
 20. [x] **Frontend-UX verification tail — DONE 2026-11-07 (P1-4)**: three pins
-        landed in `internal/web/views/settings_structure_test.go`. (a) the admin
-        line-count copy is pinned in BOTH languages (it must name the transcript,
-        keep its leading space, and stay one unbreakable German compound — so there
-        is no wrap point inside "Transkriptzeilen"); (b) the F20 three-audience
-        Settings structure is pinned as an ORDER (prefs < data < collapsed server
-        `<details>` between them) plus a per-section dl-count pin (the 10
-        hand-written shortcut rows, which no helper generates); (c)
-        `#wp-palette-open` is now a real disclosure —
-        `aria-controls="wp-palette"` + `aria-expanded`, kept in step by `shell.js`
-        at runtime, documented in docs/dom-contract.md § Notes.
+landed in `internal/web/views/settings_structure_test.go`. (a) the admin
+line-count copy is pinned in BOTH languages (it must name the transcript,
+keep its leading space, and stay one unbreakable German compound — so there
+is no wrap point inside "Transkriptzeilen"); (b) the F20 three-audience
+Settings structure is pinned as an ORDER (prefs < data < collapsed server
+`<details>` between them) plus a per-section dl-count pin (the 10
+hand-written shortcut rows, which no helper generates); (c)
+`#wp-palette-open` is now a real disclosure —
+`aria-controls="wp-palette"` + `aria-expanded`, kept in step by `shell.js`
+at runtime, documented in docs/dom-contract.md § Notes.
 21. **annotate.go/docs-gates tooling nits** (found by the docs-health v9 sweep
-    2026-11-07, upstream Artmann-Technologies repos): (a) escaped pipes inside a
-    code span (`\|`) defeat the table cell splitter, so a per-cell strike
-    silently crosses a cell boundary — hand-fixed one in the durability
-    archive; **LOCAL MITIGATION SHIPPED 2026-11-07 (P1-3)**:
-    `scripts/strike-safety.py rows` refuses the shape before a sweep writes and
-    is a wrapper gate (13-case self-test); still worth the upstream scanner
-    fix; (b) spec verdict values are not shape-validated — a literal "UNMAPPED"
-    verdict passes the banned-words check and would strike as garbage;
-    **LOCAL MITIGATION SHIPPED 2026-11-07 (P1-3)**:
-    `scripts/strike-safety.py verdict` enforces the canonical heads; upstream
-    should hard-error the same way;
-    (c) "live reports" has three disagreeing counters (INDEX regen count, raw
-    ls count, cadence gate count read 76/75/70 in one moment) — derive one
-    from the other or name the differences;
-    (d) the documented `<!-- fresh:skip -->` exemption does NOT actually exempt
-    an item (tried directly above the item and above the §f heading; the gate
-    still reported 2 unharvested). What DID work was a distinctive token in the
-    item text (`go-health-dashboard`) — so the marker is either undocumented in
-    its real placement or broken; verify upstream and fix the doc or the code.
+2026-11-07, upstream Artmann-Technologies repos): (a) escaped pipes inside a
+code span (`\|`) defeat the table cell splitter, so a per-cell strike
+silently crosses a cell boundary — hand-fixed one in the durability
+archive; **LOCAL MITIGATION SHIPPED 2026-11-07 (P1-3)**:
+`scripts/strike-safety.py rows` refuses the shape before a sweep writes and
+is a wrapper gate (13-case self-test); still worth the upstream scanner
+fix; (b) spec verdict values are not shape-validated — a literal "UNMAPPED"
+verdict passes the banned-words check and would strike as garbage;
+**LOCAL MITIGATION SHIPPED 2026-11-07 (P1-3)**:
+`scripts/strike-safety.py verdict` enforces the canonical heads; upstream
+should hard-error the same way;
+(c) "live reports" has three disagreeing counters (INDEX regen count, raw
+ls count, cadence gate count read 76/75/70 in one moment) — derive one
+from the other or name the differences;
+(d) the documented `<!-- fresh:skip -->` exemption does NOT actually exempt
+an item (tried directly above the item and above the §f heading; the gate
+still reported 2 unharvested). What DID work was a distinctive token in the
+item text (`go-health-dashboard`) — so the marker is either undocumented in
+its real placement or broken; verify upstream and fix the doc or the code.
 
 ### 2026-11-05 hygiene train (assistant sweep — tests + docs + repo hygiene)
 
@@ -686,33 +686,33 @@ fixed at their rows.
 
 Deferred engineering findings (each verified at HEAD 2026-11-05; none urgent):
 
-1. **CSP has no violation reporting** (`report-uri`/`report-to` absent from the
-   server.go CSP const) — a live XSS-class event is unobservable. Needs an owner
-   decision on where reports land (a `/csp-report` endpoint + Caddy wiring) before
-   anything is wired.
-2. **`/metrics`, `/version`, `/openapi.json` are fenced only by the module's vhost** —
-   with `caddy.enable = false` they are open to anyone who can reach the port (the
-   server.go comment says "fenced per-location by the module's vhost"; nothing
-   enforces it). A module-level eval-time warning (or a bind-interface default)
-   closes the silent-exposure class.
-3. **The NixOS module's secret-leak guard misses freeform secrets**: it asserts the
-   three typed secret files but not `gateway.webhook_secret` or a TURN secret inside
-   freeform `settings` (those still land in the world-readable store if an operator
-   writes them as literals).
-4. **The templ form-POST surface has no rate bucket**: `/messages/send`, `/fax/send`,
-   contacts import, snippets, flags are unlimited — only the `/api/*` lanes are
-   bucketed. Decide: bucket them or document the session gate as the bound.
+~~1. **CSP has no violation reporting** (`report-uri`/`report-to` absent from the
+server.go CSP const) — a live XSS-class event is unobservable. Needs an owner
+decision on where reports land (a `/csp-report` endpoint + Caddy wiring) before
+anything is wired.~~ → SHIPPED 2026-11-08 — `report-uri /csp-report` + `report-to csp-endpoint` + `Reporting-Endpoints` on every response; the session-free `POST /csp-report` intake journals one greppable `csp_report` line (bucket 30/min burst 10, 4 KiB cap, malformed best-effort 204), pinned by `TestCspReportFences` (AGENTS CSP bullet).
+~~2. **`/metrics`, `/version`, `/openapi.json` are fenced only by the module's vhost** —
+with `caddy.enable = false` they are open to anyone who can reach the port (the
+server.go comment says "fenced per-location by the module's vhost"; nothing
+enforces it). A module-level eval-time warning (or a bind-interface default)~~ → SHIPPED 2026-11-08 — the `metrics-fencing` eval-time WARNING case: a non-loopback `settings.addr` with `caddy.enable = false` names `/metrics`+`/version`+`/openapi.json`+probes and the two closes at eval (pinned by the module-check case; AGENTS metrics-fencing bullet).
+closes the silent-exposure class.
+~~3. **The NixOS module's secret-leak guard misses freeform secrets**: it asserts the
+three typed secret files but not `gateway.webhook_secret` or a TURN secret inside
+freeform `settings` (those still land in the world-readable store if an operator
+writes them as literals).~~ → SHIPPED 2026-11-08 — `inlineSecretLeaks` eval walk refuses a secret-shaped key carrying an INLINE value (`*secret*`/`*token*`/`*password*`/…); sanctioned lanes are `*_file`/`*_files`/`_path`, `/run/…` values, `environmentFile`; pinned by `nix/module-check-secrets.nix` (AGENTS secrets bullet).
+~~4. **The templ form-POST surface has no rate bucket**: `/messages/send`, `/fax/send`,
+contacts import, snippets, flags are unlimited — only the `/api/*` lanes are
+bucketed. Decide: bucket them or document the session gate as the bound.~~ → SHIPPED 2026-11-08 — the templ form-POST lanes are BUCKETED by cost class: `composeLimiter` 20/min burst 10 (send/fax/ai-draft/approve), `contactsTemplLimiter` contacts-grade, `stateTemplLimiter` hook-grade (flags/read/snippets/voicemail/draft mode); rejections carry `Retry-After` + the `.wp-error` element, pinned by `TestTemplFormPostBucketsFenceTheLanes` (AGENTS bucketing bullet).
 5. ~~**`server.Deps` grows a field per read model** (seven read-model fields, each with
-   a nil-means-503 convention riding every test composition) — DESIGNED 2026-11-08:
-   docs/planning/2026-11-08_server-deps-accessor-collapse-design.md owns the shape,
-   the migration order, and the test-composition impact. EXECUTE only when the
-   eighth read model lands (the note's trigger).~~ →
-   closed 2026-11-14 — post-ladder audit pins the surface DELIBERATE: the trigger fired
-   twice over (Messages/Faxes re-typed journal-backed + PushDevices; 10 readmodels.*
-   gates now) and the collapse has no target — readmodels.Handle was to wrap the
-   readmodels.db engine the 2026-11-11 ladder retirement (A43) deleted. One home for
-   the ruling: docs/planning/2026-11-14_t19-deps-post-ladder-audit.md (residue: two
-   missing `var _` gate pins and the Contacts/Snippets nil-doc drift)
+a nil-means-503 convention riding every test composition) — DESIGNED 2026-11-08:
+docs/planning/2026-11-08_server-deps-accessor-collapse-design.md owns the shape,
+the migration order, and the test-composition impact. EXECUTE only when the
+eighth read model lands (the note's trigger).~~ →
+closed 2026-11-14 — post-ladder audit pins the surface DELIBERATE: the trigger fired
+twice over (Messages/Faxes re-typed journal-backed + PushDevices; 10 readmodels.*
+gates now) and the collapse has no target — readmodels.Handle was to wrap the
+readmodels.db engine the 2026-11-11 ladder retirement (A43) deleted. One home for
+the ruling: docs/planning/2026-11-14_t19-deps-post-ladder-audit.md (residue: two
+missing `var _` gate pins and the Contacts/Snippets nil-doc drift)
 
 ### Fleet-libs closeout residue (2026-11-04, the SUPERB closeout train)
 
@@ -919,33 +919,33 @@ Shipped the same session: the docs-versus-code config pin (`internal/config/docp
 immediately documented eight previously undocumented keys) and generation-closing for live transcripts
 (`closeCallSegments` + the announce guard, two island specs).
 
-1. **Config typo strictness (L7, sharpest).** koanf `Unmarshal`
-   (the koanf `Unmarshal` inside `config.Load`) silently drops unknown keys from the JSON file AND from
-   `WEBPHONE_*`, so a typo turns a seam off instead of failing the boot. Design is constrained by
-   the surface itself: strict (error) for the FILE, warn-only for the ENVIRONMENT, because a dozen
-   `WEBPHONE_*` variables are operational and not config keys (`WEBPHONE_CONFIG`,
-   `WEBPHONE_DEBUG_TIMING`, `WEBPHONE_RELEASE_MAX_LOAD`, `WEBPHONE_SSE_OOB`, …) and a false reject
-   is an outage on every deployment. Owner call: the NixOS module writes a freeform `settings` map,
-   so file-strictness changes boot semantics for a deployment carrying an extra key today. Pairs
-   with the `docpin_test.go` key tree (same reflection helper can feed the allowed-key set).
+~~1. **Config typo strictness (L7, sharpest).** koanf `Unmarshal`
+(the koanf `Unmarshal` inside `config.Load`) silently drops unknown keys from the JSON file AND from
+`WEBPHONE_*`, so a typo turns a seam off instead of failing the boot. Design is constrained by
+the surface itself: strict (error) for the FILE, warn-only for the ENVIRONMENT, because a dozen
+`WEBPHONE_*` variables are operational and not config keys (`WEBPHONE_CONFIG`,
+`WEBPHONE_DEBUG_TIMING`, `WEBPHONE_RELEASE_MAX_LOAD`, `WEBPHONE_SSE_OOB`, …) and a false reject
+is an outage on every deployment. Owner call: the NixOS module writes a freeform `settings` map,
+so file-strictness changes boot semantics for a deployment carrying an extra key today. Pairs
+with the `docpin_test.go` key tree (same reflection helper can feed the allowed-key set).~~ → SHIPPED — `internal/config/unknown.go` warns at boot on unknown config keys (a config newer than its binary names what the binary ignores — the pin-gap alarm; AGENTS hard-won-rules bullet).
 2. **Agent liveness contract for D3 (L6).** Prior art worth borrowing before the agent-token lane is
-   designed: ai-phone's relay mode answers a stalled client with a filler at 1.5 s, another at 10 s,
-   a polite goodbye and BYE at 25 s; a dead `listen` client frees the listener slot on socket EOF so
-   the next call falls back to the autonomous mode; `hangup` waits 30 s + 10 s and then fails with a
-   named exit code. webphone's textagent has a 3 s probe and a 502 toast (covers unreachable, not
-   "accepted then silent") and no designed fallback for the human waiting on a draft. Design input
-   for D3 LANDED 2026-10-29 (M18/F75-F77):
-   `docs/planning/2026-10-29_16-17_D3-agent-liveness-design.md` — liveness ladder, slot release,
-   named exit codes, and the webphone seam map; still owner-GO + security-review gated.
+designed: ai-phone's relay mode answers a stalled client with a filler at 1.5 s, another at 10 s,
+a polite goodbye and BYE at 25 s; a dead `listen` client frees the listener slot on socket EOF so
+the next call falls back to the autonomous mode; `hangup` waits 30 s + 10 s and then fails with a
+named exit code. webphone's textagent has a 3 s probe and a 502 toast (covers unreachable, not
+"accepted then silent") and no designed fallback for the human waiting on a draft. Design input
+for D3 LANDED 2026-10-29 (M18/F75-F77):
+`docs/planning/2026-10-29_16-17_D3-agent-liveness-design.md` — liveness ladder, slot release,
+named exit codes, and the webphone seam map; still owner-GO + security-review gated.
 3. **Detection column in the error contract (L9).** `docs/error-contract.md` answers "what does the
-   operator SEE"; ai-phone's failure table also answers "how would anyone KNOW it happened"
-   (counters, warm-start timings, a logged line-override). Add a detection column for the quiet
-   classes at the next pass over that document.
+operator SEE"; ai-phone's failure table also answers "how would anyone KNOW it happened"
+(counters, warm-start timings, a logged line-override). Add a detection column for the quiet
+classes at the next pass over that document.
 4. **Caller-perceived latency (L3).** The histogram covers HTTP durations by status class; nothing
-   measures dial press → first audible media, or the ASR segment round trip. ai-phone's rule is the
-   sharpest phrasing of why that matters: t0 is the last speech, and the silence is INSIDE the
-   budget. Lowest of the five: needs a reporting home and an island metric, so measure the question
-   before instrumenting everything.
+measures dial press → first audible media, or the ASR segment round trip. ai-phone's rule is the
+sharpest phrasing of why that matters: t0 is the last speech, and the silence is INSIDE the
+budget. Lowest of the five: needs a reporting home and an island metric, so measure the question
+before instrumenting everything.
 
 ### Island type gate tails (2026-10-27/28 — gate SHIPPED and CI-WIRED; refinements below)
 
@@ -1581,7 +1581,7 @@ ceiling) + markdownlint posture execution (post-sitting row-18 verdict). Plan:
 ### Release-green + B5-staged — open rows (2026-11-11 harvest)
 
 - **Answer the 00-45 report's §g Q1–Q3:** (1) B5 prod-switch authority + timing, (2) main's treefmt red — heal over the other session's refactor files or let them self-heal, (3) the E3 budget number.
-- **Verify webphone CI green on the treefmt-healed tip:** the daemon-swept refactor files owe a formatter pass; main sat red across four consecutive tips (`a3832e4a` → `346cad88`), treefmt-check failing on gofmt alignment around `cqrs-lint:ignore` comments.
+  ~~- **Verify webphone CI green on the treefmt-healed tip:** the daemon-swept refactor files owe a formatter pass; main sat red across four consecutive tips (`a3832e4a` → `346cad88`), treefmt-check failing on gofmt alignment around `cqrs-lint:ignore` comments.~~ → GREEN — `8f3520bb` ci-verdict rc=0 (verified 2026-11-14 morning) and the 2026-11-14/15 pushes (`26014b9b`, `375fe473`, `5bd34dc0`) landed on a treefmt-clean tree (nix fmt 0-changed before every push).
 - **Post-switch verification battery** once B5 executes: prod `/version` = `v2.13.0`, journal quiet (no unknown-config-key WARNs), `ui-capture --track` Reports causes subline + voicemail honest-toast verdict on real data, pbx-artmann deploy-ledger row.
 - **Release-log archival:** the `/tmp/release-2.13.0-{5..11}.log` evidence was LOST to a tmpfiles purge before it reached the docs evidence home — row 32's rot warning materialized. The runbook addition below is the fix; the raw logs are unrecoverable (the verdicts live in the CHANGELOG + the status docs).
 - **aarch64 toplevel ruling:** the `pbx-aarch64` toplevel is EVAL-proven (it evaluated and reached building) but its full build is QEMU-bound on `stalwart` (a Rust mail server compiled from source for aarch64 — hours, silent). Prod is x86_64. Revisit only with an aarch64 host, or via a remote aarch64 builder.
