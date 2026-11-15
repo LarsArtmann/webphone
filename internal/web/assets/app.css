@@ -107,6 +107,15 @@
    * stored collapse preference both fall back to. */
   --rail-col: 216px;
   --rail-col-compact: 72px;
+  /* Whole column templates as tokens: the raw chains are long enough that
+   * prettier breaks them mid-var(), and a grid template nobody can read is
+   * a layout nobody will maintain. One token per shell shape. */
+  --grid-full: var(--rail-col) minmax(0, 1fr) var(--island-col);
+  --grid-full-compact: var(--rail-col-compact) minmax(0, 1fr) var(--island-col);
+  --grid-no-island: var(--rail-col) minmax(0, 1fr);
+  --grid-no-island-compact: var(--rail-col-compact) minmax(0, 1fr);
+  --grid-door: minmax(0, 1fr) var(--island-col);
+  --grid-door-no-island: minmax(0, 1fr);
   --content-max: 1560px;
   --shell-gap: 28px;
 }
@@ -427,7 +436,7 @@ h3 {
 
 .wp-body {
   display: grid;
-  grid-template-columns: var(--rail-col) minmax(0, 1fr) var(--island-col);
+  grid-template-columns: var(--grid-full);
   gap: var(--shell-gap);
   padding: 28px 32px;
   align-items: start;
@@ -441,7 +450,7 @@ h3 {
  * for one: #wp-nav stays in the DOM (the post-login shell re-fetches it)
  * but the empty rail leaves the grid. */
 .wp-body-signed-out {
-  grid-template-columns: minmax(0, 1fr) var(--island-col);
+  grid-template-columns: var(--grid-door);
 }
 
 .wp-body-signed-out .wp-rail {
@@ -513,7 +522,7 @@ h3 {
  * shell.js §4b owns the toggle. */
 @media (min-width: 901px) {
   .wp-island-collapsed .wp-body {
-    grid-template-columns: var(--rail-col) minmax(0, 1fr);
+    grid-template-columns: var(--grid-no-island);
   }
 
   .wp-island-collapsed .wp-island {
@@ -525,7 +534,7 @@ h3 {
    * :has() keeps the evaluation in CSS, so toggling the preference can
    * never strand a call in a `display: none` column. */
   .wp-island-collapsed .wp-body:has(.wp-island .call-card) {
-    grid-template-columns: var(--rail-col) minmax(0, 1fr) var(--island-col);
+    grid-template-columns: var(--grid-full);
   }
 
   .wp-island-collapsed .wp-body:has(.wp-island .call-card) .wp-island {
@@ -537,22 +546,20 @@ h3 {
    * center, badges become corner pips — the standard contact-centre icon
    * rail. */
   html.wp-rail-collapsed .wp-body {
-    grid-template-columns: var(--rail-col-compact) minmax(0, 1fr) var(--island-col);
+    grid-template-columns: var(--grid-full-compact);
   }
 
   html.wp-rail-collapsed .wp-body-signed-out {
-    grid-template-columns: minmax(0, 1fr) var(--island-col);
+    grid-template-columns: var(--grid-door);
   }
 
   html.wp-rail-collapsed.wp-island-collapsed .wp-body {
-    grid-template-columns: var(--rail-col-compact) minmax(0, 1fr);
+    grid-template-columns: var(--grid-no-island-compact);
   }
 
   html.wp-rail-collapsed.wp-island-collapsed
     .wp-body:has(.wp-island .call-card) {
-    grid-template-columns:
-      var(--rail-col-compact) minmax(0, 1fr)
-      var(--island-col);
+    grid-template-columns: var(--grid-full-compact);
   }
 
   html.wp-rail-collapsed .wp-nav-group-label,
@@ -585,15 +592,21 @@ h3 {
  * do not fit with labels at 1024-1200. */
 @media (min-width: 901px) and (max-width: 1199px) {
   .wp-body {
-    grid-template-columns: var(--rail-col-compact) minmax(0, 1fr) var(--island-col);
+    grid-template-columns: var(--grid-full-compact);
   }
 
   .wp-body-signed-out {
-    grid-template-columns: minmax(0, 1fr) var(--island-col);
+    grid-template-columns: var(--grid-door);
   }
 
   .wp-island-collapsed .wp-body {
-    grid-template-columns: var(--rail-col-compact) minmax(0, 1fr);
+    grid-template-columns: var(--grid-no-island-compact);
+  }
+
+  /* No labels, no toggle: expanding here would overflow the column, so the
+   * control would be a promise the layout cannot keep. */
+  .wp-rail-toggle {
+    display: none;
   }
 
   .wp-nav-group-label,

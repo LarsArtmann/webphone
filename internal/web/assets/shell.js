@@ -2464,9 +2464,8 @@
 
     if (railToggle) {
       railToggle.addEventListener("click", function () {
-        var collapsed = !document.documentElement.classList.contains(
-          "wp-rail-collapsed",
-        );
+        var collapsed =
+          !document.documentElement.classList.contains("wp-rail-collapsed");
         try {
           localStorage.setItem(RAIL_KEY, collapsed ? "1" : "0");
         } catch {
