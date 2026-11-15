@@ -919,6 +919,114 @@ def metrics_scenario(binary: str, workdir: str) -> int:
     return 1 if c.failures else 0
 
 
+def agent_scenario(binary: str, workdir: str) -> int:
+    """The textagent seam's boot honesty (T05) on self-booted servers.
+
+    With WEBPHONE_TEXTAGENT__URL + SECRET_FILE configured, /config.js
+    advertises "agent":true (the island's summarize gate rides it) and
+    the summarize route is LIVE (a session ask reaches the transcript
+    lookup — "no transcript", not the disabled-seam "not found"); with
+    zero config the flag stays absent and the route answers the
+    disabled-seam 404 — byte-identical off.
+    """
+    c = Check()
+
+    def boot(env_extra: dict[str, str], datadir: str) -> tuple[subprocess.Popen, str]:
+        port = free_port()
+        env = dict(os.environ)
+        env.update(
+            {
+                "WEBPHONE_ADDR": f"127.0.0.1:{port}",
+                "WEBPHONE_DATA_DIR": f"{workdir}/{datadir}",
+                "WEBPHONE_GATEWAY__WEBHOOK_SECRET": "test-secret",  # nosec B105 - fixture secret for the self-booted smoke server
+            }
+        )
+        env.update(env_extra)
+        srv = subprocess.Popen(  # nosec B603 - argv-list (no shell) launch of the local binary under test
+            [binary], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+        )
+        base = f"http://127.0.0.1:{port}"
+        deadline = time.monotonic() + TIMEOUT
+        while time.monotonic() < deadline:
+            try:
+                urllib.request.urlopen(base + "/healthz", timeout=1).read()  # nosec B310 - readiness probe of the local server under test
+                return srv, base
+            except OSError:
+                time.sleep(0.1)
+        srv.kill()
+        raise RuntimeError("agent scenario: server did not become ready")
+
+    def stop_server(srv: subprocess.Popen) -> None:
+        srv.terminate()
+        try:
+            srv.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            srv.kill()
+
+    def login_csrf(base: str) -> Smoke:
+        s = Smoke(base)
+        _, page, _ = s.request("GET", "/login")
+        m = re.search(
+            r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
+        )
+        if m:
+            s.csrf = m.group(1)
+        c.ok("agent: login accepted", s.login(), "POST /api/session != 201")
+        return s
+
+    # OFF boot: the flag is absent, the route answers the disabled seam.
+    srv, base = boot({}, "data-agent-off")
+    try:
+        _, body, _ = Smoke(base).request("GET", "/config.js")
+        c.ok(
+            "agent: config.js silent when off",
+            b'"agent":true' not in body,
+            "config.js advertised the seam without config",
+        )
+        s = login_csrf(base)
+        status, rbody, _ = s.request("POST", "/api/calls/smoke-call/summary-draft")
+        c.ok(
+            "agent: summarize route answers the disabled seam",
+            status == 404 and b"not found" in rbody,
+            f"got {status} {rbody[:60]!r}",
+        )
+    finally:
+        stop_server(srv)
+
+    # ON boot: the flag advertises, the route reaches the transcript gate.
+    secret = f"{workdir}/agent-secret"
+    with open(secret, "w", encoding="utf-8") as fh:
+        fh.write("review-secret\n")
+    srv, base = boot(
+        {
+            "WEBPHONE_TEXTAGENT__URL": "http://127.0.0.1:9",  # deliberately dead: the route must fail PAST the seam gate
+            "WEBPHONE_TEXTAGENT__SECRET_FILE": secret,
+        },
+        "data-agent-on",
+    )
+    try:
+        _, body, _ = Smoke(base).request("GET", "/config.js")
+        c.ok(
+            "agent: config.js advertises the seam",
+            b'"agent":true' in body,
+            "config.js missing the agent flag with the seam wired",
+        )
+        s = login_csrf(base)
+        status, rbody, _ = s.request("POST", "/api/calls/smoke-call/summary-draft")
+        c.ok(
+            "agent: summarize route is live",
+            status == 404 and b"transcript" in rbody,
+            f"got {status} {rbody[:60]!r}",
+        )
+    finally:
+        stop_server(srv)
+
+    print(f"agent scenario: {c.passed} passed, {len(c.failures)} failed")
+    for failure in c.failures:
+        print(f"  FAILED: {failure}")
+    return 1 if c.failures else 0
+
+
 def faxcap_scenario(binary: str, workdir: str) -> int:
     """The fax capability declaration, end-to-end on a self-booted server.
 
@@ -1633,6 +1741,34 @@ def run_checks(
             f"got {status}: {upload_body[:120]!r}",
         )
 
+    # 13c. Notes API roundtrip (T05): the one-slot-per-call contract on a
+    # fresh binary — PUT records, GET reads back, DELETE frees (the 409's
+    # remedy proves itself at boot, not only in the Go suite), and the
+    # slot reads EMPTY after the delete (a 200 with no body, the
+    # notes-precedent shape).
+    note_call = "smoke-note-call"
+    status, _, _ = s.request(
+        "PUT",
+        f"/api/calls/{note_call}/note",
+        json.dumps({"body": "smoke note"}).encode(),
+        "application/json",
+    )
+    c.ok("notes: PUT records the slot", status == 204, f"got {status}")
+    status, body, _ = s.request("GET", f"/api/calls/{note_call}/note")
+    c.ok(
+        "notes: GET reads it back",
+        status == 200 and b"smoke note" in body,
+        f"{status} {body[:60]!r}",
+    )
+    status, _, _ = s.request("DELETE", f"/api/calls/{note_call}/note")
+    c.ok("notes: DELETE frees the slot", status == 204, f"got {status}")
+    status, body, _ = s.request("GET", f"/api/calls/{note_call}/note")
+    c.ok(
+        "notes: GET after delete reads the empty slot",
+        status == 200 and b'"body":""' in body,
+        f"{status} {body[:40]!r}",
+    )
+
     # 14. Phone-api proxy fails closed while the PBX API is not configured.
     status, _, _ = s.request("GET", "/phone-api/history?limit=5")
     c.ok("phone-api proxy fails closed", status in (503, 401, 404), f"got {status}")
@@ -1800,6 +1936,7 @@ def main() -> int:
         rc = max(rc, boot_failure_scenario(binary, workdir, free_port()))
         rc = max(rc, asr_scenario(binary, workdir))
         rc = max(rc, dialgate_scenario(binary, workdir))
+        rc = max(rc, agent_scenario(binary, workdir))
         rc = max(rc, faxcap_scenario(binary, workdir))
         rc = max(rc, metrics_scenario(binary, workdir))
         rc = max(rc, enroll_scenario(binary, workdir))

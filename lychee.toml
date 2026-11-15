@@ -13,4 +13,5 @@ exclude_path = [
   "docs/announcements/archived",
   "docs/architecture-understanding/archived",
   "docs/research/archived",
+  "docs/status/archived",
 ]
