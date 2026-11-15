@@ -222,6 +222,30 @@ changes rendered strings (P4); codes are stable (P5). The seven
 principles and the per-seam table live in the error-excellence plan
 appendix (`docs/planning/archived/2026-09-22_01-20_SUPERB-error-excellence.md`).
 
+## The summarize chain's two error lanes (2026-11-15)
+
+One agent ask (`POST /api/calls/{id}/summary-draft`, the manual and the
+detached-review lane alike) produces TWO different error vocabularies,
+and the seam boundary between them is deliberate:
+
+- `textagent.*` — the agent client's OWN codes: `textagent.http` for a
+  verdict the agent answered (the status rides the verdict),
+  `textagent.reach`/`textagent.read` for transport trouble. These codes
+  never reach the browser.
+- `agent.summarize` — the summarize seam's wrap for an UNCLASSIFIED
+  transport failure: the browser sees 502. An agent VERDICT does not
+  ride this wrap — the passthrough allowlist (409/422/429/503) forwards
+  the agent's own status and its human-phrased message verbatim;
+  every other agent status collapses into the same 502 (the operator
+  never debugs the agent's internals through the browser surface).
+
+Rule of thumb: the browser sees either the agent's verdict VERBATIM
+(allowlist status + message) or `agent.summarize` 502 — never a raw
+`textagent.*` code. The push lane that fans the resulting draft fact
+wraps under `push.ntfy_send`/`push.fcm_send` and refuses under
+`push.transport`; the notes lane a draft complements answers its cap
+as `cqrs.note_list_full` (409, delete frees the slot).
+
 ## Detection — how anyone KNOWS it happened (the quiet classes, 2026-11-08)
 
 The table above answers "what does the USER see". Several real failure
