@@ -1,3 +1,12 @@
+> ARCHIVED 2026-11-15 (cadence drain): the six-hour red this report tracks was
+> healed the same day (vendorHash class, the third occurrence then — the
+> dependency-bump doctrine + the daemon-guard holes in AGENTS.md are the
+> standing remediation), the watcher scoped and self-tested, and every
+> §4 "missing" half landed in later trains (formatter-aware
+> whitespace-drift.sh, module-cache-janitor.sh, the branching-flow triage,
+> the aarch64 cross-build, the UI capture trains). Tables are
+> ledger-marked inventories (measurements + point-in-time verdicts).
+
 # Status report — a green main, a six-hour blind spot, and the fix for it
 
 **Snapshot: 2026-10-28 10:30 CET.** `HEAD` = `8edd0ea`, **pushed**, working tree clean, **CI green**
@@ -25,6 +34,8 @@ wait.
 ---
 
 ## 2. The numbers
+
+<!-- check-rows:ledger -->
 
 | Metric                                             | 03:45 (last report)                         | **10:30**                                                                                   | How measured                                                        |
 | -------------------------------------------------- | ------------------------------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
@@ -82,6 +93,8 @@ pre-bump tree). Island specs 261. `go test ./...` green (31 packages).
 ---
 
 ## 4. PARTIALLY DONE
+
+<!-- check-rows:ledger -->
 
 | Item                                     | State                                                                                                                                        | Missing                                                                                                    |
 | ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
@@ -256,10 +269,12 @@ the `art-dupl` job is **green**.
 
 `ci.yml` run 40666424112 (`3584652`) fails two jobs, and **neither is a defect I introduced**:
 
-| Job                 | Failure                                                                                     | Owner                                                                                                   |
-| ------------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+<!-- check-rows:ledger -->
+
+| Job                 | Failure                                                                                                                                                                                                                                                                                                                                            | Owner                                                                                                   |
+| ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | `fast flake checks` | ~~`treefmt-check` wants to reformat `internal/server/server.go`~~ → done 2026-11-15 — healed the same day: the owning train landed its server.go edit and the gate went green; the P1 fix this report's §6.2 recommended (whitespace-drift.sh formatter-awareness) is the shipped tool of record (selftest-pinned, GATE 1 of .githooks/pre-commit) | the concurrent session is editing that file right now (it is +26/−? lines past HEAD in my working tree) |
-| `go test -race`     | ~~`TestErrorCodeRegistryIsFresh`: new error codes from the same train are not in the contract~~ → done 2026-11-15 — healed by the same train's registry `-update` landing WITH the codes (the documented same-push rule); the freshness test is green at every HEAD since | same train; regenerating the registry now would describe code that is not in HEAD                       |
+| `go test -race`     | ~~`TestErrorCodeRegistryIsFresh`: new error codes from the same train are not in the contract~~ → done 2026-11-15 — healed by the same train's registry `-update` landing WITH the codes (the documented same-push rule); the freshness test is green at every HEAD since                                                                          | same train; regenerating the registry now would describe code that is not in HEAD                       |
 
 Concrete in-flight signals in the working tree at 10:55 CET — none of them mine:
 
