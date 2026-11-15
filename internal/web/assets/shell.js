@@ -947,11 +947,13 @@
     document.addEventListener("wp:session-opened", agentModeOpened);
 
     // Stale-pill guard (agent-pill trio): another tab's mode change
-    // cannot reach this tab through the session-opened event — when any
-    // drafts activity fires, the pill re-reads the live identity and
-    // re-renders. A failed read keeps the current pill (stale beats
-    // gone); an empty agent_mode (seam turned off) removes it, exactly
-    // like the boot path.
+    // cannot reach this tab through any boot event — when drafts
+    // activity fires, the pill re-reads the live identity and
+    // re-renders. Boot itself is NOT refreshed: the wp:session-opened
+    // detail is authoritative and an async re-read would race it. A
+    // failed read keeps the current pill (stale beats gone); an empty
+    // agent_mode (seam turned off) removes it, exactly like the boot
+    // path.
     var refreshAgentMode = function () {
       // The stub environments some surfaces run in have no fetch at all;
       // a refresh is best-effort decoration, never a thrower.
@@ -979,7 +981,6 @@
         .catch(function () {});
     };
     document.addEventListener("wp:drafts-changed", refreshAgentMode);
-    document.addEventListener("wp:session-opened", refreshAgentMode);
 
     // 2e. Reply snippets (M21): a chip or picker button carries the body
     //     itself (data-snippet). The fill REPLACES the reply textarea's
