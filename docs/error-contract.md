@@ -593,8 +593,8 @@ a deliberate code change, regenerate:
 | store.exec                                   | Infrastructure            | internal/store/sweep.go           |
 | store.fax_create                             | Infrastructure            | internal/fax/service.go           |
 | store.fax_spool                              | Infrastructure            | internal/fax/service.go           |
-| store.flag_read                              | Infrastructure            | internal/store/legacy_contacts.go |
-| store.flag_write                             | Infrastructure            | internal/store/legacy_contacts.go |
+| store.flag_read                              | Infrastructure            | internal/store/appflags.go        |
+| store.flag_write                             | Infrastructure            | internal/store/appflags.go        |
 | store.message_append                         | Infrastructure            | internal/messaging/service.go     |
 | store.message_insert                         | Infrastructure            | internal/store/messages.go        |
 | store.message_scan                           | Infrastructure            | internal/store/messages.go        |
