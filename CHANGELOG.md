@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- A grouped **sidebar rail** replaces the horizontal tab strip on desktop:
+  Workspace (Messages, Voicemail, Fax), Calls (History, Reports), People
+  (Contacts) and System (Settings, Admin), one glyph per destination and
+  unread badges on the rail. It compacts 216px -> 72px from a foot toggle
+  (stored in `localStorage`, applied before first paint) and auto-compacts
+  below 1200px; the phone island becomes the right-hand call dock. Every
+  link keeps its real route and HTMX partial swap, so deep links,
+  back/forward and (critically) the mounted SIP island are unchanged. On
+  phones the same nav markup is the fixed bottom bar, so there is one nav
+  tree, not two. Owner directive: multipage IA as a Google-Voice + CCaaS
+  mix (`docs/planning/2026-11-15_11-30_SUPERB-gv-ccaas-workspace-rail.md`;
+  this supersedes the D1 "multipage: NO" reading of 2026-10-29, which
+  answered a reload question that was never the gap).
 - `DELETE /api/calls/{id}/note` — the note slot's explicit delete, the
   409 remedy made real: the per-owner cap counts open slots, and
   freeing one is the way out the conflict message names. An
@@ -38,6 +51,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The shell's column templates are tokens (`--grid-full`,
+  `--grid-no-island`, `--grid-door`, ...) and the rail/workspace/dock grid
+  is one shape per state; the mobile rules reuse the rail markup instead of
+  keeping a second navigation tree.
 - `push.Fanout.Settle` awaits the detached delivery goroutines, and the
   ring-hook tests settle before TempDir cleanup so a fan's store read
   can no longer race the journal directory's removal (CI flake

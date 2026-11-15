@@ -60,7 +60,7 @@ _structural_ complaint, not a coat of paint.
 
 ## 3. Decisions
 
-### D1 — Multipage: **NO.** Deepen the in-shell view model instead.
+### D1 — Multipage: **NO.** Deepen the in-shell view model instead. SUPERSEDED 2026-11-15 — the IA was the gap, not the reload: `docs/planning/2026-11-15_11-30_SUPERB-gv-ccaas-workspace-rail.md` (the no-reload constraint stands; the no-sidebar conclusion does not, and Google Voice + Google CCaaS are both single-document apps with a left rail and per-view URLs).
 
 A conventional multi-page app would reload the document on navigation. The SIP
 island lives in that document and **must never unload** (AGENTS: "The island
