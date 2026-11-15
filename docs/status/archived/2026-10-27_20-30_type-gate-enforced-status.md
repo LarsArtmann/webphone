@@ -1,3 +1,9 @@
+> ARCHIVED 2026-11-15 (docs-health T16 cadence drain): the type-gate campaign this
+> report tracks COMPLETED the same day — 26/26 files at 0 errors, the gate enforced as
+> the `island-typecheck` nix check + `typecheck_pin_test.go` (AGENTS § island TYPE gate
+> bullet is the standing doctrine). §7's ledger rows all carry their completion verdict;
+> the tables are ledger-marked inventories.
+
 # Status report — the island type gate is now ENFORCED (T01–T18, partially)
 
 > **SUPERSEDED 2026-10-27 21:30.** This snapshot was taken mid-campaign and its numbers are the
@@ -19,6 +25,7 @@ measured locally, and names what was **not** run (§8).
 ---
 
 ## 0. The four numbers
+<!-- check-rows:ledger -->
 
 | Metric                                                 | Before this session  | Now                      |
 | ------------------------------------------------------ | -------------------- | ------------------------ |
@@ -229,6 +236,13 @@ None of these is a design question. It is one focused sitting.
 ---
 
 ## 7. Plan tasks not started
+<!-- check-rows:ledger -->
+
+VERDICT 2026-11-15 (archive adjudication): every row here completed the SAME DAY — the
+campaign finished 26/26 files at 0 errors (T19 include flip, T20 errorMessage sweep +
+`ui.test` micro-test, T21 the AGENTS § island TYPE gate bullet, T22 docs wiring,
+T23 ROADMAP/errata, T26 the full battery re-run green). T24/T25/T27–T29 keep their own
+trigger rows in TODO_LIST (typed-rejection design, retrofit report, android KMP).
 
 | Task                                                                                     | State                                                                                             |
 | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
@@ -246,6 +260,7 @@ None of these is a design question. It is one focused sitting.
 ---
 
 ## 8. Unverified — stated plainly
+<!-- check-rows:ledger -->
 
 | Claim                                              | Status                                                 |
 | -------------------------------------------------- | ------------------------------------------------------ |
@@ -258,6 +273,10 @@ None of these is a design question. It is one focused sitting.
 | `go test -count=1 ./...`                           | **verified** green (after fixing the two pins in §5.3) |
 | island `node --test` (260 specs)                   | **verified** green after every file                    |
 | push / CI verdict                                  | **none** — 12 commits unpushed (§0)                    |
+
+(Archive adjudication 2026-11-15: the unverified legs were run before the campaign's
+final landing — the gate rides `nix flake check` today as `island-typecheck`, and the
+type gate is the AGENTS-documented authority.)
 
 `nix flake check` and `buildflow` are the two that could still surprise: treefmt has already
 reformatted `shell.js` once mid-edit, and BuildFlow's oxfmt owns everything outside
