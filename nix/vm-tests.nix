@@ -246,6 +246,107 @@
           '';
         };
 
+        # OIDC lane VM test (plan T09, 2026-11-15): the typed
+        # services.webphone.oauth2 lane gets its RUNTIME proof, not just
+        # the eval assertions — the operator's secret file is handed to
+        # systemd as a LoadCredential, the unit-private copy lands 0400
+        # under /run/credentials, the app's rendered config points at
+        # that copy, the SSO door is LIVE (begin 302s to the configured
+        # issuer with the client id), and the chain FAILS CLOSED: remove
+        # the source file and the unit start fails (the crm.nix doctrine
+        # "a missing source file fails the UNIT START" proven live).
+        # KVM-gated like the backup VM test.
+        webphone-oauth2 = pkgs.testers.runNixOSTest {
+          name = "webphone-oauth2";
+
+          requiredFeatures.kvm = true;
+
+          nodes.machine =
+            { pkgs, ... }:
+            {
+              imports = [ ../package/nixos-module.nix ];
+              services.webphone = {
+                enable = true;
+                package = self'.packages.webphone;
+                oauth2 = {
+                  enable = true;
+                  issuer = "http://127.0.0.1:9999"; # a stub issuer: the assert is the app's redirect, never the IdP's answer
+                  clientId = "webphone-vm";
+                  clientSecretFile = "/etc/webphone-oidc-source";
+                };
+                settings = {
+                  auth.users."lars@example.org".extensions = [ "1000" ];
+                  auth.extension_password_files."1000" = "/etc/webphone-ext-1000";
+                };
+              };
+              environment.etc = {
+                "webphone-oidc-source" = {
+                  text = "oidc-vm-secret";
+                  mode = "0600";
+                };
+                "webphone-ext-1000" = {
+                  text = "ext-secret";
+                  mode = "0600";
+                };
+              };
+              environment.systemPackages = [ pkgs.curl ];
+              system.stateVersion = "26.05";
+            };
+
+          testScript = ''
+            machine.wait_for_unit("webphone.service")
+            machine.wait_for_open_port(8080)
+
+            # The credential landed: the unit-private copy exists, is
+            # owner-only (0400), and carries the source secret's bytes.
+            machine.succeed(
+                "test -f /run/credentials/webphone.service/webphone-oidc-client-secret"
+            )
+            machine.succeed(
+                "test \"$(stat -c %a /run/credentials/webphone.service/webphone-oidc-client-secret)\" = 400"
+            )
+            machine.succeed(
+                "grep -q 'oidc-vm-secret' /run/credentials/webphone.service/webphone-oidc-client-secret"
+            )
+
+            # The app READS the copy: the rendered config JSON (its store
+            # path rides WEBPHONE_CONFIG) names the credential path — the
+            # app must never see the host path in place.
+            cfg_path = machine.succeed(
+                "systemctl show webphone.service -p Environment "
+                "| tr ' ' '\\n' | grep WEBPHONE_CONFIG= | cut -d= -f2-"
+            ).strip()
+            machine.succeed(
+                f"grep -q '/run/credentials/webphone.service/webphone-oidc-client-secret' {cfg_path}"
+            )
+            machine.succeed(
+                f"grep -q 'webphone-vm' {cfg_path}"
+            )
+
+            # The SSO door is LIVE: begin 302s to the configured issuer
+            # with the client id in the query (the app parsed the lane;
+            # the IdP itself is never contacted on this leg).
+            location = machine.succeed(
+                "curl -s -o /dev/null -w '%{redirect_url}' "
+                "http://127.0.0.1:8080/api/auth/oauth2/begin"
+            )
+            assert "http://127.0.0.1:9999" in location, f"begin did not redirect to the issuer: {location}"
+            assert "client_id=webphone-vm" in location, f"begin lost the client id: {location}"
+
+            # The chain FAILS CLOSED: remove the operator's source file
+            # and the unit start dies (systemd cannot snapshot the
+            # credential) — the crm.nix doctrine proven live, not the
+            # silent-dark-seam shape.
+            machine.succeed("mv /etc/webphone-oidc-source /etc/webphone-oidc-source.saved")
+            machine.fail("systemctl restart webphone.service")
+            machine.succeed("systemctl is-failed webphone.service")
+            machine.succeed("mv /etc/webphone-oidc-source.saved /etc/webphone-oidc-source")
+            machine.succeed("systemctl restart webphone.service")
+            machine.wait_for_open_port(8080)
+            machine.succeed("curl -sf http://127.0.0.1:8080/healthz")
+          '';
+        };
+
         # Backup/restore DRILL (plan T23, 2026-09-20): the VM test above
         # proves the online snapshot; this proves the RESTORE — tar the
         # data dir, reboot in a fresh location, pull a byte-identical
