@@ -2435,6 +2435,47 @@
       });
     }
 
+    // 4c. The sidebar rail collapse — §4b's sibling one layout level out,
+    //     with the same contract: theme-preload.js applies the stored
+    //     compact state to <html> before first paint, this keeps the class,
+    //     the button's aria-expanded and localStorage in step.
+    //
+    //     Compact mode hides LABELS only: every route, badge and the
+    //     Phone tab stays mounted, so nothing about navigation changes —
+    //     the rail just narrows from 216px to 72px.
+    var RAIL_KEY = "wp-rail-collapsed";
+    var railToggle = document.getElementById("wp-rail-toggle");
+
+    /** @param {boolean} collapsed */
+    var applyRailCollapsed = function (collapsed) {
+      if (collapsed) {
+        document.documentElement.classList.add("wp-rail-collapsed");
+      } else {
+        document.documentElement.classList.remove("wp-rail-collapsed");
+      }
+      if (railToggle) {
+        railToggle.setAttribute("aria-expanded", collapsed ? "false" : "true");
+      }
+    };
+
+    applyRailCollapsed(
+      document.documentElement.classList.contains("wp-rail-collapsed"),
+    );
+
+    if (railToggle) {
+      railToggle.addEventListener("click", function () {
+        var collapsed = !document.documentElement.classList.contains(
+          "wp-rail-collapsed",
+        );
+        try {
+          localStorage.setItem(RAIL_KEY, collapsed ? "1" : "0");
+        } catch {
+          /* best-effort persistence only */
+        }
+        applyRailCollapsed(collapsed);
+      });
+    }
+
     // 5. Command palette (Ctrl/Cmd-K) and shortcut help (?): one
     //    lazily-built overlay, two modes. The palette lists the tabs
     //    plus a few shell actions and filters as you type; the help

@@ -102,7 +102,12 @@
   --island-w-min: 320px;
   --island-w-max: 400px;
   --island-col: minmax(var(--island-w-min), var(--island-w-max));
-  --content-max: 1400px;
+  /* The sidebar rail's column bounds: full (labels) and compact (glyphs
+   * only). The compact width is what the auto-compact breakpoint and the
+   * stored collapse preference both fall back to. */
+  --rail-col: 216px;
+  --rail-col-compact: 72px;
+  --content-max: 1560px;
   --shell-gap: 28px;
 }
 
@@ -422,7 +427,7 @@ h3 {
 
 .wp-body {
   display: grid;
-  grid-template-columns: var(--island-col) minmax(0, 1fr);
+  grid-template-columns: var(--rail-col) minmax(0, 1fr) var(--island-col);
   gap: var(--shell-gap);
   padding: 28px 32px;
   align-items: start;
@@ -430,6 +435,35 @@ h3 {
   width: 100%;
   max-width: var(--content-max);
   margin: 0 auto;
+}
+
+/* The signed-out door has no navigation, so it must not reserve a column
+ * for one: #wp-nav stays in the DOM (the post-login shell re-fetches it)
+ * but the empty rail leaves the grid. */
+.wp-body-signed-out {
+  grid-template-columns: minmax(0, 1fr) var(--island-col);
+}
+
+.wp-body-signed-out .wp-rail {
+  display: none;
+}
+
+/* --- sidebar rail (Google-Voice / contact-centre IA) --------------------- */
+
+/* The rail is chrome, not a document: navigating swaps #tab-content and
+ * pushes a URL; the document — and the SIP island living in it — never
+ * reloads. Grouped sections, one glyph per destination, the active row a
+ * filled accent pill with a leading bar: the shape every GV / CCaaS
+ * workspace uses. On phones the SAME markup becomes the fixed bottom bar
+ * (responsive block), so there is exactly one nav tree to keep correct. */
+.wp-rail {
+  position: sticky;
+  top: 78px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  align-self: start;
+  min-width: 0;
 }
 
 .wp-island {
@@ -479,7 +513,7 @@ h3 {
  * shell.js §4b owns the toggle. */
 @media (min-width: 901px) {
   .wp-island-collapsed .wp-body {
-    grid-template-columns: minmax(0, 1fr);
+    grid-template-columns: var(--rail-col) minmax(0, 1fr);
   }
 
   .wp-island-collapsed .wp-island {
@@ -491,11 +525,99 @@ h3 {
    * :has() keeps the evaluation in CSS, so toggling the preference can
    * never strand a call in a `display: none` column. */
   .wp-island-collapsed .wp-body:has(.wp-island .call-card) {
-    grid-template-columns: var(--island-col) minmax(0, 1fr);
+    grid-template-columns: var(--rail-col) minmax(0, 1fr) var(--island-col);
   }
 
   .wp-island-collapsed .wp-body:has(.wp-island .call-card) .wp-island {
     display: block;
+  }
+
+  /* The compact rail: stored preference (class on <html>, applied before
+   * first paint) or the auto-compact breakpoint below. Labels drop, glyphs
+   * center, badges become corner pips — the standard contact-centre icon
+   * rail. */
+  html.wp-rail-collapsed .wp-body {
+    grid-template-columns: var(--rail-col-compact) minmax(0, 1fr) var(--island-col);
+  }
+
+  html.wp-rail-collapsed .wp-body-signed-out {
+    grid-template-columns: minmax(0, 1fr) var(--island-col);
+  }
+
+  html.wp-rail-collapsed.wp-island-collapsed .wp-body {
+    grid-template-columns: var(--rail-col-compact) minmax(0, 1fr);
+  }
+
+  html.wp-rail-collapsed.wp-island-collapsed
+    .wp-body:has(.wp-island .call-card) {
+    grid-template-columns:
+      var(--rail-col-compact) minmax(0, 1fr)
+      var(--island-col);
+  }
+
+  html.wp-rail-collapsed .wp-nav-group-label,
+  html.wp-rail-collapsed .wp-nav-label,
+  html.wp-rail-collapsed .wp-rail-toggle-label {
+    display: none;
+  }
+
+  html.wp-rail-collapsed .wp-nav-link {
+    justify-content: center;
+    padding: 10px 0;
+  }
+
+  html.wp-rail-collapsed .wp-nav-badge {
+    position: absolute;
+    top: 2px;
+    right: 8px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+  }
+}
+
+/* Between a laptop's 1200 and the label rail's comfortable 1280+, the
+ * glyph rail is the honest shape: three columns (rail, work, phone dock)
+ * do not fit with labels at 1024-1200. */
+@media (min-width: 901px) and (max-width: 1199px) {
+  .wp-body {
+    grid-template-columns: var(--rail-col-compact) minmax(0, 1fr) var(--island-col);
+  }
+
+  .wp-body-signed-out {
+    grid-template-columns: minmax(0, 1fr) var(--island-col);
+  }
+
+  .wp-island-collapsed .wp-body {
+    grid-template-columns: var(--rail-col-compact) minmax(0, 1fr);
+  }
+
+  .wp-nav-group-label,
+  .wp-nav-label,
+  .wp-rail-toggle-label {
+    display: none;
+  }
+
+  .wp-nav-link {
+    justify-content: center;
+    padding: 10px 0;
+  }
+
+  .wp-nav-badge {
+    position: absolute;
+    top: 2px;
+    right: 8px;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
   }
 }
 
@@ -557,36 +679,104 @@ h3 {
   display: inline-flex;
 }
 
+/* --- collapsible rail ---------------------------------------------------- */
+
+/* The rail's own collapse control, pinned to the rail's foot. Same
+ * both-rendered chevron trick as the island toggle (the state class lives
+ * on <html>, applied before first paint by theme-preload.js, flipped by
+ * shell.js): collapsed, the chevron points the way back out. */
+.wp-rail-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 6px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: var(--text-sm);
+  text-align: start;
+  cursor: pointer;
+  transition:
+    color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    background var(--dur-fast) var(--ease);
+}
+
+.wp-rail-toggle:hover,
+.wp-rail-toggle:focus-visible {
+  color: var(--text);
+  background: var(--surface-2);
+  border-color: var(--border);
+}
+
+.wp-rail-toggle-show {
+  display: none;
+}
+
+html.wp-rail-collapsed .wp-rail-toggle-hide {
+  display: none;
+}
+
+html.wp-rail-collapsed .wp-rail-toggle-show {
+  display: inline-flex;
+}
+
+html.wp-rail-collapsed .wp-rail-toggle {
+  justify-content: center;
+  padding: 6px 0;
+}
+
 /* --- navigation ---------------------------------------------------------- */
 
-/* Segmented pill bar (2026-11-11 restyle): the tab row reads as an app
- * control, not a document strip — pills in a soft container, the active
- * tab a filled pill with the LED glow. Wraps gracefully when the admin
- * tab joins on narrow desktops. */
+/* Sidebar rail navigation (2026-11-15): the horizontal pill strip became a
+ * grouped left rail — the Google-Voice / contact-centre shape (section
+ * labels, one glyph per destination, a filled active pill with a leading
+ * bar). It is chrome, not a document: every row is a real route and the
+ * HTMX swap only replaces #tab-content, so navigation never reloads the
+ * document the SIP island lives in. On phones this same markup becomes the
+ * fixed bottom bar (responsive block). */
 .wp-nav {
   display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 2px 0;
+}
+
+.wp-nav-group {
+  display: flex;
+  flex-direction: column;
   gap: 2px;
-  flex-wrap: wrap;
-  padding: 4px;
-  background: var(--surface);
-  border: var(--hairline);
-  border-radius: 999px;
-  box-shadow: var(--shadow-1);
+}
+
+.wp-nav-group-label {
+  margin: 0 0 4px;
+  padding-inline-start: 12px;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--muted);
+  opacity: 0.85;
 }
 
 .wp-nav-link {
-  display: inline-flex;
+  position: relative;
+  display: flex;
   align-items: center;
-  gap: clamp(4px, 0.5cqw, 7px);
-  padding: 8px clamp(8px, 1.1cqw, 15px);
+  gap: 10px;
+  min-width: 0;
+  padding: 9px 12px;
   color: var(--muted);
   font-weight: 550;
   font-size: var(--text-md);
   text-decoration: none;
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: var(--radius);
   /* The Phone tab is a BUTTON in the same class (Train 3): the reset
- * keeps the UA chrome out of the pill — anchors are unaffected. */
+ * keeps the UA chrome out of the row — anchors are unaffected. */
   background-color: transparent;
   font-family: inherit;
   cursor: pointer;
@@ -594,6 +784,13 @@ h3 {
     color var(--dur-fast) var(--ease),
     background var(--dur-fast) var(--ease),
     border-color var(--dur-fast) var(--ease);
+}
+
+.wp-nav-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .wp-nav-link:hover {
@@ -610,11 +807,25 @@ h3 {
   font-weight: 650;
   background: var(--accent-soft);
   border-color: color-mix(in srgb, var(--accent) 32%, transparent);
-  /* The line-light signature: the active pill bleeds a faint LED glow —
+  /* The line-light signature: the active row bleeds a faint LED glow —
    * the one decorated spot in the chrome (everything else stays
    * quiet). */
   box-shadow: 0 8px 20px -12px
     color-mix(in srgb, var(--accent) 75%, transparent);
+}
+
+/* The leading bar marks the rail's active row (the contact-centre
+ * signature): an inset accent stripe, so the row still reads as one
+ * control and nothing overflows the rail column. */
+.wp-nav-link.wp-active::before {
+  content: "";
+  position: absolute;
+  inset-inline-start: 3px;
+  top: 9px;
+  bottom: 9px;
+  width: 3px;
+  border-radius: 2px;
+  background: var(--accent);
 }
 
 /* The glyph leads the label (icons ship with the 2026-11-11 restyle:
@@ -622,6 +833,7 @@ h3 {
  * bar the icon is what keeps the labels legible at their small size). */
 .wp-nav-ic {
   display: inline-flex;
+  flex: 0 0 auto;
 }
 
 .wp-nav-ic .wp-icon {
@@ -630,6 +842,7 @@ h3 {
 }
 
 .wp-nav-badge {
+  margin-inline-start: auto;
   background: var(--accent);
   color: var(--on-accent);
   border-radius: 999px;
@@ -637,17 +850,6 @@ h3 {
   padding: 1px 7px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-}
-
-/* Single-row fit (§f 12): the nav lives inside the tab column, so the
- * pill paddings/gap scale with the CONTAINER (cqw of tabcol) instead of
- * the viewport — with the island open at 1280 the row compacts fluidly
- * instead of wrapping Settings onto a second line; the container step
- * drops the label size last. */
-@container tabcol (max-width: 880px) {
-  .wp-nav-link {
-    font-size: var(--text-sm);
-  }
 }
 
 /* Train 3 (mobile dialer): the Phone tab is JS-created (shell.js) and
@@ -2644,6 +2846,25 @@ a:focus-visible {
     gap: 16px;
   }
 
+  /* The rail is a desktop shape: on phones its box leaves the flow and
+   * the SAME <nav> becomes the fixed bottom bar below. No second nav
+   * tree, so a11y and the HTMX swap keep one source. */
+  .wp-rail {
+    display: contents;
+  }
+
+  .wp-rail-toggle {
+    display: none;
+  }
+
+  .wp-nav-group {
+    display: contents;
+  }
+
+  .wp-nav-group-label {
+    display: none;
+  }
+
   /* Content-first (2026-11-11 restyle): signed in, the tab content
    * leads on a phone — messages and history are why the phone comes
    * out of the pocket, and the dialer island sat between the user and
@@ -2679,7 +2900,9 @@ a:focus-visible {
     right: 0;
     bottom: 0;
     z-index: 90;
+    flex-direction: row;
     flex-wrap: nowrap;
+    gap: 2px;
     justify-content: space-around;
     padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
     background: color-mix(in srgb, var(--surface) 94%, transparent);
@@ -2726,12 +2949,18 @@ a:focus-visible {
     height: 20px;
   }
 
+  /* The rail's leading bar has no room in a stacked icon slot. */
+  .wp-nav-link.wp-active::before {
+    display: none;
+  }
+
   /* The badge becomes a corner pip instead of an inline chip — the
    * column layout has no room beside the label. */
   .wp-nav-badge {
     position: absolute;
     top: 3px;
     right: 12%;
+    margin-inline-start: 0;
     min-width: 16px;
     height: 16px;
     padding: 0 4px;

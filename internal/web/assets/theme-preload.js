@@ -8,10 +8,12 @@
   var theme = null;
   var welcomeDismissed = false;
   var islandCollapsed = false;
+  var railCollapsed = false;
   try {
     theme = localStorage.getItem("wp-theme");
     welcomeDismissed = localStorage.getItem("wp-welcome-dismissed") === "1";
     islandCollapsed = localStorage.getItem("wp-island-collapsed") === "1";
+    railCollapsed = localStorage.getItem("wp-rail-collapsed") === "1";
   } catch {
     return; // storage unavailable (private mode) — ride the OS theme
   }
@@ -30,5 +32,11 @@
   // keeps this class in step; the class always lives on <html>.
   if (islandCollapsed) {
     document.documentElement.classList.add("wp-island-collapsed");
+  }
+  // The collapsible sidebar rail (same contract one layout level out: the
+  // rail's width is a grid column, so the stored compact state must land
+  // before first paint or the wide rail flashes and snaps).
+  if (railCollapsed) {
+    document.documentElement.classList.add("wp-rail-collapsed");
   }
 })();
