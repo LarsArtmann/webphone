@@ -113,6 +113,7 @@ in
     ./oauth2.nix
     ./crm.nix
     ./textagent.nix
+    ./passkey.nix
   ];
 
   config = lib.mkIf cfg.enable {
