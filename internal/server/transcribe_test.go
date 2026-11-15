@@ -4,67 +4,9 @@ import (
 	"bytes"
 	"encoding/json/v2"
 	"net/http"
-	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"github.com/larsartmann/webphone/internal/asr"
 )
-
-// providerSeen records what the fake provider received on the wire so a
-// test can assert the pass-through end to end.
-type providerSeen struct {
-	Audio       string
-	Filename    string
-	ContentType string
-	Language    string
-}
-
-// fakeProvider is an OpenAI-compatible transcription stub. It records the
-// last request it saw so a test can assert the bytes and the multipart
-// shape forwarded end to end.
-func fakeProvider(t *testing.T, status int, text string) (*httptest.Server, *providerSeen) {
-	t.Helper()
-	seen := &providerSeen{}
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/v1/audio/transcriptions" {
-			t.Errorf("provider path: %q", r.URL.Path)
-		}
-		if err := r.ParseMultipartForm(1 << 20); err != nil {
-			t.Errorf("provider multipart: %v", err)
-		}
-		if fhs := r.MultipartForm.File["file"]; len(fhs) == 1 {
-			fh := fhs[0]
-			seen.Filename = fh.Filename
-			seen.ContentType = fh.Header.Get("Content-Type")
-			if f, err := fh.Open(); err == nil {
-				defer func() { _ = f.Close() }()
-				buf := make([]byte, 1024)
-				n, _ := f.Read(buf)
-				seen.Audio = string(buf[:n])
-			}
-		}
-		seen.Language = r.FormValue("language")
-		if status != http.StatusOK {
-			w.WriteHeader(status)
-			return
-		}
-		_ = json.MarshalWrite(w, struct {
-			Text string `json:"text"`
-		}{Text: text})
-	}))
-	t.Cleanup(server.Close)
-	return server, seen
-}
-
-func asrClientFor(t *testing.T, providerURL string) *asr.Client {
-	t.Helper()
-	client, err := asr.NewClient(asr.ClientConfig{BaseURL: providerURL})
-	if err != nil {
-		t.Fatal(err)
-	}
-	return client
-}
 
 func TestTranscribeRequiresSession(t *testing.T) {
 	server := newTestServer(t)

@@ -7,7 +7,6 @@ import (
 	"log/slog"
 	"net/http"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -16,6 +15,7 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/push"
 	"github.com/larsartmann/webphone/internal/readmodels"
+	"github.com/larsartmann/webphone/internal/server/api"
 )
 
 // postSummaryDraft is the island's summarize ask: the call id rides the
@@ -223,66 +223,11 @@ func TestSummaryDraftAuditsTheProducerLine(t *testing.T) {
 	}
 }
 
-// mustExt parses a test extension or fails the test.
-func mustExt(t *testing.T, raw string) domain.Extension {
-	t.Helper()
-	owner, err := domain.ParseExtension(raw)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return owner
-}
-
-// recordingTransport satisfies push.Sender and records the draft facts
-// shipped through it (the M14 fan-out specs). The fan-out runs in a
-// fire-and-forget goroutine, so every field access is mutex-guarded.
-type recordingTransport struct {
-	mu      sync.Mutex
-	enabled bool
-	drafts  []push.Draft
-	err     error
-}
-
-func (r *recordingTransport) Enabled() bool    { return r.enabled }
-func (r *recordingTransport) Describe() string { return "recording" }
-func (r *recordingTransport) Send(context.Context, string, push.Ring) error {
-	return nil
-}
-func (r *recordingTransport) SendDraft(_ context.Context, _ string, draft push.Draft) error {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	r.drafts = append(r.drafts, draft)
-	return r.err
-}
-
-// snapshot returns a copy of the recorded drafts (race-free read).
-func (r *recordingTransport) snapshot() []push.Draft {
-	r.mu.Lock()
-	defer r.mu.Unlock()
-	return append([]push.Draft(nil), r.drafts...)
-}
-
-// waitForDrafts polls until the fan-out goroutine recorded n facts (or
-// times out) — deterministic, no sleep windows.
-func waitForDrafts(t *testing.T, transport *recordingTransport, n int) []push.Draft {
-	t.Helper()
-	deadline := time.Now().Add(2 * time.Second)
-	for {
-		drafts := transport.snapshot()
-		if len(drafts) >= n {
-			return drafts
-		}
-		if time.Now().After(deadline) {
-			t.Fatalf("fan-out recorded %d draft facts, want %d", len(drafts), n)
-		}
-		time.Sleep(5 * time.Millisecond)
-	}
-}
-
 // summaryServerWithPush wires the full summarize chain plus a push
-// seam over the journal device registry; the registry handle comes
-// back so a test can register devices directly.
-func summaryServerWithPush(t *testing.T, transport push.Sender) (*testServer, *client, readmodels.PushDeviceGate) {
+// seam over the journal device registry; the registry and fanout
+// handles come back so a test can register devices and settle the
+// detached fans.
+func summaryServerWithPush(t *testing.T, transport push.Sender) (*testServer, *client, readmodels.PushDeviceGate, *push.Fanout) {
 	t.Helper()
 	stub := newStubReviewAPI(t)
 	devices := cqrs.NewPushDevices(newCoreSystem(t))
@@ -294,7 +239,7 @@ func summaryServerWithPush(t *testing.T, transport push.Sender) (*testServer, *c
 		deps.Push = fanout
 		deps.PushDevices = devices
 	})
-	return server, clientFor(t, server), devices
+	return server, clientFor(t, server), devices, fanout
 }
 
 // summaryFanRegistry adapts the journal-backed device store to the
@@ -321,7 +266,7 @@ func (r summaryFanRegistry) Remove(ctx context.Context, owner domain.Extension, 
 // ships nothing, and the summarize answer is unaffected either way.
 func TestSummaryDraftPushesOnlyWhenSeamOn(t *testing.T) {
 	transport := &recordingTransport{enabled: false}
-	_, c, _ := summaryServerWithPush(t, transport)
+	_, c, _, _ := summaryServerWithPush(t, transport)
 	c.login("1001", "pw")
 	if resp, _ := postTranscript(t, c, "call-p1", "in", "+4989123456", "words"); resp.StatusCode != http.StatusNoContent {
 		t.Fatalf("seed transcript: %d", resp.StatusCode)
@@ -343,7 +288,7 @@ func TestSummaryDraftPushesOnlyWhenSeamOn(t *testing.T) {
 // the agent's draft id and the contact on the wire.
 func TestSummaryDraftFansOutToRegisteredDevices(t *testing.T) {
 	transport := &recordingTransport{enabled: true}
-	server, c, devices := summaryServerWithPush(t, transport)
+	server, c, devices, _ := summaryServerWithPush(t, transport)
 	ctx := context.Background()
 	for _, device := range []string{"dev-1", "dev-2"} {
 		if err := devices.Upsert(ctx, mustExt(t, "1001"), device, "recording", "tok-"+device); err != nil {
@@ -383,7 +328,7 @@ func TestSummaryDraftFansOutToRegisteredDevices(t *testing.T) {
 // ErrUnregistered prunes the registration exactly like the ring lane.
 func TestSummaryDraftPushPrunesDeadDevice(t *testing.T) {
 	transport := &recordingTransport{enabled: true, err: push.ErrUnregistered}
-	_, c, devices := summaryServerWithPush(t, transport)
+	_, c, devices, _ := summaryServerWithPush(t, transport)
 	ctx := context.Background()
 	if err := devices.Upsert(ctx, mustExt(t, "1001"), "dev-dead", "recording", "tok-dead"); err != nil {
 		t.Fatal(err)
@@ -440,7 +385,7 @@ func (p *panicTransport) SendDraft(context.Context, string, push.Draft) error {
 // still be 200 and the server must keep serving afterwards.
 func TestSummaryDraftPushPanicDoesNotKillServer(t *testing.T) {
 	transport := &panicTransport{}
-	_, c, devices := summaryServerWithPush(t, transport)
+	_, c, devices, _ := summaryServerWithPush(t, transport)
 	ctx := context.Background()
 	if err := devices.Upsert(ctx, mustExt(t, "1001"), "dev-panic", "panic", "tok"); err != nil {
 		t.Fatal(err)
@@ -464,5 +409,90 @@ func TestSummaryDraftPushPanicDoesNotKillServer(t *testing.T) {
 	resp2, _ := postSummaryDraft(t, c, "call-panic")
 	if resp2.StatusCode != http.StatusOK {
 		t.Fatalf("server must survive the fan-out panic: %d, want 200", resp2.StatusCode)
+	}
+}
+
+// TestSummaryDraftFailedAttemptNeverRecordsIdem pins the retryability
+// contract at BOTH failure arms — a call with no transcript (the
+// deleted-mid-window shape) and an agent verdict refusal record NOTHING
+// in the idempotency window: once the cause clears, the retry is a real
+// draft, never a duplicate.
+func TestSummaryDraftFailedAttemptNeverRecordsIdem(t *testing.T) {
+	stub := newStubReviewAPI(t)
+	stub.status.Store(http.StatusServiceUnavailable)
+	c := clientFor(t, serverWithAgentAndASR(t, stub.server.URL))
+	c.login("1001", "pw")
+
+	// Arm 1: transcript absent → 404, window stays empty.
+	if resp, _ := postSummaryDraft(t, c, "call-r"); resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("transcript-less call: %d, want 404", resp.StatusCode)
+	}
+	// The transcript becomes available, but the agent still refuses
+	// (arm 2) → 503 passthrough, and the window STILL records nothing.
+	if resp, _ := postTranscript(t, c, "call-r", "in", "+4989123456", "words"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("seed transcript: %d", resp.StatusCode)
+	}
+	if resp, _ := postSummaryDraft(t, c, "call-r"); resp.StatusCode != http.StatusServiceUnavailable {
+		t.Fatalf("refusing agent: %d, want 503 passthrough", resp.StatusCode)
+	}
+
+	// The cause clears: the very next attempt is a REAL draft (200,
+	// duplicate:false) — neither failed attempt poisoned the window.
+	stub.status.Store(http.StatusOK)
+	resp, body := postSummaryDraft(t, c, "call-r")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("retry after both failures: %d, want 200", resp.StatusCode)
+	}
+	var got api.SummaryDraftResponse
+	if err := json.Unmarshal(body, &got); err != nil {
+		t.Fatalf("decode retry: %v", err)
+	}
+	if got.Duplicate || got.ID != "d-ond" {
+		t.Errorf("a failed attempt must never record the idem key, got %+v", got)
+	}
+}
+
+// TestSummaryDraftReplayFansNoSecondPush pins the duplicate arm's
+// silence on the push lane: exactly ONE draft-ready fact per successful
+// summarize — the idem replay never re-fans (a device that buzzes twice
+// for one draft is a split brain on the operator's desk).
+func TestSummaryDraftReplayFansNoSecondPush(t *testing.T) {
+	transport := &recordingTransport{enabled: true}
+	_, c, devices, fanout := summaryServerWithPush(t, transport)
+	ctx := context.Background()
+	if err := devices.Upsert(ctx, mustExt(t, "1001"), "dev-f1", "recording", "tok-f1"); err != nil {
+		t.Fatal(err)
+	}
+	c.login("1001", "pw")
+	if resp, _ := postTranscript(t, c, "call-f1", "in", "+4989123456", "words"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("seed transcript: %d", resp.StatusCode)
+	}
+
+	if resp, _ := postSummaryDraft(t, c, "call-f1"); resp.StatusCode != http.StatusOK {
+		t.Fatalf("summary: %d", resp.StatusCode)
+	}
+	if drafts := waitForDrafts(t, transport, 1); len(drafts) != 1 {
+		t.Fatalf("first draft must fan exactly one fact, got %d", len(drafts))
+	}
+
+	resp, body := postSummaryDraft(t, c, "call-f1")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("replay: %d, want 200", resp.StatusCode)
+	}
+	var got api.SummaryDraftResponse
+	if err := json.Unmarshal(body, &got); err != nil {
+		t.Fatalf("decode replay: %v", err)
+	}
+	if !got.Duplicate {
+		t.Errorf("the replay must answer duplicate:true, got %+v", got)
+	}
+
+	settleCtx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	if err := fanout.Settle(settleCtx); err != nil {
+		t.Fatalf("fans did not settle: %v", err)
+	}
+	if drafts := transport.snapshot(); len(drafts) != 1 {
+		t.Errorf("the replay must fan nothing, got %d facts: %+v", len(drafts), drafts)
 	}
 }

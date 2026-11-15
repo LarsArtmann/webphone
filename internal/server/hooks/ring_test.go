@@ -18,15 +18,18 @@ import (
 	"github.com/larsartmann/webphone/internal/readmodels"
 )
 
-// fakeTransport records the rings shipped to it. Mutex-guarded: the
-// fanout delivers from a detached goroutine, so the test's polling
-// reads race with the sends.
+// fakeTransport records the rings and drafts shipped to it, each in
+// its OWN lane (a draft squashed into the ring shape would lose the
+// draft id and conflate two wire contracts). Mutex-guarded: the fanout
+// delivers from a detached goroutine, so the test's polling reads race
+// with the sends.
 type fakeTransport struct {
 	enabled bool
 	err     error
 
-	mu    sync.Mutex
-	rings []push.Ring
+	mu     sync.Mutex
+	rings  []push.Ring
+	drafts []push.Draft
 }
 
 func (f *fakeTransport) Enabled() bool    { return f.enabled }
@@ -40,7 +43,7 @@ func (f *fakeTransport) Send(_ context.Context, _ string, ring push.Ring) error 
 func (f *fakeTransport) SendDraft(_ context.Context, _ string, draft push.Draft) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	f.rings = append(f.rings, push.Ring{Event: draft.Event, From: draft.Contact})
+	f.drafts = append(f.drafts, draft)
 	return f.err
 }
 func (f *fakeTransport) count() int {
@@ -52,6 +55,29 @@ func (f *fakeTransport) snapshot() []push.Ring {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	return append([]push.Ring(nil), f.rings...)
+}
+func (f *fakeTransport) draftSnapshot() []push.Draft {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return append([]push.Draft(nil), f.drafts...)
+}
+
+// TestFakeTransportRecordsDraftsNatively pins the fake's own contract:
+// a SendDraft lands in the drafts lane (with the draft id intact) and
+// never in the ring lane — the two wire shapes stay separable.
+func TestFakeTransportRecordsDraftsNatively(t *testing.T) {
+	transport := &fakeTransport{enabled: true}
+	draft := push.Draft{Event: push.EventDraftReady, Contact: "+15550000001", DraftID: "d-1"}
+	if err := transport.SendDraft(context.Background(), "wp-topic", draft); err != nil {
+		t.Fatalf("SendDraft: %v", err)
+	}
+	got := transport.draftSnapshot()
+	if len(got) != 1 || got[0] != draft {
+		t.Fatalf("draft lane = %+v, want exactly %+v", got, draft)
+	}
+	if transport.count() != 0 || len(transport.snapshot()) != 0 {
+		t.Fatalf("a draft must never leak into the ring lane: %+v", transport.snapshot())
+	}
 }
 
 // fanRegistry adapts the journal-backed device store to the fanout's

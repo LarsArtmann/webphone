@@ -2,89 +2,11 @@ package server
 
 import (
 	"net/http"
-	"net/http/httptest"
 	"net/url"
-	"os"
-	"path/filepath"
 	"regexp"
 	"strings"
-	"sync/atomic"
 	"testing"
-
-	"github.com/larsartmann/webphone/internal/textagent"
 )
-
-// stubReviewAPI is the review-API stand-in the handlers' tests ride on:
-// scripted status + payload per route, a call log the assertions read.
-type stubReviewAPI struct {
-	server *httptest.Server
-	calls  atomic.Int32
-	// draftCalls counts ONLY POST /draft — the drafting path. `calls`
-	// counts every request, which is fine for "the seam was reached" but
-	// useless for "the agent drafted exactly once": the server also reads
-	// /reviews (the drafts panel and the session identity's agent-mode
-	// probe) without drafting anything.
-	draftCalls atomic.Int32
-	status     atomic.Int32
-	payload    string
-}
-
-func newStubReviewAPI(t *testing.T) *stubReviewAPI {
-	t.Helper()
-	stub := &stubReviewAPI{payload: `{"drafts":[{"id":"d-7","contact":"441632960961",
-		"trigger":"inbound","text":"Guten Morgen","en_gloss":"Good morning",
-		"language":"de","confidence":93,"status":"pending",
-		"created_at":"2026-10-12T18:00:00Z"}],"frozen":[],"suppressed":[],
-		"mode":"drafts","mode_source":"config","default_mode":"drafts",
-		"modes":["off","drafts","after-hours","full"]}`}
-	stub.status.Store(http.StatusOK)
-	mux := http.NewServeMux()
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		stub.calls.Add(1)
-		if strings.HasSuffix(r.URL.Path, "/draft") {
-			stub.draftCalls.Add(1)
-		}
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(int(stub.status.Load()))
-		if stub.status.Load() >= 400 {
-			// The real agent phrases its refusals as {"error": "..."} —
-			// the client extracts that field verbatim, so a passthrough
-			// test can pin on the agent's own words.
-			_, _ = w.Write([]byte(`{"error":"fail-closed: the agent cannot draft right now"}`))
-			return
-		}
-		switch {
-		case strings.HasSuffix(r.URL.Path, "/approve"):
-			_, _ = w.Write([]byte(`{"id":"d-7","status":"sent","provider_ref":"stub-1"}`))
-		case strings.HasSuffix(r.URL.Path, "/discard"):
-			_, _ = w.Write([]byte(`{"ok":true}`))
-		case strings.HasSuffix(r.URL.Path, "/mode"):
-			_, _ = w.Write([]byte(`{"mode":"full","mode_source":"runtime",
-				"default_mode":"drafts","modes":["off","drafts","after-hours","full"]}`))
-		case strings.HasSuffix(r.URL.Path, "/draft"):
-			_, _ = w.Write([]byte(`{"id":"d-ond","text":"Guten Morgen","language":"de","confidence":90}`))
-		default:
-			_, _ = w.Write([]byte(stub.payload))
-		}
-	})
-	stub.server = httptest.NewServer(mux)
-	t.Cleanup(stub.server.Close)
-	return stub
-}
-
-// agentClientFor wires a real seam client onto the given review-API URL.
-func agentClientFor(t *testing.T, url string) *textagent.Client {
-	t.Helper()
-	secret := filepath.Join(t.TempDir(), "secret")
-	if err := os.WriteFile(secret, []byte("review-secret\n"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	client, err := textagent.New(url, secret)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return client
-}
 
 func clientWithAgent(t *testing.T, stub *stubReviewAPI) *client {
 	t.Helper()
