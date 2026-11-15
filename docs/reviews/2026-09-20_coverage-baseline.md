@@ -2,8 +2,9 @@
 
 > **LIVING BASELINE — append a new dated section per re-run; never overwrite an
 > older one.** The 2026-09-20 table below is the original snapshot; the newest
-> section is the current reference. Latest re-run: **2026-11-06** (§ 2026-11-06
-> re-run, HEAD `54c8bb17`).
+> section is the current reference. Latest re-run: **2026-11-15** (§ 2026-11-15
+> union run, HEAD `b9fdcaa0` — carries the FIRST cross-package union number,
+> 75.8%, beside the per-package tables).
 
 - **Command:** `nix develop -c go test -count=1 -cover ./...`
 - **Why persisted:** the 2026-09-20 audit session computed numbers that
@@ -178,3 +179,27 @@ Movers worth reading (everything else is ±2 pp noise):
 | `internal/server/hooks`    | 52.8%      | 53.8%         | Ring/draft fan-out grew, suites kept pace roughly                                                                                                |
 
 **Honest reading (2026-11-14):** the two big movers are STRUCTURAL, not regressions — `readmodels` collapsed because the engine (and its tests) moved to `cqrs` (78.9% on a much larger body), and `store` gave back the legacy-import points those importers' deletion retired. The 2026-09-20 rule stands: percentages measure STATEMENTS, not error paths; `server/api` 7.2% and `server/platform` 27.5% stay fine because their bytes are contract-pinned one level up.
+
+## 2026-11-15 union run — HEAD `b9fdcaa0` (plan T08; the FIRST recorded cross-package number)
+
+The per-package tables above measure "how well each package is tested BY
+ITS OWN suite". This entry adds the UNION number the row asked for —
+`go test -count=1 -coverpkg=./... -coverprofile=/tmp/wp-cover-union.out
+./...` folded by `go tool cover -func`:
+
+**union (cross-package, all tests vs all statements): 75.8%**
+
+Why it is the honest headline: in this repo most behavior is asserted
+through the real router, so per-package numbers structurally undershoot
+— `internal/web/views` measures 1.3% DIRECT but 27.0% in `./...` terms
+(reached through `internal/server`'s HTTP suites); `internal/server/api`
+same class. The union figure is what a coverage regression in ANY suite
+moves, which is what "the reported number" should be.
+
+Mechanics: the installed BuildFlow `test-coverage` step cannot carry
+`-coverpkg` (binary verified 2026-11-15; the argv construction has
+`-coverprofile` only, no config key reaches it) — the draft ask for the
+knob is docs/drafts/2026-11-15_buildflow-test-coverage-coverpkg.md;
+until it lands upstream, this union pass is run by hand per re-run and
+recorded here beside the per-package tables (the doc's per-release rule
+gains one command line).
