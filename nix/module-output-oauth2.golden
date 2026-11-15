@@ -1,0 +1,66 @@
+== Caddy vhost extraConfig ==
+encode zstd gzip
+
+
+handle /events {
+  reverse_proxy 127.0.0.1:8080 {
+    flush_interval -1
+  }
+}
+# The health dashboard subtree (only served when the operator
+# enabled dashboard.enable in settings): same unbuffered
+# proxying as /events — the dashboard's SSE stream must not
+# buffer behind the front.
+handle /health/* {
+  reverse_proxy 127.0.0.1:8080 {
+    flush_interval -1
+  }
+}
+handle {
+  reverse_proxy 127.0.0.1:8080
+}
+
+== backup script (retentionDays = 7) ==
+sqlite3 "/var/lib/webphone/webphone.db" ".backup '/var/lib/webphone-backup/webphone.db'"
+# readmodels.db is RETIRED (SUPERB A43): every collection it served
+# answers from system.db since the journal swaps, the one-time
+# importers copied (never moved) the history, and the composition
+# root stopped opening the file — it is not backed up anymore. A
+# leftover file on upgraded deployments is an inert orphan.
+# The system composition root's journal database (command/event
+# streams, projections, checkpoints, DLQ) carries user data from the
+# SUPERB phases on — guarded the same way for data dirs that have
+# not booted a webphone new enough to create it yet.
+if [ -f "/var/lib/webphone/system.db" ]; then
+  sqlite3 "/var/lib/webphone/system.db" ".backup '/var/lib/webphone-backup/system.db'"
+fi
+rsync -a --delete "/var/lib/webphone/files/" "/var/lib/webphone-backup/files/"
+# Dated history: snapshot today's state under snapshots/,
+# hardlinking unchanged blobs against the newest previous
+# snapshot (first run has no basis — plain copy; a same-day
+# rerun never uses itself as the basis).
+today=$(date +%F)
+snap="/var/lib/webphone-backup/snapshots/$today"
+basis=$(
+  find "/var/lib/webphone-backup/snapshots" -mindepth 1 -maxdepth 1 -type d \
+    -name '????-??-??' ! -name "$today" 2>/dev/null | sort | tail -1 || true
+)
+mkdir -p "$snap"
+sqlite3 "/var/lib/webphone/webphone.db" ".backup '$snap/webphone.db'"
+if [ -f "/var/lib/webphone/system.db" ]; then
+  sqlite3 "/var/lib/webphone/system.db" ".backup '$snap/system.db'"
+fi
+if [ -n "$basis" ]; then
+  rsync -a --delete --link-dest="$basis" "/var/lib/webphone/files/" "$snap/files/"
+else
+  rsync -a --delete "/var/lib/webphone/files/" "$snap/files/"
+fi
+# Prune: only the dated directories themselves, never the
+# latest top-level snapshot pair, and never anything that
+# is not a YYYY-MM-DD name.
+find "/var/lib/webphone-backup/snapshots" -mindepth 1 -maxdepth 1 -type d \
+  -name '????-??-??' -mtime +7 \
+  -exec rm -rf -- {} +
+
+== settings JSON ==
+{"addr":"127.0.0.1:8080","auth":{"extension_password_files":{"1000":"/run/secrets/telephony_ext_1000"},"oauth2":{"allowed_groups":[],"client_id":"webphone","client_secret_file":"/run/credentials/webphone.service/webphone-oidc-client-secret","issuer":"https://auth.example.org","redirect_url":"https://phone.example.org/api/auth/oauth2/callback","scopes":["openid","email","profile"]},"passkey":{"rp_id":"phone.example.org","rp_origins":["https://phone.example.org"]},"users":{"lars@example.org":{"extensions":["1000"]}}},"csrf":{"trusted_origins":["https://phone.example.org"],"trusted_proxies":["127.0.0.1"]},"data_dir":"/var/lib/webphone","sip_domain":"pbx.example.org","websocket_path":"/sip"}

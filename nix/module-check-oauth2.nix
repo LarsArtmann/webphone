@@ -282,4 +282,27 @@ in
         throw "webphone-module check: the store-path secret guard mis-fires (store string: ${toString storeString}, path value: ${toString pathValue}, clean: ${toString clean})"
     );
   }
+  {
+    # The oauth2-enabled golden (plan T10/F47-F48): the FULL module
+    # output evaluated WITH the typed SSO lane on, diffed against a
+    # committed fixture — config drift fails eval, not login. The
+    # fixture's settings JSON carries the derivations from
+    # caddy.hostName (the registered callback and the passkey
+    # rp_id/rp_origins at the harness default phone.example.org), so
+    # the derivation assertion IS the golden's own bytes. Single
+    # source: nix/module-output-oauth2.nix, same recipe as the
+    # zero-config golden.
+    name = "oauth2-enabled-output-golden";
+    path = pkgs.runCommand "oauth2-enabled-output-golden" { } ''
+      if diff -u ${./module-output-oauth2.golden} ${
+        pkgs.writeText "module-output-oauth2.actual" (import ./module-output-oauth2.nix { inherit lib base; })
+      } > $out; then
+        echo "oauth2-enabled module output matches the committed golden (vhost + backup script + settings JSON incl. the hostName derivations)" >> $out
+      else
+        cat $out >&2
+        echo "webphone-module check: oauth2-enabled output drifted from nix/module-output-oauth2.golden" >&2
+        exit 1
+      fi
+    '';
+  }
 ]
