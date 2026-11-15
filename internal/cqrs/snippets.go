@@ -205,6 +205,8 @@ type Snippets struct {
 	mu     sync.Mutex
 }
 
+var _ readmodels.SnippetGate = (*Snippets)(nil)
+
 // NewSnippets builds the backend over a System.
 func NewSnippets(sys *system.System) *Snippets {
 	return &Snippets{sys: sys, reader: metaengine.NewReader[readmodels.SnippetView](sys.MetaEngine(), "snippets"), vers: streamVersions{}}

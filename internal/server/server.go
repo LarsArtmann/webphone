@@ -199,16 +199,18 @@ type Deps struct {
 	Messages readmodels.ThreadGate
 	Faxes    readmodels.FaxGate
 	// Contacts is the personal-contacts seam (the readmodels.ContactGate
-	// interface — engine-backed legacy/rollback lane, journal-backed
-	// since SUPERB Phase 4). Nil (test compositions): the surfaces
-	// degrade. Keep it a TRUE nil.
+	// interface, journal-backed — the ONE implementation is
+	// internal/cqrs Contacts). NOT nil-degrading despite the old prose:
+	// the write routes (api/contacts_api.go, actions.go) call it
+	// unguarded, so a true nil panics — prod always wires it; test
+	// compositions that omit it must not touch the contact lanes. Keep
+	// it a TRUE nil (never a typed-nil wrapper).
 	Contacts readmodels.ContactGate
-	// Snippets is the metaengine-backed reply-snippet read model
-	// (readmodels.db) — same method contract the SQL store held.
 	// Snippets is the reply-snippet seam (the readmodels.SnippetGate
-	// interface — engine-backed legacy/rollback lane, journal-backed
-	// since SUPERB Phase 3). Nil (test compositions): the surfaces
-	// degrade. Keep it a TRUE nil.
+	// interface, journal-backed — the ONE implementation is internal/cqrs
+	// Snippets). NOT nil-degrading despite the old prose: the write
+	// routes (actions.go saveSnippet/deleteSnippet) call it unguarded,
+	// so a true nil panics — prod always wires it. Keep it a TRUE nil.
 	Snippets readmodels.SnippetGate
 	// Transcripts persists live-call transcript segments (owner-scoped,
 	// rendered in the History tab) — the readmodels.TranscriptGate

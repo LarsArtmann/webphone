@@ -73,7 +73,7 @@ nix-international-telephony and pbx-artmann; no step of it has run.
    contacts index are T2, not this train.
 2. **The CCaaS half.** The shell posture is there (rail, workspace, call
    dock); presence, queue, dispositions, wrap-up and supervisor views are not.
-   The reference product's *structure* is matched, not its product depth.
+   The reference product's _structure_ is matched, not its product depth.
 3. **Mobile labels.** Eight bottom-bar slots at 390px truncate to
    "Mes…/Voic…/Hist…/Rep…/Cont…/Setti…/Phon…". Pre-existing shape (8 slots
    since the Phone tab landed), now more visible. Needs a 5-slot primary set +

@@ -33,6 +33,8 @@ type DialWindows struct {
 	mu        sync.Mutex
 }
 
+var _ readmodels.DialGate = (*DialWindows)(nil)
+
 // NewDialWindows builds the backend over a started-or-startable
 // System.
 func NewDialWindows(sys *system.System) *DialWindows {

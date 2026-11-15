@@ -223,6 +223,7 @@ points (recorded in §b and §d).
 ## f) UP TO 50 THINGS TO GET DONE NEXT
 
 **Artifact and decision hygiene**
+
 1. Regenerate `docs/status/INDEX.md` (`python3 scripts/status-index.py`) for this report.
 2. Mint a `TODO_LIST.md` row: "pbx-lens merge/extraction — ruled keep-separate; reopen on named triggers".
 3. Add that ruling to the fleet reopen-trigger registry with explicit triggers.
@@ -302,18 +303,18 @@ points (recorded in §b and §d).
 
 ## Appendix — evidence index
 
-| Claim | Where verified |
-|---|---|
-| No call aggregate in webphone; History is a per-request fold | `internal/reports/reports.go`, `internal/server/panels.go:351`, `internal/server/reports.go:37` |
-| 8-field wire CDR | `internal/pbx/client.go:99` |
-| 19-field source-normalized CallView | `pbx-lens/internal/calls/projection.go:20` |
-| CDR rows carry no call uuid | `internal/domain/callnote.go:7` |
-| Lens parses CSV; webphone does not | `pbx-lens/internal/ingest/cdr/cdr.go`, `internal/pbx/client.go:166` |
-| Opposite retention doctrines | `internal/retention/retention.go` vs `pbx-lens/internal/retention/retention.go` |
-| FTS5 only in lens | `pbx-lens/internal/search`, no FTS5/MATCH in webphone |
-| OIDC duplication | `pbx-lens/internal/oidclogin/oidclogin.go` (header cites webphone doctrine) vs `internal/sso/sso.go` |
-| Appkit-only structural fork | `pbx-lens/go.mod` vs `go.mod` + webphone AGENTS appkit NO-GO |
-| Separate stack units and read-only lens use | `nix-international-telephony/modules/telephony/lens.nix`, `text-agent.py:916` |
-| Read-only deep link rule | `pbx-lens/AGENTS.md:7` |
-| Shared catalog identity only | `internal/domain/catalog.go:97,133` |
-| Backup misses `usermgmt.db` | `package/backup-script.nix:12,23,25` (verified omission; coverage elsewhere unverified) |
+| Claim                                                        | Where verified                                                                                       |
+| ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------- |
+| No call aggregate in webphone; History is a per-request fold | `internal/reports/reports.go`, `internal/server/panels.go:351`, `internal/server/reports.go:37`      |
+| 8-field wire CDR                                             | `internal/pbx/client.go:99`                                                                          |
+| 19-field source-normalized CallView                          | `pbx-lens/internal/calls/projection.go:20`                                                           |
+| CDR rows carry no call uuid                                  | `internal/domain/callnote.go:7`                                                                      |
+| Lens parses CSV; webphone does not                           | `pbx-lens/internal/ingest/cdr/cdr.go`, `internal/pbx/client.go:166`                                  |
+| Opposite retention doctrines                                 | `internal/retention/retention.go` vs `pbx-lens/internal/retention/retention.go`                      |
+| FTS5 only in lens                                            | `pbx-lens/internal/search`, no FTS5/MATCH in webphone                                                |
+| OIDC duplication                                             | `pbx-lens/internal/oidclogin/oidclogin.go` (header cites webphone doctrine) vs `internal/sso/sso.go` |
+| Appkit-only structural fork                                  | `pbx-lens/go.mod` vs `go.mod` + webphone AGENTS appkit NO-GO                                         |
+| Separate stack units and read-only lens use                  | `nix-international-telephony/modules/telephony/lens.nix`, `text-agent.py:916`                        |
+| Read-only deep link rule                                     | `pbx-lens/AGENTS.md:7`                                                                               |
+| Shared catalog identity only                                 | `internal/domain/catalog.go:97,133`                                                                  |
+| Backup misses `usermgmt.db`                                  | `package/backup-script.nix:12,23,25` (verified omission; coverage elsewhere unverified)              |
