@@ -295,7 +295,9 @@ in
     name = "oauth2-enabled-output-golden";
     path = pkgs.runCommand "oauth2-enabled-output-golden" { } ''
       if diff -u ${./module-output-oauth2.golden} ${
-        pkgs.writeText "module-output-oauth2.actual" (import ./module-output-oauth2.nix { inherit lib base; })
+        pkgs.writeText "module-output-oauth2.actual" (
+          import ./module-output-oauth2.nix { inherit lib base; }
+        )
       } > $out; then
         echo "oauth2-enabled module output matches the committed golden (vhost + backup script + settings JSON incl. the hostName derivations)" >> $out
       else

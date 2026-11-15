@@ -150,8 +150,8 @@ report's still-open §f rows.
       `module-check-oauth2` cases are the current fence.
       ~~- [ ] **Second module-check golden with `oauth2.enable`** (exact
       rendered JSON, mirroring the zero-config golden).~~ → done 2026-11-15 (plan T10): `nix/module-output-oauth2.nix` is the single source (same recipe as the zero-config golden), `nix/module-output-oauth2.golden` pins the full three-section rendering of one bootable SSO config — the settings JSON carries the callback (`https://phone.example.org/api/auth/oauth2/callback`) and passkey `rp_id`/`rp_origins` derived from `caddy.hostName`, so the F48 derivation assertion IS the fixture's own bytes; the `oauth2-enabled-output-golden` case diffs it (35 check cases green).
-- [ ] **Typed passkey options** in the module (passkey-only configs
-      get derived rp the same way the OIDC lane derives them).
+      ~~- [ ] **Typed passkey options** in the module (passkey-only configs
+      get derived rp the same way the OIDC lane derives them).~~ → done 2026-11-15 (plan T11): package/passkey.nix — `services.webphone.passkey.enable` derives `settings.auth.passkey.{rp_id,rp_origins}` from `caddy.hostName` (mkDefault; an operator pin wins), and the OIDC lane's assertion set mirrors over (shared users map, per-extension password files, rp resolution). nix/module-check-passkey.nix pins 3 cases (typed render incl. no-credential, fail-closed halves, raw lane + pin-beats-derivation); AGENTS options bullet + CHANGELOG line.
 
 ### Voicemail playback train residue (2026-11-10 — the fix is pushed; production legs open)
 

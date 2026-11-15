@@ -256,7 +256,14 @@
     in
     {
       checks.webphone-module = pkgs.linkFarm "webphone-module-check" (
-        coreCases ++ csrfCases ++ backupCases ++ oauth2Cases ++ crmCases ++ textagentCases ++ passkeyCases ++ secretCases
+        coreCases
+        ++ csrfCases
+        ++ backupCases
+        ++ oauth2Cases
+        ++ crmCases
+        ++ textagentCases
+        ++ passkeyCases
+        ++ secretCases
       );
     };
 }

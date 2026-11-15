@@ -37,6 +37,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the normal url shape (the review API rides the consuming stack);
   the raw `settings.textagent` lane stays untouched, and typed+raw
   for the same key is an eval conflict (one home per fact).
+- A typed `services.webphone.passkey` door for passkey-ONLY
+  deployments: `enable` turns the identity layer on and derives the
+  WebAuthn `rp_id`/`rp_origins` from `caddy.hostName` exactly as the
+  OIDC lane does (previously that derivation was keyed on
+  `oauth2.enable`, so a passkey-without-SSO deployment had to
+  hand-write the rp). The shared `settings.auth.users` map and one
+  SIP-password file per mapped extension stay asserted; an operator's
+  explicit `settings.auth.passkey.*` pin beats the derivation.
 
 ### Changed
 

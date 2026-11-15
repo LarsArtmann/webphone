@@ -64,36 +64,35 @@ in
   config = lib.mkIf cfg.enable {
     # Eval-time mirrors of the app's fail-closed passkey validation —
     # the same assertions the OIDC lane carries, keyed on this lane.
-    assertions =
-      lib.optionals cfg.passkey.enable [
-        {
-          assertion = passkeyUsers != { };
-          message = ''
-            services.webphone.passkey.enable requires settings.auth.users (the
-            shared email→extension mapping) — without it every passkey login
-            is unmapped and denied.
-          '';
-        }
-        {
-          assertion =
-            (cfg.settings.auth.passkey.rp_id or "") != ""
-            && (cfg.settings.auth.passkey.rp_origins or [ ]) != [ ];
-          message = ''
-            services.webphone.passkey.enable turns on the identity layer —
-            settings.auth.passkey.rp_id and rp_origins must resolve. Enable
-            caddy to derive them from caddy.hostName, or set both explicitly
-            behind an external front.
-          '';
-        }
-        {
-          assertion = passkeyMissingPasswordFiles == [ ];
-          message = ''
-            services.webphone.passkey: every mapped extension needs a SIP
-            directory password file in settings.auth.extension_password_files
-            (missing: ${lib.concatStringsSep ", " passkeyMissingPasswordFiles}).
-          '';
-        }
-      ];
+    assertions = lib.optionals cfg.passkey.enable [
+      {
+        assertion = passkeyUsers != { };
+        message = ''
+          services.webphone.passkey.enable requires settings.auth.users (the
+          shared email→extension mapping) — without it every passkey login
+          is unmapped and denied.
+        '';
+      }
+      {
+        assertion =
+          (cfg.settings.auth.passkey.rp_id or "") != ""
+          && (cfg.settings.auth.passkey.rp_origins or [ ]) != [ ];
+        message = ''
+          services.webphone.passkey.enable turns on the identity layer —
+          settings.auth.passkey.rp_id and rp_origins must resolve. Enable
+          caddy to derive them from caddy.hostName, or set both explicitly
+          behind an external front.
+        '';
+      }
+      {
+        assertion = passkeyMissingPasswordFiles == [ ];
+        message = ''
+          services.webphone.passkey: every mapped extension needs a SIP
+          directory password file in settings.auth.extension_password_files
+          (missing: ${lib.concatStringsSep ", " passkeyMissingPasswordFiles}).
+        '';
+      }
+    ];
 
     services.webphone.settings.auth = lib.mkIf cfg.passkey.enable (
       lib.mkIf deriveWebAuthnRP {

@@ -64,9 +64,7 @@ in
       if ok then
         "typed passkey derives rp_id/rp_origins from caddy.hostName and needs no credential"
       else
-        throw "webphone-module check: typed passkey did not render the expected settings.auth.passkey shape (rp_id: ${
-          toString c.settings.auth.passkey.rp_id
-        })"
+        throw "webphone-module check: typed passkey did not render the expected settings.auth.passkey shape (rp_id: ${toString c.settings.auth.passkey.rp_id})"
     );
   }
   {
