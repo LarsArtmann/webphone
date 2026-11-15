@@ -84,7 +84,9 @@ in
         ok =
           c.settings.textagent.url == "http://127.0.0.1:8071"
           && c.settings.textagent.secret_file == "/run/credentials/webphone.service/webphone-textagent-secret"
-          && lib.elem "webphone-textagent-secret:/run/secrets/webphone-textagent-secret" (unit.LoadCredential or [ ])
+          && lib.elem "webphone-textagent-secret:/run/secrets/webphone-textagent-secret" (
+            unit.LoadCredential or [ ]
+          )
           && failedAssertions validTextagent == [ ];
       in
       if ok then

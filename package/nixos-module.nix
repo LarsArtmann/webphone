@@ -51,7 +51,8 @@ let
   ]
   ++ lib.attrValues (cfg.settings.auth.extension_password_files or { })
   ++ lib.attrValues (cfg.settings.auth.passkey.extension_password_files or { })
-  ++ lib.optional (cfg.crm.enable && cfg.crm.tokenFile != null) cfg.crm.tokenFile;
+  ++ lib.optional (cfg.crm.enable && cfg.crm.tokenFile != null) cfg.crm.tokenFile
+  ++ lib.optional (cfg.textagent.enable && cfg.textagent.secretFile != null) cfg.textagent.secretFile;
   leakedSecretFiles = lib.count leaksSecretToStore secretFilePaths;
 
   # Freeform literal-secret guard: a secret-SHAPED key (`*secret*`,

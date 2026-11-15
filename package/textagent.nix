@@ -31,8 +31,7 @@ let
 
   # The app's own URL shape: absolute http(s), non-empty host, optional
   # path — no query, no fragment. builtins.match anchors implicitly.
-  bareHTTPish =
-    url: builtins.match "https?://[^/?#]+(/[^?#]*)?" (toString url) != null;
+  bareHTTPish = url: builtins.match "https?://[^/?#]+(/[^?#]*)?" (toString url) != null;
 in
 {
   options.services.webphone.textagent = {

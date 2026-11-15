@@ -29,6 +29,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   the projection and the decision state; the Settings panel gains a
   "Noted calls N / 2000" row (fail-open), and History transcript rows
   show a glanceable "Noted" chip when a slot carries prose.
+- The NixOS module grows a typed `services.webphone.textagent` front
+  (`enable`/`url`/`secretFile`) for the post-call AI chain: the secret
+  rides a systemd credential (LoadCredential, 0400 unit-private copy),
+  half a config fails `nixos-rebuild` with a legible message, and a
+  store-path secret trips the eval-time leak guard. Loopback http is
+  the normal url shape (the review API rides the consuming stack);
+  the raw `settings.textagent` lane stays untouched, and typed+raw
+  for the same key is an eval conflict (one home per fact).
 
 ### Changed
 
