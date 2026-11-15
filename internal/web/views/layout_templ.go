@@ -392,7 +392,7 @@ func ShellBody(props ShellProps) templ.Component {
 			}
 			templ.ReleaseBuffer(templ_7745c5c3_Buffer)
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "><aside class=\"wp-rail\" aria-label=\"Workspace\"><nav class=\"wp-nav\" id=\"wp-nav\" aria-label=\"Sections\">")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 22, "><aside class=\"wp-rail\" id=\"wp-rail\" aria-label=\"Workspace\"><nav class=\"wp-nav\" id=\"wp-nav\" aria-label=\"Sections\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -405,7 +405,7 @@ func ShellBody(props ShellProps) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if props.SignedIn != "" {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<button id=\"wp-rail-toggle\" class=\"wp-rail-toggle\" type=\"button\" aria-controls=\"wp-nav\" aria-expanded=\"true\" title=\"")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<button id=\"wp-rail-toggle\" class=\"wp-rail-toggle\" type=\"button\" aria-controls=\"wp-rail\" aria-expanded=\"true\" title=\"")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

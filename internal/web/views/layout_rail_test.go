@@ -27,7 +27,7 @@ func TestShellRendersTheSidebarRail(t *testing.T) {
 		`>People<`,
 		`>System<`,
 		`id="wp-rail-toggle"`,
-		`aria-controls="wp-nav"`,
+		`aria-controls="wp-rail"`,
 	} {
 		if !strings.Contains(html, want) {
 			t.Errorf("shell is missing %s (the rail ships groups + a collapse control)", want)

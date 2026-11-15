@@ -217,7 +217,7 @@ templ ShellBody(props ShellProps) {
 		</div>
 	</header>
 	<div class={ "wp-body", templ.KV("wp-body-signed-out", props.SignedIn == "") }>
-		<aside class="wp-rail" aria-label="Workspace">
+		<aside class="wp-rail" id="wp-rail" aria-label="Workspace">
 			<nav class="wp-nav" id="wp-nav" aria-label="Sections">
 				@NavLinks(props)
 			</nav>
@@ -230,7 +230,7 @@ templ ShellBody(props ShellProps) {
 					id="wp-rail-toggle"
 					class="wp-rail-toggle"
 					type="button"
-					aria-controls="wp-nav"
+					aria-controls="wp-rail"
 					aria-expanded="true"
 					title={ T(props.Lang, "shell.rail.toggle") }
 				>
