@@ -35,7 +35,7 @@ let
       };
     };
     missing-password-file = {
-      fragment = "needs a SIP directory password file";
+      fragment = "directory password file";
       extra = {
         passkey.enable = true;
         settings.auth.users."lars@example.org".extensions = [ "1000" ];
