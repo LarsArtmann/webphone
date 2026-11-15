@@ -1,3 +1,9 @@
+> ARCHIVED 2026-11-15 (docs-health cadence drain, third of the type-gate cohort): this
+> is the campaign's COMPLETION report — its doctrine lives on as the AGENTS § island
+> TYPE gate bullet + typecheck_pin_test.go; its deferred legs (buildflow idle re-run,
+> Android/KMP, the visual matrix) keep their own standing rows. Tables are struck
+> ledger inventories.
+
 # Status report — island type gate: enforced, green, and closed
 
 **Snapshot: 2026-10-27 22:00 CET.** `HEAD` = `814fdb5`, **pushed** (`origin/main` == `HEAD`, 0 commits
@@ -25,18 +31,20 @@ the next session.
 
 ## 2. The numbers, before → after
 
-| Metric                                       | Session start                                              | **Now**                                       | How it was measured                                  |
-| -------------------------------------------- | ---------------------------------------------------------- | --------------------------------------------- | ---------------------------------------------------- |
-| Type errors over the whole asset tree        | **680**                                                    | **0**                                         | `tsc -p . --noEmit` (exit 0)                         |
-| Asset files under a **green, enforced** gate | 0 (red, unwired)                                           | **26 of 26**                                  | `tsc -p . --listFiles \| grep assets \| wc -l` = 26  |
-| Type-gate nix checks                         | 1 (`island-typecheck`)                                     | 1, **now green over the whole tree**          | `nix build .#checks.x86_64-linux.island-typecheck`   |
-| Gate pin assertions                          | 5                                                          | **6**                                         | `go test ./internal/web/assets -run TestTypeGate -v` |
-| Measuring project                            | `tsconfig.all.json` (red by design)                        | **deleted**                                   | `ls tsconfig*`                                       |
-| Declared untyped debt                        | 1 file (`shell.js`)                                        | **none — no list exists**                     | `typecheckDebt` removed                              |
-| Island behaviour specs                       | 260                                                        | **260 pass**                                  | `node --test …/island-tests/*.test.mjs`              |
-| `go test -count=1 ./...`                     | not run since edits                                        | **green**                                     | full suite, 21:5x                                    |
-| `nix flake check`                            | **never run this session** (nor before it, for this train) | **all 32 checks pass**, KVM VM tests included | `nix flake check`                                    |
-| Live smoke                                   | never run                                                  | **48 + 4 + 8 passed, 0 failed**               | `scripts/webphone-smoke.py --bin /tmp/webphone-bin`  |
+<!-- check-rows:ledger -->
+
+| ~~Metric~~                                       | ~~Session start~~                                              | ~~**Now**~~                                       | ~~How it was measured~~                                  |
+| ------------------------------------------------ | -------------------------------------------------------------- | ------------------------------------------------- | -------------------------------------------------------- |
+| ~~Type errors over the whole asset tree~~        | ~~**680**~~                                                    | ~~**0**~~                                         | ~~`tsc -p . --noEmit` (exit 0)~~                         |
+| ~~Asset files under a **green, enforced** gate~~ | ~~0 (red, unwired)~~                                           | ~~**26 of 26**~~                                  | ~~`tsc -p . --listFiles \~~                              |
+| ~~Type-gate nix checks~~                         | ~~1 (`island-typecheck`)~~                                     | ~~1, **now green over the whole tree**~~          | ~~`nix build .#checks.x86_64-linux.island-typecheck`~~   |
+| ~~Gate pin assertions~~                          | ~~5~~                                                          | ~~**6**~~                                         | ~~`go test ./internal/web/assets -run TestTypeGate -v`~~ |
+| ~~Measuring project~~                            | ~~`tsconfig.all.json` (red by design)~~                        | ~~**deleted**~~                                   | ~~`ls tsconfig*`~~                                       |
+| ~~Declared untyped debt~~                        | ~~1 file (`shell.js`)~~                                        | ~~**none — no list exists**~~                     | ~~`typecheckDebt` removed~~                              |
+| ~~Island behaviour specs~~                       | ~~260~~                                                        | ~~**260 pass**~~                                  | ~~`node --test …/island-tests/*.test.mjs`~~              |
+| ~~`go test -count=1 ./...`~~                     | ~~not run since edits~~                                        | ~~**green**~~                                     | ~~full suite, 21:5x~~                                    |
+| ~~`nix flake check`~~                            | ~~**never run this session** (nor before it, for this train)~~ | ~~**all 32 checks pass**, KVM VM tests included~~ | ~~`nix flake check`~~                                    |
+| ~~Live smoke~~                                   | ~~never run~~                                                  | ~~**48 + 4 + 8 passed, 0 failed**~~               | ~~`scripts/webphone-smoke.py --bin /tmp/webphone-bin`~~  |
 
 ---
 
@@ -104,16 +112,18 @@ covers Error / string / plain object / `null` / `undefined`.
 
 ### 3.5 Verification (all run, none claimed)
 
-| Gate           | Command                                            | Verdict                                                      |
-| -------------- | -------------------------------------------------- | ------------------------------------------------------------ |
-| Type gate      | `tsc -p . --noEmit`                                | **exit 0**, 26 files                                         |
-| Nix type check | `nix build .#checks.x86_64-linux.island-typecheck` | **green**, 26-file artefact                                  |
-| Island lint    | `nix build .#checks.x86_64-linux.island-lint`      | **green** (after the dead-binding fix)                       |
-| Island specs   | `node --test …/island-tests/*.test.mjs`            | **260 pass**                                                 |
-| Go gate pins   | `go test ./internal/web/assets -run TestTypeGate`  | **6/6 pass**                                                 |
-| Full flake     | `nix flake check`                                  | **all 32 checks passed** (VM backup + error drills included) |
-| Go suite       | `go test -count=1 ./...`                           | **green**                                                    |
-| Live smoke     | `webphone-smoke.py --bin /tmp/webphone-bin`        | **48 passed / restart 4 / boot-failure 8, 0 failed**         |
+<!-- check-rows:ledger -->
+
+| ~~Gate~~           | ~~Command~~                                            | ~~Verdict~~                                                      |
+| ------------------ | ------------------------------------------------------ | ---------------------------------------------------------------- |
+| ~~Type gate~~      | ~~`tsc -p . --noEmit`~~                                | ~~**exit 0**, 26 files~~                                         |
+| ~~Nix type check~~ | ~~`nix build .#checks.x86_64-linux.island-typecheck`~~ | ~~**green**, 26-file artefact~~                                  |
+| ~~Island lint~~    | ~~`nix build .#checks.x86_64-linux.island-lint`~~      | ~~**green** (after the dead-binding fix)~~                       |
+| ~~Island specs~~   | ~~`node --test …/island-tests/*.test.mjs`~~            | ~~**260 pass**~~                                                 |
+| ~~Go gate pins~~   | ~~`go test ./internal/web/assets -run TestTypeGate`~~  | ~~**6/6 pass**~~                                                 |
+| ~~Full flake~~     | ~~`nix flake check`~~                                  | ~~**all 32 checks passed** (VM backup + error drills included)~~ |
+| ~~Go suite~~       | ~~`go test -count=1 ./...`~~                           | ~~**green**~~                                                    |
+| ~~Live smoke~~     | ~~`webphone-smoke.py --bin /tmp/webphone-bin`~~        | ~~**48 passed / restart 4 / boot-failure 8, 0 failed**~~         |
 
 ### 3.6 Documentation (T21–T23)
 
@@ -134,13 +144,15 @@ covers Error / string / plain object / `null` / `undefined`.
 
 ## 4. PARTIALLY DONE
 
-| Item                                   | State                                                                                                                                                                                                                                                         | What is missing                                                                                                                                                                 |
-| -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **`buildflow`**                        | **1 of 58 steps failed**, and the failure is not code: `govulncheck` was killed after 60 s with _no output at all_ while the box was at load 287; BuildFlow itself judged the run `[Transient:pipeline.environment_starvation]` and told us to re-run quieter | a clean re-run on an idle machine (`BUILDFLOW_NO_RESULT_CACHE=1`)                                                                                                               |
-| **`.buildflow-baseline.json`**         | 47 accepted entries, and BuildFlow warns **none of them matched anything in each of the last 3 runs**                                                                                                                                                         | the baseline is stale/miskeyed (its IDs carry host-absolute paths — a documented failure mode). Needs `buildflow --save-baseline` from this checkout, plus a decision per entry |
-| **`nix flake check` aarch64**          | x86_64-linux fully green                                                                                                                                                                                                                                      | not evaluated (`--all-systems` omitted; the cross-build is separately proven by ELF bytes, not by this run)                                                                     |
-| **Stack browser E2E**                  | not run                                                                                                                                                                                                                                                       | owed only for served-markup changes; **this train changed no served byte** (`shell.js` was annotated, never re-shaped) — so the obligation is unchanged, not newly incurred     |
-| **Type-gate coverage of `.mjs` specs** | `island-tests/*.mjs` are formatted by oxfmt but **not** type-checked                                                                                                                                                                                          | out of scope by decision (they run under node, not in the browser); they can drift from a typed API without a compile error                                                     |
+<!-- check-rows:ledger -->
+
+| ~~Item~~                                   | ~~State~~                                                                                                                                                                                                                                                         | ~~What is missing~~                                                                                                                                                                 |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~**`buildflow`**~~                        | ~~**1 of 58 steps failed**, and the failure is not code: `govulncheck` was killed after 60 s with _no output at all_ while the box was at load 287; BuildFlow itself judged the run `[Transient:pipeline.environment_starvation]` and told us to re-run quieter~~ | ~~a clean re-run on an idle machine (`BUILDFLOW_NO_RESULT_CACHE=1`)~~                                                                                                               |
+| ~~**`.buildflow-baseline.json`**~~         | ~~47 accepted entries, and BuildFlow warns **none of them matched anything in each of the last 3 runs**~~                                                                                                                                                         | ~~the baseline is stale/miskeyed (its IDs carry host-absolute paths — a documented failure mode). Needs `buildflow --save-baseline` from this checkout, plus a decision per entry~~ |
+| ~~**`nix flake check` aarch64**~~          | ~~x86_64-linux fully green~~                                                                                                                                                                                                                                      | ~~not evaluated (`--all-systems` omitted; the cross-build is separately proven by ELF bytes, not by this run)~~                                                                     |
+| ~~**Stack browser E2E**~~                  | ~~not run~~                                                                                                                                                                                                                                                       | ~~owed only for served-markup changes; **this train changed no served byte** (`shell.js` was annotated, never re-shaped) — so the obligation is unchanged, not newly incurred~~     |
+| ~~**Type-gate coverage of `.mjs` specs**~~ | ~~`island-tests/*.mjs` are formatted by oxfmt but **not** type-checked~~                                                                                                                                                                                          | ~~out of scope by decision (they run under node, not in the browser); they can drift from a typed API without a compile error~~                                                     |
 
 ---
 
@@ -226,15 +238,17 @@ bytes). It needs the same erratum the 19:20 plan got.
 
 ## 7. NOT STARTED (deliberately, with reasons)
 
-| Item                                                                 | Why not                                                                                                                                                                                   |
-| -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `buildflow` re-run on an idle machine                                | machine load 287; BuildFlow classified the failure transient itself                                                                                                                       |
-| `art-dupl` clone fix / baseline update                               | the new clone group is in `history.templ`/`messages.templ` — **another session's disposition train**, committed by the daemon; fixing foreign, in-flight markup is how two agents collide |
-| CI re-verification to green                                          | blocked on the above; the CI run for `814fdb5` has 4 of 5 jobs green (fast flake checks, nix build, `go test -race`, reproduce-first)                                                     |
-| Stack browser E2E                                                    | no served byte changed, so no new obligation — it stays a release-runbook item                                                                                                            |
-| `scripts/ui-capture.py` visual matrix                                | local-only by budget decision; nothing about this train changes a rendered pixel                                                                                                          |
-| Android / KMP spike                                                  | separate repo, explicitly out of this train                                                                                                                                               |
-| TODO_LIST's remaining rows (Kith switch-on, attended transfer, etc.) | not part of the type-gate plan; untouched                                                                                                                                                 |
+<!-- check-rows:ledger -->
+
+| ~~Item~~                                                                 | ~~Why not~~                                                                                                                                                                                   |
+| ------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~`buildflow` re-run on an idle machine~~                                | ~~machine load 287; BuildFlow classified the failure transient itself~~                                                                                                                       |
+| ~~`art-dupl` clone fix / baseline update~~                               | ~~the new clone group is in `history.templ`/`messages.templ` — **another session's disposition train**, committed by the daemon; fixing foreign, in-flight markup is how two agents collide~~ |
+| ~~CI re-verification to green~~                                          | ~~blocked on the above; the CI run for `814fdb5` has 4 of 5 jobs green (fast flake checks, nix build, `go test -race`, reproduce-first)~~                                                     |
+| ~~Stack browser E2E~~                                                    | ~~no served byte changed, so no new obligation — it stays a release-runbook item~~                                                                                                            |
+| ~~`scripts/ui-capture.py` visual matrix~~                                | ~~local-only by budget decision; nothing about this train changes a rendered pixel~~                                                                                                          |
+| ~~Android / KMP spike~~                                                  | ~~separate repo, explicitly out of this train~~                                                                                                                                               |
+| ~~TODO_LIST's remaining rows (Kith switch-on, attended transfer, etc.)~~ | ~~not part of the type-gate plan; untouched~~                                                                                                                                                 |
 
 ---
 

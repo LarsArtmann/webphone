@@ -20,8 +20,7 @@ same `Person` shape keyed by the REQUESTED number (including `null` for
 numbers that match nothing, so callers do not guess at absent keys):
 
 ```json
-{ "+4989123456": {"id": "…", "name": "Ada Lovelace"},
-  "+4917612345678": null }
+{ "+4989123456": { "id": "…", "name": "Ada Lovelace" }, "+4917612345678": null }
 ```
 
 **Constraints carried over from the single-number contract:** bearer auth

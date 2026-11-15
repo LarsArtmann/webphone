@@ -866,15 +866,15 @@ SHIPPED and green; these are the deliberately deferred edges.
 2. **Batch identity (`by-phone?numbers=` on the producer)**: lists ask N times;
    a batch product collapses it to one. Owner-side (Kith) work, worth doing
    when a list ever exceeds ~20 numbers per render.
-~~3. **Contract snapshot test**: pin webphone's exact `/context` request + parse
+   ~~3. **Contract snapshot test**: pin webphone's exact `/context` request + parse
    against the producer's published shape, so the vocabulary-break class (a
    closed set drifting under a consumer that keeps sending the old value)
    fails in CI instead of on a customer's answered call.~~ → done 2026-11-15 — SHIPPED: `internal/crm/context_request_test.go` pins the request byte-shape (method/path/auth/query/Accept, P2-2) and `internal/crm/context_snapshot_test.go` + `testdata/kith_context_snapshot.json` pin the producer's RENDERED bytes to the mapped chips (captured from the CRM's own serializer, re-record instructions in the header). The batch-ask draft lives at docs/drafts/kith-by-phone-batch-ask.md (owner tick to file).
-4. **Full `nix flake check` as ONE gate**: the KVM-gated
+3. **Full `nix flake check` as ONE gate**: the KVM-gated
    `webphone-backup`, `webphone-backup-drill` and `webphone-module` checks were
    not part of this train's verdict set (each verified individually when it
    last changed).
-5. **Kith side (`blocked` on Q3, below)**: the endpoint's docs landed
+4. **Kith side (`blocked` on Q3, below)**: the endpoint's docs landed
    (README, FEATURES, CHANGELOG); `/docs` is generated from the EventCatalog and
    does NOT cover machine-API REST routes, so no generated-wire entry is owed.
    What remains is the PUSH: the branch is 16 commits ahead of `origin/master`
@@ -1612,7 +1612,7 @@ ceiling) + markdownlint posture execution (post-sitting row-18 verdict). Plan:
 - **File the suppression state-machine draft upstream** (`~/projects/BuildFlow/docs/drafts/cqrs-lint-suppression-block-comment-state-machine.md`; owner review tick first) — and the **D005 draft** beside it (same gate, older).
 - **Track the upstream `/*` lexer fix**: on the next cqrs-lint bump, remove the actions.go hedge comment if the fix shipped; until then any directive below a one-`/*` line comment in the six swept files is dead on arrival.
 - **Confirm the enroll.go S001 heuristic change upstream** (the wirefixtures twin still fires — intentional change or drift?).
-~~- **Train-specific decay pass: `erraudit nolint-audit`** after the C007/At-command train (the calendar's quarterly re-measure is separate, next due 2026-12-08).~~ → done 2026-11-15 — `erraudit nolint-audit`: 69 directives, 69 needed, 0 stale (no decay since C007); calendar intact (next tier re-measure 2026-12-08); bonus tier scan today: `erraudit check --max --no-suppress` = 0 violations.
+  ~~- **Train-specific decay pass: `erraudit nolint-audit`** after the C007/At-command train (the calendar's quarterly re-measure is separate, next due 2026-12-08).~~ → done 2026-11-15 — `erraudit nolint-audit`: 69 directives, 69 needed, 0 stale (no decay since C007); calendar intact (next tier re-measure 2026-12-08); bonus tier scan today: `erraudit check --max --no-suppress` = 0 violations.
 - ~~**Pin the D014 tags with a replay test**~~ → done 2026-11-11 — `internal/cqrs/tombstone_wire_test.go`: untagged old-shape witnesses replay through `DecodePayloadAuto` and must re-encode byte-identically; JSON wire keys pinned to the Go field names with byte goldens; MUTATION-PROVEN (a planted `json:"reason"` drift fails both legs)
 - ~~**`cqrs-lint scorecard` before/after** and **`cqrs-lint doctor` render check**~~ → done 2026-11-11 — scorecard: adoption 11/36 relevant modules (30%, Grade Sparse) and the score counts MODULE adoption, so the 11 disabled LINT rules could not distort it; doctor renders all 11 disable-reasons (217 rules total, 206 active, 11 disabled, each `why` verbatim)
 - ~~**Write the triage decision table**; move three lessons~~ → done 2026-11-11 — the 4-way table (config-disable / directive / keep-visible / fix) is the standing rule beside the CHANGELOG bar in AGENTS (cites the 00-36 report); docs/lessons.md § Tooling traps gains the result-cache war story, the scoped-verifier near-miss, and the vendorHash-tail red (CI's own-hash repair)
