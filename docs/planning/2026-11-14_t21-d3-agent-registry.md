@@ -13,11 +13,11 @@ ONE machine actor: the textagent bearer secret read from a file at boot (`textag
 
 ## 3. Scopes
 
-| scope        | grants                      | review-API routes                 | webphone vocab |
-| ------------ | --------------------------- | --------------------------------- | -------------- |
-| draft-only   | create drafts, read queue   | `POST /draft`, `GET /reviews`     | draft+read     |
-| send-allowed | draft-only + approve/send   | `+ POST /reviews/{id}/approve`    | send           |
-| audit-read   | read the agent-audit stream | `GET /audit` (new)                | —              |
+| scope        | grants                      | review-API routes              | webphone vocab |
+| ------------ | --------------------------- | ------------------------------ | -------------- |
+| draft-only   | create drafts, read queue   | `POST /draft`, `GET /reviews`  | draft+read     |
+| send-allowed | draft-only + approve/send   | `+ POST /reviews/{id}/approve` | send           |
+| audit-read   | read the agent-audit stream | `GET /audit` (new)             | —              |
 
 Default least privilege: `draft-only`. The scope is a CEILING — a `send-allowed` token still obeys the stack's mode gates (off/drafts/veto/after-hours/full decide send policy; the token cannot outrank them). `audit-read` is the read-only lane for observer agents (the row's agents-as-users idea).
 
