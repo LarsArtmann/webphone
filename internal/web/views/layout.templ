@@ -28,9 +28,28 @@ const (
 	TabAdmin Tab = "admin"
 )
 
-// AllTabs is the navigation order (TabAdmin rides at the end; NavLinks
+// AllTabs is every tab in DOM order (TabAdmin rides at the end; NavLinks
 // hides it from non-admin sessions).
-var AllTabs = []Tab{TabMessages, TabFax, TabVoicemail, TabHistory, TabReports, TabContacts, TabSettings, TabAdmin}
+var AllTabs = []Tab{TabMessages, TabVoicemail, TabFax, TabHistory, TabReports, TabContacts, TabSettings, TabAdmin}
+
+// navGroup is one labelled section of the sidebar rail: the Google-Voice /
+// contact-centre IA (workspace, calls, people, system) instead of one flat
+// eight-item strip. Groups are presentation only — every link keeps its real
+// route, so deep links, back/forward and the HTMX partials are untouched.
+type navGroup struct {
+	Key  string
+	Tabs []Tab
+}
+
+// navGroups is the rail's section order. Messages leads the workspace group
+// (the daily driver); Fax rides after Voicemail because voicemail is the
+// call-overflow surface, not an archive.
+var navGroups = []navGroup{
+	{Key: "nav.group.workspace", Tabs: []Tab{TabMessages, TabVoicemail, TabFax}},
+	{Key: "nav.group.calls", Tabs: []Tab{TabHistory, TabReports}},
+	{Key: "nav.group.people", Tabs: []Tab{TabContacts}},
+	{Key: "nav.group.system", Tabs: []Tab{TabSettings, TabAdmin}},
+}
 
 // Path returns the tab's route.
 func (t Tab) Path() string { return "/" + string(t) }
@@ -195,21 +214,31 @@ templ ShellBody(props ShellProps) {
 			<button id="theme-toggle" class="wp-theme-toggle" type="button" title="Color theme (auto, light, dark)">Theme: auto</button>
 		</div>
 	</header>
-	<div class="wp-body">
-		<aside class="wp-island" id="wp-island" aria-label="Phone">
-			@PhoneIsland()
-			// The live call's CRM context (issue #10). One fixed slot, filled
-			// by the shell from /partials/live-context when a call starts and
-			// emptied when the last one ends: an empty answer renders nothing
-			// inside it, so the slot costs no layout shift.
-			if props.LiveContext {
-				<div id="wp-live-context" class="wp-live-context"></div>
-			}
-		</aside>
-		<div class={ "wp-main-col", templ.KV("wp-signed-out", props.SignedIn == "") }>
+	<div class={ "wp-body", templ.KV("wp-body-signed-out", props.SignedIn == "") }>
+		<aside class="wp-rail" aria-label="Workspace">
 			<nav class="wp-nav" id="wp-nav" aria-label="Sections">
 				@NavLinks(props)
 			</nav>
+			// The rail compacts to its glyphs (the contact-centre icon rail):
+			// the preference is applied to <html> before first paint by
+			// theme-preload.js and shell.js owns the toggle. Signed out the
+			// door has no navigation, so the control is not rendered at all.
+			if props.SignedIn != "" {
+				<button
+					id="wp-rail-toggle"
+					class="wp-rail-toggle"
+					type="button"
+					aria-controls="wp-nav"
+					aria-expanded="true"
+					title={ T(props.Lang, "shell.rail.toggle") }
+				>
+					<span class="wp-rail-toggle-hide">@icons.Icon(icons.ChevronLeft, "wp-icon")</span>
+					<span class="wp-rail-toggle-show">@icons.Icon(icons.ChevronRight, "wp-icon")</span>
+					<span class="wp-rail-toggle-label">{ T(props.Lang, "shell.rail.toggle") }</span>
+				</button>
+			}
+		</aside>
+		<div class={ "wp-main-col", templ.KV("wp-signed-out", props.SignedIn == "") }>
 			// M26: the error slot renders ABOVE the panel — at panel height
 			// an error swapped in below the main never scrolled into view,
 			// and a slot the eye never meets is a slot that does not exist.
@@ -232,6 +261,16 @@ templ ShellBody(props ShellProps) {
 				<span></span>
 			</div>
 		</div>
+		<aside class="wp-island" id="wp-island" aria-label="Phone">
+			@PhoneIsland()
+			// The live call's CRM context (issue #10). One fixed slot, filled
+			// by the shell from /partials/live-context when a call starts and
+			// emptied when the last one ends: an empty answer renders nothing
+			// inside it, so the slot costs no layout shift.
+			if props.LiveContext {
+				<div id="wp-live-context" class="wp-live-context"></div>
+			}
+		</aside>
 	</div>
 	// The SR-only live region the shell announces through (new-message
 	// pushes): visually silent, politely spoken.
@@ -244,31 +283,36 @@ templ NavLinks(props ShellProps) {
 	// (the post-login re-fetch targets #wp-nav); anonymously it renders
 	// zero links instead of seven dead doors.
 	if props.SignedIn != "" {
-		for _, tab := range AllTabs {
-			// templ has no loop `continue`: the admin tab's visibility is an
-			// if-guard around the whole link (a non-admin session renders no
-			// admin nav entry at all).
-			if tab != TabAdmin || props.Admin {
-				<a
-					class={ "wp-nav-link", templ.KV("wp-active", props.ActiveTab == tab) }
-					href={ tab.Path() }
-					aria-current={ currentAttr(props.ActiveTab == tab) }
-					hx-get={ "/partials" + tab.Path() }
-					hx-target="#tab-content"
-					hx-swap="innerHTML show:window:top"
-					hx-push-url={ tab.Path() }
-					data-tab={ string(tab) }
-				>
-					<span class="wp-nav-ic">@icons.Icon(tabIcon(tab), "wp-icon")</span>
-					<span>{ T(props.Lang, "tab."+string(tab)) }</span>
-					if tab == TabMessages && props.Unread > 0 {
-						<span class="wp-nav-badge" aria-label={ badgeCount(props.Lang, props.Unread, "nav.unread") }>{ fmtInt(props.Unread) }</span>
+		for _, group := range navGroups {
+			<div class="wp-nav-group" role="group" aria-label={ T(props.Lang, group.Key) }>
+				<p class="wp-nav-group-label" aria-hidden="true">{ T(props.Lang, group.Key) }</p>
+				for _, tab := range group.Tabs {
+					// templ has no loop `continue`: the admin tab's visibility is an
+					// if-guard around the whole link (a non-admin session renders no
+					// admin nav entry at all).
+					if tab != TabAdmin || props.Admin {
+						<a
+							class={ "wp-nav-link", templ.KV("wp-active", props.ActiveTab == tab) }
+							href={ tab.Path() }
+							aria-current={ currentAttr(props.ActiveTab == tab) }
+							hx-get={ "/partials" + tab.Path() }
+							hx-target="#tab-content"
+							hx-swap="innerHTML show:window:top"
+							hx-push-url={ tab.Path() }
+							data-tab={ string(tab) }
+						>
+							<span class="wp-nav-ic">@icons.Icon(tabIcon(tab), "wp-icon")</span>
+							<span class="wp-nav-label">{ T(props.Lang, "tab."+string(tab)) }</span>
+							if tab == TabMessages && props.Unread > 0 {
+								<span class="wp-nav-badge" aria-label={ badgeCount(props.Lang, props.Unread, "nav.unread") }>{ fmtInt(props.Unread) }</span>
+							}
+							if tab == TabVoicemail && props.NewVoicemail > 0 {
+								<span class="wp-nav-badge" id="wp-nav-vm-badge" aria-label={ badgeCount(props.Lang, props.NewVoicemail, "nav.new") }>{ fmtInt(props.NewVoicemail) }</span>
+							}
+						</a>
 					}
-					if tab == TabVoicemail && props.NewVoicemail > 0 {
-						<span class="wp-nav-badge" id="wp-nav-vm-badge" aria-label={ badgeCount(props.Lang, props.NewVoicemail, "nav.new") }>{ fmtInt(props.NewVoicemail) }</span>
-					}
-				</a>
-			}
+				}
+			</div>
 		}
 	}
 }
