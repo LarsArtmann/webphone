@@ -866,10 +866,10 @@ SHIPPED and green; these are the deliberately deferred edges.
 2. **Batch identity (`by-phone?numbers=` on the producer)**: lists ask N times;
    a batch product collapses it to one. Owner-side (Kith) work, worth doing
    when a list ever exceeds ~20 numbers per render.
-3. **Contract snapshot test**: pin webphone's exact `/context` request + parse
+~~3. **Contract snapshot test**: pin webphone's exact `/context` request + parse
    against the producer's published shape, so the vocabulary-break class (a
    closed set drifting under a consumer that keeps sending the old value)
-   fails in CI instead of on a customer's answered call.
+   fails in CI instead of on a customer's answered call.~~ → done 2026-11-15 — SHIPPED: `internal/crm/context_request_test.go` pins the request byte-shape (method/path/auth/query/Accept, P2-2) and `internal/crm/context_snapshot_test.go` + `testdata/kith_context_snapshot.json` pin the producer's RENDERED bytes to the mapped chips (captured from the CRM's own serializer, re-record instructions in the header). The batch-ask draft lives at docs/drafts/kith-by-phone-batch-ask.md (owner tick to file).
 4. **Full `nix flake check` as ONE gate**: the KVM-gated
    `webphone-backup`, `webphone-backup-drill` and `webphone-module` checks were
    not part of this train's verdict set (each verified individually when it
