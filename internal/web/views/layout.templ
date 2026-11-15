@@ -189,18 +189,7 @@ templ ShellBody(props ShellProps) {
 			// chevron pair still carries the direction (both rendered, swapped
 			// by CSS per state) and aria-expanded carries the state.
 			if props.SignedIn != "" {
-				<button
-					id="wp-island-toggle"
-					class="wp-icon-toggle"
-					type="button"
-					aria-controls="wp-island"
-					aria-expanded="true"
-					title={ T(props.Lang, "shell.island.toggle") }
-				>
-					<span class="wp-island-toggle-hide">@icons.Icon(icons.ChevronLeft, "wp-icon")</span>
-					<span class="wp-island-toggle-show">@icons.Icon(icons.ChevronRight, "wp-icon")</span>
-					<span class="wp-island-toggle-label">{ T(props.Lang, "shell.island.toggle") }</span>
-				</button>
+				@collapseToggle(props.Lang, "wp-island-toggle", "wp-icon-toggle", "wp-island", "shell.island.toggle", "wp-island")
 			}
 			// The command palette's coarse-pointer entry (F12): keyboard users
 			// own Ctrl/Cmd+K and the "?" help documents it; touch has no
@@ -226,18 +215,7 @@ templ ShellBody(props ShellProps) {
 			// theme-preload.js and shell.js owns the toggle. Signed out the
 			// door has no navigation, so the control is not rendered at all.
 			if props.SignedIn != "" {
-				<button
-					id="wp-rail-toggle"
-					class="wp-rail-toggle"
-					type="button"
-					aria-controls="wp-rail"
-					aria-expanded="true"
-					title={ T(props.Lang, "shell.rail.toggle") }
-				>
-					<span class="wp-rail-toggle-hide">@icons.Icon(icons.ChevronLeft, "wp-icon")</span>
-					<span class="wp-rail-toggle-show">@icons.Icon(icons.ChevronRight, "wp-icon")</span>
-					<span class="wp-rail-toggle-label">{ T(props.Lang, "shell.rail.toggle") }</span>
-				</button>
+				@collapseToggle(props.Lang, "wp-rail-toggle", "wp-rail-toggle", "wp-rail", "shell.rail.toggle", "wp-rail")
 			}
 		</aside>
 		<div class={ "wp-main-col", templ.KV("wp-signed-out", props.SignedIn == "") }>
@@ -277,6 +255,25 @@ templ ShellBody(props ShellProps) {
 	// The SR-only live region the shell announces through (new-message
 	// pushes): visually silent, politely spoken.
 	<div id="wp-live" class="sr-only" role="status" aria-live="polite"></div>
+}
+
+// collapseToggle is the ONE home for the shell's two collapse controls
+// (island + rail): the same chevron-pair disclosure idiom, differing only
+// in ids, classes and the i18n key. aria-expanded stays the state channel;
+// shell.js owns the toggling.
+templ collapseToggle(lang Lang, id, cls, controlsID, langKey, prefix string) {
+	<button
+		id={ id }
+		class={ cls }
+		type="button"
+		aria-controls={ controlsID }
+		aria-expanded="true"
+		title={ T(lang, langKey) }
+	>
+		<span class={ prefix + "-toggle-hide" }>@icons.Icon(icons.ChevronLeft, "wp-icon")</span>
+		<span class={ prefix + "-toggle-show" }>@icons.Icon(icons.ChevronRight, "wp-icon")</span>
+		<span class={ prefix + "-toggle-label" }>{ T(lang, langKey) }</span>
+	</button>
 }
 
 templ NavLinks(props ShellProps) {
