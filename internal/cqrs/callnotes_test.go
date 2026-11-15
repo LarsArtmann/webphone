@@ -132,6 +132,7 @@ func TestNoteCapIsConflictAtTheDecision(t *testing.T) {
 		t.Fatalf("a NEW call past the cap must refuse with the ErrNoteListFull contract: %v", err)
 	}
 	errorfamilytest.AssertFamily(t, err, errorfamily.Conflict)
+	errorfamilytest.AssertCode(t, err, "cqrs.note_list_full")
 
 	_, err = decideSaveDisposition(full, event.Version(notesMaxPerOwner), SaveCallDisposition{BasicCommand: basicCommand(t, "note.disposition_save", "1001"), Owner: "1001", CallID: "call-new", Disposition: domain.DispositionAnswered})
 	if err == nil || !errors.Is(err, readmodels.ErrNoteListFull) {

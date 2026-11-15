@@ -32,6 +32,19 @@ func TestErrNoteListFullClassifiesConflict(t *testing.T) {
 	errorfamilytest.AssertFamily(t, readmodels.ErrNoteListFull, errorfamily.Conflict)
 }
 
+// TestNoteDecisionWrapKeepsSentinelAndConflict pins the decision-layer
+// wrap shape the cqrs note commands mint (callnotes.go): the sentinel
+// identity survives so the handler's 409 branch can errors.Is it, and
+// the wrap carries the seam code the registry documents.
+func TestNoteDecisionWrapKeepsSentinelAndConflict(t *testing.T) {
+	wrapped := errorfamily.WrapConflictf(readmodels.ErrNoteListFull, "cqrs.note_list_full", "note list at %d slots", 2000)
+	errorfamilytest.AssertFamily(t, wrapped, errorfamily.Conflict)
+	errorfamilytest.AssertCode(t, wrapped, "cqrs.note_list_full")
+	if !errors.Is(wrapped, readmodels.ErrNoteListFull) {
+		t.Fatal("the note cap wrap must keep errors.Is identity (the 409 branch depends on it)")
+	}
+}
+
 func TestListCapWrapKeepsIdentityAndFamily(t *testing.T) {
 	owner := domain.MustParseExtension("1001")
 	full := errorfamily.WrapRejectionf(readmodels.ErrListFull, "readmodels.contact_list_full", "%s at %d contacts", owner, readmodels.ContactsMaxPerExtension)

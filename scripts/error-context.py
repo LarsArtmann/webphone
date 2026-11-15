@@ -279,6 +279,11 @@ def self_test():
         "asr.empty": "Rejection",
         "blob.open": "Infrastructure",
         "crm.http": "runtime-split",
+        # The summarize/push/notes lanes (T04): the post-call chain's
+        # newer codes route as honestly as the founding ones.
+        "agent.summarize": "Transient",
+        "push.fcm_send": "Infrastructure",
+        "cqrs.note_list_full": "Conflict",
     }
     for code, family in picks.items():
         b = build_bundle(code, registry)

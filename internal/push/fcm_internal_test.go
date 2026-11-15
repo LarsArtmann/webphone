@@ -150,6 +150,57 @@ func TestFcmSendFullWire(t *testing.T) {
 	}
 }
 
+// TestFcmSendDraftFullWire pins the draft lane's wire shape: same
+// messages:send POST and Bearer grant as the ring, but the data carries
+// the draft fact (event/contact/draft_id) at NORMAL priority — good
+// news is not urgent; the shell owns the rendering.
+func TestFcmSendDraftFullWire(t *testing.T) {
+	var gotAuth string
+	var gotBody map[string]any
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"access_token":"test-access-token","expires_in":3600}`))
+	}))
+	defer tokenServer.Close()
+	sendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotAuth = r.Header.Get("Authorization")
+		raw, _ := io.ReadAll(r.Body)
+		if err := json.Unmarshal(raw, &gotBody); err != nil {
+			t.Errorf("decode body: %v", err)
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer sendServer.Close()
+
+	credentialsPath, _ := writeTestCredentials(t, tokenServer.URL)
+	sender, err := NewFcmSender(credentialsPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sender.sendURL = sendServer.URL
+
+	draft := Draft{Event: EventDraftReady, Contact: "+15550000001", DraftID: "d-42"}
+	if err := sender.SendDraft(context.Background(), "device-token", draft); err != nil {
+		t.Fatalf("send draft: %v", err)
+	}
+
+	if gotAuth != "Bearer test-access-token" {
+		t.Fatalf("send auth %q", gotAuth)
+	}
+	message, _ := gotBody["message"].(map[string]any)
+	if message["token"] != "device-token" {
+		t.Fatalf("token %v", message["token"])
+	}
+	data, _ := message["data"].(map[string]any)
+	if data["event"] != string(EventDraftReady) || data["contact"] != "+15550000001" || data["draft_id"] != "d-42" {
+		t.Fatalf("draft data %v", data)
+	}
+	android, _ := message["android"].(map[string]any)
+	if android["priority"] != "NORMAL" {
+		t.Fatalf("draft priority %v, want NORMAL (good news is not urgent)", android["priority"])
+	}
+}
+
 func TestFcmSendClassifiesDeadTokenAndRejectedCredential(t *testing.T) {
 	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

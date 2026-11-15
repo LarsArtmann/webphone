@@ -43,3 +43,13 @@ func TestParseTransportVocabulary(t *testing.T) {
 		}
 	}
 }
+
+// TestTransportSendWrapCarriesTheSeamCode pins the send-lane wrap
+// codes (the fcm variant shown; ntfy shares the shape): a transport
+// failure keeps its Infrastructure family under the seam's own code,
+// so the journal names the lane that failed.
+func TestTransportSendWrapCarriesTheSeamCode(t *testing.T) {
+	wrapped := errorfamily.WrapInfrastructuref(fmt.Errorf("publish refused"), "push.fcm_send", "publish to fcm")
+	errorfamilytest.AssertFamily(t, wrapped, errorfamily.Infrastructure)
+	errorfamilytest.AssertCode(t, wrapped, "push.fcm_send")
+}
