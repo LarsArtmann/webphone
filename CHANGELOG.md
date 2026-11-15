@@ -30,6 +30,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "Noted calls N / 2000" row (fail-open), and History transcript rows
   show a glanceable "Noted" chip when a slot carries prose.
 
+### Changed
+
+- The agent-mode pill speaks operator language: per-mode tooltip +
+  aria-label decode the raw mode names (off/drafts/after-hours/full),
+  the pill re-reads the live identity on `wp:drafts-changed` so another
+  tab's mode change cannot leave it stale, and a `D` keyboard shortcut
+  cycles the mode (Settings cheat-sheet + `?` help list it).
+
 ### Fixed
 
 - The ended call card's "Summarize → draft SMS" button no longer renders
