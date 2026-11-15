@@ -111,6 +111,7 @@ in
     ./options.nix
     ./oauth2.nix
     ./crm.nix
+    ./textagent.nix
   ];
 
   config = lib.mkIf cfg.enable {
