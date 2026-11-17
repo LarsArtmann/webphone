@@ -15,6 +15,7 @@ first when hunting prior rulings. Newest last; superseded files in
 | 2026-11-11 | 2026-11-11_15-22_architecture-review.html                    | Post journal-world + front-door re-review (7-dimension re-score)                                                                 |
 | 2026-11-11 | 2026-11-11_15-22-webphone-architecture{,-improved}.d2 / .svg | Current-vs-ideal D2 renders (ONE journal world, carved-server target)                                                            |
 | 2026-11-11 | 2026-11-11_20-23_deepening-candidates.html                   | Deepening candidates (owner-requested; executed same day: identity tail, fan-out policy, thread list read model, call lifecycle) |
+| 2026-11-17 | 2026-11-17_10-03-webphone-architecture{,-improved}.d2 / .svg | Current-vs-ideal D2 renders (full 38-package graph from `go list`; target = the one live server/html carve)                      |
 
 The Go-modules verdict series continues in `docs/modularization/` (2026-10-14:
 single go.mod ratified a third time — see its INDEX.md).

@@ -1,0 +1,232 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    theme-id: 200
+  }
+}
+
+classes: {
+  actor: {
+    style: {
+      fill: "#f4d35e"
+      stroke: "#f4d35e"
+      font-color: "#0e0e10"
+      bold: true
+    }
+  }
+  front: {
+    style: {
+      fill: "#6eb5ff"
+      stroke: "#6eb5ff"
+      font-color: "#0e0e10"
+      bold: true
+    }
+  }
+  surface: {
+    style: {
+      fill: "#ffb347"
+      stroke: "#ffb347"
+      font-color: "#0e0e10"
+    }
+  }
+  service: {
+    style: {
+      fill: "#1d1d24"
+      stroke: "#ffb347"
+      font-color: "#f4f4f0"
+    }
+  }
+  seam: {
+    style: {
+      fill: "#1d1d24"
+      stroke: "#6eb5ff"
+      font-color: "#f4f4f0"
+    }
+  }
+  base: {
+    style: {
+      fill: "#101014"
+      stroke: "#4a4a55"
+      font-color: "#c9c9d4"
+    }
+  }
+  external: {
+    style: {
+      fill: "#26262e"
+      stroke: "#8a8a96"
+      stroke-dash: 4
+      font-color: "#f4f4f0"
+    }
+  }
+  delta: {
+    style: {
+      fill: "#101014"
+      stroke: "#f4d35e"
+      stroke-width: 2
+      font-color: "#f4d35e"
+      bold: true
+    }
+  }
+}
+
+direction: down
+
+operator: Operator (browser) {
+  class: actor
+  island: SIP island
+  tabs: HTMX tabs
+  login: "/login front door"
+}
+
+front: TLS front — Caddy (stack module) {
+  class: front
+  style.stroke-dash: 4
+  web: reverse_proxy + /events unbuffered
+  sip: /sip WSS bridge
+}
+
+webphone: webphone single binary — target state (2026-11-17) {
+  style: {
+    stroke: "#ffb347"
+    stroke-width: 2
+    font-color: "#ffb347"
+    bold: true
+  }
+
+  cmd: cmd/webphone — process lifecycle {
+    class: base
+  }
+
+  app: internal/app — composition root (samber/do v2) {
+    class: surface
+  }
+
+  http: HTTP surface — carved by concern (delta: the ONE live carve) {
+    class: surface
+    wiring: "wiring — Deps · chain · mount (thin)"
+    auth: "server/auth — login · session · passkey · sso"
+    html: "server/html — pages · panels · actions · SSE fragments (delta)"
+    platform: "server/platform — assets · metrics · csp · trace · proxy"
+    api: server/api — JSON endpoints (carved 2026-10-17)
+    hooks: server/hooks — webhook ingest (carved 2026-10-17)
+  }
+
+  identity: identity {
+    class: seam
+    userauth: userauth — in-process usermgmt v4
+    sso: sso — Pocket ID OIDC
+    authmap: authmap
+    session: session — SQLite rows, sliding TTL
+    sipcred: sipcred
+    admin: admin
+  }
+
+  comms: comms services {
+    class: service
+    messaging: messaging.Service
+    chatloop: chatloop
+    matrix: matrix
+    signal: signal
+    faxsvc: fax.Service
+    paperless: paperless.Archiver
+    gateway: gateway — loopback | webhook
+  }
+
+  operator_services: operator services {
+    class: service
+    crmres: crm.Resolver
+    textagent: textagent
+    asr: asr.Client
+    push: push — ntfy + FCM
+    reports: reports — CDR projection
+    retention: retention
+    blob: blob
+    pbx: pbx — directory + CDR client
+  }
+
+  journal: ONE journal world (COMPLETE 2026-11-12) {
+    class: seam
+    cqrs: cqrs — deciders + projections + the ONE engine driver
+    readmodels: "readmodels — gates + view types (purity arch test)"
+    sessions: "store → sessions SQL only (ladder retired, retention empties the history)"
+  }
+
+  infra: shared infra {
+    class: base
+    domain: internal/domain — zero internal imports
+    config: config
+    httpclient: httpclient
+  }
+
+  shell: shell layer (LANDED: no store/pbx reach-through) {
+    class: base
+    views: web/views — templ surfaces, typed view props
+    assets: web/assets — island embed tree
+  }
+}
+
+sysdb: system.db (SQLite WAL) {
+  shape: cylinder
+  class: base
+}
+usermgmtdb: usermgmt.db (identity journal) {
+  shape: cylinder
+  class: base
+}
+blobs: blob tree {
+  shape: stored_data
+  class: base
+}
+
+pbxstack: FreeSWITCH PBX {
+  class: external
+}
+bridge: telnyx-webhooks bridge {
+  class: external
+}
+kith: Kith CRM {
+  class: external
+}
+pocketid: Pocket ID {
+  class: external
+}
+
+operator -> front: "HTTPS · WSS /sip"
+front.web -> webphone.http.wiring: proxies
+front.sip -> pbxstack: "SIP over WSS"
+
+webphone.cmd -> webphone.app: lifecycle
+webphone.app -> webphone.http: wires
+webphone.app -> webphone.identity: wires
+webphone.app -> webphone.comms: wires
+webphone.app -> webphone.operator_services: wires
+webphone.app -> webphone.journal: wires
+
+webphone.http.wiring -> webphone.http.auth: mounts
+webphone.http.wiring -> webphone.http.html: mounts
+webphone.http.wiring -> webphone.http.api: mounts
+webphone.http.wiring -> webphone.http.hooks: mounts
+webphone.http.wiring -> webphone.http.platform: mounts
+webphone.http.auth -> webphone.identity.userauth: ceremonies
+webphone.http.auth -> webphone.identity.sso: begin/complete
+webphone.http.html -> webphone.shell.views: renders
+webphone.http.html -> webphone.journal.readmodels: "reads views, never stores"
+webphone.http.api -> webphone.identity.session: gate
+webphone.http.hooks -> webphone.comms.messaging: Receive
+webphone.http.hooks -> webphone.comms.faxsvc: verdicts
+webphone.http.platform -> webphone.shell.assets: serves
+
+webphone.comms.messaging -> webphone.comms.gateway: Send
+webphone.comms.gateway -> bridge: "multipart + Bearer"
+bridge -> webphone.http.hooks: "/hooks/*"
+pbxstack -> webphone.http.hooks: "/hooks/ring"
+webphone.identity.session -> webphone.operator_services.pbx: directory verify
+webphone.identity.userauth -> usermgmtdb: journal
+webphone.identity.sso -> pocketid: "OIDC + PKCE"
+webphone.operator_services.crmres -> kith: bearer
+webphone.operator_services.pbx -> pbxstack: directory + CDR
+
+webphone.journal.cqrs -> sysdb: "events + projections"
+webphone.journal.readmodels -> sysdb: "gate reads"
+webphone.journal.sessions -> sysdb: sessions
+webphone.operator_services.blob -> blobs: atomic write
