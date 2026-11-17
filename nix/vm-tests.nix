@@ -441,16 +441,30 @@
             assert "code_challenge_method=S256" in location, f"begin lost the PKCE method: {location}"
             assert "nonce=" in location, f"begin lost the nonce: {location}"
 
-            # A DEAD IdP fails the ATTEMPT, not the process: discovery is
-            # boot-lazy by design (the PBX phone must keep answering while
-            # the IdP is down), and failures are never cached — this begin
-            # re-fetches and lands the browser on the login door with the
-            # unavailable reason code.
+            # The IdP DYING is invisible to the CACHED door: the positive
+            # discovery cache (15 min TTL, successes only) still composes
+            # the redirect — the failure would surface at the callback's
+            # token exchange, not at begin.
             machine.succeed("pkill -f idp-stub.py")
             machine.wait_until_fails(
                 "curl -sf https://idp.example.org/.well-known/openid-configuration",
                 timeout=60,
             )
+            cached = machine.succeed(
+                "curl -s -o /dev/null -w '%{redirect_url}' "
+                "http://127.0.0.1:8080/api/auth/oauth2/begin"
+            )
+            assert cached.startswith("https://idp.example.org/authorize"), f"cached begin lost the composed redirect: {cached}"
+
+            # A FRESH process with a dead IdP fails the ATTEMPT, not the
+            # boot: discovery is boot-lazy by design (the PBX phone must
+            # keep answering while the IdP is down), the restart proves
+            # the app comes up WITHOUT a reachable issuer, and failures
+            # are never cached — this begin re-fetches and lands the
+            # browser on the login door with the unavailable reason code.
+            machine.succeed("systemctl restart webphone.service")
+            machine.wait_for_unit("webphone.service")
+            machine.wait_for_open_port(8080)
             dead = machine.succeed(
                 "curl -s -o /dev/null -w '%{redirect_url}' "
                 "http://127.0.0.1:8080/api/auth/oauth2/begin"
