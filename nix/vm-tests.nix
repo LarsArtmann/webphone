@@ -263,27 +263,45 @@
 
           nodes.machine =
             { pkgs, ... }:
+            let
+              # Self-signed leaf for the stub IdP; the VM's system trust
+              # store adopts it so the app's Go HTTP client (system pool)
+              # verifies https://idp.example.org without any app-side knob.
+              idpCert = pkgs.runCommand "webphone-oauth2-idp-cert" { } ''
+                mkdir $out
+                ${pkgs.openssl}/bin/openssl req -x509 -newkey rsa:2048 -nodes \
+                  -keyout $out/key.pem -out $out/cert.pem -days 3 \
+                  -subj "/CN=idp.example.org" \
+                  -addext "subjectAltName=DNS:idp.example.org"
+              '';
+            in
             {
               imports = [ ../package/nixos-module.nix ];
               services.webphone = {
                 enable = true;
                 package = self'.packages.webphone;
-                # The generated vhost is the natural deployment shape —
-                # and both eval-time derivations (callback, passkey rp)
-                # key on it.
-                caddy.enable = true;
-                caddy.hostName = "phone.example.org";
+                # CADDY-FREE (2026-11-15 ruling): port 443 belongs to the
+                # stub IdP and real ACME would be network noise; the
+                # caddy-keyed derivations (callback, passkey rp) stay
+                # covered by nix/module-output-oauth2.golden, so the VM
+                # pins the callback explicitly instead.
                 oauth2 = {
                   enable = true;
-                  issuer = "https://idp.example.org"; # a stub issuer: the assert is the app's redirect, never the IdP's answer (discovery stays lazy)
+                  issuer = "https://idp.example.org";
                   clientId = "webphone-vm";
                   clientSecretFile = "/etc/webphone-oidc-source";
+                  redirectUrl = "https://phone.example.org/api/auth/oauth2/callback";
                 };
                 settings = {
                   auth.users."lars@example.org".extensions = [ "1000" ];
                   auth.extension_password_files."1000" = "/etc/webphone-ext-1000";
                 };
               };
+              # The stub IdP: the issuer name resolves to loopback over a
+              # locally-trusted TLS cert — the app's discovery leg runs
+              # for real, no external network.
+              security.pki.certificateFiles = [ "${idpCert}/cert.pem" ];
+              networking.hosts."127.0.0.1" = [ "idp.example.org" ];
               environment.etc = {
                 "webphone-oidc-source" = {
                   text = "oidc-vm-secret";
@@ -293,8 +311,19 @@
                   text = "ext-secret";
                   mode = "0600";
                 };
+                "idp-key.pem" = {
+                  source = "${idpCert}/key.pem";
+                  mode = "0600";
+                };
+                "idp-cert.pem" = {
+                  source = "${idpCert}/cert.pem";
+                  mode = "0644";
+                };
               };
-              environment.systemPackages = [ pkgs.curl ];
+              environment.systemPackages = with pkgs; [
+                curl
+                python3
+              ];
               system.stateVersion = "26.05";
             };
 
