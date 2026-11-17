@@ -248,14 +248,20 @@
 
         # OIDC lane VM test (plan T09, 2026-11-15): the typed
         # services.webphone.oauth2 lane gets its RUNTIME proof, not just
-        # the eval assertions — the operator's secret file is handed to
-        # systemd as a LoadCredential, the unit-private copy lands 0400
+        # the eval assertions. The operator's secret file is handed to
+        # systemd as a LoadCredential, the unit-private copy lands 0440
         # under /run/credentials, the app's rendered config points at
-        # that copy, the SSO door is LIVE (begin 302s to the configured
-        # issuer with the client id), and the chain FAILS CLOSED: remove
-        # the source file and the unit start fails (the crm.nix doctrine
-        # "a missing source file fails the UNIT START" proven live).
-        # KVM-gated like the backup VM test.
+        # that copy, the SSO door is LIVE against a real stub IdP
+        # (discovery is begin-eager, so the VM runs a loopback https
+        # issuer with a locally-trusted cert — begin 302s to the
+        # DISCOVERED authorization endpoint with client id + PKCE), a
+        # dead IdP fails the ATTEMPT to /login?sso_error=unavailable
+        # (boot-lazy discovery, never cached), and the chain FAILS
+        # CLOSED: remove the source file and the unit start fails (the
+        # crm.nix doctrine "a missing source file fails the UNIT START"
+        # proven live). CADDY-FREE by ruling: port 443 belongs to the
+        # stub, and the caddy-keyed derivations stay covered by the
+        # module-output-oauth2 golden. KVM-gated like the backup VM test.
         webphone-oauth2 = pkgs.testers.runNixOSTest {
           name = "webphone-oauth2";
 
@@ -273,6 +279,47 @@
                   -keyout $out/key.pem -out $out/cert.pem -days 3 \
                   -subj "/CN=idp.example.org" \
                   -addext "subjectAltName=DNS:idp.example.org"
+              '';
+              # Minimal OIDC discovery document over loopback https: the
+              # only leg the app ever contacts on the begin path. The
+              # token/jwks endpoints are never reached by this test (the
+              # assert is the app's redirect, not the IdP's answer).
+              idpStub = pkgs.writeText "webphone-oauth2-idp-stub.py" ''
+                import http.server
+                import json
+                import ssl
+
+                DISCO = json.dumps({
+                    "issuer": "https://idp.example.org",
+                    "authorization_endpoint": "https://idp.example.org/authorize",
+                    "token_endpoint": "https://idp.example.org/token",
+                    "jwks_uri": "https://idp.example.org/jwks.json",
+                    "response_types_supported": ["code"],
+                    "subject_types_supported": ["public"],
+                    "id_token_signing_alg_values_supported": ["RS256"],
+                    "scopes_supported": ["openid", "email", "profile"],
+                }).encode()
+
+                class Handler(http.server.BaseHTTPRequestHandler):
+                    def do_GET(self):
+                        if self.path.startswith("/.well-known/openid-configuration"):
+                            self.send_response(200)
+                            self.send_header("Content-Type", "application/json")
+                            self.send_header("Content-Length", str(len(DISCO)))
+                            self.end_headers()
+                            self.wfile.write(DISCO)
+                        else:
+                            self.send_response(404)
+                            self.end_headers()
+
+                    def log_message(self, *args):
+                        pass
+
+                srv = http.server.HTTPServer(("127.0.0.1", 443), Handler)
+                ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+                ctx.load_cert_chain("/etc/idp-cert.pem", "/etc/idp-key.pem")
+                srv.socket = ctx.wrap_socket(srv.socket, server_side=True)
+                srv.serve_forever()
               '';
             in
             {
@@ -311,13 +358,16 @@
                   text = "ext-secret";
                   mode = "0600";
                 };
+                "idp-cert.pem" = {
+                  source = "${idpCert}/cert.pem";
+                  mode = "0644";
+                };
                 "idp-key.pem" = {
                   source = "${idpCert}/key.pem";
                   mode = "0600";
                 };
-                "idp-cert.pem" = {
-                  source = "${idpCert}/cert.pem";
-                  mode = "0644";
+                "idp-stub.py" = {
+                  source = idpStub;
                 };
               };
               environment.systemPackages = with pkgs; [
@@ -332,14 +382,12 @@
             machine.wait_for_open_port(8080)
 
             # The credential landed: the unit-private copy exists, is
-            # owner-only (0400), and carries the source secret's bytes.
+            # owner+group readable (0440 — systemd installs LoadCredential
+            # snapshots at 0440, pinned EMPIRICALLY; not the 0400 of the
+            # encrypted-credential mental model), and carries the bytes.
             machine.succeed(
                 "test -f /run/credentials/webphone.service/webphone-oidc-client-secret"
             )
-            # The unit-private copy is owner+group readable (0440) —
-            # systemd installs LoadCredential snapshots at 0440, not the
-            # 0400 an encrypted-credential mental model suggests; the
-            # value is pinned EMPIRICALLY from this closure's systemd.
             cred_mode = machine.succeed(
                 "stat -c %a /run/credentials/webphone.service/webphone-oidc-client-secret"
             ).strip()
@@ -362,15 +410,46 @@
                 f"grep -q 'webphone-vm' {cfg_path}"
             )
 
-            # The SSO door is LIVE: begin 302s to the configured issuer
-            # with the client id in the query (the app parsed the lane;
-            # the IdP itself is never contacted on this leg).
+            # The stub IdP goes LIVE before the begin probe: discovery is
+            # boot-lazy but BEGIN-EAGER (sso.Challenge fetches the
+            # well-known doc on every door push), so an honest redirect
+            # assert needs a reachable issuer. Loopback https over the
+            # locally-trusted cert; the name resolves via /etc/hosts.
+            machine.succeed("python3 /etc/idp-stub.py >/tmp/idp-stub.log 2>&1 &")
+            machine.wait_until_succeeds(
+                "curl -sf https://idp.example.org/.well-known/openid-configuration "
+                "| grep -q authorization_endpoint",
+                timeout=60,
+            )
+
+            # The SSO door is LIVE: begin 302s to the DISCOVERED
+            # authorization endpoint with the client id, PKCE method and
+            # nonce in the query — the full config → parse → discover →
+            # compose chain, proven over real TLS.
             location = machine.succeed(
                 "curl -s -o /dev/null -w '%{redirect_url}' "
                 "http://127.0.0.1:8080/api/auth/oauth2/begin"
             )
-            assert "https://idp.example.org" in location, f"begin did not redirect to the issuer: {location}"
+            assert location.startswith("https://idp.example.org/authorize"), f"begin did not redirect to the issuer: {location}"
             assert "client_id=webphone-vm" in location, f"begin lost the client id: {location}"
+            assert "code_challenge_method=S256" in location, f"begin lost the PKCE method: {location}"
+            assert "nonce=" in location, f"begin lost the nonce: {location}"
+
+            # A DEAD IdP fails the ATTEMPT, not the process: discovery is
+            # boot-lazy by design (the PBX phone must keep answering while
+            # the IdP is down), and failures are never cached — this begin
+            # re-fetches and lands the browser on the login door with the
+            # unavailable reason code.
+            machine.succeed("pkill -f idp-stub.py")
+            machine.wait_until_fails(
+                "curl -sf https://idp.example.org/.well-known/openid-configuration",
+                timeout=60,
+            )
+            dead = machine.succeed(
+                "curl -s -o /dev/null -w '%{redirect_url}' "
+                "http://127.0.0.1:8080/api/auth/oauth2/begin"
+            )
+            assert "sso_error=unavailable" in dead, f"begin with an unreachable IdP did not fail closed to the login door: {dead}"
 
             # The chain FAILS CLOSED: remove the operator's source file
             # and the unit start dies (systemd cannot snapshot the
