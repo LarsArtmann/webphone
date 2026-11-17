@@ -307,10 +307,14 @@
             machine.succeed(
                 "test -f /run/credentials/webphone.service/webphone-oidc-client-secret"
             )
+            # The unit-private copy is owner+group readable (0440) —
+            # systemd installs LoadCredential snapshots at 0440, not the
+            # 0400 an encrypted-credential mental model suggests; the
+            # value is pinned EMPIRICALLY from this closure's systemd.
             cred_mode = machine.succeed(
                 "stat -c %a /run/credentials/webphone.service/webphone-oidc-client-secret"
             ).strip()
-            assert cred_mode == "400", f"credential mode is {cred_mode!r}, expected 400"
+            assert cred_mode == "440", f"credential mode is {cred_mode!r}, expected 440"
             machine.succeed(
                 "grep -q 'oidc-vm-secret' /run/credentials/webphone.service/webphone-oidc-client-secret"
             )

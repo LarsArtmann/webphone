@@ -12,23 +12,15 @@ import (
 // transport failure the api handler wraps around an unreachable agent
 // classifies Transient under the agent.summarize code. Agent VERDICTS
 // pass through unwrapped (they carry textagent.http + their own
-// status), pinned in internal/textagent/family_test.go.
+// status), pinned in internal/textagent/family_test.go. The draft
+// fan-out that follows is fire-and-forget (`_ = Push.Fan`): its
+// failures surface as the Fanout's greppable warns under
+// push.registry / push.transport + the transports' push.ntfy_send /
+// push.fcm_send — pinned in internal/push, not here (the historical
+// push.draft_devices / push.draft_send codes named no production
+// constructor and were deleted with this file's ghost pin).
 func TestSummaryWrapFamilyPin(t *testing.T) {
 	wrapped := errorfamily.WrapTransientf(errors.New("dial refused"), "agent.summarize", "summarize call c1")
 	errorfamilytest.AssertFamily(t, wrapped, errorfamily.Transient)
 	errorfamilytest.AssertCode(t, wrapped, "agent.summarize")
-}
-
-// TestPushDraftWrapCodePins locks the draft fan-out's two wrap codes
-// (the fire-and-forget goroutine's only greppable trail): the device
-// list failure and the per-device send failure wrap Infrastructure
-// under push.draft_devices / push.draft_send (summary_api.go).
-func TestPushDraftWrapCodePins(t *testing.T) {
-	devices := errorfamily.WrapInfrastructuref(errors.New("db down"), "push.draft_devices", "list draft push targets")
-	errorfamilytest.AssertFamily(t, devices, errorfamily.Infrastructure)
-	errorfamilytest.AssertCode(t, devices, "push.draft_devices")
-
-	send := errorfamily.WrapInfrastructuref(errors.New("ntfy 500"), "push.draft_send", "ship draft-ready to dev-1")
-	errorfamilytest.AssertFamily(t, send, errorfamily.Infrastructure)
-	errorfamilytest.AssertCode(t, send, "push.draft_send")
 }
