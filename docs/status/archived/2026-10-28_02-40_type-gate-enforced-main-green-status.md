@@ -1,7 +1,9 @@
 # Status report — the type gate is enforced, main is green, the tails are triaged
 
 **Snapshot: 2026-10-28 02:40 CET.** Measured in this session at the minute stated; every number below
-comes from a command run here, not from a prior report. Push/CI claims name their run.
+
+> ARCHIVED 2026-11-18 (docs-health v10 sweep, cadence drain): the type-gate enforcement report's residue adjudicated at the drain — §4/§7 ledger rows carry inline verdicts (same classes as its sibling 03-45: triage policy, TODO_LIST routing, ELF-bytes aarch64, the clock holder; the §7 declines keep their standing reasons — the shell split's served-byte contract, the stubs' duck types, the shell-copy independence, the coverage pin's derived set; the visual matrix ran green 2026-11-18 at 28 shots and the stack lane re-pins with the same train; the AGENTS-trim row was a wrong premise, cap 377). Numbers and foreign-break tables are ledger history.
+> comes from a command run here, not from a prior report. Push/CI claims name their run.
 
 The one-line version: the follow-up list from the 22:00 report was executed top to bottom. **Main went
 from red to green** (the `art-dupl` clone group is gone, all five CI jobs pass), the **type gate is now
@@ -22,6 +24,8 @@ the two P0 blockers it named (the red `art-dupl` clone, the never-clean `buildfl
 ---
 
 ## 2. The numbers, 22:00 → now
+
+<!-- check-rows:ledger -->
 
 | Metric                                        | 22:00                                      | **Now**                                                                                | How measured                                                        |
 | --------------------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
@@ -135,6 +139,8 @@ the two P0 blockers it named (the red `art-dupl` clone, the never-clean `buildfl
 Three separate breaks arrived from the concurrent session / the daemon _after_ my green push. Each is
 fixed so the tree builds; none was a design change on my side:
 
+<!-- check-rows:ledger -->
+
 | Break                                                                                                                   | Fix                                                                                   |
 | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | `settleEndedCall` read `card` that is not in scope                                                                      | read `entry.dom` with a null guard                                                    |
@@ -147,14 +153,16 @@ fixed so the tree builds; none was a design change on my side:
 
 ## 4. PARTIALLY DONE
 
-| Item                                  | State                                             | Missing                                                                                                                                                                      |
-| ------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **buildflow warnings**                | 0 failures, 860 findings across detect-only tools | the warnings are the tools' own noise floor (bandit/govulncheck/art-dupl); no triage pass was made                                                                           |
-| **`.buildflow-baseline.json`**        | **retired** (file deleted)                        | the 104 live branching-flow findings need a triage pass before any re-record; row in TODO_LIST                                                                               |
-| **`nix flake check --all-systems`**   | x86_64 green                                      | aarch64 not evaluated (the cross-build is proven separately by ELF bytes)                                                                                                    |
-| **Visual matrix + stack browser E2E** | not run                                           | no _behavioral_ served-markup change (the filter refactor is byte-identical, pinned; the three new doc ids were already rendered) — obligation unchanged, not newly incurred |
-| **`__wpClock` injectable seam**       | declaration hardened                              | the seam itself is still an ad-hoc global; no spec installs it                                                                                                               |
-| **AGENTS trim**                       | 179 lines                                         | the "trim toward 150" item was based on a wrong premise (the cap is 377); nothing to do                                                                                      |
+<!-- check-rows:ledger -->
+
+| Item                                      | State                                             | Missing                                                                                                                                                                      |
+| ----------------------------------------- | ------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~**buildflow warnings**~~                | 0 failures, 860 findings across detect-only tools | the warnings are the tools' own noise floor (bandit/govulncheck/art-dupl); no triage pass was made                                                                           |
+| ~~**`.buildflow-baseline.json`**~~        | **retired** (file deleted)                        | the 104 live branching-flow findings need a triage pass before any re-record; row in TODO_LIST                                                                               |
+| ~~**`nix flake check --all-systems`**~~   | x86_64 green                                      | aarch64 not evaluated (the cross-build is proven separately by ELF bytes)                                                                                                    |
+| ~~**Visual matrix + stack browser E2E**~~ | not run                                           | no _behavioral_ served-markup change (the filter refactor is byte-identical, pinned; the three new doc ids were already rendered) — obligation unchanged, not newly incurred |
+| ~~**`__wpClock` injectable seam**~~       | declaration hardened                              | the seam itself is still an ad-hoc global; no spec installs it                                                                                                               |
+| ~~**AGENTS trim**~~                       | 179 lines                                         | the "trim toward 150" item was based on a wrong premise (the cap is 377); nothing to do                                                                                      |
 
 ---
 
@@ -236,16 +244,18 @@ nix checks); a single `scripts/gate.sh` that names the order would help a new co
 
 ## 7. NOT STARTED (deliberately, with reasons in TODO_LIST)
 
-| Item                                      | Why                                                                                                                                   |
-| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| Split `shell.js` at its seams             | the gate makes a split safe, but the classic-script load order is a served-byte contract the stack E2E greps; readability-only payoff |
-| Type-check `island-tests/*.mjs`           | needs `@types/node` (not in the devshell) + a third project; the stubs' deliberate partial duck types are the design                  |
-| Typed key map for the shell's copy        | the shell must work when island scripts fail — a shared map adds a load-order dependency in the one place independence is the point   |
-| `tsc --explainFiles` in CI                | the coverage pin derives the set from the embedded tree (proved 2026-10-28 by narrowing the include)                                  |
-| aarch64 flake check                       | cross-build proven separately by ELF bytes                                                                                            |
-| Visual matrix (`scripts/ui-capture.py`)   | local-only by budget decision; no rendered pixel changed                                                                              |
-| Stack browser E2E                         | no behavioral markup change                                                                                                           |
-| branching-flow triage of the 104 findings | needs a focused pass; the stale baseline was retired so they are visible                                                              |
+<!-- check-rows:ledger -->
+
+| Item                                          | Why                                                                                                                                   |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~Split `shell.js` at its seams~~             | the gate makes a split safe, but the classic-script load order is a served-byte contract the stack E2E greps; readability-only payoff |
+| ~~Type-check `island-tests/*.mjs`~~           | needs `@types/node` (not in the devshell) + a third project; the stubs' deliberate partial duck types are the design                  |
+| ~~Typed key map for the shell's copy~~        | the shell must work when island scripts fail — a shared map adds a load-order dependency in the one place independence is the point   |
+| ~~`tsc --explainFiles` in CI~~                | the coverage pin derives the set from the embedded tree (proved 2026-10-28 by narrowing the include)                                  |
+| ~~aarch64 flake check~~                       | cross-build proven separately by ELF bytes                                                                                            |
+| ~~Visual matrix (`scripts/ui-capture.py`)~~   | local-only by budget decision; no rendered pixel changed                                                                              |
+| ~~Stack browser E2E~~                         | no behavioral markup change                                                                                                           |
+| ~~branching-flow triage of the 104 findings~~ | needs a focused pass; the stale baseline was retired so they are visible                                                              |
 
 ---
 

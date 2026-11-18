@@ -1,15 +1,16 @@
 # Status — UI/UX layout leverage train
 
 **Timestamp:** 2026-10-29 14:50 CET
+
 > ARCHIVED 2026-11-18 (docs-health v10 sweep, cadence drain): the layout-leverage train's residue was overtaken by the 20 days of UI trains it seeded — verified today: the container-query + collapsible-island + master-detail invariants live in AGENTS.md and docs/dom-contract.md (§ Notes carries wp-island, wp-island-toggle, wp-conversation-rail); view-transition tab swaps and the glyph nav shipped with the 2026-11-11/15 destination trains; ui-shots/ is gitignored (check-ignore verified); the gate-log table below is ledger history (completed facts of 2026-10-29). The dedup ruling owed for the rail-row vocabulary landed as the later sweep-log standing span-idiom class (today's baseline: 108 groups, check = 0 new). The §f list is superseded by the TODO_LIST reopen-trigger registry (2026-11-04, T25) — the ONE consolidated harvest home; §g's three owner questions were answered by the destination-doc ratification (2026-11-11).
-**Session scope:** one exploratory question ("how can we be smarter from a
-UI/UX perspective — layout, multipage, CSS? what could templ-components and
-cqrs-htmx still give us?") taken all the way to shipped, verified code.
-**Branch:** `main`, tree CLEAN at report time (the auto-commit daemon landed
-the work; the 06 files of it are in `HEAD`).
-**Snapshot-rot warning:** every claim below was verified at the timestamp
-above. Anything about CI, remote state, or the consuming stack rots fastest —
-re-check before relying on it.
+> **Session scope:** one exploratory question ("how can we be smarter from a
+> UI/UX perspective — layout, multipage, CSS? what could templ-components and
+> cqrs-htmx still give us?") taken all the way to shipped, verified code.
+> **Branch:** `main`, tree CLEAN at report time (the auto-commit daemon landed
+> the work; the 06 files of it are in `HEAD`).
+> **Snapshot-rot warning:** every claim below was verified at the timestamp
+> above. Anything about CI, remote state, or the consuming stack rots fastest —
+> re-check before relying on it.
 
 > **SUPERSEDED IN PART (same day, 17:0x):** the closeout train
 > [2026-10-29_15-48_SUPERB-ui-ux-layout-closeout.md](../planning/2026-10-29_15-48_SUPERB-ui-ux-layout-closeout.md)

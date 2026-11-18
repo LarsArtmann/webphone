@@ -1,9 +1,11 @@
 # Status report — gate enforced, main green, and the second red healed
 
 **Snapshot: 2026-10-28 03:45 CET.** `HEAD` = `212d41b`, **pushed** (`origin/main` == `HEAD`, 0 commits
-ahead), **working tree clean**, **CI green on all five jobs** (`gh run view 40621362940`: build, `go test
+
+> ARCHIVED 2026-11-18 (docs-health v10 sweep, cadence drain): the red-heal report's residue adjudicated at the drain — the §4 ledger rows carry inline verdicts (the buildflow noise floor became triaged policy via .buildflow.yml keep-visible rulings 2026-11-11; the branching-flow 104-findings pass rides its TODO_LIST row; the module-cache class got scripts/module-cache-janitor.sh 2026-10-28; __wpClock shipped as the exported clock holder the same day; aarch64 stays ELF-bytes by ritual; the reproduce-first blocking flip stays owner-gated in TODO_LIST; the byte-identical refactor owed no visual/E2E lane — both ran green 2026-11-18 regardless). The numbers and foreign-break tables are ledger history (completed facts of 2026-10-28).
+> ahead), **working tree clean**, **CI green on all five jobs** (`gh run view 40621362940`: build, `go test
 -race`, fast flake checks incl. the type gate, `art-dupl`, reproduce-first). Every number below was
-measured in this session; where a claim is push/CI it names the run.
+> measured in this session; where a claim is push/CI it names the run.
 
 This report supersedes `2026-10-28_02-40_type-gate-enforced-main-green-status.md` **only in its final
 numbers** — that report's §3–§7 analysis still stands. What is new since 02:40: the type gate is now
@@ -19,6 +21,8 @@ Execute the whole list, verify it, write this report, then wait. Done, with two 
 ---
 
 ## 2. The numbers
+
+<!-- check-rows:ledger -->
 
 | Metric                                        | This morning               | **Now**                                        | How measured                                                    |
 | --------------------------------------------- | -------------------------- | ---------------------------------------------- | --------------------------------------------------------------- |
@@ -65,6 +69,8 @@ missing = warn + fail-open), selftest 3 → 6 cases including the ES-module and 
 
 ### 3.3 The foreign in-flight breaks I healed (all were CI-red or build-red)
 
+<!-- check-rows:ledger -->
+
 | Break                                                     | Where                      | Fix                                                                  |
 | --------------------------------------------------------- | -------------------------- | -------------------------------------------------------------------- |
 | `settleEndedCall` read an out-of-scope `card`             | island `calls.js`          | read `entry.dom`, null-guarded                                       |
@@ -92,15 +98,17 @@ retired baseline), janitor learning the zero-byte `.mod`/`.info`/`.zip` class wi
 
 ## 4. PARTIALLY DONE
 
-| Item                              | State                                                                                         | Missing                                                                                    |
-| --------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
-| buildflow                         | **0 failures**; 861 findings across detect-only tools                                         | a triage pass of those warnings (bandit/govulncheck/art-dupl noise floors)                 |
-| branching-flow findings           | baseline retired (it suppressed nothing)                                                      | the 104 findings need a rule-family triage before any re-record                            |
-| shared Go module cache            | quarantined + refilled, then wiped by another process; I finished on an isolated `GOMODCACHE` | operator decision: full rebuild, or per-session caches (§9.3)                              |
-| `nix flake check --all-systems`   | x86_64 green                                                                                  | aarch64 not evaluated (cross-build proven separately by ELF bytes)                         |
-| visual matrix / stack browser E2E | not run                                                                                       | no behavioral served-markup change (byte-identical refactor, pinned); obligation unchanged |
-| `__wpClock`                       | declaration hardened                                                                          | still an ad-hoc global; no spec installs it                                                |
-| CI `reproduce-first`              | advisory (never gates)                                                                        | the deliberate blocking flip is an owner call                                              |
+<!-- check-rows:ledger -->
+
+| Item                                  | State                                                                                         | Missing                                                                                    |
+| ------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| ~~buildflow~~                         | **0 failures**; 861 findings across detect-only tools                                         | a triage pass of those warnings (bandit/govulncheck/art-dupl noise floors)                 |
+| ~~branching-flow findings~~           | baseline retired (it suppressed nothing)                                                      | the 104 findings need a rule-family triage before any re-record                            |
+| ~~shared Go module cache~~            | quarantined + refilled, then wiped by another process; I finished on an isolated `GOMODCACHE` | operator decision: full rebuild, or per-session caches (§9.3)                              |
+| ~~`nix flake check --all-systems`~~   | x86_64 green                                                                                  | aarch64 not evaluated (cross-build proven separately by ELF bytes)                         |
+| ~~visual matrix / stack browser E2E~~ | not run                                                                                       | no behavioral served-markup change (byte-identical refactor, pinned); obligation unchanged |
+| ~~`__wpClock`~~                       | declaration hardened                                                                          | still an ad-hoc global; no spec installs it                                                |
+| ~~CI `reproduce-first`~~              | advisory (never gates)                                                                        | the deliberate blocking flip is an owner call                                              |
 
 ---
 
