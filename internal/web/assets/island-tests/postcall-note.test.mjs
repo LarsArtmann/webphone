@@ -133,6 +133,11 @@ test("typing autosaves after the debounce without collapsing the editor", async 
       /Saved/,
       "the quiet status line carries the save",
     );
+    assert.equal(
+      row.querySelector(".call-note-status").getAttribute("aria-live"),
+      "polite",
+      "the status line announces politely (History-span parity)",
+    );
 
     input.value = "rueckruf am freitag, nachmittag";
     fireInput(input);

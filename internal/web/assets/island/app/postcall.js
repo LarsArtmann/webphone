@@ -255,6 +255,7 @@ export function noteRow(id) {
   input.rows = 3;
   const status = document.createElement("span");
   status.className = "call-note-status";
+  status.setAttribute("aria-live", "polite");
   /** @type {NoteAutosaveEntry} */
   const entry = {
     id,
