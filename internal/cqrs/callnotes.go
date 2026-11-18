@@ -136,6 +136,15 @@ func decideSaveNote(s notesState, ver event.Version, cmd SaveCallNote) ([]event.
 	if err != nil {
 		return nil, err
 	}
+	// An unchanged body is not a revision: the note editors autosave on
+	// every typing pause, and the journal must record CHANGES, not
+	// echoes — a same-body save answers as the settled state (the
+	// handler still returns its 204; the idempotent no-op is the same
+	// verdict the delete lane gives a vanished slot). Existing slot
+	// only: a first save keeps today's slot-minting behavior.
+	if _, exists := s.Slots[cmd.CallID]; exists && prev.Body == cmd.Body {
+		return nil, nil
+	}
 	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.CallNoteSaved{})), cmd.StreamID(), NotesStreamType, ver.Increment(), domain.CallNoteSaved{
 		Key:         domain.CallNoteKey{Owner: cmd.Owner, CallID: cmd.CallID},
 		Owner:       cmd.Owner,

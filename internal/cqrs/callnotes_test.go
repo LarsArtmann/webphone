@@ -145,6 +145,32 @@ func TestNoteCapIsConflictAtTheDecision(t *testing.T) {
 	}
 }
 
+// TestNoteSameBodySaveIsNotARevision pins the autosave echo guard: the
+// editors save on every typing pause, and a same-body save on an
+// existing slot must append NO event (the journal records changes, not
+// echoes). A first save keeps minting the slot, whatever the body.
+func TestNoteSameBodySaveIsNotARevision(t *testing.T) {
+	state := notesState{Slots: map[string]noteSlot{"call-a": {Body: "discussed the invoice"}}}
+
+	events, err := decideSaveNote(state, event.Version(1), SaveCallNote{BasicCommand: basicCommand(t, "note.save", "1001"), Owner: "1001", CallID: "call-a", Body: "discussed the invoice"})
+	if err != nil {
+		t.Fatalf("same-body save must not error: %v", err)
+	}
+	if len(events) != 0 {
+		t.Fatalf("an unchanged body is not a revision: %d events", len(events))
+	}
+
+	events, err = decideSaveNote(state, event.Version(1), SaveCallNote{BasicCommand: basicCommand(t, "note.save", "1001"), Owner: "1001", CallID: "call-a", Body: "called back"})
+	if err != nil || len(events) != 1 {
+		t.Fatalf("a changed body is a revision: %v %d", err, len(events))
+	}
+
+	events, err = decideSaveNote(notesState{Slots: map[string]noteSlot{}}, event.Version(0), SaveCallNote{BasicCommand: basicCommand(t, "note.save", "1001"), Owner: "1001", CallID: "call-b", Body: ""})
+	if err != nil || len(events) != 1 {
+		t.Fatalf("a first save keeps minting the slot: %v %d", err, len(events))
+	}
+}
+
 // TestNoteStateSurvivesRestart pins the journal-reload fold.
 func TestNoteStateSurvivesRestart(t *testing.T) {
 	dir := t.TempDir()

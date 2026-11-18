@@ -456,7 +456,8 @@ h3 {
    * (.wp-main-col). The top padding is zero for the same reason: the rail
    * must meet the header's bottom border exactly, and the workspace and
    * phone dock carry their own top spacing in the desktop block. */
-  padding: 0 32px 32px 0;
+  padding-block: 0 32px;
+  padding-inline: 0 32px;
   align-items: start;
   flex: 1;
   width: 100%;
@@ -500,7 +501,7 @@ h3 {
   min-width: 0;
   padding: 18px 14px 14px;
   background: var(--surface);
-  border-right: var(--hairline);
+  border-inline-end: var(--hairline);
   overflow-y: auto;
 }
 
