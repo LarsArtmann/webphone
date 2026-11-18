@@ -19,6 +19,14 @@ import (
 	"github.com/larsartmann/webphone/internal/session"
 )
 
+func lines(exts ...domain.Extension) []authmap.Line {
+	out := make([]authmap.Line, 0, len(exts))
+	for _, extension := range exts {
+		out = append(out, authmap.Line{Extension: extension})
+	}
+	return out
+}
+
 // The admin surface's behavior pins: the gate (anonymous 401, non-admin
 // styled 404, admin 200), the nav's conditional tab, cross-owner
 // visibility in every section, the read-only thread deep link, the
@@ -44,8 +52,8 @@ func newAdminServer(t testing.TB, phoneAPIURL string) (*testServer, session.Stor
 	dir := t.TempDir()
 	mapped, err := authmap.New(
 		map[string]authmap.User{
-			"boss@example.com":   {Email: "boss@example.com", DisplayName: "The Boss", Extensions: []domain.Extension{domain.MustParseExtension("1001")}, Admin: true},
-			"worker@example.com": {Email: "worker@example.com", Extensions: []domain.Extension{domain.MustParseExtension("1002")}},
+			"boss@example.com":   {Email: "boss@example.com", DisplayName: "The Boss", Lines: lines(domain.MustParseExtension("1001")), Admin: true},
+			"worker@example.com": {Email: "worker@example.com", Lines: lines(domain.MustParseExtension("1002"))},
 		},
 		map[string]string{
 			"1001": adminPasswordFile(t, dir, "1001", "boss-pw"),

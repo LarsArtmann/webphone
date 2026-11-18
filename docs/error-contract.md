@@ -314,6 +314,8 @@ a deliberate code change, regenerate:
 | authmap.password_file.empty                  | Rejection                 | internal/authmap/authmap.go       |
 | authmap.password_file.missing                | Rejection                 | internal/authmap/authmap.go       |
 | authmap.password_file.read                   | Rejection                 | internal/authmap/authmap.go       |
+| authmap.user.duplicate_line                  | Rejection                 | internal/authmap/authmap.go       |
+| authmap.user.lines                           | Rejection                 | internal/authmap/authmap.go       |
 | blob.name                                    | Infrastructure            | internal/blob/store.go            |
 | blob.open                                    | Infrastructure            | internal/blob/store.go            |
 | blob.probe                                   | Infrastructure            | internal/blob/store.go            |

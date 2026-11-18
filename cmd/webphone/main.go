@@ -93,7 +93,7 @@ func enrollPasskey(email string) error {
 			slog.Warn("enroll system shutdown failed after enrollment", "error", err)
 		}
 	}()
-	svc, err := userauth.New(ctx, app.PasskeyRuntime(cfg.Auth.Passkey), cfg.DataDir, cqrs.NewEnrollTokens(sys), slog.Default())
+	svc, err := userauth.New(ctx, app.PasskeyRuntime(cfg.Auth.Passkey, cfg.Identities), cfg.DataDir, cqrs.NewEnrollTokens(sys), slog.Default())
 	if err != nil {
 		return propagatef("open identity store: %w", err)
 	}

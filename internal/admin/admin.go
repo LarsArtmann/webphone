@@ -77,7 +77,7 @@ func (s *Service) Extensions() []domain.Extension {
 	}
 	seen := make(map[string]bool)
 	for _, user := range s.users.Users() {
-		for _, ext := range user.Extensions {
+		for _, ext := range user.Extensions() {
 			seen[ext.String()] = true
 		}
 	}
@@ -105,14 +105,14 @@ func (s *Service) Numbers() []Number {
 	if s == nil {
 		return nil
 	}
-	usersByExtension := make(map[string][]string)
+	usersByLine := make(map[string][]string)
 	for _, user := range s.users.Users() {
-		for _, ext := range user.Extensions {
-			usersByExtension[ext.String()] = append(usersByExtension[ext.String()], user.Email)
+		for _, owned := range user.Lines {
+			usersByLine[owned.Extension.String()] = append(usersByLine[owned.Extension.String()], user.Email)
 		}
 	}
 	seen := make(map[string]bool)
-	for ext := range usersByExtension {
+	for ext := range usersByLine {
 		seen[ext] = true
 	}
 	for ext := range s.identities {
@@ -121,7 +121,7 @@ func (s *Service) Numbers() []Number {
 	out := make([]Number, 0, len(seen))
 	for _, raw := range slices.Sorted(maps.Keys(seen)) {
 		ext := domain.MustParseExtension(raw)
-		users := slices.Clone(usersByExtension[raw])
+		users := slices.Clone(usersByLine[raw])
 		slices.Sort(users)
 		out = append(out, Number{Extension: ext, DID: s.identities[raw], Users: users})
 	}

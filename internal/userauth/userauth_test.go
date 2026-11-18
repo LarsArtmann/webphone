@@ -22,10 +22,19 @@ import (
 	errorfamily "github.com/larsartmann/go-error-family"
 	errorfamilytest "github.com/larsartmann/go-error-family/errorfamilytest"
 
+	"github.com/larsartmann/webphone/internal/authmap"
 	"github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/userauth"
 )
+
+func lines(exts ...domain.Extension) []authmap.Line {
+	out := make([]authmap.Line, 0, len(exts))
+	for _, extension := range exts {
+		out = append(out, authmap.Line{Extension: extension})
+	}
+	return out
+}
 
 // stubWebAuthn is the deterministic provider: every ceremony succeeds,
 // every response is canned (mirrors usermgmt's webauthn_stub_test.go).
@@ -83,7 +92,7 @@ func newService(t *testing.T) (*userauth.Service, *cqrs.EnrollTokens, string, st
 		RPDisplayName: "WebPhone",
 		RPOrigins:     []string{"https://pbx.example.org"},
 		Users: map[string]userauth.MappedUser{
-			mappedEmail: {Email: mappedEmail, DisplayName: "Lars", Extensions: []domain.Extension{ext}},
+			mappedEmail: {Email: mappedEmail, DisplayName: "Lars", Lines: lines(ext)},
 		},
 		ExtensionPasswordFiles: map[string]string{ext1000: passFile},
 		WebAuthn:               stubWebAuthn{},
@@ -236,7 +245,7 @@ func TestRegistrationAndLoginCeremoniesResolveMapping(t *testing.T) {
 	if mapped.Email != mappedEmail || mapped.DisplayName != "Lars" {
 		t.Errorf("mapped = %+v", mapped)
 	}
-	if got := mapped.SessionExtension().String(); got != ext1000 {
+	if got := mapped.SessionLine().Extension.String(); got != ext1000 {
 		t.Errorf("session extension = %q, want %q", got, ext1000)
 	}
 }

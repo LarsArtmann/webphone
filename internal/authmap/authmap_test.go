@@ -10,9 +10,13 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
+func line(ext, did string) Line {
+	return Line{Extension: domain.MustParseExtension(ext), DID: did}
+}
+
 func TestResolveNormalizesCaseAndWhitespace(t *testing.T) {
 	m, err := New(map[string]User{
-		"lars@example.com": {Email: "lars@example.com", DisplayName: "Lars", Extensions: []domain.Extension{domain.MustParseExtension("1000")}},
+		"lars@example.com": {Email: "lars@example.com", DisplayName: "Lars", Lines: []Line{line("1000", "+49 30 000")}},
 	}, map[string]string{"1000": fileWith(t, "secret")})
 	if err != nil {
 		t.Fatalf("New: %v", err)
@@ -21,8 +25,8 @@ func TestResolveNormalizesCaseAndWhitespace(t *testing.T) {
 	if !ok {
 		t.Fatal("mapping lookup must normalize case and whitespace")
 	}
-	if user.SessionExtension().String() != "1000" {
-		t.Errorf("session extension = %q, want 1000", user.SessionExtension().String())
+	if user.SessionLine().Extension.String() != "1000" {
+		t.Errorf("session line extension = %q, want 1000", user.SessionLine().Extension.String())
 	}
 	if _, ok := m.Resolve("nobody@example.com"); ok {
 		t.Fatal("unmapped email must not resolve")
@@ -30,14 +34,13 @@ func TestResolveNormalizesCaseAndWhitespace(t *testing.T) {
 }
 
 func TestMappedByExtensionReverseResolves(t *testing.T) {
-	ext := domain.MustParseExtension("1001")
 	m, err := New(map[string]User{
-		"alice@example.com": {Email: "alice@example.com", DisplayName: "Alice", Extensions: []domain.Extension{ext}},
+		"alice@example.com": {Email: "alice@example.com", DisplayName: "Alice", Lines: []Line{line("1001", "")}},
 	}, map[string]string{"1001": fileWith(t, "secret")})
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
-	user, ok := m.MappedByExtension(ext)
+	user, ok := m.MappedByExtension(domain.MustParseExtension("1001"))
 	if !ok || user.Email != "alice@example.com" {
 		t.Fatalf("MappedByExtension = (%v, %v), want alice", user.Email, ok)
 	}
@@ -46,20 +49,20 @@ func TestMappedByExtensionReverseResolves(t *testing.T) {
 	}
 }
 
-// TestMappedByLoginAndSharedExtensionDeterminism pins the multi-user
-// rules (2026-10-28): on a SHARED extension the plain reverse lookup is
+// TestMappedByLoginAndSharedLineDeterminism pins the multi-user rules
+// (2026-10-28): on a SHARED line the plain reverse lookup is
 // deterministic (sorted emails — Go map order must never pick whoami),
 // while a session that knows its own login email resolves THAT human —
 // each session names its own person, never a coin flip.
-func TestMappedByLoginAndSharedExtensionDeterminism(t *testing.T) {
-	ext := domain.MustParseExtension("1001")
+func TestMappedByLoginAndSharedLineDeterminism(t *testing.T) {
 	m, err := New(map[string]User{
-		"zoe@example.com":   {Email: "zoe@example.com", DisplayName: "Zoe", Extensions: []domain.Extension{ext}},
-		"alice@example.com": {Email: "alice@example.com", DisplayName: "Alice", Extensions: []domain.Extension{ext}},
+		"zoe@example.com":   {Email: "zoe@example.com", DisplayName: "Zoe", Lines: []Line{line("1001", "")}},
+		"alice@example.com": {Email: "alice@example.com", DisplayName: "Alice", Lines: []Line{line("1001", "")}},
 	}, map[string]string{"1001": fileWith(t, "secret")})
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
+	ext := domain.MustParseExtension("1001")
 
 	for i := range 20 {
 		user, ok := m.MappedByExtension(ext)
@@ -79,19 +82,52 @@ func TestMappedByLoginAndSharedExtensionDeterminism(t *testing.T) {
 	}
 	other := domain.MustParseExtension("1002")
 	if user, ok := m.MappedByLogin(other, "alice@example.com"); ok {
-		t.Fatalf("MappedByLogin(email not mapping the session extension) = %v, want no match", user.Email)
+		t.Fatalf("MappedByLogin(email not owning the session line) = %v, want no match", user.Email)
+	}
+}
+
+// TestLineModelPinsOwnershipShape pins the line-ownership model itself
+// (2026-11-18): lines ride WITH their DID (one join, not parallel maps),
+// the FIRST line is the session default, Has answers ownership, and
+// Display names the ONE fallback rule (DID when declared, extension
+// otherwise).
+func TestLineModelPinsOwnershipShape(t *testing.T) {
+	user := User{
+		Email: "lars@example.com", DisplayName: "Lars",
+		Lines: []Line{line("1000", "+49 30 111"), line("1001", "")},
+	}
+	if got := user.SessionLine().Extension.String(); got != "1000" {
+		t.Errorf("SessionLine extension = %q, want the first mapped line 1000", got)
+	}
+	if !user.Has(domain.MustParseExtension("1001")) {
+		t.Error("Has(1001) = false, want true — the second owned line")
+	}
+	if user.Has(domain.MustParseExtension("1002")) {
+		t.Error("Has(1002) = true, want false — nobody's line")
+	}
+	if got := user.Extensions()[1].String(); got != "1001" {
+		t.Errorf("Extensions()[1] = %q, want mapping order preserved", got)
+	}
+	if got := user.Lines[0].Display(); got != "+49 30 111" {
+		t.Errorf("Display with DID = %q, want the DID verbatim", got)
+	}
+	if got := user.Lines[1].Display(); got != "1001" {
+		t.Errorf("Display without DID = %q, want the bare extension", got)
+	}
+	if (Line{}).IsZero() != true || user.Lines[0].IsZero() != false {
+		t.Error("IsZero must answer true only for the extension-less line")
 	}
 }
 
 func TestSIPPasswordTrimsAndFailsClosed(t *testing.T) {
-	ext := domain.MustParseExtension("1000")
 	file := fileWith(t, "  dir-password\n")
 	m, err := New(map[string]User{
-		"lars@example.com": {Email: "lars@example.com", Extensions: []domain.Extension{ext}},
+		"lars@example.com": {Email: "lars@example.com", Lines: []Line{line("1000", "")}},
 	}, map[string]string{"1000": file})
 	if err != nil {
 		t.Fatalf("New: %v", err)
 	}
+	ext := domain.MustParseExtension("1000")
 	if got, err := m.SIPPassword(ext); err != nil || got != "dir-password" {
 		t.Fatalf("SIPPassword = (%q, %v), want the trimmed password", got, err)
 	}
@@ -121,9 +157,21 @@ func TestSIPPasswordTrimsAndFailsClosed(t *testing.T) {
 
 func TestNewRejectsMappedExtensionWithoutPasswordFile(t *testing.T) {
 	_, err := New(map[string]User{
-		"lars@example.com": {Email: "lars@example.com", Extensions: []domain.Extension{domain.MustParseExtension("1000")}},
+		"lars@example.com": {Email: "lars@example.com", Lines: []Line{line("1000", "")}},
 	}, nil)
 	errorfamilytest.AssertCode(t, err, "authmap.password_file.missing")
+}
+
+func TestNewRejectsUnownableOwnershipShapes(t *testing.T) {
+	_, err := New(map[string]User{
+		"lars@example.com": {Email: "lars@example.com", Lines: nil},
+	}, map[string]string{"1000": fileWith(t, "secret")})
+	errorfamilytest.AssertCode(t, err, "authmap.user.lines")
+
+	_, err = New(map[string]User{
+		"lars@example.com": {Email: "lars@example.com", Lines: []Line{line("1000", ""), line("1000", "+49 30 000")}},
+	}, map[string]string{"1000": fileWith(t, "secret")})
+	errorfamilytest.AssertCode(t, err, "authmap.user.duplicate_line")
 }
 
 func TestNilMapFailsClosed(t *testing.T) {

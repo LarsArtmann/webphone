@@ -19,6 +19,11 @@ type SettingsPanelProps struct {
 	SIPDomain    string
 	WebsocketURL string
 	GatewayMode  string
+	// Account is the signed-in identity made visible: who is signed in
+	// and every line they own, the active line marked (the one place
+	// that answers "which numbers are mine"). Always rendered — the
+	// classic extension login still owns its one active line.
+	Account      AccountSection
 	// Fax is the deployment's declared fax reachability (config.Fax). The
 	// row renders ONLY when a direction is missing, and names that half —
 	// the gateway-mode row ("webhook") never did.
@@ -90,6 +95,25 @@ type SettingsPanelProps struct {
 	Lang     Lang
 }
 
+// AccountSection shapes the Settings account group: the session's
+// identity (empty email/name on the classic extension login) and the
+// owned-line rows, active line first (mapping order; the server
+// synthesizes the active row for unmapped sessions).
+type AccountSection struct {
+	DisplayName string
+	Email       string
+	Admin       bool
+	// ActiveExtension names which row carries the active mark.
+	ActiveExtension string
+	Lines           []AccountLine
+}
+
+// AccountLine is one owned line of the account group.
+type AccountLine struct {
+	Extension string
+	DID       string
+}
+
 templ SettingsPanel(props SettingsPanelProps) {
 	<section class="wp-panel" id="settings-panel">
 		@panelHead(props.Lang, "tab.settings", "settings.subtitle")
@@ -97,6 +121,36 @@ templ SettingsPanel(props SettingsPanelProps) {
 		// and can act on, what leaves with you, and the operator's
 		// deployment truth (collapsed: it answers "what is this server",
 		// not "what can I change").
+		<h3 class="wp-settings-head">{ T(props.Lang, "settings.group.account") }</h3>
+		<div class="wp-settings-account" id="wp-settings-account">
+			<p class="wp-thread-text">
+				{ T(props.Lang, "settings.account.identity") }{ ": " }
+				if props.Account.DisplayName != "" {
+				<strong>{ props.Account.DisplayName }</strong>
+				}
+				if props.Account.Email != "" {
+					<span class="wp-muted">{ props.Account.Email }</span>
+				}
+				if props.Account.Admin {
+					<span class="wp-admin-chip">{ T(props.Lang, "admin.users.admin") }</span>
+				}
+			</p>
+			for _, line := range props.Account.Lines {
+				<div class="wp-row wp-account-line">
+					<span class="wp-thread-text">
+						if line.DID != "" {
+							{ line.DID }
+						} else {
+							{ line.Extension }
+						}
+						<span class="wp-muted">{ " · " + line.Extension }</span>
+					</span>
+					if line.Extension == props.Account.ActiveExtension {
+						<span class="wp-muted">{ " · " + T(props.Lang, "settings.account.active") }</span>
+					}
+				</div>
+			}
+		</div>
 		<h3 class="wp-settings-head">{ T(props.Lang, "settings.group.prefs") }</h3>
 		@SnippetsSection(props.Snippets, props.Lang)
 		if props.Passkeys.Available {

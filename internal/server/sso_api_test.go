@@ -41,6 +41,13 @@ func (s *ssoStub) Complete(_ context.Context, code, verifier, nonce string) (aut
 	return s.user, s.password, s.err
 }
 
+func (s *ssoStub) MappedByLogin(extension domain.Extension, loginEmail string) (authmap.User, bool) {
+	if s.user.Has(extension) && s.user.Email == loginEmail {
+		return s.user, true
+	}
+	return authmap.User{}, false
+}
+
 func newSSOServer(t *testing.T, stub *ssoStub) *testServer {
 	t.Helper()
 	return newTestServerWithConfig(t, "", nil, func(deps *Deps) {
@@ -59,7 +66,7 @@ func happySSOStub() *ssoStub {
 		user: authmap.User{
 			Email:       "lars@example.com",
 			DisplayName: "Lars",
-			Extensions:  []domain.Extension{domain.MustParseExtension("1000")},
+			Lines:       lines(domain.MustParseExtension("1000")),
 		},
 		password: "dir-password",
 	}

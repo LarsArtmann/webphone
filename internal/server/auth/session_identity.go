@@ -13,7 +13,6 @@ import (
 	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/sipcred"
-	"github.com/larsartmann/webphone/internal/userauth"
 )
 
 // agentModeProbeTimeout bounds the best-effort draft-mode decoration of
@@ -94,50 +93,58 @@ func (a *Handlers) sessionAnswer(
 	return response
 }
 
+// SessionLine is one line the signed-in user owns, in mapping order:
+// the extension (the SIP REGISTER user part) plus the number the line
+// presents to the outside world when the deployment declared one. The
+// ACTIVE line is the entry whose extension equals the top-level
+// extension — the client never correlates parallel lists.
+// brandid-lint:ignore(BD003) wire DTO: config-validated DID rendered verbatim, no id ever flows back in (strong-id ruling)
+type SessionLine struct {
+	Extension string `description:"A PBX extension the signed-in user owns." json:"extension"`
+	DID       string `description:"The number this line presents (config identities), when declared." json:"did,omitempty"`
+}
+
 // SessionIdentity is the typed wire shape of what a freshly minted
-// (or resumed) session tells the client about itself: the extension (the
-// island's SIP REGISTER needs it), its presented DID when configured
-// (identities), and — when the extension is passkey-mapped — the user's
-// display name and every number mapped to that user, so the whoami line
-// can lead with the human identity instead of a bare extension@sip_domain.
+// (or resumed) session tells the client about itself: the active line
+// (the extension the island's SIP REGISTER needs, its presented DID
+// when configured) and — when the login is mapped (passkey/OIDC) —
+// the user's display name and every line they own, so the whoami line
+// and the line switcher can name lines by their NUMBERS instead of
+// bare PBX codes.
 // Exactly ONE credential field rides an answer: `sip_credential` (the
 // session-derived REGISTER credential) when credential brokering is on —
 // the directory password never reaches the browser — and `password` (the
 // legacy wire, the session's own payload) only when it is off, keeping
 // unconfigured deployments byte-identical. The omitempty tags keep the
 // wire identical to the historical map form.
-// brandid-lint:ignore(BD003) wire DTO: config-validated DID rendered verbatim, no id ever flows back in (strong-id ruling)
 type SessionIdentity struct {
-	Extension        string   `description:"The signed-in extension." json:"extension"`
-	DID              string   `description:"Presented PSTN number (config identities), when known." json:"did,omitempty"` //nolint:branching-flow // wire DTO: the DID is a config-validated identity rendered verbatim (omitempty); no id ever flows back IN through this field
-	DisplayName      string   `description:"The passkey user's display name, when the extension is passkey-mapped." json:"display_name,omitempty"`
-	Numbers          []string `description:"Every number mapped to the passkey user, deduplicated." json:"numbers,omitempty"`
-	Extensions       []string `description:"Every extension mapped to the signed-in user (mapped logins only); more than one renders the line switcher." json:"extensions,omitempty"` //nolint:branching-flow // wire DTO: config-derived extension list rendered verbatim (omitempty); the switch endpoint re-validates membership server-side
-	Password         string   `description:"Legacy wire only (credential brokering off): the session's directory password for the browser REGISTER." json:"password,omitempty"`
-	SIPCredential    string   `description:"Session-derived REGISTER credential (credential brokering on; the directory password never reaches the browser)." json:"sip_credential,omitempty"`
-	AgentMode        string   `description:"The textagent's effective draft mode (agent seam on only; empty hides the nav pill)." json:"agent_mode,omitempty"`
-	AgentModeSource  string   `description:"Where the draft mode comes from: config or a runtime pin." json:"agent_mode_source,omitempty"`
-	AgentDefaultMode string   `description:"The configured draft mode a reset restores." json:"agent_default_mode,omitempty"`
-	AgentModes       []string `description:"The draft modes the agent supports, in cycle order." json:"agent_modes,omitempty"`
+	Extension        string        `description:"The signed-in (active) extension." json:"extension"`
+	DID              string        `description:"The active line's presented PSTN number (config identities), when known." json:"did,omitempty"` //nolint:branching-flow // wire DTO: the DID is a config-validated identity rendered verbatim (omitempty); no id ever flows back IN through this field
+	DisplayName      string        `description:"The mapped user's display name, when the login is mapped." json:"display_name,omitempty"`
+	Lines            []SessionLine `description:"Every line the signed-in user owns (mapped logins only), in mapping order; more than one renders the line switcher." json:"lines,omitempty"` //nolint:branching-flow // wire DTO: config-derived line list rendered verbatim (omitempty); the switch endpoint re-validates ownership server-side
+	Password         string        `description:"Legacy wire only (credential brokering off): the session's directory password for the browser REGISTER." json:"password,omitempty"`
+	SIPCredential    string        `description:"Session-derived REGISTER credential (credential brokering on; the directory password never reaches the browser)." json:"sip_credential,omitempty"`
+	AgentMode        string        `description:"The textagent's effective draft mode (agent seam on only; empty hides the nav pill)." json:"agent_mode,omitempty"`
+	AgentModeSource  string        `description:"Where the draft mode comes from: config or a runtime pin." json:"agent_mode_source,omitempty"`
+	AgentDefaultMode string        `description:"The configured draft mode a reset restores." json:"agent_default_mode,omitempty"`
+	AgentModes       []string      `description:"The draft modes the agent supports, in cycle order." json:"agent_modes,omitempty"`
 }
 
 // sessionIdentityResponse shapes what a freshly minted (or resumed)
 // session tells the client about itself (see SessionIdentity).
 // loginEmail is the session's authenticated identity when it has one
 // (passkey/OIDC): the whoami resolution prefers THAT user — on a shared
-// extension the session must name its own human, not a map-order guess
-// (the MappedByExtension fallback stays deterministic but cannot know
-// which person is signed in). Empty = the classic extension login.
+// line the session must name its own human, not a map-order guess (the
+// MappedByExtension fallback stays deterministic but cannot know which
+// person is signed in). Empty = the classic extension login.
 func (a *Handlers) sessionIdentityResponse(ctx context.Context, extension domain.Extension, loginEmail string) SessionIdentity {
 	response := SessionIdentity{Extension: extension.String()}
 	response.DID = a.shell.IdentityFor(extension)
-	if a.deps.UserAuth != nil {
-		if mapped, ok := a.deps.UserAuth.MappedByLogin(extension, loginEmail); ok {
-			response.DisplayName = mapped.DisplayName
-			response.Numbers = a.numbersFor(mapped)
-			for _, ext := range mapped.Extensions {
-				response.Extensions = append(response.Extensions, ext.String())
-			}
+	if mapped, ok := a.shell.MappedIdentityWith(extension, loginEmail); ok {
+		response.DisplayName = mapped.DisplayName
+		response.Lines = make([]SessionLine, 0, len(mapped.Lines))
+		for _, owned := range mapped.Lines {
+			response.Lines = append(response.Lines, SessionLine{Extension: owned.Extension.String(), DID: owned.DID})
 		}
 	}
 	a.fillAgentMode(ctx, &response)
@@ -164,21 +171,4 @@ func (a *Handlers) fillAgentMode(ctx context.Context, response *SessionIdentity)
 	response.AgentModeSource = reviews.ModeSource
 	response.AgentDefaultMode = reviews.DefaultMode
 	response.AgentModes = reviews.Modes
-}
-
-// numbersFor lists the mapped user's presented numbers (identities of
-// every mapped extension), deduplicated in mapping order — the "numbers
-// available to this user" the whoami line leads with.
-func (a *Handlers) numbersFor(mapped userauth.MappedUser) []string {
-	seen := make(map[string]bool, len(mapped.Extensions))
-	numbers := make([]string, 0, len(mapped.Extensions))
-	for _, ext := range mapped.Extensions {
-		did := a.shell.IdentityFor(ext)
-		if did == "" || seen[did] {
-			continue
-		}
-		seen[did] = true
-		numbers = append(numbers, did)
-	}
-	return numbers
 }

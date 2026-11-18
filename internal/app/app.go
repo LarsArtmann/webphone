@@ -311,7 +311,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 		do.ProvideNamed(injector, "userauth", func(i do.Injector) (*userauth.Service, error) {
 			bootCtx, cancel := context.WithTimeout(context.Background(), userauthBootTimeout)
 			defer cancel()
-			return userauth.New(bootCtx, PasskeyRuntime(cfg.Auth.Passkey), cfg.DataDir,
+			return userauth.New(bootCtx, PasskeyRuntime(cfg.Auth.Passkey, cfg.Identities), cfg.DataDir,
 				do.MustInvokeNamed[*CqrsService](i, cqrsProviderName).EnrollSvc(), log)
 		})
 	}
@@ -325,7 +325,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 	if cfg.Auth.OAuth2.Enabled() {
 		//samber-linter:allow hw-4 eagerly resolved via InvokeNamed in New
 		do.ProvideNamed(injector, "sso", func(i do.Injector) (*sso.Client, error) {
-			return sso.New(SSOConfig(cfg.Auth))
+			return sso.New(SSOConfig(cfg.Auth, cfg.Identities))
 		})
 	}
 
@@ -581,40 +581,52 @@ func asrLocality(cfg config.Config) string {
 }
 
 // passkeyRuntime adapts the validated config into the userauth runtime
-// shape (extensions parsed once, at boot — config validation has already
-// rejected unparseable ones, so the parse failures here are impossible
-// by construction and panic honestly on a broken invariant).
+// shape (the line join happens once, at boot — config validation has
+// already rejected unparseable extensions, so the parse failures here
+// are impossible by construction and panic honestly on a broken
+// invariant).
 // PasskeyRuntime is the config→runtime adapter for the embedded
 // identity layer (the arch invariant keeps userauth config-free, so
 // THIS package owns the translation). Exported for the CLI enrollment
 // path, which builds the same runtime the server boots with.
-func PasskeyRuntime(p config.Passkey) userauth.PasskeyRuntime {
-	users := make(map[string]userauth.MappedUser, len(p.Users))
-	for email, user := range p.Users {
-		extensions := make([]domain.Extension, 0, len(user.Extensions))
-		for _, raw := range user.Extensions {
-			ext, err := domain.ParseExtension(raw)
-			if err != nil {
-				panic(fmt.Sprintf("passkey mapping for %q holds unparseable extension %q after config validation: %v", email, raw, err)) //cqrs-lint:ignore(C009) post-validation impossible state: fail loudly at boot (DO-1)
-			}
-			extensions = append(extensions, ext)
-		}
-		users[email] = userauth.MappedUser{Email: email, DisplayName: user.DisplayName, Extensions: extensions}
-	}
+func PasskeyRuntime(p config.Passkey, identities map[string]string) userauth.PasskeyRuntime {
 	return userauth.PasskeyRuntime{
 		RPID:                   p.RPID,
 		RPDisplayName:          p.RPDisplayName,
 		RPOrigins:              p.RPOrigins,
-		Users:                  users,
+		Users:                  mappedUsers(p.Users, identities),
 		ExtensionPasswordFiles: p.ExtensionPasswordFiles,
 	}
+}
+
+// mappedUsers is the ONE config→line join: every adapter (passkey,
+// SSO, admin) translates the shared email→extensions mapping through
+// this function, so a line's DID can never disagree between login
+// modes and the admin inventory. Identifiers pass through config
+// normalization untouched — Load owns that — and the Admin flag rides
+// for every consumer (only the admin service reads it).
+func mappedUsers(users map[string]config.PasskeyUser, identities map[string]string) map[string]authmap.User {
+	out := make(map[string]authmap.User, len(users))
+	for email, user := range users {
+		mapped := authmap.User{Email: email, DisplayName: user.DisplayName, Admin: user.Admin}
+		mapped.Lines = make([]authmap.Line, 0, len(user.Extensions))
+		for _, raw := range user.Extensions {
+			ext, err := domain.ParseExtension(raw)
+			if err != nil {
+				panic(fmt.Sprintf("auth mapping for %q holds unparseable extension %q after config validation: %v", email, raw, err)) //cqrs-lint:ignore(C009) post-validation impossible state: fail loudly at boot (DO-1)
+			}
+			mapped.Lines = append(mapped.Lines, authmap.Line{Extension: ext, DID: identities[raw]})
+		}
+		out[email] = mapped
+	}
+	return out
 }
 
 // SSOConfig is the config→runtime adapter for the OIDC login mode. The
 // mapping is the SHARED one (auth.users, folded into the passkey shape by
 // config.Load) so passkey and SSO can never disagree about who may sign
 // in or where an extension's SIP password lives.
-func SSOConfig(a config.Auth) sso.Config {
+func SSOConfig(a config.Auth, identities map[string]string) sso.Config {
 	users := a.Users
 	if len(users) == 0 {
 		users = a.Passkey.Users
@@ -623,19 +635,6 @@ func SSOConfig(a config.Auth) sso.Config {
 	if len(passwordFiles) == 0 {
 		passwordFiles = a.Passkey.ExtensionPasswordFiles
 	}
-	mapped := make(map[string]authmap.User, len(users))
-	for email, user := range users {
-		extensions := make([]domain.Extension, 0, len(user.Extensions))
-		for _, raw := range user.Extensions {
-			ext, err := domain.ParseExtension(raw)
-			if err != nil {
-				//nolint:branching-flow // composition-root fail-fast (DO-1): config validation already rejects unparseable extensions, so reaching here is an unrepresentable miswire
-				panic(fmt.Sprintf("auth mapping for %q holds unparseable extension %q after config validation: %v", email, raw, err)) //cqrs-lint:ignore(C009) post-validation impossible state: fail loudly at boot (DO-1)
-			}
-			extensions = append(extensions, ext)
-		}
-		mapped[email] = authmap.User{Email: email, DisplayName: user.DisplayName, Extensions: extensions}
-	}
 	return sso.Config{
 		Issuer:                 a.OAuth2.Issuer,
 		ClientID:               a.OAuth2.ClientID,
@@ -643,7 +642,7 @@ func SSOConfig(a config.Auth) sso.Config {
 		RedirectURL:            a.OAuth2.RedirectURL,
 		Scopes:                 a.OAuth2.Scopes,
 		AllowedGroups:          a.OAuth2.AllowedGroups,
-		Users:                  mapped,
+		Users:                  mappedUsers(users, identities),
 		ExtensionPasswordFiles: passwordFiles,
 	}
 }
@@ -668,21 +667,10 @@ func AdminService(cfg config.Config) (*admin.Service, error) {
 		passwordFiles = cfg.Auth.Passkey.ExtensionPasswordFiles
 	}
 	anyAdmin := false
-	mapped := make(map[string]authmap.User, len(users))
-	for email, user := range users {
-		extensions := make([]domain.Extension, 0, len(user.Extensions))
-		for _, raw := range user.Extensions {
-			ext, err := domain.ParseExtension(raw)
-			if err != nil {
-				//nolint:branching-flow // composition-root fail-fast (DO-1): config validation already rejects unparseable extensions, so reaching here is an unrepresentable miswire
-				panic(fmt.Sprintf("auth mapping for %q holds unparseable extension %q after config validation: %v", email, raw, err)) //cqrs-lint:ignore(C009) post-validation impossible state: fail loudly at boot (DO-1)
-			}
-			extensions = append(extensions, ext)
-		}
+	for _, user := range users {
 		anyAdmin = anyAdmin || user.Admin
-		mapped[email] = authmap.User{Email: email, DisplayName: user.DisplayName, Extensions: extensions, Admin: user.Admin}
 	}
-	authMapped, err := authmap.New(mapped, passwordFiles)
+	authMapped, err := authmap.New(mappedUsers(users, cfg.Identities), passwordFiles)
 	if err != nil {
 		if anyAdmin {
 			return nil, wrapf("wire admin surface: %w", err)

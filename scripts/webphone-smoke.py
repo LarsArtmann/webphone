@@ -19,6 +19,7 @@ skipped for this repo). Exit 0 iff every check passes.
 from __future__ import annotations
 
 import argparse
+import base64
 import http.client
 import http.cookiejar
 import http.server
@@ -37,7 +38,7 @@ import urllib.error
 import urllib.request
 from collections.abc import Callable
 from typing import ClassVar
-from urllib.parse import urlparse
+from urllib.parse import urlencode, urlparse
 
 TIMEOUT = 10.0
 
@@ -281,6 +282,40 @@ def oversized_upload(s: Smoke) -> tuple[int, bytes]:
         return resp.status, resp.read()
     finally:
         conn.close()
+
+
+def multipart_body(
+    fields: list[tuple[str, str]],
+    files: list[tuple[str, str, str, bytes]],
+    boundary: str = "----webphonesmokeboundary",
+) -> tuple[bytes, str]:
+    """Encode a multipart form body the way the composer/fax forms post.
+
+    files entries are (field, filename, content_type, bytes). Returns the
+    body plus the full Content-Type header value to send it with.
+    """
+    parts: list[bytes] = []
+    for name, value in fields:
+        parts.append(
+            (
+                f"--{boundary}\r\n"
+                f'Content-Disposition: form-data; name="{name}"\r\n\r\n'
+                f"{value}\r\n"
+            ).encode()
+        )
+    for field, filename, ctype, payload in files:
+        parts.append(
+            (
+                f"--{boundary}\r\n"
+                f'Content-Disposition: form-data; name="{field}"; '
+                f'filename="{filename}"\r\n'
+                f"Content-Type: {ctype}\r\n\r\n"
+            ).encode()
+            + payload
+            + b"\r\n"
+        )
+    parts.append(f"--{boundary}--\r\n".encode())
+    return b"".join(parts), f"multipart/form-data; boundary={boundary}"
 
 
 def free_port() -> int:
@@ -1768,6 +1803,303 @@ def run_checks(
         status == 200 and b'"body":""' in body,
         f"{status} {body[:40]!r}",
     )
+
+    # 13d. SUPERB E2E train (2026-11-18): the product's WRITE surfaces as
+    # workflows against the same loopback boot — composer send, thread
+    # flags, snippets, contacts CRUD/import/export, MMS attachments, the
+    # fax lifecycle, the csp-report intake, and the manifest/export open
+    # surfaces. Session-gated lanes run only against a self-booted server
+    # (foreign mode has no session to write with).
+    # (a) csp-report intake: malformed stays best-effort 204, an oversized
+    # report hits the 4 KiB cap with 413 — the observable-CSP lane's fence.
+    status, _, _ = Smoke(s.base).request("POST", "/csp-report", b"not json", "application/json")
+    c.ok("csp-report malformed 204", status == 204, f"got {status}")
+    status, _, _ = Smoke(s.base).request(
+        "POST", "/csp-report", b"x" * 6144, "application/json"
+    )
+    c.ok("csp-report oversized 413", status == 413, f"got {status}")
+
+    # (b) PWA-lite manifest + favicon: the install surface stays honest.
+    status, body, headers = s.request("GET", "/manifest.webmanifest")
+    mtype = next((v for k, v in headers.items() if k.lower() == "content-type"), "")
+    c.ok(
+        "manifest serves",
+        status == 200 and "manifest+json" in mtype and b'"name"' in body,
+        f"{status} {mtype!r}",
+    )
+    status, body, headers = s.request("GET", "/favicon.svg")
+    ftype = next((v for k, v in headers.items() if k.lower() == "content-type"), "")
+    c.ok("favicon serves", status == 200 and "svg" in ftype.lower(), f"{status} {ftype!r}")
+
+    # (c) data export: anonymous is fenced; the session answer is a real zip.
+    anon_export = Smoke(s.base)
+    status, _, _ = anon_export.request("GET", "/api/export")
+    c.ok("export anonymous 401", status == 401, f"got {status}")
+
+    if not foreign:
+        status, body, _ = s.request("GET", "/api/export")
+        c.ok(
+            "export answers a zip",
+            status == 200 and body[:4] == b"PK\x03\x04",
+            f"{status} magic={body[:4]!r}",
+        )
+
+        # (d) Composer send: a new conversation via the real form shape,
+        # then the thread list and transcript both reflect the bubble.
+        send_to = "+441632960111"
+        body_bytes, ctype = multipart_body([("to", send_to), ("body", "smoke outbound workflow")], [])
+        status, body, _ = s.request("POST", "/messages/send", body_bytes, ctype)
+        c.ok(
+            "workflow send accepted",
+            status == 200 and b"wp-bubble" in body,
+            f"{status} {body[:80]!r}",
+        )
+        status, body, _ = s.request("GET", "/partials/messages")
+        listing = body.decode("utf-8", "replace")
+        sent_rows = re.findall(r'hx-get="/partials/messages/([^"]+)"', listing)
+        sent_thread = ""
+        for row in sent_rows:
+            if f'thread-{row}"' in listing and send_to in listing:
+                sent_thread = row
+                break
+        if not sent_thread and sent_rows:
+            sent_thread = sent_rows[0]
+        c.ok(
+            "workflow send thread listed",
+            bool(sent_thread) and send_to in listing,
+            f"rows={sent_rows[:3]}",
+        )
+        if sent_thread:
+            _, body, _ = s.request("GET", f"/partials/messages/{sent_thread}")
+            transcript = body.decode("utf-8", "replace")
+            c.ok(
+                "workflow send bubble in transcript",
+                "smoke outbound workflow" in transcript and "wp-status-" in transcript,
+                "bubble or status badge missing",
+            )
+            # (e) Deep link renders the OPEN thread in the full shell; a
+            # bogus id degrades to the list + the gone-notice (no 404).
+            status, body, _ = s.request("GET", f"/messages/{sent_thread}")
+            c.ok(
+                "workflow deep link opens thread",
+                status == 200 and 'id="thread-transcript"' in body.decode("utf-8", "replace"),
+                f"got {status}",
+            )
+            status, body, _ = s.request("GET", "/messages/zzz-not-a-thread")
+            c.ok(
+                "workflow bogus thread degrades to gone-notice",
+                status == 200 and "no longer exists" in body.decode("utf-8", "replace"),
+                f"got {status}",
+            )
+
+            # (f) Thread flags (T18): pin marks the row, archive moves it to
+            # the archived view and back, mute is presentation-only. The
+            # head-target variant answers the bare 204 the row lane does.
+            status, _, _ = s.request("POST", f"/messages/{sent_thread}/pinned?on=1")
+            c.ok("workflow pin 204", status == 204, f"got {status}")
+            _, body, _ = s.request("GET", "/partials/messages")
+            c.ok(
+                "workflow pinned row marked",
+                f'thread-{sent_thread}"' in body.decode("utf-8", "replace")
+                and "wp-pinned" in body.decode("utf-8", "replace"),
+                "wp-pinned missing from the list",
+            )
+            status, _, _ = s.request("POST", f"/messages/{sent_thread}/archived?on=1")
+            c.ok("workflow archive 204", status == 204, f"got {status}")
+            _, body, _ = s.request("GET", "/partials/messages")
+            unarchived_view = body.decode("utf-8", "replace")
+            _, body, _ = s.request("GET", "/partials/messages?archived=1")
+            archived_view = body.decode("utf-8", "replace")
+            c.ok(
+                "workflow archived row moved",
+                f"/partials/messages/{sent_thread}" not in unarchived_view
+                and f"/partials/messages/{sent_thread}" in archived_view,
+                "row did not move to the archived view",
+            )
+            status, _, _ = s.request("POST", f"/messages/{sent_thread}/archived?on=0")
+            c.ok("workflow unarchive 204", status == 204, f"got {status}")
+            status, _, _ = s.request(
+                "POST",
+                f"/messages/{sent_thread}/muted?on=1",
+                b"",
+                "",
+                {"HX-Target": "wp-thread-head"},
+            )
+            c.ok("workflow mute head-variant 204", status == 204, f"got {status}")
+
+        # (g) Snippets: save renders the settings list, an over-long body
+        # is refused, delete removes the row.
+        status, body, _ = s.request(
+            "POST", "/snippets/save", urlencode({"body": "smoke snippet workflow"}).encode(), "application/x-www-form-urlencoded"
+        )
+        c.ok(
+            "workflow snippet saved",
+            status == 200 and b"smoke snippet workflow" in body,
+            f"{status}",
+        )
+        status, _, _ = s.request(
+            "POST", "/snippets/save", urlencode({"body": "x" * 4000}).encode(), "application/x-www-form-urlencoded"
+        )
+        c.ok("workflow snippet over-long 422", status == 422, f"got {status}")
+        status, body, _ = s.request("GET", "/partials/settings")
+        snippet_ids = re.findall(r'hx-post="/snippets/delete\?id=([^"]+)"', body.decode("utf-8", "replace"))
+        if snippet_ids:
+            status, body, _ = s.request("POST", f"/snippets/delete?id={snippet_ids[-1]}")
+            c.ok(
+                "workflow snippet deleted",
+                status == 200 and f"/snippets/delete?id={snippet_ids[-1]}".encode() not in body,
+                f"got {status}",
+            )
+        else:
+            c.ok("workflow snippet deleted", False, "no snippet id in settings partial")
+
+        # (h) Contacts: save, dup-rename (one row), export, import, delete.
+        contact_number = "+441632960222"
+        status, body, _ = s.request(
+            "POST",
+            "/contacts/save",
+            urlencode({"name": "Smoke Contact", "number": contact_number}).encode(),
+            "application/x-www-form-urlencoded",
+        )
+        c.ok(
+            "workflow contact saved",
+            status == 200 and b"Smoke Contact" in body,
+            f"{status}",
+        )
+        status, body, _ = s.request(
+            "POST",
+            "/contacts/save",
+            urlencode({"name": "Smoke Renamed", "number": contact_number}).encode(),
+            "application/x-www-form-urlencoded",
+        )
+        contacts_partial = body.decode("utf-8", "replace")
+        c.ok(
+            "workflow contact upsert keeps one row",
+            status == 200
+            and contacts_partial.count("Smoke Renamed") == 1
+            and "Smoke Contact" not in contacts_partial.replace("Smoke Renamed", ""),
+            f"{status} rows changed unexpectedly",
+        )
+        status, body, _ = s.request("GET", "/contacts/export")
+        c.ok(
+            "workflow contact exported",
+            status == 200 and b"Smoke Renamed" in body,
+            f"got {status}",
+        )
+        vcard = (
+            "BEGIN:VCARD\r\nVERSION:3.0\r\nFN:Imported One\r\n"
+            f"TEL;TYPE=CELL:{contact_number[:5]}33301\r\nEND:VCARD\r\n"
+            "BEGIN:VCARD\r\nVERSION:3.0\r\nFN:Imported Two\r\n"
+            f"TEL;TYPE=CELL:{contact_number[:5]}33302\r\nEND:VCARD\r\n"
+        ).encode()
+        body_bytes, ctype = multipart_body([], [("vcard", "two.vcf", "text/vcard", vcard)])
+        status, body, _ = s.request("POST", "/contacts/import", body_bytes, ctype)
+        imported = body.decode("utf-8", "replace")
+        c.ok(
+            "workflow contacts imported",
+            status == 200 and "Imported One" in imported and "Imported Two" in imported,
+            f"got {status}",
+        )
+        status, body, _ = s.request("GET", "/partials/contacts")
+        delete_ids = re.findall(r'hx-post="/contacts/delete\?id=([^"]+)"', body.decode("utf-8", "replace"))
+        if delete_ids:
+            status, body, _ = s.request("POST", f"/contacts/delete?id={delete_ids[0]}")
+            c.ok(
+                "workflow contact deleted",
+                status == 200 and f"/contacts/delete?id={delete_ids[0]}".encode() not in body,
+                f"got {status}",
+            )
+        else:
+            c.ok("workflow contact deleted", False, "no contact id in panel")
+
+        # (i) MMS inbound with an attachment: the thread shows the honest
+        # attachment link, the stream is session-fenced, and the served
+        # bytes carry the declared type.
+        png_1px = base64.b64encode(
+            bytes.fromhex(
+                "89504e470d0a1a0a0000000d494844520000000100000001080600000"
+                "01f15c4890000000d49444154789c626001000000ffff030000060005"
+                "57bfabd40000000049454e44ae426082"
+            )
+        ).decode()
+        status, _, _ = s.hook(
+            "/hooks/message",
+            {
+                "owner": "1001",
+                "from": "+441632960444",
+                "body": "smoke mms",
+                "attachments": [
+                    {"name": "dot.png", "mime_type": "image/png", "data_base64": png_1px}
+                ],
+            },
+        )
+        c.ok("workflow mms hook 202", status == 202, f"got {status}")
+        _, body, _ = s.request("GET", "/partials/messages")
+        mms_rows = re.findall(r'hx-get="/partials/messages/([^"]+)"', body.decode("utf-8", "replace"))
+        attachment_id = ""
+        for row in mms_rows:
+            _, tbody, _ = s.request("GET", f"/partials/messages/{row}")
+            ttext = tbody.decode("utf-8", "replace")
+            if "smoke mms" in ttext:
+                match = re.search(r'href="/attachments/([^"]+)"', ttext)
+                if match:
+                    attachment_id = match.group(1)
+                break
+        c.ok("workflow mms attachment linked", bool(attachment_id), "no /attachments link in the thread")
+        if attachment_id:
+            status, _, _ = anon_export.request("GET", f"/attachments/{attachment_id}")
+            c.ok("workflow attachment anonymous 401", status == 401, f"got {status}")
+            status, body, headers = s.request("GET", f"/attachments/{attachment_id}")
+            atype = next((v for k, v in headers.items() if k.lower() == "content-type"), "")
+            c.ok(
+                "workflow attachment streams its type",
+                status == 200 and atype == "image/png",
+                f"{status} {atype!r}",
+            )
+
+        # (j) Fax lifecycle on the loopback gateway: send a PDF-shaped
+        # document, the row appears, the document streams back, an inbound
+        # fax lands as a received row, and resend never renders on a
+        # non-failed row.
+        pdf = b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n"
+        body_bytes, ctype = multipart_body(
+            [("to", "+441632960333")], [("document", "smoke.pdf", "application/pdf", pdf)]
+        )
+        status, body, _ = s.request("POST", "/fax/send", body_bytes, ctype)
+        fax_partial = body.decode("utf-8", "replace")
+        c.ok(
+            "workflow fax sent row",
+            status == 200 and "wp-fax-row" in fax_partial,
+            f"got {status}",
+        )
+        fax_doc_ids = re.findall(r'href="/fax/([^"]+)/document"', fax_partial)
+        if fax_doc_ids:
+            status, body, headers = s.request("GET", f"/fax/{fax_doc_ids[0]}/document")
+            dtype = next((v for k, v in headers.items() if k.lower() == "content-type"), "")
+            c.ok(
+                "workflow fax document streams",
+                status == 200 and "pdf" in dtype.lower() and body.startswith(b"%PDF"),
+                f"{status} {dtype!r}",
+            )
+        else:
+            c.ok("workflow fax document streams", False, "no document link in fax panel")
+        status, _, _ = s.hook(
+            "/hooks/fax",
+            {
+                "owner": "1001",
+                "from": "+441632960555",
+                "pages": 1,
+                "pdf_base64": base64.b64encode(pdf).decode(),
+            },
+        )
+        c.ok("workflow inbound fax 202", status == 202, f"got {status}")
+        _, body, _ = s.request("GET", "/partials/fax")
+        fax_after = body.decode("utf-8", "replace")
+        c.ok(
+            "workflow inbound fax received row",
+            "wp-fax-in" in fax_after and "/resend" not in fax_after,
+            "no inbound row or a resend button rendered on a healthy row",
+        )
 
     # 14. Phone-api proxy fails closed while the PBX API is not configured.
     status, _, _ = s.request("GET", "/phone-api/history?limit=5")

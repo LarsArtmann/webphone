@@ -223,11 +223,14 @@ func (h *handlers) fillAdminIdentity(r *http.Request, props *views.AdminPanelPro
 			DisplayName: user.DisplayName,
 			Admin:       user.Admin,
 		}
-		for _, ext := range user.Extensions {
-			row.Extensions = append(row.Extensions, ext.String())
+		for _, owned := range user.Lines {
+			row.Lines = append(row.Lines, views.AdminUserLine{
+				Extension: owned.Extension.String(),
+				DID:       owned.DID,
+			})
 			// Live sessions count across the account's lines: a second
 			// line signed in is a second live session of the same human.
-			row.LiveSessions += len(h.deps.Sessions.ActiveTokens(ext))
+			row.LiveSessions += len(h.deps.Sessions.ActiveTokens(owned.Extension))
 		}
 		props.Users = append(props.Users, row)
 	}

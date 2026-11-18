@@ -18,6 +18,14 @@ func ext(t *testing.T, raw string) domain.Extension {
 	return parsed
 }
 
+func lines(exts ...domain.Extension) []authmap.Line {
+	out := make([]authmap.Line, 0, len(exts))
+	for _, extension := range exts {
+		out = append(out, authmap.Line{Extension: extension})
+	}
+	return out
+}
+
 // passwordFile writes a one-line password file and returns its path.
 func passwordFile(t *testing.T, dir, password string) string {
 	t.Helper()
@@ -45,8 +53,8 @@ func TestIsAdminFailClosed(t *testing.T) {
 	dir := t.TempDir()
 	files := map[string]string{"1001": passwordFile(t, dir, "alpha"), "1002": passwordFile(t, dir, "beta")}
 	service := newTestService(t, nil, map[string]authmap.User{
-		"boss@example.com":   {Email: "boss@example.com", Extensions: []domain.Extension{ext(t, "1001")}, Admin: true},
-		"worker@example.com": {Email: "worker@example.com", Extensions: []domain.Extension{ext(t, "1002")}},
+		"boss@example.com":   {Email: "boss@example.com", Lines: lines(ext(t, "1001")), Admin: true},
+		"worker@example.com": {Email: "worker@example.com", Lines: lines(ext(t, "1002"))},
 	}, files)
 
 	if !service.IsAdmin("boss@example.com") {
@@ -80,8 +88,8 @@ func TestNumbersInventoriesMappedAndIdentityLines(t *testing.T) {
 	service := newTestService(t,
 		map[string]string{"1001": "+49301111", "1099": "+49309999"},
 		map[string]authmap.User{
-			"boss@example.com":   {Email: "boss@example.com", Extensions: []domain.Extension{ext(t, "1001")}, Admin: true},
-			"worker@example.com": {Email: "worker@example.com", Extensions: []domain.Extension{ext(t, "1001"), ext(t, "1002")}},
+			"boss@example.com":   {Email: "boss@example.com", Lines: lines(ext(t, "1001")), Admin: true},
+			"worker@example.com": {Email: "worker@example.com", Lines: lines(ext(t, "1001"), ext(t, "1002"))},
 		}, files)
 
 	numbers := service.Numbers()
@@ -121,8 +129,8 @@ func TestExtensionsSortedDeduplicated(t *testing.T) {
 	dir := t.TempDir()
 	files := map[string]string{"1002": passwordFile(t, dir, "beta"), "1001": passwordFile(t, dir, "alpha")}
 	service := newTestService(t, nil, map[string]authmap.User{
-		"boss@example.com":   {Email: "boss@example.com", Extensions: []domain.Extension{ext(t, "1002"), ext(t, "1001")}, Admin: true},
-		"worker@example.com": {Email: "worker@example.com", Extensions: []domain.Extension{ext(t, "1002")}},
+		"boss@example.com":   {Email: "boss@example.com", Lines: lines(ext(t, "1002"), ext(t, "1001")), Admin: true},
+		"worker@example.com": {Email: "worker@example.com", Lines: lines(ext(t, "1002"))},
 	}, files)
 
 	extensions := service.Extensions()
@@ -135,7 +143,7 @@ func TestSIPPasswordDelegatesToAuthmap(t *testing.T) {
 	dir := t.TempDir()
 	files := map[string]string{"1001": passwordFile(t, dir, "alpha")}
 	service := newTestService(t, nil, map[string]authmap.User{
-		"boss@example.com": {Email: "boss@example.com", Extensions: []domain.Extension{ext(t, "1001")}, Admin: true},
+		"boss@example.com": {Email: "boss@example.com", Lines: lines(ext(t, "1001")), Admin: true},
 	}, files)
 
 	password, err := service.SIPPassword(ext(t, "1001"))

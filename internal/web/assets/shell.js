@@ -536,13 +536,20 @@
       shellToast("Transcript downloaded.", "ok");
     });
 
-    // 2b7. Post-call notes (M16): [data-note-save] PUTs the row's
-    //      textarea to /api/calls/{id}/note; [data-note-draft] asks the
+    // 2b7. Post-call notes (M16 + the 2026-11-18 autosave train): the
+    //      note box saves itself as the owner types — every keystroke
+    //      re-arms a 250ms debounce, blur (the change event) flushes
+    //      immediately, and the pagehide flush carries the tail out
+    //      with keepalive. The explicit [data-note-save] button keeps
+    //      its immediate save + toast. [data-note-draft] asks the
     //      summarize chain for a draft and inserts its text for a HUMAN
-    //      edit (the AI never writes the note itself — the save is
-    //      always the owner's keystroke). The server's failure lines
-    //      are already human-phrased; the toasts relay them verbatim.
-    //      English toasts (D3).
+    //      edit (the AI never writes the note itself — a programmatic
+    //      draft insert fires no input event, so only the owner's next
+    //      keystroke saves it). Every save rides the same event-sourced
+    //      PUT (one CallNoteSaved change per real edit; the server
+    //      drops same-body echoes). The [data-note-status] line carries
+    //      the lifecycle quietly; failures toast once per episode, not
+    //      per keystroke. English copy (D3).
     /**
      * @param {string} callId
      * @returns {HTMLTextAreaElement | null}
@@ -550,6 +557,170 @@
     var noteBodyFor = function (callId) {
       return textareaIn(document, '[data-note-body="' + callId + '"]');
     };
+    /**
+     * @param {string} callId
+     * @returns {HTMLElement | null}
+     */
+    var noteStatusFor = function (callId) {
+      return document.querySelector('[data-note-status="' + callId + '"]');
+    };
+    // The autosave tuning seam (the clock-seam precedent): tests shrink
+    // the delay instead of sleeping real 250ms windows.
+    var noteAutosave = { delayMs: 250 };
+    /**
+     * Per-call autosave state: `saved` is the last CONFIRMED body (the
+     * server-rendered defaultValue seeds it, so a focus+blur without
+     * typing PUTs nothing), `timer` the pending debounce, `inflight`
+     * serializes PUTs (a save landing mid-flight re-runs on completion,
+     * never racing two bodies out of order), `toasted` the once-per-
+     * failure-episode toast gate.
+     * @typedef {Object} NoteAutosaveState
+     * @property {string | null} saved
+     * @property {ReturnType<typeof setTimeout> | null} timer
+     * @property {boolean} inflight
+     * @property {boolean} toasted
+     */
+    /** @type {Record<string, NoteAutosaveState>} */
+    var noteAutosaveState = {};
+    /**
+     * @param {string} callId
+     * @param {HTMLTextAreaElement} box
+     * @returns {NoteAutosaveState}
+     */
+    var noteState = function (callId, box) {
+      if (!noteAutosaveState[callId]) {
+        var rendered =
+          typeof box.defaultValue === "string" ? box.defaultValue : null;
+        noteAutosaveState[callId] = {
+          saved: rendered,
+          timer: null,
+          inflight: false,
+          toasted: false,
+        };
+      }
+      return noteAutosaveState[callId];
+    };
+    /**
+     * @param {NoteAutosaveState} state
+     * @param {HTMLElement | null} status
+     * @param {string} line
+     * @param {boolean} announce
+     */
+    var noteSaveFailed = function (state, status, line, announce) {
+      if (status) status.textContent = "Not saved";
+      // Autosave must not toast on every typing-pause retry: one toast
+      // per failure episode (the explicit button always toasts).
+      if (announce || !state.toasted) {
+        shellToast(line, "warn");
+        state.toasted = true;
+      }
+    };
+    /**
+     * The one save runner both lanes share: reads the box's CURRENT
+     * value (latest keystroke wins), skips a no-change save, and
+     * re-runs itself on completion when newer input arrived mid-flight.
+     * @param {string} callId
+     * @param {boolean} announce — the explicit button toasts its verdict
+     * @param {boolean} keepalive — the pagehide flush outlives the page
+     */
+    var runNoteSave = function (callId, announce, keepalive) {
+      var box = noteBodyFor(callId);
+      if (!box) return;
+      var state = noteState(callId, box);
+      if (state.inflight) return;
+      var body = box.value;
+      if (state.saved === body) {
+        if (announce) shellToast("Note saved.", "ok");
+        return;
+      }
+      state.inflight = true;
+      var status = noteStatusFor(callId);
+      if (status) status.textContent = "Saving…";
+      fetch("/api/calls/" + encodeURIComponent(callId) + "/note", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRF-Token": csrfToken(),
+        },
+        credentials: "same-origin",
+        keepalive: keepalive,
+        body: JSON.stringify({ body: body }),
+      })
+        .then(function (res) {
+          if (res.status === 204) {
+            state.saved = body;
+            state.toasted = false;
+            if (status) status.textContent = "Saved";
+            if (announce) shellToast("Note saved.", "ok");
+            return;
+          }
+          return res.text().then(function (detail) {
+            noteSaveFailed(
+              state,
+              status,
+              detail || "Could not save the note (HTTP " + res.status + ").",
+              announce,
+            );
+          });
+        })
+        .catch(function () {
+          noteSaveFailed(
+            state,
+            status,
+            "Could not save the note — check your connection.",
+            announce,
+          );
+        })
+        .then(function () {
+          state.inflight = false;
+          // Newer input landed while this save flew: carry it now
+          // instead of waiting for the next keystroke.
+          var live = noteBodyFor(callId);
+          if (live && !state.timer && live.value !== state.saved)
+            runNoteSave(callId, false, false);
+        });
+    };
+    document.addEventListener("input", function (event) {
+      var box = /** @type {HTMLTextAreaElement | null} */ (eventElement(event));
+      if (!box || !box.getAttribute) return;
+      var callId = box.getAttribute("data-note-body");
+      if (!callId) return;
+      // Bound once (the closure below runs in a later tick): narrowing
+      // does not survive into callbacks for mutable bindings.
+      var id = callId;
+      var state = noteState(id, box);
+      if (state.timer) clearTimeout(state.timer);
+      state.timer = setTimeout(function () {
+        state.timer = null;
+        runNoteSave(id, false, false);
+      }, noteAutosave.delayMs);
+    });
+    // Blur is the natural "done typing" beat: change fires only when
+    // the value moved, so the flush never PUTs a settled box.
+    document.addEventListener("change", function (event) {
+      var box = /** @type {HTMLTextAreaElement | null} */ (eventElement(event));
+      if (!box || !box.getAttribute) return;
+      var callId = box.getAttribute("data-note-body");
+      if (!callId) return;
+      var state = noteState(callId, box);
+      if (state.timer) {
+        clearTimeout(state.timer);
+        state.timer = null;
+      }
+      runNoteSave(callId, false, false);
+    });
+    // The page is going away: send the unsaved tail now, with
+    // keepalive so the browser finishes the PUT past teardown.
+    document.addEventListener("pagehide", function () {
+      Object.keys(noteAutosaveState).forEach(function (callId) {
+        var state = noteAutosaveState[callId];
+        if (state.timer) {
+          clearTimeout(state.timer);
+          state.timer = null;
+        }
+        runNoteSave(callId, false, true);
+      });
+    });
     document.addEventListener("click", function (event) {
       var btn = /** @type {HTMLButtonElement | null} */ (
         closestHTMLElement(eventElement(event), "[data-note-save]")
@@ -561,7 +732,21 @@
       var callId = btn.getAttribute("data-note-save") || "";
       var box = noteBodyFor(callId);
       if (!box) return;
+      var state = noteState(callId, box);
+      if (state.timer) {
+        clearTimeout(state.timer);
+        state.timer = null;
+      }
+      if (state.inflight) return; // the flying save toasts for this click
+      var body = box.value;
+      if (state.saved === body) {
+        shellToast("Note saved.", "ok");
+        return;
+      }
       saveButton.disabled = true;
+      var status = noteStatusFor(callId);
+      if (status) status.textContent = "Saving…";
+      state.inflight = true;
       fetch("/api/calls/" + encodeURIComponent(callId) + "/note", {
         method: "PUT",
         headers: {
@@ -569,27 +754,35 @@
           "X-CSRF-Token": csrfToken(),
         },
         credentials: "same-origin",
-        body: JSON.stringify({ body: box.value }),
+        body: JSON.stringify({ body: body }),
       })
         .then(function (res) {
           if (res.status === 204) {
+            state.saved = body;
+            state.toasted = false;
+            if (status) status.textContent = "Saved";
             shellToast("Note saved.", "ok");
             return;
           }
           return res.text().then(function (detail) {
-            shellToast(
+            noteSaveFailed(
+              state,
+              status,
               detail || "Could not save the note (HTTP " + res.status + ").",
-              "warn",
+              true,
             );
           });
         })
         .catch(function () {
-          shellToast(
+          noteSaveFailed(
+            state,
+            status,
             "Could not save the note — check your connection.",
-            "error",
+            true,
           );
         })
         .then(function () {
+          state.inflight = false;
           saveButton.disabled = false;
         });
     });
@@ -3087,6 +3280,7 @@
       module.exports.setPhonePressed = setPhonePressed;
       module.exports.errorMessage = errorMessage;
       module.exports.clock = clock;
+      module.exports.noteAutosave = noteAutosave;
     }
   } catch (err) {
     var logList = document.getElementById("log");

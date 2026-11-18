@@ -43,6 +43,7 @@ import { restoreTitle, titleFlashStop } from "./notify.js";
 import {
   dispatchAutoReview,
   dispositionRow,
+  flushPendingCallNotes,
   noteRow,
   q850CauseOf,
   showEndedReason,
@@ -320,6 +321,10 @@ function morphToEndedCard(id, entry) {
       // a bare remove() would strand the live-call badge and the CRM
       // context slot on a call the shell can no longer see.
       close.addEventListener("click", () => {
+        // A note typed in the last 250ms has not flown yet — flush the
+        // autosave tail BEFORE the editor's DOM goes away (hand-written
+        // content is never silently expunged).
+        flushPendingCallNotes();
         card.remove();
         document.dispatchEvent(new CustomEvent("wp:calls-changed"));
       });

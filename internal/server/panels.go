@@ -603,6 +603,7 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 		}
 	}
 	return views.SettingsPanel(views.SettingsPanelProps{
+		Account:        h.accountSection(sess),
 		SIPDomain:      h.deps.Config.SIPDomain,
 		WebsocketURL:   websocketURL,
 		GatewayMode:    string(h.deps.Config.Gateway.Mode),
@@ -629,6 +630,29 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 		Passkeys:       h.authHub.PasskeySectionProps(sess),
 		Lang:           h.lang(r),
 	}), nil
+}
+
+// accountSection builds the Settings account group (the ownership
+// model made visible): the session's identity and every line it owns,
+// the active line marked. A mapped login (passkey/OIDC) lists its OWN
+// lines; the classic extension login still gets its one active line —
+// every session has a line to name.
+func (h *handlers) accountSection(sess session.Session) views.AccountSection {
+	account := views.AccountSection{ActiveExtension: sess.Extension.String()}
+	if mapped, ok := h.MappedIdentityWith(sess.Extension, sess.LoginEmail); ok {
+		account.DisplayName = mapped.DisplayName
+		account.Email = mapped.Email
+		account.Admin = mapped.Admin
+		for _, owned := range mapped.Lines {
+			account.Lines = append(account.Lines, views.AccountLine{Extension: owned.Extension.String(), DID: owned.DID})
+		}
+		return account
+	}
+	account.Lines = []views.AccountLine{{
+		Extension: sess.Extension.String(),
+		DID:       h.identityFor(sess.Extension),
+	}}
+	return account
 }
 
 // agentAuditRows reads the durable agent-action audit window for the

@@ -228,6 +228,11 @@ export const I18N = {
     callNoteSaved: "Note saved",
     callNoteFailed: "Saving the note failed; try again.",
     callNoteFull: "The note list is full; delete another note first.",
+    // The autosave status line (2026-11-18): quiet by design — the
+    // announce() surface stays for failures, the line carries the rest.
+    callNoteSaving: "Saving…",
+    callNoteStatusSaved: "Saved",
+    callNoteUnsaved: "Not saved",
   }),
   de: defineMessages({
     regState: "Registrierungsstatus",
@@ -447,6 +452,9 @@ export const I18N = {
       "Speichern der Notiz fehlgeschlagen; bitte erneut versuchen.",
     callNoteFull:
       "Die Notizliste ist voll; löschen Sie zuerst eine andere Notiz.",
+    callNoteSaving: "Speichern …",
+    callNoteStatusSaved: "Gespeichert",
+    callNoteUnsaved: "Nicht gespeichert",
   }),
 };
 

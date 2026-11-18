@@ -55,10 +55,10 @@ func newSwitchIdentity(t *testing.T) *userauth.Service {
 		RPDisplayName: "WebPhone",
 		RPOrigins:     []string{"http://" + "localhost"},
 		Users: map[string]userauth.MappedUser{
-			pkEmail: {Email: pkEmail, DisplayName: "Lars", Extensions: []domain.Extension{
+			pkEmail: {Email: pkEmail, DisplayName: "Lars", Lines: lines(
 				domain.MustParseExtension("1000"),
 				domain.MustParseExtension("1001"),
-			}},
+			)},
 		},
 		ExtensionPasswordFiles: map[string]string{
 			"1000": fileFor("1000", pkPassword),

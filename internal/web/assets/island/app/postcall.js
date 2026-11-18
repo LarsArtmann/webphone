@@ -112,13 +112,138 @@ async function confirmDisposition(row, id, entry, value, labelKey) {
   }
 }
 
-// noteRow is the post-call note editor (issue #11): the hangup moment
-// gets the SAME note slot History renders later (PUT /api/calls/{id}/note),
-// so the conversation is written down with zero navigation. A 204
-// collapses the row to the saved line; the note-list-full 409 and any
-// other failure keep the draft in the editor (hand-written content is
-// never silently expunged); dismissing the card loses nothing already
-// saved.
+// noteRow is the post-call note editor (issue #11 + the 2026-11-18
+// autosave train): the hangup moment gets the SAME note slot History
+// renders later (PUT /api/calls/{id}/note), so the conversation is
+// written down with zero navigation. The note saves itself as the
+// owner types — every keystroke re-arms a 250ms debounce, blur (the
+// change event) flushes, and every save rides the same event-sourced
+// PUT (the server drops same-body echoes). The explicit button stays
+// the "done" affordance: it saves AND collapses the row to the saved
+// line; the 409/failure paths keep the draft in the editor
+// (hand-written content is never silently expunged); dismissing the
+// card flushes the unsaved tail first (calls.js), so it loses nothing
+// already typed.
+
+// The autosave tuning seam (the clock-seam precedent): tests shrink
+// the debounce instead of sleeping real 250ms windows.
+export const noteAutosave = { delayMs: 250 };
+
+/**
+ * @typedef {Object} NoteAutosaveEntry
+ * @property {string} id
+ * @property {string} saved - the last CONFIRMED body
+ * @property {ReturnType<typeof setTimeout> | null} timer
+ * @property {boolean} inflight
+ * @property {boolean} announced - one failure announcement per episode
+ */
+/** @type {Map<HTMLElement, NoteAutosaveEntry>} */
+const noteAutosaveEntries = new Map();
+
+// flushPendingCallNotes fires every editor's unsaved tail NOW: the
+// ended card's Close button calls it before the DOM goes away, and the
+// pagehide flush keeps the last PUT alive past teardown (keepalive).
+/** @param {boolean} [keepalive] */
+export function flushPendingCallNotes(keepalive = false) {
+  for (const entry of noteAutosaveEntries.values()) {
+    if (entry.timer) {
+      clearTimeout(entry.timer);
+      entry.timer = null;
+    }
+  }
+  for (const [row, entry] of noteAutosaveEntries) {
+    if (!entry.inflight) runNoteAutosave(row, entry, keepalive);
+  }
+}
+
+document.addEventListener("pagehide", () => flushPendingCallNotes(true));
+
+/**
+ * @param {HTMLElement} row
+ * @param {string} text
+ */
+function setNoteStatus(row, text) {
+  const status = row.querySelector(".call-note-status");
+  if (status) status.textContent = text;
+}
+
+/**
+ * @param {HTMLElement} row
+ * @param {NoteAutosaveEntry} entry
+ * @param {number} status - the HTTP verdict; 0 = transport failure
+ */
+function noteAutosaveFailed(row, entry, status) {
+  setNoteStatus(row, t("callNoteUnsaved"));
+  // Autosave must not announce on every typing-pause retry: one
+  // announcement per failure episode, reset on the next success.
+  if (!entry.announced) {
+    announce(status === 409 ? t("callNoteFull") : t("callNoteFailed"), "warn");
+    entry.announced = true;
+  }
+}
+
+/**
+ * The quiet save lane: latest keystroke wins, no collapse, no success
+ * announcement (the status line carries it). A newer body that lands
+ * mid-flight re-runs on completion — PUTs never race out of order.
+ * @param {HTMLElement} row
+ * @param {NoteAutosaveEntry} entry
+ * @param {boolean} keepalive
+ */
+async function runNoteAutosave(row, entry, keepalive) {
+  const input = /** @type {HTMLTextAreaElement | null} */ (
+    row.querySelector(".call-note-input")
+  );
+  if (!input || entry.inflight) return;
+  const body = input.value;
+  if (body === entry.saved) return;
+  entry.inflight = true;
+  const carried = body;
+  let landed = false;
+  setNoteStatus(row, t("callNoteSaving"));
+  try {
+    const res = await authedFetch(
+      `/api/calls/${encodeURIComponent(entry.id)}/note`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body }),
+        keepalive,
+      },
+    );
+    if (!res.ok) {
+      noteAutosaveFailed(row, entry, res.status);
+      return;
+    }
+    entry.saved = body;
+    entry.announced = false;
+    landed = true;
+    setNoteStatus(row, t("callNoteStatusSaved"));
+  } catch (err) {
+    noteAutosaveFailed(row, entry, 0);
+    log(`note autosave failed: ${errorMessage(err)}`, "warn");
+  } finally {
+    entry.inflight = false;
+    // Only input NEWER than this flight's body re-dispatches — a
+    // FAILED save whose text is still sitting in the editor must not
+    // retry itself in a loop; the next keystroke (or the re-arm below)
+    // carries it. Success carries immediately; failure re-arms the
+    // debounce once, bounded by the unchanged-body guard above.
+    const live = /** @type {HTMLTextAreaElement | null} */ (
+      row.querySelector(".call-note-input")
+    );
+    if (!live || entry.timer || live.value === carried) return;
+    if (landed) {
+      runNoteAutosave(row, entry, false);
+      return;
+    }
+    entry.timer = setTimeout(() => {
+      entry.timer = null;
+      runNoteAutosave(row, entry, false);
+    }, noteAutosave.delayMs);
+  }
+}
+
 /** @param {string} id @returns {HTMLDivElement} */
 export function noteRow(id) {
   const row = document.createElement("div");
@@ -128,66 +253,124 @@ export function noteRow(id) {
   input.placeholder = t("callNotePlaceholder");
   input.maxLength = 4000;
   input.rows = 3;
+  const status = document.createElement("span");
+  status.className = "call-note-status";
+  /** @type {NoteAutosaveEntry} */
+  const entry = {
+    id,
+    saved: "",
+    timer: null,
+    inflight: false,
+    announced: false,
+  };
+  noteAutosaveEntries.set(row, entry);
+  input.addEventListener("input", () => {
+    if (entry.timer) clearTimeout(entry.timer);
+    entry.timer = setTimeout(() => {
+      entry.timer = null;
+      runNoteAutosave(row, entry, false);
+    }, noteAutosave.delayMs);
+  });
+  // Blur is the natural "done typing" beat: change fires only when the
+  // value moved, so the flush never PUTs a settled box.
+  input.addEventListener("change", () => {
+    if (entry.timer) {
+      clearTimeout(entry.timer);
+      entry.timer = null;
+    }
+    runNoteAutosave(row, entry, false);
+  });
   const save = document.createElement("button");
   save.className = "ghost call-note-save";
   save.textContent = t("callNoteSave");
   save.addEventListener("click", () => {
-    saveCallNote(row, id, input.value).catch((err) =>
+    if (entry.timer) {
+      clearTimeout(entry.timer);
+      entry.timer = null;
+    }
+    saveCallNote(row, entry).catch((err) =>
       log(`note save failed: ${errorMessage(err)}`, "warn"),
     );
   });
-  row.append(input, save);
+  row.append(input, save, status);
   return row;
 }
 
 /**
+ * The explicit lane: save now and collapse the row to the saved line —
+ * with autosave the button means "done", and an unchanged body still
+ * collapses (nothing new to carry, the owner is finished here).
  * @param {HTMLElement} row
- * @param {string} id
- * @param {string} body
+ * @param {NoteAutosaveEntry} entry
  * @returns {Promise<void>}
  */
-async function saveCallNote(row, id, body) {
+async function saveCallNote(row, entry) {
   const save = /** @type {HTMLButtonElement | null} */ (
     row.querySelector(".call-note-save")
   );
   const input = /** @type {HTMLTextAreaElement | null} */ (
     row.querySelector(".call-note-input")
   );
-  if (save) save.disabled = true;
+  if (!save || !input) return;
+  if (entry.inflight) return; // the flying autosave carries this body
+  const body = input.value;
+  if (body === entry.saved) {
+    collapseNoteRow(row);
+    return;
+  }
+  save.disabled = true;
   try {
-    const res = await authedFetch(`/api/calls/${encodeURIComponent(id)}/note`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ body }),
-    });
-    if (!res.ok) {
-      if (save) save.disabled = false;
-      if (res.status === 409) announce(t("callNoteFull"), "warn");
-      else announce(t("callNoteFailed"), "warn");
-      return;
-    }
-    const saved = Object.assign(document.createElement("span"), {
-      className: "call-note-saved",
-      textContent: t("callNoteSaved"),
-    });
-    focusAfterReplace(
-      row,
-      () =>
-        /** @type {HTMLElement | null} */ (
-          row.querySelector(".call-note-saved")
-        ),
-      () => {
-        if (input) input.remove();
-        if (save) save.remove();
-        row.append(saved);
+    const res = await authedFetch(
+      `/api/calls/${encodeURIComponent(entry.id)}/note`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ body }),
       },
     );
+    if (!res.ok) {
+      save.disabled = false;
+      entry.announced = false; // a manual retry announces again
+      if (res.status === 409) announce(t("callNoteFull"), "warn");
+      else announce(t("callNoteFailed"), "warn");
+      setNoteStatus(row, t("callNoteUnsaved"));
+      return;
+    }
+    entry.saved = body;
+    entry.announced = false;
+    collapseNoteRow(row);
     announce(t("callNoteSaved"));
   } catch (err) {
-    if (save) save.disabled = false;
+    save.disabled = false;
     announce(t("callNoteFailed"), "warn");
+    setNoteStatus(row, t("callNoteUnsaved"));
     throw err;
   }
+}
+
+/**
+ * @param {HTMLElement} row
+ */
+function collapseNoteRow(row) {
+  const input = row.querySelector(".call-note-input");
+  const save = row.querySelector(".call-note-save");
+  const status = row.querySelector(".call-note-status");
+  const saved = Object.assign(document.createElement("span"), {
+    className: "call-note-saved",
+    textContent: t("callNoteSaved"),
+  });
+  noteAutosaveEntries.delete(row);
+  focusAfterReplace(
+    row,
+    () =>
+      /** @type {HTMLElement | null} */ (row.querySelector(".call-note-saved")),
+    () => {
+      if (input) input.remove();
+      if (save) save.remove();
+      if (status) status.remove();
+      row.append(saved);
+    },
+  );
 }
 
 // failureReasonOf maps one call's outcome to a human reason line for

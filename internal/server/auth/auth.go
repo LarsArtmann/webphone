@@ -64,6 +64,9 @@ const (
 type SSOClient interface {
 	Challenge(ctx context.Context) (sso.Challenge, error)
 	Complete(ctx context.Context, code, verifier, nonce string) (authmap.User, string, error)
+	// MappedByLogin resolves the session's display identity through the
+	// SSO mode's own authmap (the mappedIdentityWith fallback seam).
+	MappedByLogin(extension domain.Extension, loginEmail string) (authmap.User, bool)
 }
 
 // Deps is the auth surfaces' narrowed dependency view: exactly what the
@@ -97,6 +100,10 @@ type Shell interface {
 	NotFound(w http.ResponseWriter, r *http.Request)
 	// IdentityFor returns the extension's presented PSTN number.
 	IdentityFor(extension domain.Extension) string
+	// MappedIdentityWith resolves the session's display identity (the
+	// ONE ownership resolution: own login email first, deterministic
+	// line fallback second — passkey's authmap, then SSO's).
+	MappedIdentityWith(extension domain.Extension, loginEmail string) (authmap.User, bool)
 	// NotifyToast pushes one toast onto the response (HX-Trigger).
 	NotifyToast(w http.ResponseWriter, kind, msg string)
 }

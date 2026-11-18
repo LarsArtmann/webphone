@@ -228,7 +228,7 @@ func (c *Client) Complete(ctx context.Context, code, verifier, nonce string) (au
 		return empty, "", errorfamily.NewRejection("sso.unmapped_email",
 			"the IdP account %q is not in the users mapping (auth.users) — add the mapping or remove the account").WithContext("email", claims.Email)
 	}
-	password, err := c.mapped.SIPPassword(mapped.SessionExtension())
+	password, err := c.mapped.SIPPassword(mapped.SessionLine().Extension)
 	if err != nil {
 		return empty, "", err //nolint:wrapcheck // authmap owns the classification and the operator copy
 	}
@@ -242,6 +242,15 @@ func (c *Client) Resolve(email string) (authmap.User, bool) { return c.mapped.Re
 // MappedByExtension reverse-resolves a session extension to its mapped user.
 func (c *Client) MappedByExtension(extension domain.Extension) (authmap.User, bool) {
 	return c.mapped.MappedByExtension(extension)
+}
+
+// MappedByLogin resolves the identity a SESSION should display: the
+// session's own login email when it owns the session's line, else the
+// deterministic line lookup (see authmap — the one home of the rule).
+// Mirrors the userauth seam so an SSO-only deployment resolves whoami
+// and Settings identity through the SAME ownership model.
+func (c *Client) MappedByLogin(extension domain.Extension, loginEmail string) (authmap.User, bool) {
+	return c.mapped.MappedByLogin(extension, loginEmail)
 }
 
 // claims is the identity payload this login needs. The ID token carries

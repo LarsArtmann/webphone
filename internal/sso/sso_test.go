@@ -32,6 +32,14 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
+func lines(exts ...domain.Extension) []authmap.Line {
+	out := make([]authmap.Line, 0, len(exts))
+	for _, extension := range exts {
+		out = append(out, authmap.Line{Extension: extension})
+	}
+	return out
+}
+
 const (
 	stubClientID     = "webphone"
 	stubRedirect     = "https://pbx.example.org/api/auth/oauth2/callback"
@@ -215,7 +223,7 @@ func newTestClient(t *testing.T, idp *stubIDP, tweak func(*Config)) *Client {
 		RedirectURL:      stubRedirect,
 		Scopes:           []string{"openid", "email", "profile"},
 		Users: map[string]authmap.User{
-			stubUserEmail: {Email: stubUserEmail, DisplayName: "Lars", Extensions: []domain.Extension{domain.MustParseExtension("1000")}},
+			stubUserEmail: {Email: stubUserEmail, DisplayName: "Lars", Lines: lines(domain.MustParseExtension("1000"))},
 		},
 		ExtensionPasswordFiles: map[string]string{"1000": passwordFile(t)},
 	}
@@ -292,8 +300,8 @@ func TestCompleteMintsTheMappedIdentityAndPassword(t *testing.T) {
 	if user.Email != stubUserEmail {
 		t.Errorf("email = %q, want %q", user.Email, stubUserEmail)
 	}
-	if user.SessionExtension().String() != "1000" {
-		t.Errorf("session extension = %q, want 1000", user.SessionExtension().String())
+	if user.SessionLine().Extension.String() != "1000" {
+		t.Errorf("session line extension = %q, want 1000", user.SessionLine().Extension.String())
 	}
 	if password != stubPassword {
 		t.Errorf("password = %q, want the file's trimmed value", password)

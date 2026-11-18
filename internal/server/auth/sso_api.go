@@ -75,7 +75,7 @@ func (a *Handlers) SSOCallback(w http.ResponseWriter, r *http.Request) {
 		a.ssoFailed(w, r, err, "complete oidc login")
 		return
 	}
-	extension := mapped.SessionExtension()
+	extension := mapped.SessionLine().Extension
 	if !a.verifyDirectoryCredentials(w, r, extension, password) {
 		return
 	}

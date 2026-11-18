@@ -4,7 +4,6 @@ import (
 	"encoding/json/v2"
 	"log/slog"
 	"net/http"
-	"slices"
 
 	"github.com/larsartmann/go-error-family"
 
@@ -52,7 +51,7 @@ func (a *Handlers) SwitchExtension(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	mapped, ok := a.deps.UserAuth.Resolve(sess.LoginEmail)
-	if !ok || !slices.Contains(mapped.Extensions, target) {
+	if !ok || !mapped.Has(target) {
 		// One answer for an unmapped account and a not-mapped target
 		// alike: the switch surface never enumerates which lines exist.
 		http.Error(w, "extension not mapped to this account", http.StatusForbidden)

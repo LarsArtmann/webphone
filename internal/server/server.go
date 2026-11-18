@@ -405,7 +405,7 @@ func New(deps Deps) http.Handler {
 		eventsLimiter:        newKeyedRateLimiter(hookLimit, hookBurst),
 		csrfLimiter:          newKeyedRateLimiter(hookLimit, hookBurst),
 		contactsLimiter:      newKeyedRateLimiter(contactsLimit, contactsBurst),
-		noteAutosaveLimiter:   newKeyedRateLimiter(noteAutosaveLimit, noteAutosaveBurst),
+		noteAutosaveLimiter:  newKeyedRateLimiter(noteAutosaveLimit, noteAutosaveBurst),
 		switchLimiter:        newKeyedRateLimiter(switchLimit, switchBurst),
 		cspLimiter:           newKeyedRateLimiter(cspLimit, cspBurst),
 		traceLimiter:         newKeyedRateLimiter(traceLimit, traceBurst),

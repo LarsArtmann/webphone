@@ -89,7 +89,7 @@ func newPasskeyServerWithConfig(t *testing.T, tweak func(*config.Config), depsMu
 		RPDisplayName: "WebPhone",
 		RPOrigins:     []string{"http://" + "localhost"},
 		Users: map[string]userauth.MappedUser{
-			pkEmail: {Email: pkEmail, DisplayName: "Lars", Extensions: []domain.Extension{ext}},
+			pkEmail: {Email: pkEmail, DisplayName: "Lars", Lines: lines(ext)},
 		},
 		ExtensionPasswordFiles: map[string]string{"1000": passFile},
 		WebAuthn:               pkStub{},

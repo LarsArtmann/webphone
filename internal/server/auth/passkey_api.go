@@ -100,7 +100,7 @@ func (a *Handlers) PasskeyFinishLogin(w http.ResponseWriter, r *http.Request) {
 		a.passkeyServerError(w, err, "finish passkey login")
 		return
 	}
-	extension := mapped.SessionExtension()
+	extension := mapped.SessionLine().Extension
 	password, err := a.deps.UserAuth.SIPPassword(extension)
 	if err != nil {
 		a.passkeyServerError(w, err, "source extension credentials")

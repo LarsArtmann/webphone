@@ -44,11 +44,13 @@ func RenderWireFixtureFiles() map[string][]byte {
 		Password: "fixture-directory-password",
 	}
 	brokered := auth.SessionIdentity{
-		Extension:     fixtureExtension,
-		DID:           fixtureDID,
-		DisplayName:   fixtureDisplayName,
-		Numbers:       []string{fixtureDID},
-		Extensions:    []string{fixtureExtension, "1002"},
+		Extension:   fixtureExtension,
+		DID:         fixtureDID,
+		DisplayName: fixtureDisplayName,
+		Lines: []auth.SessionLine{
+			{Extension: fixtureExtension, DID: fixtureDID},
+			{Extension: "1002"},
+		},
 		SIPCredential: "fixture-sip-credential",
 	}
 	register := api.PushDeviceRegisterRequest{
