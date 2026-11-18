@@ -4,6 +4,14 @@
 > Scope: THIS session's run only (the "notes save themselves as you
 > type, event-sourced, 200-300ms debounce" train). No repo-wide
 > harvest — the living inventory stays TODO_LIST/FEATURES.
+>
+> SUPERSEDED (2026-11-18, docs honesty): the closeout report
+> `2026-11-18_21-55_notes-autosave-closeout-and-self-review.md` owns
+> this train's final state. This report's central "next" claim, the
+> shell.js retry loop still being live, was overtaken by events: the
+> carried/landed fix, both test-file repairs, and every gate landed
+> 19:35-21:55 the same evening. Sections d/e below read as the
+> mid-flight diagnosis, not the end state.
 
 ## The ask
 

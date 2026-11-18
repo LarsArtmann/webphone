@@ -1230,3 +1230,33 @@ without a decision. Lesson: any new writer under dataDir adjudicates the
 backup tar + the VM-test fixtures AT introduction — include deliberately or
 exclude deliberately; "it's just a subdir" is how unbounded backup growth
 lands.
+
+## Autosave completion hooks compare against the carried body, never `saved` (2026-11-18)
+
+The notes-autosave train wrote the same terminating-retry defect into BOTH
+editors (postcall.js and shell.js): the save completion hook asked "does the
+editor still differ from `saved`?" and re-dispatched when it did. But a
+FAILED save never moves `saved`, so a failing server plus an unchanged draft
+answered "differs" forever — an unbounded PUT loop (surfaced as a 6-minute
+test hang; the twin in shell.js survived a session pause because only one
+file was fixed before the report). The terminating invariant: a completion
+hook may re-dispatch ONLY input that is NEWER than that flight's captured
+body — capture the carried body at dispatch, set `landed` on success, and
+compare `live.value === carried` (never `saved`) in the finally block;
+failure re-arms the debounce once (bounded by the unchanged-body guard),
+success carries newer input immediately. Both editors pin the no-retry-loop
+case (fail always + no new input = exactly ONE PUT), and the manual Save
+lane carries the same tail. A diagnosed bug in symmetric code gets fixed at
+EVERY site in the same breath.
+
+The test-isolation twin: the autosave flush maps (`noteAutosaveEntries`
+keyed by row element, `noteAutosaveState` keyed by callId) are module-global
+BY DESIGN (pagehide must flush every live row), so rows leaked from earlier
+specs ride any later flush — a "count all PUTs" assertion counts other
+specs' PUTs. Scope assertions per-row URL instead of resetting production
+state (a reset seam costs served bytes). Stub lessons from the same train:
+island test elements carry `listeners` maps but no `dispatchEvent` (fire
+the listeners directly with a synthetic target); a fetch stub's `ok` must be
+COMPUTED from the status (a hardcoded false made the 204 recovery path read
+as failure); and a pending debounce timer correctly suppresses the
+completion hook's tail — the timer carries it.
