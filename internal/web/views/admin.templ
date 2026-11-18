@@ -53,24 +53,40 @@ type AdminPanelProps struct {
 type AdminUserRow struct {
 	Email       string
 	DisplayName string
-	// Lines is the account's owned inventory (DID + extension per
-	// line) — ownership reads as phone numbers, not bare PBX codes.
-	Lines        []AdminUserLine
+	// Lines is the account's owned inventory — ownership reads as
+	// phone numbers, not bare PBX codes.
+	Lines        []AdminLine
 	Admin        bool
 	LiveSessions int
 }
 
-// AdminUserLine is one owned line of an account row.
-type AdminUserLine struct {
+// AdminLine is one owned line rendered as a labeled chip: Name is the
+// line's human-facing name (DID when declared, the bare extension
+// otherwise — authmap.Line.Display, the ONE fallback rule), Extension
+// rides as the secondary label only when the name is not already it,
+// so a DID-less line never repeats itself.
+type AdminLine struct {
+	Name      string
 	Extension string
-	DID       string
 }
 
-// AdminNumberRow is one line of the numbers inventory.
+// AdminNumberRow is one line of the numbers inventory: the same
+// labeled chip the users inventory renders, plus the owning emails.
 type AdminNumberRow struct {
-	Extension string
-	DID       string
-	Users     []string
+	Line  AdminLine
+	DID   string
+	Users []string
+}
+
+// adminLineChip is the ONE chip rendering both inventories share —
+// a line reads as its number everywhere it is named.
+templ adminLineChip(line AdminLine) {
+	<span class="wp-admin-line">
+		{ line.Name }
+		if line.Extension != line.Name {
+			<span class="wp-muted">{ " · " + line.Extension }</span>
+		}
+	</span>
 }
 
 // AdminCallRow is one transcribed call across owners: the TranscriptGroup
@@ -130,14 +146,7 @@ templ AdminPanel(props AdminPanelProps) {
 				</span>
 				<span class="wp-thread-text">
 					for _, line := range user.Lines {
-						<span class="wp-admin-line">
-							if line.DID != "" {
-								{ line.DID }
-							} else {
-								{ line.Extension }
-							}
-							<span class="wp-muted">{ " · " + line.Extension }</span>
-						</span>
+						@adminLineChip(line)
 					}
 					if user.Admin {
 						<span class="wp-admin-chip">{ T(props.Lang, "admin.users.admin") }</span>
@@ -154,11 +163,9 @@ templ AdminPanel(props AdminPanelProps) {
 		}
 		for _, number := range props.Numbers {
 			<div class="wp-row wp-admin-number-row">
-				<span class="wp-admin-ext">{ number.Extension }</span>
+				@adminLineChip(number.Line)
 				<span class="wp-thread-text">
-					if number.DID != "" {
-						{ number.DID }
-					} else {
+					if number.DID == "" {
 						<span class="wp-muted">{ T(props.Lang, "admin.numbers.nodid") }</span>
 					}
 					if len(number.Users) > 0 {

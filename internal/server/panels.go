@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -15,6 +16,7 @@ import (
 	"github.com/larsartmann/go-error-family"
 	"github.com/larsartmann/httputil"
 
+	"github.com/larsartmann/webphone/internal/authmap"
 	"github.com/larsartmann/webphone/internal/crm"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/pbx"
@@ -634,24 +636,43 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 
 // accountSection builds the Settings account group (the ownership
 // model made visible): the session's identity and every line it owns,
-// the active line marked. A mapped login (passkey/OIDC) lists its OWN
-// lines; the classic extension login still gets its one active line —
-// every session has a line to name.
+// the ACTIVE line first, mapping order after it. A mapped login
+// (passkey/OIDC) lists its OWN lines; the classic extension login
+// still gets its one active line — every session has a line to name.
+// Row names come from authmap.Line.Display — the ONE fallback rule
+// (DID when declared, bare extension otherwise) every line-labeled
+// surface shares; the island mirrors it client-side over the same
+// wire fields.
 func (h *handlers) accountSection(sess session.Session) views.AccountSection {
-	account := views.AccountSection{ActiveExtension: sess.Extension.String()}
+	account := views.AccountSection{}
 	if mapped, ok := h.MappedIdentityWith(sess.Extension, sess.LoginEmail); ok {
 		account.DisplayName = mapped.DisplayName
 		account.Email = mapped.Email
 		account.Admin = mapped.Admin
+		lines := make([]views.AccountLine, 0, len(mapped.Lines))
 		for _, owned := range mapped.Lines {
-			account.Lines = append(account.Lines, views.AccountLine{Extension: owned.Extension.String(), DID: owned.DID})
+			lines = append(lines, views.AccountLine{
+				Name:      owned.Display(),
+				Extension: owned.Extension.String(),
+				Active:    owned.Extension == sess.Extension,
+			})
 		}
+		// The session's own line leads (owner ruling 2026-11-18): stable
+		// partition, mapping order preserved otherwise.
+		slices.SortStableFunc(lines, func(a, b views.AccountLine) int {
+			if a.Active == b.Active {
+				return 0
+			}
+			if a.Active {
+				return -1
+			}
+			return 1
+		})
+		account.Lines = lines
 		return account
 	}
-	account.Lines = []views.AccountLine{{
-		Extension: sess.Extension.String(),
-		DID:       h.identityFor(sess.Extension),
-	}}
+	line := authmap.Line{Extension: sess.Extension, DID: h.identityFor(sess.Extension)}
+	account.Lines = []views.AccountLine{{Name: line.Display(), Extension: line.Extension.String(), Active: true}}
 	return account
 }
 

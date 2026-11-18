@@ -97,21 +97,24 @@ type SettingsPanelProps struct {
 
 // AccountSection shapes the Settings account group: the session's
 // identity (empty email/name on the classic extension login) and the
-// owned-line rows, active line first (mapping order; the server
-// synthesizes the active row for unmapped sessions).
+// owned-line rows, the ACTIVE line first, mapping order after it (the
+// server synthesizes the active row for unmapped sessions).
 type AccountSection struct {
 	DisplayName string
 	Email       string
 	Admin       bool
-	// ActiveExtension names which row carries the active mark.
-	ActiveExtension string
-	Lines           []AccountLine
+	Lines       []AccountLine
 }
 
-// AccountLine is one owned line of the account group.
+// AccountLine is one owned line of the account group. Name is the
+// line's human-facing name (DID when declared, the bare extension
+// otherwise — authmap.Line.Display, the ONE fallback rule); Extension
+// rides as the secondary label only when the name is not already it,
+// so a DID-less line never repeats itself.
 type AccountLine struct {
+	Name      string
 	Extension string
-	DID       string
+	Active    bool
 }
 
 templ SettingsPanel(props SettingsPanelProps) {
@@ -138,14 +141,12 @@ templ SettingsPanel(props SettingsPanelProps) {
 			for _, line := range props.Account.Lines {
 				<div class="wp-row wp-account-line">
 					<span class="wp-thread-text">
-						if line.DID != "" {
-							{ line.DID }
-						} else {
-							{ line.Extension }
+						{ line.Name }
+						if line.Extension != line.Name {
+							<span class="wp-muted">{ " · " + line.Extension }</span>
 						}
-						<span class="wp-muted">{ " · " + line.Extension }</span>
 					</span>
-					if line.Extension == props.Account.ActiveExtension {
+					if line.Active {
 						<span class="wp-muted">{ " · " + T(props.Lang, "settings.account.active") }</span>
 					}
 				</div>

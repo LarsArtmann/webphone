@@ -46,9 +46,11 @@ func adminPasswordFile(t testing.TB, dir, extension, password string) string {
 	return path
 }
 
-// newAdminServer wires the admin seam over a two-account mapping:
-// boss@example.com owns 1001 (ADMIN), worker@example.com owns 1002.
-// The identity layer's login modes stay off — the admin gate reads the
+// newAdminServer wires the admin seam over a three-account mapping:
+// boss@example.com owns 1001 (ADMIN), worker@example.com owns 1002,
+// intern@example.com owns 1003 — a line with NO declared DID, pinning
+// the fallback chip (bare extension, never "1003 · 1003"). The
+// identity layer's login modes stay off — the admin gate reads the
 // session row's LoginEmail, never the ceremony, so the tests mint rows
 // directly through the session store.
 func newAdminServer(t testing.TB, phoneAPIURL string) (*testServer, session.Store) {
@@ -60,10 +62,12 @@ func newAdminServer(t testing.TB, phoneAPIURL string) (*testServer, session.Stor
 		map[string]authmap.User{
 			"boss@example.com":   {Email: "boss@example.com", DisplayName: "The Boss", Lines: []authmap.Line{didLine("1001", "+49301111")}, Admin: true},
 			"worker@example.com": {Email: "worker@example.com", Lines: []authmap.Line{didLine("1002", "+49302222")}},
+			"intern@example.com": {Email: "intern@example.com", Lines: []authmap.Line{{Extension: domain.MustParseExtension("1003")}}},
 		},
 		map[string]string{
 			"1001": adminPasswordFile(t, dir, "1001", "boss-pw"),
 			"1002": adminPasswordFile(t, dir, "1002", "worker-pw"),
+			"1003": adminPasswordFile(t, dir, "1003", "intern-pw"),
 		},
 	)
 	if err != nil {

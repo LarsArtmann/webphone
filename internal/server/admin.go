@@ -11,6 +11,7 @@ import (
 
 	"github.com/larsartmann/go-error-family"
 
+	"github.com/larsartmann/webphone/internal/authmap"
 	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/session"
@@ -224,9 +225,9 @@ func (h *handlers) fillAdminIdentity(r *http.Request, props *views.AdminPanelPro
 			Admin:       user.Admin,
 		}
 		for _, owned := range user.Lines {
-			row.Lines = append(row.Lines, views.AdminUserLine{
+			row.Lines = append(row.Lines, views.AdminLine{
+				Name:      owned.Display(),
 				Extension: owned.Extension.String(),
-				DID:       owned.DID,
 			})
 			// Live sessions count across the account's lines: a second
 			// line signed in is a second live session of the same human.
@@ -235,10 +236,11 @@ func (h *handlers) fillAdminIdentity(r *http.Request, props *views.AdminPanelPro
 		props.Users = append(props.Users, row)
 	}
 	for _, number := range h.deps.Admin.Numbers() {
+		line := authmap.Line{Extension: number.Extension, DID: number.DID}
 		props.Numbers = append(props.Numbers, views.AdminNumberRow{
-			Extension: number.Extension.String(),
-			DID:       number.DID,
-			Users:     number.Users,
+			Line:  views.AdminLine{Name: line.Display(), Extension: line.Extension.String()},
+			DID:   number.DID,
+			Users: number.Users,
 		})
 	}
 }
