@@ -2044,15 +2044,17 @@ test("a failed mode change keeps the pill honest (state unchanged, announced)", 
 const noteRow = (callId, note) => {
   const row = doc.createElement();
   doc.body.append(row);
-  // noteBodyFor routes through document.querySelector; route attribute
-  // lookups into this row's tree (the stub's default answers null).
+  // noteBodyFor/noteStatusFor route through document.querySelector; route
+  // attribute lookups into this row's tree (the stub's default answers
+  // null — it interprets only class/id selectors).
   const realQS = doc.querySelector;
   doc.querySelector = (selector) => {
-    const match = /^\[data-note-body="(.+)"\]$/.exec(selector);
+    const match = /^\[data-note-(body|status)="(.+)"\]$/.exec(selector);
     if (!match) return realQS(selector);
+    const attr = "data-note-" + match[1];
     const walk = (node) => {
       for (const kid of node.children) {
-        if (kid.getAttribute && kid.getAttribute("data-note-body") === match[1]) {
+        if (kid.getAttribute && kid.getAttribute(attr) === match[2]) {
           return kid;
         }
         const found = walk(kid);
@@ -2068,6 +2070,10 @@ const noteRow = (callId, note) => {
   box.value = note || "";
   box.parent = row;
   row.children.push(box);
+  const status = doc.createElement();
+  status.setAttribute("data-note-status", callId);
+  status.parent = row;
+  row.children.push(status);
   const save = doc.createElement();
   save.selector = "[data-note-save]";
   save.setAttribute("data-note-save", callId);
@@ -2078,7 +2084,7 @@ const noteRow = (callId, note) => {
   draft.setAttribute("data-note-draft", callId);
   draft.parent = row;
   row.children.push(draft);
-  return { row, box, save, draft };
+  return { row, box, status, save, draft };
 };
 
 test("data-note-save PUTs the textarea body and toasts the verdict", async () => {
@@ -2158,6 +2164,217 @@ test("a failed note save relays the server's human phrasing", async () => {
   } finally {
     globalThis.fetch = realFetch;
   }
+});
+
+// The 2026-11-18 autosave train: the History note box saves itself as
+// the owner types (250ms trailing debounce), blur flushes immediately,
+// pagehide carries the tail out with keepalive, and a failing server
+// must NEVER retry-loop — the terminating invariant is "re-dispatch
+// only when input is NEWER than the flight's body" (comparing against
+// `saved`, which a failure never moves, was the infinite-PUT bug).
+// The noteAutosave export is the tuning seam these specs shrink.
+const withFastNotes = async (fn) => {
+  const real = shellApi.noteAutosave.delayMs;
+  shellApi.noteAutosave.delayMs = 5;
+  try {
+    await fn();
+  } finally {
+    shellApi.noteAutosave.delayMs = real;
+  }
+};
+const notesSettle = () => new Promise((resolve) => setTimeout(resolve, 25));
+const notePutsRecorder = () => {
+  const puts = [];
+  const realFetch = globalThis.fetch;
+  const install = (answer) => {
+    globalThis.fetch = async (url, options = {}) => {
+      if (options.method === "PUT" && String(url).includes("/note")) {
+        puts.push({ url: String(url), options });
+        return answer();
+      }
+      return realFetch(url, options);
+    };
+    return puts;
+  };
+  return { install, restore: () => (globalThis.fetch = realFetch) };
+};
+
+test("typing a note autosaves after the debounce through the quiet status line", async () => {
+  await withFastNotes(async () => {
+    const { box, status } = noteRow("call-s1", "");
+    const rec = notePutsRecorder();
+    const puts = rec.install(() => ({ status: 204, text: async () => "" }));
+    try {
+      const toastsBefore = toasts().children.length;
+      box.value = "rueckruf am freitag";
+      doc.dispatch("input", { target: box });
+      await notesSettle();
+      assert.equal(puts.length, 1, "one debounced PUT");
+      assert.match(puts[0].url, /\/api\/calls\/call-s1\/note$/);
+      assert.deepEqual(JSON.parse(puts[0].options.body), { body: "rueckruf am freitag" });
+      assert.equal(status.textContent, "Saved", "the quiet line carries the verdict");
+      assert.equal(toasts().children.length, toastsBefore, "autosave success never toasts");
+
+      box.value = "rueckruf am freitag, nachmittag";
+      doc.dispatch("input", { target: box });
+      await notesSettle();
+      assert.equal(puts.length, 2, "the next pause saves again");
+    } finally {
+      rec.restore();
+    }
+  });
+});
+
+test("a note typing burst coalesces into ONE save carrying the final body", async () => {
+  await withFastNotes(async () => {
+    const { box } = noteRow("call-s2", "");
+    const rec = notePutsRecorder();
+    const puts = rec.install(() => ({ status: 204, text: async () => "" }));
+    try {
+      box.value = "a";
+      doc.dispatch("input", { target: box });
+      box.value = "ab";
+      doc.dispatch("input", { target: box });
+      box.value = "abc";
+      doc.dispatch("input", { target: box });
+      await notesSettle();
+      assert.equal(puts.length, 1, "the debounce coalesces the burst");
+      assert.deepEqual(JSON.parse(puts[0].options.body), { body: "abc" });
+    } finally {
+      rec.restore();
+    }
+  });
+});
+
+test("blur (change) flushes the note immediately instead of waiting out the debounce", async () => {
+  const { box } = noteRow("call-s3", "");
+  const rec = notePutsRecorder();
+  const puts = rec.install(() => ({ status: 204, text: async () => "" }));
+  try {
+    // delayMs stays at the real 250: the change flush must not need it.
+    box.value = "typed then tabbed away";
+    doc.dispatch("input", { target: box });
+    doc.dispatch("change", { target: box });
+    await settle();
+    const mine = puts.filter((p) => p.url.includes("/call-s3/"));
+    assert.equal(mine.length, 1, "the flush flew without the debounce");
+  } finally {
+    rec.restore();
+  }
+});
+
+test("a failing note autosave marks the line, toasts once, and never retry-loops", async () => {
+  await withFastNotes(async () => {
+    const { box, status } = noteRow("call-s4", "");
+    const rec = notePutsRecorder();
+    const puts = rec.install(() => ({ status: 503, text: async () => "upstream gone" }));
+    try {
+      box.value = "loop guard";
+      doc.dispatch("input", { target: box });
+      // Three debounce windows of silence. The pre-fix completion hook
+      // compared the live value against `saved` — which a failure never
+      // moves — and re-dispatched the PUT immediately, forever. The
+      // carried-body comparison must leave the failed flight as the
+      // ONLY PUT until newer input arrives.
+      await new Promise((resolve) => setTimeout(resolve, 75));
+      const mine = () => puts.filter((p) => p.url.includes("/call-s4/"));
+      assert.equal(mine().length, 1, "no retry without newer input");
+      assert.equal(status.textContent, "Not saved", "the line tells the truth");
+      const announced = toasts().children.length;
+      assert.ok(announced >= 1, "the first failure announces");
+
+      box.value = "loop guard, typed again";
+      doc.dispatch("input", { target: box });
+      await notesSettle();
+      assert.equal(mine().length, 2, "newer input retries");
+      assert.equal(
+        toasts().children.length,
+        announced,
+        "the same failure episode does not re-announce",
+      );
+    } finally {
+      rec.restore();
+    }
+  });
+});
+
+test("pagehide flushes the pending note tail with keepalive", async () => {
+  const { box } = noteRow("call-s5", "");
+  const rec = notePutsRecorder();
+  const puts = rec.install(() => ({ status: 204, text: async () => "" }));
+  try {
+    box.value = "typed right before leaving";
+    doc.dispatch("input", { target: box });
+    // No wait: the flush is the point.
+    doc.dispatch("pagehide");
+    await settle();
+    const mine = puts.filter((p) => p.url.includes("/call-s5/"));
+    assert.equal(mine.length, 1, "the tail flew without the debounce");
+    assert.equal(mine[0].options.keepalive, true, "the PUT outlives the page");
+  } finally {
+    rec.restore();
+  }
+});
+
+test("the explicit note save toasts without a second PUT once autosave settled", async () => {
+  await withFastNotes(async () => {
+    const { box, save } = noteRow("call-s6", "");
+    const rec = notePutsRecorder();
+    const puts = rec.install(() => ({ status: 204, text: async () => "" }));
+    try {
+      box.value = "all typed, all saved";
+      doc.dispatch("input", { target: box });
+      await notesSettle();
+      assert.equal(puts.length, 1);
+
+      doc.dispatch("click", { target: save });
+      await settle();
+      assert.equal(puts.length, 1, "no second PUT for a settled body");
+      assert.match(toasts().children.at(-1).textContent, /Note saved/);
+    } finally {
+      rec.restore();
+    }
+  });
+});
+
+test("input landing during an explicit note save is carried when the flight completes", async () => {
+  await withFastNotes(async () => {
+    const { box, save } = noteRow("call-s7", "");
+    const puts = [];
+    const realFetch = globalThis.fetch;
+    let release;
+    globalThis.fetch = async (url, options = {}) => {
+      if (options.method === "PUT" && String(url).includes("/note")) {
+        puts.push({ url: String(url), options });
+        await new Promise((resolve) => (release = resolve));
+        return { status: 204, text: async () => "" };
+      }
+      return realFetch(url, options);
+    };
+    try {
+      box.value = "first body";
+      doc.dispatch("click", { target: save });
+      await settle();
+      box.value = "first body, plus a late word";
+      doc.dispatch("input", { target: box });
+      // The debounce fires mid-flight and is dropped by the inflight
+      // guard: without the completion-hook carry this tail would sit
+      // unsaved until the next keystroke. (A debounce still PENDING at
+      // completion correctly suppresses the hook — the timer carries
+      // that tail — so this spec waits the debounce out first.)
+      await new Promise((resolve) => setTimeout(resolve, 25));
+      release();
+      await settle();
+      const mine = puts.filter((p) => p.url.includes("/call-s7/"));
+      assert.equal(mine.length, 2, "the completion hook carries the newer body");
+      assert.deepEqual(JSON.parse(mine[1].options.body), {
+        body: "first body, plus a late word",
+      });
+      if (release) release();
+    } finally {
+      globalThis.fetch = realFetch;
+    }
+  });
 });
 // The collapsible phone panel (P2). The class lives on <html> because
 // theme-preload.js applies the stored state before first paint; shell.js

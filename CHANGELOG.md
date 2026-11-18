@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Call notes autosave as the owner types** (2026-11-18): every note
+  editor — History rows and the island's ended-call card — re-arms a
+  250ms trailing debounce per keystroke, flushes on blur, and carries
+  the unsaved tail out with `keepalive` on pagehide/card close. Saves
+  ride the same event-sourced PUT lane (one `CallNoteSaved` change per
+  real edit; same-body echoes append nothing server-side, and the lane
+  got its own rate bucket so sustained editing never drains the
+  contacts grade). A quiet `Saving…/Saved/Not saved` status line
+  carries the verdict; failures toast once per episode and never
+  retry-loop — a save re-dispatches only when input is NEWER than the
+  in-flight body. The explicit Save button stays as the "done"
+  affordance.
 - Phone numbers connect to users through a named **line ownership
   model** (2026-11-18): `authmap.Line` (extension + presented DID) is
   the one owned-identity type, joined exactly once from the three

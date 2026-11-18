@@ -7,6 +7,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/url"
 	"strings"
@@ -197,6 +198,66 @@ func TestSSOCallbackMintsTheSession(t *testing.T) {
 				t.Errorf("%s must be expired on the callback, got MaxAge=%d", cookie.Name, cookie.MaxAge)
 			}
 		}
+	}
+}
+
+// TestSSOOnlySessionResolvesIdentity pins the SSO branch of the ONE
+// identity resolution (MappedIdentityWith): an SSO-ONLY deployment —
+// passkey off, deps.UserAuth nil — must still resolve whoami's display
+// name and owned lines through the SSO seam's own mapping. Before the
+// 2026-11-18 line-ownership join this silently resolved nothing: every
+// OIDC login rendered a bare-extension whoami with no line labels.
+func TestSSOOnlySessionResolvesIdentity(t *testing.T) {
+	stub := happySSOStub()
+	stub.user.Lines = []authmap.Line{didLine("1000", "+17165550100")}
+	server := newSSOServer(t, stub)
+	c := clientFor(t, server)
+	// The IdP authorize URL is off-host: observe the hops, follow nothing.
+	c.http.CheckRedirect = func(*http.Request, []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+
+	resp, err := c.http.Get(c.base + "/api/auth/oauth2/begin")
+	if err != nil {
+		t.Fatalf("begin: %v", err)
+	}
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusFound {
+		t.Fatalf("begin: status %d, want 302", resp.StatusCode)
+	}
+
+	resp, err = c.http.Get(c.base + "/api/auth/oauth2/callback?code=good-code&state=" + url.QueryEscape(stub.challenge.State))
+	if err != nil {
+		t.Fatalf("callback: %v", err)
+	}
+	_ = resp.Body.Close()
+	if resp.StatusCode != http.StatusSeeOther {
+		t.Fatalf("callback: status %d, want 303", resp.StatusCode)
+	}
+
+	// The minted cookie is a real session: the resume endpoint (the
+	// island's boot probe) must resolve the mapped identity over it.
+	resp, body := c.do(http.MethodGet, "/api/session", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("resume with the minted cookie: %d %s", resp.StatusCode, body)
+	}
+	var identity struct {
+		Extension   string `json:"extension"`
+		DisplayName string `json:"display_name"`
+		Lines       []struct {
+			Extension string `json:"extension"`
+			DID       string `json:"did"`
+		} `json:"lines"`
+	}
+	if err := json.Unmarshal(body, &identity); err != nil {
+		t.Fatalf("resume body %q: %v", body, err)
+	}
+	if identity.Extension != "1000" || identity.DisplayName != "Lars" {
+		t.Errorf("resume identity = extension %q display_name %q, want 1000/Lars resolved through the SSO mapping",
+			identity.Extension, identity.DisplayName)
+	}
+	if len(identity.Lines) != 1 || identity.Lines[0].Extension != "1000" || identity.Lines[0].DID != "+17165550100" {
+		t.Errorf("lines = %+v, want one labeled line 1000/+17165550100", identity.Lines)
 	}
 }
 
