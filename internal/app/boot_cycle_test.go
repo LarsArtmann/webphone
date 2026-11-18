@@ -103,8 +103,11 @@ func TestAppBootCycleLoginSendHookSSE(t *testing.T) {
 	}
 	currentToken = rotated.Token
 
-	// 2. Open the SSE stream BEFORE the traffic: the nudge must arrive
-	// on the same live connection a browser tab would hold.
+	// 2. Open the SSE stream BEFORE the traffic — and wait for the
+	// hub's `connected` greeting before sending anything: a subscription
+	// that is still handshaking when the notifier publishes would MISS
+	// the nudge (SSE events are not replayed), which the full-suite load
+	// made a real race rather than a theoretical one.
 	events := make(chan string, 16)
 	sseCtx, stopSSE := sseContext()
 	defer stopSSE()
@@ -127,7 +130,7 @@ func TestAppBootCycleLoginSendHookSSE(t *testing.T) {
 	}()
 	waitEvent := func(name string) {
 		t.Helper()
-		deadline := time.After(3 * time.Second)
+		deadline := time.After(5 * time.Second)
 		for {
 			select {
 			case got := <-events:
@@ -139,6 +142,7 @@ func TestAppBootCycleLoginSendHookSSE(t *testing.T) {
 			}
 		}
 	}
+	waitEvent("connected")
 
 	// 3. A composer send through the real multipart lane.
 	var form bytes.Buffer

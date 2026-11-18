@@ -634,6 +634,8 @@
         return;
       }
       state.inflight = true;
+      var carried = body;
+      var landed = false;
       var status = noteStatusFor(callId);
       if (status) status.textContent = "Saving…";
       fetch("/api/calls/" + encodeURIComponent(callId) + "/note", {
@@ -650,6 +652,7 @@
           if (res.status === 204) {
             state.saved = body;
             state.toasted = false;
+            landed = true;
             if (status) status.textContent = "Saved";
             if (announce) shellToast("Note saved.", "ok");
             return;
@@ -673,11 +676,22 @@
         })
         .then(function () {
           state.inflight = false;
-          // Newer input landed while this save flew: carry it now
-          // instead of waiting for the next keystroke.
+          // Only input NEWER than this flight's body re-dispatches. A
+          // failed save never moves `saved`, so comparing against it
+          // (the pre-fix hook) re-fired the PUT in an infinite loop on
+          // every failing server. Success carries newer input now;
+          // failure re-arms the debounce once, bounded by the
+          // same-body guard at the top of the runner.
           var live = noteBodyFor(callId);
-          if (live && !state.timer && live.value !== state.saved)
+          if (!live || state.timer || live.value === carried) return;
+          if (landed) {
             runNoteSave(callId, false, false);
+            return;
+          }
+          state.timer = setTimeout(function () {
+            state.timer = null;
+            runNoteSave(callId, false, false);
+          }, noteAutosave.delayMs);
         });
     };
     document.addEventListener("input", function (event) {
@@ -784,6 +798,12 @@
         .then(function () {
           state.inflight = false;
           saveButton.disabled = false;
+          // Newer input that landed during this explicit save is still
+          // owed a quiet flush: its debounce may have fired mid-flight
+          // and been dropped by the inflight guard.
+          var live = noteBodyFor(callId);
+          if (live && !state.timer && live.value !== body)
+            runNoteSave(callId, false, false);
         });
     });
     document.addEventListener("click", function (event) {
