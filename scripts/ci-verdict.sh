@@ -105,7 +105,7 @@ blame_failed_tests() {
 	while IFS= read -r test; do
 		[ -n "$test" ] && blame_test "$test"
 	done <<-EOF
-	$tests
+		$tests
 	EOF
 	return 0
 }
@@ -152,12 +152,18 @@ no test files'
 	got=$(blame_test TestSSOOnlySessionResolvesIdentity)
 	case "$got" in
 	*"internal/server/sso_api_test.go"*) echo "self-test ok: blame mapping (test -> declaring file)" ;;
-	*) echo "self-test FAIL: blame mapping (got: $got)" >&2; fail=1 ;;
+	*)
+		echo "self-test FAIL: blame mapping (got: $got)" >&2
+		fail=1
+		;;
 	esac
 	got=$(blame_test TestNoSuchTestAnywhere)
 	case "$got" in
 	*"no declaring file"*) echo "self-test ok: blame mapping miss (unknown test named honestly)" ;;
-	*) echo "self-test FAIL: blame mapping miss (got: $got)" >&2; fail=1 ;;
+	*)
+		echo "self-test FAIL: blame mapping miss (got: $got)" >&2
+		fail=1
+		;;
 	esac
 
 	if [ "$fail" = 0 ]; then
