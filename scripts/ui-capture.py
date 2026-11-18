@@ -1639,8 +1639,33 @@ def check_thread_layout(driver, base: str, thread_path: str, out_dir: str) -> No
 
     expanded = driver.execute_script(probe_js)
     print(f"layout: expanded {expanded}")
-    if expanded["splitDir"] != "row":
-        failures.append(f"the split must be a row, got {expanded['splitDir']!r}")
+    # The docked sidebar rail (2026-11-18) owns 216px of the desktop
+    # frame, so at 1280 with the island expanded the tab column is
+    # ~576px — BELOW the 44rem split threshold, and single-column is
+    # the DESIGNED answer there. The split follows the COLUMN width
+    # (the same rule the ladder below proves), never the viewport.
+    want = "row" if expanded["colWidth"] >= 704 else "column"
+    if expanded["splitDir"] != want:
+        failures.append(
+            f"at column {expanded['colWidth']}px the split must be {want}, "
+            f"got {expanded['splitDir']!r}"
+        )
+
+    # A wide canvas must engage the split WITH the island expanded —
+    # the desktop split exists; 1280 is simply no longer that canvas
+    # now that the rail is docked.
+    driver.set_window_size(1600, 900)
+    time.sleep(0.45)
+    wide = driver.execute_script(probe_js)
+    print(f"layout: expanded wide {wide}")
+    if wide["splitDir"] != "row":
+        failures.append(
+            "the split must engage on a wide canvas with the island "
+            f"expanded (column {wide['colWidth']}px, got {wide['splitDir']!r})"
+        )
+    driver.set_window_size(1280, 900)
+    time.sleep(0.45)
+
     if expanded["islandDisplay"] == "none":
         failures.append("the island column must be visible while expanded")
     if expanded["ariaExpanded"] != "true":
