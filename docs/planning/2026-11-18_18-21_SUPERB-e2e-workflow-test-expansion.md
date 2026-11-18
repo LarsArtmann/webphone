@@ -195,7 +195,7 @@ Legend: ID — task — (est). Status column maintained during execution: `[ ]` 
 | B34 | disposition: POST → 204                                                          | 10m |
 | B35 | all new scenarios green in one full smoke run                                    | 10m |
 
-### C. Go workflow chains (NEW files only; harness = internal/server `newTestHarness` pattern)
+### C. Go workflow chains (NEW files only; harness = the server `newTestServer`/`client` idiom) — LANDED 2026-11-18: internal/server/workflow_chains_test.go (TestInboundWorkflowChain: hook -> BOTH SSE events with payload shapes -> unread 2 -> archive -> inbound AUTO-UNARCHIVES over HTTP; TestForeignOwnerSurfacesStayDenied: cross-owner attachment/fax-document 404s + foreign thread deep link degrades to the gone-notice), internal/server/voicemail_chain_test.go (fake PBX mailbox under the /phone-api prefix — the pbx client prepends it: panel rows, delete proxies, payload-less voicemail nudge), internal/app/boot_cycle_test.go (composition-root cycle: front-door login -> CSRF adopt -> live SSE stream -> composer send -> inbound hook -> threads+thread on one connection). C08-C11 (retry/kind/reason): ALREADY PINNED by TestFailedBubbleCarriesReasonAndRetry. C14 (admin fallback): ALREADY PINNED by TestAdminAttachmentAndFaxDocumentFallback. C20 (retention): ALREADY PINNED per aggregate (threadsdeletion/faxes-sweep/transcripts-trim). Full `go test ./...` green.
 
 | ID  | Task                                                                | Est |
 | --- | ------------------------------------------------------------------- | --- |
@@ -221,7 +221,7 @@ Legend: ID — task — (est). Status column maintained during execution: `[ ]` 
 | C20 | retention chain: tombstone visible then TrimStream shrinks bytes    | 12m |
 | C21 | full `go test ./internal/... ./cmd/...` green (env -u GOEXPERIMENT) | 10m |
 
-### D. Island JS spec gaps (new .test.mjs files; helpers.mjs stubs)
+### D. Island JS spec gaps (new .test.mjs files; helpers.mjs stubs) — LANDED 2026-11-18 (D01-D02, D03-D05): notify.test.mjs (the title FLASH half: interval flip, idempotent start, stop restores, restoreTitle) + shortcuts.test.mjs (the full keymap: letters/brackets/media act via preventDefault, unmapped keys pass through, modifier chords inert — the ring-queue spec already owned Esc + the typing gate). The other planned rows were ALREADY PINNED by existing specs (verified before writing duplicates): transfer wiring = transfer-row.test.mjs, morph surfaces = shell.test.mjs + SSE swap-safety Go pins, offline banner = resume/connection specs, audio analyser = latency.test.mjs watchRemoteAudio, composer paths = composer.test.mjs. Island suite: 356 tests; the only 2 reds are the CONCURRENT SESSION's postcall-note spec (their in-flight train, attributed 18:40 — not touched per the fix-forward protocol).
 
 | ID | Task | Est |
 | --- | --- |
