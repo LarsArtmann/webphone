@@ -57,12 +57,16 @@ func testCatalogService(t *testing.T, svc catalog.Service) {
 		t.Errorf("len(Commands) = %d, want 0 (webphone writes are HTTP, not messages)", len(svc.Commands))
 	}
 
-	// Service-dir-relative: core joins the service page's directory with
-	// these paths (core/src/utils/resource-files.ts). Root-absolute paths
-	// silently matched nothing and broke the federation hub at lint/render.
+	// Bare filenames: core resolves a specification through TWO resolvers
+	// — the lint/MDX resolvers join the full path onto the service page's
+	// directory, while the spec viewer pages join only the path's
+	// BASENAME (core/src/utils/collections/util.ts processSpecifications).
+	// Only a bare filename satisfies both; subdirectory paths
+	// ("specifications/asyncapi.yaml") and root-absolute paths
+	// ("/specifications/...") each broke the federation hub once.
 	wantSpecs := []catalog.Specification{
-		{Type: "asyncapi", Path: "specifications/asyncapi.yaml", Name: "Webphone wire contracts (hooks, receipts, SSE)"},
-		{Type: "openapi", Path: "specifications/openapi.json", Name: "Session-gated HTTP API"},
+		{Type: "asyncapi", Path: "asyncapi.yaml", Name: "Webphone wire contracts (hooks, receipts, SSE)"},
+		{Type: "openapi", Path: "openapi.json", Name: "Session-gated HTTP API"},
 	}
 	if !slices.Equal(svc.Specifications, wantSpecs) {
 		t.Errorf("Service.Specifications = %v, want %v (the hub inventory page links the wire contracts through these)", svc.Specifications, wantSpecs)

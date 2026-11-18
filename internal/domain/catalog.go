@@ -102,29 +102,35 @@ func BuildCatalog() *catalog.Catalog {
 	})
 	builder.ConfigureService(CatalogServiceID, catalog.ServiceOwners("lars"),
 		// Wire-contract cross-links (hub inventory page): the catalog
-		// command renders BOTH spec files into
-		// <out>/eventcatalog/services/webphone/specifications/ — the
-		// AsyncAPI doc from server.RenderWireContractsYAML (the /hooks/*
-		// lanes, receipts, SSE) and the OpenAPI doc from
-		// server.RenderOpenAPIContract (the session-gated HTTP API).
+		// command renders BOTH spec files directly into
+		// <out>/eventcatalog/services/webphone/ — the AsyncAPI doc from
+		// server.RenderWireContractsYAML (the /hooks/* lanes, receipts,
+		// SSE) and the OpenAPI doc from server.RenderOpenAPIContract
+		// (the session-gated HTTP API).
 		//
-		// Paths are SERVICE-DIR-RELATIVE, which is what core actually
-		// enforces: it joins the resource page's directory with the path
-		// (core/src/utils/resource-files.ts, getResourceFilePath ->
-		// path.join(dirname(resource), relativePath)). The previous
-		// catalog-root layout ("/specifications/...", files at the tree
-		// root) satisfied no check locally and died in the federation
-		// hub: `refs/file-exists` red at lint, and astro ENOENT
-		// 'services/webphone/specifications/asyncapi.yaml' at render.
+		// Paths MUST be bare filenames: @eventcatalog/core resolves a
+		// specification through TWO resolvers — the lint/MDX resolvers
+		// join the full path onto the resource page's directory
+		// (core/src/utils/resource-files.ts), while the spec viewer
+		// pages join only the path's BASENAME
+		// (core/src/utils/collections/util.ts processSpecifications ->
+		// filename: getBasename(path)). A "specifications/"
+		// subdirectory satisfied the first and silently 404'd the
+		// viewer in the federation hub ("No OpenAPI spec file found";
+		// the AsyncAPI page parsed empty content and blamed a missing
+		// `asyncapi` field). The earlier catalog-root layout
+		// ("/specifications/...", files at the tree root) satisfied no
+		// check locally and died at lint (`refs/file-exists`) and
+		// render (astro ENOENT).
 		catalog.ServiceSpecifications(
 			catalog.Specification{
 				Type: "asyncapi",
-				Path: "specifications/asyncapi.yaml",
+				Path: "asyncapi.yaml",
 				Name: "Webphone wire contracts (hooks, receipts, SSE)",
 			},
 			catalog.Specification{
 				Type: "openapi",
-				Path: "specifications/openapi.json",
+				Path: "openapi.json",
 				Name: "Session-gated HTTP API",
 			},
 		),

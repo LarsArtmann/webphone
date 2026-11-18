@@ -41,20 +41,30 @@ func runCatalog(args []string) error {
 	// `webphone contracts` and GET /openapi.json, so the hub's inventory
 	// page links live contract bytes, never hand-maintained copies.
 	//
-	// They live INSIDE the service directory because core resolves a
-	// specification path relative to the resource page
-	// (core/src/utils/resource-files.ts: path.join(dirname(resourcePage),
-	// specPath)). A tree-root specifications/ dir matched nothing.
-	specs := filepath.Join(dir, "services", domain.CatalogServiceID, "specifications")
-	if err := os.MkdirAll(specs, 0o755); err != nil {
+	// They live DIRECTLY IN the service directory with bare-filename
+	// frontmatter paths because @eventcatalog/core resolves a
+	// specification through TWO resolvers, and only a bare filename
+	// satisfies both: the lint/MDX resolvers join the FULL path onto
+	// the resource page's directory (core/src/utils/resource-files.ts),
+	// while the spec viewer pages join only the path's BASENAME
+	// (core/src/utils/collections/util.ts processSpecifications ->
+	// filename: getBasename(path), consumed by
+	// pages/docs/[type]/[id]/[version]/{asyncapi,spec}/[filename].astro).
+	// A specifications/ subdirectory satisfied the first and silently
+	// 404'd the viewer in the federation hub ("No OpenAPI spec file
+	// found"; the AsyncAPI page parsed empty content and reported a
+	// misleading "asyncapi field missing"). A tree-root specifications/
+	// dir, the shape before that, matched nothing at all.
+	serviceDir := filepath.Join(dir, "services", domain.CatalogServiceID)
+	if err := os.MkdirAll(serviceDir, 0o755); err != nil {
 		return bootErr(bootGeneric, errorfamily.WrapInfrastructure(err, "webphone.cli.catalog",
-			"create "+specs))
+			"create "+serviceDir))
 	}
 	wire, err := server.RenderWireContractsYAML()
 	if err != nil {
 		return bootErr(bootGeneric, err)
 	}
-	if _, err := atomicwrite.WriteIfChanged(filepath.Join(specs, "asyncapi.yaml"), wire); err != nil {
+	if _, err := atomicwrite.WriteIfChanged(filepath.Join(serviceDir, "asyncapi.yaml"), wire); err != nil {
 		return bootErr(bootGeneric, errorfamily.WrapInfrastructure(err, "webphone.cli.catalog",
 			"write the asyncapi specification"))
 	}
@@ -62,7 +72,7 @@ func runCatalog(args []string) error {
 	if err != nil {
 		return bootErr(bootGeneric, err)
 	}
-	if _, err := atomicwrite.WriteIfChanged(filepath.Join(specs, "openapi.json"), apiBody); err != nil {
+	if _, err := atomicwrite.WriteIfChanged(filepath.Join(serviceDir, "openapi.json"), apiBody); err != nil {
 		return bootErr(bootGeneric, errorfamily.WrapInfrastructure(err, "webphone.cli.catalog",
 			"write the openapi specification"))
 	}
