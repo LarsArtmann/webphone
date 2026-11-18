@@ -1814,8 +1814,11 @@ def run_checks(
     # report hits the 4 KiB cap with 413 — the observable-CSP lane's fence.
     status, _, _ = Smoke(s.base).request("POST", "/csp-report", b"not json", "application/json")
     c.ok("csp-report malformed 204", status == 204, f"got {status}")
+    # A report that is VALID JSON SHAPE past the 4 KiB cap hits the
+    # honest 413 (a syntactically broken report errors before the reader
+    # reaches the cap and stays best-effort 204 — see the malformed probe).
     status, _, _ = Smoke(s.base).request(
-        "POST", "/csp-report", b"x" * 6144, "application/json"
+        "POST", "/csp-report", b'{"documentURI":"' + b"x" * 6144 + b'"}', "application/json"
     )
     c.ok("csp-report oversized 413", status == 413, f"got {status}")
 
@@ -1851,7 +1854,7 @@ def run_checks(
         status, body, _ = s.request("POST", "/messages/send", body_bytes, ctype)
         c.ok(
             "workflow send accepted",
-            status == 200 and b"wp-bubble" in body,
+            status == 200 and b'messages-panel' in body,
             f"{status} {body[:80]!r}",
         )
         status, body, _ = s.request("GET", "/partials/messages")
@@ -1895,7 +1898,7 @@ def run_checks(
             # (f) Thread flags (T18): pin marks the row, archive moves it to
             # the archived view and back, mute is presentation-only. The
             # head-target variant answers the bare 204 the row lane does.
-            status, _, _ = s.request("POST", f"/messages/{sent_thread}/pinned?on=1")
+            status, _, _ = s.request("POST", f"/messages/{sent_thread}/pin?on=1")
             c.ok("workflow pin 204", status == 204, f"got {status}")
             _, body, _ = s.request("GET", "/partials/messages")
             c.ok(
@@ -1904,7 +1907,7 @@ def run_checks(
                 and "wp-pinned" in body.decode("utf-8", "replace"),
                 "wp-pinned missing from the list",
             )
-            status, _, _ = s.request("POST", f"/messages/{sent_thread}/archived?on=1")
+            status, _, _ = s.request("POST", f"/messages/{sent_thread}/archive?on=1")
             c.ok("workflow archive 204", status == 204, f"got {status}")
             _, body, _ = s.request("GET", "/partials/messages")
             unarchived_view = body.decode("utf-8", "replace")
@@ -1916,16 +1919,22 @@ def run_checks(
                 and f"/partials/messages/{sent_thread}" in archived_view,
                 "row did not move to the archived view",
             )
-            status, _, _ = s.request("POST", f"/messages/{sent_thread}/archived?on=0")
+            status, _, _ = s.request("POST", f"/messages/{sent_thread}/archive?on=0")
             c.ok("workflow unarchive 204", status == 204, f"got {status}")
-            status, _, _ = s.request(
+            status, _, _ = s.request("POST", f"/messages/{sent_thread}/mute?on=1")
+            c.ok("workflow mute row-lane 204", status == 204, f"got {status}")
+            status, body, _ = s.request(
                 "POST",
-                f"/messages/{sent_thread}/muted?on=1",
+                f"/messages/{sent_thread}/mute?on=0",
                 b"",
                 "",
                 {"HX-Target": "wp-thread-head"},
             )
-            c.ok("workflow mute head-variant 204", status == 204, f"got {status}")
+            c.ok(
+                "workflow mute head-variant swaps the head",
+                status == 200 and b"wp-thread-head" in body,
+                f"got {status}",
+            )
 
         # (g) Snippets: save renders the settings list, an over-long body
         # is refused, delete removes the row.
@@ -2037,13 +2046,17 @@ def run_checks(
         _, body, _ = s.request("GET", "/partials/messages")
         mms_rows = re.findall(r'hx-get="/partials/messages/([^"]+)"', body.decode("utf-8", "replace"))
         attachment_id = ""
+        # Only the MMS thread carries an attachment row, so hunt for the
+        # wp-attachment marker directly (the rail preview would match any
+        # thread's view — pinned rows sort first and broke the naive hunt).
         for row in mms_rows:
             _, tbody, _ = s.request("GET", f"/partials/messages/{row}")
             ttext = tbody.decode("utf-8", "replace")
-            if "smoke mms" in ttext:
-                match = re.search(r'href="/attachments/([^"]+)"', ttext)
-                if match:
-                    attachment_id = match.group(1)
+            match = re.search(r'class="wp-attachment[^"]*"[^>]*href="/attachments/([^"]+)"', ttext) or re.search(
+                r'href="/attachments/([^"]+)"[^>]*class="wp-attachment', ttext
+            )
+            if match:
+                attachment_id = match.group(1)
                 break
         c.ok("workflow mms attachment linked", bool(attachment_id), "no /attachments link in the thread")
         if attachment_id:
