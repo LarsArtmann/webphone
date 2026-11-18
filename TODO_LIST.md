@@ -30,11 +30,25 @@ front matter does not carry their history (one home per fact, per the rule above
       check in the consuming stack's fixture (fake IdP or the Pocket ID
       VM lane). Trigger: the next stack fixture pass touching the OIDC
       lane. **Priority:** Low · **Effort:** M.
-- [ ] **Ownership hot-reload** (§f-16): design sketch:
-      docs/planning/2026-11-18_ownership-hot-reload-sketch.md — SIGHUP
-      vs file-watch re-join is an owner call; do not implement without
-      it. **Priority:** Low · **Effort:** M (design done) / L
-      (implement).
+- ~~**Ownership hot-reload** (§f-16): design sketch:
+  docs/planning/2026-11-18_ownership-hot-reload-sketch.md — SIGHUP
+  vs file-watch re-join is an owner call; do not implement without
+  it.~~ → design DONE 2026-11-18 (follow-up train) — the sketch
+  landed (MapSource atomic-swap seam, boot-equal validation
+  doctrine, live-session semantics, SIGHUP-vs-file-watch table
+  with a non-binding SIGHUP recommendation). The IMPLEMENT arm
+  stays owner-gated on the trigger call (19-21 §g q2 / 20-03 §g
+  q3); a ruling spawns a fresh row.
+- [ ] **pma daemon push heuristic** (§f-8): don't push while test
+      files are seconds old (the 19-21 §d/§e commit-race class) — the
+      push lives in pma/go-commit's `WithAutoPush`/`pushProject`
+      (projects-management-automation, operations.go), a fleet-wide
+      LIVE daemon, so this is a cross-repo pma train (age heuristic +
+      rollback story + one-repo canary), NEVER a webphone-side edit.
+      Webphone-side mitigations already shipped: one-call stage+commit
+      discipline per unit (20-03 report). **Priority:** Low ·
+      **Effort:** M (pma repo). Mirror row in pma's own TODO_LIST when
+      picked up.
 
 ### UI/UX destination trains (ratified 2026-11-11 — plan: docs/planning/2026-11-11_15-11_ui-ux-destination.md)
 
