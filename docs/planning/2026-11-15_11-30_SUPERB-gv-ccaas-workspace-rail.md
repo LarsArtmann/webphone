@@ -33,6 +33,14 @@ reference products.
 
 **The shell is rail | workspace | phone dock.**
 
+> ERRATA 2026-11-18 (owner ask: "properly to the side"): the rail first
+> shipped as a grid column INSIDE the old centred 1560px body box, which on
+> wide monitors reads as a stray floating column, not a sidebar. The body is
+> now a full-bleed app frame: the rail docks flush to the viewport's left
+> edge and runs the full height under the sticky header (own surface +
+> hairline, toggle pinned to the foot), the workspace caps at 1120px centred
+> in the remaining space, the dock keeps its right edge.
+
 - **Rail (left, 216px):** four labelled groups (Workspace, Calls, People,
   System) with one glyph per destination and unread badges, the active row a
   filled accent pill with a leading bar. Compacts to 72px via a foot toggle
