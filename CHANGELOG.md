@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- The sidebar rail is now a DOCKED sidebar: the shell body is a full-bleed
+  app frame, so the rail sits flush against the viewport's left edge and
+  runs the full height under the sticky header (its own surface + hairline,
+  collapse toggle pinned to the foot), instead of floating as a stray
+  column inside the old centred 1560px body box. The workspace column caps
+  at 1120px and centres in the remaining space; the phone dock keeps its
+  right edge. Tokens gained `--header-h` (the header and the rail's dock
+  edge share one source) and a repurposed `--content-max`.
+
 ### Added
 
 - A grouped **sidebar rail** replaces the horizontal tab strip on desktop:
