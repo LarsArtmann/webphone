@@ -340,14 +340,16 @@
                   redirectUrl = "https://phone.example.org/api/auth/oauth2/callback";
                 };
                 settings = {
-                  auth.users."lars@example.org".extensions = [ "1000" ];
-                  auth.extension_password_files."1000" = "/etc/webphone-ext-1000";
-                  # oauth2 turns on the shared identity layer, whose
-                  # passkey-mode derivation must resolve even with the
-                  # ceremony off — without caddy the rp keys are set
-                  # explicitly (same origin the front would serve).
-                  auth.passkey.rp_id = "phone.example.org";
-                  auth.passkey.rp_origins = [ "https://phone.example.org" ];
+                  auth = {
+                    users."lars@example.org".extensions = [ "1000" ];
+                    extension_password_files."1000" = "/etc/webphone-ext-1000";
+                    # oauth2 turns on the shared identity layer, whose
+                    # passkey-mode derivation must resolve even with the
+                    # ceremony off — without caddy the rp keys are set
+                    # explicitly (same origin the front would serve).
+                    passkey.rp_id = "phone.example.org";
+                    passkey.rp_origins = [ "https://phone.example.org" ];
+                  };
                 };
               };
               # The stub IdP: the issuer name resolves to loopback over a
