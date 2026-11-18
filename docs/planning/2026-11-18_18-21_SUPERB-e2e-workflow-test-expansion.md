@@ -1,6 +1,6 @@
 # SUPERB — E2E + integration + fully automated workflow frontend tests
 
-> STATUS: EXECUTING (2026-11-18 18:21). Owner ask: "a LOT more E2E + integration and
+> STATUS: LANDED 2026-11-18 ~20:00 (all trains executed; G/H/I below). Owner ask: "a LOT more E2E + integration and
 > fully automated workflow frontend tests". This doc is the ONE home for the plan,
 > the Pareto breakdown, the execution graph, and the fine-grained task ledger.
 > Evidence base: four read-only research inventories (Go integration landscape,
@@ -290,7 +290,7 @@ Legend: ID — task — (est). Status column maintained during execution: `[ ]` 
 | F03 | job budget + timeout + tally printing                                           | 6m  |
 | F04 | CI green verify via scripts/ci-verdict.sh                                       | 12m |
 
-### G. Docs + ledger
+### G. Docs + ledger — LANDED 2026-11-18: AGENTS.md Commands carries the smoke's four new scenario names + the workflow-e2e PYSEL line; this ledger's sections carry per-train strike notes; TODO_LIST.md grew the 'SUPERB E2E test-expansion — deferred rows' section (admin/switch black-box, dial-gate chip journey, voicemail browser journey, the advisory->blocking flip).
 
 | ID | Task | Est |
 | --- | --- |
@@ -301,7 +301,7 @@ Legend: ID — task — (est). Status column maintained during execution: `[ ]` 
 | G05 | docs-gates --check green after md edits | 8m |
 | G06 | git-status re-check for concurrent-session collisions before each commit | 4m |
 
-### H. Gates
+### H. Gates — EXECUTED 2026-11-18: full go suite green (env -u GOEXPERIMENT); island suite 356 tests green except the concurrent session's 2 postcall reds (attributed 18:40, fix-forward protocol, not touched); smoke replay 200/0 across all 12 scenarios; workflow-e2e 20/0 twice; format canonical (TREEFMT_NO_CACHE=1 + format-check rc=0); docs-gates: my md files dprint-clean, the corpus reds (cadence/status-f-section/format) predate this train (verified by removing my doc and re-running). The FULL buildflow battery's first run was green on every step except the go step carrying this train's ONE flake (TestAppBootCycleLoginSendHookSSE raced its SSE subscription past the send under full-suite load — fixed by gating on the hub's `connected` greeting before any traffic; 3x green standalone + app+server packages green under load); the re-run was blocked by a HOST nix eval breakage (placeholder-hash FOD for templ-0.3.1100 — the documented concurrent-eval class; flake.lock untouched) and the store-toolchain fallback surfaced the server depth-budget red (5212 > 5200) which is the CONCURRENT session's production growth (test files are excluded from the count; their admin/panels train owns the bump or carve).
 
 | ID  | Task                             | Est |
 | --- | -------------------------------- | --- |
@@ -311,7 +311,7 @@ Legend: ID — task — (est). Status column maintained during execution: `[ ]` 
 | H04 | buildflow battery                | 12m |
 | H05 | flake spot-fix window (budgeted) | 12m |
 
-### I. Ship
+### I. Ship — EXECUTED 2026-11-18: narrative commits 83e5c770 (smoke trains A+B), 4a0d0c38 (Go chains + island specs); trains E/F/G rode the daemon's chore commits with this ledger + AGENTS + TODO_LIST as their record; push + ci-verdict watch executed at train end.
 
 | ID  | Task                                            | Est |
 | --- | ----------------------------------------------- | --- |
