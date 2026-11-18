@@ -78,6 +78,35 @@ en/de UI strings' English anchors.
   (`auth.users`); one home in code (`app.mappedUsers`), a config edit
   never a UI flow.
 
+### The ownership model at a glance (2026-11-18)
+
+```
+ operator feeds (config files)          ONE join (app.mappedUsers)
+ ┌───────────────────────────┐          ┌──────────────────────────────┐
+ │ auth.users                │          │ authmap.User                 │
+ │   email → extensions[]    │───┐      │   Email, DisplayName, Admin  │
+ │ identities                │   ├──join──►Lines: []authmap.Line      │
+ │   extension → DID         │───┤      │     Line{Extension, DID}     │
+ │ extension_password_files  │   │      └──────────────┬───────────────┘
+ │   extension → file        │───┘                     │
+ └───────────────────────────┘                         ▼
+                                          login mints session ON one line
+                                          (the active line; switch moves it
+                                          within the SAME owned set)
+
+ surfaces (all render from the one model)
+   whoami ………… active line's number, name when mapped
+   switcher …… every owned line, "DID · extension"
+   Settings ……"My account": identity + owned lines, active first
+   Admin ……… users inventory (line chips) + numbers inventory
+   session wire  lines[{extension, did}] — typed, no parallel lists
+```
+
+A human owns ≥1 line; a session acts on exactly one (the active
+line); switching re-mints within the owned set and never crosses
+owners. The classic extension login owns nothing in the map — its
+session still names its one line (synthesized from `identities`).
+
 ## Telephony
 
 - **call** — one island call leg. States: ringing/established/ending

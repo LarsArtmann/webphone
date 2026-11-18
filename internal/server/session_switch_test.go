@@ -130,6 +130,25 @@ func (c *client) sessionCookie() *http.Cookie {
 	return nil
 }
 
+// TestSessionSwitchKeepsTheChosenLanguage: language lives in the
+// request-scoped wp-lang cookie, never in the session row — a switch
+// to another owned line re-mints the session but must not touch the
+// browser's language choice. The post-switch shell stays German.
+func TestSessionSwitchKeepsTheChosenLanguage(t *testing.T) {
+	_, c := newSwitchServer(t)
+	c.http.Jar.SetCookies(mustURL(t, c.base), []*http.Cookie{{Name: "wp-lang", Value: "de"}})
+	if resp, body := c.do(http.MethodPost, switchPath, []byte(`{"extension":"1001"}`), "application/json"); resp.StatusCode != http.StatusOK {
+		t.Fatalf("switch: %d %s", resp.StatusCode, body)
+	}
+	resp, body := c.do(http.MethodGet, "/", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("post-switch shell: %d %s", resp.StatusCode, body)
+	}
+	if !strings.Contains(string(body), `<html lang="de"`) {
+		t.Errorf("the switched session must keep the wp-lang language:\n%.400s", body)
+	}
+}
+
 func TestSessionSwitchReMintsForMappedExtension(t *testing.T) {
 	_, c := newSwitchServer(t)
 

@@ -61,7 +61,9 @@ documents structurally describe but the consumers byte-verify:
   compact-JSON `message` field, title, priority, tags) — pinned
   nowhere else, since they are transport-internal (no HTTP surface);
 - the two `sessionIdentity` credential arms (`password` legacy vs
-  `sip_credential` brokered — the exactly-one rule);
+  `sip_credential` brokered — the exactly-one rule; the brokered
+  fixture also pins the typed `lines[{extension,did}]` ownership list,
+  2026-11-18 — the uncorrelatable `numbers`/`extensions` pair is gone);
 - the push-device registration request the shell ENCODES.
 
 `webphone-android` vendors these into its JVM tests

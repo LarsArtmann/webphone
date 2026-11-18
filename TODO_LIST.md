@@ -14,6 +14,28 @@ front matter does not carry their history (one home per fact, per the rule above
 
 ## Open tasks
 
+### Line-ownership model residue (2026-11-18 — harvested from the 19-21 status report §f)
+
+- [ ] **webphone-android adopts the `lines[]` wire** (§f-5): the JVM
+      suite stays green on the typed session identity (credential arms
+      only), but the shell should render its line picker from
+      `lines[{extension,did}]` (DID-first labels) and re-vendor the
+      `docs/contracts/wire/` fixtures via its sync script. Mirror row
+      in webphone-android's TODO_LIST when picked up. **Priority:**
+      Low · **Effort:** S.
+- [ ] **SSO-only identity resolution verified end-to-end in the stack
+      fixture** (§f-6): the app-level pin
+      (`TestSSOOnlySessionResolvesIdentity`, ssoStub) landed 2026-11-18;
+      the remaining leg is an OIDC-lane-with-passkey-off deployment
+      check in the consuming stack's fixture (fake IdP or the Pocket ID
+      VM lane). Trigger: the next stack fixture pass touching the OIDC
+      lane. **Priority:** Low · **Effort:** M.
+- [ ] **Ownership hot-reload** (§f-16): design sketch:
+      docs/planning/2026-11-18_ownership-hot-reload-sketch.md — SIGHUP
+      vs file-watch re-join is an owner call; do not implement without
+      it. **Priority:** Low · **Effort:** M (design done) / L
+      (implement).
+
 ### UI/UX destination trains (ratified 2026-11-11 — plan: docs/planning/2026-11-11_15-11_ui-ux-destination.md)
 
 - ~~**Train 3 tap-through proof** (§f-13 of the 04-09 report): a driver script taps
