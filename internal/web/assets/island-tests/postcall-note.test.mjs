@@ -29,7 +29,8 @@ globalThis.fetch = async (input, init) => {
   return { ok: true, status: 204, headers: new Headers() };
 };
 
-const { noteRow, flushPendingCallNotes, noteAutosave } = await import("../island/app/postcall.js?test=note");
+const { noteRow, flushPendingCallNotes, noteAutosave } =
+  await import("../island/app/postcall.js?test=note");
 
 // fireInput drives the element stub's input listeners the way the
 // browser would (the stub has no dispatchEvent on elements).
@@ -187,11 +188,7 @@ test("a failed autosave keeps the draft, marks the line, announces once per epis
       fireInput(input);
       await settleAutosave();
       assert.equal(notePuts.length, 2, "the next pause retries");
-      assert.equal(
-        toasts.children.length,
-        announced,
-        "the same episode does not re-announce",
-      );
+      assert.equal(toasts.children.length, announced, "the same episode does not re-announce");
 
       answerStatus = 204;
       input.value = "draft three";

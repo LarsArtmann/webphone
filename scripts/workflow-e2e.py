@@ -77,7 +77,9 @@ def multipart_body(fields: list[tuple[str, str]]) -> tuple[bytes, str]:
     return b"".join(parts), f"multipart/form-data; boundary={boundary}"
 
 
-def boot(binary: str, workdir: str) -> tuple[subprocess.Popen, str, str, Callable[[], None]]:  # type: ignore[name-defined]
+def boot(
+    binary: str, workdir: str
+) -> tuple[subprocess.Popen, str, str, Callable[[], None]]:  # type: ignore[name-defined]
     """Boot the binary on a fresh port + datadir; returns (proc, base,
     datadir, stop)."""
     port = free_port()
@@ -222,7 +224,9 @@ def make_driver():
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1280,900")
     driver_path = shutil.which("chromedriver")
-    service = webdriver.ChromeService(executable_path=driver_path) if driver_path else None
+    service = (
+        webdriver.ChromeService(executable_path=driver_path) if driver_path else None
+    )
     return webdriver.Chrome(options=options, service=service)
 
 
@@ -269,7 +273,8 @@ def journey_tab_navigation(driver, base: str, c: Check) -> None:
         link = wait(
             driver,
             lambda d, p=path: [
-                el for el in d.find_elements("css selector", "a.wp-nav-link")
+                el
+                for el in d.find_elements("css selector", "a.wp-nav-link")
                 if el.get_attribute("href").endswith(p)
             ],
         )[0]
@@ -281,8 +286,7 @@ def journey_tab_navigation(driver, base: str, c: Check) -> None:
         )
         c.ok(
             f"J2 {path} panel + aria-current + url",
-            driver.current_url.endswith(path)
-            and (current or "").endswith(path),
+            driver.current_url.endswith(path) and (current or "").endswith(path),
             f"url={driver.current_url} current={current}",
         )
     marker = driver.execute_script("return window.__e2eMarker")
@@ -308,24 +312,22 @@ def _open_first_thread(driver, base: str) -> str:
 
 def journey_composer_send(driver, base: str, c: Check, body: str) -> None:
     _open_first_thread(driver, base)
-    before = len(
-        driver.find_elements("css selector", "#thread-transcript .wp-bubble")
-    )
+    before = len(driver.find_elements("css selector", "#thread-transcript .wp-bubble"))
     area = wait(
         driver,
-        lambda d: d.find_elements("css selector", "form.wp-compose textarea[name=body]"),
+        lambda d: d.find_elements(
+            "css selector", "form.wp-compose textarea[name=body]"
+        ),
     )[0]
     area.send_keys(body)
-    driver.find_element(
-        "css selector", "form.wp-compose button[type=submit]"
-    ).click()
+    driver.find_element("css selector", "form.wp-compose button[type=submit]").click()
     try:
         wait(
             driver,
-            lambda d: len(
-                d.find_elements("css selector", "#thread-transcript .wp-bubble")
-            )
-            > before,
+            lambda d: (
+                len(d.find_elements("css selector", "#thread-transcript .wp-bubble"))
+                > before
+            ),
         )
         c.ok("J3 composer send lands the bubble", True)
     except Exception as err:  # noqa: BLE001 - journey assertion failure, not control flow
@@ -414,22 +416,24 @@ def journey_contacts(driver, base: str, c: Check, name: str, number: str) -> Non
     wait(driver, lambda d: d.find_elements("css selector", "#contacts-panel"))
     name_input = wait(
         driver,
-        lambda d: d.find_elements("css selector", "form input[name=name], form input[name='contact-name']"),
+        lambda d: d.find_elements(
+            "css selector", "form input[name=name], form input[name='contact-name']"
+        ),
     )[0]
     number_input = driver.find_element(
         "css selector", "form input[name=number], form input[name='contact-number']"
     )
     name_input.send_keys(name)
     number_input.send_keys(number)
-    driver.find_element(
-        "css selector", "form button[type=submit]"
-    ).click()
+    driver.find_element("css selector", "form button[type=submit]").click()
     try:
         wait(driver, lambda d: rows_named(d, True))
         c.ok("J7 contact add lands the row", True)
         delete = wait(
             driver,
-            lambda d: d.find_elements("css selector", "button[hx-post*='/contacts/delete']"),
+            lambda d: d.find_elements(
+                "css selector", "button[hx-post*='/contacts/delete']"
+            ),
         )[0]
         delete.click()
         driver.switch_to.alert.accept()
@@ -488,8 +492,10 @@ def journey_palette(driver, base: str, c: Check) -> None:
         box.send_keys(Keys.ENTER)
         wait(
             driver,
-            lambda d: d.current_url.endswith("/fax")
-            and d.find_elements("css selector", "#fax-panel"),
+            lambda d: (
+                d.current_url.endswith("/fax")
+                and d.find_elements("css selector", "#fax-panel")
+            ),
         )
         c.ok("J10 palette enter navigates", True)
     except Exception as err:  # noqa: BLE001 - journey assertion failure, not control flow

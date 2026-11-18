@@ -1812,13 +1812,18 @@ def run_checks(
     # (foreign mode has no session to write with).
     # (a) csp-report intake: malformed stays best-effort 204, an oversized
     # report hits the 4 KiB cap with 413 — the observable-CSP lane's fence.
-    status, _, _ = Smoke(s.base).request("POST", "/csp-report", b"not json", "application/json")
+    status, _, _ = Smoke(s.base).request(
+        "POST", "/csp-report", b"not json", "application/json"
+    )
     c.ok("csp-report malformed 204", status == 204, f"got {status}")
     # A report that is VALID JSON SHAPE past the 4 KiB cap hits the
     # honest 413 (a syntactically broken report errors before the reader
     # reaches the cap and stays best-effort 204 — see the malformed probe).
     status, _, _ = Smoke(s.base).request(
-        "POST", "/csp-report", b'{"documentURI":"' + b"x" * 6144 + b'"}', "application/json"
+        "POST",
+        "/csp-report",
+        b'{"documentURI":"' + b"x" * 6144 + b'"}',
+        "application/json",
     )
     c.ok("csp-report oversized 413", status == 413, f"got {status}")
 
@@ -1832,7 +1837,11 @@ def run_checks(
     )
     status, body, headers = s.request("GET", "/favicon.svg")
     ftype = next((v for k, v in headers.items() if k.lower() == "content-type"), "")
-    c.ok("favicon serves", status == 200 and "svg" in ftype.lower(), f"{status} {ftype!r}")
+    c.ok(
+        "favicon serves",
+        status == 200 and "svg" in ftype.lower(),
+        f"{status} {ftype!r}",
+    )
 
     # (c) data export: anonymous is fenced; the session answer is a real zip.
     anon_export = Smoke(s.base)
@@ -1850,11 +1859,13 @@ def run_checks(
         # (d) Composer send: a new conversation via the real form shape,
         # then the thread list and transcript both reflect the bubble.
         send_to = "+441632960111"
-        body_bytes, ctype = multipart_body([("to", send_to), ("body", "smoke outbound workflow")], [])
+        body_bytes, ctype = multipart_body(
+            [("to", send_to), ("body", "smoke outbound workflow")], []
+        )
         status, body, _ = s.request("POST", "/messages/send", body_bytes, ctype)
         c.ok(
             "workflow send accepted",
-            status == 200 and b'messages-panel' in body,
+            status == 200 and b"messages-panel" in body,
             f"{status} {body[:80]!r}",
         )
         status, body, _ = s.request("GET", "/partials/messages")
@@ -1885,7 +1896,8 @@ def run_checks(
             status, body, _ = s.request("GET", f"/messages/{sent_thread}")
             c.ok(
                 "workflow deep link opens thread",
-                status == 200 and 'id="thread-transcript"' in body.decode("utf-8", "replace"),
+                status == 200
+                and 'id="thread-transcript"' in body.decode("utf-8", "replace"),
                 f"got {status}",
             )
             status, body, _ = s.request("GET", "/messages/zzz-not-a-thread")
@@ -1939,7 +1951,10 @@ def run_checks(
         # (g) Snippets: save renders the settings list, an over-long body
         # is refused, delete removes the row.
         status, body, _ = s.request(
-            "POST", "/snippets/save", urlencode({"body": "smoke snippet workflow"}).encode(), "application/x-www-form-urlencoded"
+            "POST",
+            "/snippets/save",
+            urlencode({"body": "smoke snippet workflow"}).encode(),
+            "application/x-www-form-urlencoded",
         )
         c.ok(
             "workflow snippet saved",
@@ -1947,16 +1962,24 @@ def run_checks(
             f"{status}",
         )
         status, _, _ = s.request(
-            "POST", "/snippets/save", urlencode({"body": "x" * 4000}).encode(), "application/x-www-form-urlencoded"
+            "POST",
+            "/snippets/save",
+            urlencode({"body": "x" * 4000}).encode(),
+            "application/x-www-form-urlencoded",
         )
         c.ok("workflow snippet over-long 422", status == 422, f"got {status}")
         status, body, _ = s.request("GET", "/partials/settings")
-        snippet_ids = re.findall(r'hx-post="/snippets/delete\?id=([^"]+)"', body.decode("utf-8", "replace"))
+        snippet_ids = re.findall(
+            r'hx-post="/snippets/delete\?id=([^"]+)"', body.decode("utf-8", "replace")
+        )
         if snippet_ids:
-            status, body, _ = s.request("POST", f"/snippets/delete?id={snippet_ids[-1]}")
+            status, body, _ = s.request(
+                "POST", f"/snippets/delete?id={snippet_ids[-1]}"
+            )
             c.ok(
                 "workflow snippet deleted",
-                status == 200 and f"/snippets/delete?id={snippet_ids[-1]}".encode() not in body,
+                status == 200
+                and f"/snippets/delete?id={snippet_ids[-1]}".encode() not in body,
                 f"got {status}",
             )
         else:
@@ -2001,7 +2024,9 @@ def run_checks(
             "BEGIN:VCARD\r\nVERSION:3.0\r\nFN:Imported Two\r\n"
             f"TEL;TYPE=CELL:{contact_number[:5]}33302\r\nEND:VCARD\r\n"
         ).encode()
-        body_bytes, ctype = multipart_body([], [("vcard", "two.vcf", "text/vcard", vcard)])
+        body_bytes, ctype = multipart_body(
+            [], [("vcard", "two.vcf", "text/vcard", vcard)]
+        )
         status, body, _ = s.request("POST", "/contacts/import", body_bytes, ctype)
         imported = body.decode("utf-8", "replace")
         c.ok(
@@ -2010,12 +2035,15 @@ def run_checks(
             f"got {status}",
         )
         status, body, _ = s.request("GET", "/partials/contacts")
-        delete_ids = re.findall(r'hx-post="/contacts/delete\?id=([^"]+)"', body.decode("utf-8", "replace"))
+        delete_ids = re.findall(
+            r'hx-post="/contacts/delete\?id=([^"]+)"', body.decode("utf-8", "replace")
+        )
         if delete_ids:
             status, body, _ = s.request("POST", f"/contacts/delete?id={delete_ids[0]}")
             c.ok(
                 "workflow contact deleted",
-                status == 200 and f"/contacts/delete?id={delete_ids[0]}".encode() not in body,
+                status == 200
+                and f"/contacts/delete?id={delete_ids[0]}".encode() not in body,
                 f"got {status}",
             )
         else:
@@ -2038,13 +2066,19 @@ def run_checks(
                 "from": "+441632960444",
                 "body": "smoke mms",
                 "attachments": [
-                    {"name": "dot.png", "mime_type": "image/png", "data_base64": png_1px}
+                    {
+                        "name": "dot.png",
+                        "mime_type": "image/png",
+                        "data_base64": png_1px,
+                    }
                 ],
             },
         )
         c.ok("workflow mms hook 202", status == 202, f"got {status}")
         _, body, _ = s.request("GET", "/partials/messages")
-        mms_rows = re.findall(r'hx-get="/partials/messages/([^"]+)"', body.decode("utf-8", "replace"))
+        mms_rows = re.findall(
+            r'hx-get="/partials/messages/([^"]+)"', body.decode("utf-8", "replace")
+        )
         attachment_id = ""
         # Only the MMS thread carries an attachment row, so hunt for the
         # wp-attachment marker directly (the rail preview would match any
@@ -2052,18 +2086,26 @@ def run_checks(
         for row in mms_rows:
             _, tbody, _ = s.request("GET", f"/partials/messages/{row}")
             ttext = tbody.decode("utf-8", "replace")
-            match = re.search(r'class="wp-attachment[^"]*"[^>]*href="/attachments/([^"]+)"', ttext) or re.search(
+            match = re.search(
+                r'class="wp-attachment[^"]*"[^>]*href="/attachments/([^"]+)"', ttext
+            ) or re.search(
                 r'href="/attachments/([^"]+)"[^>]*class="wp-attachment', ttext
             )
             if match:
                 attachment_id = match.group(1)
                 break
-        c.ok("workflow mms attachment linked", bool(attachment_id), "no /attachments link in the thread")
+        c.ok(
+            "workflow mms attachment linked",
+            bool(attachment_id),
+            "no /attachments link in the thread",
+        )
         if attachment_id:
             status, _, _ = anon_export.request("GET", f"/attachments/{attachment_id}")
             c.ok("workflow attachment anonymous 401", status == 401, f"got {status}")
             status, body, headers = s.request("GET", f"/attachments/{attachment_id}")
-            atype = next((v for k, v in headers.items() if k.lower() == "content-type"), "")
+            atype = next(
+                (v for k, v in headers.items() if k.lower() == "content-type"), ""
+            )
             c.ok(
                 "workflow attachment streams its type",
                 status == 200 and atype == "image/png",
@@ -2076,7 +2118,8 @@ def run_checks(
         # non-failed row.
         pdf = b"%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n"
         body_bytes, ctype = multipart_body(
-            [("to", "+441632960333")], [("document", "smoke.pdf", "application/pdf", pdf)]
+            [("to", "+441632960333")],
+            [("document", "smoke.pdf", "application/pdf", pdf)],
         )
         status, body, _ = s.request("POST", "/fax/send", body_bytes, ctype)
         fax_partial = body.decode("utf-8", "replace")
@@ -2088,14 +2131,18 @@ def run_checks(
         fax_doc_ids = re.findall(r'href="/fax/([^"]+)/document"', fax_partial)
         if fax_doc_ids:
             status, body, headers = s.request("GET", f"/fax/{fax_doc_ids[0]}/document")
-            dtype = next((v for k, v in headers.items() if k.lower() == "content-type"), "")
+            dtype = next(
+                (v for k, v in headers.items() if k.lower() == "content-type"), ""
+            )
             c.ok(
                 "workflow fax document streams",
                 status == 200 and "pdf" in dtype.lower() and body.startswith(b"%PDF"),
                 f"{status} {dtype!r}",
             )
         else:
-            c.ok("workflow fax document streams", False, "no document link in fax panel")
+            c.ok(
+                "workflow fax document streams", False, "no document link in fax panel"
+            )
         status, _, _ = s.hook(
             "/hooks/fax",
             {
@@ -2250,7 +2297,9 @@ def _scenario_boot(
 def _thread_id_for(s: Smoke, needle: str) -> str:
     """Find the thread id whose DETAIL (not rail preview) matches needle."""
     _, body, _ = s.request("GET", "/partials/messages")
-    rows = re.findall(r'hx-get="/partials/messages/([^"]+)"', body.decode("utf-8", "replace"))
+    rows = re.findall(
+        r'hx-get="/partials/messages/([^"]+)"', body.decode("utf-8", "replace")
+    )
     for row in rows:
         _, tbody, _ = s.request("GET", f"/partials/messages/{row}")
         if needle in tbody.decode("utf-8", "replace"):
@@ -2282,13 +2331,17 @@ def msglifecycle_scenario(binary: str, workdir: str) -> int:
     try:
         s = Smoke(base)
         _, page, _ = s.request("GET", "/login")
-        m = re.search(r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace"))
+        m = re.search(
+            r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
+        )
         if m:
             s.csrf = m.group(1)
         c.ok("msglifecycle: login accepted", s.login(), "POST /api/session != 201")
         sink: list[tuple[str, str]] = []
         ev_stop = threading.Event()
-        reader = threading.Thread(target=s.sse_events, args=(ev_stop, sink), daemon=True)
+        reader = threading.Thread(
+            target=s.sse_events, args=(ev_stop, sink), daemon=True
+        )
         reader.start()
         time.sleep(0.4)
 
@@ -2318,7 +2371,9 @@ def msglifecycle_scenario(binary: str, workdir: str) -> int:
                 ref = str(hit["ref"])
         c.ok("msglifecycle: receipt ref known", bool(ref), "no provider_ref captured")
         thread = _thread_id_for(s, "lifecycle one")
-        c.ok("msglifecycle: outbound bubble persisted", bool(thread), "thread not found")
+        c.ok(
+            "msglifecycle: outbound bubble persisted", bool(thread), "thread not found"
+        )
 
         if ref:
             status, _, _ = s.hook(
@@ -2332,7 +2387,11 @@ def msglifecycle_scenario(binary: str, workdir: str) -> int:
                 "no delivered badge in the transcript",
             )
             data = s.wait_for(sink, "thread", time.monotonic() + TIMEOUT)
-            c.ok("msglifecycle: SSE thread on verdict", data is not None, "no thread event")
+            c.ok(
+                "msglifecycle: SSE thread on verdict",
+                data is not None,
+                "no thread event",
+            )
             status, _, _ = s.hook(
                 "/hooks/message/status", {"provider_ref": ref, "status": "delivered"}
             )
@@ -2397,9 +2456,17 @@ def msglifecycle_scenario(binary: str, workdir: str) -> int:
             )
             status, _, _ = s.hook(
                 "/hooks/message/status",
-                {"provider_ref": f"gw-smoke-{_FakeProviderHandler.counter}", "status": "failed", "error": "carrier rejected"},
+                {
+                    "provider_ref": f"gw-smoke-{_FakeProviderHandler.counter}",
+                    "status": "failed",
+                    "error": "carrier rejected",
+                },
             )
-            c.ok("msglifecycle: failed verdict with reason 202", status == 202, f"got {status}")
+            c.ok(
+                "msglifecycle: failed verdict with reason 202",
+                status == 202,
+                f"got {status}",
+            )
             _, tbody, _ = s.request("GET", f"/partials/messages/{outage_thread}")
             c.ok(
                 "msglifecycle: failed detail lands",
@@ -2407,7 +2474,11 @@ def msglifecycle_scenario(binary: str, workdir: str) -> int:
                 "provider reason missing from the transcript",
             )
         else:
-            c.ok("msglifecycle: outage bubble retryable", False, "outage thread not found")
+            c.ok(
+                "msglifecycle: outage bubble retryable",
+                False,
+                "outage thread not found",
+            )
 
         ev_stop.set()
     finally:
@@ -2425,11 +2496,15 @@ def ratelimit_scenario(binary: str, workdir: str) -> int:
     scenario's traffic): login lockout with Retry-After, the compose
     bucket's .wp-error fragment, the hooks lane, and the csrf lane."""
     c = Check()
-    srv, base, stop = _scenario_boot(binary, workdir, "data-ratelimit", {}, "ratelimit scenario")
+    srv, base, stop = _scenario_boot(
+        binary, workdir, "data-ratelimit", {}, "ratelimit scenario"
+    )
     try:
         s = Smoke(base)
         _, page, _ = s.request("GET", "/login")
-        m = re.search(r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace"))
+        m = re.search(
+            r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
+        )
         if m:
             s.csrf = m.group(1)
         c.ok("ratelimit: clean login first", s.login(), "the clean-bucket login failed")
@@ -2441,7 +2516,9 @@ def ratelimit_scenario(binary: str, workdir: str) -> int:
         # every page; /api/csrf would pollute the csrf lane below).
         attacker = Smoke(base)
         _, page, _ = attacker.request("GET", "/login")
-        m = re.search(r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace"))
+        m = re.search(
+            r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
+        )
         if m:
             attacker.csrf = m.group(1)
         saw_429 = False
@@ -2463,7 +2540,11 @@ def ratelimit_scenario(binary: str, workdir: str) -> int:
             )
             if m:
                 attacker.csrf = m.group(1)
-        c.ok("ratelimit: login bucket 429s", saw_429, "40 logins never tripped the limiter")
+        c.ok(
+            "ratelimit: login bucket 429s",
+            saw_429,
+            "40 logins never tripped the limiter",
+        )
         c.ok("ratelimit: 429 carries Retry-After", bool(retry_after), "missing header")
 
         # Compose bucket: 20/min burst 10 -> the 11th rapid send answers
@@ -2473,10 +2554,16 @@ def ratelimit_scenario(binary: str, workdir: str) -> int:
             body_bytes, ctype = multipart_body(
                 [("to", f"+44163296011{i}"), ("body", "rl")]
             )
-            status, body, headers = s.request("POST", "/messages/send", body_bytes, ctype)
+            status, body, headers = s.request(
+                "POST", "/messages/send", body_bytes, ctype
+            )
             if status == 429:
                 limited_body = body
-                c.ok("ratelimit: compose 429 has Retry-After", bool(headers.get("Retry-After")), "missing header")
+                c.ok(
+                    "ratelimit: compose 429 has Retry-After",
+                    bool(headers.get("Retry-After")),
+                    "missing header",
+                )
                 break
         c.ok(
             "ratelimit: compose bucket 429s",
@@ -2489,7 +2576,11 @@ def ratelimit_scenario(binary: str, workdir: str) -> int:
         hook_429 = False
         for _ in range(63):
             status, _, _ = s.request(
-                "POST", "/hooks/message", b"{}", "application/json", {"Authorization": "Bearer wrong"}
+                "POST",
+                "/hooks/message",
+                b"{}",
+                "application/json",
+                {"Authorization": "Bearer wrong"},
             )
             if status == 429:
                 hook_429 = True
@@ -2503,7 +2594,9 @@ def ratelimit_scenario(binary: str, workdir: str) -> int:
             if status == 429:
                 csrf_429 = True
                 break
-        c.ok("ratelimit: csrf lane 429s", csrf_429, "63 rapid csrf fetches never tripped")
+        c.ok(
+            "ratelimit: csrf lane 429s", csrf_429, "63 rapid csrf fetches never tripped"
+        )
     finally:
         stop()
     print(f"ratelimit scenario: {c.passed} passed, {len(c.failures)} failed")
@@ -2544,17 +2637,23 @@ class _FakeAgentHandler(http.server.BaseHTTPRequestHandler):
     def do_POST(self) -> None:
         length = int(self.headers.get("Content-Length", "0"))
         body = self.rfile.read(length).decode("utf-8", "replace")
-        _FakeAgentHandler.hits.append({"path": self.path, "method": "POST", "body": body})
+        _FakeAgentHandler.hits.append(
+            {"path": self.path, "method": "POST", "body": body}
+        )
         _FakeAgentHandler.counter += 1
         draft_id = f"d-smoke-{_FakeAgentHandler.counter}"
         if self.path.startswith("/reviews/") and self.path.endswith("/discard"):
             self._json(200, {})
             return
         if self.path.startswith("/reviews/") and self.path.endswith("/approve"):
-            self._json(200, {"id": draft_id, "text": "smoke agent draft", "status": "approved"})
+            self._json(
+                200, {"id": draft_id, "text": "smoke agent draft", "status": "approved"}
+            )
             return
         if self.path == "/mode":
-            self._json(200, {"mode": "off", "mode_source": "runtime", "default_mode": "off"})
+            self._json(
+                200, {"mode": "off", "mode_source": "runtime", "default_mode": "off"}
+            )
             return
         self._json(
             200,
@@ -2606,12 +2705,18 @@ def drafts_scenario(binary: str, workdir: str) -> int:
     try:
         s = Smoke(base)
         _, page, _ = s.request("GET", "/login")
-        m = re.search(r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace"))
+        m = re.search(
+            r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
+        )
         if m:
             s.csrf = m.group(1)
         c.ok("drafts: login accepted", s.login(), "POST /api/session != 201")
         _, body, _ = s.request("GET", "/config.js")
-        c.ok("drafts: config.js advertises the agent", b'"agent":true' in body, body[:120].decode("utf-8", "replace"))
+        c.ok(
+            "drafts: config.js advertises the agent",
+            b'"agent":true' in body,
+            body[:120].decode("utf-8", "replace"),
+        )
 
         body_bytes, ctype = multipart_body(
             [("to", "+441632960555"), ("body", "say hi about the invoice")]
@@ -2640,7 +2745,11 @@ def drafts_scenario(binary: str, workdir: str) -> int:
             status == 200 and b'id="wp-drafts"' in body,
             f"got {status}",
         )
-        approve_hits = [h for h in _FakeAgentHandler.hits if h["path"] == "/reviews/d-smoke-1/approve"]
+        approve_hits = [
+            h
+            for h in _FakeAgentHandler.hits
+            if h["path"] == "/reviews/d-smoke-1/approve"
+        ]
         c.ok(
             "drafts: approve relays to the agent's draft id",
             len(approve_hits) >= 1,
@@ -2659,7 +2768,9 @@ def drafts_scenario(binary: str, workdir: str) -> int:
             "",
         )
         c.ok("drafts: discard answers", status == 200, f"got {status}")
-        discard_hits = [h for h in _FakeAgentHandler.hits if h["path"].endswith("/discard")]
+        discard_hits = [
+            h for h in _FakeAgentHandler.hits if h["path"].endswith("/discard")
+        ]
         c.ok("drafts: agent saw the discard", len(discard_hits) >= 1, "no discard hit")
 
         status, body, _ = s.request(
@@ -2680,7 +2791,12 @@ def drafts_scenario(binary: str, workdir: str) -> int:
             "POST",
             "/api/calls/smoke-call-1/disposition",
             json.dumps(
-                {"disposition": "missed", "number": "+441632960555", "direction": "in", "seconds": 0}
+                {
+                    "disposition": "missed",
+                    "number": "+441632960555",
+                    "direction": "in",
+                    "seconds": 0,
+                }
             ).encode(),
             "application/json",
         )
@@ -2760,7 +2876,12 @@ def push_scenario(binary: str, workdir: str) -> int:
         c.ok("push: off boot answers 404", status == 404, f"got {status}")
         status, _, _ = s.hook(
             "/hooks/ring",
-            {"owner": "1001", "from": "+441632960000", "call_id": "fs-off", "state": "ring"},
+            {
+                "owner": "1001",
+                "from": "+441632960000",
+                "call_id": "fs-off",
+                "state": "ring",
+            },
         )
         c.ok("push: off boot ring stays 202 inert", status == 202, f"got {status}")
     finally:
@@ -2768,7 +2889,11 @@ def push_scenario(binary: str, workdir: str) -> int:
 
     ntfy, stop_ntfy = _start_fake_ntfy()
     srv, base, stop = _scenario_boot(
-        binary, workdir, "data-push-on", {"WEBPHONE_PUSH__NTFY__URL": ntfy}, "push scenario"
+        binary,
+        workdir,
+        "data-push-on",
+        {"WEBPHONE_PUSH__NTFY__URL": ntfy},
+        "push scenario",
     )
     try:
         s = fresh_login(base)
@@ -2782,7 +2907,11 @@ def push_scenario(binary: str, workdir: str) -> int:
             "POST",
             "/api/push-devices",
             json.dumps(
-                {"device_id": "smoke-device-1", "transport": "ntfy", "token": "smoketopic111"}
+                {
+                    "device_id": "smoke-device-1",
+                    "transport": "ntfy",
+                    "token": "smoketopic111",
+                }
             ).encode(),
             "application/json",
         )
@@ -2800,7 +2929,11 @@ def push_scenario(binary: str, workdir: str) -> int:
             "POST",
             "/api/push-devices",
             json.dumps(
-                {"device_id": "smoke-device-1", "transport": "ntfy", "token": "smoketopic222"}
+                {
+                    "device_id": "smoke-device-1",
+                    "transport": "ntfy",
+                    "token": "smoketopic222",
+                }
             ).encode(),
             "application/json",
         )
@@ -2814,7 +2947,12 @@ def push_scenario(binary: str, workdir: str) -> int:
 
         status, _, _ = s.hook(
             "/hooks/ring",
-            {"owner": "1001", "from": "+441632960000", "call_id": "fs-ring-1", "state": "ring"},
+            {
+                "owner": "1001",
+                "from": "+441632960000",
+                "call_id": "fs-ring-1",
+                "state": "ring",
+            },
         )
         c.ok("push: ring hook 202", status == 202, f"got {status}")
         deadline = time.monotonic() + TIMEOUT
@@ -2829,32 +2967,51 @@ def push_scenario(binary: str, workdir: str) -> int:
             time.sleep(0.1)
         c.ok(
             "push: ring wakes the rotated topic urgently",
-            ring_hit is not None and str(ring_hit.get("priority")) == "5" and "fs-ring-1" in str(ring_hit.get("message", "")),
+            ring_hit is not None
+            and str(ring_hit.get("priority")) == "5"
+            and "fs-ring-1" in str(ring_hit.get("message", "")),
             f"hits={_FakeNtfyHandler.hits[-2:]}",
         )
         status, _, _ = s.hook(
             "/hooks/ring",
-            {"owner": "1001", "from": "+441632960000", "call_id": "fs-ring-1", "state": "end"},
+            {
+                "owner": "1001",
+                "from": "+441632960000",
+                "call_id": "fs-ring-1",
+                "state": "end",
+            },
         )
         c.ok("push: end state 202", status == 202, f"got {status}")
         deadline = time.monotonic() + TIMEOUT
         end_hit = None
         while time.monotonic() < deadline:
             for hit in _FakeNtfyHandler.hits:
-                if hit.get("topic") == "smoketopic222" and str(hit.get("priority")) != "5":
+                if (
+                    hit.get("topic") == "smoketopic222"
+                    and str(hit.get("priority")) != "5"
+                ):
                     end_hit = hit
                     break
             if end_hit:
                 break
             time.sleep(0.1)
-        c.ok("push: end stands down at lower priority", end_hit is not None, f"hits={_FakeNtfyHandler.hits[-2:]}")
+        c.ok(
+            "push: end stands down at lower priority",
+            end_hit is not None,
+            f"hits={_FakeNtfyHandler.hits[-2:]}",
+        )
 
         status, _, _ = s.request("DELETE", "/api/push-devices?id=smoke-device-1")
         c.ok("push: deregister 204", status == 204, f"got {status}")
         before = len(_FakeNtfyHandler.hits)
         s.hook(
             "/hooks/ring",
-            {"owner": "1001", "from": "+441632960000", "call_id": "fs-ring-2", "state": "ring"},
+            {
+                "owner": "1001",
+                "from": "+441632960000",
+                "call_id": "fs-ring-2",
+                "state": "ring",
+            },
         )
         time.sleep(0.6)
         c.ok(
