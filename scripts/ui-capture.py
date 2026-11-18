@@ -2461,10 +2461,16 @@ def main() -> int:
                 "passkey": {
                     "rp_id": "webphone.test",
                     "rp_origins": ["https://webphone.test"],
-                    # admin + display_name (2026-11-18): the line-ownership
-                    # surfaces need the Admin inventory in the matrix — the
-                    # nav link renders for admins only, and the admin
-                    # surface joins only when the session's nav proves it.
+                    # admin + display_name (2026-11-18): the identity
+                    # exists for completeness, but NOTE — the admin
+                    # surface CANNOT join a fixture boot: the harness
+                    # session is an extension login (empty login_email,
+                    # POST /api/session), admin resolves per-request
+                    # from the identity mapping, and passkey ceremonies
+                    # cannot be automated — so /admin stays a PROD
+                    # --track lane (the owner's real session is admin).
+                    # The DID labels below DO reach every surface the
+                    # fixture shoots (identityFor keys off identities).
                     "users": {
                         "ui-capture@example.com": {
                             "extensions": ["1001"],
