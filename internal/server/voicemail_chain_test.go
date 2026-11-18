@@ -20,11 +20,11 @@ type fakeMailbox struct {
 
 func (f *fakeMailbox) handler() http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /voicemail/{ext}/summary", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /phone-api/voicemail/{ext}/summary", func(w http.ResponseWriter, r *http.Request) {
 		f.record("GET summary")
 		writeJSON(w, map[string]int{"new": 1, "old": 1})
 	})
-	mux.HandleFunc("GET /voicemail/{ext}/messages", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("GET /phone-api/voicemail/{ext}/messages", func(w http.ResponseWriter, r *http.Request) {
 		f.record("GET messages")
 		writeJSON(w, map[string]any{"messages": []map[string]any{
 			{
@@ -39,7 +39,7 @@ func (f *fakeMailbox) handler() http.Handler {
 			},
 		}})
 	})
-	mux.HandleFunc("DELETE /voicemail/{ext}/messages/{uuid}", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("DELETE /phone-api/voicemail/{ext}/messages/{uuid}", func(w http.ResponseWriter, r *http.Request) {
 		f.mu.Lock()
 		f.deleted = append(f.deleted, r.PathValue("uuid"))
 		f.mu.Unlock()
