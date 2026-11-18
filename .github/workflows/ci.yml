@@ -79,7 +79,7 @@ jobs:
       - name: Run the browser workflow journeys
         run: |
           PYSEL=$(nix build --no-link --print-out-paths --impure \
-            --expr '(builtins.getFlake "path:.").inputs.nixpkgs.legacyPackages.x86_64-linux.python312.withPackages (ps: [ ps.selenium ])')
+            --expr "(builtins.getFlake \"path:$PWD\").inputs.nixpkgs.legacyPackages.x86_64-linux.python312.withPackages (ps: [ ps.selenium ])")
           nix shell nixpkgs#chromium nixpkgs#chromedriver "$PYSEL" \
             --command python3 scripts/workflow-e2e.py --bin ./result/bin/webphone
 
