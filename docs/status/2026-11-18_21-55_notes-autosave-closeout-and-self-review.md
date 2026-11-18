@@ -28,23 +28,23 @@ document.
 
 ## a) FULLY DONE (this session, verified)
 
-| What | Where | Evidence |
-| --- | --- | --- |
-| shell.js retry-loop FIX (carried/landed pattern; failure re-arms debounce once, bounded; success carries newer input immediately) | shell.js §2b7 `runNoteSave` | no-retry-loop spec: 1 PUT across 3 debounce windows of failing silence, 2nd on newer input |
-| Manual Save lane tail-carry (input landing mid-flight whose debounce was dropped by the inflight guard is flushed on completion) | shell.js `[data-note-save]` handler | dedicated spec: held-open flight + mid-flight input → 2nd PUT on release |
-| postcall test fixes (stub `ok` computed from status; PUT counts scoped per-row URL) | postcall-note.test.mjs | 9/9 pass |
-| Loop-pin spec (island side) | postcall-note.test.mjs | "a failing server does not retry-loop an unchanged draft" green |
-| 7 new shell autosave specs (debounce+status, burst coalesce, blur flush, failure episode + loop pin, pagehide keepalive, settled-body save-skip, mid-flight carry) | shell.test.mjs | 76/76 pass |
-| Full island suite | all *.test.mjs | 364/364 |
-| Type gate | `tsc -p . --noEmit` | exit 0 |
-| Format gate | `nix fmt` + sandboxed `format-check.sh` | exit 0 |
-| Full Go suite (clean worktree at then-HEAD, working tree carried a concurrent session's mid-edit compile break) | 37 packages | exit 0 |
-| CHANGELOG `[Unreleased]` entry | CHANGELOG.md | landed (daemon-committed) |
-| AGENTS.md post-call-notes bullet rewrite (autosave semantics + carried-body invariant + limiter + flush contract) | AGENTS.md | landed (daemon-committed) |
-| buildflow battery | full run 14/15; scoped `test-race` re-run SUCCESS | sole red = server depth pin 5212>5200, healed by the concurrent session's `30ec09dc` pin raise; not this train's code |
-| FIX-FORWARD: stranded vendorHashes restored (go-etag v0.6.2 bump rode the daemon without its re-pin; main nix/smoke red since 18:24) | nix/packages.nix | `goModules --rebuild` + devshell boot verify; NEXT CI run's nix build + smoke jobs ✓ |
-| Stale tracker #253 closed with evidence (it flagged this train's 2 intermediate failing specs) | GitHub | closed 21:4x |
-| CI verified name-aware via `scripts/ci-verdict.sh`; my surfaces green on pushed shas (nix, smoke, island/format lanes) | CI runs 44374290116, 44376100681 | ✓ lanes listed |
+| What                                                                                                                                                               | Where                                             | Evidence                                                                                                              |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| shell.js retry-loop FIX (carried/landed pattern; failure re-arms debounce once, bounded; success carries newer input immediately)                                  | shell.js §2b7 `runNoteSave`                       | no-retry-loop spec: 1 PUT across 3 debounce windows of failing silence, 2nd on newer input                            |
+| Manual Save lane tail-carry (input landing mid-flight whose debounce was dropped by the inflight guard is flushed on completion)                                   | shell.js `[data-note-save]` handler               | dedicated spec: held-open flight + mid-flight input → 2nd PUT on release                                              |
+| postcall test fixes (stub `ok` computed from status; PUT counts scoped per-row URL)                                                                                | postcall-note.test.mjs                            | 9/9 pass                                                                                                              |
+| Loop-pin spec (island side)                                                                                                                                        | postcall-note.test.mjs                            | "a failing server does not retry-loop an unchanged draft" green                                                       |
+| 7 new shell autosave specs (debounce+status, burst coalesce, blur flush, failure episode + loop pin, pagehide keepalive, settled-body save-skip, mid-flight carry) | shell.test.mjs                                    | 76/76 pass                                                                                                            |
+| Full island suite                                                                                                                                                  | all *.test.mjs                                    | 364/364                                                                                                               |
+| Type gate                                                                                                                                                          | `tsc -p . --noEmit`                               | exit 0                                                                                                                |
+| Format gate                                                                                                                                                        | `nix fmt` + sandboxed `format-check.sh`           | exit 0                                                                                                                |
+| Full Go suite (clean worktree at then-HEAD, working tree carried a concurrent session's mid-edit compile break)                                                    | 37 packages                                       | exit 0                                                                                                                |
+| CHANGELOG `[Unreleased]` entry                                                                                                                                     | CHANGELOG.md                                      | landed (daemon-committed)                                                                                             |
+| AGENTS.md post-call-notes bullet rewrite (autosave semantics + carried-body invariant + limiter + flush contract)                                                  | AGENTS.md                                         | landed (daemon-committed)                                                                                             |
+| buildflow battery                                                                                                                                                  | full run 14/15; scoped `test-race` re-run SUCCESS | sole red = server depth pin 5212>5200, healed by the concurrent session's `30ec09dc` pin raise; not this train's code |
+| FIX-FORWARD: stranded vendorHashes restored (go-etag v0.6.2 bump rode the daemon without its re-pin; main nix/smoke red since 18:24)                               | nix/packages.nix                                  | `goModules --rebuild` + devshell boot verify; NEXT CI run's nix build + smoke jobs ✓                                  |
+| Stale tracker #253 closed with evidence (it flagged this train's 2 intermediate failing specs)                                                                     | GitHub                                            | closed 21:4x                                                                                                          |
+| CI verified name-aware via `scripts/ci-verdict.sh`; my surfaces green on pushed shas (nix, smoke, island/format lanes)                                             | CI runs 44374290116, 44376100681                  | ✓ lanes listed                                                                                                        |
 
 ## b) PARTIALLY DONE
 
@@ -121,23 +121,23 @@ document.
 
 <!-- check-rows:ledger -->
 
-| # | Thing | Why now | Size |
-| --- | --- | --- | --- |
-| 1 | Answer the 3 owner questions below (Save button, AI-draft autosave, failure loudness) | gates the polish lanes | S |
-| 2 | Attribute CI's `workflow e2e (browser, advisory)` failure — re-run once (known flake mode) then dig if it stands | standing markup-E2E rule | S |
-| 3 | Check `NotifyCallNotesChanged` conditionality; gate it on event-append if unconditional | pointless SSE nudges on no-op PUTs | S |
-| 4 | Add `aria-live="polite"` to island `.call-note-status` (parity with History span) | a11y parity | XS |
-| 5 | Annotate/supersede the 18:39 status report rows (done here, file itself unmarked) | docs honesty | XS |
-| 6 | `docs/lessons.md` war story: carried-body invariant + module-global map isolation trap | reusable lesson | S |
-| 7 | maxlength boundary test (UTF-16 vs runes) | unpinned edge | XS |
-| 8 | `withIsolatedNoteRows` test helper (neutralize leaked entries between specs) | future-proofing | S |
-| 9 | art-dupl red on main: adjudicate the 4 new clone groups (2 admin-internal, dir-chip 3-way vs history's pre-existing chip, test-fake 2-liner) — owning session's call, baseline or consolidate | main's only gating red | M |
-| 10 | If owner wants draft inserts saved: dispatch a synthetic input event or save-after-insert (currently keystroke-gated by doctrine) | owner Q2 follow-up | S |
-| 11 | If owner wants louder failure: retry chip on the note row (message-bubble pattern) | owner Q3 follow-up | M |
-| 12 | If owner drops the Save button: collapse-only "done" semantics on History rows | owner Q1 follow-up | S |
-| 13 | ui-capture shot of the History note box with status line in situ | visual ledger | S |
-| 14 | Consider `resetForTests()` seam ONLY if test-side neutralization proves brittle (served-byte cost today) | deferred decision | XS |
-| 15 | Re-verify smoke's `faxcap`/`enroll` scenario counts still print after this train's asset churn (they should; script prints counts) | belt+braces | XS |
+| #  | Thing                                                                                                                                                                                         | Why now                            | Size |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- | ---- |
+| 1  | Answer the 3 owner questions below (Save button, AI-draft autosave, failure loudness)                                                                                                         | gates the polish lanes             | S    |
+| 2  | Attribute CI's `workflow e2e (browser, advisory)` failure — re-run once (known flake mode) then dig if it stands                                                                              | standing markup-E2E rule           | S    |
+| 3  | Check `NotifyCallNotesChanged` conditionality; gate it on event-append if unconditional                                                                                                       | pointless SSE nudges on no-op PUTs | S    |
+| 4  | Add `aria-live="polite"` to island `.call-note-status` (parity with History span)                                                                                                             | a11y parity                        | XS   |
+| 5  | Annotate/supersede the 18:39 status report rows (done here, file itself unmarked)                                                                                                             | docs honesty                       | XS   |
+| 6  | `docs/lessons.md` war story: carried-body invariant + module-global map isolation trap                                                                                                        | reusable lesson                    | S    |
+| 7  | maxlength boundary test (UTF-16 vs runes)                                                                                                                                                     | unpinned edge                      | XS   |
+| 8  | `withIsolatedNoteRows` test helper (neutralize leaked entries between specs)                                                                                                                  | future-proofing                    | S    |
+| 9  | art-dupl red on main: adjudicate the 4 new clone groups (2 admin-internal, dir-chip 3-way vs history's pre-existing chip, test-fake 2-liner) — owning session's call, baseline or consolidate | main's only gating red             | M    |
+| 10 | If owner wants draft inserts saved: dispatch a synthetic input event or save-after-insert (currently keystroke-gated by doctrine)                                                             | owner Q2 follow-up                 | S    |
+| 11 | If owner wants louder failure: retry chip on the note row (message-bubble pattern)                                                                                                            | owner Q3 follow-up                 | M    |
+| 12 | If owner drops the Save button: collapse-only "done" semantics on History rows                                                                                                                | owner Q1 follow-up                 | S    |
+| 13 | ui-capture shot of the History note box with status line in situ                                                                                                                              | visual ledger                      | S    |
+| 14 | Consider `resetForTests()` seam ONLY if test-side neutralization proves brittle (served-byte cost today)                                                                                      | deferred decision                  | XS   |
+| 15 | Re-verify smoke's `faxcap`/`enroll` scenario counts still print after this train's asset churn (they should; script prints counts)                                                            | belt+braces                        | XS   |
 
 ## g) Questions the owner must answer (cannot be derived)
 
