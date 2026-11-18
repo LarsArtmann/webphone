@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Line-labeled surfaces share one fallback rule** (2026-11-18): the
+  Settings account rows and both Admin inventories (users, phone
+  numbers) render line names computed once via `authmap.Line.Display`
+  — DID when declared, bare extension otherwise — instead of
+  hand-rolling the rule in markup. A DID-less line now names itself
+  once (before: "1001 · 1001" repeated the extension); the owned-lines
+  list leads with the ACTIVE line (mapping order after); the Admin
+  phone-numbers inventory renders the same labeled chips the users
+  inventory does. SSO-only deployments resolving their whoami identity
+  is now pinned by test (previously shipped unpinned).
 - **Call notes autosave as the owner types** (2026-11-18): every note
   editor — History rows and the island's ended-call card — re-arms a
   250ms trailing debounce per keystroke, flushes on blur, and carries
