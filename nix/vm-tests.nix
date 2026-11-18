@@ -479,7 +479,21 @@
             # silent-dark-seam shape.
             machine.succeed("mv /etc/webphone-oidc-source /etc/webphone-oidc-source.saved")
             machine.fail("systemctl restart webphone.service")
-            machine.succeed("systemctl is-failed webphone.service")
+            # The unit CYCLES on Restart=always (restart counter climbing,
+            # ~100ms failed windows), so steady-state probes race the
+            # cycle — assert the ESSENCE instead: start attempts keep
+            # failing, the journal names the exit-code result, and the
+            # app never comes up (the error-drill 2026-10-29 lesson in
+            # its honest form for an always-restarting unit).
+            machine.wait_until_succeeds(
+                "test \"$(systemctl show webphone.service -p NRestarts --value)\" -gt 2",
+                timeout=30,
+            )
+            machine.succeed(
+                "journalctl -u webphone.service --no-pager "
+                "| grep -q \"Failed with result 'exit-code'\""
+            )
+            machine.fail("curl -sf http://127.0.0.1:8080/healthz")
             machine.succeed("mv /etc/webphone-oidc-source.saved /etc/webphone-oidc-source")
             machine.succeed("systemctl restart webphone.service")
             machine.wait_for_open_port(8080)
