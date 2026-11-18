@@ -2436,12 +2436,27 @@ def main() -> int:
                 "passkey": {
                     "rp_id": "webphone.test",
                     "rp_origins": ["https://webphone.test"],
-                    "users": {"ui-capture@example.com": {"extensions": ["1001"]}},
+                    # admin + display_name (2026-11-18): the line-ownership
+                    # surfaces need the Admin inventory in the matrix — the
+                    # nav link renders for admins only, and the admin
+                    # surface joins only when the session's nav proves it.
+                    "users": {
+                        "ui-capture@example.com": {
+                            "extensions": ["1001"],
+                            "admin": True,
+                            "display_name": "Capture Operator",
+                        }
+                    },
                     "extension_password_files": {
                         "1001": os.path.join(data_dir, "ext1001.pass")
                     },
                 }
             },
+            # DID-bearing lines (2026-11-18): whoami leads with the
+            # number, and the Settings account rows + Admin chips read
+            # "DID · extension" — the fixture proves the labeled
+            # surfaces, not the bare-extension fallback alone.
+            "identities": {"1001": "+15551234567"},
         }
         if args.fax_off:
             config["fax"] = {"send": False, "receive": False}
