@@ -54,8 +54,15 @@ en/de UI strings' English anchors.
 
 ## Identity and sessions
 
-- **extension** — the PBX phone identity ("1001"): the product's ONLY
-  user concept. No user table exists by design (split-brain refusal of
+- **line** — one telephony identity: a PBX **extension** plus the
+  **DID** it presents to the outside world. The owned unit of the
+  product (`authmap.Line`, 2026-11-18): users OWN lines, sessions ACT
+  on one line at a time (the **active line**), and the first owned
+  line is a login's default. The switcher, whoami, Settings' "My
+  account" group and the Admin inventory render from this one model —
+  labeled "DID · extension", never bare PBX codes.
+- **extension** — the PBX phone identity ("1001"): the internal half
+  of a line. No user table exists by design (split-brain refusal of
   the cqrs-htmx `setup` bundle — reinforced 2026-09-30 by the measured
   footprint refusal: +10.40 MB / +68.2% for the shell-only adoption).
 - **directory password** — the PBX FreeSWITCH directory credential;
@@ -64,8 +71,12 @@ en/de UI strings' English anchors.
 - **session** — the cookie-backed tab session; slides on activity,
   capped absolutely. `requireSession` self-gates handlers.
 - **identity / DID** — the operator-configured `identities` map:
-  which presented number an extension sends as. Feeds the self-send
-  warning.
+  which presented number a line sends as (owner-formatted, rendered
+  verbatim; a line without one falls back to the bare extension — the
+  ONE fallback rule). Feeds the self-send warning and the line model's
+  DID half. **ownership** — the config join of humans to lines
+  (`auth.users`); one home in code (`app.mappedUsers`), a config edit
+  never a UI flow.
 
 ## Telephony
 

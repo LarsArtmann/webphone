@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- Phone numbers connect to users through a named **line ownership
+  model** (2026-11-18): `authmap.Line` (extension + presented DID) is
+  the one owned-identity type, joined exactly once from the three
+  operator feeds and carried typed through every login mode, the line
+  switcher, whoami, Settings and the Admin inventory. The session
+  identity wire replaces the parallel `numbers`/`extensions` lists with
+  a typed `lines` array (`{extension, did}`); the switcher's options
+  read "DID · extension" instead of bare PBX codes, and the whoami line
+  leads with the ACTIVE line's number. SSO-only deployments now resolve
+  their mapped identity too (the one resolution home covers both
+  authmaps).
 - The sidebar rail is now a DOCKED sidebar: the shell body is a full-bleed
   app frame, so the rail sits flush against the viewport's left edge and
   runs the full height under the sticky header (its own surface + hairline,
@@ -20,6 +31,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Settings gains a **"My account"** group (`wp-settings-account`): the
+  signed-in identity (display name + email, admin chip) and every owned
+  line as "DID · extension" with the active line marked — extension
+  logins still see their one active line. Admin user rows show the same
+  labeled line chips.
 - A grouped **sidebar rail** replaces the horizontal tab strip on desktop:
   Workspace (Messages, Voicemail, Fax), Calls (History, Reports), People
   (Contacts) and System (Settings, Admin), one glyph per destination and
