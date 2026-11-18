@@ -51,7 +51,7 @@ func TestDispositionFromEndTable(t *testing.T) {
 		if got != row.want {
 			t.Fatalf("DispositionFromEnd(%v, %d) = %q, want %q", row.established, row.seconds, got, row.want)
 		}
-		if got.AnsweredClass() {
+		if got.answeredClass() {
 			t.Fatalf("observed end (%v, %d) reached the answered class — the table may never guess", row.established, row.seconds)
 		}
 	}
@@ -89,8 +89,8 @@ func TestAnsweredClassIsExclusive(t *testing.T) {
 		DispositionAnswered, DispositionMissed, DispositionVoicemail,
 		DispositionIVR, DispositionFailed, DispositionUnknown,
 	} {
-		if got, want := d.AnsweredClass(), d == DispositionAnswered; got != want {
-			t.Fatalf("Disposition(%q).AnsweredClass() = %v, want %v", d, got, want)
+		if got, want := d.answeredClass(), d == DispositionAnswered; got != want {
+			t.Fatalf("Disposition(%q).answeredClass() = %v, want %v", d, got, want)
 		}
 	}
 }

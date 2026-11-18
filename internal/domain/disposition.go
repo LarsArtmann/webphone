@@ -97,11 +97,14 @@ func LegacyOutcomeDisposition(outcome string) Disposition {
 	return DispositionUnknown
 }
 
-// AnsweredClass reports whether this disposition may be counted as a
+// answeredClass reports whether this disposition may be counted as a
 // human answer. ONLY DispositionAnswered qualifies — unknown maps to
 // the failure class by ruling (issue #6 acceptance bar), so journal
 // aggregation can never inflate answered counts from guesses.
-func (d Disposition) AnsweredClass() bool {
+// Unexported (2026-11-18): the predicate is domain-internal law, never
+// cross-package API — consumers classify through the vocabulary
+// itself (the CRM bridge's outcome table).
+func (d Disposition) answeredClass() bool {
 	return d == DispositionAnswered
 }
 
