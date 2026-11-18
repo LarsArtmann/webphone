@@ -38,8 +38,11 @@ var depthBudgetNames = map[string]depthCeiling{
 	// non-carved surfaces). The 2026-11-12 carve train already split
 	// auth+platform out; the TODO_LIST carve row owns the html question
 	// (ruled: only a real architecture change reopens it, never a
-	// mechanical move).
-	"server": {loc: 5200, exports: 60},
+	// mechanical move). 5200 -> 5250 on 2026-11-18: the line-ownership
+	// unit (Display-rule consumption, active-first ordering, admin
+	// chips) grew the identity renderers; the number rides WITH that
+	// feature, not as silent drift — direction stays DOWN.
+	"server": {loc: 5250, exports: 60},
 	// The carved island JSON surface: fixture-heavy (wire DTOs + fuzz
 	// corpora) but the ceiling still pins today's shape.
 	"server/api": {loc: 1900, exports: 60},
