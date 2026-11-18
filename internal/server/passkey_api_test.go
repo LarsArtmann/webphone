@@ -21,6 +21,7 @@ import (
 	"encoding/json/jsontext"
 
 	identitymodel "github.com/larsartmann/cqrs-htmx/identity-model/v4"
+	"github.com/larsartmann/webphone/internal/authmap"
 	"github.com/larsartmann/webphone/internal/config"
 	"github.com/larsartmann/webphone/internal/cqrs"
 	"github.com/larsartmann/webphone/internal/domain"
@@ -89,7 +90,7 @@ func newPasskeyServerWithConfig(t *testing.T, tweak func(*config.Config), depsMu
 		RPDisplayName: "WebPhone",
 		RPOrigins:     []string{"http://" + "localhost"},
 		Users: map[string]userauth.MappedUser{
-			pkEmail: {Email: pkEmail, DisplayName: "Lars", Lines: lines(ext)},
+			pkEmail: {Email: pkEmail, DisplayName: "Lars", Lines: []authmap.Line{{Extension: ext, DID: "+17287289311"}}},
 		},
 		ExtensionPasswordFiles: map[string]string{"1000": passFile},
 		WebAuthn:               pkStub{},
@@ -195,10 +196,13 @@ func TestPasskeyFinishMintsTheSessionWithIdentity(t *testing.T) {
 		t.Fatalf("finish: %d %s", resp.StatusCode, body)
 	}
 	var identity struct {
-		Extension   string   `json:"extension"`
-		Password    string   `json:"password"`
-		DisplayName string   `json:"display_name"`
-		Numbers     []string `json:"numbers"`
+		Extension   string `json:"extension"`
+		Password    string `json:"password"`
+		DisplayName string `json:"display_name"`
+		Lines       []struct {
+			Extension string `json:"extension"`
+			DID       string `json:"did"`
+		} `json:"lines"`
 	}
 	if err := json.Unmarshal(body, &identity); err != nil {
 		t.Fatalf("finish body %q: %v", body, err)
@@ -209,8 +213,11 @@ func TestPasskeyFinishMintsTheSessionWithIdentity(t *testing.T) {
 	if identity.DisplayName != "Lars" {
 		t.Errorf("display_name = %q, want Lars", identity.DisplayName)
 	}
-	if len(identity.Numbers) != 1 || identity.Numbers[0] != "+17287289311" {
-		t.Errorf("numbers = %v, want the config identity", identity.Numbers)
+	// The line inventory rides LABELED: the finish answer carries the
+	// owned line with its presented number — the shape the switcher
+	// renders (2026-11-18 line-ownership model).
+	if len(identity.Lines) != 1 || identity.Lines[0].Extension != "1000" || identity.Lines[0].DID != "+17287289311" {
+		t.Errorf("lines = %+v, want one labeled line 1000/+17287289311", identity.Lines)
 	}
 
 	// The minted cookie is a real webphone session: the resume endpoint

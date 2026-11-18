@@ -136,14 +136,21 @@ func TestSessionSwitchReMintsForMappedExtension(t *testing.T) {
 		t.Fatalf("resume: %d %s", resp.StatusCode, body)
 	}
 	var identity struct {
-		Extension  string   `json:"extension"`
-		Extensions []string `json:"extensions"`
+		Extension string `json:"extension"`
+		Lines     []struct {
+			Extension string `json:"extension"`
+			DID       string `json:"did"`
+		} `json:"lines"`
 	}
 	if err := json.Unmarshal(body, &identity); err != nil {
 		t.Fatalf("resume body %q: %v", body, err)
 	}
-	if identity.Extension != "1000" || strings.Join(identity.Extensions, ",") != "1000,1001" {
-		t.Fatalf("mapped identity = %+v", identity)
+	// The mapped identity carries every owned line (the switcher's
+	// render condition: more than one) with its presented number —
+	// the labeled-lines wire of the 2026-11-18 ownership model.
+	if identity.Extension != "1000" || len(identity.Lines) != 2 ||
+		identity.Lines[0].Extension != "1000" || identity.Lines[1].Extension != "1001" {
+		t.Fatalf("mapped identity = %+v, want two lines 1000+1001", identity)
 	}
 
 	// Snapshot the pre-switch session cookie: the switch must kill this
@@ -155,8 +162,11 @@ func TestSessionSwitchReMintsForMappedExtension(t *testing.T) {
 		t.Fatalf("switch: %d %s", resp.StatusCode, body)
 	}
 	var switched struct {
-		Extension  string   `json:"extension"`
-		Extensions []string `json:"extensions"`
+		Extension string `json:"extension"`
+		Lines     []struct {
+			Extension string `json:"extension"`
+			DID       string `json:"did"`
+		} `json:"lines"`
 		Password   string   `json:"password"`
 	}
 	if err := json.Unmarshal(body, &switched); err != nil {
@@ -165,8 +175,8 @@ func TestSessionSwitchReMintsForMappedExtension(t *testing.T) {
 	if switched.Extension != "1001" {
 		t.Fatalf("switched extension = %q", switched.Extension)
 	}
-	if strings.Join(switched.Extensions, ",") != "1000,1001" {
-		t.Fatalf("switched extensions = %v (the mapping does not change)", switched.Extensions)
+	if len(switched.Lines) != 2 || switched.Lines[0].Extension != "1000" || switched.Lines[1].Extension != "1001" {
+		t.Fatalf("switched lines = %+v (the ownership does not change)", switched.Lines)
 	}
 	// Legacy mode answers no credential on switch (the reload's boot
 	// probe fetches the row's own payload) — mirror of createSession.
