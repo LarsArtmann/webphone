@@ -2512,178 +2512,6 @@ def ratelimit_scenario(binary: str, workdir: str) -> int:
     return 1 if c.failures else 0
 
 
-def adminswitch_scenario(binary: str, workdir: str) -> int:
-    """The admin surface (read-only, all lines) and the line switcher on
-    a config-file boot with the identity layer: one admin account owning
-    two mapped extensions, one plain account, and the isolation fences
-    between them."""
-    c = Check()
-
-    datadir = f"{workdir}/data-adminswitch"
-    os.makedirs(datadir, exist_ok=True)
-    password_files: dict[str, str] = {}
-    for ext in ("1001", "1002", "1003"):
-        path = f"{workdir}/pw-{ext}"
-        with open(path, "w", encoding="utf-8") as fh:
-            fh.write("pw\n")
-        password_files[ext] = path
-    cfg = {
-        "addr": "127.0.0.1:18099",
-        "data_dir": datadir,
-        "gateway": {"webhook_secret": "test-secret"},  # nosec B105 - fixture secret for the self-booted smoke server
-        "auth": {
-            "users": {
-                "admin@example.com": {"extensions": ["1001", "1002"], "admin": True},
-                "user@example.com": {"extensions": ["1003"]},
-            },
-            "extension_password_files": password_files,
-            "passkey": {
-                "rp_id": "webphone.test",
-                "rp_origins": ["https://webphone.test"],
-            },
-        },
-    }
-    cfg_path = f"{workdir}/config-adminswitch.json"
-    port = free_port()
-    cfg["addr"] = f"127.0.0.1:{port}"
-    with open(cfg_path, "w", encoding="utf-8") as fh:
-        json.dump(cfg, fh)
-    env = dict(os.environ)
-    env["WEBPHONE_CONFIG"] = cfg_path
-    env["WEBPHONE_GATEWAY__WEBHOOK_SECRET"] = "test-secret"  # nosec B105 - fixture secret for the self-booted smoke server
-    srv = subprocess.Popen(  # nosec B603 - argv-list (no shell) launch of the local binary under test
-        [binary], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
-    )
-    base = f"http://127.0.0.1:{port}"
-    ready = False
-    deadline = time.monotonic() + TIMEOUT
-    while time.monotonic() < deadline:
-        try:
-            urllib.request.urlopen(base + "/healthz", timeout=1).read()  # nosec B310 - readiness probe of the local server under test
-            ready = True
-            break
-        except OSError:
-            time.sleep(0.1)
-    if not ready:
-        srv.kill()
-        print("adminswitch scenario: 0 passed, 1 failed")
-        print("  FAILED: adminswitch: server did not become ready")
-        return 1
-
-    def stop() -> None:
-        srv.terminate()
-        try:
-            srv.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            srv.kill()
-
-    try:
-        def fresh_login(extension: str) -> Smoke:
-            client = Smoke(base)
-            _, page, _ = client.request("GET", "/login")
-            m = re.search(
-                r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
-            )
-            if m:
-                client.csrf = m.group(1)
-            client.login(extension)
-            return client
-
-        # Seed a thread owned by the PLAIN line, then prove the admin
-        # sees it cross-line while the plain line cannot see the admin's.
-        admin = fresh_login("1001")
-        plain = fresh_login("1003")
-        c.ok("adminswitch: admin login", any(n.name == "webphone_session" for n in admin.jar), "no session")
-        c.ok("adminswitch: plain login", any(n.name == "webphone_session" for n in plain.jar), "no session")
-        status, _, _ = plain.hook(
-            "/hooks/message", {"owner": "1003", "from": "+441632960123", "body": "plain line thread"}
-        )
-        c.ok("adminswitch: plain thread seeded", status == 202, f"got {status}")
-
-        status, body, _ = admin.request("GET", "/admin")
-        admin_page = body.decode("utf-8", "replace")
-        c.ok(
-            "adminswitch: admin page renders",
-            status == 200 and 'id="admin-panel"' in admin_page,
-            f"got {status}",
-        )
-        status, body, _ = admin.request("GET", "/partials/admin")
-        admin_partial = body.decode("utf-8", "replace")
-        c.ok(
-            "adminswitch: admin sees the plain line's thread",
-            status == 200 and "+441632960123" in admin_partial,
-            f"cross-line row missing: {admin_partial[:80]!r}",
-        )
-        rows = re.findall(r'hx-get="/partials/admin/threads/([^"]+)"', admin_partial)
-        if rows:
-            status, body, _ = admin.request("GET", f"/admin/threads/{rows[0]}")
-            c.ok(
-                "adminswitch: admin deep link opens the thread",
-                status == 200 and 'id="thread-transcript"' in body.decode("utf-8", "replace"),
-                f"got {status}",
-            )
-        else:
-            c.ok("adminswitch: admin deep link opens the thread", False, "no admin row link")
-
-        status, body, _ = plain.request("GET", "/admin")
-        c.ok(
-            "adminswitch: non-admin gets the styled 404",
-            status == 404 and b"wp-notfound" in body,
-            f"got {status}",
-        )
-        status, body, _ = plain.request("GET", "/partials/nav")
-        c.ok(
-            "adminswitch: non-admin nav hides the tab",
-            status == 200 and b"/admin" not in body,
-            "admin link rendered for a non-admin",
-        )
-
-        # Line switcher: the admin's two mapped extensions re-mint the
-        # session; the other account's line and unmapped extensions stay
-        # out of reach.
-        status, body, _ = admin.request(
-            "POST",
-            "/api/session/switch",
-            json.dumps({"extension": "1002"}).encode(),
-            "application/json",
-        )
-        c.ok("adminswitch: switch to mapped line", status in (200, 204), f"got {status}: {body[:80]!r}")
-        admin.adopt_csrf()
-        status, body, _ = admin.request("GET", "/api/session")
-        switched = json.loads(body) if body else {}
-        c.ok(
-            "adminswitch: switched identity answers 1002",
-            switched.get("extension") == "1002",
-            f"identity={switched.get('extension')}",
-        )
-        status, body, _ = admin.request("GET", "/partials/messages")
-        c.ok(
-            "adminswitch: switched line isolates other owners",
-            status == 200 and b"+441632960123" not in body,
-            "the 1003 thread leaked across the line switch",
-        )
-        status, _, _ = admin.request(
-            "POST",
-            "/api/session/switch",
-            json.dumps({"extension": "1003"}).encode(),
-            "application/json",
-        )
-        c.ok("adminswitch: foreign line 403s", status == 403, f"got {status}")
-        status, _, _ = plain.request(
-            "POST",
-            "/api/session/switch",
-            json.dumps({"extension": "1003"}).encode(),
-            "application/json",
-        )
-        c.ok("adminswitch: extension login cannot switch", status == 403, f"got {status}")
-    finally:
-        stop()
-    print(f"adminswitch scenario: {c.passed} passed, {len(c.failures)} failed")
-    for failure in c.failures:
-        print(f"  FAILED: {failure}")
-    return 1 if c.failures else 0
-
-
 class _FakeAgentHandler(http.server.BaseHTTPRequestHandler):
     """The textagent review-API stand-in: drafts with counting ids, the
     approve/discard verdicts, mode pinning, and the reviews listing."""
@@ -2807,18 +2635,20 @@ def drafts_scenario(binary: str, workdir: str) -> int:
             urlencode({"text": ""}).encode(),
             "application/x-www-form-urlencoded",
         )
-        c.ok("drafts: approve answers the panel", status == 200, f"got {status}")
-        approve_hits = [h for h in _FakeAgentHandler.hits if h["path"].endswith("/approve")]
-        c.ok("drafts: agent saw the approve", len(approve_hits) >= 1, "no approve hit")
-        _, body, _ = s.request("GET", "/partials/messages")
-        listing = body.decode("utf-8", "replace")
         c.ok(
-            "drafts: approved draft reached the thread",
-            "+441632960555" in listing,
-            "thread for the draft destination missing",
+            "drafts: approve re-renders the drafts panel",
+            status == 200 and b'id="wp-drafts"' in body,
+            f"got {status}",
         )
-        draft_thread = _thread_id_for(s, "smoke agent draft")
-        c.ok("drafts: draft text landed as a bubble", bool(draft_thread), "draft bubble missing")
+        approve_hits = [h for h in _FakeAgentHandler.hits if h["path"] == "/reviews/d-smoke-1/approve"]
+        c.ok(
+            "drafts: approve relays to the agent's draft id",
+            len(approve_hits) >= 1,
+            f"hits={[h['path'] for h in _FakeAgentHandler.hits]}",
+        )
+        # The agent (stack-side) is the one that SENDS an approved draft
+        # through its own bridge — webphone's contract here is only the
+        # relay + the panel, not the thread bubble.
 
         body_bytes, ctype = multipart_body([("to", "+441632960556"), ("body", "hint")])
         status, _, _ = s.request("POST", "/messages/ai-draft", body_bytes, ctype)
@@ -3175,7 +3005,6 @@ def main() -> int:
         rc = max(rc, enroll_scenario(binary, workdir))
         rc = max(rc, msglifecycle_scenario(binary, workdir))
         rc = max(rc, ratelimit_scenario(binary, workdir))
-        rc = max(rc, adminswitch_scenario(binary, workdir))
         rc = max(rc, drafts_scenario(binary, workdir))
         rc = max(rc, push_scenario(binary, workdir))
         return rc

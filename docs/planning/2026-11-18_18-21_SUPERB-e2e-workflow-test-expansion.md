@@ -114,7 +114,7 @@ flowchart TD
 
 Legend: ID — task — (est). Status column maintained during execution: `[ ]` → `[x]`.
 
-### A. Smoke run_checks additions (CI black-box, plugs into `scripts/webphone-smoke.py`)
+### A. Smoke run_checks additions (CI black-box, plugs into `scripts/webphone-smoke.py`) — LANDED 2026-11-18: `smoke: 92 passed, 0 failed` (was 63 checks; +29 workflow checks incl. csp-report 204/413, manifest/favicon, export zip, snippets, contacts CRUD/import/export, flags pin/archive/mute, send/deep-link/gone-notice, MMS attachment fence+type, fax send/document/inbound). A11 quick-cap was REPLACED by the over-long 422 (the 5-quick cap is a UI rendering fact, not a server fence — verified in cqrs/readmodels).
 
 | ID  | Task                                                             | Est |
 | --- | ---------------------------------------------------------------- | --- |
@@ -155,7 +155,7 @@ Legend: ID — task — (est). Status column maintained during execution: `[ ]` 
 | A35 | fax: document endpoint 200 + pdf content type                    | 8m  |
 | A36 | run_checks verdict lines + local run green                       | 8m  |
 
-### B. Smoke new scenarios (own boots; scenario-function pattern + main() wiring)
+### B. Smoke new scenarios (own boots; scenario-function pattern + main() wiring) — LANDED 2026-11-18 (B01-B18, B28-B35): msglifecycle 17/0 (webhook gateway + switchable fake provider), ratelimit 7/0 (login/compose/hooks/csrf lanes; the login lane drives SUCCESSFUL logins — loopback does not verify credentials, and CSRF-class rejections die upstream of the limiter), drafts 11/0 (fake review API), push 13/0 (fake ntfy; A07-A09 relocated here). B19-B27 (admin/switch black-box) DEFERRED: both surfaces require a MAPPED login (passkey/OIDC) — `isAdminSession` reads `sess.LoginEmail`, empty for extension logins, and no black-box lane can drive WebAuthn or a full RS256 OIDC IdP from the smoke; the Go chain train (C) covers cross-owner admin reads instead.
 
 | ID  | Task                                                                             | Est |
 | --- | -------------------------------------------------------------------------------- | --- |
