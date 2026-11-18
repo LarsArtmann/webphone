@@ -75,6 +75,13 @@ const (
 	hookBurst     = 60
 	contactsLimit = 60
 	contactsBurst = 60
+	// Note autosaves (2026-11-18): the note editors save on every typing
+	// pause (250ms debounce), so the PUT lane rides its OWN bucket — the
+	// contacts grade would fence a sustained editing session mid-note.
+	// Generous but bounded: the write is one journal append + projection
+	// row, capped at 4 KiB by the body limit.
+	noteAutosaveLimit = 120
+	noteAutosaveBurst = 30
 	// Line switches (D1): session-gated + CSRF-gated, but each POST
 	// directory-verifies against the PBX — the bucket fences a runaway
 	// client from hammering the directory, not an attacker.
@@ -398,6 +405,7 @@ func New(deps Deps) http.Handler {
 		eventsLimiter:        newKeyedRateLimiter(hookLimit, hookBurst),
 		csrfLimiter:          newKeyedRateLimiter(hookLimit, hookBurst),
 		contactsLimiter:      newKeyedRateLimiter(contactsLimit, contactsBurst),
+		noteAutosaveLimiter:   newKeyedRateLimiter(noteAutosaveLimit, noteAutosaveBurst),
 		switchLimiter:        newKeyedRateLimiter(switchLimit, switchBurst),
 		cspLimiter:           newKeyedRateLimiter(cspLimit, cspBurst),
 		traceLimiter:         newKeyedRateLimiter(traceLimit, traceBurst),
@@ -649,7 +657,7 @@ func New(deps Deps) http.Handler {
 	// island hides the decoration when this fails.
 	protected.Handle("GET /api/dials", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.DialSlots)))
 	protected.Handle("GET /api/calls/{id}/note", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.GetCallNote)))
-	protected.Handle("PUT /api/calls/{id}/note", h.contactsLimiter.Middleware()(httputil.MaxBodySize(api.TranscriptBodyLimit)(http.HandlerFunc(apiHandlers.SetCallNote))))
+	protected.Handle("PUT /api/calls/{id}/note", h.noteAutosaveLimiter.Middleware()(httputil.MaxBodySize(api.TranscriptBodyLimit)(http.HandlerFunc(apiHandlers.SetCallNote))))
 	// The 409 remedy made real: deleting a slot outright frees the
 	// per-owner cap (the empty-body PUT keeps the slot).
 	protected.Handle("DELETE /api/calls/{id}/note", h.contactsLimiter.Middleware()(http.HandlerFunc(apiHandlers.DeleteCallNote)))

@@ -31,6 +31,10 @@ type handlers struct {
 	eventsLimiter   *httputil.KeyedRateLimiter
 	csrfLimiter     *httputil.KeyedRateLimiter
 	contactsLimiter *httputil.KeyedRateLimiter
+	// Note autosave PUTs (2026-11-18): the editors save on every typing
+	// pause, so the lane gets its OWN bucket — sustained editing must not
+	// drain the contacts grade it used to share.
+	noteAutosaveLimiter *httputil.KeyedRateLimiter
 	// Flight-recorder snapshot requests (GET /internal/flightrecorder):
 	// each hit writes a full execution-trace window + gzip to disk — a
 	// tight bucket keeps a runaway poller from filling the trace dir.

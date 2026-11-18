@@ -659,7 +659,7 @@ func TestHistoryTranscriptReviewStates(t *testing.T) {
 	}
 
 	present := render(group("present", "Guten Morgen", 90), true)
-	for _, want := range []string{"wp-call-review", "Guten Morgen", "Confidence:", "90%"} {
+	for _, want := range []string{"wp-call-review", "Guten Morgen", "Confidence:", "90%", `data-note-status="call-1"`, "wp-note-status"} {
 		if !strings.Contains(present, want) {
 			t.Errorf("present review must render %q: %s", want, present)
 		}

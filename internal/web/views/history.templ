@@ -304,6 +304,12 @@ templ TranscriptSection(props HistoryPanelProps) {
 							title={ T(props.Lang, "history.note.aiDraft") }
 						>{ T(props.Lang, "history.note.aiDraft") }</button>
 					}
+					// The autosave state line (2026-11-18): shell.js fills it
+					// as the debounce fires ("Saving…"/"Saved"/"Not saved").
+					// Server-rendered empty — a freshly painted box IS the
+					// saved state. English per D3 (shell copy), aria-live so
+					// a save the user did not click is still announced.
+					<span class="wp-note-status" data-note-status={ group.CallID } aria-live="polite"></span>
 				</div>
 			</details>
 		}
