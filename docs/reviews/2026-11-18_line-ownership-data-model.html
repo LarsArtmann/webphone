@@ -897,175 +897,351 @@
 
         <!-- Scorecard -->
         <section id="scorecard" class="scorecard">
-          <div class="score-card score-good">
-            <div class="score">8</div>
-            <div class="label">Items passing</div>
-          </div>
-          <div class="score-card score-warn">
-            <div class="score">3</div>
-            <div class="label">Warnings</div>
-          </div>
           <div class="score-card score-bad">
             <div class="score">1</div>
-            <div class="label">Blockers</div>
+            <div class="label">Root cause found</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">7</div>
+            <div class="label">Symptoms cataloged</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">7</div>
+            <div class="label">Shipped in this train</div>
           </div>
           <div class="score-card">
-            <div class="score">12</div>
-            <div class="label">Total reviewed</div>
+            <div class="score">1</div>
+            <div class="label">Deliberately kept (config shape)</div>
           </div>
         </section>
 
-        <!-- Summary -->
+<!-- Summary -->
         <section id="summary">
           <h2><span class="num">00</span>Summary</h2>
           <p>
-            Replace this with the bottom-line verdict. A good summary tells the
-            reader whether the subject is ready, what the biggest risk is, and
-            what one action would unlock the most value.
+            The platform's central concept — a phone LINE (an extension plus the
+            number it presents) — did not exist as a type. Ownership was three
+            parallel string maps joined ad hoc at every consumer, the wire
+            carried two uncorrelated lists, the line switcher showed bare PBX
+            codes, and Settings had no surface that answered "which numbers are
+            mine." Twelve visible symptoms, one root cause.
           </p>
-          <div class="callout callout-amber">
+          <div class="callout callout-teal">
             <strong>The bottom line</strong>
-            State the verdict plainly. If the report is blocking, say so. If
-            it's mostly positive, lead with that.
+            Shipped. <code>authmap.Line</code> is now the one owned-identity
+            type; the composition root joins the operator's three feeds exactly
+            once; the wire carries a typed <code>lines</code> array; the
+            switcher, whoami, Settings ("My account") and the Admin inventory
+            render numbers, not codes. SSO-only deployments resolve their
+            identity too — a latent gap the redesign surfaced and closed.
           </div>
         </section>
 
-        <!-- Strengths -->
+<!-- Strengths -->
         <section id="strengths">
-          <h2><span class="num">&#9670;</span>What's already excellent</h2>
+          <h2><span class="num">&#9670;</span>What was already right</h2>
           <p>
-            Before the criticism: acknowledge what works. This builds trust and
-            keeps the report from reading like a pure complaint list.
+            The redesign builds on rails earlier reviews laid: the join landed
+            in ONE place because the composition-root doctrine already existed.
           </p>
 
           <div class="strengths">
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength one</strong>
-                <span>Explain why it matters and what it enables.</span>
+                <strong>authmap was already the one mapping home</strong>
+                <span
+                  >The 2026-10-28 doctrine ("both login modes resolve through
+                  one implementation") meant adding the Line type extended an
+                  existing seam instead of founding a second one.</span
+                >
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
-                <strong>Specific strength two</strong>
+                <strong>domain.Extension was already branded</strong>
                 <span
-                  >Reference files, metrics, or patterns where possible.</span
+                  >ParseExtension/MustParseExtension made the join
+                  type-carrying for free; no string-typed extension entered the
+                  model during the migration.</span
+                >
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The Android wire tests pin behavior, not shape</strong>
+                <span
+                  >The JVM suite pins the credential arms only, so the
+                  numbers/extensions&rarr;lines wire change broke no consumer
+                  while keeping the contract honest.</span
                 >
               </div>
             </div>
           </div>
         </section>
 
-        <!-- Findings -->
+<!-- Findings -->
         <section id="findings">
-          <h2><span class="num">01</span>Findings</h2>
-          <p>These are the issues that need attention, ordered by impact.</p>
+          <h2><span class="num">01</span>Problem catalog</h2>
+          <p>
+            Seven findings, one root cause each traces back to. All seven
+            shipped fixed in this train.
+          </p>
 
-          <!-- Issue 1 -->
           <div class="issue issue-critical" id="issue-1">
             <span class="severity severity-critical"
-              >Blocking &middot; High impact</span
+              >Critical &middot; P1/P4 missing entity</span
             >
-            <h3>Critical issue title</h3>
+            <h3>No Line type — the concept the product sells</h3>
             <div class="where">
-              path/to/file.go:42-58 &middot; short context
+              config.go / authmap.go / admin.go &middot; three maps keyed by raw
+              strings, joined ad hoc
             </div>
             <p>
-              Describe the problem, cite the code or behavior, and explain why
-              it matters to the reader's goals.
+              Ownership lived in <code>auth.users</code> (email&rarr;extensions),
+              <code>identities</code> (extension&rarr;DID) and
+              <code>extension_password_files</code> (extension&rarr;file). The
+              platform's owned unit — a line — was the implicit intersection of
+              three string keys, reconstructed at every consumer.
             </p>
-            <pre><code>// Example of the problematic pattern
-func BadExample() {}</code></pre>
+            <pre><code>// before: the line was whatever these three agree on
+Users map[string]PasskeyUser      // email -> []extension
+Identities map[string]string      // extension -> DID
+ExtensionPasswordFiles map[string]string</code></pre>
             <div class="callout callout-teal">
-              <strong>Fix: recommended action</strong>
-              State the concrete fix, including file names, function names, or
-              configuration changes.
+              <strong>Fix: shipped</strong>
+              <code>authmap.Line{Extension, DID}</code> owned by
+              <code>authmap.User.Lines</code>; the join happens once in
+              <code>app.mappedUsers</code> and every consumer reads the typed
+              model.
             </div>
           </div>
 
-          <!-- Issue 2 -->
-          <div class="issue issue-important" id="issue-2">
-            <span class="severity severity-important"
-              >Important &middot; Medium impact</span
+          <div class="issue issue-critical" id="issue-2">
+            <span class="severity severity-critical"
+              >Critical &middot; P5 uncorrelatable wire</span
             >
-            <h3>Important issue title</h3>
-            <div class="where">path/to/another.go:12-19</div>
+            <h3>The session wire carried two parallel lists</h3>
+            <div class="where">
+              server/auth/session_identity.go &middot; numbers[] + extensions[]</div>
             <p>
-              Explain the risk. Important issues are not blockers but would make
-              a careful reviewer hesitate before shipping.
+              <code>numbers</code> was DEDUPED and DID-less extensions were
+              DROPPED, so index i of one list did not map to index i of the
+              other. The switcher could not label an option with its number even
+              if it wanted to — the shape made the product's best UX
+              inexpressible.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix: shipped</strong>
+              One typed array — <code>lines: [{extension, did}]</code> — the
+              active line identified by equality with the top-level extension.
+              OpenAPI golden + Android fixtures regenerated.
+            </div>
+          </div>
+
+          <div class="issue issue-important" id="issue-3">
+            <span class="severity severity-important"
+              >Important &middot; P9 duplicated joins</span
+            >
+            <h3>The same join written four times</h3>
+            <div class="where">
+              app.go (three adapter loops) + admin.Numbers + numbersFor</div>
+            <p>
+              PasskeyRuntime, SSOConfig and AdminService each parsed the same
+              config mapping independently; two more joins lived in the admin
+              inventory and the whoami builder. Five sites could disagree about
+              who owns what.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix: shipped</strong>
+              One helper (<code>app.mappedUsers</code>) feeds all three
+              adapters; admin and whoami read the model.
+            </div>
+          </div>
+
+          <div class="issue issue-important" id="issue-4">
+            <span class="severity severity-important"
+              >Important &middot; latent gap closed</span
+            >
+            <h3>SSO-only deployments resolved no identity</h3>
+            <div class="where">server/auth/session_identity.go &middot; UserAuth-only resolution</div>
+            <p>
+              Whoami resolved identity through the passkey service only; with
+              SSO configured and passkey off, a mapped login showed a bare
+              extension. The redesign's one resolution home
+              (<code>MappedIdentityWith</code>) covers both authmaps.
             </p>
           </div>
 
-          <!-- Issue 3 -->
-          <div class="issue issue-nice" id="issue-3">
-            <span class="severity severity-nice"
-              >Nice to have &middot; Low impact</span
+          <div class="issue issue-important" id="issue-5">
+            <span class="severity severity-important"
+              >Important &middot; unenforced invariants</span
             >
-            <h3>Nice-to-have improvement</h3>
-            <div class="where">docs/ or config</div>
+            <h3>Line-less users and duplicate lines were representable</h3>
+            <div class="where">authmap.New &middot; now two new codes</div>
             <p>
-              Minor polish, documentation gaps, or future-proofing suggestions
-              go here.
+              A mapped user with zero extensions, or one naming the same
+              extension twice (the switcher dedups nothing), compiled fine and
+              failed at login time.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix: shipped</strong>
+              <code>authmap.user.lines</code> and
+              <code>authmap.user.duplicate_line</code> rejections at Map
+              construction; registry regenerated in the same commit.
+            </div>
+          </div>
+
+          <div class="issue issue-nice" id="issue-6">
+            <span class="severity severity-nice"
+              >UX &middot; the "stupid" feeling, made precise</span
+            >
+            <h3>A phone product that spoke in PBX codes</h3>
+            <div class="where">island session.js / ui.js / Settings</div>
+            <p>
+              The line switcher listed "1001, 1002". The whoami line flattened
+              every owned number into one comma join. Settings had no account
+              surface at all — the one place that should answer "which numbers
+              are mine" did not exist.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix: shipped</strong>
+              Switcher options read "DID &middot; extension"; whoami leads with
+              the ACTIVE line's number; Settings renders a "My account" group
+              with every owned line and the active mark; Admin user rows carry
+              the same labeled chips.
+            </div>
+          </div>
+
+          <div class="issue issue-nice" id="issue-7">
+            <span class="severity severity-nice"
+              >Considered &middot; deliberately kept</span
+            >
+            <h3>The operator's three-map config shape stays</h3>
+            <div class="where">config.go / NixOS module / stack assertions</div>
+            <p>
+              A cohesive <code>auth.users[email].lines[]</code> config shape was
+              designed and declined: it would compete with identities +
+              password files as a second home for the same facts ("declare the
+              mapping ONCE" is a standing rejection), and the typed NixOS lane
+              asserts the current shape. The MODEL joined them; the operator
+              interface is unchanged — one config edit still changes ownership.
             </p>
           </div>
         </section>
 
-        <!-- Proposal -->
+<!-- Proposal -->
         <section id="proposal">
-          <h2><span class="num">02</span>What the solution could look like</h2>
+          <h2><span class="num">02</span>The model that shipped</h2>
           <p>
-            If the findings were fixed, what would the new state be? Show the
-            target API, structure, or workflow.
+            Three concepts, three invariants, one join. This is the current
+            tree, not a proposal.
           </p>
-          <pre><code>// Target state after the recommended changes
-type BetterAPI struct {
-    Field string
+          <pre><code>// internal/authmap — the ONE ownership model
+type Line struct {
+    Extension domain.Extension // branded; ParseExtension mints
+    DID       string           // verbatim owner formatting; "" = undeclared
+}
+func (l Line) Display() string // DID when declared, else extension:
+                                // the ONE fallback rule, server + island
+
+type User struct {
+    Email       string
+    DisplayName string
+    Lines       []Line // >= 1 by construction; Lines[0] = session default
+    Admin       bool   // identity property, resolved per request
+}
+func (u User) SessionLine() Line
+func (u User) Has(domain.Extension) bool
+
+// the join happens ONCE (internal/app):
+func mappedUsers(users map[string]config.PasskeyUser,
+                 identities map[string]string) map[string]authmap.User
+
+// the wire (server/auth): one typed array, active by equality
+type SessionLine struct {
+    Extension string `json:"extension"`
+    DID       string `json:"did,omitempty"`
 }</code></pre>
           <div class="callout callout-teal">
-            <strong>This is the target</strong>
-            Summarize why this state is better and what it unlocks.
+            <strong>Why this state is better</strong>
+            Ownership disagreements are now compile errors (a second join cannot
+            type-check into existence); the switcher's best possible UX became
+            the cheap one; and every surface answers "whose number is this"
+            from one place.
           </div>
         </section>
 
-        <!-- Appendix -->
+<!-- Appendix -->
         <section id="appendix">
-          <h2><span class="num">03</span>Appendix</h2>
+          <h2><span class="num">03</span>Appendix — the train, verified</h2>
           <p>
-            Methodology, links to related files, or a priority matrix can live
-            here.
+            Series: 4th review (2026-10-25) opened the type-safety roadmap; 5th
+            (2026-11-11) re-verified it. This review's scope was the owner's
+            question, and it ends SHIPPED rather than filed.
           </p>
           <table class="compare">
             <thead>
               <tr>
-                <th>Issue</th>
+                <th>Finding</th>
                 <th>Severity</th>
-                <th>Effort</th>
                 <th>Status</th>
+                <th>Pinned by</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td>Issue one</td>
+                <td>Line type + one join home</td>
                 <td class="no">Critical</td>
-                <td>Low</td>
-                <td class="no">Open</td>
+                <td class="yes">Shipped</td>
+                <td>authmap_test.go, app admin_test.go</td>
               </tr>
               <tr>
-                <td>Issue two</td>
+                <td>Typed lines wire</td>
+                <td class="no">Critical</td>
+                <td class="yes">Shipped</td>
+                <td>openapi golden, session_switch/passkey tests</td>
+              </tr>
+              <tr>
+                <td>Duplicated joins collapsed</td>
                 <td class="no">Important</td>
-                <td>Medium</td>
-                <td class="yes">In progress</td>
+                <td class="yes">Shipped</td>
+                <td>app.mappedUsers (single helper)</td>
+              </tr>
+              <tr>
+                <td>SSO-only identity resolution</td>
+                <td class="no">Important</td>
+                <td class="yes">Shipped</td>
+                <td>MappedIdentityWith + ssoStub</td>
+              </tr>
+              <tr>
+                <td>Ownership invariants</td>
+                <td class="no">Important</td>
+                <td class="yes">Shipped</td>
+                <td>authmap.user.* codes in error-contract.md</td>
+              </tr>
+              <tr>
+                <td>Number-labeled surfaces</td>
+                <td class="no">UX</td>
+                <td class="yes">Shipped</td>
+                <td>account_test.go, session-switch.test.mjs</td>
+              </tr>
+              <tr>
+                <td>Cohesive config shape</td>
+                <td>Considered</td>
+                <td class="no">Declined</td>
+                <td>one-home-per-fact doctrine (this report &sect;7)</td>
               </tr>
             </tbody>
           </table>
         </section>
 
-        <!-- Footer -->
+<!-- Footer -->
         <footer class="footer">
           <p>
-            Generated YYYY-MM-DD &middot; Reviewed against version X.Y.Z
+            Generated 2026-11-18 &middot; Verified against the shipped tree (go test ./internal/... green)
             &middot; All claims verified against source code where noted
           </p>
         </footer>
