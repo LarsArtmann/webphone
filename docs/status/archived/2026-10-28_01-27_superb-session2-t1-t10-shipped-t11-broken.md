@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-18 (docs-health v10 sweep, cadence drain): the session-2 arc's first half — its 10 shipped rows are ledger history (all named commits in git history), its 4 partial + 6 not-started rows adjudicated against today's tree (T11 healed same day and fully shipped 2026-10-28, the T12-T18 surfaces live in AGENTS doctrine, T19 superseded by the dial-gate landing, T22-T24 are pbx-artmann's board); both archive gates passed before the move.
+
 # Status — SUPERB session 2: T1–T10 shipped, T11 broken mid-ship
 
 Claims verified as of **2026-10-28 01:27 CET** on `main` (push/CI statements rot fastest; the
@@ -12,6 +14,8 @@ todo list rebuilt, main RED (registry drift), and ended at 01:27 with T1–T10 s
 landed, and **T11 half-landed and red** (details in (d)).
 
 ## a) FULLY DONE (shipped, verified, in git)
+
+<!-- check-rows:ledger -->
 
 | Task                              | What landed                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Verification                                  |
 | --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------- |
@@ -35,30 +39,30 @@ LSP's download path anomaly, not tampering.
 
 ## b) PARTIALLY DONE
 
-1. **T11 automatic review job (issue #8) — ~70% and RED (see (d))**: server dispatch endpoint
-   (`POST /api/calls/{id}/review`, WithoutCancel job, in-flight guard, shared idem with the
-   manual button, agentAudit via the new `AuditAgent` seam method, route wired) is committed and
-   builds. Island auto-fire on settle + pending button state is committed. **MISSING**: the
-   `reviewQueued` i18n key in BOTH island maps (my edit failed twice on stale-read and I moved
-   on), the M66 server tests, the apidocs entry + status row for the new route, fmt/type/lint
-   gates.
-2. **Push state**: `main` is ahead 3 (daemon commits 01:06–01:24, contents unknown to me).
-   CI last verified green at the 23:50 push; everything after is unverified. The 00:32 push was
-   NOT CI-checked by me either.
-3. **Stack browser E2E** (owed after the T3/T7 served-markup changes): not run this session.
-4. **CHANGELOG**: T7 (tri-state row) and T11 (auto review) have no `[Unreleased]` entries yet.
+~~1. **T11 automatic review job (issue #8) — ~70% and RED (see (d))**: server dispatch endpoint
+(`POST /api/calls/{id}/review`, WithoutCancel job, in-flight guard, shared idem with the
+manual button, agentAudit via the new `AuditAgent` seam method, route wired) is committed and
+builds. Island auto-fire on settle + pending button state is committed. **MISSING**: the
+`reviewQueued` i18n key in BOTH island maps (my edit failed twice on stale-read and I moved
+on), the M66 server tests, the apidocs entry + status row for the new route, fmt/type/lint
+gates.~~ → done 2026-11-18 (adjudicated at the cadence drain): healed the SAME DAY by the 01-43 sibling and fully shipped 2026-10-28 — the review route is registered in apidocs.go (the doctrine hole closed), the reviewQueued key landed in both maps, History renders present/pending/failed + the wp-review-unconfigured chip; AGENTS carries the artifact bullet.
+~~2. **Push state**: `main` is ahead 3 (daemon commits 01:06–01:24, contents unknown to me).
+CI last verified green at the 23:50 push; everything after is unverified. The 00:32 push was
+NOT CI-checked by me either.~~ → done 2026-11-18 (adjudicated at the cadence drain): stale history — the daemon swept those commits, later pushes were CI-verified green (the 2.13.0 release train and every train since runs the ci-verdict ritual).
+~~3. **Stack browser E2E** (owed after the T3/T7 served-markup changes): not run this session.~~ → routed 2026-11-18 (adjudicated at the cadence drain): satisfied by the release-runbook obligation — the 2.13.0 release train (and its stack E2E leg) ran after the T3/T7 markup; the obligation is per-release, not per-train.
+~~4. **CHANGELOG**: T7 (tri-state row) and T11 (auto review) have no `[Unreleased]` entries yet.~~ → done 2026-11-18 (adjudicated at the cadence drain): the CHANGELOG bar was met by the release-train entries — the auto_review leg and the tri-state row carry their lines under the shipped releases; nothing owed.
 
 ## c) NOT STARTED
 
-- **T12–T15** (#8 artifact slot in readmodels, History render with pending/failed/present, the
-  "review not configured" chip, the model-routing decision doc).
-- **T16–T18** (#7 per-remote redial cooldown: read-model, typeahead chip, hardening tests).
-- **T19** (external-claims verification: dialer PRs #20/#54 at source, the "matching Kith issue").
-- **T22–T24** (pbx-artmann: dnsblockd CA trust, token provisioning, e2e verify — tri-repo ritual).
-- **T25–T27** (docs polish A/B, harvest + tails — including the plan-errata rows for the T2 slot
-  ruling, T21's LOCAL-only verdict, and M62's 15s-vs-95s budget deviation).
-- gh CLI auth **expired mid-session** (401 on `gh issue view 8`) — issue bodies/comments now
-  blocked until re-auth; #8's design was reconstructed from TODO_LIST + the plan doc.
+~~- **T12–T15** (#8 artifact slot in readmodels, History render with pending/failed/present, the~~ → done 2026-11-18 (adjudicated at the cadence drain): all four landed — the call_reviews readmodels slot (2000-cap REJECT), the History present/pending/failed render, the wp-review-unconfigured chip, and the M22 model-routing decisions doc (the confidence marker was REJECTED on provider evidence, which IS the decision record).
+"review not configured" chip, the model-routing decision doc).
+~~- **T16–T18** (#7 per-remote redial cooldown: read-model, typeahead chip, hardening tests).~~ → done 2026-11-18 (adjudicated at the cadence drain): the dial-gate seam shipped 2026-10-28 (issue #7) — readmodels.DialWindows, the inline deny state + Dial-again chip (no modal), the smoke dialgate scenario; the hardening tests are the TestDialGate family.
+~~- **T19** (external-claims verification: dialer PRs #20/#54 at source, the "matching Kith issue").~~ → superseded 2026-11-18 (adjudicated at the cadence drain): the server-side dial-gate landed instead, making the external dialer-PR lane moot for the phone; the verify-before-filing gate itself is now a standing skill.
+~~- **T22–T24** (pbx-artmann: dnsblockd CA trust, token provisioning, e2e verify — tri-repo ritual).~~ → routed 2026-11-18 (adjudicated at the cadence drain): cross-repo — pbx-artmann's own pareto plans own these (its 2026-11-15 v2 board carries the trunk/token/e2e rows); not this repo's ledger.
+~~- **T25–T27** (docs polish A/B, harvest + tails — including the plan-errata rows for the T2 slot~~ → done 2026-11-18 (adjudicated at the cadence drain): the named errata landed — T21's LOCAL-only verdict is the AGENTS harness doctrine today, the T23 section carries the matrix budget, and the docs-health sweeps own the harvest discipline.
+ruling, T21's LOCAL-only verdict, and M62's 15s-vs-95s budget deviation).
+~~- gh CLI auth **expired mid-session** (401 on `gh issue view 8`) — issue bodies/comments now~~ → done 2026-11-18 (adjudicated at the cadence drain): resolved — gh auth has worked continuously since (this session filed issue #253 and posted its comment without a 401).
+blocked until re-auth; #8's design was reconstructed from TODO_LIST + the plan doc.
 
 ## d) TOTALLY FUCKED UP (honest section)
 

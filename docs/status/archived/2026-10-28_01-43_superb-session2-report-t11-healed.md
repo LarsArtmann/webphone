@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-18 (docs-health v10 sweep, cadence drain): the session-2 arc's second half — same disposition as its 01-27 sibling (10 shipped rows ledger-marked, the partial/not-started rows adjudicated against today's tree; every "RED" this report carries was healed the same day and shipped 2026-10-28); both archive gates passed before the move.
+
 # Status — SUPERB session 2 (continued): T1–T10 shipped, T11 healing
 
 Claims verified as of **2026-10-28 01:43 CET** on `main` — `main...origin/main` **ahead 8**
@@ -12,6 +14,8 @@ Supersedes `docs/status/2026-10-28_01-27_superb-session2-t1-t10-shipped-t11-brok
 M66 server tests.
 
 ## a) FULLY DONE (shipped, verified, in git)
+
+<!-- check-rows:ledger -->
 
 | Task                                         | What landed                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Verification                               |
 | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
@@ -35,28 +39,28 @@ download-path anomaly.
 
 ## b) PARTIALLY DONE
 
-1. **T11 automatic review job (#8) — ~85%**: server dispatch endpoint
-   (`POST /api/calls/{id}/review`: WithoutCancel job, in-flight guard, shared summarize idem
-   with the manual button, `AuditAgent` seam method, route wired, builds) + island auto-fire on
-   settle with the pending/retryable button are COMMITTED and the island suite is GREEN again.
-   **Still missing**: the apidocs entry + apidocs_test status row for the new route (the
-   machine-contract doctrine — currently a silent drift), the M66 server tests (happy/502/
-   unconfigured/no-transcript/duplicate/in-flight), `nix fmt` + island type/lint gates on the
-   swept files, and a full-suite green before push.
-2. **Push/CI state**: ahead 8, none of the 01:06–01:43 commits CI-verified; the 23:50 push was
-   the last verified green.
-3. **Stack browser E2E** (owed after T3/T7/T11 served-markup changes): not run.
-4. **CHANGELOG**: T7 and T11 entries still owed.
+~~1. **T11 automatic review job (#8) — ~85%**: server dispatch endpoint
+(`POST /api/calls/{id}/review`: WithoutCancel job, in-flight guard, shared summarize idem
+with the manual button, `AuditAgent` seam method, route wired, builds) + island auto-fire on
+settle with the pending/retryable button are COMMITTED and the island suite is GREEN again.
+**Still missing**: the apidocs entry + apidocs_test status row for the new route (the
+machine-contract doctrine — currently a silent drift), the M66 server tests (happy/502/
+unconfigured/no-transcript/duplicate/in-flight), `nix fmt` + island type/lint gates on the
+swept files, and a full-suite green before push.~~ → done 2026-11-18 (adjudicated at the cadence drain): identical arc to the 01-27 sibling — healed same day, fully shipped 2026-10-28, the review route registered in apidocs.go, the i18n key landed, History render + chip live.
+~~2. **Push/CI state**: ahead 8, none of the 01:06–01:43 commits CI-verified; the 23:50 push was
+the last verified green.~~ → done 2026-11-18 (adjudicated at the cadence drain): stale history — swept and CI-verified by every later train (the ci-verdict ritual is standing doctrine).
+~~3. **Stack browser E2E** (owed after T3/T7/T11 served-markup changes): not run.~~ → routed 2026-11-18 (adjudicated at the cadence drain): satisfied by the release-runbook obligation — the 2.13.0 release train ran the stack E2E leg after this markup.
+~~4. **CHANGELOG**: T7 and T11 entries still owed.~~ → done 2026-11-18 (adjudicated at the cadence drain): met by the release-train CHANGELOG entries; nothing owed.
 
 ## c) NOT STARTED
 
-- **T12–T15** (#8 artifact slot, History render pending/failed/present, "review not configured"
-  chip, model-routing decision doc).
-- **T16–T18** (#7 redial cooldown: read-model, typeahead chip, hardening tests).
-- **T19** (dialer PRs #20/#54 source verification + the matching Kith issue).
-- **T22–T24** (pbx-artmann CA trust, token provisioning, e2e — tri-repo ritual).
-- **T25–T27** (docs polish, harvest, plan errata).
-- **gh auth**: expired mid-session (401) — blocks all issue/PR work until re-auth.
+~~- **T12–T15** (#8 artifact slot, History render pending/failed/present, "review not configured"~~ → done 2026-11-18 (adjudicated at the cadence drain): all four shipped 2026-10-28 (AGENTS § Automatic review artifact — the readmodels slot, the History render, the chip, the M22 decisions doc).
+chip, model-routing decision doc).
+~~- **T16–T18** (#7 redial cooldown: read-model, typeahead chip, hardening tests).~~ → done 2026-11-18 (adjudicated at the cadence drain): the dial-gate seam shipped 2026-10-28 (issue #7).
+~~- **T19** (dialer PRs #20/#54 source verification + the matching Kith issue).~~ → superseded 2026-11-18 (adjudicated at the cadence drain): the server-side dial-gate landed instead; the external dialer lane is moot for the phone.
+~~- **T22–T24** (pbx-artmann CA trust, token provisioning, e2e — tri-repo ritual).~~ → routed 2026-11-18 (adjudicated at the cadence drain): pbx-artmann's own pareto board owns these rows.
+~~- **T25–T27** (docs polish, harvest, plan errata).~~ → done 2026-11-18 (adjudicated at the cadence drain): the named errata landed in later docs sweeps (T21's LOCAL-only verdict is the AGENTS harness doctrine today).
+~~- **gh auth**: expired mid-session (401) — blocks all issue/PR work until re-auth.~~ → done 2026-11-18 (adjudicated at the cadence drain): resolved — gh has worked continuously since (issue #253 filed this session).
 
 ## d) TOTALLY FUCKED UP (honest)
 

@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-18 (docs-health v10 sweep, cadence drain): the oldest live report (21d) — its 12 done rows are ledger history (re-verified: all four named commits in history, the seam files exist today, the module check green), its 4 partial + 4 not-started rows adjudicated (3 routed to standing TODO rows, 1 REAL gap harvested as the hardening-parity pin row); both archive gates passed before the move.
+
 # Nix-review train — full status + brutal self-review
 
 **Claims verified as of 2026-10-28 01:00 CET.** Push/CI statements rot fastest; everything below names its evidence and its verification moment. Session scope: the "Is our .nix configured superbly?" review train (all 20 `.nix` files) plus everything that went wrong and right while executing it. Nothing outside this session is re-researched here.
@@ -11,6 +13,8 @@ A checklist-driven nix-review (skill: nix-review) over all 20 `.nix` files (2,77
 ---
 
 ## a) FULLY DONE (verified)
+
+<!-- check-rows:ledger -->
 
 | #  | Item                                                                                                                                                                                                                                                                                                                                                                                                 | Evidence                                                                                                                                                                               |
 | -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -29,19 +33,19 @@ A checklist-driven nix-review (skill: nix-review) over all 20 `.nix` files (2,77
 
 ## b) PARTIALLY DONE
 
-| # | Item                                          | What's missing                                                                                                                                                                                                                                 |
-| - | --------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1 | buildflow at train START (AGENTS.md rule)     | Ran it at train END in fast mode instead. It ran, it triaged clean — but the rule's purpose (early detection of daemon-mangled `.buildflow.yml`) was served only accidentally                                                                  |
-| 2 | buildflow timing-regression attribution       | Board-wide +54…250% inflations (even 4ms steps) attributed to machine load (my own two VM boots + concurrent session); `buildflow timings --regressions` NOT run to confirm. Inference, labeled as such                                        |
-| 3 | The 3 transient buildflow failures from run 1 | Never identified by name (log lost to `tail -6`); they healed on `--failed-only` rerun. Load-transience is plausible, unproven                                                                                                                 |
-| 4 | aarch64 verification                          | `nix flake check` omitted aarch64 (standard warning); no `nix build .#webphone --system aarch64-linux` spot-check after the module refactor. Eval-only refactor makes risk ~nil, but the repo's ELF-byte doctrine was not exercised this train |
+| #  | Item | What's missing                                |
+| -- | ---- | --------------------------------------------- |
+| ~~ | 1    | buildflow at train START (AGENTS.md rule)     |
+| ~~ | 2    | buildflow timing-regression attribution       |
+| ~~ | 3    | The 3 transient buildflow failures from run 1 |
+| ~~ | 4    | aarch64 verification                          |
 
 ## c) NOT STARTED (identified this session, deliberately deferred)
 
-- TODO_LIST harvest of section (f) below (docs-health HARVEST owed if this session continues).
-- TODO_LIST line 124 stale-phrase fix ("crm options exist in package/nixos-module.nix today" — they live in `package/crm.nix` now).
-- Dedup-registry ruling for the now-duplicated hardening directive list (see d/e).
-- Anything in the consuming stack repo — deliberately out of scope (module output is byte-identical; the stack needs nothing until the next release train re-pins).
+~~- TODO_LIST harvest of section (f) below (docs-health HARVEST owed if this session continues).~~ → done 2026-11-18 (adjudicated at the cadence drain): the §f items were superseded by the TODO_LIST reopen-trigger registry (2026-11-04, T25), the ONE consolidated harvest home.
+~~- TODO_LIST line 124 stale-phrase fix ("crm options exist in package/nixos-module.nix today" — they live in `package/crm.nix` now).~~ → done 2026-11-18 (adjudicated at the cadence drain): the stale phrase is GONE from TODO_LIST (rg confirms no match); fixed by a later sweep, nothing owed.
+~~- Dedup-registry ruling for the now-duplicated hardening directive list (see d/e).~~ → harvested 2026-11-18 (adjudicated at the cadence drain): the ruling NEVER landed — docs/dedup-registry.md carries no hardening row and the duplicated systemd directive list is still comment-tied only; rowed in TODO_LIST as the hardening-parity pin question.
+~~- Anything in the consuming stack repo — deliberately out of scope (module output is byte-identical; the stack needs nothing until the next release train re-pins).~~ → done 2026-11-18 (adjudicated at the cadence drain): correctly out of scope then and now — the stack re-pins ride the release-runbook dance, and the v2.14 release train's runbook state is rowed in TODO_LIST.
 
 ## d) TOTALLY FUCKED UP (self-inflicted, all recovered)
 
