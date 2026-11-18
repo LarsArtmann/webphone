@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **One home for the direction chip markup** (2026-11-18): the
+  History, Admin and Fax rows' inbound/outbound glyph chip renders
+  through one shared `dirChip` component instead of four hand-kept
+  copies (byte-identical output; the Admin CDR row's parity with the
+  History row is structural now, not comment-enforced). The Admin
+  numbers inventory likewise composes its no-DID/owners meta into one
+  `adminNumberMeta` line.
 - **Line-labeled surfaces share one fallback rule** (2026-11-18): the
   Settings account rows and both Admin inventories (users, phone
   numbers) render line names computed once via `authmap.Line.Display`
