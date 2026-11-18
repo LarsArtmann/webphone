@@ -103,7 +103,8 @@ func (h *Handlers) SetCallNote(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "note too long", http.StatusRequestEntityTooLarge)
 		return
 	}
-	if err := h.deps.Notes.Set(r.Context(), sess.Extension, callID, body.Body); err != nil {
+	changed, err := h.deps.Notes.Set(r.Context(), sess.Extension, callID, body.Body)
+	if err != nil {
 		if errors.Is(err, readmodels.ErrNoteListFull) {
 			http.Error(w, "the note list is full — delete another note first", http.StatusConflict)
 			return
@@ -113,10 +114,16 @@ func (h *Handlers) SetCallNote(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "could not save the note", http.StatusInternalServerError)
 		return
 	}
-	// The save succeeded: nudge every surface the owner has open. The nudge is
-	// payload-less (no note text on the wire) and fires only on success, so a
-	// conflict or a store failure leaves other tabs alone.
-	h.deps.Server.NotifyCallNotesChanged(sess.Extension)
+	// The nudge rides CHANGES only: a same-body autosave echo is
+	// journal-silent (the store answered changed=false), and other
+	// tabs hold exactly what they already show; nudging an echo would
+	// make every open tab re-fetch and re-render the same unchanged
+	// note. A real save still publishes exactly one payload-less nudge
+	// (no note text on the wire), so a conflict or a store failure
+	// leaves other tabs alone.
+	if changed {
+		h.deps.Server.NotifyCallNotesChanged(sess.Extension)
+	}
 	w.WriteHeader(http.StatusNoContent)
 }
 

@@ -66,7 +66,14 @@ type CallNoteView struct {
 // implementation.
 type NotesGate interface {
 	Get(ctx context.Context, owner domain.Extension, callID string) (*CallNoteView, error)
-	Set(ctx context.Context, owner domain.Extension, callID, body string) error
+	// Set upserts the owner's note for one call; the returned bool
+	// names whether the slot CHANGED. The editors autosave on every
+	// typing pause, so a same-body save over the existing slot is an
+	// echo (what a re-mounted editor PUTs right after its GET):
+	// echoes are journal-silent, and the SSE nudge the handler owes
+	// other tabs rides changes only. A first save always changes (the
+	// slot mints, whatever the body).
+	Set(ctx context.Context, owner domain.Extension, callID, body string) (bool, error)
 	SetDisposition(ctx context.Context, owner domain.Extension, callID string, disposition domain.Disposition) error
 	// Delete removes one call's note slot outright (the explicit
 	// DELETE lane — the empty-body clear keeps the slot, the delete

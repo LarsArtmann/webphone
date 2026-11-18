@@ -121,13 +121,15 @@ func TestCallNoteNilSeamIs503(t *testing.T) {
 	}
 }
 
-// TestCallNoteSaveNudgesHistory pins P2-3: every successful note save publishes
+// TestCallNoteSaveNudgesHistory pins P2-3: every CHANGING note save publishes
 // exactly one payload-less "notes" SSE event to the OWNER's hub, so a second
 // open tab showing the same call re-fetches instead of holding a stale box.
 //
 // The nudge is deliberately not published on FAILURE: a 409 (note list full) or
-// a store error must leave other tabs exactly as they were — a nudge there
-// would make every open tab re-fetch and re-render the same unchanged note.
+// a store error must leave other tabs exactly as they were. It is not
+// published on ECHOES either: a same-body autosave save (what a re-mounted
+// editor PUTs right after its GET) is journal-silent, and other tabs already
+// hold exactly what they show.
 func TestCallNoteSaveNudgesHistory(t *testing.T) {
 	srv := newTestServer(t)
 	c := clientFor(t, srv)
@@ -158,6 +160,42 @@ func TestCallNoteSaveNudgesHistory(t *testing.T) {
 	case ev := <-events:
 		t.Fatalf("second push %q: a save owes exactly one nudge", ev.Event)
 	case <-time.After(200 * time.Millisecond):
+	}
+
+	// Wait until the save is client-visible, then PUT the same body:
+	// an autosave echo is still a 204 but owes NO nudge (the journal
+	// already holds this note).
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		_, body := getCallNote(t, c, "call-nudge-note")
+		if strings.Contains(string(body), "called back") {
+			break
+		}
+		if time.Now().After(deadline) {
+			t.Fatalf("first save never became visible: %s", body)
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	if resp, _ := putCallNote(t, c, "call-nudge-note", "called back"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("echo save: %d, want the same 204", resp.StatusCode)
+	}
+	select {
+	case ev := <-events:
+		t.Fatalf("echo pushed %q: an unchanged body owes no nudge", ev.Event)
+	case <-time.After(200 * time.Millisecond):
+	}
+
+	// A real revision publishes exactly one more.
+	if resp, _ := putCallNote(t, c, "call-nudge-note", "called back twice"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("revision save: %d", resp.StatusCode)
+	}
+	select {
+	case ev := <-events:
+		if ev.Event != "notes" || len(ev.Data) != 0 {
+			t.Fatalf("revision nudge = %q (%.40s), want payload-less notes", ev.Event, ev.Data)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("no nudge for a real revision within 2s")
 	}
 }
 

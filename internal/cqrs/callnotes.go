@@ -333,18 +333,34 @@ func noteDispatchError(err error, op string) error {
 // existing disposition. A NEW call past the cap refuses with the
 // ErrNoteListFull Conflict contract. The D7 await keeps the read-your-writes
 // beat (the History panel re-fetches right behind the SSE nudge).
-func (s *Notes) Set(ctx context.Context, owner domain.Extension, callID, body string) error {
+//
+// The returned bool names whether the slot changed: the editors
+// autosave on every typing pause, and a save whose body already is the
+// slot's body is an echo (what a re-mounted editor PUTs right after
+// its GET). Echoes skip the dispatch entirely; the decider's same-body
+// guard stays the authority under races (a pre-read that races a
+// concurrent write at worst dispatches a save the decider then no-ops,
+// which is the pre-echo behavior, not a new one). A first save always
+// changes (the slot mints, whatever the body).
+func (s *Notes) Set(ctx context.Context, owner domain.Extension, callID, body string) (bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	view, err := s.Get(ctx, owner, callID)
+	if err != nil {
+		return false, err
+	}
+	if view != nil && view.Body == body {
+		return false, nil
+	}
 	if err := dispatchOwnerCommand(ctx, s.sys, "note.save", owner.String(),
 		func(base *command.BasicCommand) *SaveCallNote {
 			return &SaveCallNote{BasicCommand: base, Owner: owner.String(), CallID: callID, Body: body, At: time.Now()}
 		}); err != nil {
-		return noteDispatchError(err, "note.save")
+		return false, noteDispatchError(err, "note.save")
 	}
 	awaitOwnWrite(ctx, s.sys, NotesStreamType, owner.String(), notesCollection, s.vers)
-	return nil
+	return true, nil
 }
 
 // SetDisposition records the operator's verdict on the same slot; the

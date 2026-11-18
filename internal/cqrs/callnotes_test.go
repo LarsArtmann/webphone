@@ -52,7 +52,7 @@ func TestNoteMergeSemantics(t *testing.T) {
 		t.Fatalf("absent note must read nil: %v %+v", err, view)
 	}
 
-	if err := s.Set(ctx, owner, "call-a", "discussed the invoice"); err != nil {
+	if _, err := s.Set(ctx, owner, "call-a", "discussed the invoice"); err != nil {
 		t.Fatalf("Set note: %v", err)
 	}
 	view := awaitNote(t, s, owner, "call-a")
@@ -81,7 +81,7 @@ func TestNoteMergeSemantics(t *testing.T) {
 		time.Sleep(5 * time.Millisecond)
 	}
 
-	if err := s.Set(ctx, owner, "call-a", "v2"); err != nil {
+	if _, err := s.Set(ctx, owner, "call-a", "v2"); err != nil {
 		t.Fatalf("Set note v2: %v", err)
 	}
 	deadline = time.Now().Add(5 * time.Second)
@@ -108,7 +108,7 @@ func TestNoteOwnerScopingKeepsSlotsApart(t *testing.T) {
 	s := bootNotes(t, t.TempDir())
 	ctx := context.Background()
 
-	if err := s.Set(ctx, mustExt(t, "1001"), "call-a", "private"); err != nil {
+	if _, err := s.Set(ctx, mustExt(t, "1001"), "call-a", "private"); err != nil {
 		t.Fatalf("Set: %v", err)
 	}
 	if view, err := s.Get(ctx, mustExt(t, "1002"), "call-a"); err != nil || view != nil {
@@ -171,6 +171,27 @@ func TestNoteSameBodySaveIsNotARevision(t *testing.T) {
 	}
 }
 
+// TestNoteSetNamesWhetherItChanged pins the changed verdict the
+// handler's SSE nudge gates on: an echo (the same body over the
+// existing slot) answers false without dispatching; a revision
+// answers true.
+func TestNoteSetNamesWhetherItChanged(t *testing.T) {
+	s := bootNotes(t, t.TempDir())
+	ctx := context.Background()
+	owner := mustExt(t, "1001")
+
+	if changed, err := s.Set(ctx, owner, "call-echo", "first"); err != nil || !changed {
+		t.Fatalf("a first save changes: %v %v", changed, err)
+	}
+	awaitNote(t, s, owner, "call-echo")
+	if changed, err := s.Set(ctx, owner, "call-echo", "first"); err != nil || changed {
+		t.Fatalf("a same-body echo must not change: %v %v", changed, err)
+	}
+	if changed, err := s.Set(ctx, owner, "call-echo", "second"); err != nil || !changed {
+		t.Fatalf("a revision changes: %v %v", changed, err)
+	}
+}
+
 // TestNoteStateSurvivesRestart pins the journal-reload fold.
 func TestNoteStateSurvivesRestart(t *testing.T) {
 	dir := t.TempDir()
@@ -178,7 +199,7 @@ func TestNoteStateSurvivesRestart(t *testing.T) {
 	owner := mustExt(t, "1001")
 
 	s := bootNotes(t, dir)
-	if err := s.Set(ctx, owner, "call-a", "across boots"); err != nil {
+	if _, err := s.Set(ctx, owner, "call-a", "across boots"); err != nil {
 		t.Fatalf("Set: %v", err)
 	}
 	if err := s.SetDisposition(ctx, owner, "call-a", domain.DispositionAnswered); err != nil {
@@ -220,7 +241,7 @@ func TestNoteVerdictFirstAndClearedBody(t *testing.T) {
 	}
 	var err error
 
-	if err := s.Set(ctx, owner, "call-9", "rueckruf vereinbart"); err != nil {
+	if _, err := s.Set(ctx, owner, "call-9", "rueckruf vereinbart"); err != nil {
 		t.Fatalf("set note: %v", err)
 	}
 	deadline := time.Now().Add(5 * time.Second)
@@ -241,7 +262,7 @@ func TestNoteVerdictFirstAndClearedBody(t *testing.T) {
 		time.Sleep(5 * time.Millisecond)
 	}
 
-	if err := s.Set(ctx, owner, "call-9", ""); err != nil {
+	if _, err := s.Set(ctx, owner, "call-9", ""); err != nil {
 		t.Fatalf("clear: %v", err)
 	}
 	deadline = time.Now().Add(5 * time.Second)
@@ -291,7 +312,7 @@ func TestNoteDeleteFreesTheCapSlot(t *testing.T) {
 	ctx := context.Background()
 	owner := mustExt(t, "1001")
 
-	if err := s.Set(ctx, owner, "call-a", "keep me or delete me"); err != nil {
+	if _, err := s.Set(ctx, owner, "call-a", "keep me or delete me"); err != nil {
 		t.Fatalf("Set: %v", err)
 	}
 	awaitNote(t, s, owner, "call-a")
@@ -314,7 +335,7 @@ func TestNoteDeleteFreesTheCapSlot(t *testing.T) {
 
 	// The freed slot is RECLAIMABLE: a new note for the same call is a
 	// fresh save, not a resurrection.
-	if err := s.Set(ctx, owner, "call-a", "fresh prose"); err != nil {
+	if _, err := s.Set(ctx, owner, "call-a", "fresh prose"); err != nil {
 		t.Fatalf("reclaim: %v", err)
 	}
 	awaitNote(t, s, owner, "call-a")
@@ -329,18 +350,18 @@ func TestNoteDeleteFreesCapPressure(t *testing.T) {
 	owner := mustExt(t, "1001")
 
 	for i := range readmodels.NotesMaxPerExtension {
-		if err := s.Set(ctx, owner, fmt.Sprintf("call-%03d", i), "filler"); err != nil {
+		if _, err := s.Set(ctx, owner, fmt.Sprintf("call-%03d", i), "filler"); err != nil {
 			t.Fatalf("fill %d: %v", i, err)
 		}
 	}
-	if err := s.Set(ctx, owner, "call-new", "one past the cap"); !errors.Is(err, readmodels.ErrNoteListFull) {
+	if _, err := s.Set(ctx, owner, "call-new", "one past the cap"); !errors.Is(err, readmodels.ErrNoteListFull) {
 		t.Fatalf("cap: %v, want ErrNoteListFull", err)
 	}
 	if err := s.Delete(ctx, owner, "call-000"); err != nil {
 		t.Fatalf("free a slot: %v", err)
 	}
 	awaitNoteGone(t, s, owner, "call-000")
-	if err := s.Set(ctx, owner, "call-new", "one past the cap"); err != nil {
+	if _, err := s.Set(ctx, owner, "call-new", "one past the cap"); err != nil {
 		t.Fatalf("the freed slot must admit the new note: %v", err)
 	}
 	awaitNote(t, s, owner, "call-new")

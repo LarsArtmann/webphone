@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Autosave echoes are silent end to end** (2026-11-18): a note PUT
+  whose body already is the stored note still answers 204 but no
+  longer journals an event or publishes the live-update nudge (other
+  tabs re-fetching on an echo would re-render the same unchanged
+  note). Real revisions keep publishing exactly one payload-less
+  nudge.
 - **One home for the direction chip markup** (2026-11-18): the
   History, Admin and Fax rows' inbound/outbound glyph chip renders
   through one shared `dirChip` component instead of four hand-kept
