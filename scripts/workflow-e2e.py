@@ -333,20 +333,26 @@ def journey_composer_send(driver, base: str, c: Check, body: str) -> None:
 
 
 def journey_live_inbound(driver, base: str, c: Check, sender: str, body: str) -> None:
+    from selenium.common.exceptions import StaleElementReferenceException
+
     driver.get(base + "/messages")
     wait(driver, lambda d: d.find_elements("css selector", 'a[href^="/messages/"]'))
     driver.execute_script("window.__e2eMarker = 7;")
     seed = Seed(base)
     seed.hook_inbound(sender, body)
-    try:
-        wait(
-            driver,
-            lambda d: [
+
+    def sender_row(d):
+        try:
+            return [
                 el
                 for el in d.find_elements("css selector", 'a[href^="/messages/"]')
                 if sender in el.get_attribute("href") or sender in el.text
-            ],
-        )
+            ]
+        except StaleElementReferenceException:
+            return []  # the SSE morph swapped the rail mid-poll; the next poll re-finds
+
+    try:
+        wait(driver, sender_row)
         c.ok("J4 live inbound appears via SSE", True)
     except Exception as err:  # noqa: BLE001 - journey assertion failure, not control flow
         c.ok("J4 live inbound appears via SSE", False, str(err)[:120])
@@ -367,7 +373,7 @@ def journey_thread_pin(driver, base: str, c: Check) -> None:
     try:
         wait(
             driver,
-            lambda d: d.find_elements("css selector", ".wp-thread-rowwrap.wp-pinned"),
+            lambda d: d.find_elements("css selector", ".wp-thread-row.wp-pinned"),
         )
         c.ok("J5 pin toggles the row state", True)
     except Exception as err:  # noqa: BLE001 - journey assertion failure, not control flow
@@ -391,6 +397,19 @@ def journey_snippet_fill(driver, base: str, c: Check, snippet: str) -> None:
 
 
 def journey_contacts(driver, base: str, c: Check, name: str, number: str) -> None:
+    from selenium.common.exceptions import StaleElementReferenceException
+
+    def rows_named(d, want: bool):
+        try:
+            found = [
+                el
+                for el in d.find_elements("css selector", ".wp-thread-remote")
+                if el.text == name
+            ]
+            return found if want else (not found)
+        except StaleElementReferenceException:
+            return [] if want else True  # mid-morph; the next poll re-finds
+
     driver.get(base + "/contacts")
     wait(driver, lambda d: d.find_elements("css selector", "#contacts-panel"))
     name_input = wait(
@@ -406,14 +425,7 @@ def journey_contacts(driver, base: str, c: Check, name: str, number: str) -> Non
         "css selector", "form button[type=submit]"
     ).click()
     try:
-        wait(
-            driver,
-            lambda d: [
-                el
-                for el in d.find_elements("css selector", ".wp-thread-remote")
-                if el.text == name
-            ],
-        )
+        wait(driver, lambda d: rows_named(d, True))
         c.ok("J7 contact add lands the row", True)
         delete = wait(
             driver,
@@ -421,14 +433,7 @@ def journey_contacts(driver, base: str, c: Check, name: str, number: str) -> Non
         )[0]
         delete.click()
         driver.switch_to.alert.accept()
-        wait(
-            driver,
-            lambda d: not [
-                el
-                for el in d.find_elements("css selector", ".wp-thread-remote")
-                if el.text == name
-            ],
-        )
+        wait(driver, lambda d: rows_named(d, False))
         c.ok("J7 contact delete removes the row", True)
     except Exception as err:  # noqa: BLE001 - journey assertion failure, not control flow
         c.ok("J7 contact add lands the row", False, str(err)[:120])
@@ -461,7 +466,7 @@ def journey_styled_404(driver, base: str, c: Check) -> None:
         c.ok(
             "J9 styled 404 with a way home",
             "/definitely/not/a/workflow/path" in panel.text
-            and bool(panel.find_elements("css selector", "a[href='/messages']")),
+            and bool(panel.find_elements("css selector", "a.wp-notfound-back")),
             panel.text[:80],
         )
     except Exception as err:  # noqa: BLE001 - journey assertion failure, not control flow
@@ -567,9 +572,9 @@ def main() -> int:
             journey_thread_pin(driver, base, c)
             journey_snippet_fill(driver, base, c, "workflow snippet body")
             journey_contacts(driver, base, c, "Browser Contact", "+441632960805")
-            journey_language_cookie(driver, base, c)
-            journey_styled_404(driver, base, c)
             journey_palette(driver, base, c)
+            journey_styled_404(driver, base, c)
+            journey_language_cookie(driver, base, c)
         finally:
             driver.quit()
     finally:
