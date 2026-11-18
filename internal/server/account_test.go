@@ -71,7 +71,7 @@ func TestAdminUserRowsLabelOwnedLines(t *testing.T) {
 	admin := mintedClient(t, server, sessions, "1001", "boss@example.com")
 	_, body := admin.do(http.MethodGet, "/partials/admin", nil, "")
 	page := string(body)
-	for _, want := range []string{"+49301111 · 1001", "+49302222 · 1002"} {
+	for _, want := range []string{`class="wp-admin-line"`, "+49301111", " · 1001", "+49302222", " · 1002"} {
 		if !strings.Contains(page, want) {
 			t.Errorf("admin user rows must label lines with their numbers (missing %q):\n%s", want, page)
 		}

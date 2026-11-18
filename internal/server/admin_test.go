@@ -27,6 +27,10 @@ func lines(exts ...domain.Extension) []authmap.Line {
 	return out
 }
 
+func didLine(raw, did string) authmap.Line {
+	return authmap.Line{Extension: domain.MustParseExtension(raw), DID: did}
+}
+
 // The admin surface's behavior pins: the gate (anonymous 401, non-admin
 // styled 404, admin 200), the nav's conditional tab, cross-owner
 // visibility in every section, the read-only thread deep link, the
@@ -50,10 +54,12 @@ func adminPasswordFile(t testing.TB, dir, extension, password string) string {
 func newAdminServer(t testing.TB, phoneAPIURL string) (*testServer, session.Store) {
 	t.Helper()
 	dir := t.TempDir()
+	// DID-bearing lines (the app adapter's join shape): the users
+	// inventory renders "DID · extension" chips from THESE.
 	mapped, err := authmap.New(
 		map[string]authmap.User{
-			"boss@example.com":   {Email: "boss@example.com", DisplayName: "The Boss", Lines: lines(domain.MustParseExtension("1001")), Admin: true},
-			"worker@example.com": {Email: "worker@example.com", Lines: lines(domain.MustParseExtension("1002"))},
+			"boss@example.com":   {Email: "boss@example.com", DisplayName: "The Boss", Lines: []authmap.Line{didLine("1001", "+49301111")}, Admin: true},
+			"worker@example.com": {Email: "worker@example.com", Lines: []authmap.Line{didLine("1002", "+49302222")}},
 		},
 		map[string]string{
 			"1001": adminPasswordFile(t, dir, "1001", "boss-pw"),
