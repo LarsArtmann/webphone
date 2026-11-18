@@ -241,32 +241,36 @@ function hasLiveCall() {
 }
 
 // renderLineSwitcher draws the whoami line's switcher when the session's
-// user maps to MORE THAN ONE extension (the identity's extensions list;
-// single-line and extension logins render nothing — the served markup
-// stays untouched). Selecting another line POSTs /api/session/switch and
-// reloads: the boot probe then re-registers, resubscribes and re-renders
-// every surface for the new line — one boot path, no half-switched
-// state. Failures announce and reset the select; a live call blocks the
+// user owns MORE THAN ONE line (the identity's lines list; single-line
+// and extension logins render nothing — the served markup stays
+// untouched). Options are LABELED with the line's number: a phone
+// product switches between numbers, not between PBX codes — the label
+// is "DID · extension", the bare extension when no DID is declared.
+// Selecting another line POSTs /api/session/switch and reloads: the
+// boot probe then re-registers, resubscribes and re-renders every
+// surface for the new line — one boot path, no half-switched state.
+// Failures announce and reset the select; a live call blocks the
 // switch outright (the reload would tear it down).
 /** @param {IslandSessionIdentity} data */
 export function renderLineSwitcher(data) {
   const whoami = document.querySelector(".whoami");
   if (!whoami) return;
   document.getElementById("wp-ext-switch")?.remove();
-  const extensions = Array.isArray(data.extensions)
-    ? data.extensions.filter(Boolean)
-    : [];
-  if (extensions.length < 2) return;
+  const lines = Array.isArray(data.lines) ? data.lines.filter(Boolean) : [];
+  if (lines.length < 2) return;
   const select = document.createElement("select");
   select.id = "wp-ext-switch";
   select.className = "wp-ext-switch";
   select.setAttribute("aria-label", t("lineSwitchLabel"));
   select.title = t("lineSwitchLabel");
-  for (const extension of extensions) {
+  for (const line of lines) {
+    if (!line.extension) continue;
     const option = document.createElement("option");
-    option.value = extension;
-    option.textContent = extension;
-    if (extension === data.extension) option.selected = true;
+    option.value = line.extension;
+    option.textContent = line.did
+      ? `${line.did} · ${line.extension}`
+      : line.extension;
+    if (line.extension === data.extension) option.selected = true;
     select.append(option);
   }
   select.addEventListener("change", () => {

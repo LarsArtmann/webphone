@@ -46,17 +46,28 @@ function reset() {
   while (toastsHost().firstChild) toastsHost().firstChild.remove();
 }
 
-const multi = { extension: "1000", extensions: ["1000", "1001", "1002"] };
+// The mapped identity wire (2026-11-18 ownership model): every owned
+// line carries its extension plus its presented number when declared —
+// the switcher labels its options from THIS, never from bare codes.
+const multi = {
+  extension: "1000",
+  did: "+49 30 111",
+  lines: [
+    { extension: "1000", did: "+49 30 111" },
+    { extension: "1001", did: "+49 30 222" },
+    { extension: "1002" },
+  ],
+};
 
 test("renders nothing without a multi-line mapped identity", () => {
   reset();
-  session.renderLineSwitcher({ extension: "1000", extensions: ["1000"] });
+  session.renderLineSwitcher({ extension: "1000", lines: [{ extension: "1000" }] });
   assert.equal(switcher(), undefined, "single line: no switcher");
   session.renderLineSwitcher({ extension: "1000" });
-  assert.equal(switcher(), undefined, "no extensions list: no switcher");
+  assert.equal(switcher(), undefined, "no lines list: no switcher");
 });
 
-test("renders one option per mapped line, current selected", () => {
+test("renders one labeled option per owned line, current selected", () => {
   reset();
   session.renderLineSwitcher(multi);
   const select = switcher();
@@ -64,6 +75,13 @@ test("renders one option per mapped line, current selected", () => {
   assert.deepEqual(
     select.children.map((option) => option.value),
     ["1000", "1001", "1002"],
+  );
+  // Labels are the line's NUMBER, not the PBX code — the whole point of
+  // the ownership wire. An undeclared DID falls back to the bare
+  // extension (the one fallback rule, server-mirrored).
+  assert.deepEqual(
+    select.children.map((option) => option.textContent),
+    ["+49 30 111 · 1000", "+49 30 222 · 1001", "1002"],
   );
   assert.equal(select.children[0].selected, true);
   assert.equal(select.attrs["aria-label"], t("lineSwitchLabel"));

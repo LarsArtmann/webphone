@@ -349,30 +349,22 @@ export function dialFromUi(number) {
   els.dialForm.requestSubmit();
 }
 
-// whoamiLine renders the signed-in line for an identity-bearing session
-// payload: the display name plus the user's numbers when the deployment
-// knows them, the plain extension otherwise. It lives in this NEUTRAL
-// module (not the passkey feature module) because BOTH login paths
-// render it — the resume path and the passkey path carry the same
-// fields.
+// whoamiLine renders the signed-in identity: the human's name plus the
+// ACTIVE line's number (the line you act from), the bare extension
+// otherwise. It lives in this NEUTRAL module (not the passkey feature
+// module) because BOTH login paths render it — the resume path and the
+// passkey path carry the same fields. The user's OTHER lines live in
+// the switcher beside this line, not in a flattened number join.
 /**
  * @param {IslandSessionIdentity} data
  * @returns {string}
  */
 export function whoamiLine(data) {
-  const numbers = Array.isArray(data.numbers)
-    ? data.numbers.filter(Boolean)
-    : [];
+  const active = data.did || `${data.extension}@${sipDomain}`;
   if (data.display_name) {
-    const tail = numbers.length
-      ? numbers.join(", ")
-      : `${data.extension}@${sipDomain}`;
-    return `${data.display_name} · ${tail}`;
+    return `${data.display_name} · ${active}`;
   }
-  if (numbers.length) {
-    return `${data.extension}@${sipDomain} · ${numbers.join(", ")}`;
-  }
-  return `${data.extension}@${sipDomain}`;
+  return active;
 }
 
 // The diagnostics gear (K5): collapses the ICE panel + event log on

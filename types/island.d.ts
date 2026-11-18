@@ -157,17 +157,27 @@ interface IslandSessionIdentity {
   extension: string;
   did?: string;
   display_name?: string;
-  numbers?: string[];
-  /** Every extension mapped to the signed-in user (mapped logins only);
-   * more than one renders the line switcher. The switch endpoint
-   * re-validates membership server-side — this list is a suggestion. */
-  extensions?: string[];
+  /** Every line the signed-in user owns (mapped logins only), in
+   * mapping order — extension plus the number it presents when the
+   * deployment declared one. More than one renders the line switcher;
+   * the switch endpoint re-validates ownership server-side — this list
+   * is a suggestion, never authority. */
+  lines?: IslandSessionLine[];
   password?: string;
   sip_credential?: string;
   agent_mode?: string;
   agent_mode_source?: string;
   agent_default_mode?: string;
   agent_modes?: string[];
+}
+
+/** One owned line of the session identity wire (the 2026-11-18
+ * ownership model): the active line is the entry whose extension
+ * equals the top-level extension — the client never correlates
+ * parallel lists. */
+interface IslandSessionLine {
+  extension: string;
+  did?: string;
 }
 
 /** The ringing-stack button handlers ui.js renders (calls.js supplies them). */
