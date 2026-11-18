@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The island note status line announces politely** (2026-11-18): the
+  ended-call card's autosave status span carries `aria-live="polite"`,
+  matching the History row's span (one save status, one screen-reader
+  contract on both editor surfaces); pinned in the island debounce
+  spec.
 - **Autosave echoes are silent end to end** (2026-11-18): a note PUT
   whose body already is the stored note still answers 204 but no
   longer journals an event or publishes the live-update nudge (other
