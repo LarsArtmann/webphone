@@ -227,7 +227,10 @@ DONE 2026-11-10 (trains cabdeeb8 / abed8247 / 3d1c1ba2 / 12cee0b3): C1 is the on
       (pareto T18/F61): `scripts/ui-night-pair.sh` schedules both runs
       as transient systemd user units (run 1 now, run 2 +8h) with the
       env credentials — the wall-clock half stays a scheduled item until
-      the first pair actually runs.
+      the first pair actually runs. The pair's verdict is MECHANICAL
+      since 2026-11-17 (tracking-plan ledger, T25 row): STABLE = same
+      pass count × ±25% duration band × ring-clean × noise floor (bar =
+      floor+1pp rounded UP, never down).
 
 - [x] **Self-test pins for the dormant paths** (tracking plan T28's
       second half + §f-3 partial): the EMPTY-run discard guard
@@ -242,7 +245,9 @@ DONE 2026-11-10 (trains cabdeeb8 / abed8247 / 3d1c1ba2 / 12cee0b3): C1 is the on
       call in a tracked run (first prod session + a caller; the
       selector is verified against the served markup 2026-11-10 —
       phone.templ renders `hidden`, the island toggles the attribute).
-      Home: the tracking plan's T13 live half.
+      Home: the tracking plan's T13 live half. The night pair's verdict
+      rule (2026-11-17, tracking-plan ledger) treats a fired ring-guard
+      as pair-invalidating, so both prod asks can ride ONE window.
 
 ### BuildFlow tool-disposition residue (harvested 2026-11-08 from the 2026-10-11 findings-zeroing plan — one home now)
 
@@ -1665,4 +1670,4 @@ T01–T16 are done (strikes live in the plan file + the 2026-11-12 status report
       ~~- [ ] **Smoke boot probes + lychee excludes** (same report §f8/9/15): smoke greps the `window.PBX_CONFIG.agent` flag at boot and round-trips the notes API on a fresh binary; lychee excludes for docs/architecture-understanding/archived + docs/research/archived (the preflight warn).~~ → done 2026-11-15 (plan T05): the agent scenario (6 checks: off ⇒ config.js silent + disabled-seam 404; on ⇒ "agent":true + the route reaches the transcript gate) + smoke 13c notes PUT/GET/DELETE roundtrip (58 passed, 0 failed); lychee excludes already carried the two plan paths — docs/status/archived joined them (the T16 drain's archive dir).
       ~~- [ ] **Typed `settings.textagent.*` module lane** (same report §f36): the summarize chain made the textagent seam first-class; the NixOS module has no typed option for it (raw `settings` only).~~ → done 2026-11-15 (plan T06): package/textagent.nix (`enable`/`url`/`secretFile`, LoadCredential, eval-time both-or-neither + absolute-http(s) mirror + the store-leak guard joins the secretFile), nix/module-check-textagent.nix pins 4 cases (typed render incl. the sanctioned-file secrets pass, fail-closed halves, raw lane untouched, typed/raw conflict); AGENTS options bullet + CHANGELOG line.
       ~~- [ ] **`buildflow -coverpkg` union coverage step** (docs/status/2026-09-18_16-52_tests-and-architecture-status.html §f7; ROADMAP carries the policy question, this row the mechanical half): add the union pass to the buildflow test-coverage step so the reported number is the cross-package one the coverage baseline records by hand each release.~~ → done 2026-11-15 (plan T08) with an upstream caveat: the installed BuildFlow's test-coverage step CANNOT carry -coverpkg (binary verified — argv carries -coverprofile only, no config key reaches it), so the mechanical half landed as the FIRST recorded union run — **75.8%** cross-package at b9fdcaa0, appended as a dated section in docs/reviews/2026-09-20_coverage-baseline.md (views 1.3% direct vs 27.0% in ./... terms is the structural-undershoot proof) — and the knob ask is drafted for the owner (docs/drafts/2026-11-15_buildflow-test-coverage-coverpkg.md); future re-runs run the union command by hand per the doc's rule until BuildFlow grows the key.
-- [ ] **Refresh the architecture-understanding diagrams** (Low): the 2026-09-30 D2/SVG pair predates the storage-ladder retirement, the push/chat-network packages and the server carve — the "16 packages" graph is two platform generations stale vs the ~38-package reality; regenerate via the architecture-visualization skill, keeping the dated-snapshot convention (new files, old ones stay).
+      ~~- [ ] **Refresh the architecture-understanding diagrams** (Low): the 2026-09-30 D2/SVG pair predates the storage-ladder retirement, the push/chat-network packages and the server carve — the "16 packages" graph is two platform generations stale vs the ~38-package reality; regenerate via the architecture-visualization skill, keeping the dated-snapshot convention (new files, old ones stay).~~ → done 2026-11-17: a NEW dated pair (`2026-11-17_10-03-webphone-architecture{,-improved}.d2/.svg`, old generations kept) derived from the REAL `go list` import-graph dump (per-package ImportPath vs Imports) — 38 production packages, 146 internal edges (internal/arch stays un drawn: test-only, zero non-test files). Current-state fixes over the 11-11 generation: server/auth + config + httpclient + pbx + web/assets nodes added, views→reports and session→pbx and platform→hooks edges made honest, volatile file-count labels dropped. Improved/target updated for what LANDED since 11-11 (readmodels purity + views typed props are no longer deltas — the edge list proves views imports only domain/readmodels/reports/assets): the ONE live delta left is the server/html carve. INDEX.md row added. d2 v0.9.0 (system path), both renders exit 0.
