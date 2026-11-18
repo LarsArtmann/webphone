@@ -1930,7 +1930,8 @@
   --grid-no-island-compact: var(--rail-col-compact) minmax(0, 1fr);
   --grid-door: minmax(0, 1fr) var(--island-col);
   --grid-door-no-island: minmax(0, 1fr);
-  --content-max: 1560px;
+  --header-h: 52px;
+  --content-max: 1120px;
   --shell-gap: 28px;
 }
 :root[data-theme="dark"] {
@@ -2084,6 +2085,7 @@ h3 {
   align-items: center;
   gap: 16px;
   padding: 10px 24px;
+  min-height: var(--header-h);
   border-bottom: var(--hairline);
   background: var(--surface);
   @supports (color: color-mix(in lab, red, red)) {
@@ -2199,12 +2201,10 @@ h3 {
   display: grid;
   grid-template-columns: var(--grid-full);
   gap: var(--shell-gap);
-  padding: 28px 32px;
+  padding: 0 32px 32px 0;
   align-items: start;
   flex: 1;
   width: 100%;
-  max-width: var(--content-max);
-  margin: 0 auto;
 }
 .wp-body-signed-out {
   grid-template-columns: var(--grid-door);
@@ -2214,12 +2214,18 @@ h3 {
 }
 .wp-rail {
   position: sticky;
-  top: 78px;
+  top: var(--header-h);
+  align-self: start;
+  height: calc(100vh - var(--header-h));
+  height: calc(100dvh - var(--header-h));
   display: flex;
   flex-direction: column;
   gap: 12px;
-  align-self: start;
   min-width: 0;
+  padding: 18px 14px 14px;
+  background: var(--surface);
+  border-right: var(--hairline);
+  overflow-y: auto;
 }
 .wp-island {
   position: sticky;
@@ -2230,6 +2236,9 @@ h3 {
   flex-direction: column;
   gap: 16px;
   min-width: 0;
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
   container-type: inline-size;
   container-name: tabcol;
 }
@@ -2244,6 +2253,12 @@ h3 {
   min-height: 0;
 }
 @media (min-width: 901px) {
+  .wp-main-col {
+    padding-top: 24px;
+  }
+  .wp-island {
+    margin-top: 24px;
+  }
   .wp-island-collapsed .wp-body {
     grid-template-columns: var(--grid-no-island);
   }
@@ -2372,7 +2387,7 @@ h3 {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-top: 4px;
+  margin-top: auto;
   padding: 6px 10px;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);

@@ -116,7 +116,16 @@
   --grid-no-island-compact: var(--rail-col-compact) minmax(0, 1fr);
   --grid-door: minmax(0, 1fr) var(--island-col);
   --grid-door-no-island: minmax(0, 1fr);
-  --content-max: 1560px;
+  /* The sticky header's height: the docked rail pins its top edge to this,
+   * so the sidebar starts exactly at the header's bottom border. The header
+   * enforces the same number as min-height, so the two cannot drift apart
+   * by more than a hair (content growth slides the rail a px UNDER the
+   * translucent header, which the blur hides). */
+  --header-h: 52px;
+  /* The workspace column's cap: full-bleed body, centred work area — the
+   * rail and the phone dock own the screen edges, the reading column stays
+   * desk-density even on a 4k canvas. */
+  --content-max: 1120px;
   --shell-gap: 28px;
 }
 
@@ -302,6 +311,9 @@ h3 {
   align-items: center;
   gap: 16px;
   padding: 10px 24px;
+  /* Pinned to the same token the rail docks against (--header-h): the
+   * sidebar's top edge and the header's bottom edge must meet exactly. */
+  min-height: var(--header-h);
   border-bottom: var(--hairline);
   background: color-mix(in srgb, var(--surface) 86%, transparent);
   backdrop-filter: blur(12px);
@@ -438,12 +450,16 @@ h3 {
   display: grid;
   grid-template-columns: var(--grid-full);
   gap: var(--shell-gap);
-  padding: 28px 32px;
+  /* Full-bleed app frame (the GV/CCaaS shape): NO max-width, no auto
+   * margins, and no left padding — the rail column reaches the viewport's
+   * left edge and the workspace centres itself inside the remaining track
+   * (.wp-main-col). The top padding is zero for the same reason: the rail
+   * must meet the header's bottom border exactly, and the workspace and
+   * phone dock carry their own top spacing in the desktop block. */
+  padding: 0 32px 32px 0;
   align-items: start;
   flex: 1;
   width: 100%;
-  max-width: var(--content-max);
-  margin: 0 auto;
 }
 
 /* The signed-out door has no navigation, so it must not reserve a column
@@ -464,15 +480,28 @@ h3 {
  * reloads. Grouped sections, one glyph per destination, the active row a
  * filled accent pill with a leading bar: the shape every GV / CCaaS
  * workspace uses. On phones the SAME markup becomes the fixed bottom bar
- * (responsive block), so there is exactly one nav tree to keep correct. */
+ * (responsive block), so there is exactly one nav tree to keep correct.
+ *
+ * DOCKED, not floating (2026-11-18): the rail is a real sidebar — flush
+ * with the viewport's left edge, running the full height under the sticky
+ * header, its own surface and hairline separating it from the work area.
+ * Inside the old centred body box it rendered as a stray column marooned
+ * in whitespace on any wide monitor; a sidebar that does not sit AT the
+ * side is decoration, not navigation. */
 .wp-rail {
   position: sticky;
-  top: 78px;
+  top: var(--header-h);
+  align-self: start;
+  height: calc(100vh - var(--header-h));
+  height: calc(100dvh - var(--header-h));
   display: flex;
   flex-direction: column;
   gap: 12px;
-  align-self: start;
   min-width: 0;
+  padding: 18px 14px 14px;
+  background: var(--surface);
+  border-right: var(--hairline);
+  overflow-y: auto;
 }
 
 .wp-island {
@@ -485,6 +514,12 @@ h3 {
   flex-direction: column;
   gap: 16px;
   min-width: 0;
+  /* The full-bleed frame hands the workspace a track that grows with the
+   * monitor; the column itself stays capped and centred inside it, so a
+   * 4k canvas gets breathing room, not 2000px conversation lines. */
+  width: 100%;
+  max-width: var(--content-max);
+  margin-inline: auto;
   /* The tab column is a CONTAINER, not a viewport slice: its width is
    * `viewport − island − gap − padding`, so collapsing the island widens
    * it without the viewport changing at all. Every component-level layout
@@ -521,6 +556,16 @@ h3 {
  * lives on <html> (theme-preload.js applies it before first paint) and
  * shell.js §4b owns the toggle. */
 @media (min-width: 901px) {
+  /* The body's top padding is zero (the rail docks against the header),
+   * so the workspace and the phone dock carry their own breathing room. */
+  .wp-main-col {
+    padding-top: 24px;
+  }
+
+  .wp-island {
+    margin-top: 24px;
+  }
+
   .wp-island-collapsed .wp-body {
     grid-template-columns: var(--grid-no-island);
   }
@@ -702,7 +747,10 @@ h3 {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  margin-top: 4px;
+  /* Pinned to the rail's foot: the docked sidebar runs the full viewport
+   * height, and a toggle floating mid-panel reads as lost. auto margin in
+   * the rail's flex column drops it to the bottom edge (GV foot row). */
+  margin-top: auto;
   padding: 6px 10px;
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
