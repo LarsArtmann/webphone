@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-18 (docs-health v10 sweep): cadence drain — the 11-14 sweep's work is all struck with evidence and both archive gates (check-rows --strict, bare-rows) passed before the move; see docs/status/2026-11-18_18-33_SUPERB-open-queue-closeout-status.md for the same-day verdicts.
+
 # Status: docs-health September-corpus sweep (every live 2026-0* file + the six living docs)
 
 **Snapshot:** claims verified 2026-11-14 11:29 CET at HEAD `8f3520bb`

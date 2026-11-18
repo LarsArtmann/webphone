@@ -1,6 +1,6 @@
 # SUPERB open-queue closeout — T09/T17/T18 + the heal train
 
-> STATUS: claims verified as of 2026-11-18 18:33. Push/CI statements rot
+> STATUS: claims verified as of 2026-11-18 19:05. Push/CI statements rot
 > fastest; the verification ledger at the bottom carries the shas.
 
 The owner-GO'd pareto plan
@@ -13,16 +13,16 @@ postmortem — the repair itself shipped 2026-11-15 (`0ca42edd`).
 
 ## a) Landed this session
 
-| Item                                        | What landed                                                                                                                                                        | Commit      |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- |
-| T09 — OIDC lane VM test                     | `webphone-oauth2` GREEN: real stub IdP (loopback https, system-trusted cert), live begin chain (client_id + PKCE S256 + nonce over TLS), cached-provider compose, fresh-process dead-IdP → `sso_error=unavailable`, fail-closed restart cycle (NRestarts + journal + healthz down) | `65299eb9`  |
-| T09 honest findings                          | credential mode is **0440** (systemd LoadCredential; the 0400 guess was wrong — pinned empirically); discovery is boot-lazy but **begin-eager**; the 15-min positive discovery cache composes redirects with the IdP dead | `65299eb9`  |
-| T17 — architecture diagrams refreshed       | `2026-11-17_10-03-webphone-architecture{,-improved}.d2/.svg` derived from the real `go list` graph (38 production packages, 146 internal edges); old generations kept; INDEX row; the ONE live delta left is the server/html carve | daemon-carried (`1e38ae4c`/`f3ad5396`) |
-| T17 evidence: ghost code pin deleted         | `internal/server/api/family_test.go` pinned `push.draft_devices`/`push.draft_send` — codes NO production constructor emits (summary_api wraps `agent.summarize`; the fan is fire-and-forget riding `push.registry`/`push.transport`/`push.*_send`). Deleted + historical note in place; AGENTS § agent-chain prose corrected | daemon-carried (`fd54f189`) |
-| T18 — night-pair verdict rule               | The tracking plan's ledger now defines STABLE mechanically: same pass count × ±25% duration band × ring-clean × noise floor (bar = floor+1pp UP). Both prod-gated TODO rows updated; one owner window covers both | `9dff7438`  |
-| statix red on origin (MINE, fixed same day) | The caddy-free VM rewrite opened a second `auth.` block — statix repeated-keys failed fast-flake-checks on `1a376563`; one-auth-attrset fix pushed | `444b9cbd`  |
-| api-dial tripwire (14)                      | **FIRED**: revisit date passed with the trunk still screened AND the dev-box watcher degraded (pbx-artmann #45/#46 — ssh failing since 11-15). Recommendation flips DEFER → GO per the memo's own logic, but the decision is spend-bearing → routed to the OWNER+ASST sitting (pbx-artmann pareto-v2 N6) | `9dff7438`  |
-| Cross-session registry regen                 | The concurrent authmap train's two new codes (`authmap.user.lines`, `authmap.user.duplicate_line`) carried the `TestErrorCodeRegistryIsFresh -update` regen per the same-push doctrine | this push   |
+| Item                                        | What landed                                                                                                                                                                                                                                                                                                                  | Commit                                 |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------- |
+| T09 — OIDC lane VM test                     | `webphone-oauth2` GREEN: real stub IdP (loopback https, system-trusted cert), live begin chain (client_id + PKCE S256 + nonce over TLS), cached-provider compose, fresh-process dead-IdP → `sso_error=unavailable`, fail-closed restart cycle (NRestarts + journal + healthz down)                                           | `65299eb9`                             |
+| T09 honest findings                         | credential mode is **0440** (systemd LoadCredential; the 0400 guess was wrong — pinned empirically); discovery is boot-lazy but **begin-eager**; the 15-min positive discovery cache composes redirects with the IdP dead                                                                                                    | `65299eb9`                             |
+| T17 — architecture diagrams refreshed       | `2026-11-17_10-03-webphone-architecture{,-improved}.d2/.svg` derived from the real `go list` graph (38 production packages, 146 internal edges); old generations kept; INDEX row; the ONE live delta left is the server/html carve                                                                                           | daemon-carried (`1e38ae4c`/`f3ad5396`) |
+| T17 evidence: ghost code pin deleted        | `internal/server/api/family_test.go` pinned `push.draft_devices`/`push.draft_send` — codes NO production constructor emits (summary_api wraps `agent.summarize`; the fan is fire-and-forget riding `push.registry`/`push.transport`/`push.*_send`). Deleted + historical note in place; AGENTS § agent-chain prose corrected | daemon-carried (`fd54f189`)            |
+| T18 — night-pair verdict rule               | The tracking plan's ledger now defines STABLE mechanically: same pass count × ±25% duration band × ring-clean × noise floor (bar = floor+1pp UP). Both prod-gated TODO rows updated; one owner window covers both                                                                                                            | `9dff7438`                             |
+| statix red on origin (MINE, fixed same day) | The caddy-free VM rewrite opened a second `auth.` block — statix repeated-keys failed fast-flake-checks on `1a376563`; one-auth-attrset fix pushed                                                                                                                                                                           | `444b9cbd`                             |
+| api-dial tripwire (14)                      | **FIRED**: revisit date passed with the trunk still screened AND the dev-box watcher degraded (pbx-artmann #45/#46 — ssh failing since 11-15). Recommendation flips DEFER → GO per the memo's own logic, but the decision is spend-bearing → routed to the OWNER+ASST sitting (pbx-artmann pareto-v2 N6)                     | `9dff7438`                             |
+| Cross-session registry regen                | The concurrent authmap train's two new codes (`authmap.user.lines`, `authmap.user.duplicate_line`) carried the `TestErrorCodeRegistryIsFresh -update` regen per the same-push doctrine                                                                                                                                       | this push                              |
 
 ## b) The plan's final tally
 
@@ -64,18 +64,22 @@ fix-forward protocol nothing of theirs was reverted or patched.
 - `nix build .#checks.x86_64-linux.webphone-oauth2` — GREEN (fails=0,
   ~39s VM run; the earlier reds were iteration, each attributed in the
   TODO strike).
+- `env -u GOEXPERIMENT go test -count=1 ./...` — **0 failures** on the
+  final healed tree (`/tmp/go-final.log`, 19:0x).
 - `nix build .#checks.x86_64-linux.format` (the ONLY format authority) —
-  GREEN on the current tree.
+  GREEN.
 - `tsc -p . --noEmit` — exit 0.
-- Island suite — 341 pass / 0 fail excluding the concurrent session's
-  in-flight `postcall-note.test.mjs` (their file, mid-flight).
-- `go test -count=1 ./...` — final rerun on the healed tree, verdict in
-  this report's commit; the arch registry test healed via `-update`
-  (their 2 codes).
-- `nix flake check` — see the commit message; VM tests included (KVM
-  present).
+- Island suite — 347 pass / 2 fail; BOTH failures are the concurrent
+  train's LANDED `postcall-note.test.mjs` (announce count 4 vs the
+  spec's once-per-episode) — filed as tracker **#253**; the suite minus
+  that file is 341/0.
+- `nix flake check` — blocked by exactly those two legs during this
+  session's runs (island-js = #253; treefmt drifted on their in-flight
+  `session_switch_test.go` and has since SELF-HEALED — the format check
+  above is green). The oauth2 VM leg itself is green; a full flake
+  re-run once #253 closes is the residual.
 - docs-gates battery — PASS (all five doc gates + table-damage +
   strike-safety) before this report's push.
-- CI: watched via `scripts/ci-verdict.sh`; the statix axis on my pushes
-  is green (the ✅ in the `444b9cbd` log); the treefmt axis red is the
-  concurrent train's snapshot, expected to self-heal.
+- CI: the statix axis on my pushes green (✅ in the `444b9cbd` log);
+  the treefmt axis red on `444b9cbd` was their committed snapshot and
+  self-healed; origin's current failure verdict = #253's island leg.
