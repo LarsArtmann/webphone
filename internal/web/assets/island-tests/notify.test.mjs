@@ -27,7 +27,10 @@ test("titleFlashStart flips the title on the interval and stop restores the idle
   // Two half-periods guarantee at least one flip whatever the phase.
   await new Promise((resolve) => setTimeout(resolve, 1900));
   const flipped = document.title === "☎ ☎ ☎";
-  assert.ok(flipped || document.title === "Webphone", `title in the flash orbit, got ${document.title}`);
+  assert.ok(
+    flipped || document.title === "Webphone",
+    `title in the flash orbit, got ${document.title}`,
+  );
   // While flashing, a second start must not stack a second interval.
   notify.titleFlashStart();
   notify.titleFlashStop();

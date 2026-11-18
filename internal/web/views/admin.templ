@@ -55,8 +55,8 @@ type AdminUserRow struct {
 	DisplayName string
 	// Lines is the account's owned inventory (DID + extension per
 	// line) — ownership reads as phone numbers, not bare PBX codes.
-	Lines       []AdminUserLine
-	Admin       bool
+	Lines        []AdminUserLine
+	Admin        bool
 	LiveSessions int
 }
 
@@ -125,7 +125,7 @@ templ AdminPanel(props AdminPanelProps) {
 				<span class="wp-thread-text">
 					{ user.Email }
 					if user.DisplayName != "" {
-					<span class="wp-muted">{ user.DisplayName }</span>
+						<span class="wp-muted">{ user.DisplayName }</span>
 					}
 				</span>
 				<span class="wp-thread-text">

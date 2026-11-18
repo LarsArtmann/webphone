@@ -167,7 +167,7 @@ test("a failed autosave keeps the draft, marks the line, announces once per epis
     globalThis.fetch = async (inputUrl, init) => {
       if (String(inputUrl).includes("/note")) {
         notePuts.push({ url: String(inputUrl), body: init?.body ? JSON.parse(init.body) : null });
-        return { ok: false, status: answerStatus, headers: new Headers() };
+        return { ok: answerStatus < 400, status: answerStatus, headers: new Headers() };
       }
       return { ok: true, status: 204, headers: new Headers() };
     };
@@ -202,13 +202,47 @@ test("a failed autosave keeps the draft, marks the line, announces once per epis
   });
 });
 
+test("a failing server does not retry-loop an unchanged draft", async () => {
+  await withFastDebounce(async () => {
+    const previousFetch = globalThis.fetch;
+    notePuts = [];
+    globalThis.fetch = async (inputUrl, init) => {
+      if (String(inputUrl).includes("/note")) {
+        notePuts.push({ url: String(inputUrl), body: init?.body ? JSON.parse(init.body) : null });
+        return { ok: false, status: 503, headers: new Headers() };
+      }
+      return { ok: true, status: 204, headers: new Headers() };
+    };
+    try {
+      const row = noteRow("call-a6");
+      const input = row.querySelector(".call-note-input");
+      input.value = "loop guard";
+      fireInput(input);
+      // Three debounce windows of silence. The pre-fix completion hook
+      // compared the live value against `saved` — which a failure never
+      // moves — and re-dispatched immediately, an infinite PUT loop that
+      // hung this whole file. The carried-body guard leaves the failed
+      // flight as the ONLY PUT until newer input arrives.
+      await new Promise((resolve) => setTimeout(resolve, 75));
+      const mine = () => notePuts.filter((p) => p.url.includes("/call-a6/"));
+      assert.equal(mine().length, 1, "no retry without newer input");
+      input.value = "loop guard, typed again";
+      fireInput(input);
+      await settleAutosave();
+      assert.equal(mine().length, 2, "newer input retries");
+    } finally {
+      globalThis.fetch = previousFetch;
+    }
+  });
+});
+
 test("flushPendingCallNotes sends the unsaved tail without waiting", async () => {
   await withFastDebounce(async () => {
     const previousFetch = globalThis.fetch;
     const seen = [];
     globalThis.fetch = async (inputUrl, init) => {
       if (String(inputUrl).includes("/note")) {
-        seen.push({ body: init?.body ? JSON.parse(init.body) : null, init });
+        seen.push({ url: String(inputUrl), body: init?.body ? JSON.parse(init.body) : null, init });
         return { ok: true, status: 204, headers: new Headers() };
       }
       return { ok: true, status: 204, headers: new Headers() };
@@ -221,8 +255,12 @@ test("flushPendingCallNotes sends the unsaved tail without waiting", async () =>
       // No settle wait: the flush is the point.
       flushPendingCallNotes();
       await new Promise((resolve) => setTimeout(resolve, 0));
-      assert.equal(seen.length, 1, "the tail flew immediately");
-      assert.deepEqual(seen[0].body, { body: "typed right before closing" });
+      // The entries map is module-global BY DESIGN (pagehide must flush
+      // every live row), so rows earlier tests never collapsed ride the
+      // same flush — scope every count to THIS row's URL.
+      const mine = () => seen.filter((entry) => entry.url.includes("/call-a4/"));
+      assert.equal(mine().length, 1, "the tail flew immediately");
+      assert.deepEqual(mine()[0].body, { body: "typed right before closing" });
 
       // pagehide rides the same flush with keepalive: the page is going
       // away, the browser must finish the PUT past teardown.
@@ -230,8 +268,8 @@ test("flushPendingCallNotes sends the unsaved tail without waiting", async () =>
       fireInput(input);
       doc.dispatch("pagehide");
       await new Promise((resolve) => setTimeout(resolve, 0));
-      assert.equal(seen.length, 2);
-      assert.equal(seen[1].init.keepalive, true, "pagehide keeps the PUT alive");
+      assert.equal(mine().length, 2);
+      assert.equal(mine()[1].init.keepalive, true, "pagehide keeps the PUT alive");
     } finally {
       globalThis.fetch = previousFetch;
     }

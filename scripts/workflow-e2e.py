@@ -24,7 +24,6 @@ passed, M failed"); counts are always the tally, never hardcoded.
 from __future__ import annotations
 
 import argparse
-import base64
 import http.cookiejar
 import json
 import os
