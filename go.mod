@@ -31,8 +31,8 @@ require (
 	github.com/larsartmann/go-cqrs-lite/snapshot/v4 v4.7.0
 	github.com/larsartmann/go-cqrs-lite/system/v4 v4.18.0
 	github.com/larsartmann/go-error-family v0.12.0
-	github.com/larsartmann/go-etag/entitytag v0.6.1
-	github.com/larsartmann/go-etag/server v0.6.1
+	github.com/larsartmann/go-etag/entitytag v0.6.2
+	github.com/larsartmann/go-etag/server v0.6.2
 	github.com/larsartmann/go-flightrecorder v0.2.1
 	github.com/larsartmann/go-health v0.10.0
 	github.com/larsartmann/go-health-dashboard v0.13.3
