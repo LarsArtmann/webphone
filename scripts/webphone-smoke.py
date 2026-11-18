@@ -286,7 +286,7 @@ def oversized_upload(s: Smoke) -> tuple[int, bytes]:
 
 def multipart_body(
     fields: list[tuple[str, str]],
-    files: list[tuple[str, str, str, bytes]],
+    files: list[tuple[str, str, str, bytes]] | None = None,
     boundary: str = "----webphonesmokeboundary",
 ) -> tuple[bytes, str]:
     """Encode a multipart form body the way the composer/fax forms post.
@@ -303,7 +303,7 @@ def multipart_body(
                 f"{value}\r\n"
             ).encode()
         )
-    for field, filename, ctype, payload in files:
+    for field, filename, ctype, payload in files or []:
         parts.append(
             (
                 f"--{boundary}\r\n"
@@ -2153,6 +2153,868 @@ def run_checks(
     return 1 if c.failures else 0
 
 
+class _FakeProviderHandler(http.server.BaseHTTPRequestHandler):
+    """The webhook-gateway bridge stand-in: records outbound receipts and
+    answers them with provider refs. `mode` switches the verdict:
+    ok (200 + receipt), refuse (422 provider refusal), down (503)."""
+
+    mode = "ok"
+    hits: ClassVar[list[dict[str, str]]] = []
+    counter: ClassVar[int] = 0
+
+    def do_POST(self) -> None:
+        length = int(self.headers.get("Content-Length", "0"))
+        raw = self.rfile.read(length)
+        _FakeProviderHandler.counter += 1
+        _FakeProviderHandler.hits.append(
+            {
+                "path": self.path,
+                "auth": self.headers.get("Authorization", ""),
+                "ctype": self.headers.get("Content-Type", ""),
+                "body": raw.decode("utf-8", "replace"),
+            }
+        )
+        if _FakeProviderHandler.mode == "refuse":
+            payload = b"destination not allowed by provider policy"
+            self.send_response(422)
+        elif _FakeProviderHandler.mode == "down":
+            payload = b"upstream unavailable"
+            self.send_response(503)
+        else:
+            ref = f"gw-smoke-{_FakeProviderHandler.counter}"
+            payload = json.dumps({"provider_ref": ref}).encode()
+            self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(payload)))
+        self.end_headers()
+        self.wfile.write(payload)
+
+    def log_message(self, *_args: object) -> None:
+        pass
+
+
+def _start_fake_provider() -> tuple[str, Callable[[], None]]:
+    _FakeProviderHandler.mode = "ok"
+    _FakeProviderHandler.hits = []
+    _FakeProviderHandler.counter = 0
+    httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), _FakeProviderHandler)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+
+    def stop() -> None:
+        httpd.shutdown()
+        httpd.server_close()
+
+    return f"http://127.0.0.1:{httpd.server_port}", stop
+
+
+def _scenario_boot(
+    binary: str, workdir: str, datadir: str, env_extra: dict[str, str], name: str
+) -> tuple[subprocess.Popen, str, Callable[[], None]]:
+    """The shared scenario boot: free port, loopback env, readiness poll."""
+
+    def stop_server(srv: subprocess.Popen) -> None:
+        srv.terminate()
+        try:
+            srv.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            srv.kill()
+
+    port = free_port()
+    env = dict(os.environ)
+    env.update(
+        {
+            "WEBPHONE_ADDR": f"127.0.0.1:{port}",
+            "WEBPHONE_DATA_DIR": f"{workdir}/{datadir}",
+            "WEBPHONE_GATEWAY__WEBHOOK_SECRET": "test-secret",  # nosec B105 - fixture secret for the self-booted smoke server
+        }
+    )
+    env.update(env_extra)
+    srv = subprocess.Popen(  # nosec B603 - argv-list (no shell) launch of the local binary under test
+        [binary], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+    )
+    base = f"http://127.0.0.1:{port}"
+    deadline = time.monotonic() + TIMEOUT
+    while time.monotonic() < deadline:
+        try:
+            urllib.request.urlopen(base + "/healthz", timeout=1).read()  # nosec B310 - readiness probe of the local server under test
+            return srv, base, lambda: stop_server(srv)
+        except OSError:
+            time.sleep(0.1)
+    stop_server(srv)
+    raise RuntimeError(f"{name}: server did not become ready")
+
+
+def _thread_id_for(s: Smoke, needle: str) -> str:
+    """Find the thread id whose DETAIL (not rail preview) matches needle."""
+    _, body, _ = s.request("GET", "/partials/messages")
+    rows = re.findall(r'hx-get="/partials/messages/([^"]+)"', body.decode("utf-8", "replace"))
+    for row in rows:
+        _, tbody, _ = s.request("GET", f"/partials/messages/{row}")
+        if needle in tbody.decode("utf-8", "replace"):
+            return row
+    return ""
+
+
+def msglifecycle_scenario(binary: str, workdir: str) -> int:
+    """The outbound messaging lifecycle over the REAL webhook gateway.
+
+    Loopback mode makes every send succeed, so the honest transport test
+    points the gateway at a controllable fake provider: the send receipt,
+    the delivered verdict, the refusal (a provider 4xx with its reason),
+    the outage class (5xx -> retryable), the retry lane, hook replay
+    idempotence, and the SSE events along the way.
+    """
+    c = Check()
+    provider, stop_provider = _start_fake_provider()
+    srv, base, stop = _scenario_boot(
+        binary,
+        workdir,
+        "data-msglifecycle",
+        {
+            "WEBPHONE_GATEWAY__MODE": "webhook",
+            "WEBPHONE_GATEWAY__WEBHOOK_URL": provider,
+        },
+        "msglifecycle scenario",
+    )
+    try:
+        s = Smoke(base)
+        _, page, _ = s.request("GET", "/login")
+        m = re.search(r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace"))
+        if m:
+            s.csrf = m.group(1)
+        c.ok("msglifecycle: login accepted", s.login(), "POST /api/session != 201")
+        sink: list[tuple[str, str]] = []
+        ev_stop = threading.Event()
+        reader = threading.Thread(target=s.sse_events, args=(ev_stop, sink), daemon=True)
+        reader.start()
+        time.sleep(0.4)
+
+        body_bytes, ctype = multipart_body(
+            [("to", "+441632960777"), ("body", "lifecycle one")]
+        )
+        status, body, _ = s.request("POST", "/messages/send", body_bytes, ctype)
+        c.ok(
+            "msglifecycle: send accepted",
+            status == 200 and b"messages-panel" in body,
+            f"got {status}",
+        )
+        receipts = [h for h in _FakeProviderHandler.hits if h["path"] == "/message"]
+        c.ok(
+            "msglifecycle: provider saw the message",
+            len(receipts) >= 1
+            and receipts[0]["auth"] == "Bearer test-secret"
+            and "+441632960777" in receipts[0]["body"],
+            f"hits={_FakeProviderHandler.hits[:1]}",
+        )
+        data = s.wait_for(sink, "threads", time.monotonic() + TIMEOUT)
+        c.ok("msglifecycle: SSE threads on send", data is not None, "no threads event")
+
+        ref = ""
+        match = re.search(r'"provider_ref": "(gw-smoke-[0-9]+)"', json.dumps(_FakeProviderHandler.hits))
+        if match:
+            ref = match.group(1)
+        c.ok("msglifecycle: receipt ref known", bool(ref), "no provider_ref captured")
+        thread = _thread_id_for(s, "lifecycle one")
+        c.ok("msglifecycle: outbound bubble persisted", bool(thread), "thread not found")
+
+        if ref:
+            status, _, _ = s.hook(
+                "/hooks/message/status", {"provider_ref": ref, "status": "delivered"}
+            )
+            c.ok("msglifecycle: delivered hook 202", status == 202, f"got {status}")
+            _, tbody, _ = s.request("GET", f"/partials/messages/{thread}")
+            c.ok(
+                "msglifecycle: delivered badge lands",
+                b"wp-status-delivered" in tbody,
+                "no delivered badge in the transcript",
+            )
+            data = s.wait_for(sink, "thread", time.monotonic() + TIMEOUT)
+            c.ok("msglifecycle: SSE thread on verdict", data is not None, "no thread event")
+            status, _, _ = s.hook(
+                "/hooks/message/status", {"provider_ref": ref, "status": "delivered"}
+            )
+            c.ok("msglifecycle: hook replay 202", status == 202, f"got {status}")
+
+        # Refusal: the provider's 4xx reason is user feedback (422) and
+        # the bubble keeps it with NO retry affordance.
+        _FakeProviderHandler.mode = "refuse"
+        body_bytes, ctype = multipart_body(
+            [("to", "+441632960888"), ("body", "lifecycle refused")]
+        )
+        status, body, _ = s.request("POST", "/messages/send", body_bytes, ctype)
+        c.ok(
+            "msglifecycle: refusal answers 422 with the reason",
+            status == 422 and b"provider policy" in body,
+            f"got {status}: {body[:120]!r}",
+        )
+        refused_thread = _thread_id_for(s, "lifecycle refused")
+        if refused_thread:
+            _, tbody, _ = s.request("GET", f"/partials/messages/{refused_thread}")
+            ttext = tbody.decode("utf-8", "replace")
+            c.ok(
+                "msglifecycle: refused bubble keeps reason, no retry",
+                "wp-status-failed" in ttext and "wp-retry" not in ttext,
+                "failed badge/retry affordance wrong",
+            )
+        else:
+            c.ok(
+                "msglifecycle: refused bubble keeps reason, no retry",
+                False,
+                "refused thread not found",
+            )
+
+        # Outage class: a provider 5xx is infrastructure (502) and the
+        # bubble stays retryable.
+        _FakeProviderHandler.mode = "down"
+        body_bytes, ctype = multipart_body(
+            [("to", "+441632960999"), ("body", "lifecycle outage")]
+        )
+        status, body, _ = s.request("POST", "/messages/send", body_bytes, ctype)
+        c.ok("msglifecycle: outage answers 502", status == 502, f"got {status}")
+        outage_thread = _thread_id_for(s, "lifecycle outage")
+        if outage_thread:
+            _, tbody, _ = s.request("GET", f"/partials/messages/{outage_thread}")
+            ttext = tbody.decode("utf-8", "replace")
+            c.ok(
+                "msglifecycle: outage bubble retryable",
+                "wp-status-failed" in ttext and "wp-retry" in ttext,
+                "retry affordance missing on the transient failure",
+            )
+            # Retry once the provider recovers (the retry lane rides
+            # ?thread= exactly like the rendered form).
+            _FakeProviderHandler.mode = "ok"
+            body_bytes, ctype = multipart_body([("body", "lifecycle retry")])
+            status, body, _ = s.request(
+                "POST", f"/messages/send?thread={outage_thread}", body_bytes, ctype
+            )
+            c.ok(
+                "msglifecycle: retry send accepted",
+                status == 200 and b"wp-bubble" in body,
+                f"got {status}",
+            )
+            status, _, _ = s.hook(
+                "/hooks/message/status",
+                {"provider_ref": f"gw-smoke-{_FakeProviderHandler.counter}", "status": "failed", "error": "carrier rejected"},
+            )
+            c.ok("msglifecycle: failed verdict with reason 202", status == 202, f"got {status}")
+            _, tbody, _ = s.request("GET", f"/partials/messages/{outage_thread}")
+            c.ok(
+                "msglifecycle: failed detail lands",
+                b"carrier rejected" in tbody,
+                "provider reason missing from the transcript",
+            )
+        else:
+            c.ok("msglifecycle: outage bubble retryable", False, "outage thread not found")
+
+        ev_stop.set()
+    finally:
+        stop()
+        stop_provider()
+    print(f"msglifecycle scenario: {c.passed} passed, {len(c.failures)} failed")
+    for failure in c.failures:
+        print(f"  FAILED: {failure}")
+    return 1 if c.failures else 0
+
+
+def ratelimit_scenario(binary: str, workdir: str) -> int:
+    """The limiter fences on their own boot (buckets are per-IP, so a
+    dedicated datadir keeps the exhaustion run from poisoning any other
+    scenario's traffic): login lockout with Retry-After, the compose
+    bucket's .wp-error fragment, the hooks lane, and the csrf lane."""
+    c = Check()
+    srv, base, stop = _scenario_boot(binary, workdir, "data-ratelimit", {}, "ratelimit scenario")
+    try:
+        s = Smoke(base)
+        _, page, _ = s.request("GET", "/login")
+        m = re.search(r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace"))
+        if m:
+            s.csrf = m.group(1)
+        c.ok("ratelimit: clean login first", s.login(), "the clean-bucket login failed")
+
+        # Login lockout: burst 5 / 30 per minute. Bad credentials 401
+        # until the bucket empties, then 429 + Retry-After.
+        attacker = Smoke(base)
+        _, page, _ = attacker.request("GET", "/login")
+        m = re.search(r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace"))
+        if m:
+            attacker.csrf = m.group(1)
+        saw_429 = False
+        retry_after = ""
+        for _ in range(8):
+            status, _, headers = attacker.request(
+                "POST",
+                "/api/session",
+                json.dumps({"extension": "1001", "password": "wrong"}).encode(),  # nosec B105 - negative-test credential: this login MUST be rejected/limited
+                "application/json",
+            )
+            if status == 429:
+                saw_429 = True
+                retry_after = headers.get("Retry-After", "")
+                break
+        c.ok("ratelimit: login bucket 429s", saw_429, "8 attempts never tripped the limiter")
+        c.ok("ratelimit: 429 carries Retry-After", bool(retry_after), "missing header")
+
+        # Compose bucket: 20/min burst 10 -> the 11th rapid send answers
+        # 429 with the .wp-error fragment htmx swaps into #wp-tab-error.
+        limited_body = b""
+        for i in range(12):
+            body_bytes, ctype = multipart_body(
+                [("to", f"+44163296011{i}"), ("body", "rl")]
+            )
+            status, body, headers = s.request("POST", "/messages/send", body_bytes, ctype)
+            if status == 429:
+                limited_body = body
+                c.ok("ratelimit: compose 429 has Retry-After", bool(headers.get("Retry-After")), "missing header")
+                break
+        c.ok(
+            "ratelimit: compose bucket 429s",
+            b"wp-error" in limited_body,
+            f"12 rapid sends never answered a .wp-error 429: {limited_body[:80]!r}",
+        )
+
+        # Hooks lane: 60/min burst 60 -> 61 rapid bad-secret probes trip
+        # the fence before the secret gate is even consulted.
+        hook_429 = False
+        for _ in range(63):
+            status, _, _ = s.request(
+                "POST", "/hooks/message", b"{}", "application/json", {"Authorization": "Bearer wrong"}
+            )
+            if status == 429:
+                hook_429 = True
+                break
+        c.ok("ratelimit: hooks lane 429s", hook_429, "63 rapid hooks never tripped")
+
+        # CSRF lane: same 60/60 budget on GET /api/csrf.
+        csrf_429 = False
+        for _ in range(63):
+            status, _, _ = s.request("GET", "/api/csrf")
+            if status == 429:
+                csrf_429 = True
+                break
+        c.ok("ratelimit: csrf lane 429s", csrf_429, "63 rapid csrf fetches never tripped")
+    finally:
+        stop()
+    print(f"ratelimit scenario: {c.passed} passed, {len(c.failures)} failed")
+    for failure in c.failures:
+        print(f"  FAILED: {failure}")
+    return 1 if c.failures else 0
+
+
+def adminswitch_scenario(binary: str, workdir: str) -> int:
+    """The admin surface (read-only, all lines) and the line switcher on
+    a config-file boot with the identity layer: one admin account owning
+    two mapped extensions, one plain account, and the isolation fences
+    between them."""
+    c = Check()
+
+    datadir = f"{workdir}/data-adminswitch"
+    os.makedirs(datadir, exist_ok=True)
+    password_files: dict[str, str] = {}
+    for ext in ("1001", "1002", "1003"):
+        path = f"{workdir}/pw-{ext}"
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write("pw\n")
+        password_files[ext] = path
+    cfg = {
+        "addr": "127.0.0.1:18099",
+        "data_dir": datadir,
+        "gateway": {"webhook_secret": "test-secret"},  # nosec B105 - fixture secret for the self-booted smoke server
+        "auth": {
+            "users": {
+                "admin@example.com": {"extensions": ["1001", "1002"], "admin": True},
+                "user@example.com": {"extensions": ["1003"]},
+            },
+            "extension_password_files": password_files,
+        },
+    }
+    cfg_path = f"{workdir}/config-adminswitch.json"
+    port = free_port()
+    cfg["addr"] = f"127.0.0.1:{port}"
+    with open(cfg_path, "w", encoding="utf-8") as fh:
+        json.dump(cfg, fh)
+    env = dict(os.environ)
+    env["WEBPHONE_CONFIG"] = cfg_path
+    env["WEBPHONE_GATEWAY__WEBHOOK_SECRET"] = "test-secret"  # nosec B105 - fixture secret for the self-booted smoke server
+    srv = subprocess.Popen(  # nosec B603 - argv-list (no shell) launch of the local binary under test
+        [binary], env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL
+    )
+    base = f"http://127.0.0.1:{port}"
+    ready = False
+    deadline = time.monotonic() + TIMEOUT
+    while time.monotonic() < deadline:
+        try:
+            urllib.request.urlopen(base + "/healthz", timeout=1).read()  # nosec B310 - readiness probe of the local server under test
+            ready = True
+            break
+        except OSError:
+            time.sleep(0.1)
+    if not ready:
+        srv.kill()
+        print("adminswitch scenario: 0 passed, 1 failed")
+        print("  FAILED: adminswitch: server did not become ready")
+        return 1
+
+    def stop() -> None:
+        srv.terminate()
+        try:
+            srv.wait(timeout=5)
+        except subprocess.TimeoutExpired:
+            srv.kill()
+
+    try:
+        def fresh_login(extension: str) -> Smoke:
+            client = Smoke(base)
+            _, page, _ = client.request("GET", "/login")
+            m = re.search(
+                r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
+            )
+            if m:
+                client.csrf = m.group(1)
+            client.login(extension)
+            return client
+
+        # Seed a thread owned by the PLAIN line, then prove the admin
+        # sees it cross-line while the plain line cannot see the admin's.
+        admin = fresh_login("1001")
+        plain = fresh_login("1003")
+        c.ok("adminswitch: admin login", any(n.name == "webphone_session" for n in admin.jar), "no session")
+        c.ok("adminswitch: plain login", any(n.name == "webphone_session" for n in plain.jar), "no session")
+        status, _, _ = plain.hook(
+            "/hooks/message", {"owner": "1003", "from": "+441632960123", "body": "plain line thread"}
+        )
+        c.ok("adminswitch: plain thread seeded", status == 202, f"got {status}")
+
+        status, body, _ = admin.request("GET", "/admin")
+        admin_page = body.decode("utf-8", "replace")
+        c.ok(
+            "adminswitch: admin page renders",
+            status == 200 and 'id="admin-panel"' in admin_page,
+            f"got {status}",
+        )
+        status, body, _ = admin.request("GET", "/partials/admin")
+        admin_partial = body.decode("utf-8", "replace")
+        c.ok(
+            "adminswitch: admin sees the plain line's thread",
+            status == 200 and "+441632960123" in admin_partial,
+            f"cross-line row missing: {admin_partial[:80]!r}",
+        )
+        rows = re.findall(r'hx-get="/partials/admin/threads/([^"]+)"', admin_partial)
+        if rows:
+            status, body, _ = admin.request("GET", f"/admin/threads/{rows[0]}")
+            c.ok(
+                "adminswitch: admin deep link opens the thread",
+                status == 200 and 'id="thread-transcript"' in body.decode("utf-8", "replace"),
+                f"got {status}",
+            )
+        else:
+            c.ok("adminswitch: admin deep link opens the thread", False, "no admin row link")
+
+        status, body, _ = plain.request("GET", "/admin")
+        c.ok(
+            "adminswitch: non-admin gets the styled 404",
+            status == 404 and b"wp-notfound" in body,
+            f"got {status}",
+        )
+        status, body, _ = plain.request("GET", "/partials/nav")
+        c.ok(
+            "adminswitch: non-admin nav hides the tab",
+            status == 200 and b"/admin" not in body,
+            "admin link rendered for a non-admin",
+        )
+
+        # Line switcher: the admin's two mapped extensions re-mint the
+        # session; the other account's line and unmapped extensions stay
+        # out of reach.
+        status, body, _ = admin.request(
+            "POST",
+            "/api/session/switch",
+            json.dumps({"extension": "1002"}).encode(),
+            "application/json",
+        )
+        c.ok("adminswitch: switch to mapped line", status in (200, 204), f"got {status}: {body[:80]!r}")
+        admin.adopt_csrf()
+        status, body, _ = admin.request("GET", "/api/session")
+        switched = json.loads(body) if body else {}
+        c.ok(
+            "adminswitch: switched identity answers 1002",
+            switched.get("extension") == "1002",
+            f"identity={switched.get('extension')}",
+        )
+        status, body, _ = admin.request("GET", "/partials/messages")
+        c.ok(
+            "adminswitch: switched line isolates other owners",
+            status == 200 and b"+441632960123" not in body,
+            "the 1003 thread leaked across the line switch",
+        )
+        status, _, _ = admin.request(
+            "POST",
+            "/api/session/switch",
+            json.dumps({"extension": "1003"}).encode(),
+            "application/json",
+        )
+        c.ok("adminswitch: foreign line 403s", status == 403, f"got {status}")
+        status, _, _ = plain.request(
+            "POST",
+            "/api/session/switch",
+            json.dumps({"extension": "1003"}).encode(),
+            "application/json",
+        )
+        c.ok("adminswitch: extension login cannot switch", status == 403, f"got {status}")
+    finally:
+        stop()
+    print(f"adminswitch scenario: {c.passed} passed, {len(c.failures)} failed")
+    for failure in c.failures:
+        print(f"  FAILED: {failure}")
+    return 1 if c.failures else 0
+
+
+class _FakeAgentHandler(http.server.BaseHTTPRequestHandler):
+    """The textagent review-API stand-in: drafts with counting ids, the
+    approve/discard verdicts, mode pinning, and the reviews listing."""
+
+    hits: ClassVar[list[dict[str, str]]] = []
+    counter: ClassVar[int] = 0
+
+    def _json(self, status: int, payload: dict) -> None:
+        body = json.dumps(payload).encode()
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_GET(self) -> None:
+        _FakeAgentHandler.hits.append({"path": self.path, "method": "GET"})
+        self._json(
+            200,
+            {
+                "drafts": [],
+                "frozen": [],
+                "suppressed": [],
+                "mode": "off",
+                "mode_source": "config",
+                "default_mode": "off",
+            },
+        )
+
+    def do_POST(self) -> None:
+        length = int(self.headers.get("Content-Length", "0"))
+        body = self.rfile.read(length).decode("utf-8", "replace")
+        _FakeAgentHandler.hits.append({"path": self.path, "method": "POST", "body": body})
+        _FakeAgentHandler.counter += 1
+        draft_id = f"d-smoke-{_FakeAgentHandler.counter}"
+        if self.path.startswith("/reviews/") and self.path.endswith("/discard"):
+            self._json(200, {})
+            return
+        if self.path.startswith("/reviews/") and self.path.endswith("/approve"):
+            self._json(200, {"id": draft_id, "text": "smoke agent draft", "status": "approved"})
+            return
+        if self.path == "/mode":
+            self._json(200, {"mode": "off", "mode_source": "runtime", "default_mode": "off"})
+            return
+        self._json(
+            200,
+            {
+                "id": draft_id,
+                "text": "smoke agent draft",
+                "status": "draft",
+                "confidence": 80,
+            },
+        )
+
+    def log_message(self, *_args: object) -> None:
+        pass
+
+
+def _start_fake_agent() -> tuple[str, Callable[[], None]]:
+    _FakeAgentHandler.hits = []
+    _FakeAgentHandler.counter = 0
+    httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), _FakeAgentHandler)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+
+    def stop() -> None:
+        httpd.shutdown()
+        httpd.server_close()
+
+    return f"http://127.0.0.1:{httpd.server_port}", stop
+
+
+def drafts_scenario(binary: str, workdir: str) -> int:
+    """The agent drafts workflow against a fake review API: the compose
+    button's draft lands prefilled in the composer, approve SENDS it into
+    the thread, discard drops it, the mode switch round-trips, and the
+    review/disposition surfaces answer their absent-value contracts."""
+    c = Check()
+    agent, stop_agent = _start_fake_agent()
+    srv, base, stop = _scenario_boot(
+        binary, workdir, "data-drafts", {"WEBPHONE_TEXTAGENT__URL": agent}, "drafts scenario"
+    )
+    try:
+        s = Smoke(base)
+        _, page, _ = s.request("GET", "/login")
+        m = re.search(r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace"))
+        if m:
+            s.csrf = m.group(1)
+        c.ok("drafts: login accepted", s.login(), "POST /api/session != 201")
+        _, body, _ = s.request("GET", "/config.js")
+        c.ok("drafts: config.js advertises the agent", b'"agent":true' in body, body[:120].decode("utf-8", "replace"))
+
+        body_bytes, ctype = multipart_body(
+            [("to", "+441632960555"), ("body", "say hi about the invoice")]
+        )
+        status, body, _ = s.request("POST", "/messages/ai-draft", body_bytes, ctype)
+        c.ok(
+            "drafts: ai-draft prefills the composer",
+            status == 200 and b"smoke agent draft" in body,
+            f"got {status}: {body[:100]!r}",
+        )
+        agent_hits = [h for h in _FakeAgentHandler.hits if h["path"] == "/draft"]
+        c.ok(
+            "drafts: agent saw the ask",
+            len(agent_hits) >= 1 and "invoice" in agent_hits[0].get("body", ""),
+            f"hits={agent_hits[:1]}",
+        )
+
+        status, body, _ = s.request(
+            "POST",
+            "/messages/drafts/d-smoke-1/approve",
+            urlencode({"text": ""}).encode(),
+            "application/x-www-form-urlencoded",
+        )
+        c.ok("drafts: approve answers the panel", status == 200, f"got {status}")
+        approve_hits = [h for h in _FakeAgentHandler.hits if h["path"].endswith("/approve")]
+        c.ok("drafts: agent saw the approve", len(approve_hits) >= 1, "no approve hit")
+        _, body, _ = s.request("GET", "/partials/messages")
+        listing = body.decode("utf-8", "replace")
+        c.ok(
+            "drafts: approved draft reached the thread",
+            "+441632960555" in listing,
+            "thread for the draft destination missing",
+        )
+        draft_thread = _thread_id_for(s, "smoke agent draft")
+        c.ok("drafts: draft text landed as a bubble", bool(draft_thread), "draft bubble missing")
+
+        body_bytes, ctype = multipart_body([("to", "+441632960556"), ("body", "hint")])
+        status, _, _ = s.request("POST", "/messages/ai-draft", body_bytes, ctype)
+        status, _, _ = s.request(
+            "POST",
+            "/messages/drafts/d-smoke-2/discard",
+            b"",
+            "",
+        )
+        c.ok("drafts: discard answers", status == 200, f"got {status}")
+        discard_hits = [h for h in _FakeAgentHandler.hits if h["path"].endswith("/discard")]
+        c.ok("drafts: agent saw the discard", len(discard_hits) >= 1, "no discard hit")
+
+        status, body, _ = s.request(
+            "POST",
+            "/messages/drafts/mode",
+            urlencode({"mode": "off"}).encode(),
+            "application/x-www-form-urlencoded",
+        )
+        c.ok("drafts: mode toggle answers", status == 200, f"got {status}")
+
+        status, body, _ = s.request("GET", "/api/calls/no-such-call/review")
+        c.ok(
+            "drafts: absent review reads empty",
+            status == 200 and body == b"",
+            f"got {status} {body[:40]!r}",
+        )
+        status, _, _ = s.request(
+            "POST",
+            "/api/calls/smoke-call-1/disposition",
+            json.dumps(
+                {"disposition": "missed", "number": "+441632960555", "direction": "in", "seconds": 0}
+            ).encode(),
+            "application/json",
+        )
+        c.ok("drafts: disposition records", status == 204, f"got {status}")
+    finally:
+        stop()
+        stop_agent()
+    print(f"drafts scenario: {c.passed} passed, {len(c.failures)} failed")
+    for failure in c.failures:
+        print(f"  FAILED: {failure}")
+    return 1 if c.failures else 0
+
+
+class _FakeNtfyHandler(http.server.BaseHTTPRequestHandler):
+    """The ntfy stand-in: records the JSON publish bodies the push fanout
+    sends (topic in the body, priority per urgency)."""
+
+    hits: ClassVar[list[dict[str, object]]] = []
+
+    def do_POST(self) -> None:
+        length = int(self.headers.get("Content-Length", "0"))
+        raw = self.rfile.read(length)
+        try:
+            payload = json.loads(raw)
+        except ValueError:
+            payload = {"raw": raw.decode("utf-8", "replace")}
+        _FakeNtfyHandler.hits.append(payload)
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", "2")
+        self.end_headers()
+        self.wfile.write(b"{}")
+
+    def log_message(self, *_args: object) -> None:
+        pass
+
+
+def _start_fake_ntfy() -> tuple[str, Callable[[], None]]:
+    _FakeNtfyHandler.hits = []
+    httpd = http.server.ThreadingHTTPServer(("127.0.0.1", 0), _FakeNtfyHandler)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+
+    def stop() -> None:
+        httpd.shutdown()
+        httpd.server_close()
+
+    return f"http://127.0.0.1:{httpd.server_port}", stop
+
+
+def push_scenario(binary: str, workdir: str) -> int:
+    """The ring-while-closed seam end-to-end against a fake ntfy: the
+    off-boot answers 404 (the shell must not believe registration
+    worked), the configured boot registers a device whose token is
+    write-only, rotation replaces it, the ring hook wakes the device on
+    its CURRENT topic with the urgent priority, the end state stands it
+    down, and a deregistered device hears nothing."""
+    c = Check()
+
+    def fresh_login(base_url: str) -> Smoke:
+        client = Smoke(base_url)
+        _, page, _ = client.request("GET", "/login")
+        m = re.search(
+            r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
+        )
+        if m:
+            client.csrf = m.group(1)
+        client.login()
+        return client
+
+    # Off boot: no push config = the surface does not exist.
+    srv_off, base_off, stop_off = _scenario_boot(
+        binary, workdir, "data-push-off", {}, "push scenario"
+    )
+    try:
+        s = fresh_login(base_off)
+        status, _, _ = s.request("GET", "/api/push-devices")
+        c.ok("push: off boot answers 404", status == 404, f"got {status}")
+        status, _, _ = s.hook(
+            "/hooks/ring",
+            {"owner": "1001", "from": "+441632960000", "call_id": "fs-off", "state": "ring"},
+        )
+        c.ok("push: off boot ring stays 202 inert", status == 202, f"got {status}")
+    finally:
+        stop_off()
+
+    ntfy, stop_ntfy = _start_fake_ntfy()
+    srv, base, stop = _scenario_boot(
+        binary, workdir, "data-push-on", {"WEBPHONE_PUSH__NTFY__URL": ntfy}, "push scenario"
+    )
+    try:
+        s = fresh_login(base)
+        status, body, _ = s.request("GET", "/api/push-devices")
+        c.ok(
+            "push: list starts empty",
+            status == 200 and json.loads(body).get("devices") == [],
+            f"got {status} {body[:60]!r}",
+        )
+        status, _, _ = s.request(
+            "POST",
+            "/api/push-devices",
+            json.dumps(
+                {"device_id": "smoke-device-1", "transport": "ntfy", "token": "smoketopic111"}
+            ).encode(),
+            "application/json",
+        )
+        c.ok("push: register 204", status == 204, f"got {status}")
+        status, body, _ = s.request("GET", "/api/push-devices")
+        listed = json.loads(body)
+        c.ok(
+            "push: list never echoes the token",
+            status == 200
+            and len(listed.get("devices", [])) == 1
+            and b"smoketopic111" not in body,
+            f"got {status} {body[:80]!r}",
+        )
+        status, _, _ = s.request(
+            "POST",
+            "/api/push-devices",
+            json.dumps(
+                {"device_id": "smoke-device-1", "transport": "ntfy", "token": "smoketopic222"}
+            ).encode(),
+            "application/json",
+        )
+        c.ok("push: rotation 204", status == 204, f"got {status}")
+        status, body, _ = s.request("GET", "/api/push-devices")
+        c.ok(
+            "push: rotation keeps one row",
+            len(json.loads(body).get("devices", [])) == 1,
+            f"rows={json.loads(body).get('devices')}",
+        )
+
+        status, _, _ = s.hook(
+            "/hooks/ring",
+            {"owner": "1001", "from": "+441632960000", "call_id": "fs-ring-1", "state": "ring"},
+        )
+        c.ok("push: ring hook 202", status == 202, f"got {status}")
+        deadline = time.monotonic() + TIMEOUT
+        ring_hit = None
+        while time.monotonic() < deadline:
+            for hit in _FakeNtfyHandler.hits:
+                if hit.get("topic") == "smoketopic222":
+                    ring_hit = hit
+                    break
+            if ring_hit:
+                break
+            time.sleep(0.1)
+        c.ok(
+            "push: ring wakes the rotated topic urgently",
+            ring_hit is not None and str(ring_hit.get("priority")) == "5" and "fs-ring-1" in str(ring_hit.get("message", "")),
+            f"hits={_FakeNtfyHandler.hits[-2:]}",
+        )
+        status, _, _ = s.hook(
+            "/hooks/ring",
+            {"owner": "1001", "from": "+441632960000", "call_id": "fs-ring-1", "state": "end"},
+        )
+        c.ok("push: end state 202", status == 202, f"got {status}")
+        deadline = time.monotonic() + TIMEOUT
+        end_hit = None
+        while time.monotonic() < deadline:
+            for hit in _FakeNtfyHandler.hits:
+                if hit.get("topic") == "smoketopic222" and str(hit.get("priority")) != "5":
+                    end_hit = hit
+                    break
+            if end_hit:
+                break
+            time.sleep(0.1)
+        c.ok("push: end stands down at lower priority", end_hit is not None, f"hits={_FakeNtfyHandler.hits[-2:]}")
+
+        status, _, _ = s.request("DELETE", "/api/push-devices?id=smoke-device-1")
+        c.ok("push: deregister 204", status == 204, f"got {status}")
+        before = len(_FakeNtfyHandler.hits)
+        s.hook(
+            "/hooks/ring",
+            {"owner": "1001", "from": "+441632960000", "call_id": "fs-ring-2", "state": "ring"},
+        )
+        time.sleep(0.6)
+        c.ok(
+            "push: deregistered device hears nothing",
+            len(_FakeNtfyHandler.hits) == before,
+            f"publishes after deregister: {_FakeNtfyHandler.hits[before:]}",
+        )
+    finally:
+        stop()
+        stop_ntfy()
+    print(f"push scenario: {c.passed} passed, {len(c.failures)} failed")
+    for failure in c.failures:
+        print(f"  FAILED: {failure}")
+    return 1 if c.failures else 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--base", help="smoke an already-running server")
@@ -2285,6 +3147,11 @@ def main() -> int:
         rc = max(rc, faxcap_scenario(binary, workdir))
         rc = max(rc, metrics_scenario(binary, workdir))
         rc = max(rc, enroll_scenario(binary, workdir))
+        rc = max(rc, msglifecycle_scenario(binary, workdir))
+        rc = max(rc, ratelimit_scenario(binary, workdir))
+        rc = max(rc, adminswitch_scenario(binary, workdir))
+        rc = max(rc, drafts_scenario(binary, workdir))
+        rc = max(rc, push_scenario(binary, workdir))
         return rc
     finally:
         server.terminate()
