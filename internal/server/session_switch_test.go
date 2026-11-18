@@ -167,7 +167,7 @@ func TestSessionSwitchReMintsForMappedExtension(t *testing.T) {
 			Extension string `json:"extension"`
 			DID       string `json:"did"`
 		} `json:"lines"`
-		Password   string   `json:"password"`
+		Password string `json:"password"`
 	}
 	if err := json.Unmarshal(body, &switched); err != nil {
 		t.Fatalf("switch body %q: %v", body, err)
