@@ -50,6 +50,39 @@ jobs:
           nix run nixpkgs#python3 -- scripts/webphone-smoke.py \
             --bin ./result/bin/webphone
 
+  # The fully automated WORKFLOW frontend E2E (2026-11-18 SUPERB train):
+  # a real headless Chromium drives the real UI — login front door, tab
+  # navigation without reload, composer send, a LIVE inbound webhook
+  # appearing through SSE->morph in the open page, thread flags, snippet
+  # fills, contacts CRUD through the real forms, the language cookie,
+  # the styled 404, and the command palette. DOM assertions only (no
+  # screenshots — the visual budget stays with ui-capture). ADVISORY for
+  # the same reason reproduce-first is: browser lanes earn blocking via
+  # clean trains, and the daemon pushes mid-train states; flip by
+  # deleting continue-on-error after clean runs.
+  workflow-e2e:
+    name: workflow e2e (browser, advisory)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: DeterminateSystems/nix-installer-action@3138316df39ed29be04236d7ffc686fa525866aa # v23
+
+      - name: Build the binary
+        run: nix build -L .#webphone
+
+      # nix >= 2.34 parses `nixpkgs#python312.withPackages(ps: ...)` as a
+      # PATH, so the selenium env is built as a store path first and the
+      # plain attrpath shells stay machine-parsed (the PYSEL dance).
+      - name: Run the browser workflow journeys
+        run: |
+          PYSEL=$(nix build --no-link --print-out-paths --impure \
+            --expr '(builtins.getFlake "path:.").inputs.nixpkgs.legacyPackages.x86_64-linux.python312.withPackages (ps: [ ps.selenium ])')
+          nix shell nixpkgs#chromium nixpkgs#chromedriver "$PYSEL" \
+            --command python3 scripts/workflow-e2e.py --bin ./result/bin/webphone
+
   # Go unit/contract tests (cmd + internal). The minimal `ci` devShell
   # provides Go at the go.mod floor; GOTOOLCHAIN=local (set in that
   # shell) forbids surprise toolchain downloads inside the hermetic shell.

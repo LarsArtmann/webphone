@@ -245,7 +245,7 @@ Legend: ID — task — (est). Status column maintained during execution: `[ ]` 
 | D18 | composer.test.mjs: non-media reject path | 10m |
 | D19 | node --test island-tests green | 6m |
 
-### E. Browser workflow harness (`scripts/workflow-e2e.py` — NEW layer)
+### E. Browser workflow harness (`scripts/workflow-e2e.py` — NEW layer) — LANDED 2026-11-18: workflow e2e: 20 passed, 0 failed, TWICE on fresh boots (E30/E31). J1 login front door (the browser logs in through the REAL form — no cookie injection; the seed session only creates data), J2 all six tabs (panel id + aria-current + URL + no-reload marker), J3 composer send (bubble count grows), J4 live inbound via /hooks/message appearing through SSE->morph with the no-reload marker intact (stale-element-safe predicates for the morphing rail), J5 pin (class lands on .wp-thread-row, not the wrapper), J6 snippet chip fill, J7 contacts add/delete through the real forms incl. the hx-confirm alert, J10 palette Ctrl+K + enter navigation, J9 styled 404 (path echo + .wp-notfound-back), J8 wp-lang=de relabel (run LAST — it flips the UI language). E29 (dial-gate chip) DEFERRED to the backlog: the island's placeCall gate sits behind the SIP boot. E06 (cookie inject) was DROPPED in favor of the honest J1 login.
 
 | ID  | Task                                                         | Est |
 | --- | ------------------------------------------------------------ | --- |
@@ -281,7 +281,7 @@ Legend: ID — task — (est). Status column maintained during execution: `[ ]` 
 | E30 | full local run green                                         | 10m |
 | E31 | stability pass #2 (fresh datadir)                            | 10m |
 
-### F. CI wiring
+### F. CI wiring — LANDED 2026-11-18 (F01-F03): the `workflow-e2e` job (build + PYSEL store-path dance — nix >= 2.34 parses nixpkgs#python312.withPackages(...) as a PATH — + chromium/chromedriver shell, 15m budget, tallies printed). ADVISORY (continue-on-error) per the reproduce-first/tw-freshness precedent: browser lanes earn blocking via clean trains. F04 (CI green verify) rides the final push watch.
 
 | ID  | Task                                                                            | Est |
 | --- | ------------------------------------------------------------------------------- | --- |
