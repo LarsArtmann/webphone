@@ -154,7 +154,7 @@ templ FaxRow(job domain.FaxJob, contacts CRMContacts, lang Lang) {
 	// wp-fax-row stays in the class list: it is the swap-safety contract
 	// the SSE fax-payload test greps for (TestSSEPushesSwapSafeFragments).
 	<article class={ "wp-row wp-fax-row", templ.KV("wp-fax-in", job.Direction == domain.FaxInbound) }>
-		<span class={ "wp-dir-chip", templ.KV("wp-dir-in", job.Direction == domain.FaxInbound) } role="img" aria-label={ faxDirLabel(job, lang) }>@icons.Icon(faxDirGlyph(job), "wp-icon")</span>
+		@dirChip(faxDirGlyph(job), faxDirLabel(job, lang), job.Direction == domain.FaxInbound, false, "")
 		<span class="wp-thread-text">
 			@remoteLabel(job.Remote.String(), contacts, lang)
 			<span class="wp-muted">

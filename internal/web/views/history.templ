@@ -353,11 +353,7 @@ func groupCDRsByDay(entries []CDREntry) []cdrDayGroup {
 templ CDRRow(cdr CDREntry, contacts CRMContacts, lang Lang) {
 	<tr class={ templ.KV("wp-row-missed", cdrMissed(cdr)) }>
 		<td class="wp-table-dir">
-			<span
-				class={ "wp-dir-chip", templ.KV("wp-dir-in", cdr.Context == "public"), templ.KV("wp-dir-missed", cdrMissed(cdr)) }
-				role="img"
-				aria-label={ cdrDirLabel(cdr, lang) }
-			>@icons.Icon(cdrDirGlyph(cdr), "wp-icon")</span>
+			@dirChip(cdrDirGlyph(cdr), cdrDirLabel(cdr, lang), cdr.Context == "public", cdrMissed(cdr), "wp-dir-missed")
 		</td>
 		<td class="wp-table-remote">
 			@remoteLabel(cdrTarget(cdr), contacts, lang)

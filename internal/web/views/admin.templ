@@ -78,6 +78,22 @@ type AdminNumberRow struct {
 	Users []string
 }
 
+// adminNumberMeta composes the number row's muted meta line: the
+// no-DID marker and the owner emails, dot-joined after the chip.
+// Byte-shape note: the users part always keeps its leading " · " (the
+// chip precedes it) and the no-DID marker never carries one, matching
+// the two historical spans exactly; empty when neither applies.
+func adminNumberMeta(number AdminNumberRow, lang Lang) string {
+	meta := ""
+	if number.DID == "" {
+		meta = T(lang, "admin.numbers.nodid")
+	}
+	if len(number.Users) > 0 {
+		meta += " · " + strings.Join(number.Users, ", ")
+	}
+	return meta
+}
+
 // adminLineChip is the ONE chip rendering both inventories share —
 // a line reads as its number everywhere it is named.
 templ adminLineChip(line AdminLine) {
@@ -164,14 +180,9 @@ templ AdminPanel(props AdminPanelProps) {
 		for _, number := range props.Numbers {
 			<div class="wp-row wp-admin-number-row">
 				@adminLineChip(number.Line)
-				<span class="wp-thread-text">
-					if number.DID == "" {
-						<span class="wp-muted">{ T(props.Lang, "admin.numbers.nodid") }</span>
-					}
-					if len(number.Users) > 0 {
-						<span class="wp-muted">{ " · " + strings.Join(number.Users, ", ") }</span>
-					}
-				</span>
+				if meta := adminNumberMeta(number, props.Lang); meta != "" {
+					<span class="wp-thread-text"><span class="wp-muted">{ meta }</span></span>
+				}
 			</div>
 		}
 		<h3 class="wp-settings-head" id="wp-admin-threads">{ T(props.Lang, "admin.threads.title") }</h3>
@@ -213,7 +224,7 @@ templ AdminPanel(props AdminPanelProps) {
 		}
 		for _, job := range props.Faxes {
 			<div class={ "wp-row wp-admin-fax-row", templ.KV("wp-fax-in", job.Direction == domain.FaxInbound) }>
-				<span class={ "wp-dir-chip", templ.KV("wp-dir-in", job.Direction == domain.FaxInbound) } role="img" aria-label={ faxDirLabel(job, props.Lang) }>@icons.Icon(faxDirGlyph(job), "wp-icon")</span>
+				@dirChip(faxDirGlyph(job), faxDirLabel(job, props.Lang), job.Direction == domain.FaxInbound, false, "")
 				<span class="wp-thread-text">
 					<span class="wp-admin-ext">{ job.Owner.String() }</span>
 					{ " " }
@@ -275,11 +286,7 @@ templ AdminPanel(props AdminPanelProps) {
 // lists read identically.
 templ AdminCDRRowView(row AdminCDRRow, lang Lang) {
 	<article class={ "wp-row wp-admin-cdr-row", templ.KV("wp-row-missed", cdrMissed(row.CDR)) }>
-		<span
-			class={ "wp-dir-chip", templ.KV("wp-dir-in", row.CDR.Context == "public"), templ.KV("wp-row-missed", cdrMissed(row.CDR)) }
-			role="img"
-			aria-label={ cdrDirLabel(row.CDR, lang) }
-		>@icons.Icon(cdrDirGlyph(row.CDR), "wp-icon")</span>
+		@dirChip(cdrDirGlyph(row.CDR), cdrDirLabel(row.CDR, lang), row.CDR.Context == "public", cdrMissed(row.CDR), "wp-row-missed")
 		<span class="wp-thread-text">
 			{ cdrParty(row.CDR) + " → " + row.CDR.DestinationNumber }
 			<span class="wp-muted">{ row.CDR.Start + " · " + durationLabel(row.CDR.Billsec) }</span>

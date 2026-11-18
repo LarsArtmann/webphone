@@ -370,6 +370,17 @@ templ identityLine(lang Lang, identity string) {
 	}
 }
 
+// dirChip is the one home of the direction glyph chip every call and
+// fax row opens with: the inbound/outbound glyph, its aria label and
+// the missed-state class ride one component, so the History, Admin and
+// Fax rows cannot drift apart (the admin CDR row's "reuses the History
+// row's vocabulary" note becomes structural, not comment-enforced).
+// missedClass is the surface-specific missed modifier ("wp-dir-missed"
+// in History, "wp-row-missed" in Admin, "" where fax rows carry none).
+templ dirChip(glyph icons.Name, label string, inbound bool, missed bool, missedClass string) {
+	<span class={ "wp-dir-chip", templ.KV("wp-dir-in", inbound), templ.KV(missedClass, missed && missedClass != "") } role="img" aria-label={ label }>@icons.Icon(glyph, "wp-icon")</span>
+}
+
 // sendIndicator is the ONE home of the submit-button htmx spinner (the
 // request in-flight marker htmx toggles on .htmx-request forms); Button
 // renders it ahead of the label. Every long-running htmx form submit
