@@ -2177,13 +2177,16 @@ class _FakeProviderHandler(http.server.BaseHTTPRequestHandler):
         if _FakeProviderHandler.mode == "refuse":
             payload = b"destination not allowed by provider policy"
             self.send_response(422)
+            ref = ""
         elif _FakeProviderHandler.mode == "down":
             payload = b"upstream unavailable"
             self.send_response(503)
+            ref = ""
         else:
             ref = f"gw-smoke-{_FakeProviderHandler.counter}"
             payload = json.dumps({"provider_ref": ref}).encode()
             self.send_response(200)
+        _FakeProviderHandler.hits[-1]["ref"] = ref
         self.send_header("Content-Type", "application/json")
         self.send_header("Content-Length", str(len(payload)))
         self.end_headers()
@@ -2310,9 +2313,9 @@ def msglifecycle_scenario(binary: str, workdir: str) -> int:
         c.ok("msglifecycle: SSE threads on send", data is not None, "no threads event")
 
         ref = ""
-        match = re.search(r'"provider_ref": "(gw-smoke-[0-9]+)"', json.dumps(_FakeProviderHandler.hits))
-        if match:
-            ref = match.group(1)
+        for hit in _FakeProviderHandler.hits:
+            if hit.get("ref"):
+                ref = str(hit["ref"])
         c.ok("msglifecycle: receipt ref known", bool(ref), "no provider_ref captured")
         thread = _thread_id_for(s, "lifecycle one")
         c.ok("msglifecycle: outbound bubble persisted", bool(thread), "thread not found")
@@ -2431,8 +2434,11 @@ def ratelimit_scenario(binary: str, workdir: str) -> int:
             s.csrf = m.group(1)
         c.ok("ratelimit: clean login first", s.login(), "the clean-bucket login failed")
 
-        # Login lockout: burst 5 / 30 per minute. Bad credentials 401
-        # until the bucket empties, then 429 + Retry-After.
+        # Login lockout: 30/min + burst 5. Credentials are not verified
+        # on the loopback boot, so the consuming request is a SUCCESSFUL
+        # login — each rotates the CSRF token, and the next one is scraped
+        # from the layout meta (the shell carries the current token on
+        # every page; /api/csrf would pollute the csrf lane below).
         attacker = Smoke(base)
         _, page, _ = attacker.request("GET", "/login")
         m = re.search(r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace"))
@@ -2440,18 +2446,24 @@ def ratelimit_scenario(binary: str, workdir: str) -> int:
             attacker.csrf = m.group(1)
         saw_429 = False
         retry_after = ""
-        for _ in range(8):
+        for _ in range(40):
             status, _, headers = attacker.request(
                 "POST",
                 "/api/session",
-                json.dumps({"extension": "1001", "password": "wrong"}).encode(),  # nosec B105 - negative-test credential: this login MUST be rejected/limited
+                json.dumps({"extension": "1001", "password": "pw"}).encode(),
                 "application/json",
             )
             if status == 429:
                 saw_429 = True
                 retry_after = headers.get("Retry-After", "")
                 break
-        c.ok("ratelimit: login bucket 429s", saw_429, "8 attempts never tripped the limiter")
+            _, page, _ = attacker.request("GET", "/")
+            m = re.search(
+                r'name="csrf-token" content="([^"]+)"', page.decode("utf-8", "replace")
+            )
+            if m:
+                attacker.csrf = m.group(1)
+        c.ok("ratelimit: login bucket 429s", saw_429, "40 logins never tripped the limiter")
         c.ok("ratelimit: 429 carries Retry-After", bool(retry_after), "missing header")
 
         # Compose bucket: 20/min burst 10 -> the 11th rapid send answers
@@ -2525,6 +2537,10 @@ def adminswitch_scenario(binary: str, workdir: str) -> int:
                 "user@example.com": {"extensions": ["1003"]},
             },
             "extension_password_files": password_files,
+            "passkey": {
+                "rp_id": "webphone.test",
+                "rp_origins": ["https://webphone.test"],
+            },
         },
     }
     cfg_path = f"{workdir}/config-adminswitch.json"
@@ -2746,8 +2762,18 @@ def drafts_scenario(binary: str, workdir: str) -> int:
     review/disposition surfaces answer their absent-value contracts."""
     c = Check()
     agent, stop_agent = _start_fake_agent()
+    agent_secret = f"{workdir}/agent-secret"
+    with open(agent_secret, "w", encoding="utf-8") as fh:
+        fh.write("agent-secret")  # nosec B105 - fixture secret for the fake review API
     srv, base, stop = _scenario_boot(
-        binary, workdir, "data-drafts", {"WEBPHONE_TEXTAGENT__URL": agent}, "drafts scenario"
+        binary,
+        workdir,
+        "data-drafts",
+        {
+            "WEBPHONE_TEXTAGENT__URL": agent,
+            "WEBPHONE_TEXTAGENT__SECRET_FILE": agent_secret,
+        },
+        "drafts scenario",
     )
     try:
         s = Smoke(base)

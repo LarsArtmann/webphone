@@ -378,3 +378,13 @@ only behind capability checks.
   is the one body column; the NAV STAYS VISIBLE — it is the only way
   back, never hidden (the 2026-11-12 trap fix). Cleared by any real
   tab click (the document-level cleanup listener) and on second Phone tap.
+- `wp-settings-account` (Settings) — the "My account" group (2026-11-18
+  line-ownership model): served on EVERY signed-in Settings render. The
+  identity paragraph (class `wp-settings-account`) names the mapped
+  login (display name + email, admin chip) or renders bare for the
+  classic extension login; the rows (`wp-row wp-account-line`) list the
+  session's owned lines as "DID · extension" with the session's active
+  line marked — the one place that answers "which numbers are mine".
+  The island's line switcher stays JS-created (`#wp-ext-switch`, see
+  the conditional notes) and now labels its options from the same
+  `lines` wire.
