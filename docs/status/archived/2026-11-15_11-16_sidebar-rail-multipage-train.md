@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-18 (docs-health v10 sweep): cadence drain (second archive in the same push — the notes-autosave report's filing tripped the pin again); both archive gates (check-rows --strict, bare-rows) passed before the move.
+
 # Sidebar rail train: the multipage ask finally got an IA, and the deploy is still owed
 
 **Date:** 2026-11-15 11:16 CET
