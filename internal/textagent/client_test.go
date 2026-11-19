@@ -178,6 +178,35 @@ func TestDraftForCarriesToAndOptionalHint(t *testing.T) {
 	}
 }
 
+func TestDraftFromTranscriptTailCapCutsOnRuneBoundaries(t *testing.T) {
+	stub := newStubAgent(t, func(stubRequest) (int, string) {
+		return http.StatusOK, `{"id":"d-3","text":"ok"}`
+	})
+	client := mustClient(t, stub.server.URL)
+	// Multi-byte runes throughout: any byte-index cut splits one.
+	transcript := strings.Repeat("älände 每通電話 📞", 2000)
+	if _, err := client.DraftFromTranscript(context.Background(), "+4915112345678", transcript); err != nil {
+		t.Fatal(err)
+	}
+	hint, _ := stub.lastRequest(t).body["hint"].(string)
+	if !strings.Contains(hint, "… ") {
+		t.Fatalf("an over-cap transcript must ride its tail with the ellipsis marker, got %q…", hint[:min(40, len(hint))])
+	}
+	// The prefix before "… " is the fixed summarize framing; the excerpt
+	// after it must be valid UTF-8 — a mid-rune cut surfaces as U+FFFD.
+	excerpt := strings.TrimPrefix(hint, "Summarize this phone call as a short follow-up SMS to the other party. Call transcript:\n\n… ")
+	if strings.ContainsRune(excerpt, '�') {
+		t.Errorf("tail cap split a rune: excerpt starts with a replacement character")
+	}
+	if len(excerpt) > textagentSummarizeAllowance() {
+		t.Errorf("excerpt exceeds the cap allowance: %d", len(excerpt))
+	}
+}
+
+// textagentSummarizeAllowance is the test-side read of the cap plus the
+// worst-case rune-walk overshoot (3 bytes for a split 4-byte rune).
+func textagentSummarizeAllowance() int { return SummarizeHintCap + 3 }
+
 func TestHTTPErrorCarriesStatusMessageAndFamily(t *testing.T) {
 	stub := newStubAgent(t, func(stubRequest) (int, string) {
 		return http.StatusServiceUnavailable, `{"error":"gemini key is a placeholder"}`

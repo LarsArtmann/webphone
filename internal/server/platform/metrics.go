@@ -63,10 +63,18 @@ func (p *Hub) Metrics(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "counts unavailable", http.StatusInternalServerError)
 		return
 	}
-	transcriptCount, err := p.deps.Transcripts.Count(r.Context())
-	if err != nil {
-		http.Error(w, "counts unavailable", http.StatusInternalServerError)
-		return
+	// Transcripts is nil in test compositions (the Deps contract); the
+	// metric still renders, as a true zero — the pin at server_test.go
+	// asserts `webphone_transcripts_total 0`, and a nil store holds no
+	// segments by definition.
+	transcriptCount := int64(0)
+	if p.deps.Transcripts != nil {
+		var err error
+		transcriptCount, err = p.deps.Transcripts.Count(r.Context())
+		if err != nil {
+			http.Error(w, "counts unavailable", http.StatusInternalServerError)
+			return
+		}
 	}
 	var b strings.Builder
 	writeMetric := func(name, help, kind string, value any) {

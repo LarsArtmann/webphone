@@ -124,6 +124,7 @@ func (h *ExtensionHubs) Shutdown() {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 	streams := 0
+	hubs := len(h.hubs)
 	for key, hub := range h.hubs {
 		streams += hub.Hub().SubscriberCount()
 		hub.Close()
@@ -132,8 +133,9 @@ func (h *ExtensionHubs) Shutdown() {
 	}
 	// The greppable incident line: operators correlating a restart window
 	// (proxy 502s) with this log see exactly how many live feeds the
-	// release touched.
-	slog.Info("events: released live SSE streams for shutdown", "hubs", len(h.hubs), "streams", streams)
+	// release touched. Count captured BEFORE the loop deletes the map
+	// entries — reading len(h.hubs) here would always log 0.
+	slog.Info("events: released live SSE streams for shutdown", "hubs", hubs, "streams", streams)
 }
 
 // sweep deletes hubs that are both untouched for hubIdleTTL and carry no

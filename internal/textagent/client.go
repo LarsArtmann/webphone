@@ -14,6 +14,7 @@ import (
 	"os"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"github.com/larsartmann/go-error-family"
 
@@ -249,7 +250,14 @@ const SummarizeHintCap = 6000
 func (c *Client) DraftFromTranscript(ctx context.Context, to, transcript string) (*Draft, error) { //nolint:branching-flow // agent wire params: the phone is the call's remote echoed back, the transcript is hint text
 	trimmed := transcript
 	if len(trimmed) > SummarizeHintCap {
-		trimmed = "… " + trimmed[len(trimmed)-SummarizeHintCap:]
+		start := len(trimmed) - SummarizeHintCap
+		// A byte-index cut can land mid-rune; walking forward to the
+		// next boundary keeps the excerpt valid UTF-8 instead of
+		// handing the agent a U+FFFD replacement character.
+		for start < len(trimmed) && !utf8.RuneStart(trimmed[start]) {
+			start++
+		}
+		trimmed = "… " + trimmed[start:]
 	}
 	return c.DraftFor(ctx, to, summarizeHintPrefix+trimmed)
 }
