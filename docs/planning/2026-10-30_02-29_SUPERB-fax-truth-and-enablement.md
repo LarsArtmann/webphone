@@ -4,7 +4,7 @@
 **Author:** Crush (session that shipped the fax capability declaration)
 **Status:** PLAN — nothing in this document is shipped except where marked
 `DONE` (the code train of 2026-10-30 01:57–02:14).
-**Companion status report:** [docs/status/2026-10-30_02-25_fax-capability-honesty.md](../status/2026-10-30_02-25_fax-capability-honesty.md)
+**Companion status report:** [docs/status/archived/2026-10-30_02-25_fax-capability-honesty.md](../status/archived/2026-10-30_02-25_fax-capability-honesty.md)
 
 ---
 

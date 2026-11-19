@@ -6,7 +6,7 @@
 fastest; this snapshot names the exact commits and run IDs it saw.
 
 Session: execution of the gated Pareto plan
-[docs/planning/2026-10-24_16-50_SUPERB-catalog-contracts-plan.md](../planning/2026-10-24_16-50_SUPERB-catalog-contracts-plan.md)
+[docs/planning/2026-10-24_16-50_SUPERB-catalog-contracts-plan.md](../../planning/2026-10-24_16-50_SUPERB-catalog-contracts-plan.md)
 (M1–M18). A **concurrent session** ran the eventcatalog lane in parallel
 (`internal/domain/catalog.go`, `webphone catalog` CLI, go.mod vendorHash —
 plan item M4 de facto done by it); this session took the non-colliding
@@ -270,7 +270,7 @@ flagged, not propagated). WAITING FOR INSTRUCTIONS._
 ## Close-out (20:55 CEST, same day) — the completion train executed
 
 The SUPERB completion plan
-([docs/planning/2026-10-24_19-27_SUPERB-contracts-completion.md](../planning/2026-10-24_19-27_SUPERB-contracts-completion.md))
+([docs/planning/2026-10-24_19-27_SUPERB-contracts-completion.md](../../planning/2026-10-24_19-27_SUPERB-contracts-completion.md))
 ran its tiers. Claims verified as of 20:55 CEST:
 
 - **1% DONE**: red main RECOVERED — the three error codes registered

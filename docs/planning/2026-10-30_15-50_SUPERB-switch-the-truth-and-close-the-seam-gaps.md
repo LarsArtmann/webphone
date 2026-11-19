@@ -13,7 +13,7 @@ the ride for the commits that landed after staging, and the two seams
 the audit filed.
 
 **Companion docs:** status report §UPDATE
-(`docs/status/2026-10-30_02-25_fax-capability-honesty.md`), decision
+(`docs/status/archived/2026-10-30_02-25_fax-capability-honesty.md`), decision
 doc (`docs/planning/2026-10-30_04-15_fax-decision.md`), capability
 audit (`docs/planning/2026-10-30_14-05_capability-seam-audit.md`),
 owner switch sheet (pbx-artmann, above).

@@ -4,7 +4,7 @@
 **Status:** EXECUTING
 **Predecessor:** [2026-10-29_17-52_SUPERB-crm-data-mesh.md](2026-10-29_17-52_SUPERB-crm-data-mesh.md)
 (design + decisions) and
-[docs/status/2026-10-29_18-06_crm-data-mesh-midtrain-status.md](../status/2026-10-29_18-06_crm-data-mesh-midtrain-status.md)
+[docs/status/archived/2026-10-29_18-06_crm-data-mesh-midtrain-status.md](../status/archived/2026-10-29_18-06_crm-data-mesh-midtrain-status.md)
 (the honest mid-flight audit)
 **Scope:** finish what the last session started, make every claim true, ship it
 green. Explicitly NOT in scope: SMS/voicemail/fax journaling into the CRM (an

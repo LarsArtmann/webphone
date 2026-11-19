@@ -4,7 +4,7 @@
 **Status:** EXECUTING (Tier 1 + Tier 2 shipped this session; Tier 3/4 planned)
 **Predecessor:** [2026-10-29_11-27_SUPERB-ui-ux-layout-leverage.md](2026-10-29_11-27_SUPERB-ui-ux-layout-leverage.md)
 (the diagnosis + decisions doc) and
-[docs/status/2026-10-29_14-50_ui-ux-layout-leverage-train-status.md](../status/2026-10-29_14-50_ui-ux-layout-leverage-train-status.md)
+[docs/status/archived/2026-10-29_14-50_ui-ux-layout-leverage-train-status.md](../status/archived/2026-10-29_14-50_ui-ux-layout-leverage-train-status.md)
 (the honest audit of what shipped vs what was claimed)
 **Scope:** close out the layout train properly, then take the few remaining
 high-value UI/UX steps. Explicitly NOT in scope: rewriting `app.css`,

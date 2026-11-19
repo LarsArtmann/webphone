@@ -9,7 +9,7 @@ gate numbers are from the runs recorded in the plan doc's §6)
 (the code run **40927955113 = success** too)
 **Kith (CRM):** `master` @ `d57e00f`, **16 commits ahead of `origin/master`,
 NOT pushed**
-**Plan of record:** [2026-10-29_18-13_SUPERB-crm-data-mesh-completion.md](../planning/2026-10-29_18-13_SUPERB-crm-data-mesh-completion.md)
+**Plan of record:** [2026-10-29_18-13_SUPERB-crm-data-mesh-completion.md](../../planning/2026-10-29_18-13_SUPERB-crm-data-mesh-completion.md)
 **Supersedes:** [2026-10-29_18-06_crm-data-mesh-midtrain-status.md](2026-10-29_18-06_crm-data-mesh-midtrain-status.md)
 
 ---

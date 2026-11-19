@@ -6,7 +6,7 @@
 session spans midnight — CI timestamps below are UTC).** Follow-up to
 [docs/status/2026-10-24_19-15_catalog-contracts-execution-status.md](2026-10-24_19-15_catalog-contracts-execution-status.md):
 this covers executing the SUPERB completion plan
-([docs/planning/2026-10-24_19-27_SUPERB-contracts-completion.md](../planning/2026-10-24_19-27_SUPERB-contracts-completion.md))
+([docs/planning/2026-10-24_19-27_SUPERB-contracts-completion.md](../../planning/2026-10-24_19-27_SUPERB-contracts-completion.md))
 end-to-end (plan written+pushed `4b59be5`, then N1–N18 executed).
 
 ## Direct answers to the three opening questions

@@ -11,7 +11,7 @@
 > files, `tsc -p . --noEmit` green, `nix flake check` green (all 32 checks, VM tests included),
 > `tsconfig.all.json` deleted, and the debt list replaced by coverage pins. Read the completion
 > record in
-> [docs/planning/2026-10-27_19-20_SUPERB-island-type-gate-execution-pareto-plan.md](../planning/2026-10-27_19-20_SUPERB-island-type-gate-execution-pareto-plan.md)
+> [docs/planning/2026-10-27_19-20_SUPERB-island-type-gate-execution-pareto-plan.md](../../planning/2026-10-27_19-20_SUPERB-island-type-gate-execution-pareto-plan.md)
 > §9 — everything below stays as the point-in-time record, including its "not run" list.
 
 **Snapshot: 2026-10-27 20:30 CET.** Working tree: `internal/web/assets/shell.js` mid-edit (this

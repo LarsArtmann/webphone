@@ -1,7 +1,7 @@
 # SUPERB — Contracts completion plan (red-main recovery → rest)
 
 **Planned 2026-10-24 19:27 CEST** · Sources: the execution status report
-([docs/status/2026-10-24_19-15_catalog-contracts-execution-status.md](../status/2026-10-24_19-15_catalog-contracts-execution-status.md))
+([docs/status/archived/2026-10-24_19-15_catalog-contracts-execution-status.md](../status/archived/2026-10-24_19-15_catalog-contracts-execution-status.md))
 
 - the open tail of
   [docs/planning/2026-10-24_16-50_SUPERB-catalog-contracts-plan.md](2026-10-24_16-50_SUPERB-catalog-contracts-plan.md)

@@ -5,13 +5,13 @@
 **Written:** 2026-10-29 18:06 CET
 **Verified as of:** 18:06 (build/vet re-run seconds before writing; everything else timestamped below)
 **Branch:** `main` · **Working tree:** 6 modified files, HEAD advanced by the auto-commit daemon (no narrative commits)
-**Predecessor:** [2026-10-29_17-52_SUPERB-crm-data-mesh.md](../planning/2026-10-29_17-52_SUPERB-crm-data-mesh.md)
+**Predecessor:** [2026-10-29_17-52_SUPERB-crm-data-mesh.md](../../planning/2026-10-29_17-52_SUPERB-crm-data-mesh.md)
 
 ---
 
 > **SUPERSEDED (same day, 19:0x).** Every §c/§d item in this snapshot was
 > closed by the completion train:
-> [2026-10-29_18-13_SUPERB-crm-data-mesh-completion.md](../planning/2026-10-29_18-13_SUPERB-crm-data-mesh-completion.md).
+> [2026-10-29_18-13_SUPERB-crm-data-mesh-completion.md](../../planning/2026-10-29_18-13_SUPERB-crm-data-mesh-completion.md).
 > The red test tree, the dead strip, the missing CSS, the unregistered error
 > code and the absent producer are all fixed and gated. Kept as the
 > point-in-time audit it was, not rewritten.

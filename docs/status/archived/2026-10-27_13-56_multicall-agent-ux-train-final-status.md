@@ -12,7 +12,7 @@
 
 (= `origin/main`, working tree clean). Session scope: execution of the
 ENTIRE SUPERB plan
-[docs/planning/2026-10-26_08-11_SUPERB-multicall-dock-agent-ux.md](../planning/2026-10-26_08-11_SUPERB-multicall-dock-agent-ux.md)
+[docs/planning/2026-10-26_08-11_SUPERB-multicall-dock-agent-ux.md](../../planning/2026-10-26_08-11_SUPERB-multicall-dock-agent-ux.md)
 (M11–M20 remainder; M1–M10 shipped 2026-10-26), plus gates. This report
 supersedes `docs/status/2026-10-26_23-44_multicall-agent-ux-train-status-and-self-review.md`.
 

@@ -304,4 +304,4 @@ Filled from actual runs, never pre-filled.
 | S7 | Strip               | ⚠️ PARTIAL      | component + i18n + `ThreadViewProps.CRMContext` wired; **no producer, no CSS, no test**   |
 | S8 | Docs + gates        | ⛔ NOT STARTED | **test tree RED** (`panels_test.go` references the removed `TranscriptGroup.Name`)        |
 
-Snapshot and the full honesty audit: [docs/status/2026-10-29_18-06_crm-data-mesh-midtrain-status.md](../status/2026-10-29_18-06_crm-data-mesh-midtrain-status.md).
+Snapshot and the full honesty audit: [docs/status/archived/2026-10-29_18-06_crm-data-mesh-midtrain-status.md](../status/archived/2026-10-29_18-06_crm-data-mesh-midtrain-status.md).
