@@ -33,7 +33,9 @@ import sys
 import urllib.request
 from pathlib import Path
 
-DEFAULT_CONTRACT_URL = "https://catalog.home.lan/contracts/catalog-frontmatter.v2.schema.json"
+DEFAULT_CONTRACT_URL = (
+    "https://catalog.home.lan/contracts/catalog-frontmatter.v2.schema.json"
+)
 EXTENSION_PATTERN = re.compile(r"^x-")
 
 
@@ -80,20 +82,27 @@ def violations(export_root, contract):
         for mdx in sorted(base.rglob("*.mdx")):
             keys = parse_frontmatter(mdx.read_text(encoding="utf-8", errors="replace"))
             if keys is None:
-                problems.append(f"{collection}: {mdx.relative_to(root)} has no --- frontmatter fence")
+                problems.append(
+                    f"{collection}: {mdx.relative_to(root)} has no --- frontmatter fence"
+                )
                 continue
             rel = mdx.relative_to(root).parts
             primary = len(rel) == 2 or (len(rel) == 3 and mdx.name == "index.mdx")
             if primary:
                 missing = [key for key in required if key not in keys]
                 if missing:
-                    problems.append(f"{collection}: {mdx.relative_to(root)} missing required {missing}")
+                    problems.append(
+                        f"{collection}: {mdx.relative_to(root)} missing required {missing}"
+                    )
             unknown = sorted(
-                key for key in keys
+                key
+                for key in keys
                 if key not in allowed and not EXTENSION_PATTERN.match(key)
             )
             if unknown:
-                problems.append(f"{collection}: {mdx.relative_to(root)} carries unknown key(s) {unknown}")
+                problems.append(
+                    f"{collection}: {mdx.relative_to(root)} carries unknown key(s) {unknown}"
+                )
     return problems
 
 
@@ -104,7 +113,16 @@ def self_test():
         "properties": {
             "events": {
                 "required": ["id", "name", "version", "summary"],
-                "allowed": ["id", "name", "version", "summary", "owners", "producers", "consumers", "schemaPath"],
+                "allowed": [
+                    "id",
+                    "name",
+                    "version",
+                    "summary",
+                    "owners",
+                    "producers",
+                    "consumers",
+                    "schemaPath",
+                ],
             },
         }
     }
@@ -121,20 +139,27 @@ def self_test():
         (root / "events/nofence.v1.0.0").mkdir(parents=True)
         (root / "events/nofence.v1.0.0/index.mdx").write_text("no fence\n")
         problems = violations(root, contract)
-        assert any("bad.v1.0.0" in p and "missing required ['name', 'version', 'summary']" in p for p in problems), problems
+        assert any(
+            "bad.v1.0.0" in p and "missing required ['name', 'version', 'summary']" in p
+            for p in problems
+        ), problems
         assert any("bad.v1.0.0" in p and "summery" in p for p in problems), problems
         assert any("nofence" in p for p in problems), problems
         assert not any("good.v1.0.0" in p for p in problems), problems
         # x-* extensions stay open by contract
         assert not any("x-custom" in p for p in problems), problems
-        assert violations(root / "does-not-exist", contract) == ["export tree missing: " + str(root / "does-not-exist")]
+        assert violations(root / "does-not-exist", contract) == [
+            "export tree missing: " + str(root / "does-not-exist")
+        ]
     print("check-catalog-contract self-test: OK")
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--export", help="the catalog export tree to check")
-    parser.add_argument("--contract", default=DEFAULT_CONTRACT_URL, help="contract URL or local file")
+    parser.add_argument(
+        "--contract", default=DEFAULT_CONTRACT_URL, help="contract URL or local file"
+    )
     parser.add_argument("--self-test", action="store_true")
     args = parser.parse_args()
     if args.self_test:
@@ -146,7 +171,10 @@ def main():
     try:
         contract = load_contract(args.contract)
     except (OSError, ValueError) as error:
-        print(f"check-catalog-contract: contract unreadable at {args.contract}: {error}", file=sys.stderr)
+        print(
+            f"check-catalog-contract: contract unreadable at {args.contract}: {error}",
+            file=sys.stderr,
+        )
         return 2
     schema_version = contract.get("x-hub-schema-version")
     print(f"check-catalog-contract: contract v{schema_version} from {args.contract}")
@@ -154,7 +182,10 @@ def main():
     for problem in problems:
         print(f"  VIOLATION: {problem}")
     if problems:
-        print(f"check-catalog-contract: {len(problems)} violation(s) — fix the exporter, never widen the contract", file=sys.stderr)
+        print(
+            f"check-catalog-contract: {len(problems)} violation(s) — fix the exporter, never widen the contract",
+            file=sys.stderr,
+        )
         return 1
     print("check-catalog-contract: clean")
     return 0
