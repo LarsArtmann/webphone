@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-19 (docs-health cadence-drain sweep): headroom drain — this train adds several new status reports; both archive gates (check-rows --strict, bare-rows) passed before the move, data tables ledger-marked as inventoried history.
+
 # Status — the red-main heal: the docs battery's first CI day, fixed end to end (2026-11-07 21:12)
 
 **Snapshot-rot header: every claim below was verified as of 2026-11-08 00:24
@@ -10,6 +12,8 @@ defects, ending fully green.
 
 ## a) FULLY DONE
 
+
+<!-- check-rows:ledger -->
 | # | Work                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | - | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | **Fix 1 — dprint pinned into the devShell.** The battery's CI step fail-closes on a missing `dprint` (the wrapper's exit-2 gate), and the devShell only ever found dprint through the host PATH — true on this workstation (`~/.nix-profile/bin/dprint`), false on a GitHub runner. `pkgs.dprint` (nixpkgs 0.64.3, host 0.64.1, same minor; formatting comes from the wasm plugins pinned in `dprint.json`, so no drift) now rides `nix/devshell.nix` beside `config.packages.docs-gates`. Proved under CI conditions locally: a stripped-PATH `nix develop -c` resolves both tools from the store and the battery runs green. Commit `6e3fb06a` (daemon-swept edit) + `0d4f0eb9` (the CHANGELOG half).                                                                                                                                                                                                                                                                                   |
@@ -98,6 +102,8 @@ defects, ending fully green.
 
 Ranked by risk of silent failure, then by what unblocks the most.
 
+
+<!-- check-rows:ledger -->
 | # | Task                                                                                                                                                                        | Impact | Effort | Home                         |
 | - | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ---------------------------- |
 | 1 | File the go-idempotency injectable-clock ask upstream (verify-before-filing + github-voice; evidence: run 42407471289, ledger row, claimkit guard reading)                  | High   | M      | TODO §Fleet-libs closeout n3 |

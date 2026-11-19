@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-19 (docs-health cadence-drain sweep): headroom drain — this train adds several new status reports; both archive gates (check-rows --strict, bare-rows) passed before the move, data tables ledger-marked as inventoried history.
+
 # Status — M20 shipped, main healed after the concurrent json/v2 break (2026-11-07 19:2x)
 
 **Snapshot-rot header: claims verified as of 2026-11-07 19:2x CET.** The
@@ -9,6 +11,8 @@ the ratified red-main-with-verified-fix bar.
 
 ## a) FULLY DONE
 
+
+<!-- check-rows:ledger -->
 | # | Work                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           | Verification                                                                                                                                                                                                                         |
 | - | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1 | **M20 shipped** (the one open harvested frontend-ux train row): voicemail reload failure got its own copy (`vmLoadFailed` — the 401 arm keeps `vmAuthFailed`), and the call-history + contacts loads announce a warn toast on both the `!res.ok` arm and the thrown-fetch arm (`historyLoadFailed`/`contactsLoadFailed`, en+de keys) — M20's review finding was "voicemail reload failure has no distinct copy; history/contacts loads swallow !res.ok silently"; both halves closed                                                           | commit `5c368085`; panels-load-failures.test.mjs 6/6; island suite 318/318; tsc green; no served-bytes pin collisions (grepped smoke + Go tests); CHANGELOG `[Unreleased]` line added                                                |
@@ -72,6 +76,8 @@ row names its ONE home in TODO_LIST (the harvest target), so the freshness gate
 can match it rather than leaving another tolerated finding. Rows marked OWNER
 need a decision, not code.
 
+
+<!-- check-rows:ledger -->
 | #  | Task                                                                                                                       | Impact   | Effort | Home                       |
 | -- | -------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | -------------------------- |
 | 1  | Wire the `docs-gates` battery into CI and the devShell so a doc rot cannot land silently                                   | Critical | M      | TODO §2026-11-06 r10       |

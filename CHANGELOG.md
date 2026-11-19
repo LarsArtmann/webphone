@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **A failed app start now drains the container** (2026-11-19): when
+  `App.Start` fails partway (e.g. a rejected chat-network config after the
+  cqrs workers and health probe came up), the process-layer boot path now
+  runs the container cascade (`application.Shutdown`) before exiting —
+  the SQLite handles, the projection drain and the dashboard pusher are
+  closed on every exit path, not only the serve paths (the samber/do
+  DO-2 audit; same `bootJoin` shape as the listener-failure path).
 - **Island error-path justifications made explicit** (2026-11-19): four
   fire-and-forget promise sites that lacked a written at-site
   justification (ringback resume, the latency beacon POST, the read

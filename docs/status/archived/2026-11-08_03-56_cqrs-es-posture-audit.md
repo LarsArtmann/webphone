@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-19 (docs-health cadence-drain sweep): headroom drain — this train adds several new status reports; both archive gates (check-rows --strict, bare-rows) passed before the move, data tables ledger-marked as inventoried history.
+
 # Status: CQRS / Command- / Event-Sourcing posture audit session
 
 > **Snapshot:** claims verified as of 03:56 CET, 2026-11-08. Push/CI claims rot fastest; nothing was pushed this session (read-only audit, zero code changes, zero commits authored).
@@ -29,6 +31,8 @@
 
 ## The verdict delivered (recap, so this report stands alone)
 
+
+<!-- check-rows:ledger -->
 | Claim                        | Verdict                | Core evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
 | ---------------------------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | CQRS (write/read separation) | Partial, deliberate    | `internal/readmodels` over metaengine: 11 collections, 19 typed fact types, `Apply(fact)` writes + declared `Query[Q,R]` `OnRecord` folds = real CQRS shape. Product core (threads/messages/attachments) still reads and writes the same hand-written SQL tables in `store/messages.go` — migration explicitly gated (N2/T20) in the dogfooding plan. No command/query _bus_ anywhere.                                                                                                                                                                  |
@@ -94,6 +98,8 @@ Radical honesty, most valuable section — nothing user-facing broke (no code ch
 
 Ranked by impact. **Honest count: 30.** The instruction allows 50; padding to 50 would require re-deriving the repo's existing backlog (TODO_LIST/ROADMAP own it — one-home doctrine), which the "do not research unrelated stuff" instruction forbids. Items 1–12 are session-grounded follow-ups; 13–30 are standing repo items I _read about_ this session, listed so this report is the one place a reader sees posture + open work together. This section is the HARVEST input.
 
+
+<!-- check-rows:ledger -->
 | #  | Task                                                                                                                                                                                                    | Impact | Effort | Category      |
 | -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
 | 1  | Verify or retract the audit's "no optimistic concurrency/versioning" claim: sweep `store/db.go` schema + readmodels view types for version/column evidence; annotate the verdict site with the outcome. | High   | S      | Quality       |

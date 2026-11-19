@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-19 (docs-health cadence-drain sweep): unarchived count crossed the 65 pin (69 at the pushed HEAD; the red CI cadence gate). Both archive gates (check-rows --strict, bare-rows) passed before the move; data tables ledger-marked as inventoried history. **Live remainder:** the CRM switch-on (issue #9, root-secret-gated) stays open on GitHub; the fleet-libs reopen-trigger registry lives on in TODO_LIST.
+
 # Status — Fax capability honesty (the Fax tab stopped lying)
 
 **Snapshot:** 2026-10-30 02:25 CET. Claims below were verified at that

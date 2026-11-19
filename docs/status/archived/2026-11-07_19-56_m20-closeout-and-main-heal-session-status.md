@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-19 (docs-health cadence-drain sweep): headroom drain — this train adds several new status reports; both archive gates (check-rows --strict, bare-rows) passed before the move, data tables ledger-marked as inventoried history.
+
 # Status — M20 close-out, the json/v2 main-heal, and what the evening exposed (2026-11-07 19:56)
 
 **Snapshot-rot header: claims verified as of 2026-11-07 19:56 CET.** Two
@@ -14,6 +16,8 @@ reported only where it collided with mine or red-ed main.
 
 ## a) FULLY DONE
 
+
+<!-- check-rows:ledger -->
 | #  | Work                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Verification                                                                                                                                                                                                                     |
 | -- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1  | **Stale todo list repaired** per the session-summary FIRST ACTION: T24a–d marked completed, M20 / cadence / §g routed in as tracked items                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   | todos tool; every item now completed or explicitly owner-routed                                                                                                                                                                  |
@@ -162,6 +166,8 @@ reported only where it collided with mine or red-ed main.
 Ordered by impact; items 1–10 from THIS session's evidence, 11–50
 carried open items I noticed remain unaddressed.
 
+
+<!-- check-rows:ledger -->
 | #  | Task                                                                                                                                                                                                                                   |
 | -- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1  | Land the battery train's CI fix (their stream is close: latest `6007c093` + run 42403427494 in flight) — watch it to green and record the verdict in the ledger                                                                        |
