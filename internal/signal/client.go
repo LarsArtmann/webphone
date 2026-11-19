@@ -18,8 +18,10 @@ import (
 	"io"
 	"log/slog"
 	"net"
+	"net/url"
 	"os"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -366,7 +368,11 @@ func dataURI(att gateway.OutboundAttachment) (string, error) {
 	if mime == "" {
 		mime = "application/octet-stream"
 	}
-	return fmt.Sprintf("data:%s;filename=%s;base64,%s", mime, att.Name, base64.StdEncoding.EncodeToString(data)), nil
+	// The filename rides the data URI percent-escaped: an inbound
+	// attachment name is remote-controlled, and a raw ";" or "%" could
+	// terminate the parameter or forge the base64 payload marker.
+	name := strings.ReplaceAll(url.PathEscape(att.Name), ";", "%3B")
+	return fmt.Sprintf("data:%s;filename=%s;base64,%s", mime, name, base64.StdEncoding.EncodeToString(data)), nil
 }
 
 // CloseConn tears the connection down (shutdown path).
