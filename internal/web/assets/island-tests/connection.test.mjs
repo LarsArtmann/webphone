@@ -639,3 +639,74 @@ test("a user mid-type keeps their focus when a call rings", async () => {
   );
   doc.activeElement = null;
 });
+
+// --- the 2026-11-19 production storm ---------------------------------------
+// A stop() that hangs dies inside sip.js's unregister choreography and
+// never reaches the transport: the old WebSocket stayed open, the PBX
+// kept serving the stale registration, and every inbound call forked to
+// the dead agent — double rings, N× missed-call announcements, N×
+// blocked AudioContext starts, and a burst of "closed before
+// established" sockets when the lingerers were finally closed. The
+// cleanup contract: force-close the transport, and make every delegate
+// of a superseded agent inert.
+
+test("a hung stop force-closes the abandoned transport", async (tc) => {
+  resetStubs();
+  const connection = await loadConnection("stop-hang");
+  await connection.connect("1001", "pw");
+  // Mock timers drive the real 3s stop bound and the 1s force-close
+  // bound; the stub transport's disconnect resolves immediately.
+  tc.mock.timers.enable({ apis: ["setTimeout"] });
+  StubUserAgent.nextStopHangs = true;
+  registerers.at(-1).fire("Unregistered"); // wasRegistered: rebuild
+  await tc.mock.timers.tick(3000); // the stop bound gives up
+  await flushes();
+  assert.equal(agents[0].transport.disconnectCalls, 1,
+    "the hung stop's transport must be closed directly");
+  assert.equal(agents.length, 2, "the rebuild still builds the fresh agent");
+  assert.equal(pill(), t("registered"), "the fresh agent registers");
+});
+
+test("a superseded agent's events drive nothing", async (tc) => {
+  resetStubs();
+  const connection = await loadConnection("stale-agent");
+  await connection.connect("1001", "pw");
+  const staleAgent = agents[0];
+  const staleRegisterer = registerers[0];
+  // Rebuild: a fresh agent takes over while the old one keeps
+  // "existing" (its stop hung in the field incident).
+  tc.mock.timers.enable({ apis: ["setTimeout"] });
+  StubUserAgent.nextStopHangs = true;
+  staleRegisterer.fire("Unregistered");
+  await tc.mock.timers.tick(3000);
+  await flushes();
+  assert.equal(agents.length, 2);
+  assert.equal(pill(), t("registered"));
+
+  staleAgent.connected = false;
+  staleAgent.delegate.onDisconnect(new Error("late transport flap"));
+  await tc.mock.timers.tick(4000);
+  await flushes();
+  assert.equal(pill(), t("registered"),
+    "a superseded agent's transport flap must not touch the pill or the recovery rhythm");
+  assert.equal(agents.length, 2, "no reconnect chain on the dead agent");
+
+  staleRegisterer.fire("Terminated");
+  staleRegisterer.fire("Unregistered");
+  await flushes();
+  assert.equal(agents.length, 2,
+    "a superseded registerer's teardown noise must not rebuild");
+  assert.equal(pill(), t("registered"));
+
+  state.incomingSessions.length = 0;
+  const logBefore = logTexts().length;
+  staleAgent.delegate.onInvite(incomingInvitation());
+  await flushes();
+  assert.equal(state.incomingSessions.length, 0,
+    "a forked INVITE aimed at the stale agent is not a caller");
+  assert.ok(
+    !logTexts().slice(logBefore).some((line) => line.includes("incoming call from")),
+    "no ring, no announcement, no log for the stale fork",
+  );
+  assert.equal(doc.getElementById("incoming-call").hidden, true);
+});

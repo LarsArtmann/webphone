@@ -110,3 +110,81 @@ test("a browser without AudioContext.setSinkId keeps the room alarm", async () =
     AudioContext.prototype.setSinkId = saved;
   }
 });
+
+// --- the gesture unlock (2026-11-19 ring-silence + autoplay storm) ---------
+// A cookie session restore boots the island without any click, so the
+// first ring creates the context OUTSIDE a gesture: Chrome suspends it
+// forever and prints one "not allowed to start" warning per blocked
+// attempt — N warnings under a fork-storm. The unlock contract: arming
+// at creation, no failed resume per ring, one interaction unlocks.
+
+const pointerBaseline = () =>
+  (globalThis.window.listeners.pointerdown ?? []).length;
+
+test("a never-gestured ring does not resume; the first interaction unlocks", async () => {
+  const baseline = pointerBaseline();
+  const audio = await loadAudio("gesture-unlock");
+  audio.ringToneStart();
+  const ctx = contexts.at(-1);
+  assert.equal(ctx.state, "suspended");
+  assert.equal(
+    ctx.resumeCalls,
+    0,
+    "a ring carries no gesture: no doomed resume attempt per invite",
+  );
+  globalThis.window.dispatchWindow("pointerdown");
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(ctx.state, "running", "the first interaction unlocks the ring");
+  assert.equal(ctx.resumeCalls, 1);
+  assert.equal(
+    pointerBaseline(),
+    baseline,
+    "the unlock disarms itself after succeeding",
+  );
+  globalThis.window.dispatchWindow("keydown");
+  assert.equal(ctx.resumeCalls, 1, "no duplicate resume from the keydown");
+  audio.ringToneStop();
+});
+
+test("a refused resume stays armed; the next gesture retries", async () => {
+  const baseline = pointerBaseline();
+  const audio = await loadAudio("gesture-retry");
+  audio.ringToneStart();
+  const ctx = contexts.at(-1);
+  ctx.resume = () => Promise.reject(new Error("no user activation"));
+  globalThis.window.dispatchWindow("pointerdown");
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(ctx.state, "suspended", "the refused resume changes nothing");
+  assert.equal(
+    pointerBaseline(),
+    baseline + 1,
+    "the unlock stays armed for the next interaction",
+  );
+  ctx.resume = function () {
+    this.resumeCalls = (this.resumeCalls ?? 0) + 1;
+    this.state = "running";
+    return Promise.resolve();
+  };
+  globalThis.window.dispatchWindow("keydown");
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(ctx.state, "running", "the second gesture unlocks");
+  assert.equal(pointerBaseline(), baseline, "disarmed after success");
+  audio.ringToneStop();
+});
+
+test("a running context never re-arms the unlock", async () => {
+  const audio = await loadAudio("gesture-running");
+  await audio.resumeAudio(); // explicit gesture path creates + unlocks
+  const ctx = contexts.at(-1);
+  globalThis.window.dispatchWindow("pointerdown"); // disarm whatever creation armed
+  await new Promise((resolve) => setImmediate(resolve));
+  const baseline = pointerBaseline();
+  audio.ringToneStart();
+  assert.equal(
+    pointerBaseline(),
+    baseline,
+    "a running context must not arm listeners",
+  );
+  assert.equal(ctx.resumeCalls, 1, "no resume attempt on an already-running context");
+  audio.ringToneStop();
+});
