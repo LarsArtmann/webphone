@@ -1,0 +1,1242 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Deepening design — messaging read surface</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS LIGHT — Editorial template
+         Design language: form follows function. Primary colors on warm paper.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Light) --- */
+        --color-paper: #f4f4f0;
+        --color-paper-2: #ffffff;
+        --color-paper-3: #e8e8e2;
+        --color-ink: #111111;
+        --color-red: #e63946;
+        --color-blue: #1d3557;
+        --color-yellow: #f4d35e;
+        --color-hairline: rgba(17, 17, 17, 0.14);
+        --color-hairline-strong: rgba(17, 17, 17, 0.3);
+
+        /* --- Semantic layer (shared vocabulary with dark template) --- */
+        --surface: var(--color-paper);
+        --surface-raised: var(--color-paper-2);
+        --surface-sunken: var(--color-paper-3);
+        --text: var(--color-ink);
+        --text-muted: rgba(17, 17, 17, 0.72);
+        --text-faint: rgba(17, 17, 17, 0.5);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-red);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber: var(--warning);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 22%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 12%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 12%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px;
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .sidebar a {
+        font-size: 0.86rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-left: 4px solid transparent;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      h1 {
+        font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+        line-height: 1.05;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px solid var(--text);
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--text);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin-bottom: 0.9rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0 0 1rem;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.6rem;
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+      }
+      .tag.amber {
+        background: var(--warning);
+        border-color: var(--warning);
+        color: var(--text);
+      }
+      .tag.teal {
+        background: var(--solution);
+        border-color: var(--solution);
+        color: var(--surface);
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 90px;
+        margin-bottom: 1.2rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        right: 180px;
+        width: 64px;
+        height: 64px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 26px;
+        right: 90px;
+        width: 56px;
+        height: 56px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-left: 32px solid transparent;
+        border-right: 32px solid transparent;
+        border-bottom: 56px solid var(--warning);
+      }
+      .hero-shapes .bar {
+        position: absolute;
+        bottom: 0;
+        right: 230px;
+        width: 100px;
+        height: 14px;
+        background: var(--text);
+      }
+
+      /* --- Scorecard / stat cards --- */
+      .scorecard,
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        margin: 1.5rem 0 2rem;
+        border: 3px solid var(--text);
+      }
+      .score-card,
+      .stat-card {
+        padding: 1.3rem 1rem;
+        text-align: center;
+        border-right: 3px solid var(--text);
+        background: var(--surface-raised);
+      }
+      .score-card:last-child,
+      .stat-card:last-child {
+        border-right: none;
+      }
+
+      .score,
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.6rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-card .label,
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 0.5rem;
+      }
+      /* Semantic state classes — no nth-child decoration, no !important */
+      .score-good,
+      .stat-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .score-warn,
+      .stat-warn {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .score-bad,
+      .stat-bad {
+        background: var(--problem);
+        color: var(--surface);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.6rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid var(--text);
+        color: var(--text);
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: var(--warning);
+      }
+      .badge-medium {
+        background: var(--surface-sunken);
+      }
+      .badge-low {
+        background: var(--surface-raised);
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      /* --- Callouts --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-sunken);
+        font-size: 0.92rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-teal,
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 10%,
+          var(--surface-raised)
+        );
+      }
+      .callout-amber,
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 18%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Strengths --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.3rem;
+        line-height: 1.3;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+        border: 2px solid var(--text);
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--text);
+        color: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border-strong);
+      }
+      th:last-child {
+        border-right: none;
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+      }
+      td:last-child {
+        border-right: none;
+      }
+      tr:nth-child(even) td {
+        background: var(--surface-sunken);
+      }
+      table.compare td.yes {
+        color: var(--solution);
+        font-weight: 700;
+      }
+      table.compare td.no {
+        color: var(--problem);
+        font-weight: 700;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--text);
+        color: var(--surface);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        border: 2px solid var(--text);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--warning);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: #95e1d3;
+      }
+      .tok-comment {
+        color: rgba(244, 244, 240, 0.45);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #6eb5ff;
+      }
+      .tok-number {
+        color: var(--warning);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #6eb5ff;
+      }
+      .tok-punct {
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .tok-attr {
+        color: var(--warning);
+      }
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 2px solid var(--text);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--surface-sunken);
+        border: 1px solid var(--text);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1.1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.94rem;
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 3px solid var(--text);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .scorecard,
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-right: none;
+        }
+        .score-card:nth-child(1),
+        .stat-card:nth-child(1),
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-bottom: 3px solid var(--text);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+        .hero-shapes {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Full-bleed top bar -->
+    <div class="top-bar">
+      <span>DEEPENING DESIGN</span>
+      <span>2026-11-19</span>
+      <span>COMPANION TO THE 08-10 BRIEF</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#constraint">00 Constraint</a>
+          <a href="#category">01 Category</a>
+          <a href="#twice">02 Design it twice</a>
+          <a href="#shape">03 The deepened shape</a>
+          <a href="#invariants">04 Invariants</a>
+          <a href="#risks">05 Risks</a>
+          <a href="#migration">06 Migration sketch</a>
+          <a href="#frontier">07 Frontier questions</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <header class="hero">
+          <div class="hero-shapes">
+            <div class="bar"></div>
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="eyebrow">DEEPENING DESIGN &middot; 2026-11-19</div>
+          <h1>Collapse the messaging read surface onto the ThreadGate</h1>
+          <p class="subtitle">
+            The grilled design for candidate 1 of the 08-10 brief. The owner
+            was not present to pick or answer, so every decision below is a
+            recommended default, listed as frontier questions in §07 — nothing
+            is implemented and no TODO_LIST row is written until the owner
+            confirms a shared understanding.
+          </p>
+          <div class="meta">
+            <span class="tag amber">Candidate: messaging read surface</span>
+            <span class="tag">Commit: 94cf4365</span>
+            <span class="tag teal">Design, not implementation</span>
+          </div>
+        </header>
+
+        <section id="constraint">
+          <h2><span class="num">00</span>The constraint that makes this hurt</h2>
+          <p>
+            Facts verified at HEAD <code>94cf4365</code>:
+          </p>
+          <ul>
+            <li>
+              <code>internal/messaging/service.go:255-371</code> holds ten read
+              methods whose bodies are 1–3 lines each — pure forwards into the
+              <code>readmodels.ThreadGate</code> plus a
+              <code>readmodels.SummariesOfView</code> conversion
+              (ResolveThread, Threads, AllThreads, ThreadAny, ArchivedThreads,
+              ArchivedCount, ThreadSearch, Thread, ThreadWindow, MarkRead;
+              AttachmentByID/Any at :437-446 are the same shape).
+            </li>
+            <li>
+              <code>server.Deps</code> carries BOTH routes:
+              <code>Messages readmodels.ThreadGate</code> (server.go:206) and
+              <code>Messaging *messaging.Service</code> (server.go:255). The
+              paths already diverged — platform reads the gate directly
+              (platform/export.go:84,121; platform/metrics.go:42,47) while the
+              html surfaces ride the forwarders (panels.go:53-110,
+              actions.go:433,573,626, admin.go:120,129,251 — thirteen sites).
+            </li>
+            <li>
+              A third conversion site exists: the Notifier renders list pushes
+              through <code>ListThreads</code> +
+              <code>SummariesOfView</code> (notifier.go:110-111).
+            </li>
+            <li>
+              No test pins the forwarders: messaging's suites cover
+              Send/Receive/senders/selfsend/blob-rollback/race — none cover the
+              reads. Deletion test passes: deleting the forwarders deletes
+              complexity; it does not reappear (handlers already know the gate's
+              nouns — panels.go builds <code>crmNumbers(threads …)</code> over
+              <code>readmodels.ThreadSummary</code> today).
+            </li>
+          </ul>
+          <div class="callout callout-amber">
+            <strong>The hurt</strong>
+            every new thread reader must choose between two paths, and the
+            choice has already split; the choice is invisible to the depth
+            budget (messaging is 486 LOC, under every ceiling) so nothing gates
+            it — only a real seam decision fixes it.
+          </div>
+        </section>
+
+        <section id="category">
+          <h2><span class="num">01</span>Dependency category</h2>
+          <table class="compare">
+            <thead>
+              <tr><th>dependency</th><th>category</th><th>verdict</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>messaging → ThreadGate → cqrs (journal)</td>
+                <td><code>in-process</code> — nothing crosses a process; the gate has exactly one production implementation (cqrs.NewThreads) plus one test wrapper</td>
+                <td class="yes">no port, no new seam: <strong>replace, don't layer</strong> — reads merge onto the existing interface</td>
+              </tr>
+              <tr>
+                <td>messaging → gateway (senders) · blob store</td>
+                <td><code>mock</code>-shaped outbound, already behind its own seam</td>
+                <td class="yes">untouched — stays inside the pipeline half</td>
+              </tr>
+            </tbody>
+          </table>
+          <p>
+            The category decides the shape: because everything is in-process,
+            the deepening is a deletion plus an interface narrowing — no
+            adapters are introduced, and the one adapter that exists (cqrs over
+            the journal) absorbs what the deleted layer used to do in transit.
+          </p>
+        </section>
+
+        <section id="twice">
+          <h2><span class="num">02</span>Design it twice</h2>
+          <p>
+            The interface shape was contested enough to run three designs
+            against each other (compared inline with fresh file reads — no
+            sub-agent dispatch was available this session; each design was
+            derived from the constraint, not from the others).
+          </p>
+          <table class="compare">
+            <thead>
+              <tr><th></th><th>A · minimal deletion</th><th>B · deepen the gate</th><th>C · deepen the service</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>move</td>
+                <td>delete the forwarders; handlers call the gate + exported SummariesOfView; windowing becomes a 12-line handler helper</td>
+                <td>delete the forwarders AND the conversion: gate methods answer in ThreadSummary; gate gains ThreadWindow; View types become the cqrs adapter's implementation</td>
+                <td>keep the service as the one conversation module; platform switches to it; delete Deps.Messages</td>
+              </tr>
+              <tr>
+                <td>depth</td>
+                <td>gate unchanged; callers learn 19 methods + a converter + a helper</td>
+                <td class="yes">interface knowledge shrinks: no View nouns, no converter, paging hidden</td>
+                <td class="no">interface stays 24+ methods wide — depth unchanged, only the path count collapses</td>
+              </tr>
+              <tr>
+                <td>locality</td>
+                <td>three conversion sites → three call sites (net zero)</td>
+                <td class="yes">one conversion home (the adapter); notifier + handlers stop converting</td>
+                <td>reads and writes keep sharing one module</td>
+              </tr>
+              <tr>
+                <td>seam placement</td>
+                <td class="yes">correct today</td>
+                <td class="yes">correct: the seam already exists, its promise sharpens</td>
+                <td class="no">misplaced: presentation reads behind the pipeline module</td>
+              </tr>
+            </tbody>
+          </table>
+          <div class="callout callout-teal">
+            <strong>Recommended: design B</strong>
+            it is the only one that buys depth (callers learn fewer facts per
+            capability): the gate answers in the nouns every consumer already
+            speaks (ThreadSummary), the windowing contract (page 0 = newest,
+            hasMore) hides inside, and the View wire shapes become
+            implementation. Design A is the fallback if the owner wants the
+            smallest possible diff — it still kills the split-brain, it just
+            leaves three conversion call sites.
+          </div>
+        </section>
+
+        <section id="shape">
+          <h2><span class="num">03</span>The deepened shape (design B)</h2>
+          <pre><code>// readmodels — the gate after the fold (reads only shown)
+type ThreadGate interface {
+    // summary reads — ThreadSummary, render-ready, owner-scoped
+    ListThreads(ctx, owner) ([]ThreadSummary, error)
+    ListArchivedThreads(ctx, owner) ([]ThreadSummary, error)
+    SearchThreads(ctx, owner, needle) ([]ThreadSummary, error)
+    ListAllThreads(ctx, limit) ([]ThreadSummary, error)   // admin-gated by reachability
+    CountArchived(ctx, owner) (int, error)
+    // window read — absorbs paging + hasMore (was ThreadWindow on the service)
+    ThreadWindow(ctx, owner, id, page) (Thread, []Message, bool, error)
+    GetThread / GetThreadAny / MarkThreadRead / SetThreadFlag …  // unchanged
+    // deleted from the interface: ListMessagesPage (single caller was the forwarder)
+}
+
+// messaging — the pipeline that stays (interface shrinks ~24 → ~9)
+RegisterSender · Send · Receive · DeliveryReceipt · RemoteRead
+SetThreadFlag (write + notify) · AttachmentByID/Any · OpenAttachment
+// deleted: ResolveThread Threads AllThreads ThreadAny ArchivedThreads
+//          ArchivedCount ThreadSearch Thread MarkRead + MessagePageSize</code></pre>
+          <p>
+            <strong>What the interface promises callers:</strong> owner scoping
+            on every read (the gate enforces it, handlers stop re-deriving it);
+            absent = <code>store.ErrNotFound</code> sentinel, unchanged; lists
+            are render-ready summaries; the window read pages newest-first with
+            an honest hasMore. <strong>What stays outside the seam:</strong> CRM
+            enrichment (<code>crmDirectory</code>/<code>crmNumbers</code> at
+            the handlers), the unread hub, props assembly, the Notifier's
+            event→push policy table (machine-tables ruling), and every write
+            path — the pipeline module keeps them.
+          </p>
+          <p>
+            <strong>Which tests survive:</strong> all of them, minus nothing —
+            messaging's suites never covered reads; server handler tests go
+            through the same compositions unchanged (byte-pinned panel tests
+            included); notifier tests unchanged. <strong>New pin:</strong>
+            extend cqrs/threadspaging_test.go to pin ThreadWindow's page-0 and
+            hasMore semantics at the gate, since the composition moves inside.
+          </p>
+        </section>
+
+        <section id="invariants">
+          <h2><span class="num">04</span>Stress-tested against the repo's invariants</h2>
+          <table class="compare">
+            <thead>
+              <tr><th>invariant</th><th>effect</th><th>verdict</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>arch tests (services never import server/web; readmodels purity; island closure)</td>
+                  <td>messaging keeps importing readmodels/domain/gateway only; ThreadSummary + SummariesOfView already live in readmodels (gates + view types — its ratified shape); no sqliteengine, no func Open</td>
+                  <td class="yes">holds</td></tr>
+              <tr><td>wiring parity (TestAppWiresEveryServerDep)</td>
+                  <td>no Deps field is added or removed — both Messages and Messaging stay, already present in app.go's literal and server_test.go:173,181</td>
+                  <td class="yes">untouched</td></tr>
+              <tr><td>depth budget (1500/60 default; cqrs 6000 pin)</td>
+                  <td>messaging 486 → ~370 (down, un-pinned); readmodels +0 (types already there); cqrs 5672 → ~5700 (windowing compose moves in — inside the 6000 pin, and the growth IS the depth bought)</td>
+                  <td class="yes">direction down where it can be</td></tr>
+              <tr><td>one-home helpers + dedup registry</td>
+                  <td>no helper moves (requireThread, crmNumbers, renderHTML stay); no adjudicated group matches the forwarders; post-train the dedup protocol runs (CI-pinned art-dupl v0.7.2, -t 1) and expects the collapsed call sites to shrink groups, not add them</td>
+                  <td class="yes">no conflict</td></tr>
+              <tr><td>error-code registry</td>
+                  <td>no errorfamily codes move or appear — read errors already surface cqrs-wrapped; handlers mint nothing for reads; no regen owed (no moves/renames of code sites)</td>
+                  <td class="yes">no same-commit regen</td></tr>
+              <tr><td>admin cross-owner seams</td>
+                  <td>ListAllThreads/GetThreadAny/AttachmentByIDAny stay reachable only from admin-gated handlers — the same handlers, same gating order; store/readmodels-side pins unaffected</td>
+                  <td class="yes">reachability unchanged</td></tr>
+              <tr><td>machine-tables ruling</td>
+                  <td>deliveryMoves/faxMoves/AppendToThread and Notifier.Project untouched</td>
+                  <td class="yes">untouched</td></tr>
+              <tr><td>CHANGELOG bar</td>
+                  <td>committed code-path change ⇒ one [Unreleased] line</td>
+                  <td class="yes">owed by the train</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <section id="risks">
+          <h2><span class="num">05</span>Risks — grilled</h2>
+          <div class="strengths">
+            <div class="strength">
+              <div class="check" style="color: var(--problem)">!</div>
+              <div class="text">
+                <strong>R1 · the render shape becomes the gate's contract</strong>
+                <span>ThreadSummary at the interface means a future non-render consumer of thread lists rides the render nouns. Checked: no /api surface serves threads today (openapi's 11 surfaces exclude them), and the android shell reads panels, not a thread JSON lane — the risk is real only if a thread API lane is ever added, and then Summary is still the honest wire.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check" style="color: var(--problem)">!</div>
+              <div class="text">
+                <strong>R2 · export.go consumes View fields directly</strong>
+                <span>platform/export.go builds its export rows from ThreadSummaryView today; under design B it reads ThreadSummary. Mitigation is the storage-ladder recipe step zero: copy the view shapes VERBATIM from git history when touching the mapping — ThreadSummary already carries the fields (id, remote, newest stamp) the export needs, verified against readmodels/threads.go:61-72.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check" style="color: var(--problem)">!</div>
+              <div class="text">
+                <strong>R3 · MarkRead loses its (nonexistent) notify half</strong>
+                <span>Verified service.go:360-371: MarkRead emits nothing today — the pass-through moves to a direct gate call with identical behaviour; the unread hub drop stays at the handler.</span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check" style="color: var(--problem)">!</div>
+              <div class="text">
+                <strong>R4 · one train, compile-coupled</strong>
+                <span>gate signature change + cqrs adapter + 13 handler sites + service deletions only compile together — one train, one commit, staged and committed in a single call (the daemon race rule), full suite + buildflow at train start and end per the health warning.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="migration">
+          <h2><span class="num">06</span>Migration sketch (not executed)</h2>
+          <div class="migration-step">
+            <div class="migration-num">1</div>
+            <div class="migration-content">
+              <h4>readmodels: sharpen the gate</h4>
+              <p>ThreadGate's four list methods return []ThreadSummary; add ThreadWindow; drop ListMessagesPage from the interface (ListMessages(limit) stays for export). SummariesOfView stays exported — its one caller becomes the cqrs adapter.</p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">2</div>
+            <div class="migration-content">
+              <h4>cqrs: the adapter absorbs conversion + windowing</h4>
+              <p>threadsreads.go/threadsstore.go convert View → Summary at the adapter edge and compose GetThread + paging into ThreadWindow, behaviour verbatim (page 0 newest, hasMore honest). Extend threadspaging_test.go to pin the window at the gate.</p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">3</div>
+            <div class="migration-content">
+              <h4>server: rewire thirteen read sites</h4>
+              <p>panels.go ×6, actions.go ×3, admin.go ×3 from deps.Messaging.* to deps.Messages.*; notifier.go's conversion line dies (gate answers summaries). Handler tests untouched; the failingAppendGate test wrapper gains nothing (it embeds the real gate).</p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">4</div>
+            <div class="migration-content">
+              <h4>messaging: delete the read half</h4>
+              <p>Ten forwarders + Thread/ThreadWindow + MessagePageSize (moves to readmodels) deleted; ResolveThread un-exports (Send-internal). Hooks (Receive/DeliveryReceipt), api, attachments untouched. Service tests untouched — none covered reads.</p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">5</div>
+            <div class="migration-content">
+              <h4>gates + ledger</h4>
+              <p>nix develop -c go test -count=1 ./... (env -u GOEXPERIMENT if a local-only red appears), buildflow at both ends, dedup-registry sweep-log line, CHANGELOG [Unreleased] line. No error-code regen owed (no codes moved).</p>
+            </div>
+          </div>
+        </section>
+
+        <section id="frontier">
+          <h2><span class="num">07</span>Frontier questions (recommended defaults)</h2>
+          <p>
+            One round, each worded so "yes" accepts the recommendation. Facts
+            above are the reviewer's job; these five are the owner's:
+          </p>
+          <table class="compare">
+            <thead><tr><th>#</th><th>question</th><th>recommended default</th></tr></thead>
+            <tbody>
+              <tr><td>Q1</td><td>fold the View→Summary conversion into the gate (design B), or leave the converter exported for callers (design A)?</td><td><strong>B</strong> — three conversion sites die; View becomes implementation</td></tr>
+              <tr><td>Q2</td><td>fold ThreadWindow into the gate, or keep a 12-line handler helper?</td><td><strong>fold</strong> — ListMessagesPage has exactly one caller; hasMore semantics hide</td></tr>
+              <tr><td>Q3</td><td>keep Deps.Messaging (name + field) as the pipeline route?</td><td><strong>keep</strong> — wiring-parity untouched, hooks keep their seam</td></tr>
+              <tr><td>Q4</td><td>AttachmentByID/Any stay on the service?</td><td><strong>stay</strong> — owner scope + admin fallback + blob open is a real composition, not a forwarder</td></tr>
+              <tr><td>Q5</td><td>land as one compile-coupled train/commit?</td><td><strong>one</strong> — the daemon race rule; a split train cannot compile</td></tr>
+            </tbody>
+          </table>
+          <div class="callout callout-amber">
+            <strong>Not done until the owner answers</strong>
+            per the skill: no edits and no TODO_LIST rows until a shared
+            understanding is confirmed. When confirmed, the chosen refactor
+            runs docs-health → HARVEST so it lands in TODO_LIST.md.
+          </div>
+        </section>
+
+        <footer class="footer">
+          <p>
+            Generated 2026-11-19 &middot; Reviewed against 94cf4365 &middot;
+            Companion to 2026-11-19_08-10_webphone-deepening.html (candidate 1)
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
