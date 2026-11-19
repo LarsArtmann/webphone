@@ -127,24 +127,24 @@ only; no benchmarks, no flake check, no CI verdict read for HEAD.
 
 ## f) Next tasks (what THIS session surfaced — 16, not padded to 50)
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | Land `ReviewSaved` in `BuildCatalog` (+ mirror, `wantEventIDs`, parity pair) | High | S | Bug (docs) |
-| 2 | Decide the CatalogVersion bump rule for ADDED messages (bump with the fix?) | High | S | Documentation |
-| 3 | Add `TestCatalogSeamEventSetParity` (domain.Event implementers ⊆ catalog) | High | S | Quality |
-| 4 | Re-run `check-catalog-contract.py` against the hub's live v2 URL post-fix | Medium | S | Quality |
-| 5 | Verify the hub actually lints the `-plain` tree (cross-repo config read) | Medium | S | Quality |
-| 6 | systemscenario spike for the cqrs Ginkgo suites (notes first) — or write the why-not ruling | Medium | M | Quality |
-| 7 | Confirm `readmodels/faxesgate.go`'s `metaengine.Query` sits right with the gates-and-views-only purity test | Low | S | Quality |
-| 8 | Codify the CatalogVersion bump policy in `catalog.go`'s comment block | Low | S | Documentation |
-| 9 | HARVEST this (f) into TODO_LIST.md (docs-health) | Medium | S | Process |
-| 10 | Assess snapshot need for long-lived streams (threads per owner, unbounded versions?) | Low | M | Quality |
-| 11 | Delete test-only `store.Messages` (messages.go:19-24) | Low | S | Cleanup |
-| 12 | Route metrics counts (`ReadCounts`/`FlagPresent`) off the frozen webphone.db ladder | Low | M | Cleanup |
-| 13 | Operator note: readmodels.db is an inert orphan on upgraded deployments (README) | Low | S | Documentation |
-| 14 | When landing #1, document ReviewSaved's payload-less nudge semantics in its summary | Low | S | Documentation |
-| 15 | Consider a CI job variant linting the `-plain` export pre-push | Low | S | Quality |
-| 16 | DLQ depth visibility: verify an operator surface exists for poisoned projections (metrics/log) | Medium | S | Feature |
+| #  | Task                                                                                                        | Impact | Effort | Category      |
+| -- | ----------------------------------------------------------------------------------------------------------- | ------ | ------ | ------------- |
+| 1  | Land `ReviewSaved` in `BuildCatalog` (+ mirror, `wantEventIDs`, parity pair)                                | High   | S      | Bug (docs)    |
+| 2  | Decide the CatalogVersion bump rule for ADDED messages (bump with the fix?)                                 | High   | S      | Documentation |
+| 3  | Add `TestCatalogSeamEventSetParity` (domain.Event implementers ⊆ catalog)                                   | High   | S      | Quality       |
+| 4  | Re-run `check-catalog-contract.py` against the hub's live v2 URL post-fix                                   | Medium | S      | Quality       |
+| 5  | Verify the hub actually lints the `-plain` tree (cross-repo config read)                                    | Medium | S      | Quality       |
+| 6  | systemscenario spike for the cqrs Ginkgo suites (notes first) — or write the why-not ruling                 | Medium | M      | Quality       |
+| 7  | Confirm `readmodels/faxesgate.go`'s `metaengine.Query` sits right with the gates-and-views-only purity test | Low    | S      | Quality       |
+| 8  | Codify the CatalogVersion bump policy in `catalog.go`'s comment block                                       | Low    | S      | Documentation |
+| 9  | HARVEST this (f) into TODO_LIST.md (docs-health)                                                            | Medium | S      | Process       |
+| 10 | Assess snapshot need for long-lived streams (threads per owner, unbounded versions?)                        | Low    | M      | Quality       |
+| 11 | Delete test-only `store.Messages` (messages.go:19-24)                                                       | Low    | S      | Cleanup       |
+| 12 | Route metrics counts (`ReadCounts`/`FlagPresent`) off the frozen webphone.db ladder                         | Low    | M      | Cleanup       |
+| 13 | Operator note: readmodels.db is an inert orphan on upgraded deployments (README)                            | Low    | S      | Documentation |
+| 14 | When landing #1, document ReviewSaved's payload-less nudge semantics in its summary                         | Low    | S      | Documentation |
+| 15 | Consider a CI job variant linting the `-plain` export pre-push                                              | Low    | S      | Quality       |
+| 16 | DLQ depth visibility: verify an operator surface exists for poisoned projections (metrics/log)              | Medium | S      | Feature       |
 
 ## g) Questions (cannot figure these out myself)
 

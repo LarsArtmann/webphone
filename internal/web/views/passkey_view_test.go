@@ -17,14 +17,14 @@ func TestLoginPageExtraAdaptsToPasskeyMode(t *testing.T) {
 	breakglass := renderComponent(t, LoginPageExtra(false, false))
 	withSSO := renderComponent(t, LoginPageExtra(false, true))
 
-	extensionIds := []string{
+	extensionIDs := []string{
 		`id="login-form"`,
 		`id="ext"`,
 		`id="pass"`,
 		`id="remember"`,
 		`id="login-error"`,
 	}
-	for _, id := range extensionIds {
+	for _, id := range extensionIDs {
 		if !strings.Contains(primary, id) || !strings.Contains(breakglass, id) {
 			t.Errorf("extension login %s must survive in BOTH shapes (primary=%v breakglass=%v)", id,
 				strings.Contains(primary, id), strings.Contains(breakglass, id))

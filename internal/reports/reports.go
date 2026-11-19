@@ -322,15 +322,15 @@ func (r Report) BusiestHours() []Hour {
 // MaxDayTalk is the largest daily talk time, the denominator a daily bar
 // ladder needs. Zero when no day holds talk time.
 func (r Report) MaxDayTalk() time.Duration {
-	var max time.Duration
+	var peak time.Duration
 
 	for _, day := range r.Days {
-		if day.Talk > max {
-			max = day.Talk
+		if day.Talk > peak {
+			peak = day.Talk
 		}
 	}
 
-	return max
+	return peak
 }
 
 // remoteOf is the OTHER party: the caller for an inbound record, the

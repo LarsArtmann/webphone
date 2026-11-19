@@ -25,10 +25,10 @@ type threadState struct {
 	Pinned     bool
 	Archived   bool
 	Muted      bool
-	MastBody   string // last-by-created-at preview body
-	MastDir    string
-	MastChan   string
-	MastAttach bool
+	LastBody   string // last-by-created-at preview body
+	LastDir    string
+	LastChan   string
+	LastAttach bool
 	Messages   []string // every appended message id, journal order
 	Outbound   map[string]domain.Delivery
 	AttachIDs  []string // every attachment id, journal order
@@ -46,10 +46,10 @@ func (s threadState) summaryImage() domain.ThreadSummaryImage {
 		Pinned:         s.Pinned,
 		Archived:       s.Archived,
 		Muted:          s.Muted,
-		LastBody:       s.MastBody,
-		LastDirection:  s.MastDir,
-		LastChannel:    s.MastChan,
-		LastAttachment: s.MastAttach,
+		LastBody:       s.LastBody,
+		LastDirection:  s.LastDir,
+		LastChannel:    s.LastChan,
+		LastAttachment: s.LastAttach,
 	}
 }
 
@@ -216,7 +216,7 @@ func appendToState(s threadState, msg domain.Message) threadState {
 	// Journal order is creation order for both the live lane (CreatedAt =
 	// now, monotonic) and the sorted importer, so the appended message is
 	// the newest — the legacy list's ORDER BY created_at DESC twin.
-	s.MastBody, s.MastDir, s.MastChan, s.MastAttach = msg.Body,
+	s.LastBody, s.LastDir, s.LastChan, s.LastAttach = msg.Body,
 		string(msg.Direction), string(msg.Channel), len(msg.Attachments) > 0
 	s.Messages = append(s.Messages, msg.ID.String())
 	if msg.Direction == domain.DirectionOutbound {
@@ -230,5 +230,5 @@ func adoptSummaryImage(s *threadState, img domain.ThreadSummaryImage) {
 	s.ThreadID, s.Owner, s.Network, s.Remote = img.ThreadID, img.Owner, img.Network, img.Remote
 	s.LastAct, s.Unread = img.LastActivity, img.Unread
 	s.Pinned, s.Archived, s.Muted = img.Pinned, img.Archived, img.Muted
-	s.MastBody, s.MastDir, s.MastChan, s.MastAttach = img.LastBody, img.LastDirection, img.LastChannel, img.LastAttachment
+	s.LastBody, s.LastDir, s.LastChan, s.LastAttach = img.LastBody, img.LastDirection, img.LastChannel, img.LastAttachment
 }

@@ -48,14 +48,14 @@ func Sleep(ctx context.Context, d time.Duration) bool {
 }
 
 // nextDelay computes attempt n's wait: go-retry's exponential doubling
-// with up to 50% additive jitter, hard-capped at max — the fleet
+// with up to 50% additive jitter, hard-capped — the fleet
 // library's hardened math replaces the hand-rolled deterministic
 // ladder (thundering-herd prone when every lane reconnects after a
 // shared-server restart). attempt must be >= 1.
-func nextDelay(attempt int, max time.Duration) time.Duration {
-	delay, err := retry.ComputeDelay(firstWait, max, 2, attempt)
+func nextDelay(attempt int, ceiling time.Duration) time.Duration {
+	delay, err := retry.ComputeDelay(firstWait, ceiling, 2, attempt)
 	if err != nil {
-		return max // unreachable for attempt >= 1; a caller bug waits the cap
+		return ceiling // unreachable for attempt >= 1; a caller bug waits the cap
 	}
 	return delay
 }
