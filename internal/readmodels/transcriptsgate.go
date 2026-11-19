@@ -101,10 +101,10 @@ func ReassembleTranscripts(rows []domain.CallTranscriptSegment, maxCalls int) []
 		}
 	}
 	for i := range groups {
-		// The store yields oldest-first per call; the UI reads top-down, so
-		// each call's lines are presented newest-first. slices.Reverse is the
-		// stdlib home for this (the hand-rolled two-pointer helper it replaces
-		// carried a nolint purely for its own arithmetic).
+		// The fetch is newest-first per call (seq-DESC); the UI reads
+		// spoken order, so the per-group reverse restores it. slices.Reverse
+		// is the stdlib home for this (the hand-rolled two-pointer helper it
+		// replaces carried a nolint purely for its own arithmetic).
 		slices.Reverse(groups[i].Lines)
 	}
 	return groups

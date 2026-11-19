@@ -48,6 +48,15 @@ type (
 		Owner string `json:"owner"` // Extension: the PBX extension owning the fax job
 		Fax   string `json:"fax"`   // FaxID: the fax job that advanced
 	}
+
+	// CatalogReviewSavedSchema mirrors ReviewSaved. CallID stays a raw
+	// string on the event too: the island-owned SIP Call-ID is an opaque
+	// foreign token (the strong-id wire ruling), so there is no brand to
+	// hide from the schema reflector here.
+	CatalogReviewSavedSchema struct {
+		Owner  string `json:"owner"`   // Extension: the PBX extension owning the call
+		CallID string `json:"call_id"` // the island-owned SIP Call-ID the review keys on
+	}
 )
 
 // BuildCatalog constructs webphone's event catalog from the closed
@@ -89,6 +98,12 @@ func BuildCatalog() *catalog.Catalog {
 			catalog.Owners("lars"),
 			catalog.WithName("Fax Advanced"),
 			catalog.WithSummary("A fax job moved through its lifecycle: submit, settle, verdict, or receive."),
+		),
+		catalog.Event[CatalogReviewSavedSchema](
+			catalog.MessageID("review.saved"), catalog.Sends,
+			catalog.Owners("lars"),
+			catalog.WithName("Review Saved"),
+			catalog.WithSummary("A call-review artifact landed in its slot (pending, present, or failed); the projection is a payload-less nudge."),
 		),
 	)
 

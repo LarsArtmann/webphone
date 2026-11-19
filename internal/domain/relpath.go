@@ -58,6 +58,3 @@ func (p RelPath) String() string { return p.value }
 // Empty reports the zero path — the one emptiness check for the
 // branded shape (comparisons against "" do not compile, by design).
 func (p RelPath) Empty() bool { return p.value == "" }
-
-// IsZero reports whether the path is the zero value.
-func (p RelPath) IsZero() bool { return p.value == "" }

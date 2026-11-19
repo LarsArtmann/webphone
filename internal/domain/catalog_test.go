@@ -77,6 +77,7 @@ func testCatalogService(t *testing.T, svc catalog.Service) {
 		"message.delivery.advanced",
 		"thread.flag.changed",
 		"fax.advanced",
+		"review.saved",
 	}
 
 	if len(svc.Events) != len(wantEventIDs) {
@@ -162,6 +163,7 @@ func TestCatalogSchemaParity(t *testing.T) {
 		{MessageDeliveryAdvanced{}, CatalogMessageDeliveryAdvancedSchema{}},
 		{ThreadFlagChanged{}, CatalogThreadFlagChangedSchema{}},
 		{FaxAdvanced{}, CatalogFaxAdvancedSchema{}},
+		{ReviewSaved{}, CatalogReviewSavedSchema{}},
 	}
 
 	for _, pair := range pairs {
@@ -172,6 +174,17 @@ func TestCatalogSchemaParity(t *testing.T) {
 			t.Errorf("%T and its catalog mirror %T drifted: fields %v vs %v",
 				pair.event, pair.mirror, eventFields, mirrorFields)
 		}
+	}
+
+	// The pairs list and the catalog's event table are two hand-held
+	// halves of the same closed set — the ReviewSaved omission (found
+	// 2026-11-19: 4 of 5 events documented) was exactly this gap. A new
+	// event must join BOTH lists or this fails: the parity pairs cannot
+	// silently outnumber (or undercount) the catalog.
+	catalogEvents := len(BuildCatalog().Services[0].Events)
+	if len(pairs) != catalogEvents {
+		t.Errorf("parity pairs cover %d events but BuildCatalog documents %d — a new seam event joined one list and missed the other",
+			len(pairs), catalogEvents)
 	}
 }
 

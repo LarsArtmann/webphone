@@ -131,9 +131,6 @@ func (a Address) Network() Network { return a.network }
 // String returns the raw address value.
 func (a Address) String() string { return a.value }
 
-// IsZero reports whether the address is the zero value.
-func (a Address) IsZero() bool { return a.value == "" }
-
 // IsPhoneShaped reports whether the address rides a telephony network, i.e.
 // whether an external phone-number index can possibly match it. SMS and Signal
 // addresses ARE phone numbers; a Matrix user id or a Session id is not, so

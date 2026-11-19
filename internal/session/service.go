@@ -55,9 +55,6 @@ func ParseToken(raw string) Token {
 // String returns the raw cookie/SQL form.
 func (t Token) String() string { return t.value }
 
-// IsZero reports whether no credential is present.
-func (t Token) IsZero() bool { return t.value == "" }
-
 // Session is one signed-in extension.
 type Session struct {
 	Extension domain.Extension

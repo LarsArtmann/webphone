@@ -79,9 +79,6 @@ func MustParsePhone(raw string) Phone {
 // String returns the sanitized number.
 func (p Phone) String() string { return p.value }
 
-// IsZero reports whether the phone is the zero value.
-func (p Phone) IsZero() bool { return p.value == "" }
-
 // keepRunes is the ONE home of the "keep only the runes of s for which
 // keep holds, order preserved" loop: the dialable sanitize, the contact
 // digit key and the avatar digit tail share the shape, and second
