@@ -63,47 +63,47 @@ harvest wiring that keeps this plan from entombing its own rows.
 Sorted by importance / impact / effort / customer-value (customer = the
 owner-operator; "rides T11" = merges into the 19:46 plan's T11 train).
 
-| #   | Task                                                                                                    | Impact                     | Effort | Value   | Gate            |
-| --- | ------------------------------------------------------------------------------------------------------- | -------------------------- | ------ | ------- | --------------- |
-| TA  | T11 delta: CatalogVersion bump decision (rec. 1.0.0→1.1.0, owner-vetoable) + bump-policy comment + seam-only ruling + ReviewSaved summary wording | High (completes the scheduled fix) | 45m | High | 19:46 T11 |
-| TB  | Verification ring: live hub v2 contract run + hub `-plain` lint config read + CI `-plain` export lane     | High (real-oracle compliance) | 60m | High | TA landed |
-| TC  | DLQ operator visibility: inspect what exists, add depth surface (metric or log line) + Settings/ops note | Medium-High (only blind failure mode) | 45m | High | — |
-| TE  | Metrics off the frozen ladder: assess what `ReadCounts`/`FlagPresent` measure post-retention, reroute or retire | Medium | 30m | Medium | — |
-| TD  | `systemscenario` spike + written ruling for the cqrs Ginkgo boots (notes suite first; adopt or why-not)  | Medium (test infra)        | 30m | Medium | — |
-| TF  | Snapshot assessment: stream-version growth (threads per owner), metaengine snapshot support, verdict row | Low-Med (long horizon)     | 30m | Low-Med | — |
-| TG  | Cleanups: `readmodels.db` orphan operator note + delete test-only `internal/store/messages.go`          | Low                        | 20m | Low    | — |
-| TH  | Harvest wiring: TODO_LIST rows for TC–TG, annotate the status report's open (b)/(c) items                | Medium (process)           | 15m | Medium | TC–TG verdicts |
+| #  | Task                                                                                                                                              | Impact                                | Effort | Value   | Gate           |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- | ------ | ------- | -------------- |
+| TA | T11 delta: CatalogVersion bump decision (rec. 1.0.0→1.1.0, owner-vetoable) + bump-policy comment + seam-only ruling + ReviewSaved summary wording | High (completes the scheduled fix)    | 45m    | High    | 19:46 T11      |
+| TB | Verification ring: live hub v2 contract run + hub `-plain` lint config read + CI `-plain` export lane                                             | High (real-oracle compliance)         | 60m    | High    | TA landed      |
+| TC | DLQ operator visibility: inspect what exists, add depth surface (metric or log line) + Settings/ops note                                          | Medium-High (only blind failure mode) | 45m    | High    | —              |
+| TE | Metrics off the frozen ladder: assess what `ReadCounts`/`FlagPresent` measure post-retention, reroute or retire                                   | Medium                                | 30m    | Medium  | —              |
+| TD | `systemscenario` spike + written ruling for the cqrs Ginkgo boots (notes suite first; adopt or why-not)                                           | Medium (test infra)                   | 30m    | Medium  | —              |
+| TF | Snapshot assessment: stream-version growth (threads per owner), metaengine snapshot support, verdict row                                          | Low-Med (long horizon)                | 30m    | Low-Med | —              |
+| TG | Cleanups: `readmodels.db` orphan operator note + delete test-only `internal/store/messages.go`                                                    | Low                                   | 20m    | Low     | —              |
+| TH | Harvest wiring: TODO_LIST rows for TC–TG, annotate the status report's open (b)/(c) items                                                         | Medium (process)                      | 15m    | Medium  | TC–TG verdicts |
 
 ## 3. Micro breakdown — ≤12 min per task, ALL todos
 
-| ID    | Micro task                                                                                                                  | Min | T  |
-| ----- | --------------------------------------------------------------------------------------------------------------------------- | --- | -- |
+| ID    | Micro task                                                                                                                   | Min | T  |
+| ----- | ---------------------------------------------------------------------------------------------------------------------------- | --- | -- |
 | a01.1 | Decide the bump: adding a declared message changes catalog content ⇒ rec. `CatalogVersion` 1.0.0→1.1.0 (constant + all refs) | 6   | TA |
 | a01.2 | Write the bump-policy sentence into `catalog.go`'s comment block (when to bump: message added/changed/removed)               | 6   | TA |
-| a01.3 | Write the seam-only ruling comment: catalog documents the 5 seam events; the 30 journal events are internal, never cataloged  | 8   | TA |
+| a01.3 | Write the seam-only ruling comment: catalog documents the 5 seam events; the 30 journal events are internal, never cataloged | 8   | TA |
 | a01.4 | Draft ReviewSaved's catalog summary incl. payload-less nudge semantics (History re-reads its own store)                      | 6   | TA |
 | a01.5 | Hand TA's artifacts to the T11 executor (or land them in the same train); record in the R31 row                              | 5   | TA |
 | a01.6 | Re-export both trees; eyeball `webphone-1.1.0` refs + the 5th event frontmatter                                              | 8   | TA |
 | b01.1 | Run `check-catalog-contract.py --export <fresh>` against the LIVE v2 URL (needs the hub up); capture verdict                 | 10  | TB |
 | b01.2 | If red: fix the exporter call, not the schema; re-run to clean                                                               | 12  | TB |
 | b01.3 | Read the hub repo's lint config: confirm it consumes the `-plain` tree (cross-repo read; record path+commit)                 | 12  | TB |
-| b01.4 | Add a CI step: second `catalog -o … -plain` export + contract check over that tree                                            | 12  | TB |
-| b01.5 | Push, watch the `catalog-contract` job go green on both trees; `scripts/ci-verdict.sh <sha>`                                  | 10  | TB |
+| b01.4 | Add a CI step: second `catalog -o … -plain` export + contract check over that tree                                           | 12  | TB |
+| b01.5 | Push, watch the `catalog-contract` job go green on both trees; `scripts/ci-verdict.sh <sha>`                                 | 10  | TB |
 | c01.1 | Inspect DLQ surfaces today: `projectionhost` logging, `/metrics`, healthz — grep + live boot probe                           | 12  | TC |
 | c01.2 | Pick the surface: depth metric `webphone_projection_dlq_depth{worker}` (aggregates-only rule) vs WARN log line               | 8   | TC |
-| c01.3 | Implement + unit test (poison one projection in a test boot; assert the surface fires)                                        | 12  | TC |
+| c01.3 | Implement + unit test (poison one projection in a test boot; assert the surface fires)                                       | 12  | TC |
 | c01.4 | Ops note: one line in README §operators + AGENTS flight-recorder-adjacent bullet                                             | 8   | TC |
 | e01.1 | Trace `ReadCounts`/`FlagPresent` callers + what they measure now that retention empties legacy rows                          | 12  | TE |
-| e01.2 | Verdict: reroute through gate counts (journal-side) or retire the metrics; implement the cheap arm                            | 12  | TE |
-| e01.3 | Update the `/metrics` leak-test fixtures if names change; changelog line                                                      | 6   | TE |
-| d01.1 | Spike: boot the notes suite via `systemscenario.System` in a scratch branch; compare ergonomics + runtime                     | 12  | TD |
-| d01.2 | Write the ruling (adopt-with-train or why-not) into the TODO row; delete the branch                                           | 10  | TD |
-| f01.1 | Measure: longest stream versions in a prod-shaped db (threads per owner after months of traffic)                              | 12  | TF |
-| f01.2 | Check metaengine snapshot support surface; write the verdict row (adopt-later trigger: measured versions > N)                 | 12  | TF |
-| g01.1 | README upgrade note: `readmodels.db` is an inert orphan post-v2.12; safe to delete                                            | 6   | TG |
-| g01.2 | Verify `internal/store/messages.go` is test-only (grep importers); delete + run store tests                                   | 8   | TG |
-| h01.1 | Append the harvest subsection to TODO_LIST (TC–TG rows + R31 delta note); docs-gates `--check`                                | 10  | TH |
-| h01.2 | Annotate the 20:23 status report's (b)/(c) items with outcomes (non-destructive)                                              | 5   | TH |
+| e01.2 | Verdict: reroute through gate counts (journal-side) or retire the metrics; implement the cheap arm                           | 12  | TE |
+| e01.3 | Update the `/metrics` leak-test fixtures if names change; changelog line                                                     | 6   | TE |
+| d01.1 | Spike: boot the notes suite via `systemscenario.System` in a scratch branch; compare ergonomics + runtime                    | 12  | TD |
+| d01.2 | Write the ruling (adopt-with-train or why-not) into the TODO row; delete the branch                                          | 10  | TD |
+| f01.1 | Measure: longest stream versions in a prod-shaped db (threads per owner after months of traffic)                             | 12  | TF |
+| f01.2 | Check metaengine snapshot support surface; write the verdict row (adopt-later trigger: measured versions > N)                | 12  | TF |
+| g01.1 | README upgrade note: `readmodels.db` is an inert orphan post-v2.12; safe to delete                                           | 6   | TG |
+| g01.2 | Verify `internal/store/messages.go` is test-only (grep importers); delete + run store tests                                  | 8   | TG |
+| h01.1 | Append the harvest subsection to TODO_LIST (TC–TG rows + R31 delta note); docs-gates `--check`                               | 10  | TH |
+| h01.2 | Annotate the 20:23 status report's (b)/(c) items with outcomes (non-destructive)                                             | 5   | TH |
 
 ## 4. Execution graph
 
@@ -168,13 +168,13 @@ graph TD
 
 ## 7. Dedupe map (vs the 19:46 plan + 2026-11-19 harvests)
 
-| This plan | 19:46 / TODO_LIST says | Verdict |
-| --- | --- | --- |
-| ReviewSaved row + parity | T11 / R31 / fcr-02 M2 | NOT duplicated — TA adds only the delta |
-| Run catalog pins | m11.3 | folded into a01.6 |
-| faxesgate purity check | resolved 2026-11-11 carve (faxesgate.go IS the home) | DROPPED (stale — my status report's item 7) |
-| store.Messages | registration deleted 2026-11-12; test-only file remains | kept, file-deletion only (g01.2) |
-| DLQ, systemscenario, snapshots, metrics-ladder, live-contract, -plain lane, readmodels.db note | no row anywhere | NEW (harvested by TH) |
+| This plan                                                                                      | 19:46 / TODO_LIST says                                  | Verdict                                     |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ------------------------------------------- |
+| ReviewSaved row + parity                                                                       | T11 / R31 / fcr-02 M2                                   | NOT duplicated — TA adds only the delta     |
+| Run catalog pins                                                                               | m11.3                                                   | folded into a01.6                           |
+| faxesgate purity check                                                                         | resolved 2026-11-11 carve (faxesgate.go IS the home)    | DROPPED (stale — my status report's item 7) |
+| store.Messages                                                                                 | registration deleted 2026-11-12; test-only file remains | kept, file-deletion only (g01.2)            |
+| DLQ, systemscenario, snapshots, metrics-ladder, live-contract, -plain lane, readmodels.db note | no row anywhere                                         | NEW (harvested by TH)                       |
 
 ## 8. Errata / continuity
 
