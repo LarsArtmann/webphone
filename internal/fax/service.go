@@ -202,17 +202,30 @@ func (s *Service) Resend(ctx context.Context, owner domain.Extension, id domain.
 	if job.Direction != domain.FaxOutbound || job.Status != domain.FaxFailed {
 		return domain.FaxJob{}, &ErrInvalidFax{Reason: "only failed outbound faxes can be resent"}
 	}
-	// The document must still exist before a new job references it: a
+	// The document must still exist before a new job is created: a
 	// loopback gateway would otherwise "transmit" a resend whose PDF is
-	// gone (the probe is the honesty guard, drive never opens the file).
-	probe, err := s.blobs.Open(job.DocumentPath)
+	// gone (the reopen is the honesty guard, drive never opens the file).
+	doc, err := s.blobs.Open(job.DocumentPath)
 	if err != nil {
 		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_spool", "reopen fax document")
 	}
-	_ = probe.Close() //nolint:erraudit // existence probe: nothing to read
+	docBytes, readErr := io.ReadAll(doc)
+	_ = doc.Close() //nolint:erraudit // read-complete: nothing left to do on close failure
+	if readErr != nil {
+		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(readErr, "store.fax_spool", "reread fax document")
+	}
+	// The retry owns its OWN blob copy (one extra disk write per retry,
+	// bounded by MaxPDFSize which the original passed at Send time): the
+	// original stays subject to retention on its own schedule, so the
+	// sweep can never unlink a shared path out from under a still-live
+	// retry (2026-11-19 review M1). Each row owns its path.
+	retryPath, err := s.blobs.Save("faxes", ".pdf", docBytes)
+	if err != nil {
+		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_spool", "spool fax retry")
+	}
 
 	now := s.clock()
-	retry := domain.NewOutboundFaxJob(domain.GenerateFaxID(), owner, job.Remote, job.DocumentPath, now)
+	retry := domain.NewOutboundFaxJob(domain.GenerateFaxID(), owner, job.Remote, retryPath, now)
 	if err := s.faxes.Create(ctx, retry); err != nil {
 		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_create", "persist fax retry")
 	}
