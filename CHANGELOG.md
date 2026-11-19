@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Full-code-review fix-forward batch** (2026-11-19): five surgical
+  fixes out of the 2026-11-19 four-part file-by-file review — the SSE
+  shutdown incident line counts the hubs it released BEFORE deleting
+  them (it always logged `hubs=0`); `/metrics` renders
+  `webphone_transcripts_total 0` instead of panicking in test
+  compositions where the Transcripts store is nil; the `/login` CSP
+  override carries the `report-uri`/`report-to` tail so violations on
+  the front door reach the one CSP journal (the header middleware
+  already rode every response); the contacts-import failure banner no
+  longer double-escapes the filename (renderPanelError is the one-home
+  escaper); and the agent summarize hint's transcript tail-cap walks
+  forward to a UTF-8 rune boundary instead of handing the agent a
+  split character (test-pinned). Plus, from the same day's data-model
+  review: a disposition re-select of the verdict already on record is
+  an inert no-op at the journal (matching the note-body echo rule and
+  the API's documented "same verdict again is an inert 204"), and the
+  dial-windows `Active()` list reads the seam's overridable clock like
+  every other path.
+- **The login favicon is green** (2026-11-19): the auth front door's
+  brand-initial favicon square renders the product's green accent
+  (`#17a467`) via the loginpage library's `AccentColor` knob — the
+  library default (indigo) contradicted the 2026-11-11 brand ruling on
+  the one page every anonymous visitor sees.
 - **A failed app start now drains the container** (2026-11-19): when
   `App.Start` fails partway (e.g. a rejected chat-network config after the
   cqrs workers and health probe came up), the process-layer boot path now
