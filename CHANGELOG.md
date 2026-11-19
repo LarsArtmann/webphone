@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- The **workflow-e2e browser lane is now a blocking CI job**
+  (2026-11-19): eight consecutive green advisory runs earned the gate —
+  `continue-on-error` is gone and a red browser journey is a red main.
 - **A resent fax owns its own document copy** (2026-11-19, full-code-review
   M1): a resend used to reference the original job's blob path, and the
   retention sweep could unlink that shared file while the retry row was

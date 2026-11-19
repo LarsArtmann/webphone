@@ -83,15 +83,13 @@ jobs:
   # appearing through SSE->morph in the open page, thread flags, snippet
   # fills, contacts CRUD through the real forms, the language cookie,
   # the styled 404, and the command palette. DOM assertions only (no
-  # screenshots — the visual budget stays with ui-capture). ADVISORY for
-  # the same reason reproduce-first is: browser lanes earn blocking via
-  # clean trains, and the daemon pushes mid-train states; flip by
-  # deleting continue-on-error after clean runs.
+  # screenshots — the visual budget stays with ui-capture). BLOCKING
+  # since 2026-11-19: eight consecutive green runs earned the lane its
+  # gate (the advisory era is over; a red here is now a red main).
   workflow-e2e:
-    name: workflow e2e (browser, advisory)
+    name: workflow e2e (browser)
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    continue-on-error: true
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
