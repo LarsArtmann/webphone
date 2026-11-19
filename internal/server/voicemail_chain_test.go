@@ -68,7 +68,7 @@ func (f *fakeMailbox) saw(needle string) bool {
 
 func writeJSON(w http.ResponseWriter, payload any) {
 	w.Header().Set("Content-Type", "application/json")
-	_ = json.MarshalWrite(w, payload) //nolint:erraudit // test fake: nothing to act on
+	_ = json.MarshalWrite(w, payload)
 }
 
 // The voicemail chain over the REAL proxy: the panel reads the PBX's
