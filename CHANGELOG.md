@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Island error-path justifications made explicit** (2026-11-19): four
+  fire-and-forget promise sites that lacked a written at-site
+  justification (ringback resume, the latency beacon POST, the read
+  receipt, the dial-anyway `placeCall`) now carry one — the dial-anyway
+  call additionally gained the explicit `void` fire-and-forget marker —
+  closing the four gaps the erraudit JS sweep found against the
+  2026-10-27 owner ruling; one stale `//nolint:erraudit` directive in
+  `voicemail_chain_test.go` removed (nolint-audit 69/69 clean).
 - **The island note status line announces politely** (2026-11-18): the
   ended-call card's autosave status span carries `aria-live="polite"`,
   matching the History row's span (one save status, one screen-reader
