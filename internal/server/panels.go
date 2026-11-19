@@ -96,8 +96,10 @@ func (h *handlers) threadPanelPrefilled(r *http.Request, sess session.Session, i
 		return nil, err
 	}
 	if err := h.deps.Messaging.MarkRead(r.Context(), sess.Extension, id); err != nil {
-		// marking read is cosmetic; a failure must not block the transcript
-		_ = err
+		// marking read is cosmetic; a failure must not block the transcript,
+		// but it stays observable at debug (the unread badge may re-appear)
+		slog.DebugContext(r.Context(), "mark read failed", "error", err,
+			"extension", sess.Extension.String())
 	}
 	h.unread.Drop(sess.Extension)
 	// The master rail (P1): the same active-thread list the Messages

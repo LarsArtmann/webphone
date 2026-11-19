@@ -227,6 +227,12 @@ func (s *Service) Receive(ctx context.Context, inbound domain.InboundFax) (domai
 	if len(inbound.PDFBytes) == 0 {
 		return domain.FaxJob{}, &ErrInvalidFax{Reason: "inbound fax carries no document"}
 	}
+	// Inbound bytes are deliberately NOT re-bounded to Send's MaxPDFSize
+	// or %PDF- signature: this lane's caller is the provider bridge
+	// (webhook-secret-gated machine traffic, already bounded by the hooks
+	// lane's 40 MiB body cap), and refusing a provider document on a
+	// heuristic would silently drop an inbound fax. The body cap is the
+	// transport bound; the blob store stays the only storage truth.
 	path, err := s.blobs.Save("faxes", ".pdf", inbound.PDFBytes)
 	if err != nil {
 		return domain.FaxJob{}, errorfamily.WrapInfrastructuref(err, "store.fax_spool", "spool inbound pdf")

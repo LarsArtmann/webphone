@@ -65,12 +65,14 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 	// registry, everything else is the sms lane (ParseComposedAddress).
 	threadParam := r.URL.Query().Get("thread")
 	var to domain.Address
+	var threadID domain.ThreadID
 	if threadParam != "" {
-		threadID, err := domain.ParseThreadID(threadParam)
+		id, err := domain.ParseThreadID(threadParam)
 		if err != nil {
 			h.notFound(w, r)
 			return
 		}
+		threadID = id
 		thread, err := h.deps.Messaging.ResolveThread(r.Context(), sess.Extension, threadID)
 		if err != nil {
 			h.notFound(w, r)
@@ -116,12 +118,8 @@ func (h *handlers) sendMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Reply keeps the thread open; a new conversation returns to the list.
+	// threadID was parsed once at the door above; a reply never re-parses.
 	if threadParam != "" {
-		threadID, err := domain.ParseThreadID(threadParam)
-		if err != nil {
-			h.notFound(w, r)
-			return
-		}
 		component, err := h.threadPanel(r, sess, threadID, 0)
 		if err != nil {
 			h.internalError(w, r, "load conversation", err)

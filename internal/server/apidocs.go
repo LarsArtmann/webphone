@@ -20,10 +20,11 @@ package server
 //     make the exporter invent a required request body the handler
 //     ignores. The kind name is catalog taxonomy; the wire shape is
 //     the contract.
-//   - The 429 limiter responses document the Retry-After header in
-//     their DESCRIPTION text: the exporter cannot express response
-//     headers at catalog v4.9.0. The contacts/calls pins assert the
-//     clause; revisit when headers land upstream.
+//   - The 429 limiter responses document the Retry-After header twice,
+//     belt-and-braces: as typed response headers via the exporter's
+//     WithResponseHeader (supported since the catalog v4.15.0 pin) AND
+//     in the DESCRIPTION text, which the contacts/calls pins assert.
+//     The text clause stays for consumers that read descriptions only.
 //
 // The /hooks/* lanes and the /events SSE stream are machine-to-machine
 // contracts with their own home (docs/contracts/, AsyncAPI) — they stay
