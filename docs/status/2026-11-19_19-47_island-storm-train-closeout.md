@@ -152,7 +152,9 @@ green, 369/369 locally). The honest list:
 4. Soften the two inference claims in docs/lessons.md to "consistent with,
    not proven" pending FS logs.
 5. Stack browser E2E reconnect drill re-run against this island.
-6. Real-browser default-autoplay-policy pass of the ring path.
+6. Real-browser Chromium pass: cookie-restored tab, autoplay policy left
+   at its default, inbound ring audible after the first interaction —
+   closes the gesture-unlock loop from the 19:26 missed call.
 7. Spec: force-close 1s-timeout branch (disconnect hangs ⇒
    "force-close failed" log, rebuild continues).
 8. Spec: `networkOnline()` during `resetting` stays inert.
