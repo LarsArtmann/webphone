@@ -40,6 +40,13 @@
           };
           vendorHash = "sha256-MMAoHofeZzGNFsjxY4nrPRyaiKOk4fLYY+kIVmdAL3g=";
           subPackages = [ "cmd/templ" ];
+          meta = {
+            description = "Templ compiler pinned to go.mod's library version (the committed codegen must match the library)";
+            homepage = "https://github.com/a-h/templ";
+            license = lib.licenses.mit;
+            mainProgram = "templ";
+            platforms = lib.platforms.linux;
+          };
         };
 
         # The docs-health battery, built from the locked rev of the upstream
@@ -56,6 +63,13 @@
           subPackages = [ "cmd/docs-gates" ];
           doCheck = false;
           env.CGO_ENABLED = "0";
+          meta = {
+            description = "Docs-health battery (freshness / audit-all / annotate / routing / cadence) from the locked upstream rev";
+            homepage = "https://github.com/Artmann-Technologies/docs-gates";
+            license = lib.licenses.mit;
+            mainProgram = "docs-gates";
+            platforms = lib.platforms.linux;
+          };
         };
 
         # The vulnix triage verdict logic as a standalone CLI so the
