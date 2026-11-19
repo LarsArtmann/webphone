@@ -163,7 +163,9 @@ exclude:
 #   decider.StrictApply on all 11 folds via per-aggregate stream-vocab
 #   vars shared with the decls' Events, D014 exact-name json tags on the
 #   journaled tombstones (byte-neutral). STILL VISIBLE by choice (each
-#   must stay armed): C014 time.Local (deliberate boot-time zone), D006
+#   must stay armed): C014 time.Local x2 (app.go boots the validated
+#   cfg.Timezone deliberately; reports.go windows ride that same
+#   deployment zone per the Reports ruling), D006
 #   errTraceRequestFailed sentinel (recorder trigger vocabulary,
 #   erraudit-clean), E023 database/sql mixing (sessions SQL per the D2
 #   ruling + DLQ engine-tier exempt — the rule's own text), F009
