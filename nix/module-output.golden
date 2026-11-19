@@ -34,6 +34,14 @@ sqlite3 "/var/lib/webphone/webphone.db" ".backup '/var/lib/webphone-backup/webph
 if [ -f "/var/lib/webphone/system.db" ]; then
   sqlite3 "/var/lib/webphone/system.db" ".backup '/var/lib/webphone-backup/system.db'"
 fi
+# The passkey identity layer's own database (usermgmt.db — account
+# rows, WebAuthn credentials, and the durable auth-audit journal)
+# is user data NO other file in the set carries; losing it locks
+# every passwordless login out. Guarded-if like system.db because
+# deployments that never enabled passkey never create it.
+if [ -f "/var/lib/webphone/usermgmt.db" ]; then
+  sqlite3 "/var/lib/webphone/usermgmt.db" ".backup '/var/lib/webphone-backup/usermgmt.db'"
+fi
 rsync -a --delete "/var/lib/webphone/files/" "/var/lib/webphone-backup/files/"
 # Dated history: snapshot today's state under snapshots/,
 # hardlinking unchanged blobs against the newest previous
@@ -49,6 +57,9 @@ mkdir -p "$snap"
 sqlite3 "/var/lib/webphone/webphone.db" ".backup '$snap/webphone.db'"
 if [ -f "/var/lib/webphone/system.db" ]; then
   sqlite3 "/var/lib/webphone/system.db" ".backup '$snap/system.db'"
+fi
+if [ -f "/var/lib/webphone/usermgmt.db" ]; then
+  sqlite3 "/var/lib/webphone/usermgmt.db" ".backup '$snap/usermgmt.db'"
 fi
 if [ -n "$basis" ]; then
   rsync -a --delete --link-dest="$basis" "/var/lib/webphone/files/" "$snap/files/"

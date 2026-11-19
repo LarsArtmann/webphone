@@ -38,6 +38,18 @@
                 package = self'.packages.webphone;
                 backup.enable = true;
                 backup.retentionDays = 7;
+                # Passkey ON so the identity layer's usermgmt.db exists
+                # from boot and the backup assertions below prove the
+                # 2026-11-19 gap close (raw settings lane; the password
+                # file is read per LOGIN, so the drill never reads it).
+                settings.auth = {
+                  users."lars@example.org".extensions = [ "1000" ];
+                  extension_password_files."1000" = "/run/secrets/ext-1000";
+                  passkey = {
+                    rp_id = "webphone.test";
+                    rp_origins = [ "https://webphone.test" ];
+                  };
+                };
               };
               environment.systemPackages = [ pkgs.sqlite ];
               system.stateVersion = "26.05";
@@ -65,16 +77,6 @@
                 "sqlite3 /var/lib/webphone-backup/webphone.db 'pragma integrity_check' | grep -q '^ok$'"
             )
 
-            # The metaengine read-model database rides the same snapshot
-            # (it carries user data since the metaengine train: contacts,
-            # snippets, faxes, transcripts) — present, consistent.
-            machine.succeed(
-
-            )
-            machine.succeed(
-
-            )
-
             # The system composition root's journal database rides the
             # same snapshot (command/event streams, projections,
             # checkpoints, DLQ — user data from the SUPERB phases on).
@@ -83,6 +85,16 @@
             )
             machine.succeed(
                 "sqlite3 /var/lib/webphone-backup/system.db 'pragma integrity_check' | grep -q '^ok$'"
+            )
+
+            # The passkey identity database rides the same snapshot
+            # (2026-11-19 gap close: accounts, WebAuthn credentials,
+            # and the durable auth-audit journal ride NO other file).
+            machine.succeed(
+                "test -f /var/lib/webphone-backup/usermgmt.db"
+            )
+            machine.succeed(
+                "sqlite3 /var/lib/webphone-backup/usermgmt.db 'pragma integrity_check' | grep -q '^ok$'"
             )
 
             # Private-data hardening (2026-09-29 train, pinned 2026-09-30):
@@ -139,7 +151,7 @@
             "sqlite3 '/var/lib/webphone-backup/snapshots/'$(date +%F)'/webphone.db' 'pragma integrity_check' | grep -q '^ok$'"
             )
             machine.succeed(
-
+            "test -f '/var/lib/webphone-backup/snapshots/'$(date +%F)'/usermgmt.db'"
             )
             machine.succeed(
             "test -f '/var/lib/webphone-backup/snapshots/'$(date +%F)'/system.db'"

@@ -22,6 +22,14 @@ in
   if [ -f "${cfg.dataDir}/system.db" ]; then
     sqlite3 "${cfg.dataDir}/system.db" ".backup '${dest}/system.db'"
   fi
+  # The passkey identity layer's own database (usermgmt.db — account
+  # rows, WebAuthn credentials, and the durable auth-audit journal)
+  # is user data NO other file in the set carries; losing it locks
+  # every passwordless login out. Guarded-if like system.db because
+  # deployments that never enabled passkey never create it.
+  if [ -f "${cfg.dataDir}/usermgmt.db" ]; then
+    sqlite3 "${cfg.dataDir}/usermgmt.db" ".backup '${dest}/usermgmt.db'"
+  fi
   rsync -a --delete "${cfg.dataDir}/files/" "${dest}/files/"
 ''
 + (lib.optionalString history ''
@@ -39,6 +47,9 @@ in
   sqlite3 "${cfg.dataDir}/webphone.db" ".backup '$snap/webphone.db'"
   if [ -f "${cfg.dataDir}/system.db" ]; then
     sqlite3 "${cfg.dataDir}/system.db" ".backup '$snap/system.db'"
+  fi
+  if [ -f "${cfg.dataDir}/usermgmt.db" ]; then
+    sqlite3 "${cfg.dataDir}/usermgmt.db" ".backup '$snap/usermgmt.db'"
   fi
   if [ -n "$basis" ]; then
     rsync -a --delete --link-dest="$basis" "${cfg.dataDir}/files/" "$snap/files/"

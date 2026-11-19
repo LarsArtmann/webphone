@@ -57,9 +57,14 @@ in
         && lib.hasInfix "--link-dest" retentionScript
         && lib.hasInfix "-mtime +7" retentionScript
         # The system journal database rides BOTH branches (guarded-if,
-        # same posture as readmodels.db — SUPERB A07).
+        # same posture as readmodels.db — SUPERB A07), and so does the
+        # passkey identity database (usermgmt.db — accounts, WebAuthn
+        # credentials, the durable auth-audit journal; the 2026-11-19
+        # backup-gap close).
         && lib.hasInfix "system.db" plainScript
         && lib.hasInfix "system.db" retentionScript
+        && lib.hasInfix "usermgmt.db" plainScript
+        && lib.hasInfix "usermgmt.db" retentionScript
       then
         "backup retention branch renders per option"
       else
