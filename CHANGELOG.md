@@ -132,6 +132,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- The backup set now covers **`usermgmt.db`** (the passkey identity
+  database: accounts, WebAuthn credentials, and the durable auth-audit
+  journal) — guarded-if like `system.db` in BOTH the single-snapshot and
+  the dated-history branches, so passkey identities and the login audit
+  trail survive a restore. Pinned by the backup VM test (boots WITH
+  passkey enabled and asserts presence + sqlite integrity in both
+  branches) and both module-output goldens (2026-11-19, closing the
+  companion debt the pbx-lens decision analysis flagged).
 - Settings gains a **"My account"** group (`wp-settings-account`): the
   signed-in identity (display name + email, admin chip) and every owned
   line as "DID · extension" with the active line marked — extension

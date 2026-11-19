@@ -122,7 +122,7 @@
               '';
             };
           in
-          pkgs.runCommand "webphone-vulnix-triage-check" { } "${lib.getExe script} | tee $out";
+          pkgs.runCommand "webphone-vulnix-triage-check" { } "${lib.getExe script} > $out 2>&1";
 
         statix =
           pkgs.runCommand "statix-check"
@@ -132,7 +132,7 @@
             }
             ''
               cd ${self}
-              statix check -o errfmt . 2>&1 | tee $out
+              statix check -o errfmt . > $out 2>&1
             '';
 
         # The scoped dashboard stylesheet is a COMMITTED artifact built
@@ -170,7 +170,7 @@
               # flake.nix files (templ, tailwind-merge-go) whose unused
               # overlay params we neither own nor fix — they are frozen
               # third-party sources (nix-review batch 2, 2026-10-02).
-              deadnix --fail --no-lambda-pattern-names --exclude ./vendor . 2>&1 | tee $out
+              deadnix --fail --no-lambda-pattern-names --exclude ./vendor . > $out 2>&1
             '';
 
         # no-undef over the SIP island modules: a call to an undefined
