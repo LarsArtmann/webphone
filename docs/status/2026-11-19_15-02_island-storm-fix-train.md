@@ -290,3 +290,25 @@ decisions, not work orders.)
 _Report written 15:02 CET; status index regenerated immediately after;
 `docs-gates --check` result reported in-session (not retro-edited into this
 file unless it reds and is fixed)._
+
+## Addendum (15:10 CET — the two open verification items resolved)
+
+1. **`docs-gates --check` DID red at first run, then green.** The offender
+   was THIS report's own bytes (dprint wanted different wrapping); the
+   repair-mode run (`scripts/docs-gates.sh`, fmt-first) made it canonical
+   and `--check` then passed all gates (format, status-f-section, battery,
+   table-damage, strike-safety). The ALREADY-PUSHED docs (CHANGELOG/
+   AGENTS/lessons in f5a4cfef) were canonical all along — nothing to fix
+   there.
+2. **The CI red on c89f6687 is attributed and not mine.** The failing job
+   was the Docs-health battery inside "fast flake checks": gate
+   `status-f-section` — the OTHER session's `2026-11-19_15-20_release-
+   readiness.md` (committed in c89f6687) had NO `## f)` section; their own
+   unpushed commits (978576c1, a14733e3) add it — proven by
+   `git show c89f6687:<report> | grep -c '^## f)'` → 0 vs worktree → 1.
+   The daemon's push leg stayed stalled >60 min on the oldest unpushed
+   commit (anchor: 978576c1 @ 14:09:27; bar 15:09:27), so the ratified
+   MANUAL-PUSH BAR was invoked: `git push origin main` at ~15:09
+   (c89f6687 → 93c88d20, fast-forward; carries their heal + this report +
+   the regenerated index). CI verdict on 93c88d20 polled in-session; the
+   code train's own CI verdict (d0a9a3be) was and remains GREEN.
