@@ -107,7 +107,10 @@ func (s *DialWindows) Active(ctx context.Context, owner domain.Extension, cooldo
 	if err != nil {
 		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.dial_window_load", "scan active windows")
 	}
-	now := time.Now()
+	// The seam's own clock (overridable in tests), never the wall — the
+	// decide path already rides timeNow; Active() reading the wall made
+	// backdated-window tests only accidentally deterministic.
+	now := timeNow()
 	slots := make([]readmodels.ActiveSlot, 0, len(wins))
 	windowSecs := int64(cooldown / time.Second)
 	for _, v := range wins {

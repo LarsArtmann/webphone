@@ -785,8 +785,11 @@ func (h *handlers) importContacts(w http.ResponseWriter, r *http.Request) {
 			"skipped", skipped, "imported", imported, "first_reason", firstSkip)
 	}
 	if imported == 0 {
+		// The filename rides RAW: renderPanelError is the one-home HTML
+		// escaper for the banner (and notifyToast JSON-encodes for the
+		// toast) — pre-escaping here double-rendered as entity literals.
 		h.renderPanelError(w, r, sess, views.TabContacts, http.StatusUnprocessableEntity,
-			h.T(r, "contacts.importNone.pre")+templ.EscapeString(header.Filename)+h.T(r, "contacts.importNone.post"))
+			h.T(r, "contacts.importNone.pre")+header.Filename+h.T(r, "contacts.importNone.post"))
 		return
 	}
 	notifyToast(w, "ok", h.T(r, "toast.imported.pre")+strconv.Itoa(imported)+h.T(r, "toast.imported.post"))
