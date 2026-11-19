@@ -1718,3 +1718,13 @@ T01–T16 are done (strikes live in the plan file + the 2026-11-12 status report
 - [ ] **Dial-gate chip browser journey** (plan E29): the island's placeCall asks `/api/dials` before the INVITE, but the dial form's flow sits behind the SIP island boot a browser harness cannot complete without a PBX websocket. Reopen when the workflow harness gains a fake SIP websocket lane (or the stack's browser E2E grows the gate assert — it has the real PBX).
 - [ ] **Voicemail browser journey** (plan backlog): needs the fake PBX mailbox inside the browser boot (the Go chain covers the proxy path; the browser would prove the panel's sse:voicemail re-fetch morph). Cheap once the harness has a `--phone-api` flag that boots the fakeMailbox equivalent.
 - [ ] **Flip the `workflow-e2e` CI job to blocking** (plan F04 note): delete `continue-on-error` after N clean advisory trains (the reproduce-first/tw-freshness precedent); watch the GitHub annotations for browser-lane flake first.
+
+<!-- 2026-11-19 review-train harvest (the 20-skill session's findings) -->
+
+- [ ] **fax: Resend x retention document integrity (fcr-02 M1, HIGH)** (harvested 2026-11-19 from docs/reviews/2026-11-19_full-code-review/02-telephony-core.md): Resend reuses the original job's DocumentPath while the retention fax sweep unlinks per-row paths — add the shared-path sweep test.
+- [ ] **catalog: ReviewSaved never joined the event catalog (fcr-02 M2)** (harvested 2026-11-19 from docs/reviews/2026-11-19_full-code-review/02-telephony-core.md): add the row + derive TestCatalogSchemaParity exhaustively.
+- [ ] **naming adjudication train** (harvested 2026-11-19 from docs/reviews/2026-11-19_naming-review.md): FindThread -> ResolveThreadID, VoicemailItem split brain, authmap.Map -> Ownership, Shell x2, Mast* -> Last*.
+- [ ] **type tails from data-model review #6** (harvested 2026-11-19 from docs/reviews/2026-11-19_data-model-review.md): asr.Locality constants, ASRProvider enum, LoginPageExtra positional bools.
+- [ ] **apidocs.go header comment lies about response headers** (2026-11-19): catalog v4.15.0 HAS response-header support — fix comment + AGENTS bullet.
+- [ ] **favicon green split brain** (2026-11-19): auth.go literal #17a467 vs --accent tokens — derive from one source.
+- [ ] **cadence pre-drain automation** (2026-11-19): pre-compute the gates-passing archive set so the 65-pin never reds CI for hours.

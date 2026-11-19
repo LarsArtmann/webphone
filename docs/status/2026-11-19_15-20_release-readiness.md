@@ -64,3 +64,18 @@ bump `webphoneVersion` in flake.nix → cut CHANGELOG → full gates →
 `release.sh` → push webphone → stack re-pin (per-train lock bump) →
 pbx-artmann relock (clean tree first) → verify end states with
 `git ls-remote` + `scripts/ci-verdict.sh`.
+
+## f) Up to 50 things we should get done next
+
+1. Watch CI run 44529291480 to green via `scripts/ci-verdict.sh`, then hold
+   until the owner picks the bump-vs-ship order for v2.15.0.
+2. Run the T1 cqrs-lite trio bump train (system v4.19.0 fix-class first)
+   per docs/research/2026-11-19_dependency-currency-sweep.md if the owner
+   folds deps into v2.15.0.
+3. Run the T2 templ v0.3.1118 + CLI-matched `templ generate` regen train
+   (same sweep's plan; codegen pairing is mandatory).
+4. Run the T3 modernc sqlite v1.62.0 train (backup-drill + vulnix gates).
+5. Run the T4 small-SDKs train (httputil, paperless, idempotency WithClock
+   migration retiring TimingScale 5, nanoid, oauth2).
+6. Fix the fax Resend x retention document-integrity edge (fcr-02 M1,
+   TODO row harvested 2026-11-19) before the release if cheap.
