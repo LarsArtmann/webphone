@@ -231,6 +231,10 @@ def make_driver():
     options.add_argument("--no-sandbox")
     options.add_argument("--disable-dev-shm-usage")
     options.add_argument("--window-size=1280,900")
+    # The passkey ceremonies need a DOMAIN origin (WebAuthn rejects IP
+    # rp_ids): map webphone.test onto the loopback server inside the
+    # browser only — no /etc/hosts, no TLS front needed for the journey.
+    options.add_argument("--host-resolver-rules=MAP webphone.test 127.0.0.1")
     driver_path = shutil.which("chromedriver")
     service = (
         webdriver.ChromeService(executable_path=driver_path) if driver_path else None
