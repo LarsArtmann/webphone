@@ -14,13 +14,13 @@
 
 ## 0. Current state
 
-| Measure | Value |
-| --- | --- |
-| Review-4 open roadmap items adjudicated | 5 (+2 carried by the 11-11 entry) |
-| Landed and verified in source | 6 of 7 (incl. both 11-11 carry-ons) |
-| Closed by later ruling (declined) | 1 — `sso.Finish` |
-| New findings cataloged | 8 (1 medium, 4 small, 3 low) |
-| Baseline-ruled premises re-verified | all 9 hold (3 edge doors + 6 Deps seams) |
+| Measure                                 | Value                                    |
+| --------------------------------------- | ---------------------------------------- |
+| Review-4 open roadmap items adjudicated | 5 (+2 carried by the 11-11 entry)        |
+| Landed and verified in source           | 6 of 7 (incl. both 11-11 carry-ons)      |
+| Closed by later ruling (declined)       | 1 — `sso.Finish`                         |
+| New findings cataloged                  | 8 (1 medium, 4 small, 3 low)             |
+| Baseline-ruled premises re-verified     | all 9 hold (3 edge doors + 6 Deps seams) |
 
 The headline: **four of review 4's five open items landed** (push.Transport, FaxJob
 RelPath, asr/matrix wiring structs, machineSurface bool-last), the fifth was **declined
@@ -35,22 +35,22 @@ one adoption gap where a landed brand stops at a gate.
 
 ### 1.1 The review-4 open roadmap, adjudicated
 
-| # | Review-4 item | Verdict | Evidence verified today |
-| --- | --- | --- | --- |
-| 1 | `push.Transport` defined type + `ParseTransport` | **Landed** | `internal/push/push.go:46` (`type Transport string`), `:56` (`ParseTransport`), registry `senders map[Transport]Sender` (`:163`); the registration API parses at its door (`server/api/push_api.go:124`); `TestParseTransportVocabulary` pins the closed set. Residual: the brand stops at the device gate (finding F2). |
-| 2 | `sso.Finish` value object into `Complete` | **Superseded — declined** | The 2026-11-11 entry closed this as a site-ruled decline ("foreign protocol tokens; two guards already reject mixing; pay only when a third field joins"). Source carries the ruling: `internal/sso/sso.go:158` — `Complete(ctx, code, verifier, nonce string)` with `//nolint:branching-flow // OAuth2 protocol tokens (code/verifier/nonce), not domain concepts`. **Not re-proposed.** Reopen trigger (11-11's own): a third protocol field joining the callback. |
-| 3 | `FaxJob.DocumentPath` as `domain.RelPath` | **Landed** | `internal/domain/fax.go:83` — `DocumentPath RelPath`; both lifecycle constructors (`:112`, `:128`) carry it. The journal facts (`FaxReceipted.DocumentPath string`, `fax.go:281`) stay raw per the engine-row doctrine — correct split, no action. |
-| 4 | asr/matrix wiring structs | **Landed, evolved** | `matrix.New(cfg ClientConfig)` (`matrix/client.go:68-74`) and `asr.NewClient/NewWhisperCppClient(cfg ClientConfig)` (`asr/client.go:50,77`); the asr package has since split (client/google/outcomes/transport) and grown `NewGoogleClient(cfg GoogleConfig)` (`google.go:96`) — the struct door absorbed the growth, which is the design paying off. |
-| 5 | `machineSurface` bool-last | **Landed** | `server/platform/internal_directory.go:37-39` — `(w, r, missing, enabled bool)`, bool last; the nolint comment names the 2026-10-25 roadmap item as closed. |
+| # | Review-4 item                                    | Verdict                   | Evidence verified today                                                                                                                                                                                                                                                                                                                                                                                                                                              |
+| - | ------------------------------------------------ | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1 | `push.Transport` defined type + `ParseTransport` | **Landed**                | `internal/push/push.go:46` (`type Transport string`), `:56` (`ParseTransport`), registry `senders map[Transport]Sender` (`:163`); the registration API parses at its door (`server/api/push_api.go:124`); `TestParseTransportVocabulary` pins the closed set. Residual: the brand stops at the device gate (finding F2).                                                                                                                                             |
+| 2 | `sso.Finish` value object into `Complete`        | **Superseded — declined** | The 2026-11-11 entry closed this as a site-ruled decline ("foreign protocol tokens; two guards already reject mixing; pay only when a third field joins"). Source carries the ruling: `internal/sso/sso.go:158` — `Complete(ctx, code, verifier, nonce string)` with `//nolint:branching-flow // OAuth2 protocol tokens (code/verifier/nonce), not domain concepts`. **Not re-proposed.** Reopen trigger (11-11's own): a third protocol field joining the callback. |
+| 3 | `FaxJob.DocumentPath` as `domain.RelPath`        | **Landed**                | `internal/domain/fax.go:83` — `DocumentPath RelPath`; both lifecycle constructors (`:112`, `:128`) carry it. The journal facts (`FaxReceipted.DocumentPath string`, `fax.go:281`) stay raw per the engine-row doctrine — correct split, no action.                                                                                                                                                                                                                   |
+| 4 | asr/matrix wiring structs                        | **Landed, evolved**       | `matrix.New(cfg ClientConfig)` (`matrix/client.go:68-74`) and `asr.NewClient/NewWhisperCppClient(cfg ClientConfig)` (`asr/client.go:50,77`); the asr package has since split (client/google/outcomes/transport) and grown `NewGoogleClient(cfg GoogleConfig)` (`google.go:96`) — the struct door absorbed the growth, which is the design paying off.                                                                                                                |
+| 5 | `machineSurface` bool-last                       | **Landed**                | `server/platform/internal_directory.go:37-39` — `(w, r, missing, enabled bool)`, bool last; the nolint comment names the 2026-10-25 roadmap item as closed.                                                                                                                                                                                                                                                                                                          |
 
 ### 1.2 The 11-11 entry's own roadmap, adjudicated
 
-| Item | Verdict | Evidence |
-| --- | --- | --- |
-| `push.Transport` / `FaxJob.DocumentPath` / wiring structs / machineSurface | Landed | Same rows as above (the 11-11 entry re-carried review 4's list; all landed after it). |
-| ThreadSummary re-home (out of the store package) | **Landed** | `readmodels/threads.go:66` — `ThreadSummary` now lives in readmodels, re-parsed from the raw `ThreadSummaryView` at the gate ("wire stays raw by doctrine, the brands come back here"). |
-| ThreadFlag re-home | **Settled in readmodels** | `readmodels/threads.go:77` — `type ThreadFlag string` with `FlagPinned/FlagArchived/FlagMuted`. It is a *typed* enum already; its home beside `ThreadGate.SetThreadFlag` (the only consumer) is defensible layering: the domain row (`domain.Thread`) carries the three axes as bools, the gate carries the command vocabulary. Moving it to domain would split it from its consumer. Adjudicate: no action; revisit only if a second consumer of the flag vocabulary appears. |
-| Close P6 (sso value object) | **Closed by decision** | The decline above is this item's landing. |
+| Item                                                                       | Verdict                   | Evidence                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| -------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `push.Transport` / `FaxJob.DocumentPath` / wiring structs / machineSurface | Landed                    | Same rows as above (the 11-11 entry re-carried review 4's list; all landed after it).                                                                                                                                                                                                                                                                                                                                                                                          |
+| ThreadSummary re-home (out of the store package)                           | **Landed**                | `readmodels/threads.go:66` — `ThreadSummary` now lives in readmodels, re-parsed from the raw `ThreadSummaryView` at the gate ("wire stays raw by doctrine, the brands come back here").                                                                                                                                                                                                                                                                                        |
+| ThreadFlag re-home                                                         | **Settled in readmodels** | `readmodels/threads.go:77` — `type ThreadFlag string` with `FlagPinned/FlagArchived/FlagMuted`. It is a _typed_ enum already; its home beside `ThreadGate.SetThreadFlag` (the only consumer) is defensible layering: the domain row (`domain.Thread`) carries the three axes as bools, the gate carries the command vocabulary. Moving it to domain would split it from its consumer. Adjudicate: no action; revisit only if a second consumer of the flag vocabulary appears. |
+| Close P6 (sso value object)                                                | **Closed by decision**    | The decline above is this item's landing.                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 
 ### 1.3 Baseline-ruled premises re-verified (never re-litigated — premise check only)
 
@@ -146,7 +146,7 @@ deviceID, transport, token string)` (a three-string tail) and the command
 
 The landed brand flows API → `ParseTransport` → Fanout registry, then dies at this line:
 the gate re-accepts raw strings and the command carries them on. The nolint at the gate
-says why it is raw *today* — "verbatim port of the retired engine store's Upsert
+says why it is raw _today_ — "verbatim port of the retired engine store's Upsert
 signature (parity rule)" — but the parity rule itself prescribes the second,
 separately-verified refactor, and the port landed 2026-11-11. This is that change:
 
@@ -167,7 +167,7 @@ write-only credential — BD003 class, reasoned).
 an existing slot — pinned by `TestNoteSameBodySaveIsNotARevision`) vs `:162`
 (`decideSaveDisposition` journals unconditionally). The gate mirrors it:
 `readmodels.NotesGate.Set` returns the `changed bool` the handler's SSE nudge gates on,
-`SetDisposition` (`notesgate.go:77`) returns bare `error` — it *cannot* be echo-aware
+`SetDisposition` (`notesgate.go:77`) returns bare `error` — it _cannot_ be echo-aware
 even if the handler wanted it.
 
 Consequence: a disposition re-click (or a second tab re-PUTting the same verdict)
@@ -235,7 +235,7 @@ Migration: one call site, view regen, `passkey_view_test.go` shape pins re-check
 `map[string]map[string]bool{"dial_to_audio": {...}, "asr_round_trip": {...}}`.
 
 The design is right (server-owned cardinality, wire legs outside the set dropped — the
-beacon doctrine held), and the map *is* the parser at the door. The residual: the
+beacon doctrine held), and the map _is_ the parser at the door. The residual: the
 interval vocabulary has no named constants, and `RecordBeacon(interval string, ...)` +
 `islandSeriesKey{interval, leg string}` carry it raw across the api→platform seam. A
 defined key type names the set without changing behavior:
@@ -319,7 +319,7 @@ reviews-seam touch.
   detectors stop re-finding it.
 - **`Catalog*Schema` mirrors** (`domain/catalog.go`) — forced by the schema reflector's
   blindness to unexported branded state; `TestCatalogSchemaParity` fails the build on
-  drift. The mirror *is* the pinned pattern for reflector-fed exports.
+  drift. The mirror _is_ the pinned pattern for reflector-fed exports.
 - **`SessionIdentity` / `SessionLine` wire rawness** — BD003 directives at both decls;
   the active-line correlation rule ("the entry whose extension equals the top-level
   extension — the client never correlates parallel lists") is the 11-18 doc's own
@@ -334,15 +334,15 @@ reviews-seam touch.
 
 ## 5. Decision log
 
-| Decision | Rationale | Rejected alternative |
-| --- | --- | --- |
-| `Locality` typed in `asr`, not `domain` | A provider-trust label local to the ASR seam; domain holds cross-seam telephony concepts. Wire field stays string. | `domain.Locality`: drags a Settings-chip detail into the domain package for zero safety. |
-| Transport through the gate, facts stay raw | The gate is in-process (brands allowed, per the 11-11 gates-re-parse ruling); the journal fact is wire (raw, per the engine-row ruling). The parity rule's own second change. | Branding `PushDeviceRegistered.Transport`: changes journal semantics for no consumer gain. |
-| Disposition echo drop (Option A) over a doc comment | The autosave doctrine ("the journal must record CHANGES, not echoes") is lane-agnostic; symmetry deletes a spurious-nudge class for one guard. | Option B (documented asymmetry): leaves a test-unpinned behavioral wrinkle on a save path two surfaces share. |
-| ASR enum parsed in `config.Load`, wire untouched | The vocabulary is repo-owned and boot-rejected today; the parser is the validation, moved one step earlier. koanf/json tags unchanged — no config-file migration. | A `Config` method layer (`Provider.IsGoogle()` family): more surface, still stringly at the store boundary. |
-| `LoginExtra` struct, not bool-last reorder | Two flags have no order; the machineSurface fix (reorder) worked because there was exactly one flag. | Reorder: leaves the same trap armed for the next flag. |
-| DID stays verbatim string (again) | Re-affirms the 11-18 ruling: display-verbatim owner formatting; canonicalization is a product decision. | `domain.Phone`: changes rendered bytes on every configured deployment. |
-| Interval-scoped leg vocabularies stay maps | Legs belong to their interval; a global leg enum is the wrong model (a leg name may repeat with different meaning per interval). | `type latencyLeg string` global set: invents cross-interval identity that does not exist. |
+| Decision                                            | Rationale                                                                                                                                                                     | Rejected alternative                                                                                          |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `Locality` typed in `asr`, not `domain`             | A provider-trust label local to the ASR seam; domain holds cross-seam telephony concepts. Wire field stays string.                                                            | `domain.Locality`: drags a Settings-chip detail into the domain package for zero safety.                      |
+| Transport through the gate, facts stay raw          | The gate is in-process (brands allowed, per the 11-11 gates-re-parse ruling); the journal fact is wire (raw, per the engine-row ruling). The parity rule's own second change. | Branding `PushDeviceRegistered.Transport`: changes journal semantics for no consumer gain.                    |
+| Disposition echo drop (Option A) over a doc comment | The autosave doctrine ("the journal must record CHANGES, not echoes") is lane-agnostic; symmetry deletes a spurious-nudge class for one guard.                                | Option B (documented asymmetry): leaves a test-unpinned behavioral wrinkle on a save path two surfaces share. |
+| ASR enum parsed in `config.Load`, wire untouched    | The vocabulary is repo-owned and boot-rejected today; the parser is the validation, moved one step earlier. koanf/json tags unchanged — no config-file migration.             | A `Config` method layer (`Provider.IsGoogle()` family): more surface, still stringly at the store boundary.   |
+| `LoginExtra` struct, not bool-last reorder          | Two flags have no order; the machineSurface fix (reorder) worked because there was exactly one flag.                                                                          | Reorder: leaves the same trap armed for the next flag.                                                        |
+| DID stays verbatim string (again)                   | Re-affirms the 11-18 ruling: display-verbatim owner formatting; canonicalization is a product decision.                                                                       | `domain.Phone`: changes rendered bytes on every configured deployment.                                        |
+| Interval-scoped leg vocabularies stay maps          | Legs belong to their interval; a global leg enum is the wrong model (a leg name may repeat with different meaning per interval).                                              | `type latencyLeg string` global set: invents cross-interval identity that does not exist.                     |
 
 ## 6. Migration roadmap (refresh)
 
@@ -371,6 +371,6 @@ Standing invitations kept open from earlier entries: transcript remote + hub map
 
 ---
 
-*Generated 2026-11-19 · sixth series entry · read-only review: no source files changed ·
+_Generated 2026-11-19 · sixth series entry · read-only review: no source files changed ·
 repo discipline: no commits made (auto-commit daemon owns the tree) · claims verified as
-of ~08:40 CET: every cited declaration read in source today.*
+of ~08:40 CET: every cited declaration read in source today._

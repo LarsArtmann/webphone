@@ -168,7 +168,7 @@ may never be started — that is by design, not neglect.
     `go test -count=1 ./...`, closeout status report, INDEX regen,
     push, CI verdict — ALL in the same session as the push.
 17. T13 — `scripts/loc-normalized.sh` + self-test (kills the d2
-   error class permanently).
+    error class permanently).
 18. T14 — measure both binaries (size + idle RSS) into the evidence
     appendix.
 19. T15 — `go mod graph` diff + co-change query.

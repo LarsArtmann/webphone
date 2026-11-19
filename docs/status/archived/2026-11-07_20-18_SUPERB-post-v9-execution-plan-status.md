@@ -13,8 +13,8 @@ got before the instruction to stop and wait arrived.
 
 ## a) FULLY DONE
 
-
 <!-- check-rows:ledger -->
+
 | #  | Work                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
 | -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 1  | **P0-2 — the docs battery is unskippable.** `docs-gates` is now a flake package built from a locked upstream rev (`flake = false`, because the upstream flake pulls a PRIVATE `erraudit` input over ssh that public CI cannot fetch), present in the devShell CI enters, and run as its own `fast-checks` step. The wrapper gained a `--check` mode that runs `dprint check` instead of `fmt` — a CI run must never certify a tree it just repaired — and reports `SKIP` for the one local-only gate instead of lying green.                                                                                                                                                                                                                                                                                       |
@@ -70,8 +70,8 @@ got before the instruction to stop and wait arrived.
 
 Honest, ranked by what it cost:
 
-
 <!-- check-rows:ledger -->
+
 | # | Failure                                                                                                                                                                                                                                                                                                                                                                                                                                                  | Cost                         |
 | - | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
 | 1 | **I fought the docs meter four times instead of diagnosing it once.** 355 → 352 → 355 → 101 → 71, with a red gate between each step, because I kept treating the symptom (a count moved) instead of the cause (the threshold was calibrated for a smaller corpus). The last step is right and now carries a RULE; the first three were churn, and each one wrote prose into the living docs that then perturbed the very measurement it was reacting to. | ~4 gate cycles + 3 commits   |
@@ -111,8 +111,8 @@ Honest, ranked by what it cost:
 Ranked by risk of silent failure, then by what unblocks the most. Rows marked
 OWNER need a decision; the rest are assistant-executable.
 
-
 <!-- check-rows:ledger -->
+
 | #  | Task                                                                                                                                                      | Impact   | Effort | Home                      |
 | -- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------------------- |
 | 1  | Read the in-flight `buildflow` verdict and triage whatever error-severity findings survive the file-size accepts                                          | Critical | S      | TODO §2026-11-06 r7       |

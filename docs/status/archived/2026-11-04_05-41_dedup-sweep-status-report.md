@@ -24,6 +24,7 @@
 ## a) FULLY DONE
 
 <!-- check-rows:ledger -->
+
 | What                                                                             | Evidence                                                                                                                                                                                      |
 | -------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Ratified dedup sweep executed at HEAD                                            | pinned v0.7.2 `check . -t 1` = **0 new** vs 86 baseline (start + end of session)                                                                                                              |
@@ -37,6 +38,7 @@
 ## b) PARTIALLY DONE
 
 <!-- check-rows:ledger -->
+
 | Item                                                      | What works                                                                                                                                                                | What remains                                                                                                                                                | Effort           |
 | --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
 | Big shape-noise group attribution (e.g. `f49b…` 43 sites) | Every occurrence's _shape_ verified via the SARIF snippet text (each is a lone field/signature line)                                                                      | The 43 host files were not each opened in full; justified by the class (declaration noise needs no file context) but rigor is snippet-level, not file-level | S if ever needed |
@@ -81,6 +83,7 @@
 ## f) Next tasks (ranked; honest count — padding to 50 would fabricate work)
 
 <!-- check-rows:ledger -->
+
 | #  | Task                                                                                                                                                                    | Impact   | Effort | Category      |
 | -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | ------ | ------------- |
 | 1  | Buildflow tiers 1+2 monthly re-measure — **due 2026-11-05**                                                                                                             | Critical | M      | Quality       |

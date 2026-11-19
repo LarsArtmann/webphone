@@ -17,16 +17,16 @@ imports nothing internal, services never import server/web, zero cycles,
 solo build green, and the 2026-11-12 auth+platform carves landed exactly as
 the refinement plan said they would.
 
-| Probe | Result | Method |
-| --- | --- | --- |
-| External Go consumers | **0** | `gh search code` (3 queries) + Sourcegraph public index + local sweep of `~/projects/webphone-android` |
-| Packages | 38, **all** `internal/` or `cmd/` | `go list ./...` in `nix develop` |
-| Real go.mod files | 1 (root) | `find` — the second hit is the `internal/arch/testdata/erraudit-rule-probes` lint-probe fixture, not a buildable module |
-| domain internal imports | **0** (fan-in 28) | import map + `TestDomainImportsNothingInternal` |
-| services importing server/web | **0 violations** | import map + `TestServicesNeverImportServerOrWeb` |
-| Cycles | **0** (147 internal production edges) | DFS over the full production import set |
-| Solo build (gate 5) | **GREEN** | `GOWORK=off go build ./...` in `nix develop` (go1.27.3) |
-| `internal/arch` suite | **GREEN** (13 tests) | `go test -count=1 ./internal/arch/` |
+| Probe                         | Result                                | Method                                                                                                                  |
+| ----------------------------- | ------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| External Go consumers         | **0**                                 | `gh search code` (3 queries) + Sourcegraph public index + local sweep of `~/projects/webphone-android`                  |
+| Packages                      | 38, **all** `internal/` or `cmd/`     | `go list ./...` in `nix develop`                                                                                        |
+| Real go.mod files             | 1 (root)                              | `find` — the second hit is the `internal/arch/testdata/erraudit-rule-probes` lint-probe fixture, not a buildable module |
+| domain internal imports       | **0** (fan-in 28)                     | import map + `TestDomainImportsNothingInternal`                                                                         |
+| services importing server/web | **0 violations**                      | import map + `TestServicesNeverImportServerOrWeb`                                                                       |
+| Cycles                        | **0** (147 internal production edges) | DFS over the full production import set                                                                                 |
+| Solo build (gate 5)           | **GREEN**                             | `GOWORK=off go build ./...` in `nix develop` (go1.27.3)                                                                 |
+| `internal/arch` suite         | **GREEN** (13 tests)                  | `go test -count=1 ./internal/arch/`                                                                                     |
 
 ## 01 Trigger check — did "a second Go consumer importing internal/domain or internal/gateway" appear?
 
@@ -41,7 +41,7 @@ the refinement plan said they would.
 2. Exact trigger paths — `gh search code 'larsartmann/webphone/internal/domain'`:
    **0 hits outside the repo**. `'.../internal/gateway'`: exactly one outside
    hit, `LarsArtmann/.hermes:workspace/projects/.pdg-sweep/logs/webphone.log` —
-   a sweep-tool **log** of `go test` output from running *this* module's own
+   a sweep-tool **log** of `go test` output from running _this_ module's own
    tests (`ok github.com/larsartmann/webphone/internal/gateway 0.398s`). Test
    output is not an import; the `.hermes` repo contains no Go module consuming
    webphone. Not a consumer.
@@ -53,7 +53,7 @@ the refinement plan said they would.
    `gradlew` present (per the platform decision). Its only webphone reference
    outside `build/` is a markdown draft. It consumes the server as **wire
    contracts** — JSON fixtures from `docs/contracts/wire/` decoded by a Kotlin
-   `WireContractTest` — never Go packages. The sibling is a *client* of the
+   `WireContractTest` — never Go packages. The sibling is a _client_ of the
    HTTP surface, which trigger 3 (a separately deployed artifact) explicitly
    treats as not-module-boundary material.
 
@@ -147,7 +147,7 @@ client) and structurally (compiler-refused while 38/38 packages stay under
 `internal/`). The DAG claims underpinning the ratification all hold at HEAD
 `536a7b20`. Next scheduled re-review: quarterly, ~2027-01.
 
-*Generated 2026-11-19 · verification posture (trigger check + DAG audit +
+_Generated 2026-11-19 · verification posture (trigger check + DAG audit +
 carve adjudication; no re-litigation) · all probes run this session inside
 `nix develop` (go1.27.3) except the GitHub/Sourcegraph searches · series
-home: [INDEX.md](INDEX.md)*
+home: [INDEX.md](INDEX.md)_

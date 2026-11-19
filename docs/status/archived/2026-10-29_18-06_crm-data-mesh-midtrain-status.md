@@ -39,6 +39,7 @@ bricks stacked beside it.
 ## a) What is FULLY done (verified, not claimed)
 
 <!-- check-rows:ledger -->
+
 | #   | Thing                                                                                                                                                                                                                                                                 | Evidence                                                                                              |
 | --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
 | A1  | **Root-cause diagnosis of the CRM seam.** `Resolver.Names` returned `map[number]string` while `Match` already carried the CRM `ContactRef` — identity died at the boundary, so the UI could never link to the person it just named.                                   | `internal/crm/resolver.go` (pre-change), read in full; recorded as F1 in the planning doc §2          |
@@ -59,6 +60,7 @@ bricks stacked beside it.
 ## b) What is PARTIALLY done
 
 <!-- check-rows:ledger -->
+
 | #  | Thing                                            | What exists                                                                                                                              | What is missing                                                                                                                                                                                                                                      |
 | -- | ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | B1 | **The CRM context strip**                        | `views.CRMContext` type, `crmContextStrip` component, `ThreadViewProps.CRMContext *CRMContext`, wired into `ThreadDetail` after the head | **Everything that makes it live**: no `crm.Context` wire type, no client call, no cache, no Kith endpoint, no server code that ever sets the field. It is 100 % dead code today.                                                                     |
@@ -74,6 +76,7 @@ bricks stacked beside it.
 ## c) What is NOT started
 
 <!-- check-rows:ledger -->
+
 | #   | Thing                                                                                                                                                                                                  | Why it matters                                                                                 |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
 | C1  | **`GET /api/contacts/{id}/context` in Kith**                                                                                                                                                           | Without the producer, S5/S7 have nothing to consume. This was ~40 % of the train's user value. |
@@ -93,6 +96,7 @@ bricks stacked beside it.
 ## d) What is TOTALLY fucked up
 
 <!-- check-rows:ledger -->
+
 | #  | Fuck-up                                                                                                                                                                                                          | Severity     | Detail                                                                                                                                                                                                                |
 | -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | D1 | **The tree is RED at the test layer.** `internal/web/views/panels_test.go:562` still sets `Name: "Erika"` on a `TranscriptGroup` whose `Name` field I deleted. `go vet ./...` fails; `go test ./...` cannot run. | **Blocking** | I removed a struct field and did not grep its test usage. Production code builds, so the mistake hides behind a green `go build` — the classic "compiles ≠ works" trap. CI would go red the moment the daemon pushed. |
@@ -138,6 +142,7 @@ bricks stacked beside it.
 **Tier 0 — stop the bleeding (do first, ~25 min total)**
 
 <!-- check-rows:ledger -->
+
 | #     | Task                                                                                                                                                                                                                                                                                          | Min |
 | ----- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
 | ~~1~~ | ~~Fix `panels_test.go:562` → assert through `props.CRM` instead of `TranscriptGroup.Name`~~ — done in the same train: the test asserts through the panel's ONE directory map (panels_test.go:557, "CRM name arrives through the panel's ONE directory map (props.CRM), never" the group name) | 5   |
@@ -146,6 +151,7 @@ bricks stacked beside it.
 **Tier 1 — make the claims true (~4 h)**
 
 <!-- check-rows:ledger -->
+
 | #  | Task                                                                                                                       | Min |
 | -- | -------------------------------------------------------------------------------------------------------------------------- | --- |
 | 3  | Config test: the three rejection arms + the accept path for `crm.contact_url`                                              | 20  |
@@ -160,6 +166,7 @@ bricks stacked beside it.
 **Tier 2 — finish the producer/consumer (~5 h)**
 
 <!-- check-rows:ledger -->
+
 | #  | Task                                                                                                                | Min |
 | -- | ------------------------------------------------------------------------------------------------------------------- | --- |
 | 11 | Kith: `GET /api/contacts/{id}/context` handler (contact + company + open deals + open/overdue task + last activity) | 60  |
@@ -176,6 +183,7 @@ bricks stacked beside it.
 **Tier 3 — make it look like something (~2 h)**
 
 <!-- check-rows:ledger -->
+
 | #      | Task                                                                                                                                                                         | Min    |
 | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | 21     | `app.css`: `.wp-crm-link` (inherit colour, dotted underline, hover solid)                                                                                                    | 10     |
@@ -189,6 +197,7 @@ bricks stacked beside it.
 **Tier 4 — gates and history (~3 h)**
 
 <!-- check-rows:ledger -->
+
 | #      | Task                                                                                                                                     | Min    |
 | ------ | ---------------------------------------------------------------------------------------------------------------------------------------- | ------ |
 | 28     | `templ generate` final + `nix fmt`                                                                                                       | 10     |
@@ -208,6 +217,7 @@ bricks stacked beside it.
 **Tier 5 — the mesh's second half (not this train; needs the owner)**
 
 <!-- check-rows:ledger -->
+
 | #  | Task                                                                                                                   | Min |
 | -- | ---------------------------------------------------------------------------------------------------------------------- | --- |
 | 41 | Decide whether SMS/voicemail/fax facts get journaled into the CRM (owner Q3)                                           | —   |
@@ -251,6 +261,7 @@ to NO for now because it multiplies context fetches across a page of rows.)_
 ## h) Corrections ledger — where I caught myself
 
 <!-- check-rows:ledger -->
+
 | # | Claim I nearly made                                               | Correction                                                                                                                                                                                                                        |
 | - | ----------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | "The views migrate cleanly"                                       | They did not: templ components cannot be used as expressions (`{ crmNameLink(…) }`), and templ names its own `ctx` parameter, so `ctx *CRMContext` collided with `context.Context`. Both found only by regenerating and building. |
@@ -289,6 +300,7 @@ now); the stack's browser E2E.
 ## j) Risk register
 
 <!-- check-rows:ledger -->
+
 | Risk                                                                                   | Likelihood | Impact | Mitigation                                                                                                 |
 | -------------------------------------------------------------------------------------- | ---------- | ------ | ---------------------------------------------------------------------------------------------------------- |
 | Daemon pushes the red test tree to `main` and reds CI                                  | **High**   | High   | Fix D1 first, then push a fix immediately (manual-push bar: red main + verified fix in hand)               |

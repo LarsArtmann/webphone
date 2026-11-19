@@ -23,6 +23,7 @@ The two detectors speak different group universes (the documented version-skew
 trap, 10-15 ruling). Groups in the paste, ranked by fragment size:
 
 <!-- check-rows:ledger -->
+
 | Fragment size                                                                        | Shape                                                                                                                                                                              | Ruling                                                                                                                                                       |
 | ------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 43-tok ×43 (`f49b5c35…`)                                                             | Lone struct-field declarations (`email string`, `raw string`, …) across 43 sites                                                                                                   | ACCEPT — field-shape similarity is architectural ROLE, not duplication (the 10-05 mixin doctrine class)                                                      |

@@ -39,6 +39,7 @@ directions (send / receive) and the product modelled neither.
 ## a) FULLY DONE
 
 <!-- check-rows:ledger -->
+
 | #  | Work                                                                                                                                                                                                                                                                                                                                            | Evidence                                                                                                                                                                                                                                    |
 | -- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1  | **Config declares fax lanes.** `config.Fax{Send, Receive *bool}` with `SendEnabled()/ReceiveEnabled()/AnyEnabled()`; pointer bools so an unset field = **on** and no forgotten literal can strip the UI. Env `WEBPHONE_FAX__SEND=false`, file `{"fax":{"send":false}}`.                                                                         | `internal/config/config.go:526`; `TestLoadFaxCapability` (default both on → env turns ONE off → file turns both off)                                                                                                                        |
@@ -64,6 +65,7 @@ stack 3+ (latest `87331b2`, 02:14). **Both repos are clean but UNPUSHED.**
 ## b) PARTIALLY DONE
 
 <!-- check-rows:ledger -->
+
 | # | Work                               | What is missing                                                                                                                                                                                                                                                                                                         |
 | - | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | **Deployment effect.**             | The stack pins `github:LarsArtmann/webphone` via `flake.lock`; the pinned revision **predates** this change and `koanf` silently ignores the unknown `fax` key. So `pbx-artmann` will keep serving the old, lying Fax tab until: push webphone → stack lock bump → pbx-artmann relock → switch. None of those happened. |

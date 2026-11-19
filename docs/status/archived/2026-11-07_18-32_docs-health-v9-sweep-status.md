@@ -19,8 +19,8 @@ docs. Documentation-only: zero product code touched.
 
 ## a) FULLY DONE
 
-
 <!-- check-rows:ledger -->
+
 | #  | Work                                                                                                                                                                                                                                                                                                                                                                                                                                           | Verification                                                                                                                                |
 | -- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1  | **All four executed September plans taken through the full row-level pass and ARCHIVED** — error-excellence (95 rows + 25 prose), 20-year-durability (217 + 6), pareto-execution-v260 (118), stack-adoption-pareto (123): ~553 table rows + ~31 prose items, each struck per-cell with evidence verified THIS session (git grep / CHANGELOG quotes / AGENTS bullets / code paths), not transcribed on faith                                    | `check-rows --strict` + `bare-rows` + `prose-items` green per file BEFORE each `git mv`; post-move `grep -L '~~'` clean (completeness gate) |
