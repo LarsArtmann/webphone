@@ -312,3 +312,5 @@ file unless it reds and is fixed)._
    (c89f6687 → 93c88d20, fast-forward; carries their heal + this report +
    the regenerated index). CI verdict on 93c88d20 polled in-session; the
    code train's own CI verdict (d0a9a3be) was and remains GREEN.
+
+CI verdict on the pushed tip 93c88d20: GREEN (`scripts/ci-verdict.sh` exit 0, 15:23) — the whole train is verified end-to-end on the remote.
