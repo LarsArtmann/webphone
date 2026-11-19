@@ -276,10 +276,22 @@ export function installBrowserGlobals() {
   };
   globalThis.window = {
     // gesture-level listeners (transcribe.js arms one-shot pointerdown/
-    // keydown retries) ride here, mirroring the document pattern below.
+    // keydown retries, audio.js the shared-context gesture unlock) ride
+    // here, mirroring the document pattern below.
     listeners: {},
     addEventListener(type, fn) {
       (this.listeners[type] ??= []).push(fn);
+    },
+    removeEventListener(type, fn) {
+      const list = this.listeners[type];
+      if (!list) return;
+      const i = list.indexOf(fn);
+      if (i >= 0) list.splice(i, 1);
+    },
+    // The gesture tests fire the armed listeners directly: a plain
+    // event object (the unlock reads no event fields).
+    dispatchWindow(type, event = {}) {
+      for (const fn of this.listeners[type] ?? []) fn(event);
     },
   };
   // Older node lacks CustomEvent; the island dispatches wp:* events with it.

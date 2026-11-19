@@ -195,6 +195,25 @@ async function rebuildConnection(reason) {
     );
   } catch (err) {
     log(`old agent stop: ${errorMessage(err)}`);
+    // A hung stop dies inside sip.js's unregister choreography, BEFORE
+    // the transport ever disconnects — the old WebSocket is left open
+    // and the PBX keeps serving that stale registration until expiry,
+    // forking every inbound call to a dead agent (the 2026-11-19
+    // production storm: double rings, N× missed-call announcements, a
+    // burst of "closed before established" sockets). Close the
+    // transport directly; the delegates' staleness guards make any
+    // agent that still squirms inert regardless.
+    if (old) {
+      try {
+        await withTimeout(
+          old.transport.disconnect(),
+          1000,
+          "transport disconnect timed out",
+        );
+      } catch (closeErr) {
+        log(`old transport force-close: ${errorMessage(closeErr)}`);
+      }
+    }
   }
   try {
     await withTimeout(
@@ -209,11 +228,16 @@ async function rebuildConnection(reason) {
 
 async function attemptReconnect() {
   armReconnectCycleDeadline();
+  // Snapshotted at entry: a rebuild that supersedes THIS attempt (its
+  // own deadline fired first, or a registration-lost event won the
+  // race) owns recovery from here — letting the loser log, flip the
+  // pill, or schedule another reconnect would stack a second chain
+  // beside the fresh agent's (the 2026-11-19 nested-chain storm).
+  const agent = state.userAgent;
+  const registered = registerer;
+  const superseded = () =>
+    stopping || resetting || state.userAgent !== agent;
   try {
-    // Bound once: `state.userAgent` is nullable and the await boundary
-    // invalidates the narrowing of a live module field.
-    const agent = state.userAgent;
-    const registered = registerer;
     if (!agent || !registered) throw new Error("not connected");
     await withTimeout(
       (async () => {
@@ -223,6 +247,7 @@ async function attemptReconnect() {
       RECONNECT_ATTEMPT_TIMEOUT_MS,
       "reconnect timed out",
     );
+    if (superseded()) return;
     reconnectAttempts = 0;
     clearReconnectCycleDeadline();
     // sip.js fires NO stateChange when the Registerer never left
@@ -238,6 +263,7 @@ async function attemptReconnect() {
     }
     log("transport reconnected; re-registered");
   } catch (err) {
+    if (superseded()) return;
     log(`reconnect failed: ${errorMessage(err)}`);
     // A hung attempt or a Terminated registerer leaves the agent
     // unusable (retrying register() on a Terminated registerer throws
@@ -298,7 +324,7 @@ async function buildConnection() {
     logLevel: "warn",
     delegate: {
       onDisconnect: (/** @type {Error | null} */ error) => {
-        if (stopping || resetting) return;
+        if (state.userAgent !== agent || stopping || resetting) return;
         // Surface WHY the transport died — the pill is the first place
         // a user looks when audio goes quiet; "offline" alone hides
         // certificate/TLS vs network failures.
@@ -309,6 +335,10 @@ async function buildConnection() {
         if (error) scheduleReconnect();
       },
       onInvite: (/** @type {SipInvitation} */ invitation) => {
+        // An INVITE aimed at a superseded agent is a stale
+        // registration talking, never a real caller — ring only for
+        // the agent the PBX should be talking to.
+        if (state.userAgent !== agent) return;
         warmMic();
         const from = (invitation.remoteIdentity &&
           invitation.remoteIdentity.uri) || {
@@ -386,6 +416,14 @@ async function buildConnection() {
     },
   });
 
+  // The staleness handle: every delegate below compares its agent
+  // against state.userAgent at event time, so a superseded agent (its
+  // own stop hung, or a newer rebuild took over) stays INERT — its
+  // transport flaps and its forked INVITEs (the PBX still serves the
+  // stale registration until expiry) belong to the teardown, never to
+  // the shared phone state (the 2026-11-19 double-ring storm).
+  const agent = state.userAgent;
+
   await state.userAgent.start();
 
   registerer = new SIP.Registerer(state.userAgent);
@@ -415,6 +453,10 @@ async function buildConnection() {
     );
   };
   registerer.stateChange.addListener((/** @type {string} */ regState) => {
+    // Superseded registerers report teardown noise ("Unregistered",
+    // "Terminated" from the stop path); only the current agent's
+    // registerer owns the pill and the recovery rhythm.
+    if (state.userAgent !== agent) return;
     log(`registration ${regState}`);
     if (regState === SIP.RegistererState.Registered) {
       wasRegistered = true;
@@ -452,6 +494,10 @@ async function buildConnection() {
     }
     setOfflinePill(regState.toLowerCase());
   });
+  // Register only while still current: a rebuild that superseded this
+  // one mid-start() must not have its stale registerer re-claim the
+  // PBX registration underneath the fresh agent.
+  if (state.userAgent !== agent) return;
   await registerer.register();
 }
 

@@ -64,13 +64,32 @@ class StubRegisterer {
   }
 }
 
+class StubTransport {
+  constructor(agent) {
+    this.agent = agent;
+    this.disconnectCalls = 0;
+  }
+  async disconnect() {
+    this.disconnectCalls += 1;
+    this.agent.transportClosed = true;
+  }
+}
+
 class StubUserAgent {
+  // Optional class-level script for the NEXT constructed agent: makes
+  // its stop() hang (the sip.js wedged-unregister shape whose cleanup
+  // never reaches the transport).
+  static nextStopHangs = false;
+
   constructor(options) {
     this.options = options;
     this.delegate = options.delegate;
     this.stopped = false;
     this.connected = true;
     this.hangReconnect = false;
+    this.transport = new StubTransport(this);
+    this.stopHangs = StubUserAgent.nextStopHangs;
+    StubUserAgent.nextStopHangs = false;
     agents.push(this);
   }
 
@@ -85,6 +104,7 @@ class StubUserAgent {
   async start() {}
 
   async stop() {
+    if (this.stopHangs) return new Promise(() => {});
     this.stopped = true;
   }
 
@@ -143,6 +163,7 @@ const resetStubs = () => {
   agents.length = 0;
   registerers.length = 0;
   StubRegisterer.nextRejectWith = null;
+  StubUserAgent.nextStopHangs = false;
 };
 
 const pill = () => doc.getElementById("reg-status").textContent;

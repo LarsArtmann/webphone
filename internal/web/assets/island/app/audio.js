@@ -9,7 +9,9 @@ import { errorMessage } from "./ui.js";
 // SILENT. Sharing one context means a single resumeAudio() at the first
 // user gesture (accept, reject, dial) brings every tone to life; the
 // ringback and ring patterns stay audibly distinct by frequency and
-// rhythm, not by context.
+// rhythm, not by context. The gesture unlock below additionally arms a
+// first-interaction resume so a never-gestured tab (cookie session
+// restore) rings as soon as the user touches ANYTHING.
 
 /** @type {AudioContext | null} */
 let ctx = null;
@@ -27,6 +29,52 @@ let ringToneTimer = null;
 // context is finally created by a gesture.
 /** @type {string} */
 let preferredSink = "";
+
+// The gesture unlock: Chrome leaves a context created outside a user
+// gesture suspended FOREVER — and the first ring usually IS that
+// moment (a cookie session restore boots the island without a click,
+// so the 2026-11-19 missed call rang silently). The per-invite resume
+// this replaces could only fail (a ring carries no gesture) and
+// printed one autoplay warning per forked invitation. ONE capture-phase
+// pointerdown/keydown pair owns the suspended→running transition: the
+// first interaction anywhere on the page resumes the shared context
+// and removes itself; a refused resume (no activation yet) stays
+// armed for the next gesture.
+/** @type {(() => void) | null} */
+let disarmUnlock = null;
+
+/** @param {AudioContext} audio */
+function armGestureUnlock(audio) {
+  if (disarmUnlock || audio.state !== "suspended" || !audio.resume) return;
+  const disarm = () => {
+    if (!disarmUnlock) return;
+    const remove = disarmUnlock;
+    disarmUnlock = null;
+    remove();
+  };
+  const resume = () => {
+    if (audio.state !== "suspended") {
+      disarm();
+      return;
+    }
+    audio.resume().then(disarm, () => {
+      // That event carried no user activation; stay armed and let the
+      // next interaction retry.
+    });
+  };
+  window.addEventListener("pointerdown", resume, {
+    capture: true,
+    passive: true,
+  });
+  window.addEventListener("keydown", resume, {
+    capture: true,
+    passive: true,
+  });
+  disarmUnlock = () => {
+    window.removeEventListener("pointerdown", resume, { capture: true });
+    window.removeEventListener("keydown", resume, { capture: true });
+  };
+}
 
 // applySink routes the context's OUTPUT to a device. Feature-detected
 // structurally (the DOM lib and older browsers disagree about this
@@ -69,9 +117,13 @@ function audioCtx() {
   if (!ctx) {
     ctx = new AudioContext();
     if (preferredSink) applySink(ctx, preferredSink);
+    armGestureUnlock(ctx);
   }
   return ctx;
 }
+
+/** @type {boolean} */
+let resumeWarned = false;
 
 // Bring the shared context from suspended to running. Call from gesture
 // handlers (accept/reject/dial in calls.js); a no-op promise when the
@@ -82,8 +134,13 @@ export function resumeAudio() {
   if (audio.state === "suspended" && audio.resume)
     return audio.resume().catch((err) => {
       // Autoplay policy can refuse a resume without a fresh gesture;
-      // the next user gesture retries. Operator-visible, not a toast.
-      console.warn(`webphone: audio resume failed: ${errorMessage(err)}`);
+      // the next user gesture retries (the gesture unlock above arms
+      // that retry for the ring path). Operator-visible, not a toast —
+      // and at most once per page, so a fork-storm cannot spam it.
+      if (!resumeWarned) {
+        resumeWarned = true;
+        console.warn(`webphone: audio resume failed: ${errorMessage(err)}`);
+      }
     });
   return Promise.resolve();
 }
@@ -120,10 +177,13 @@ export function ringbackStop() {
 export function ringToneStart() {
   if (ringToneTimer) return;
   const audio = audioCtx();
-  // No gesture exists while a call rings — this resume usually no-ops,
-  // but after the FIRST user gesture the context stays running, so a
-  // second incoming call rings audibly without any further unlock.
-  resumeAudio().catch(() => {});
+  // No gesture exists while a call rings: a fresh context stays
+  // suspended (the gesture unlock above owns the first-interaction
+  // transition — calling resume here could only fail and warn), and
+  // the burst schedules into the suspended graph so the queued ring is
+  // heard the moment ANY interaction unlocks the context. After the
+  // first user gesture the context runs, so later incoming calls ring
+  // audibly with no further unlock.
   const burst = () => {
     const now = audio.currentTime;
     [480, 960].forEach((freq) => {

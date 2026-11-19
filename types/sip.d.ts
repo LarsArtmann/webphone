@@ -100,12 +100,19 @@ interface SipRegisterer {
   dispose(): Promise<void>;
 }
 
+/** The user agent's one registration transport. */
+interface SipTransport {
+  disconnect(): Promise<void>;
+}
+
 /** The user agent (one per connection). */
 interface SipUserAgent {
   start(): Promise<void>;
   stop(): Promise<void>;
   reconnect(): Promise<void>;
   isConnected(): boolean;
+  /** Public on the 0.21 UserAgent; force-closed when a hung stop leaves it open. */
+  readonly transport: SipTransport;
 }
 
 /** A description-handler factory as sip.js invokes it. */
