@@ -9,6 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **A resent fax owns its own document copy** (2026-11-19, full-code-review
+  M1): a resend used to reference the original job's blob path, and the
+  retention sweep could unlink that shared file while the retry row was
+  still live — the retry's download failing with `blob.open` for a job the
+  fax list still rendered. Each retry now spools its own copy (one extra
+  disk write per retry, bounded by the send-size cap), so the original
+  stays expirable on its own schedule and no sweep can destroy a live
+  row's document; the ownership invariant is service-pinned.
+
+- **The `review.saved` event joined the event catalog** (2026-11-19,
+  full-code-review M2): the automatic call-review event was live since
+  2026-10-28 but missing from the `webphone catalog` export (4 of 5 seam
+  events documented). It now carries its schema mirror, its
+  `review.saved` message, a parity-pair ↔ catalog count cross-check so
+  the next event cannot silently miss either list, and the catalog
+  version bumped to 1.1.0 — with every message now stamped explicitly
+  (message versions default to "1.0.0" regardless of the catalog
+  version; the bump caught all five riding the stale stamp).
+
+- **The inbound-signal attachment filename is percent-escaped into the
+  data URI** (2026-11-19, full-code-review F-G): the name is
+  remote-controlled; a raw `;` or `%` could terminate the parameter or
+  forge the base64 payload marker.
+
+- **The three Nix fixture checks can now actually fail** (2026-11-19,
+  nix-review): `statix`, `deadnix` and the `vulnix-triage` check piped
+  into `tee`, so the derivation saw tee's exit 0 and a red verdict still
+  built green — the same pipeline-masking class the `island-js` check
+  was fixed for. All three redirect straight into `$out`.
+
 - **A stale SIP agent can no longer double-ring the island** (2026-11-19,
   from the production storm log): a `stop()` that hangs dies inside
   sip.js's unregister choreography before the transport ever

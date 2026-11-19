@@ -81,7 +81,7 @@ Nothing destroyed, nothing reverted that wasn't mine, no red left behind by this
 1. Wait for/collect the full buildflow re-run verdict (background job) and archive it.
 2. If buildflow names nix-hash-fix as still red: run `nix build .#webphone.goModules --rebuild` + re-pin the vendorHash (the documented recipe), re-run.
 3. Push the one remaining unpushed commit (sibling's callnote work — daemon's job; verify with `git ls-remote`).
-4. Watch the next CI run on main to green (`gh run list`) after that push.
+4. Watch the next CI run on main to green (`gh run list`) after that push. **→ moot 2026-11-19 — the watched push's CI verdict is 23 days past; the current CI-watch duty lives in 2026-11-19_21-05 §f item 2**
 5. Append the probe-fixture war story to docs/lessons.md (rules are in AGENTS.md; evidence belongs there).
 6. Save the /tmp probe fixtures as a committed fixture test (testdata/erraudit-probes) so rule upgrades are diffable.
 7. End-to-end `errors.Is(store.ErrNotFound)` test through a real readmodels engine call (c2 above).

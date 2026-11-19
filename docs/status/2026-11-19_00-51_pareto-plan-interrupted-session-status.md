@@ -126,7 +126,7 @@ session's work (the §f follow-up closeout) is already reported at
 17. R15 hub ALERT_WEBHOOK_URL decision + secret.
 18. R16 ringhook operator docs + typed mirror.
 19. R02 SSO-only OIDC leg in the stack fixture.
-20. R04 stack drift audit (module assertions vs internal/config).
+20. R04 stack drift audit (module assertions vs internal/config). **→ routed — TODO_LIST cross-repo obligations ("Stack drift audit R04", harvested 2026-11-19 evening)**
 21. R08 stack coverage arms (voicemail E2E, verify-live audio, 206 pin).
 22. R03 pma push-heuristic train (pma repo).
 23. R01 android `lines[]` picker adoption + fixture re-vendor.
@@ -146,7 +146,7 @@ session's work (the §f follow-up closeout) is already reported at
 
 31. TODO_LIST harvest-sync after the plan lands (new rows this plan
     surfaced: none beyond R20's strike — verify).
-32. The e.2 cadence-structure owner call (threshold/age rule).
+32. The e.2 cadence-structure owner call (threshold/age rule). **→ routed — the report's own §g Q3 (owner call, still pending; the 21-05 report's §f item 13 carries tonight's instance)**
 
 ## g) QUESTIONS ONLY THE OWNER CAN ANSWER
 
