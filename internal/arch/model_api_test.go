@@ -33,8 +33,7 @@ import (
 // to every internal package would drown interface implementations and
 // wire DTOs in false positives (the type-safety triage's
 // single-implementer seams are the documented counter-example class).
-const modelAPIRoot = "." // resolved against the repo root below
-
+//
 // repoRoot answers this checkout's root (the test's CWD is its package
 // dir, not the module root).
 func repoRoot(t *testing.T) string {

@@ -1,0 +1,268 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    theme-id: 200
+  }
+}
+
+classes: {
+  actor: {
+    style: {
+      fill: "#f4d35e"
+      stroke: "#f4d35e"
+      font-color: "#0e0e10"
+      bold: true
+    }
+  }
+  front: {
+    style: {
+      fill: "#6eb5ff"
+      stroke: "#6eb5ff"
+      font-color: "#0e0e10"
+      bold: true
+    }
+  }
+  surface: {
+    style: {
+      fill: "#ffb347"
+      stroke: "#ffb347"
+      font-color: "#0e0e10"
+    }
+  }
+  service: {
+    style: {
+      fill: "#1d1d24"
+      stroke: "#ffb347"
+      font-color: "#f4f4f0"
+    }
+  }
+  seam: {
+    style: {
+      fill: "#1d1d24"
+      stroke: "#6eb5ff"
+      font-color: "#f4f4f0"
+    }
+  }
+  infra: {
+    style: {
+      fill: "#101014"
+      stroke: "#6eb5ff"
+      font-color: "#c9c9d4"
+      stroke-dash: 4
+    }
+  }
+  base: {
+    style: {
+      fill: "#101014"
+      stroke: "#4a4a55"
+      font-color: "#c9c9d4"
+    }
+  }
+  external: {
+    style: {
+      fill: "#26262e"
+      stroke: "#8a8a96"
+      stroke-dash: 4
+      font-color: "#f4f4f0"
+    }
+  }
+}
+
+direction: down
+
+operator: Operator (browser) {
+  class: actor
+  island: SIP island — sip.js 0.21.2, served verbatim
+  tabs: HTMX tabs — real URLs + pushState + morph swaps
+  login: "/login front door — passkey | extension | Pocket ID"
+}
+
+front: TLS front — Caddy (stack module) {
+  class: front
+  style.stroke-dash: 4
+  web: reverse_proxy + /events + /health unbuffered
+  sip: /sip WSS bridge to the PBX
+}
+
+webphone: webphone single binary — current state (2026-11-19) {
+  style: {
+    stroke: "#ffb347"
+    stroke-width: 2
+    font-color: "#ffb347"
+    bold: true
+  }
+
+  cmd: cmd/webphone — process concerns {
+    class: base
+    details: "boot report (5-part contract) · ExtensionHubs pre-drain · trace drain last · enroll CLI"
+  }
+
+  app: internal/app — composition root (samber/do v2) {
+    class: surface
+    details: "ONE container owns lifetime · MustInvoke* root-only (arch test) · named: sqlite, blob-dir, userauth · eager: pair + handler · shutdown = HTTP drain → Probe → do.Shutdown"
+  }
+
+  http: internal/server — HTTP hub {
+    class: surface
+    residual: "pages · panels · actions · notifier · sse (the html hub: measured named residual)"
+    auth: "server/auth — /login · session · passkey · sso doors (carved 11-12)"
+    api: "server/api — JSON surfaces: session · calls · notes · review · summary · transcribe · transcripts · contacts · dialgate · push-devices · beacon (carved 10-17)"
+    hooks: "server/hooks — webhook ingest + hooksIdem windows (carved 10-17)"
+    platform: "server/platform — assets · /metrics · CSP intake · trace · /phone-api proxy · /internal/directory (carved 11-12)"
+  }
+
+  chain: middleware chain (server New, ORDER) {
+    class: infra
+    style.font-color: "#6eb5ff"
+    m1: 1 ContextEnrichment
+    m2: 2 Metrics (latency aggregates, no route labels)
+    m3: "3 [Trace — only when flight-recorder seam wired]"
+    m4: 4 RequestLoggingSlog
+    m5: 5 ServerTiming (env-gated)
+    m6: 6 SecurityHeaders (one config source)
+    m7: 7 ReportingEndpoints (CSP report-uri)
+    m8: 8 Recovery
+    routes: routes (mux)
+
+    m1 -> m2 -> m3 -> m4 -> m5 -> m6 -> m7 -> m8 -> routes: next
+  }
+
+  identity: identity {
+    class: seam
+    userauth: "userauth — in-process usermgmt v4 (own usermgmt.db)"
+    sso: sso — Pocket ID OIDC
+    authmap: "authmap — shared users map · Lines[] one owned-identity type"
+    session: session — SQLite rows · sliding TTL
+    sipcred: sipcred — per-session derived SIP credential
+    admin: admin — read-only all-lines property of identity
+  }
+
+  comms: comms services {
+    class: service
+    messaging: messaging.Service — sender registry (Network axis)
+    chatloop: chatloop — receiver backoff ladder
+    matrix: matrix — /sync loop · sync cursor in app_flags
+    signal: signal — socket reader
+    faxsvc: fax.Service — lifecycle
+    paperless: paperless.Archiver — inbound faxes
+    gateway: "gateway — loopback | webhook seam"
+  }
+
+  operator_services: operator services {
+    class: service
+    crmres: crm.Resolver — TTL + single-flight caches
+    textagent: textagent — AI drafts + reviews (loopback review API)
+    asr: asr.Client — OpenAI-compatible, local provider doctrine
+    push: push — ntfy + FCM fanout (two independent transports)
+    reports: reports — CDR projection (pure, no storage)
+    retention: retention — tombstones + TrimStream (GDPR arm)
+    blob: blob — atomic-write tree (ProbeWrite)
+    vcard: vcard — pure parser
+    pbx: pbx — FreeSWITCH directory + CDR client (one timeout-bounded client)
+  }
+
+  journal: ONE journal world {
+    class: seam
+    cqrs: "cqrs — deciders + projections + THE engine-driver registration (go-cqrs-lite)"
+    readmodels: "readmodels — gates + view types ONLY (purity arch test)"
+    store: "store — sessions SQL + frozen import-only ladder"
+  }
+
+  shell: shell layer {
+    class: base
+    views: web/views — templ surfaces (typed props, no store/pbx reach-through)
+    assets: web/assets — island JS + css embed tree (served verbatim)
+  }
+
+  plain: shared infra {
+    class: infra
+    domain: "domain — branded IDs · machine tables · zero internal imports"
+    config: config — env/file loader + unknown-key WARN
+    httpclient: httpclient — timeout-bounded HTTP (no http.DefaultClient)
+  }
+}
+
+sysdb: system.db (SQLite WAL — every domain aggregate) {
+  shape: cylinder
+  class: base
+}
+usermgmtdb: usermgmt.db (identity + auth-audit journal) {
+  shape: cylinder
+  class: base
+}
+blobs: blob dir (nanoid files) {
+  shape: stored_data
+  class: base
+}
+
+pbxstack: FreeSWITCH PBX (stack) {
+  class: external
+}
+bridge: telnyx-webhooks bridge (pbx-artmann) {
+  class: external
+}
+kith: Kith CRM (bearer /api/*) {
+  class: external
+}
+paperlessd: Paperless {
+  class: external
+}
+speaches: Speaches ASR (local) {
+  class: external
+}
+ntfy: ntfy {
+  class: external
+}
+fcm: FCM {
+  class: external
+}
+matrixhs: Matrix homeserver {
+  class: external
+}
+signald: Signal daemon {
+  class: external
+}
+pocketid: Pocket ID (OIDC IdP) {
+  class: external
+}
+android: webphone-android (P1 native shell) {
+  class: external
+}
+
+operator -> front: HTTPS
+front -> webphone.http: reverse_proxy
+operator.island -> pbxstack: SIP over WSS (via /sip)
+front -> pbxstack: /sip WSS proxy
+
+webphone.cmd -> webphone.app: starts
+webphone.app -> webphone.http: Deps literal (wiring-parity pinned)
+webphone.http.chain -> webphone.http.routes: gates every surface
+webphone.http -> webphone.shell: renders
+webphone.http.auth -> webphone.identity: resolves per request
+webphone.http.api -> webphone.operator_services: reads + dispatches
+webphone.http.hooks -> webphone.comms: inbound ingest
+webphone.http.platform -> pbxstack: /phone-api proxy
+webphone.http.platform -> pbxstack: "GET /internal/directory/{ext} (xml_curl, Bearer)"
+
+webphone.comms -> webphone.journal.cqrs: decide + append
+webphone.comms -> webphone.gateway: outbound send
+webphone.identity -> usermgmtdb: journals auth events
+webphone.session: webphone.identity.session
+
+webphone.journal.cqrs -> sysdb: journal + projections
+webphone.journal.cqrs -> webphone.domain: machine tables consulted verbatim
+webphone.journal.readmodels -> sysdb: gates (owner-scoped queries)
+webphone.journal.store -> sysdb: sessions (outside the ladder)
+webphone.operator_services.blob -> blobs: atomic writes
+webphone.operator_services.pbx -> pbxstack: directory verify + CDR page
+webphone.operator_services.crmres -> kith: by-phone + /context
+webphone.operator_services.paperless -> paperlessd: archive inbound
+webphone.operator_services.asr -> speaches: /v1/audio/transcriptions
+webphone.operator_services.push -> ntfy: ring/end facts
+webphone.operator_services.push -> fcm: ring/end facts
+webphone.comms.matrix -> matrixhs: /sync
+webphone.comms.signal -> signald: socket
+webphone.identity.sso -> pocketid: OIDC dance
+webphone.operator_services.push -> android: draft_ready + ring
+bridge -> webphone.http.hooks: webhook {url}/message|/fax
+pbxstack -> webphone.http.hooks: "POST /hooks/ring (dialplan ringhook)"
