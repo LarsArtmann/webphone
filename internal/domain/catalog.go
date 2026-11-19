@@ -7,11 +7,13 @@ import (
 // CatalogTitle and CatalogVersion identify the generated event catalog
 // (`webphone catalog` export, federation hub). CatalogVersion versions
 // the CATALOG CONTENT, not the binary: bump it when a declared message
-// changes shape — every exported message must carry it (the zlota44
+// changes shape OR the declared set gains/loses a message (a new seam
+// event is a content change — review.saved's arrival bumped 1.0.0 →
+// 1.1.0) — every exported message must carry it (the zlota44
 // lesson: unstamped versions fail the hub's governance gate).
 const (
 	CatalogTitle   = "Webphone"
-	CatalogVersion = "1.0.0"
+	CatalogVersion = "1.1.0"
 
 	// CatalogServiceID is the service id in the catalog and the
 	// federation-hub union — keep in sync with the repo's
@@ -62,6 +64,10 @@ type (
 // BuildCatalog constructs webphone's event catalog from the closed
 // service-seam event set. There are no catalog commands by design:
 // webphone's writes are HTTP-driven (session + htmx), not messages.
+// SEAM-ONLY RULING: the catalog documents the five service-seam events
+// and NEVER the ~30 internal journal events — the hub is a contract
+// surface, not a journal mirror; a new SEAM event joins this set (and
+// bumps CatalogVersion), a new journal event does not.
 // The catalog is consumed by the `webphone catalog` command, which
 // renders the EventCatalog project tree for the architecture-catalog
 // hub. No database, no network — a pure render.
@@ -75,33 +81,42 @@ func BuildCatalog() *catalog.Catalog {
 			"and contacts behind one login against the PBX directory.",
 		// --- Events (the service seam emits these; the projection
 		// turns each into SSE pushes for the live UI) ---
+		// WithVersion: message versions default to "1.0.0" regardless of
+		// the builder's catalog version — the stamp must ride each event,
+		// so a CatalogVersion bump has to touch these five (the 2026-11-19
+		// 1.0.0 -> 1.1.0 bump caught it).
 		catalog.Event[CatalogMessageReceivedSchema](
 			catalog.MessageID("message.received"), catalog.Sends,
 			catalog.Owners("lars"),
+			catalog.WithVersion(CatalogVersion),
 			catalog.WithName("Message Received"),
 			catalog.WithSummary("An inbound message landed in an owner's thread."),
 		),
 		catalog.Event[CatalogMessageDeliveryAdvancedSchema](
 			catalog.MessageID("message.delivery.advanced"), catalog.Sends,
 			catalog.Owners("lars"),
+			catalog.WithVersion(CatalogVersion),
 			catalog.WithName("Message Delivery Advanced"),
 			catalog.WithSummary("An outbound message's delivery state moved: send accepted or refused, provider verdict landed."),
 		),
 		catalog.Event[CatalogThreadFlagChangedSchema](
 			catalog.MessageID("thread.flag.changed"), catalog.Sends,
 			catalog.Owners("lars"),
+			catalog.WithVersion(CatalogVersion),
 			catalog.WithName("Thread Flag Changed"),
 			catalog.WithSummary("The user toggled a thread organization flag; list-only by design, so an open transcript is never wiped."),
 		),
 		catalog.Event[CatalogFaxAdvancedSchema](
 			catalog.MessageID("fax.advanced"), catalog.Sends,
 			catalog.Owners("lars"),
+			catalog.WithVersion(CatalogVersion),
 			catalog.WithName("Fax Advanced"),
 			catalog.WithSummary("A fax job moved through its lifecycle: submit, settle, verdict, or receive."),
 		),
 		catalog.Event[CatalogReviewSavedSchema](
 			catalog.MessageID("review.saved"), catalog.Sends,
 			catalog.Owners("lars"),
+			catalog.WithVersion(CatalogVersion),
 			catalog.WithName("Review Saved"),
 			catalog.WithSummary("A call-review artifact landed in its slot (pending, present, or failed); the projection is a payload-less nudge."),
 		),
