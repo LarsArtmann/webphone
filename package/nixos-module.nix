@@ -243,7 +243,7 @@ in
             # The OIDC client secret and the CRM bearer token ride
             # LoadCredential entries contributed by oauth2.nix / crm.nix:
             # systemd copies the operator's file into the unit's private
-            # credential directory at start (0400, owned by the webphone
+            # credential directory at start (0440, owned by the webphone
             # user), so the app reads the copy and no host-side group
             # grant is needed. A missing source file fails the unit
             # start — earlier and louder than the first login.

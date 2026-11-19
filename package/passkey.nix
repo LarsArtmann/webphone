@@ -94,16 +94,14 @@ in
       }
     ];
 
-    services.webphone.settings.auth = lib.mkIf cfg.passkey.enable (
-      lib.mkIf deriveWebAuthnRP {
-        # mkDefault: an explicitly declared settings.auth.passkey.*
-        # value wins, so an operator pin stays authoritative (the
-        # oauth2 precedent).
-        passkey = {
-          rp_id = lib.mkDefault cfg.caddy.hostName;
-          rp_origins = lib.mkDefault [ "https://${cfg.caddy.hostName}" ];
-        };
-      }
-    );
+    services.webphone.settings.auth = lib.mkIf deriveWebAuthnRP {
+      # mkDefault: an explicitly declared settings.auth.passkey.*
+      # value wins, so an operator pin stays authoritative (the
+      # oauth2 precedent).
+      passkey = {
+        rp_id = lib.mkDefault cfg.caddy.hostName;
+        rp_origins = lib.mkDefault [ "https://${cfg.caddy.hostName}" ];
+      };
+    };
   };
 }

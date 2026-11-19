@@ -33,7 +33,7 @@ in
       the Ledger CRM integration: caller names enrich the call and
       message surfaces, finished calls journal on the matching contact.
       The bearer token rides a systemd credential (LoadCredential), so
-      the app reads a 0400 copy owned by the service user and no
+      the app reads a 0440 copy owned by the service user and no
       host-side group grant is needed.
 
       The integration stays optional and observer-grade by design: a
@@ -60,7 +60,7 @@ in
 
         The module hands this file to systemd as a credential
         (`LoadCredential`): systemd copies it into the unit's private
-        credential directory at every unit start (mode 0400, owned by the
+        credential directory at every unit start (mode 0440, owned by the
         service user), so the app reads the copy and never the host
         path in place — a missing source file fails the UNIT START
         instead of the first enrichment.

@@ -115,7 +115,7 @@ in
 
         The module hands this file to systemd as a credential
         (`LoadCredential`): systemd copies it into the unit's private
-        credential directory at every unit start (mode 0400, owned by the
+        credential directory at every unit start (mode 0440, owned by the
         service user), so the app reads the copy and never the host
         path in place — no host-side group grant needed, and a missing
         source file fails the UNIT START instead of the first SSO login.

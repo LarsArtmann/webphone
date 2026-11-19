@@ -40,7 +40,7 @@ in
       follow-up draft in the review queue (the agent pill, the ended
       card, History's review artifacts). The review API's bearer secret
       rides a systemd credential (LoadCredential), so the app reads a
-      0400 copy owned by the service user and no host-side group grant
+      0440 copy owned by the service user and no host-side group grant
       is needed.
 
       The seam stays optional by design: with it off the agent surfaces
@@ -69,7 +69,7 @@ in
 
         The module hands this file to systemd as a credential
         (`LoadCredential`): systemd copies it into the unit's private
-        credential directory at every unit start (mode 0400, owned by
+        credential directory at every unit start (mode 0440, owned by
         the service user), so the app reads the copy and never the host
         path in place — a missing source file fails the UNIT START
         instead of the first summarize.
