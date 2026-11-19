@@ -10,6 +10,7 @@ flags with real verdicts, two were feature issues that shipped). **One stays ope
 `#9`, CRM switch-on — because the code half is done and the rest needs a root-only
 secret and the PBX host. One dependabot PR that was failing CI is now green.
 
+<!-- check-rows:ledger -->
 | #      | Kind                                   | Outcome                                                                                                                                                                    |
 | ------ | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 232    | red-main `41927384287`                 | **CLOSED** — not a flake: stale generated views + unbaselined clones; healed same night by `97a3656d` + `49aa34bd`. Ledger row added.                                      |

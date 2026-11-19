@@ -31,6 +31,7 @@ session would rewrite something.
 
 ## a) FULLY DONE (verified by a gate, not by intent)
 
+<!-- check-rows:ledger -->
 | #   | Thing                                                                                                                                                                                                                                                                                  | Evidence                                                                          |
 | --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
 | A1  | **Root cause fixed**: the seam's type was a lossy `number → string`, so the CRM contact id died at the boundary and nothing could link to a named caller. Now `crm.Person{Ref, Name}` + `Resolver.People`.                                                                             | `internal/crm/client.go`, `resolver.go`; crm package tests green                  |
@@ -48,6 +49,7 @@ session would rewrite something.
 
 ## b) PARTIALLY DONE
 
+<!-- check-rows:ledger -->
 | #  | Thing                                  | What exists                                                                                                             | What is missing                                                                                                                                                                                                                       |
 | -- | -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | B1 | **Producer is committed, not shipped** | Kith has my `context.go`, its tests, the route, and two stale-spec fixes, all committed by that repo's daemon           | **Not pushed** (`master` 16 ahead of `origin/master`) and **not mentioned in Kith's CHANGELOG or its generated wire reference** (`/docs`, OpenAPI/AsyncAPI) — the data product is undocumented where that repo documents its products |
@@ -61,6 +63,7 @@ session would rewrite something.
 
 ## c) NOT STARTED
 
+<!-- check-rows:ledger -->
 | #  | Thing                                                                                                                          | Why it matters                                                                                                                                                                    |
 | -- | ------------------------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | C1 | Links on the remaining safe surfaces: voicemail's `vmCaller` chain (mixed name/number text), the drafts panel's `contactLabel` | Three surfaces link, two do not — an inconsistency a user will notice before I do                                                                                                 |
@@ -75,6 +78,7 @@ session would rewrite something.
 
 ## d) TOTALLY FUCKED UP
 
+<!-- check-rows:ledger -->
 | #  | Fuck-up                                                                                                                                                                                                                                                                                                                                                      | Severity        | Detail                                                                                                                                                                                                                              |
 | -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | D1 | **I shipped a live integration break and only found it by accident.** The CRM's closed outcome vocabulary rejects `answered`; webphone sent exactly that. Every answered call would have journaled as a 400 → island 502 toast. I found it because a _test fixture_ I wrote used `"answered"` and got a 400 — not because any gate, doc, or alert caught it. | **High**        | Fixed (A8), but the lesson is the failure mode: a sibling repo changed a wire contract and nothing in this repo would have noticed. There is still **no contract test against a real CRM** — the stub is mine, so it agrees with me |
@@ -123,6 +127,7 @@ session would rewrite something.
 
 **Tier 0 — close this train's own holes (~2 h)**
 
+<!-- check-rows:ledger -->
 | #     | Task                                                                                                                                                                                                                                                                                                                                                                     | Min   |
 | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----- |
 | 1     | Add the "CRM context absent/unreachable" row to `error-contract.md` § Detection column (D2)                                                                                                                                                                                                                                                                              | 10    |
@@ -136,6 +141,7 @@ session would rewrite something.
 
 **Tier 1 — make the new thing provable (~3 h)**
 
+<!-- check-rows:ledger -->
 | #  | Task                                                                                  | Min |
 | -- | ------------------------------------------------------------------------------------- | --- |
 | 9  | Give `scripts/ui-capture.py` a fake CRM (by-phone + /context) behind a flag           | 30  |
@@ -149,6 +155,7 @@ session would rewrite something.
 
 **Tier 2 — finish the surfaces (~4 h)**
 
+<!-- check-rows:ledger -->
 | #  | Task                                                                                                       | Min |
 | -- | ---------------------------------------------------------------------------------------------------------- | --- |
 | 17 | Link the voicemail caller label (needs `vmCaller` split into name + fallback text)                         | 30  |
@@ -160,6 +167,7 @@ session would rewrite something.
 
 **Tier 3 — governance and tooling (~4 h)**
 
+<!-- check-rows:ledger -->
 | #      | Task                                                                                                                                                                                                                   | Min |
 | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
 | 23     | Test: every registered error code appears in the detection table or an explicit loud list (e)                                                                                                                          | 45  |
@@ -173,6 +181,7 @@ session would rewrite something.
 
 **Tier 4 — product depth (needs owner input, not mine)**
 
+<!-- check-rows:ledger -->
 | #  | Task                                                                                                                | Min |
 | -- | ------------------------------------------------------------------------------------------------------------------- | --- |
 | 31 | Decide Q3: SMS/voicemail/fax facts into the CRM timeline                                                            | —   |
@@ -188,6 +197,7 @@ session would rewrite something.
 
 **Tier 5 — debt noticed this session, unrelated to the feature**
 
+<!-- check-rows:ledger -->
 | #  | Task                                                                                                                                              | Min |
 | -- | ------------------------------------------------------------------------------------------------------------------------------------------------- | --- |
 | 41 | `.buildflow-baseline.json` is stale (78 entries matching nothing for 3 runs) — refresh or retire, same ruling as the branching-flow baseline      | 30  |
@@ -229,6 +239,7 @@ for that session to land?
 
 ## h) Corrections ledger — where I caught myself mid-flight
 
+<!-- check-rows:ledger -->
 | # | Claim I nearly made                                | Correction                                                                                                                                                                                    |
 | - | -------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1 | "the strip works"                                  | It compiled, was wired, and rendered nothing until the producer existed: I only called it done after the server test asserted the HTML                                                        |
@@ -268,6 +279,7 @@ Everything this report called "speculation, labelled" and the §f items 1–2 ar
 now measured rather than guessed. Superseded claims are corrected inline below
 rather than silently edited:
 
+<!-- check-rows:ledger -->
 | Report claim                                 | Now                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | "that the strip looks right (no screenshot)" | **Measured.** `scripts/ui-capture.py --crm` boots a bearer-gated fake Kith machine API beside the app and adds the `crm-context` surface. Two shots (`ui-shots/0*-crm-context-{light,dark}.png`) and three DOM pins: `.wp-crm-link` + the name, `#wp-crm-context` + company, and the deal title. Running it WITHOUT `--crm` exits 2 with a message, so the proof cannot silently degrade.                                                                |

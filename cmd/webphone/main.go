@@ -186,7 +186,11 @@ func run() error {
 		return propagatef("build app: %w", err)
 	}
 	if err := application.Start(ctx); err != nil {
-		return bootErr(bootGeneric, propagatef("start app: %w", err))
+		// Start can fail PARTWAY (a rejected chat-network config after
+		// the cqrs workers and the probe came up): the container
+		// cascade must still run — same shape as the listener-failure
+		// path below (DO-2: every do.New() reaches a Shutdown).
+		return bootJoin(bootErr(bootGeneric, propagatef("start app: %w", err)), application.Shutdown())
 	}
 
 	// httputil.Server owns the lifecycle — the same tested primitive the

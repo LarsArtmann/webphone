@@ -53,8 +53,12 @@ func debugFlightRecorderEnabled() bool {
 }
 
 // traceRecorder adapts go-flightrecorder to the platform package's TraceRecorder
-// seam. It implements do.Shutdowner so the container drains in-flight
-// captures on exit (the library blocks Close until they finish).
+// seam. Close satisfies the ShutdownerWithError shape, but the recorder is
+// deliberately NOT registered in the container (a nil recorder registered as
+// a value would make the cascade Close it even when the seam is off — the
+// traceSeam typed-nil lesson): App.Shutdown drains it explicitly, LAST,
+// after every handler that could still report a request has stopped (the
+// library blocks Close until in-flight captures finish).
 type traceRecorder struct {
 	rec     *flightrecorder.Recorder
 	trigger flightrecorder.TriggerFunc

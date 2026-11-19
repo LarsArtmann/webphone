@@ -7,6 +7,7 @@ session; every gate row below was run on the tree it names, not assumed.
 §f, i.e. the seven blocking/high-value items plus everything that fell out of
 them. Nothing outside this train was researched.
 
+<!-- check-rows:ledger -->
 | Repo     | HEAD       | State                                                                               |
 | -------- | ---------- | ----------------------------------------------------------------------------------- |
 | webphone | `366944d3` | clean, pushed, **CI `40942091650` green** (7m57s)                                   |
@@ -112,6 +113,7 @@ name; only a picture does.**
 
 Computed from the live tokens, sRGB luminance, both themes:
 
+<!-- check-rows:ledger -->
 | pair                           | ratio   | verdict         |
 | ------------------------------ | ------- | --------------- |
 | light `--muted` on `--surface` | 5.85:1  | AA              |
@@ -159,6 +161,7 @@ automatically your regression.
 
 ### 9. Gates actually run (frozen tree, 20:40)
 
+<!-- check-rows:ledger -->
 | Gate                           | Result                                                                      |
 | ------------------------------ | --------------------------------------------------------------------------- |
 | `go build` + `go vet ./...`    | clean                                                                       |
