@@ -1,0 +1,1285 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Report Title</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS LIGHT — Editorial template
+         Design language: form follows function. Primary colors on warm paper.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Light) --- */
+        --color-paper: #f4f4f0;
+        --color-paper-2: #ffffff;
+        --color-paper-3: #e8e8e2;
+        --color-ink: #111111;
+        --color-red: #e63946;
+        --color-blue: #1d3557;
+        --color-yellow: #f4d35e;
+        --color-hairline: rgba(17, 17, 17, 0.14);
+        --color-hairline-strong: rgba(17, 17, 17, 0.3);
+
+        /* --- Semantic layer (shared vocabulary with dark template) --- */
+        --surface: var(--color-paper);
+        --surface-raised: var(--color-paper-2);
+        --surface-sunken: var(--color-paper-3);
+        --text: var(--color-ink);
+        --text-muted: rgba(17, 17, 17, 0.72);
+        --text-faint: rgba(17, 17, 17, 0.5);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-red);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber: var(--warning);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 22%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 12%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 12%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px;
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .sidebar a {
+        font-size: 0.86rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-left: 4px solid transparent;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      h1 {
+        font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+        line-height: 1.05;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px solid var(--text);
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--text);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin-bottom: 0.9rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0 0 1rem;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.6rem;
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+      }
+      .tag.amber {
+        background: var(--warning);
+        border-color: var(--warning);
+        color: var(--text);
+      }
+      .tag.teal {
+        background: var(--solution);
+        border-color: var(--solution);
+        color: var(--surface);
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 90px;
+        margin-bottom: 1.2rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        right: 180px;
+        width: 64px;
+        height: 64px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 26px;
+        right: 90px;
+        width: 56px;
+        height: 56px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-left: 32px solid transparent;
+        border-right: 32px solid transparent;
+        border-bottom: 56px solid var(--warning);
+      }
+      .hero-shapes .bar {
+        position: absolute;
+        bottom: 0;
+        right: 230px;
+        width: 100px;
+        height: 14px;
+        background: var(--text);
+      }
+
+      /* --- Scorecard / stat cards --- */
+      .scorecard,
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        margin: 1.5rem 0 2rem;
+        border: 3px solid var(--text);
+      }
+      .score-card,
+      .stat-card {
+        padding: 1.3rem 1rem;
+        text-align: center;
+        border-right: 3px solid var(--text);
+        background: var(--surface-raised);
+      }
+      .score-card:last-child,
+      .stat-card:last-child {
+        border-right: none;
+      }
+
+      .score,
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.6rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-card .label,
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 0.5rem;
+      }
+      /* Semantic state classes — no nth-child decoration, no !important */
+      .score-good,
+      .stat-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .score-warn,
+      .stat-warn {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .score-bad,
+      .stat-bad {
+        background: var(--problem);
+        color: var(--surface);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.6rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid var(--text);
+        color: var(--text);
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: var(--warning);
+      }
+      .badge-medium {
+        background: var(--surface-sunken);
+      }
+      .badge-low {
+        background: var(--surface-raised);
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      /* --- Callouts --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-sunken);
+        font-size: 0.92rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-teal,
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 10%,
+          var(--surface-raised)
+        );
+      }
+      .callout-amber,
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 18%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Strengths --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.3rem;
+        line-height: 1.3;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+        border: 2px solid var(--text);
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--text);
+        color: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border-strong);
+      }
+      th:last-child {
+        border-right: none;
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+      }
+      td:last-child {
+        border-right: none;
+      }
+      tr:nth-child(even) td {
+        background: var(--surface-sunken);
+      }
+      table.compare td.yes {
+        color: var(--solution);
+        font-weight: 700;
+      }
+      table.compare td.no {
+        color: var(--problem);
+        font-weight: 700;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--text);
+        color: var(--surface);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        border: 2px solid var(--text);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--warning);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: #95e1d3;
+      }
+      .tok-comment {
+        color: rgba(244, 244, 240, 0.45);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #6eb5ff;
+      }
+      .tok-number {
+        color: var(--warning);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #6eb5ff;
+      }
+      .tok-punct {
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .tok-attr {
+        color: var(--warning);
+      }
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 2px solid var(--text);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--surface-sunken);
+        border: 1px solid var(--text);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1.1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.94rem;
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 3px solid var(--text);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .scorecard,
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-right: none;
+        }
+        .score-card:nth-child(1),
+        .stat-card:nth-child(1),
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-bottom: 3px solid var(--text);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+        .hero-shapes {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Full-bleed top bar -->
+    <div class="top-bar">
+      <span>DEEPENING CANDIDATES</span>
+      <span>2026-11-19</span>
+      <span>ARCHITECTURE-DEEPENING SKILL</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#legend">Legend · scope</a>
+          <a href="#c1">1 · messaging read surface</a>
+          <a href="#c2">2 · httpclient roundtrip skeleton</a>
+          <a href="#c3">3 · island call module</a>
+          <a href="#c4">4 · OIDC identity unweld</a>
+          <a href="#c5">5 · small-package question</a>
+          <a href="#ruled">Ruled out</a>
+          <a href="#top">Top recommendation</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <!-- Hero -->
+        <header class="hero">
+          <div class="hero-shapes">
+            <div class="bar"></div>
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="eyebrow">DEEPENING CANDIDATES &middot; 2026-11-19</div>
+          <h1>Where webphone is shallow — five seams, ranked</h1>
+          <p class="subtitle">
+            A brief for choosing one refactor, not a scorecard. Every card names
+            the module, the seam it sits at, and the deepening that would put
+            more behaviour behind a smaller interface.
+          </p>
+          <div class="meta">
+            <span class="tag amber">Scope: internal/ packages + island modules</span>
+            <span class="tag">Commit: 94cf4365</span>
+            <span class="tag teal">Series: follows 2026-11-11_20-23 brief</span>
+          </div>
+        </header>
+
+        <!-- Legend + scope -->
+        <section id="legend">
+          <h2><span class="num">00</span>Legend · scope</h2>
+          <div class="diagram">
+            <span class="node">solid box — module</span>
+            <span class="node" style="border-style: dashed">dashed box — seam</span>
+            <span class="node node-problem">red — leakage / shallow</span>
+            <span class="node node-good" style="border-width: 3px">thick box — deep module</span>
+            <span class="arrow">→</span>
+            <span class="arrow">calls</span>
+          </div>
+          <p>
+            Scanned: every <code>internal/</code> package (hand-written LOC,
+            exported-interface shape), the island module graph under
+            <code>internal/web/assets/island/app/</code>, and the seams AGENTS.md
+            names (httpclient, identity, chat receivers, the server carve, the
+            small packages). Weighted by the last 300 commits: views, cqrs,
+            server, app, readmodels, island are the hot paths. Not scanned:
+            cmd/, scripts/, nix/. The 2026-11-11 brief's four candidates are
+            accounted for first — one landed in full, one executed as the
+            server/auth carve, two leave residue taken up below.
+          </p>
+          <div class="callout callout-amber">
+            <strong>Prior dispositions (2026-11-11 brief)</strong>
+            #1 thread read model — landed (ThreadSummary/ThreadFlag moved into
+            readmodels; SummariesOfView is the bridge). #2 identity module —
+            executed 2026-11-12 as the server/auth + platform carves. #3 call
+            lifecycle — open, restated sharper as card 3. #4 push policy —
+            Fanout landed (internal/push/push.go:135).
+          </div>
+        </section>
+
+        <!-- C1 -->
+        <article class="card card-problem" id="c1">
+          <h2>1 · Collapse the messaging read surface onto the ThreadGate</h2>
+          <div>
+            <span class="badge badge-critical">Strong</span>
+            <span class="badge">in-process</span>
+          </div>
+          <div class="where">
+            internal/messaging/service.go:255-371 · internal/server/server.go:206,255 ·
+            internal/server/{panels,actions,admin}.go · internal/server/platform/{export,metrics}.go ·
+            internal/readmodels/threads.go:89-119
+          </div>
+          <div class="compare-header">
+            <div class="compare-before">Before — two read paths, one of them pass-through</div>
+            <div class="compare-after">After — one read seam; the pipeline module keeps writes</div>
+          </div>
+          <div class="compare-row">
+            <div class="diagram" style="flex-direction: column; align-items: stretch">
+              <span class="node">panels · actions · admin handlers</span>
+              <span class="arrow">↓ deps.Messaging.Threads() …</span>
+              <span class="node node-problem">messaging — 10 read methods, 1–3 lines each (interface ≈ implementation)</span>
+              <span class="arrow">↓ forward</span>
+              <span class="node">readmodels — ThreadGate (19 methods)</span>
+              <span class="node" style="margin-top: .6rem">platform: export · metrics</span>
+              <span class="arrow">↓ deps.Messages.ListThreads() — the SAME gate, reached directly</span>
+              <span class="node node-problem">second path: Deps carries gate AND pipeline module</span>
+            </div>
+            <div class="diagram" style="flex-direction: column; align-items: stretch">
+              <span class="node">panels · actions · admin · platform — every reader</span>
+              <span class="arrow">↓ one seam</span>
+              <span class="node node-good" style="border-width: 3px">readmodels — ThreadGate + SummariesOfView (deep: fold, paging, admin Any-seams inside)</span>
+              <span class="arrow">↓ writes only</span>
+              <span class="node node-good" style="border-width: 3px">messaging — send/receive/verdict pipeline + attachment streaming + notify</span>
+              <span class="node" style="margin-top: .6rem">hooks: Receive · DeliveryReceipt — unchanged</span>
+            </div>
+          </div>
+          <p>
+            <strong>Problem:</strong> the messaging module's read half is shallow
+            — ten methods whose interface matches their implementation line for
+            line — and server's Deps already carries the ThreadGate beside it, so
+            the codebase reads threads through two paths that have already
+            diverged (platform reaches the gate directly, the html surfaces ride
+            the forwarders).
+          </p>
+          <p>
+            <strong>Solution:</strong> delete the pass-through reads; handlers
+            call <code>deps.Messages</code> (the gate) plus
+            <code>readmodels.SummariesOfView</code>; the messaging module keeps
+            exactly the write+notify pipeline (<code>Send</code>,
+            <code>Receive</code>, <code>DeliveryReceipt</code>,
+            <code>RemoteRead</code>, <code>SetThreadFlag</code>, attachments).
+          </p>
+          <ul>
+            <li>interface shrinks by ten methods</li>
+            <li>one read path; split-brain dies</li>
+            <li>deletion test passes: zero tests ported</li>
+            <li>depth ratchet moves down</li>
+            <li>continues the 11-11 Strong pick</li>
+          </ul>
+          <div class="callout callout-teal">
+            <strong>No recorded decision conflicts.</strong>
+            The machine-tables ruling keeps legality in
+            deliveryMoves/faxMoves/AppendToThread — untouched. The
+            *Any/ListAll* admin seams stay admin-gated at the same handlers;
+            their store-side pins keep holding.
+          </div>
+        </article>
+
+        <!-- C2 -->
+        <article class="card card-warning" id="c2">
+          <h2>2 · Deepen httpclient into the outbound roundtrip skeleton</h2>
+          <div>
+            <span class="badge badge-high">Worth exploring</span>
+            <span class="badge">local-substitutable</span>
+          </div>
+          <div class="where">
+            internal/httpclient/httpclient.go (24 LOC, pool only) · request-build sites ×10:
+            internal/{pbx,crm,asr×2,matrix,push/ntfy,push/fcm,gateway,textagent}/client*.go ·
+            internal/server/platform/proxy.go · drain tails: asr/transport.go:48, crm/client.go:321, push/ntfy.go:150
+          </div>
+          <div class="compare-header">
+            <div class="compare-before">Before — the seam owns the pool; every client owns its own tail</div>
+            <div class="compare-after">After — one skeleton absorbs build/send/drain/classify</div>
+          </div>
+          <div class="compare-row">
+            <div class="diagram" style="flex-direction: column; align-items: stretch">
+              <span class="node">pbx · crm · asr×2 · matrix · push×2 · gateway · textagent</span>
+              <span class="arrow">↓ each hand-rolls</span>
+              <span class="node node-problem">build → send → drain → classify (per seam, per bug)</span>
+              <span class="arrow">↓</span>
+              <span class="node">httpclient — Isolated(timeout): pool only, 6 implementation lines</span>
+            </div>
+            <div class="diagram" style="flex-direction: column; align-items: stretch">
+              <span class="node">pbx · crm · asr×2 · matrix · push×2 · gateway · textagent</span>
+              <span class="arrow">↓ one call, verdict-shaped answer</span>
+              <span class="node node-good" style="border-width: 3px">httpclient — roundtrip skeleton: pool + timeouts + drain + status verdict</span>
+              <span class="arrow">↓ per seam (stays at the call site)</span>
+              <span class="node">errorfamily code mapping — pbx.url · crm.* · asr.* · push.*_send</span>
+            </div>
+          </div>
+          <p>
+            <strong>Problem:</strong> the seam's interface is one pool factory
+            while the transport tail (request build, body drain, status
+            classification) is re-implemented in nine machine-facing modules —
+            the 2026-11-08 shared-pool flake birthed the package but
+            centralized only the pool half.
+          </p>
+          <p>
+            <strong>Solution:</strong> httpclient absorbs the roundtrip skeleton
+            and returns a status verdict; each seam keeps mapping the verdict to
+            its own errorfamily codes at its call site.
+          </p>
+          <ul>
+            <li>new seams stop re-learning the tail</li>
+            <li>drain/classify bugs fix once</li>
+            <li>pool policy stays one home</li>
+            <li>nine call sites, one interface</li>
+          </ul>
+          <div class="callout callout-amber">
+            <strong>ADR callout — re-litigates recorded rulings.</strong>
+            The dedup registry ACCEPTs the asr/crm NewClient-prologue pair and
+            the providerRoundTrip call-site class under per-package-client
+            doctrine ("each seam owns its client and its codes"), and the
+            go-appkit httpx NO-GO (2026-11-12) is about the framework layer —
+            but the ask filed there (#61 success-status) is evidence the tail
+            shape is real. Reopening the per-seam doctrine needs the friction
+            named: the NEXT machine-facing seam (a second chat network, a
+            metrics exporter) re-pays the tail. Not this train.
+          </div>
+        </article>
+
+        <!-- C3 -->
+        <article class="card card-warning" id="c3">
+          <h2>3 · Split the in-call transcript and dock surfaces out of the island call module</h2>
+          <div>
+            <span class="badge badge-high">Worth exploring</span>
+            <span class="badge">in-process</span>
+          </div>
+          <div class="where">
+            internal/web/assets/island/app/calls.js (1 701 lines: dock 378-491, call cards 606-737,
+            transcript UI + save queue 738-947, REFER 948-1073, latency 1074, bindSession 1096, DTMF 1297-end) ·
+            transcribe.js · postcall.js · state.js
+          </div>
+          <div class="compare-header">
+            <div class="compare-before">Before — one module, call control + three UI surfaces</div>
+            <div class="compare-after">After — control stays; surfaces ride the state channel</div>
+          </div>
+          <div class="compare-row">
+            <div class="diagram" style="flex-direction: column; align-items: stretch">
+              <span class="node node-problem">calls.js — 1 701 lines: invite/accept/hold/REFER/DTMF + dock + card UI + transcript queue + beacons</span>
+              <span class="arrow">↕ leaks both ways</span>
+              <span class="node">transcribe.js (capture) · postcall.js (settle) — the halves already extracted</span>
+              <span class="node">state.js — wp:calls-changed channel (acyclicity hub)</span>
+            </div>
+            <div class="diagram" style="flex-direction: column; align-items: stretch">
+              <span class="node node-good" style="border-width: 3px">calls.js — call control only (invite, hold, REFER, DTMF, teardown)</span>
+              <span class="arrow">↓ publish</span>
+              <span class="node">state.js — wp:calls-changed</span>
+              <span class="arrow">↓ subscribe</span>
+              <span class="node node-good">calldock.js (dock + chips) · calltranscript.js (in-call transcript UI + save queue)</span>
+            </div>
+          </div>
+          <p>
+            <strong>Problem:</strong> call control shares one module with three
+            rendered surfaces — a transcript bug spans calls.js (queue, card UI)
+            and transcribe.js (capture), and the settle path spans calls.js
+            (morphToEndedCard) and postcall.js: locality lost across the seam
+            the 2026-11-11 brief already flagged.
+          </p>
+          <p>
+            <strong>Solution:</strong> extract the dock and the in-call
+            transcript surface as modules behind state.js's existing
+            wp:calls-changed channel, exactly the way transcribe.js and
+            postcall.js already work.
+          </p>
+          <ul>
+            <li>calls.js shrinks ~40%</li>
+            <li>transcript bugs concentrate</li>
+            <li>import closure test unchanged</li>
+            <li>verbatim serving preserved</li>
+          </ul>
+          <div class="callout callout-amber">
+            <strong>Constraint, not a blocker.</strong>
+            DOM-contract ids, island-lint, the type gate, the import-closure
+            test and the node-test stub discipline pin the shape; every moved
+            selector owes a dom-contract.md re-read, and served markup changes
+            re-owe the stack browser E2E.
+          </div>
+        </article>
+
+        <!-- C4 -->
+        <article class="card card-warning" id="c4">
+          <h2>4 · Unweld identity resolution from the OIDC transport client</h2>
+          <div>
+            <span class="badge badge-high">Worth exploring</span>
+            <span class="badge">in-process</span>
+          </div>
+          <div class="where">
+            internal/sso/sso.go:82-246 (client owns an authmap.Map + Resolve/MappedByLogin/MappedByExtension) ·
+            internal/server/auth/auth.go:64-70 (SSOClient interface carries MappedByLogin) ·
+            authmap.Map instances ×3: sso.go:112, userauth.go:140, app.go:673 — same config feeds
+          </div>
+          <div class="diagram">
+            <span class="node node-problem">sso.Client = OIDC dance + ownership resolution</span>
+            <span class="arrow">→</span>
+            <span class="node">every test stub must reimplement resolution</span>
+            <span class="arrow">·</span>
+            <span class="node">userauth builds its own Map · app builds the admin one</span>
+          </div>
+          <p>
+            <strong>Problem:</strong> the OIDC transport module's interface
+            includes an ownership-resolution method, so the seam a test stubs
+            to fake the dance must also answer "who owns line 1000" — and the
+            one-model-of-ownership claim is satisfied by the type but not the
+            instance: three Maps are built from the same operator feeds.
+          </p>
+          <p>
+            <strong>Solution:</strong> SSOClient drops MappedByLogin; the auth
+            shell resolves through one shared Map (the instance the admin
+            module already owns), leaving the client's interface the wire
+            concern only.
+          </p>
+          <ul>
+            <li>stubs shrink to the dance</li>
+            <li>one resolver instance</li>
+            <li>interface matches the wire concern</li>
+            <li>finishes the 11-18 line-ownership train</li>
+          </ul>
+          <div class="callout callout-teal">
+            <strong>No ADR conflict.</strong>
+            The 2026-11-18 line-ownership ruling named authmap.Line the ONE
+            owned-identity type — this is its instance-level completion, not a
+            reopening. MappedIdentityWith stays the ONE resolution.
+          </div>
+        </article>
+
+        <!-- C5 -->
+        <article class="card" id="c5">
+          <h2>5 · The small-package question: vcard, reports, textagent — answered, leave them</h2>
+          <div>
+            <span class="badge badge-low">Speculative</span>
+            <span class="badge">in-process</span>
+          </div>
+          <div class="where">
+            internal/vcard (198) · internal/reports (383) · internal/textagent (277) ·
+            internal/sipcred (24) · internal/httpclient (24) · internal/chatloop (88)
+          </div>
+          <table class="compare">
+            <thead>
+              <tr><th>module</th><th>what it owns</th><th>deletion test</th><th>verdict</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>vcard</td><td>a wire format (parse + export)</td><td class="yes">complexity reappears in contacts handlers</td><td class="yes">keep</td></tr>
+              <tr><td>reports</td><td>the ratified pure projection (2026-11-06)</td><td class="yes">moves into server + views, unpinned</td><td class="yes">keep</td></tr>
+              <tr><td>textagent</td><td>the agent client + its codes</td><td class="yes">moves into server</td><td class="yes">keep</td></tr>
+              <tr><td>sipcred</td><td>a cross-repo wire contract (stack VM pins the vector)</td><td class="yes">both repos re-derive it</td><td class="yes">keep</td></tr>
+              <tr><td>chatloop</td><td>the receivers' shared skeleton (two adapters)</td><td class="yes">matrix/signal re-diverge</td><td class="yes">keep</td></tr>
+            </tbody>
+          </table>
+          <p>
+            <strong>Problem:</strong> five sub-400-LOC packages invite a
+            "collapse the crumbs" proposal every review cycle.
+          </p>
+          <p>
+            <strong>Solution:</strong> none — every one passes the deletion test
+            (the complexity reappears at N callers); this card exists so the
+            question stops being re-asked.
+          </p>
+          <ul>
+            <li>recorded: no move proposed</li>
+            <li>each owns one wire/projection</li>
+            <li>chatloop: two adapters, real seam</li>
+          </ul>
+        </article>
+
+        <!-- Ruled out -->
+        <section id="ruled">
+          <h2><span class="num">R</span>Ruled out before scanning — do not re-propose</h2>
+          <table class="compare">
+            <thead>
+              <tr><th>shape</th><th>ruling · one home</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>server html carve (pages/panels/actions)</td><td class="no">RULED OUT 2026-11-12 — TODO_LIST carve row; reopen only on a real architecture change</td></tr>
+              <tr><td>splitting internal/cqrs</td><td class="no">RATIFIED single journal world (2026-11-09); depth pin 6000 is the ruling's product</td></tr>
+              <tr><td>readmodels engine return</td><td class="no">purity arch test forbids sqliteengine / func Open( forever</td></tr>
+              <tr><td>go-appkit framework layer</td><td class="no">NO-GO 2026-11-12; three upstream asks filed (#59-#61)</td></tr>
+              <tr><td>island state/auth import edges</td><td class="no">arch test enforces acyclicity — the seam is load-bearing as-is</td></tr>
+              <tr><td>sub-module split (go.work)</td><td class="no">RATIFIED single go.mod; reopen only on a second Go consumer</td></tr>
+            </tbody>
+          </table>
+        </section>
+
+        <!-- Top recommendation -->
+        <section id="top">
+          <h2><span class="num">&#9670;</span>Top recommendation</h2>
+          <div class="card card-solution">
+            <h3><a href="#c1">1 · Collapse the messaging read surface onto the ThreadGate</a></h3>
+            <p>
+              It is the only candidate with zero recorded-decision friction, a
+              passing deletion test, and a live split-brain to show for it: Deps
+              already carries the deep module (the gate); the shallow half just
+              has to be deleted. The 11-11 brief's Strong pick landed its shape
+              move; this finishes its consumer move. Design grilled in the
+              companion artifact:
+              2026-11-19_08-10_messaging-read-surface-design.html.
+            </p>
+          </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+          <p>
+            Generated 2026-11-19 &middot; Reviewed against 94cf4365 &middot;
+            Evidence re-verified at HEAD; LOC counts exclude *_test.go and *_templ.go
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>

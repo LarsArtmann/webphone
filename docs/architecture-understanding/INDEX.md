@@ -18,6 +18,7 @@ first when hunting prior rulings. Newest last; superseded files in
 | 2026-11-17 | 2026-11-17_10-03-webphone-architecture{,-improved}.d2 / .svg | Current-vs-ideal D2 renders (full 38-package graph from `go list`; target = the one live server/html carve)                      |
 | 2026-11-19 | 2026-11-19_07-41-webphone-architecture{,-improved}.d2 / .svg | Current-vs-ideal D2 renders (verified middleware chain incl. ReportingEndpoints; corrects the 11-17 target: html carve was RULED OUT 2026-11-12 — four surface carves = end state, html hub = named residual) |
 | 2026-11-19 | 2026-11-19_07-41-{events-commands,integration-seams,island-surfaces,deployment-tri-repo}.d2 / .svg | Thematic companions: journal/command flow (machine tables → projections → Notifier → SSE), integration seam map, island modules ↔ server surfaces, tri-repo deployment graph |
+| 2026-11-19 | 2026-11-19_07-53_architecture-review.html                     | Post-carve re-score, series #5 (4.36 avg; findings: depth-pin saturation, templ outside the depth ratchet, server-root test concentration) |
 
 The Go-modules verdict series continues in `docs/modularization/` (2026-10-14:
 single go.mod ratified a third time — see its INDEX.md).
