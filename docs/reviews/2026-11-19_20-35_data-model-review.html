@@ -1,0 +1,1360 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data-model review 2026-11-19 (evening) — series #7</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS LIGHT — Editorial template
+         Design language: form follows function. Primary colors on warm paper.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Light) --- */
+        --color-paper: #f4f4f0;
+        --color-paper-2: #ffffff;
+        --color-paper-3: #e8e8e2;
+        --color-ink: #111111;
+        --color-red: #e63946;
+        --color-blue: #1d3557;
+        --color-yellow: #f4d35e;
+        --color-hairline: rgba(17, 17, 17, 0.14);
+        --color-hairline-strong: rgba(17, 17, 17, 0.3);
+
+        /* --- Semantic layer (shared vocabulary with dark template) --- */
+        --surface: var(--color-paper);
+        --surface-raised: var(--color-paper-2);
+        --surface-sunken: var(--color-paper-3);
+        --text: var(--color-ink);
+        --text-muted: rgba(17, 17, 17, 0.72);
+        --text-faint: rgba(17, 17, 17, 0.5);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-red);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber: var(--warning);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 22%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 12%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 12%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px;
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .sidebar a {
+        font-size: 0.86rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-left: 4px solid transparent;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      h1 {
+        font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+        line-height: 1.05;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px solid var(--text);
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--text);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin-bottom: 0.9rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0 0 1rem;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.6rem;
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+      }
+      .tag.amber {
+        background: var(--warning);
+        border-color: var(--warning);
+        color: var(--text);
+      }
+      .tag.teal {
+        background: var(--solution);
+        border-color: var(--solution);
+        color: var(--surface);
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 90px;
+        margin-bottom: 1.2rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        right: 180px;
+        width: 64px;
+        height: 64px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 26px;
+        right: 90px;
+        width: 56px;
+        height: 56px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-left: 32px solid transparent;
+        border-right: 32px solid transparent;
+        border-bottom: 56px solid var(--warning);
+      }
+      .hero-shapes .bar {
+        position: absolute;
+        bottom: 0;
+        right: 230px;
+        width: 100px;
+        height: 14px;
+        background: var(--text);
+      }
+
+      /* --- Scorecard / stat cards --- */
+      .scorecard,
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        margin: 1.5rem 0 2rem;
+        border: 3px solid var(--text);
+      }
+      .score-card,
+      .stat-card {
+        padding: 1.3rem 1rem;
+        text-align: center;
+        border-right: 3px solid var(--text);
+        background: var(--surface-raised);
+      }
+      .score-card:last-child,
+      .stat-card:last-child {
+        border-right: none;
+      }
+
+      .score,
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.6rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-card .label,
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 0.5rem;
+      }
+      /* Semantic state classes — no nth-child decoration, no !important */
+      .score-good,
+      .stat-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .score-warn,
+      .stat-warn {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .score-bad,
+      .stat-bad {
+        background: var(--problem);
+        color: var(--surface);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.6rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid var(--text);
+        color: var(--text);
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: var(--warning);
+      }
+      .badge-medium {
+        background: var(--surface-sunken);
+      }
+      .badge-low {
+        background: var(--surface-raised);
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      /* --- Callouts --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-sunken);
+        font-size: 0.92rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-teal,
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 10%,
+          var(--surface-raised)
+        );
+      }
+      .callout-amber,
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 18%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Strengths --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.3rem;
+        line-height: 1.3;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+        border: 2px solid var(--text);
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--text);
+        color: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border-strong);
+      }
+      th:last-child {
+        border-right: none;
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+      }
+      td:last-child {
+        border-right: none;
+      }
+      tr:nth-child(even) td {
+        background: var(--surface-sunken);
+      }
+      table.compare td.yes {
+        color: var(--solution);
+        font-weight: 700;
+      }
+      table.compare td.no {
+        color: var(--problem);
+        font-weight: 700;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--text);
+        color: var(--surface);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        border: 2px solid var(--text);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--warning);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: #95e1d3;
+      }
+      .tok-comment {
+        color: rgba(244, 244, 240, 0.45);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #6eb5ff;
+      }
+      .tok-number {
+        color: var(--warning);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #6eb5ff;
+      }
+      .tok-punct {
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .tok-attr {
+        color: var(--warning);
+      }
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 2px solid var(--text);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--surface-sunken);
+        border: 1px solid var(--text);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1.1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.94rem;
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 3px solid var(--text);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .scorecard,
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-right: none;
+        }
+        .score-card:nth-child(1),
+        .stat-card:nth-child(1),
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-bottom: 3px solid var(--text);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+        .hero-shapes {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+<div class="top-bar">
+  <span>DATA-MODEL REVIEW</span>
+  <span>2026-11-19 20:35 CET</span>
+  <span>SERIES #7 &middot; ADJUDICATION AT HEAD</span>
+</div>
+
+<div class="layout">
+  <aside class="sidebar" data-nav>
+    <nav>
+      <div class="label">Contents</div>
+      <a href="#state">01 Current state</a>
+      <a href="#catalog">02 Problem catalog</a>
+      <a href="#vision">03 The vision</a>
+      <a href="#model">04 Go data model</a>
+      <a href="#composition">05 Composition in action</a>
+      <a href="#validation">06 Validation layer</a>
+      <a href="#decisions">07 Decision log</a>
+      <a href="#antipatterns">08 Anti-patterns</a>
+      <a href="#roadmap">09 Migration roadmap</a>
+      <a href="#conclusion">10 Conclusion</a>
+    </nav>
+  </aside>
+
+  <main class="main">
+    <header class="hero">
+      <div class="hero-shapes">
+        <div class="bar"></div>
+        <div class="circle"></div>
+        <div class="square"></div>
+        <div class="tri"></div>
+      </div>
+      <div class="eyebrow">DATA-MODEL REVIEW &middot; 2026-11-19 (EVENING)</div>
+      <h1>Eight proposals, zero landed, one baseline grown</h1>
+      <p class="subtitle">
+        Seventh series entry and the second today. The 08:40 markdown entry
+        catalogued eight findings against the post-line-ownership model; this
+        entry verifies all eight at HEAD <code>859904c2</code> (all open,
+        none landed &mdash; the tree moved 12 Go files of textagent/SSE
+        polish), re-presents them in the series&rsquo; HTML format with the
+        full redesign sections, and adds the evening&rsquo;s one new fact:
+        the F7 stringly-join class covers more ground than the morning
+        cited.
+      </p>
+      <div class="meta">
+        <span class="tag amber">Scope: domain &rarr; cqrs &rarr; readmodels &rarr; config &rarr; DTOs &rarr; views</span>
+        <span class="tag">8/8 findings verified open</span>
+        <span class="tag teal">Read-only review &mdash; no source changed</span>
+      </div>
+    </header>
+
+    <section id="scorecard" class="scorecard">
+      <div class="score-card score-good">
+        <div class="score">8/8</div>
+        <div class="label">Findings re-verified at HEAD</div>
+      </div>
+      <div class="score-card score-warn">
+        <div class="score">1</div>
+        <div class="label">Medium (F3 semantics)</div>
+      </div>
+      <div class="score-card score-warn">
+        <div class="score">4</div>
+        <div class="label">Small (F1 F2 F4 F5)</div>
+      </div>
+      <div class="score-card">
+        <div class="score">3</div>
+        <div class="label">Low (F6 F7 F8)</div>
+      </div>
+    </section>
+
+    <section id="state">
+      <h2><span class="num">01</span>Current state</h2>
+      <p>
+        The model&rsquo;s load-bearing walls are unchanged and strong: the
+        ID wall (branded <code>Extension</code>/<code>Phone</code> with parse
+        doors, go-branded-id generics for aggregate ids), the network axis
+        (<code>Network</code>+<code>Address</code>, the rule living inside
+        the type), closed enums with <code>Parse*</code>/<code>Must*</code>
+        doors, machine tables as the one legality home, the SSE event set as
+        a closed interface union, and &mdash; since 2026-11-18 &mdash;
+        <code>authmap.Line{Extension, DID}</code> as the one owned-identity
+        type with a typed session wire. The 08:40 entry&rsquo;s thesis
+        stands: exactly <strong>one</strong> live instance of a vocabulary
+        living in string literals instead of types
+        (<code>asr.LocalityOf</code>), one fired-but-unlanded trigger (ASR
+        provider), one brand that stops at a gate (push.Transport).
+      </p>
+      <table class="compare">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>08:40 finding</th>
+            <th>Class</th>
+            <th>Verified tonight at</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>F1</td><td><code>asr.Locality</code>: two-value trust label as bare literals across a four-hop seam</td><td>P4</td><td>asr.go:65 &middot; server.go Deps.ASRLocality &middot; configjs.go:73 &middot; settings.templ:491 (<code>== "local"</code>)</td><td class="no">Open</td></tr>
+          <tr><td>F2</td><td><code>push.Transport</code> brand stops at the device gate</td><td>P4</td><td>pushdevices.go:228 (three-string tail, parity-rule nolint)</td><td class="no">Open</td></tr>
+          <tr><td>F3</td><td>Note decider&rsquo;s echo drop is body-lane-only; disposition echoes journal</td><td>P2-adjacent</td><td>callnotes.go:134/:162; notesgate.go:77 returns bare error</td><td class="no">Open</td></tr>
+          <tr><td>F4</td><td>ASR provider enum: trigger fired, vocabulary in four places</td><td>P4</td><td>config.go:435/:462; app.go:248</td><td class="no">Open</td></tr>
+          <tr><td>F5</td><td><code>LoginPageExtra(primary, sso bool)</code> positional bools</td><td>FLAG_PARAM</td><td>auth.go:178 (&nbsp;<code>!passkeyOn, deps.SSO != nil</code>&nbsp;)</td><td class="no">Open</td></tr>
+          <tr><td>F6</td><td><code>islandLatencyLegs</code> nested stringly map</td><td>low</td><td>islandlatency.go:19</td><td class="no">Open (deferred by trigger)</td></tr>
+          <tr><td>F7</td><td>authmap feeds stringly-keyed across a validated boundary</td><td>low</td><td>config.go:918 (parse-then-discard); app.go:618 (<code>identities[raw]</code>) &mdash; <strong>plus matrix.owner/signal.owner joins, config.go:1219/:1243, same class</strong></td><td class="no">Open (extended tonight)</td></tr>
+          <tr><td>F8</td><td><code>ReviewsGate.Set</code> four-string parameter train</td><td>low</td><td>reviewsgate.go (Set carries state, draftID, text, language, confidence)</td><td class="no">Open</td></tr>
+        </tbody>
+      </table>
+      <div class="callout callout-amber">
+        <strong>New tonight &mdash; F7&rsquo;s class is wider than catalogued</strong>
+        The morning cited the <code>identities</code> join; the same
+        parse-then-discard shape also governs <code>matrix.owner</code> and
+        <code>signal.owner</code> (validated with
+        <code>domain.ParseExtension</code> at config.go:1219 and :1243, then
+        re-joined as raw strings downstream). The typed-feed-maps fix
+        (<code>map[domain.Extension]string</code>) should carry all three
+        feeds in the same train, which makes the fix&rsquo;s value denser
+        than the morning graded it.
+      </div>
+      <h3>Baseline re-verified</h3>
+      <p>
+        The nine baseline-ruled premises (3 edge doors + 6 single-implementer
+        Deps seams) were re-verified by the 08:40 entry; tonight spot-checked
+        the two the day&rsquo;s commits could have touched
+        (<code>SSOClient</code> at server/auth, <code>DedupWindow</code> at
+        server/hooks) &mdash; both intact, no second production implementer
+        anywhere.
+      </p>
+    </section>
+
+    <section id="catalog">
+      <h2><span class="num">02</span>Problem catalog</h2>
+      <p>
+        Each finding graded against the ratified doctrine: brands only where
+        a repo-owned identity or closed vocabulary exists; wire DTOs,
+        journal facts and engine views stay raw with written reasons;
+        foreign tokens never branded mechanically (BD003).
+      </p>
+
+      <div class="issue issue-important" id="f3">
+        <span class="severity severity-important">Medium &middot; F3</span>
+        <h3>Disposition echoes journal no-change events</h3>
+        <div class="where">internal/cqrs/callnotes.go:134 (body lane drops same-body echoes) vs :162 (disposition lane journals unconditionally) &middot; readmodels/notesgate.go:77</div>
+        <p>
+          The autosave doctrine &mdash; the journal records CHANGES, not
+          echoes &mdash; is enforced on the note-body lane and absent on the
+          disposition lane. A re-click or second tab re-PUTting the same
+          verdict journals a no-change event, bumps UpdatedAt (which History
+          renders as recency), and fires an SSE nudge over an unchanged
+          slot. The asymmetry is undocumented at both sites.
+        </p>
+        <div class="callout callout-teal">
+          <strong>Fix (Option A, symmetry)</strong>
+          One guard in <code>decideSaveDisposition</code> + a
+          <code>changed bool</code> return at the gate, mirroring
+          <code>NotesGate.Set</code>; the disposition-lane twin of
+          <code>TestNoteSameBodySaveIsNotARevision</code> pins it. Effort XS.
+        </div>
+      </div>
+
+      <div class="issue issue-important" id="f1">
+        <span class="severity severity-important">Small &middot; F1 &middot; P4</span>
+        <h3>asr.Locality: the last vocabulary living only in literals</h3>
+        <div class="where">internal/asr/asr.go:65 &rarr; app.go:576 &rarr; server.go Deps.ASRLocality &rarr; platform/configjs.go:73 &rarr; settings.templ:491</div>
+        <p>
+          A two-value, repo-owned trust label minted by one function,
+          threaded raw through three package seams, string-compared at the
+          render. Exactly the shape <code>push.Transport</code> was before
+          it landed cleanly.
+        </p>
+      </div>
+
+      <div class="issue issue-important" id="f2">
+        <span class="severity severity-important">Small &middot; F2 &middot; P4</span>
+        <h3>push.Transport stops at the device gate</h3>
+        <div class="where">internal/cqrs/pushdevices.go:228 &mdash; Upsert(ctx, owner, deviceID, transport, token string)</div>
+        <p>
+          The landed brand flows API &rarr; ParseTransport &rarr; Fanout
+          registry, then dies at this signature. The parity rule&rsquo;s
+          nolint names the debt: the port landed 2026-11-11; the
+          rule&rsquo;s own second, separately-verified change is owed.
+        </p>
+      </div>
+
+      <div class="issue issue-important" id="f4">
+        <span class="severity severity-important">Small &middot; F4 &middot; P4</span>
+        <h3>ASR provider: the trigger fired, the enum didn&rsquo;t</h3>
+        <div class="where">internal/config/config.go:435/:462/:971 &middot; internal/app/app.go:248</div>
+        <p>
+          Review 4 said &ldquo;parsed enum at the next config touch.&rdquo;
+          The Google train WAS that touch: validation now enumerates the set
+          in prose while <code>Provider == "google"</code> /
+          <code>== "whispercpp"</code> compare raw in two packages &mdash;
+          the vocabulary lives in four places.
+        </p>
+      </div>
+
+      <div class="issue issue-nice" id="f5">
+        <span class="severity severity-nice">Trivial &middot; F5 &middot; FLAG_PARAM</span>
+        <h3>LoginPageExtra&rsquo;s two positional bools at the auth front door</h3>
+        <div class="where">web/views/login_page.templ &middot; called once at server/auth/auth.go:178</div>
+        <p>
+          A transposed call compiles and swaps which sign-in method is the
+          disclosure&rsquo;s primary. Same class as the machineSurface fix
+          the 10-25 entry ratified.
+        </p>
+      </div>
+
+      <div class="issue issue-nice" id="f6">
+        <span class="severity severity-nice">Low &middot; F6</span>
+        <h3>islandLatencyLegs: nested stringly map, deferred by trigger</h3>
+        <div class="where">internal/server/platform/islandlatency.go:19</div>
+        <p>
+          The map IS the parser at the door (server-owned cardinality held);
+          the residual is unnamed interval constants. Fix only when a third
+          interval joins &mdash; the typed key then also stops a typo&rsquo;d
+          literal from silently dropping beacons forever.
+        </p>
+      </div>
+
+      <div class="issue issue-nice" id="f7">
+        <span class="severity severity-nice">Low+ &middot; F7 (extended)</span>
+        <h3>The authmap feeds: parse-then-discard, now in three lanes</h3>
+        <div class="where">config.go:918 (identities) &middot; :1219 (matrix.owner) &middot; :1243 (signal.owner) &middot; app.go:618-623 join</div>
+        <p>
+          Boot-refusing guards exist, but the joins&rsquo; correctness is
+          string-equality discipline plus validation in another package. The
+          repo&rsquo;s own pattern (parse once at the door, carry the brand)
+          makes it structural &mdash; and the fix&rsquo;s surface is now
+          three lanes, not one.
+        </p>
+      </div>
+
+      <div class="issue issue-nice" id="f8">
+        <span class="severity severity-nice">Low &middot; F8</span>
+        <h3>ReviewsGate.Set&rsquo;s adjacent-content string train</h3>
+        <div class="where">internal/readmodels/reviewsgate.go &mdash; Set(&hellip; state, draftID, text, language string, confidence int)</div>
+        <p>
+          text/language swap compiles and journals wrong (language renders
+          as a label). The honest fix is a payload value object, not brands
+          &mdash; foreign ids and content stay content.
+        </p>
+      </div>
+    </section>
+
+    <section id="vision">
+      <h2><span class="num">03</span>The vision</h2>
+      <div class="strengths">
+        <div class="strength"><div class="check">+</div><div class="text"><strong>Every closed vocabulary has named constants</strong><span>local/remote, openai/whispercpp/google, the two beacon intervals &mdash; none live only in literals or prose validation messages.</span></div></div>
+        <div class="strength"><div class="check">+</div><div class="text"><strong>Brands flow to the gate; raw stops at the wire</strong><span>push.Transport reaches Upsert; journal facts, config.js fields and openapi DTOs stay raw by doctrine, converted at one site each.</span></div></div>
+        <div class="strength"><div class="check">+</div><div class="text"><strong>Echoes never journal</strong><span>Same-verdict dispositions are as inert as same-body notes: no event, no UpdatedAt bump, no SSE nudge.</span></div></div>
+        <div class="strength"><div class="check">+</div><div class="text"><strong>Config joins are typed after validation</strong><span>identities, matrix.owner and signal.owner join on domain.Extension keys minted at Load; the post-validation panic class is deleted, not guarded.</span></div></div>
+        <div class="strength"><div class="check">+</div><div class="text"><strong>Positional-bool seams are structurally impossible</strong><span>LoginExtra carries named fields; the next flag joins without re-arming the transposition trap.</span></div></div>
+        <div class="strength"><div class="check">+</div><div class="text"><strong>The baseline table is the detectors&rsquo; first read</strong><span>Every deliberate rawness (wire DTOs, journal facts, catalog mirrors, textagent pairs) carries its reason where the detector finds it &mdash; findings stop re-deriving settled calls.</span></div></div>
+      </div>
+    </section>
+
+    <section id="model">
+      <h2><span class="num">04</span>Go data model &mdash; the eight fixes</h2>
+
+      <h3>F1 &mdash; the trust label, typed where it is minted</h3>
+      <pre><code><span class="tok-comment">// asr &mdash; the trust label the Settings chip and caption strip render.</span>
+<span class="tok-keyword">type</span> <span class="tok-type">Locality</span> <span class="tok-keyword">string</span>
+
+<span class="tok-keyword">const</span> (
+    LocalityLocal  <span class="tok-type">Locality</span> = <span class="tok-string">"local"</span>
+    LocalityRemote <span class="tok-type">Locality</span> = <span class="tok-string">"remote"</span>
+)
+
+<span class="tok-keyword">func</span> <span class="tok-func">LocalityOf</span>(rawURL <span class="tok-keyword">string</span>) <span class="tok-type">Locality</span> <span class="tok-comment">// logic unchanged, typed answers</span></code></pre>
+      <p>
+        <code>Deps.ASRLocality</code> and the settings props re-type; the
+        config.js wire field stays <code>string</code> (JSON DTO ruling),
+        converted at the render site. Declined: <code>bool isLocal</code>
+        &mdash; the disabled-seam state must stay distinct from both values.
+      </p>
+
+      <h3>F2 &mdash; the brand crosses the gate, the fact stays raw</h3>
+      <pre><code><span class="tok-keyword">func</span> (s *<span class="tok-type">PushDevices</span>) <span class="tok-func">Upsert</span>(ctx context.<span class="tok-type">Context</span>, owner domain.<span class="tok-type">Extension</span>,
+    deviceID <span class="tok-keyword">string</span>, transport push.<span class="tok-type">Transport</span>, token <span class="tok-keyword">string</span>) <span class="tok-type">error</span>
+<span class="tok-comment">// SavePushDevice{Owner, DeviceID, Transport push.Transport, Token string}</span>
+<span class="tok-comment">// fact.Transport stays string &mdash; engine-row doctrine; the decider converts at the journal edge.</span></code></pre>
+
+      <h3>F3 &mdash; the echo guard, symmetric</h3>
+      <pre><code><span class="tok-keyword">func</span> <span class="tok-func">decideSaveDisposition</span>(s notesState, ver event.<span class="tok-type">Version</span>, cmd <span class="tok-type">SaveCallDisposition</span>) ([]event.<span class="tok-type">Event</span>, <span class="tok-type">error</span>) {
+    <span class="tok-keyword">if</span> prev, exists := s.Slots[cmd.CallID]; exists &amp;&amp; prev.Disposition == cmd.Disposition {
+        <span class="tok-keyword">return</span> <span class="tok-builtin">nil</span>, <span class="tok-builtin">nil</span> <span class="tok-comment">// an unchanged verdict is not a revision</span>
+    }
+    <span class="tok-comment">// &hellip; plus SetDisposition(...) (bool, error) at the gate, Set's contract.</span>
+}</code></pre>
+
+      <h3>F4 &mdash; the provider vocabulary, one home</h3>
+      <pre><code><span class="tok-comment">// config &mdash; the ASR wire-selection vocabulary, closed since the google train.</span>
+<span class="tok-keyword">type</span> <span class="tok-type">ASRProvider</span> <span class="tok-keyword">string</span>
+
+<span class="tok-keyword">const</span> (
+    ASROpenAI     <span class="tok-type">ASRProvider</span> = <span class="tok-string">"openai"</span>     <span class="tok-comment">// "" aliases this (wire default)</span>
+    ASRWhisperCpp <span class="tok-type">ASRProvider</span> = <span class="tok-string">"whispercpp"</span>
+    ASRGoogle     <span class="tok-type">ASRProvider</span> = <span class="tok-string">"google"</span>
+)</code></pre>
+      <p>
+        The field stays string-tagged on the koanf wire; <code>Load</code>
+        parses once (the prose validation at config.go:971 becomes the
+        parser&rsquo;s error); Google() and the app selection compare typed
+        constants. Config-file bytes unchanged.
+      </p>
+
+      <h3>F5 &mdash; named fields, no order</h3>
+      <pre><code><span class="tok-keyword">type</span> <span class="tok-type">LoginExtra</span> <span class="tok-keyword">struct</span> { Primary, SSO <span class="tok-keyword">bool</span> }
+<span class="tok-comment">// call site: views.LoginPageExtra(views.LoginExtra{Primary: !passkeyOn, SSO: deps.SSO != nil})</span></code></pre>
+
+      <h3>F6 &mdash; interval keys (deferred until a third interval)</h3>
+      <pre><code><span class="tok-keyword">type</span> <span class="tok-type">latencyInterval</span> <span class="tok-keyword">string</span>
+<span class="tok-keyword">const</span> (
+    intervalDialToAudio  <span class="tok-type">latencyInterval</span> = <span class="tok-string">"dial_to_audio"</span>
+    intervalASRRoundTrip <span class="tok-type">latencyInterval</span> = <span class="tok-string">"asr_round_trip"</span>
+)
+<span class="tok-keyword">var</span> islandLatencyLegs = <span class="tok-keyword">map</span>[<span class="tok-type">latencyInterval</span>]<span class="tok-keyword">map</span>[<span class="tok-keyword">string</span>]<span class="tok-keyword">bool</span>{<span class="tok-comment">&hellip;</span>}</code></pre>
+
+      <h3>F7 &mdash; typed feed maps, all three lanes</h3>
+      <pre><code><span class="tok-comment">// config.Load mints, the join consumes brands:</span>
+identities      <span class="tok-keyword">map</span>[domain.<span class="tok-type">Extension</span>]<span class="tok-keyword">string</span> <span class="tok-comment">// DID verbatim (11-18 ruling)</span>
+passwordFiles   <span class="tok-keyword">map</span>[domain.<span class="tok-type">Extension</span>]<span class="tok-keyword">string</span>
+chatLaneOwners  <span class="tok-keyword">map</span>[domain.<span class="tok-type">Extension</span>]domain.<span class="tok-type">Network</span> <span class="tok-comment">// matrix/signal owner lanes, same train</span></code></pre>
+      <p>
+        The <code>panic</code>-on-unparseable in
+        <code>mappedUsers</code> (app.go:616) becomes dead code and deletes.
+        DID stays verbatim string &mdash; canonicalization is a product
+        decision, not a type decision.
+      </p>
+
+      <h3>F8 &mdash; the payload value object</h3>
+      <pre><code><span class="tok-keyword">type</span> <span class="tok-type">ReviewDraft</span> <span class="tok-keyword">struct</span> {
+    State      domain.<span class="tok-type">ReviewState</span>
+    DraftID    <span class="tok-keyword">string</span> <span class="tok-comment">// foreign (agent-side id) &mdash; stays raw, BD003 class</span>
+    Text       <span class="tok-keyword">string</span>
+    Language   <span class="tok-keyword">string</span>
+    Confidence <span class="tok-keyword">int</span>
+}
+<span class="tok-func">Set</span>(ctx context.<span class="tok-type">Context</span>, owner domain.<span class="tok-type">Extension</span>, callID <span class="tok-keyword">string</span>, d <span class="tok-type">ReviewDraft</span>) <span class="tok-type">error</span></code></pre>
+    </section>
+
+    <section id="composition">
+      <h2><span class="num">05</span>Composition in action</h2>
+      <table class="compare">
+        <thead>
+          <tr><th>Seam</th><th>Before (tonight, verified)</th><th>After</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Device upsert</td>
+            <td class="no">Upsert(ctx, owner, deviceID, transport, token <strong>string</strong>) &mdash; brand stringified away one line after ParseTransport</td>
+            <td class="yes">transport <strong>push.Transport</strong> through gate + command; string reappears once, at the journal fact</td>
+          </tr>
+          <tr>
+            <td>Login extra section</td>
+            <td class="no">LoginPageExtra(!passkeyOn, deps.SSO != nil) &mdash; transposition compiles</td>
+            <td class="yes">LoginExtra{Primary: &hellip;, SSO: &hellip;} &mdash; transposition is a compile error</td>
+          </tr>
+          <tr>
+            <td>Disposition save</td>
+            <td class="no">second identical PUT journals an event, bumps recency, nudges SSE</td>
+            <td class="yes">echo guard + changed-bool &mdash; identical PUT is inert, handler skips the nudge</td>
+          </tr>
+          <tr>
+            <td>Config join</td>
+            <td class="no">ParseExtension validates 3 lanes at boot, discards; app re-joins identities[raw]; panic guards the residue</td>
+            <td class="yes">typed maps minted at Load; join is map[Extension]; the panic class deletes</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="validation">
+      <h2><span class="num">06</span>Validation layer &mdash; where invalid states become unrepresentable</h2>
+      <p>
+        The repo&rsquo;s validation doctrine is <strong>parse at the door,
+        carry the brand</strong> &mdash; and the eight fixes move three more
+        validations into that shape:
+      </p>
+      <ul>
+        <li><strong>From prose to parser (F4):</strong> the provider set is currently enforced by an error message enumerating it; the enum&rsquo;s <code>Parse</code> becomes the validation, one step earlier, with the config wire untouched.</li>
+        <li><strong>From post-hoc guard to structural join (F7):</strong> boot-time ParseExtension checks stop being a separate step the join must trust; the join consumes the parsed keys themselves.</li>
+        <li><strong>From convention to constructor (F1, F6):</strong> vocabularies whose only home is a comment become constants; a typo&rsquo;d literal stops compiling (F6, once its trigger fires) instead of silently dropping beacons.</li>
+      </ul>
+      <p>
+        What deliberately stays OUT of the type layer: wire DTO bytes
+        (BD003 directives), journal fact fields (engine-row doctrine,
+        frozen), foreign ids (client-generated device ids, agent draft ids),
+        and DID formatting (display-verbatim by owner ruling).
+      </p>
+    </section>
+
+    <section id="decisions">
+      <h2><span class="num">07</span>Decision log</h2>
+      <p>
+        Carried from the 08:40 entry (attributed), with tonight&rsquo;s one
+        addition:
+      </p>
+      <table>
+        <thead><tr><th>Decision</th><th>Rationale</th><th>Rejected alternative</th></tr></thead>
+        <tbody>
+          <tr><td>Locality typed in asr, not domain</td><td>Provider-trust label local to the ASR seam; domain holds cross-seam telephony concepts</td><td>domain.Locality: drags a Settings-chip detail into the domain package</td></tr>
+          <tr><td>Transport through the gate, facts stay raw</td><td>Gate is in-process (brands allowed per the 11-11 gates-re-parse ruling); journal fact is wire</td><td>Branding the fact: changes journal semantics for no consumer gain</td></tr>
+          <tr><td>Disposition echo drop (Option A) over doc comment</td><td>The autosave doctrine is lane-agnostic; symmetry deletes a spurious-nudge class for one guard</td><td>Option B: leaves a test-unpinned wrinkle on a save path two surfaces share</td></tr>
+          <tr><td>ASR enum parsed in config.Load, wire untouched</td><td>Parser is the validation, moved one step earlier; koanf/json tags unchanged</td><td>A Config method layer: more surface, still stringly at the boundary</td></tr>
+          <tr><td>LoginExtra struct, not bool-last reorder</td><td>Two flags have no order; machineSurface&rsquo;s reorder worked because there was exactly one flag</td><td>Reorder: re-arms the trap for the next flag</td></tr>
+          <tr><td>DID stays verbatim string (again)</td><td>11-18 ruling: display-verbatim owner formatting</td><td>domain.Phone: changes rendered bytes on every deployment</td></tr>
+          <tr><td>Interval-scoped leg vocabularies stay maps</td><td>Legs belong to their interval; a global leg enum invents cross-interval identity</td><td>type latencyLeg string global set</td></tr>
+          <tr><td><strong>Tonight:</strong> F7 fix carries all three owner lanes</td><td>matrix.owner and signal.owner are the same parse-then-discard class (config.go:1219/:1243); one train, three lanes, one deleted panic class</td><td>identities-only fix: leaves two lanes of the same defect shape for the next session to re-derive</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="antipatterns">
+      <h2><span class="num">08</span>Anti-patterns &mdash; traps when adopting</h2>
+      <ul>
+        <li><strong>Do not brand the wire.</strong> SessionIdentity, journal facts and config.js fields stay raw with their BD003/nolint directives; a branded type whose String() renders <code>Brand:</code> prefixes corrupts bytes every consumer pins.</li>
+        <li><strong>Do not mint mechanical brands.</strong> The brandid-lint suggestions (FaxViewID, faxInputID&hellip;) split-brain the existing domain.FaxID-class brands; brands ride repo-owned identities and closed vocabularies only.</li>
+        <li><strong>Do not move ThreadFlag to domain.</strong> Settled beside its only consumer (the gate); revisit only if a second consumer of the flag vocabulary appears.</li>
+        <li><strong>Do not i18n service validation reasons</strong> and do not widen <code>errorfamily.IsRetryable</code> semantics while touching the chatloop backoff &mdash; both are adjacent, both are ruled.</li>
+        <li><strong>Do not &ldquo;fix&rdquo; the six single-implementer Deps seams</strong> or the three edge doors &mdash; baseline-ruled (detector-blind classes), re-verified tonight.</li>
+        <li><strong>Do not canonicalize DID.</strong> Verbatim is a product ruling; any normalization changes rendered bytes on configured deployments.</li>
+      </ul>
+    </section>
+
+    <section id="roadmap">
+      <h2><span class="num">09</span>Migration roadmap</h2>
+      <p>
+        All steps independently revertable; three are already harvested as
+        TODO_LIST rows (the morning&rsquo;s type-tails row; tonight adds the
+        remainder row).
+      </p>
+      <div class="migration-step"><div class="migration-num">1</div><div class="migration-content"><h4>asr.Locality constants (S)</h4><p>asr family tests + the settings chip pin; wire field stays string.</p></div></div>
+      <div class="migration-step"><div class="migration-num">2</div><div class="migration-content"><h4>push.Transport through Upsert + SavePushDevice (S)</h4><p>The parity rule&rsquo;s owed second change; push gate + api tests.</p></div></div>
+      <div class="migration-step"><div class="migration-num">3</div><div class="migration-content"><h4>Disposition echo symmetry (XS)</h4><p>Decider guard + gate changed-bool + the disposition-lane twin of the body-lane pin.</p></div></div>
+      <div class="migration-step"><div class="migration-num">4</div><div class="migration-content"><h4>ASRProvider enum at config.Load (S)</h4><p>Closes review-4 item 7; trigger already fired; config bytes unchanged.</p></div></div>
+      <div class="migration-step"><div class="migration-num">5</div><div class="migration-content"><h4>LoginExtra struct at the login seam (XS)</h4><p>One call site, view regen, shape pins re-checked.</p></div></div>
+      <div class="migration-step"><div class="migration-num">6</div><div class="migration-content"><h4>ReviewsGate.Set payload struct (XS)</h4><p>Rides the next reviews-seam touch.</p></div></div>
+      <div class="migration-step"><div class="migration-num">7</div><div class="migration-content"><h4>Typed feed maps &mdash; all three owner lanes (S, opportunistic)</h4><p>Next config-struct train; deletes the post-validation panic class; extended scope tonight (matrix/signal owners).</p></div></div>
+      <div class="migration-step"><div class="migration-num">8</div><div class="migration-content"><h4>islandLatencyLegs typed interval key (XS, deferred)</h4><p>Only when a third interval joins the vocabulary.</p></div></div>
+      <p>
+        Standing invitations kept open from earlier entries: transcript
+        remote + hub map keys (the 10-14 item-7 remainder &mdash; no new
+        pressure tonight).
+      </p>
+    </section>
+
+    <section id="conclusion">
+      <h2><span class="num">10</span>Conclusion</h2>
+      <div class="callout callout-teal">
+        <strong>&ldquo;The model&rsquo;s walls are right; what remains is
+        vocabulary hygiene at the seams &mdash; eight small doors, each
+        one train, none structural.&rdquo;</strong>
+        The doctrine (brands at repo-owned identities, raw at every wire,
+        legality in machine tables) held through the line-ownership model,
+        the note autosave, and the beacon vocabulary. Nothing tonight
+        warrants re-opening a settled call.
+      </div>
+    </section>
+
+    <footer class="footer">
+      <p>
+        Generated 2026-11-19 20:35 CET &middot; every cited declaration
+        re-read at HEAD 859904c2 this session &middot; companions:
+        2026-11-19_data-model-review.md (#6) &middot;
+        2026-11-11_data-model-review.html (#5) &middot;
+        2026-11-18_line-ownership-data-model.html
+      </p>
+    </footer>
+  </main>
+</div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>

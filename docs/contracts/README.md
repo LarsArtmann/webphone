@@ -101,3 +101,18 @@ references session/api handler DTOs, so it MUST live in server), and
 references hooks + gateway wire types, likewise server-owned). A merge
 would either invert an import edge or split-brain a lane; the shared
 parts (title/version consts, the split rule) stay documented here.
+
+## The vendored catalog frontmatter contract
+
+`catalog-frontmatter.v2.schema.json` in this directory is the
+BYTE-IDENTICAL dist artifact of the hub's merge-gate schema, vendored
+because the hub publishes at `https://catalog.home.lan/contracts/…` —
+a LAN name GitHub runners cannot resolve. The first CI run of the
+`catalog-contract` job failed on exactly that DNS (2026-11-19), so CI
+validates the export against this pinned copy while local runs may
+still pass `--contract <live URL>` to probe hub drift (this host
+resolves the hub). Refresh ritual when the hub bumps its contract
+version: fetch the new `v<N>` artifact into this directory, update the
+CI `--contract` path, and keep the old copy until no exporter targets
+it. Provenance of the current copy: fetched 2026-11-19, sha256
+`d626ab6a14d0e607605c34743d03769380ebee9a0e1623a0dad203c6dc9baf14`.

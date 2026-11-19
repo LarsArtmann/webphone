@@ -32,8 +32,12 @@ jobs:
   # publishes a versioned frontmatter contract
   # (catalog-frontmatter.v<N>.schema.json, byte-asserted into its dist);
   # validating the export HERE turns a schema break into this repo's red
-  # instead of a red hub build naming webphone. Network-light: one HTTP
-  # fetch of the contract, one Go run of the exporter.
+  # instead of a red hub build naming webphone. The contract is VENDORED
+  # (docs/contracts/catalog-frontmatter.v2.schema.json) because the hub
+  # lives on the LAN (catalog.home.lan) — a GitHub runner can never fetch
+  # it, and a red CI on DNS was the 2026-11-19 lesson. Local runs may
+  # still pass --contract <live URL> to probe hub drift (this host
+  # resolves it); CI pins the copy.
   catalog-contract:
     name: catalog export matches the hub frontmatter contract
     runs-on: ubuntu-latest
@@ -48,8 +52,8 @@ jobs:
       - name: Export the catalog
         run: go run ./cmd/webphone catalog -o work/out/webphone
 
-      - name: Validate against the published frontmatter contract
-        run: python3 scripts/check-catalog-contract.py --export work/out/webphone
+      - name: Validate against the vendored frontmatter contract
+        run: python3 scripts/check-catalog-contract.py --export work/out/webphone --contract docs/contracts/catalog-frontmatter.v2.schema.json
 
   # The live smoke (plan T15.5 finding, 2026-10-30): the 6-scenario
   # self-booting suite (restart, boot-failure, ASR, dial-gate, faxcap)

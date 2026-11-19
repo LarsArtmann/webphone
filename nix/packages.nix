@@ -46,6 +46,12 @@
             license = lib.licenses.mit;
             mainProgram = "templ";
             platforms = lib.platforms.linux;
+            maintainers = [
+              {
+                name = "Lars Artmann";
+                github = "LarsArtmann";
+              }
+            ];
           };
         };
 
@@ -69,6 +75,12 @@
             license = lib.licenses.mit;
             mainProgram = "docs-gates";
             platforms = lib.platforms.linux;
+            maintainers = [
+              {
+                name = "Lars Artmann";
+                github = "LarsArtmann";
+              }
+            ];
           };
         };
 

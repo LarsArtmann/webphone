@@ -1,0 +1,361 @@
+{
+  "$defs": {
+    "adrs": {
+      "additionalProperties": false,
+      "description": "Frontmatter for the  collection(s) gated as 'adrs'.",
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "amendedBy": {},
+        "amends": {},
+        "appliesTo": {},
+        "badges": {},
+        "date": {},
+        "id": {},
+        "name": {},
+        "owners": {},
+        "related": {},
+        "status": {},
+        "summary": {},
+        "supersededBy": {},
+        "supersedes": {},
+        "version": {}
+      },
+      "required": [
+        "id",
+        "name",
+        "version",
+        "status",
+        "date"
+      ],
+      "type": "object"
+    },
+    "agents": {
+      "additionalProperties": false,
+      "description": "Frontmatter for the  collection(s) gated as 'agents'.",
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "badges": {},
+        "deprecated": {},
+        "draft": {},
+        "id": {},
+        "name": {},
+        "owners": {},
+        "summary": {},
+        "version": {}
+      },
+      "required": [
+        "id",
+        "name",
+        "version"
+      ],
+      "type": "object"
+    },
+    "channels": {
+      "additionalProperties": false,
+      "description": "Frontmatter for the  collection(s) gated as 'channels'.",
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "address": {},
+        "badges": {},
+        "deliveryGuarantee": {},
+        "deprecated": {},
+        "draft": {},
+        "id": {},
+        "messages": {},
+        "name": {},
+        "owners": {},
+        "protocols": {},
+        "summary": {},
+        "version": {}
+      },
+      "required": [
+        "id",
+        "name",
+        "version"
+      ],
+      "type": "object"
+    },
+    "containers": {
+      "additionalProperties": false,
+      "description": "Frontmatter for the  collection(s) gated as 'containers'.",
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "access_mode": {},
+        "authoritative": {},
+        "badges": {},
+        "container_type": {},
+        "deprecated": {},
+        "draft": {},
+        "id": {},
+        "name": {},
+        "owners": {},
+        "summary": {},
+        "technology": {},
+        "version": {}
+      },
+      "required": [
+        "id",
+        "name",
+        "version"
+      ],
+      "type": "object"
+    },
+    "dataProducts": {
+      "additionalProperties": false,
+      "description": "Frontmatter for the  collection(s) gated as 'dataProducts'.",
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "badges": {},
+        "deprecated": {},
+        "draft": {},
+        "id": {},
+        "inputs": {},
+        "name": {},
+        "outputs": {},
+        "owners": {},
+        "summary": {},
+        "version": {}
+      },
+      "required": [
+        "id",
+        "name",
+        "version"
+      ],
+      "type": "object"
+    },
+    "domains": {
+      "additionalProperties": false,
+      "description": "Frontmatter for the  collection(s) gated as 'domains'.",
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "badges": {},
+        "deprecated": {},
+        "diagrams": {},
+        "dictionary": {},
+        "draft": {},
+        "flows": {},
+        "id": {},
+        "name": {},
+        "owners": {},
+        "services": {},
+        "sidebar": {},
+        "summary": {},
+        "version": {}
+      },
+      "required": [
+        "id",
+        "name",
+        "version"
+      ],
+      "type": "object"
+    },
+    "entities": {
+      "additionalProperties": false,
+      "description": "Frontmatter for the  collection(s) gated as 'entities'.",
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "badges": {},
+        "deprecated": {},
+        "draft": {},
+        "id": {},
+        "name": {},
+        "owners": {},
+        "summary": {},
+        "version": {}
+      },
+      "required": [
+        "id",
+        "name",
+        "version"
+      ],
+      "type": "object"
+    },
+    "flows": {
+      "additionalProperties": false,
+      "description": "Frontmatter for the  collection(s) gated as 'flows'.",
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "badges": {},
+        "deprecated": {},
+        "draft": {},
+        "id": {},
+        "name": {},
+        "owners": {},
+        "steps": {},
+        "summary": {},
+        "version": {}
+      },
+      "required": [
+        "id",
+        "name",
+        "version",
+        "steps"
+      ],
+      "type": "object"
+    },
+    "messages": {
+      "additionalProperties": false,
+      "description": "Frontmatter for the  collection(s) gated as 'messages'.",
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "badges": {},
+        "consumers": {},
+        "deprecated": {},
+        "diagrams": {},
+        "draft": {},
+        "id": {},
+        "name": {},
+        "operation": {},
+        "owners": {},
+        "producers": {},
+        "repository": {},
+        "schemaPath": {},
+        "sidebar": {},
+        "summary": {},
+        "version": {},
+        "x-labels": {}
+      },
+      "required": [
+        "id",
+        "name",
+        "version"
+      ],
+      "type": "object"
+    },
+    "services": {
+      "additionalProperties": false,
+      "description": "Frontmatter for the  collection(s) gated as 'services'.",
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "badges": {},
+        "deprecated": {},
+        "diagrams": {},
+        "draft": {},
+        "id": {},
+        "name": {},
+        "owners": {},
+        "readsFrom": {},
+        "receives": {},
+        "repository": {},
+        "sends": {},
+        "sidebar": {},
+        "specifications": {},
+        "summary": {},
+        "version": {},
+        "writesTo": {},
+        "x-errors": {}
+      },
+      "required": [
+        "id",
+        "name",
+        "version"
+      ],
+      "type": "object"
+    },
+    "teams": {
+      "additionalProperties": false,
+      "description": "Frontmatter for the  collection(s) gated as 'teams'.",
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "badges": {},
+        "id": {},
+        "members": {},
+        "name": {},
+        "source": {},
+        "summary": {}
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "type": "object"
+    },
+    "users": {
+      "additionalProperties": false,
+      "description": "Frontmatter for the  collection(s) gated as 'users'.",
+      "patternProperties": {
+        "^x-": {}
+      },
+      "properties": {
+        "avatarUrl": {},
+        "email": {},
+        "id": {},
+        "name": {},
+        "role": {},
+        "source": {}
+      },
+      "required": [
+        "id",
+        "name",
+        "email"
+      ],
+      "type": "object"
+    }
+  },
+  "$id": "https://catalog.home.lan/contracts/catalog-frontmatter.v2.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "anyOf": [
+    {
+      "$ref": "#/$defs/adrs"
+    },
+    {
+      "$ref": "#/$defs/agents"
+    },
+    {
+      "$ref": "#/$defs/channels"
+    },
+    {
+      "$ref": "#/$defs/containers"
+    },
+    {
+      "$ref": "#/$defs/dataProducts"
+    },
+    {
+      "$ref": "#/$defs/domains"
+    },
+    {
+      "$ref": "#/$defs/entities"
+    },
+    {
+      "$ref": "#/$defs/flows"
+    },
+    {
+      "$ref": "#/$defs/messages"
+    },
+    {
+      "$ref": "#/$defs/services"
+    },
+    {
+      "$ref": "#/$defs/teams"
+    },
+    {
+      "$ref": "#/$defs/users"
+    }
+  ],
+  "description": "The frontmatter key contract the architecture-hub union gate enforces for every catalog page. A page passes when it matches ANY one collection definition below; each definition allows exactly the keys that collection's exporter may emit. Derived from catalog-frontmatter.schema.json by scripts/build-frontmatter-jsonschema.py \u2014 do not edit by hand.",
+  "title": "EventCatalog hub frontmatter contract",
+  "x-hub-schema-version": 2,
+  "x-hub-source": "catalog-frontmatter.schema.json"
+}
