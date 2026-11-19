@@ -32,5 +32,9 @@ export function sendLatencyBeacon(interval, legsMS, segmentBytes) {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
     keepalive: true,
-  }).catch(() => {});
+  }).catch(() => {
+    // Deliberate discard: the beacon is fire-and-forget — the server
+    // answers every failure with a silent 204 and instrumentation
+    // never alerts on itself (the AGENTS.md island-beacon doctrine).
+  });
 }

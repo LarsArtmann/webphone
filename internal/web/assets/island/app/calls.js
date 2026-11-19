@@ -1441,7 +1441,10 @@ function showDialCooldown(target, verdict) {
     const allowed = await overrideDialGate(target);
     if (allowed) {
       hideDialCooldown();
-      placeCall(target, { force: true, latencyT0: Date.now() });
+      // Fire-and-forget by design: force skips the gate consult and
+      // invite() is try-caught inside placeCall, so the promise cannot
+      // reject here — the void marks the intent explicitly.
+      void placeCall(target, { force: true, latencyT0: Date.now() });
     } else {
       announce(t("cooldownOverrideFailed"), "warn");
       anyway.disabled = false;

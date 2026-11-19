@@ -91,7 +91,11 @@ export function resumeAudio() {
 export function ringbackStart() {
   if (ringbackTimer) return;
   const audio = audioCtx();
-  resumeAudio().catch(() => {});
+  resumeAudio().catch(() => {
+    // Deliberate discard: resumeAudio observes its own failure (the
+    // console.warn above) and never rejects — this catch only keeps
+    // the fire-and-forget contract explicit for the ring tone path.
+  });
   const on = () => {
     const now = audio.currentTime;
     [440, 480].forEach((freq) => {

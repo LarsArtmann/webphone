@@ -1488,7 +1488,11 @@
         credentials: "same-origin",
       })
         .then(refreshNav)
-        .catch(function () {});
+        .catch(function () {
+          // Deliberate discard: the read receipt is best-effort — a
+          // failed POST leaves the badge on, and the next SSE nudge or
+          // panel interaction re-reads the thread state.
+        });
     });
 
     // 3b-2. Jump-to-latest chip: a live push that lands while the reader
