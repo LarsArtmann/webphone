@@ -1260,3 +1260,63 @@ the listeners directly with a synthetic target); a fetch stub's `ok` must be
 COMPUTED from the status (a hardcoded false made the 204 recovery path read
 as failure); and a pending debounce timer correctly suppresses the
 completion hook's tail — the timer carries it.
+
+## Stale SIP agents fork every inbound call — guard the delegates, close the transport (2026-11-19)
+
+The owner's production console log (pbx.artmann.tech, Nov 18–19) showed
+a reconnect storm that no single line explained: two "incoming call /
+missed call" announcement waves for ONE caller, NINE "The AudioContext
+was not allowed to start" warnings at the same millisecond, a burst of
+27 "WebSocket is closed before the connection is established" errors
+in one tick, reconnect attempts reaching try 86 over ~54 minutes, and
+a registration that only recovered when the client's own network did
+(ERR_NAME_NOT_RESOLVED on /events throughout — the outage itself was
+the client's DNS, not the server's).
+
+Root cause chain: every `rebuildConnection` bounds `old.stop()` at 3s;
+in the field that bound FIRED ("old agent stop: stop timed out") — and
+sip.js 0.21's stop() hangs INSIDE its unregister choreography, before
+it ever disconnects the transport. Two leaks follow. (1) The old
+WebSocket is never closed — the browser's mass "closed before
+established" burst is the graveyard of those CONNECTING sockets. (2)
+The failed UNREGISTER means the PBX keeps serving the stale
+registration until expiry, so FreeSWITCH forks every inbound call to
+the dead contact too — the dead agent's `onInvite` still runs (double
+rings, N× missed-call announcements, N× history rows) and its
+`onDisconnect` still drives `scheduleReconnect()` beside the live
+chain (the nested `armReconnectCycleDeadline` frames in the stack
+traces). The nine autoplay warnings are one blocked `resume()` per
+forked invitation.
+
+The fix is two contracts in `connection.js`, both test-pinned: every
+delegate (`onDisconnect`, `onInvite`, the registerer `stateChange`
+listener, the final `register()`) compares its agent against
+`state.userAgent` at event time, so a superseded agent is fully inert;
+and the stop-timeout catch force-closes `old.transport.disconnect()`
+bounded at 1s, because stop()'s choreography demonstrably never
+reaches it. LESSON: a hung stop() does not mean the object is dead —
+sip.js kept its transport alive and the OPERATOR'S PBX kept the
+registration alive; "bounded the await" is not "closed the socket".
+Test-harness twin: the shared window stub's `dispatchWindow` must
+SNAPSHOT the listener array (real DOM semantics) — a listener that
+removes itself during iteration skipped its neighbors and made the
+disarm assertions count wrong.
+
+The audio half got its own fix in the same train: the ring AudioContext
+arms a capture-phase pointerdown/keydown unlock at creation, because a
+cookie session restore boots the island with NO gesture ever and the
+ring stayed silent until the user happened to click the phone (the
+19:26 missed call was never heard). The per-invite `resumeAudio()` in
+`ringToneStart` was deleted — pre-gesture it can only fail (and print
+the browser warning); the unlock owns the transition, and
+`resumeAudio`'s failure warn is capped at once per page.
+
+Not fixed here, deliberately: the `[object Event]` console line beside
+every SSE flap is the vendored cqrs-htmx bundle's own logging (served
+by `cqrshtmx.HTMXExtensionsHandler`, not this repo); session.js's
+`htmx:sseError` line is the readable record and already documents the
+pairing. And the SSE `/events` failures + the long reconnect storm
+itself were the client's local network (ERR_NETWORK_CHANGED →
+ERR_NAME_NOT_RESOLVED); the machinery recovered by design the moment
+DNS returned — the defects fixed here are what the outage EXPOSED,
+not the outage.

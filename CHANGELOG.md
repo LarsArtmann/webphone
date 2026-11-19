@@ -9,6 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **A stale SIP agent can no longer double-ring the island** (2026-11-19,
+  from the production storm log): a `stop()` that hangs dies inside
+  sip.js's unregister choreography before the transport ever
+  disconnects, so the old WebSocket stayed open and the PBX kept
+  serving the stale registration until expiry — every inbound call was
+  FORKED to the dead agent: double "incoming call / missed call"
+  waves, one blocked-AudioContext autoplay warning per forked
+  invitation (nine at once), and a burst of "closed before the
+  connection is established" sockets when the lingerers were finally
+  closed. Every delegate in `connection.js` now compares its agent
+  against the current one at event time (a superseded agent is fully
+  inert: no rings, no announcements, no reconnect chains, no pill
+  flips, no stale re-register), and a hung stop force-closes the old
+  transport directly. Alongside, the shared ring AudioContext arms a
+  capture-phase pointerdown/keydown unlock at creation, so a
+  never-gestured tab (cookie session restore) rings on the first
+  interaction anywhere instead of staying silent, and the ring no
+  longer attempts a doomed resume (and its autoplay warning) per
+  invite; resume failures warn at most once per page. The
+  `[object Event]` line beside every SSE flap is the vendored
+  cqrs-htmx bundle's own logging — the readable, greppable record of
+  the same failure is the island's `htmx:sseError` line, unchanged.
+
 - **Full-code-review fix-forward batch** (2026-11-19): five surgical
   fixes out of the 2026-11-19 four-part file-by-file review — the SSE
   shutdown incident line counts the hubs it released BEFORE deleting
