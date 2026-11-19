@@ -289,9 +289,11 @@ export function installBrowserGlobals() {
       if (i >= 0) list.splice(i, 1);
     },
     // The gesture tests fire the armed listeners directly: a plain
-    // event object (the unlock reads no event fields).
+    // event object (the unlock reads no event fields). Snapshot like
+    // the real DOM — a listener that removes itself during dispatch
+    // must not skip its neighbors.
     dispatchWindow(type, event = {}) {
-      for (const fn of this.listeners[type] ?? []) fn(event);
+      for (const fn of [...(this.listeners[type] ?? [])]) fn(event);
     },
   };
   // Older node lacks CustomEvent; the island dispatches wp:* events with it.

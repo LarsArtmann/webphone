@@ -118,10 +118,17 @@ test("a browser without AudioContext.setSinkId keeps the room alarm", async () =
 // attempt — N warnings under a fork-storm. The unlock contract: arming
 // at creation, no failed resume per ring, one interaction unlocks.
 
+// Each fresh module instance arms its own listener pair on the SHARED
+// window stub; the gesture tests reset the registry so every assertion
+// counts exactly its own module's pair.
+const resetWindowListeners = () => {
+  globalThis.window.listeners = {};
+};
 const pointerBaseline = () =>
   (globalThis.window.listeners.pointerdown ?? []).length;
 
 test("a never-gestured ring does not resume; the first interaction unlocks", async () => {
+  resetWindowListeners();
   const baseline = pointerBaseline();
   const audio = await loadAudio("gesture-unlock");
   audio.ringToneStart();
@@ -147,6 +154,7 @@ test("a never-gestured ring does not resume; the first interaction unlocks", asy
 });
 
 test("a refused resume stays armed; the next gesture retries", async () => {
+  resetWindowListeners();
   const baseline = pointerBaseline();
   const audio = await loadAudio("gesture-retry");
   audio.ringToneStart();
@@ -173,6 +181,7 @@ test("a refused resume stays armed; the next gesture retries", async () => {
 });
 
 test("a running context never re-arms the unlock", async () => {
+  resetWindowListeners();
   const audio = await loadAudio("gesture-running");
   await audio.resumeAudio(); // explicit gesture path creates + unlocks
   const ctx = contexts.at(-1);

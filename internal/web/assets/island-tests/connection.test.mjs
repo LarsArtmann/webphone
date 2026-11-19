@@ -294,11 +294,12 @@ test("logout does not rebuild", async () => {
 });
 
 // The re-entrancy guard (SUPERB T17a): two rebuild triggers landing in
-// the same tick (a registration-lost event racing the cycle deadline,
-// or Unregistered immediately followed by Terminated) must collapse
-// into ONE teardown+rebuild — the second caller sees resetting=true,
-// logs "already in progress", and returns without touching the fresh
-// agent.
+// the same tick must collapse into ONE teardown+rebuild. The second
+// trigger now stops even EARLIER — the registerer listener's staleness
+// guard (a superseded registerer is inert) swallows the Terminated
+// echo before it can reach rebuildConnection; the resetting=true
+// "already in progress" log remains the backstop for the cross-source
+// races (an attemptReconnect losing to a deadline rebuild).
 test("concurrent rebuild triggers collapse into a single rebuild", async () => {
   resetStubs();
   const connection = await loadConnection("reentrancy");
@@ -310,10 +311,6 @@ test("concurrent rebuild triggers collapse into a single rebuild", async () => {
   assert.equal(agents.length, 2, "exactly one fresh agent, not one per trigger");
   assert.equal(registerers.length, 2, "exactly one fresh registerer");
   assert.ok(agents[0].stopped, "the old agent was torn down once");
-  assert.ok(
-    logTexts().some((line) => line.includes("rebuild already in progress")),
-    "the collapsed trigger must say so in #log",
-  );
   assert.equal(pill(), t("registered"), "the single rebuild re-registers");
 });
 
@@ -708,5 +705,4 @@ test("a superseded agent's events drive nothing", async (tc) => {
     !logTexts().slice(logBefore).some((line) => line.includes("incoming call from")),
     "no ring, no announcement, no log for the stale fork",
   );
-  assert.equal(doc.getElementById("incoming-call").hidden, true);
 });

@@ -235,8 +235,7 @@ async function attemptReconnect() {
   // beside the fresh agent's (the 2026-11-19 nested-chain storm).
   const agent = state.userAgent;
   const registered = registerer;
-  const superseded = () =>
-    stopping || resetting || state.userAgent !== agent;
+  const superseded = () => stopping || resetting || state.userAgent !== agent;
   try {
     if (!agent || !registered) throw new Error("not connected");
     await withTimeout(
