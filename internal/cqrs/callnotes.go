@@ -164,6 +164,15 @@ func decideSaveDisposition(s notesState, ver event.Version, cmd SaveCallDisposit
 	if err != nil {
 		return nil, err
 	}
+	// The same echo guard the note body rides: the disposition chips are
+	// click-shaped, and the API contract already promises "the same
+	// verdict again is an inert 204" — the journal must record CHANGES,
+	// not re-clicks (each event would bump UpdatedAt and fire the notes
+	// SSE nudge for a fact that did not change). Existing slot only: a
+	// first disposition keeps minting the slot.
+	if _, exists := s.Slots[cmd.CallID]; exists && prev.Disposition == cmd.Disposition {
+		return nil, nil
+	}
 	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.CallNoteSaved{})), cmd.StreamID(), NotesStreamType, ver.Increment(), domain.CallNoteSaved{
 		Key:         domain.CallNoteKey{Owner: cmd.Owner, CallID: cmd.CallID},
 		Owner:       cmd.Owner,
