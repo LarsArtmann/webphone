@@ -154,7 +154,7 @@ The status request arrived while A25's final full buildflow run was still owed.
 | 3  | A27 transcripts aggregate (5000/owner trim stays; per-CALL floor keeps loop)                                       | M    | P4                         |
 | 4  | A28 call notes + reviews aggregates (409 Conflict vs 2000 Rejection)                                               | M    | P4                         |
 | 5  | A29 P4 importers ×4 + markers + dual-run diffs                                                                     | M    | P4                         |
-| 6  | A30 P4 gates + release train (one release per phase, D4)                                                           | M    | P4                         |
+| 6  | A30 P4 gates + release train (one release per phase, D4)                                                           | M    | P4 — RESOLVED 2026-11-19: shipped as the consolidated v2.14.0 release train (2026-11-11) via the standing release.sh dance; per-phase releases superseded by the runbook's one-tag posture (docs/status/2026-11-19_15-20_release-readiness.md owns the current one) |
 | 7  | A31 core stream design doc (per-thread streams; AppendToThread as ONE Decide; R7 retry)                            | H    | P5 map                     |
 | 8  | A32 delivery machine integration (DeliveryAdvance → decisions; self-send 422 arm preserved)                        | H    | P5                         |
 | 9  | A33 message projections (byte-identical fragments, `wp-bubble`/`wp-thread-row` pins)                               | H    | P5                         |

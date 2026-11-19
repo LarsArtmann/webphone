@@ -55,7 +55,7 @@
 1. `BUILDFLOW_NO_RESULT_CACHE=1 nix develop -c buildflow` — full clean run (closes the A25 debt; expect ~68 steps green)
 2. ~~`nix flake check` (island-lint/island-js/typecheck/format/module-check/backup VM)~~ done-with-residue — the fast legs (format/island/lints derivations) and `nix build .#webphone` verified green in CI run 42500447327; the module-check and backup VM legs stay KVM/local-only, carried by the TODO_LIST Phase-4 release-preflight row
 3. Live smoke: `nix build .#webphone --no-link --print-out-paths` + `scripts/webphone-smoke.py --bin …` (all scenarios incl. dialgate + faxcap)
-4. CI watch on the current push run (42498925196) to green
+4. ~~CI watch on the current push run (42498925196) to green~~ → concluded 2026-11-08 (the run's verdict is historical; the standing watch ritual is `scripts/ci-verdict.sh`, workflow-name-verified)
 5. CHANGELOG `[Unreleased]` entry for Phase 4 (the battery/deadlock/panic story + the four swaps)
 6. Plan Errata Phase-4 as-built notes (per-owner stream deviation, D7 await-then-enforce, EnforceCaps bounded posture, migration twins incl. ReassembleTranscripts export #3, cqrs.engine_count, battery-with-aggregate rule)
 7. A30 release train per D4 (see §g-2) OR the owner's explicit deferral
