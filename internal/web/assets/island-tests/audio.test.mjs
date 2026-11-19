@@ -124,8 +124,7 @@ test("a browser without AudioContext.setSinkId keeps the room alarm", async () =
 const resetWindowListeners = () => {
   globalThis.window.listeners = {};
 };
-const pointerBaseline = () =>
-  (globalThis.window.listeners.pointerdown ?? []).length;
+const pointerBaseline = () => (globalThis.window.listeners.pointerdown ?? []).length;
 
 test("a never-gestured ring does not resume; the first interaction unlocks", async () => {
   resetWindowListeners();
@@ -143,11 +142,7 @@ test("a never-gestured ring does not resume; the first interaction unlocks", asy
   await new Promise((resolve) => setImmediate(resolve));
   assert.equal(ctx.state, "running", "the first interaction unlocks the ring");
   assert.equal(ctx.resumeCalls, 1);
-  assert.equal(
-    pointerBaseline(),
-    baseline,
-    "the unlock disarms itself after succeeding",
-  );
+  assert.equal(pointerBaseline(), baseline, "the unlock disarms itself after succeeding");
   globalThis.window.dispatchWindow("keydown");
   assert.equal(ctx.resumeCalls, 1, "no duplicate resume from the keydown");
   audio.ringToneStop();
@@ -163,11 +158,7 @@ test("a refused resume stays armed; the next gesture retries", async () => {
   globalThis.window.dispatchWindow("pointerdown");
   await new Promise((resolve) => setImmediate(resolve));
   assert.equal(ctx.state, "suspended", "the refused resume changes nothing");
-  assert.equal(
-    pointerBaseline(),
-    baseline + 1,
-    "the unlock stays armed for the next interaction",
-  );
+  assert.equal(pointerBaseline(), baseline + 1, "the unlock stays armed for the next interaction");
   ctx.resume = function () {
     this.resumeCalls = (this.resumeCalls ?? 0) + 1;
     this.state = "running";
@@ -189,11 +180,7 @@ test("a running context never re-arms the unlock", async () => {
   await new Promise((resolve) => setImmediate(resolve));
   const baseline = pointerBaseline();
   audio.ringToneStart();
-  assert.equal(
-    pointerBaseline(),
-    baseline,
-    "a running context must not arm listeners",
-  );
+  assert.equal(pointerBaseline(), baseline, "a running context must not arm listeners");
   assert.equal(ctx.resumeCalls, 1, "no resume attempt on an already-running context");
   audio.ringToneStop();
 });

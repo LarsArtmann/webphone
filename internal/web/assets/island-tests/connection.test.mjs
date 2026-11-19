@@ -658,8 +658,11 @@ test("a hung stop force-closes the abandoned transport", async (tc) => {
   registerers.at(-1).fire("Unregistered"); // wasRegistered: rebuild
   await tc.mock.timers.tick(3000); // the stop bound gives up
   await flushes();
-  assert.equal(agents[0].transport.disconnectCalls, 1,
-    "the hung stop's transport must be closed directly");
+  assert.equal(
+    agents[0].transport.disconnectCalls,
+    1,
+    "the hung stop's transport must be closed directly",
+  );
   assert.equal(agents.length, 2, "the rebuild still builds the fresh agent");
   assert.equal(pill(), t("registered"), "the fresh agent registers");
 });
@@ -684,25 +687,32 @@ test("a superseded agent's events drive nothing", async (tc) => {
   staleAgent.delegate.onDisconnect(new Error("late transport flap"));
   await tc.mock.timers.tick(4000);
   await flushes();
-  assert.equal(pill(), t("registered"),
-    "a superseded agent's transport flap must not touch the pill or the recovery rhythm");
+  assert.equal(
+    pill(),
+    t("registered"),
+    "a superseded agent's transport flap must not touch the pill or the recovery rhythm",
+  );
   assert.equal(agents.length, 2, "no reconnect chain on the dead agent");
 
   staleRegisterer.fire("Terminated");
   staleRegisterer.fire("Unregistered");
   await flushes();
-  assert.equal(agents.length, 2,
-    "a superseded registerer's teardown noise must not rebuild");
+  assert.equal(agents.length, 2, "a superseded registerer's teardown noise must not rebuild");
   assert.equal(pill(), t("registered"));
 
   state.incomingSessions.length = 0;
   const logBefore = logTexts().length;
   staleAgent.delegate.onInvite(incomingInvitation());
   await flushes();
-  assert.equal(state.incomingSessions.length, 0,
-    "a forked INVITE aimed at the stale agent is not a caller");
+  assert.equal(
+    state.incomingSessions.length,
+    0,
+    "a forked INVITE aimed at the stale agent is not a caller",
+  );
   assert.ok(
-    !logTexts().slice(logBefore).some((line) => line.includes("incoming call from")),
+    !logTexts()
+      .slice(logBefore)
+      .some((line) => line.includes("incoming call from")),
     "no ring, no announcement, no log for the stale fork",
   );
 });
