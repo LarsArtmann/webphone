@@ -28,6 +28,29 @@ jobs:
       - name: Build the webphone binary
         run: nix build -L .#webphone
 
+  # Pre-upload contract check (2026-11-19, hub pareto T20): the hub
+  # publishes a versioned frontmatter contract
+  # (catalog-frontmatter.v<N>.schema.json, byte-asserted into its dist);
+  # validating the export HERE turns a schema break into this repo's red
+  # instead of a red hub build naming webphone. Network-light: one HTTP
+  # fetch of the contract, one Go run of the exporter.
+  catalog-contract:
+    name: catalog export matches the hub frontmatter contract
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Export the catalog
+        run: go run ./cmd/webphone catalog -o work/out/webphone
+
+      - name: Validate against the published frontmatter contract
+        run: python3 scripts/check-catalog-contract.py --export work/out/webphone
+
   # The live smoke (plan T15.5 finding, 2026-10-30): the 6-scenario
   # self-booting suite (restart, boot-failure, ASR, dial-gate, faxcap)
   # never ran in CI — every verdict was a human running it locally. The
