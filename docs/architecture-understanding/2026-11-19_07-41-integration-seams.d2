@@ -101,7 +101,7 @@ core.gateway -> pbx: loopback (dev)
 core.pbxseam -> pbx: directory verify · CDR · proxy
 pbx -> core.pbxseam: xml_curl directory asks
 core.crmseam -> kith: "GET /api/contacts/by-phone · /context (bearer)"
-kith -> core.crmseam: Person{Ref,Name} + Context
+kith -> core.crmseam: "Person{Ref,Name} + Context"
 core.paperlessseam -> paperlessd: archive inbound fax documents
 core.asrseam -> speaches: whole audio segments (multipart)
 core.agentseam -> agentapi: "POST /draft (transcript hint)"

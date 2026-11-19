@@ -264,5 +264,5 @@ webphone.comms.matrix -> matrixhs: /sync
 webphone.comms.signal -> signald: socket
 webphone.identity.sso -> pocketid: OIDC dance
 webphone.operator_services.push -> android: draft_ready + ring
-bridge -> webphone.http.hooks: webhook {url}/message|/fax
+bridge -> webphone.http.hooks: "webhook {url}/message|/fax"
 pbxstack -> webphone.http.hooks: "POST /hooks/ring (dialplan ringhook)"
