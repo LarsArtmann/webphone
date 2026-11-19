@@ -111,3 +111,23 @@ release ritual is deliberately out of agent hands").
   class, VoicemailItem/authmap.Map/Shell renames, FCM single-flight,
   blob brand-before-write, Seq-as-retention-clock, asr.Locality tails,
   favicon split brain, README install section + testdata fixtures.
+
+## f) Routed work, restated (section appended 21:55 — see note)
+
+> NOTE: this report shipped without an `## f)` section, which reds the
+> docs-gates `status-f-section` precondition ("the freshness gate would
+> pass it vacuously"). The rows below are THIS report's own §Routing and
+> still-open lists restated in the gate's harvest shape — no new claims;
+> the TODO_LIST homes are the ones the report itself names.
+
+1. **File-size gate refresh + release-blocker posture** — routed: TODO_LIST § "2026-11-19 ~21:00 verification-session harvest".
+2. **VM-tests split** (vm-tests.nix decomposition) — routed: same harvest section.
+3. **erraudit JS directive triage** — routed: same harvest section.
+4. **Deepening owner pick** (the 08-10 candidates' §g register) — routed: same harvest section (owner).
+5. **Bump-train handoff + go-structure-linter info tail** — routed: same harvest section.
+6. **FindThread → ResolveThreadID rename class + VoicemailItem/authmap.Map/Shell renames** — open: the "naming adjudication train" TODO row (4 renames remain).
+7. **FCM token-mint single-flight** — open: the "fcr small-findings batch" TODO row.
+8. **Blob brand-before-write + Seq-as-retention-clock comment** — open: the "fcr small-findings batch" TODO row.
+9. **asr.Locality tails** — open: the "type tails from data-model review #6" TODO row.
+10. **favicon green split brain** — open: its own 2026-11-19 TODO row.
+11. **README install section + testdata fixtures** — open: the verification-session harvest section's row.
