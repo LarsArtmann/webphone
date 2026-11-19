@@ -1,0 +1,144 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    theme-id: 200
+  }
+}
+
+classes: {
+  intake: {
+    style: {
+      fill: "#6eb5ff"
+      stroke: "#6eb5ff"
+      font-color: "#0e0e10"
+      bold: true
+    }
+  }
+  decision: {
+    style: {
+      fill: "#f4d35e"
+      stroke: "#f4d35e"
+      font-color: "#0e0e10"
+    }
+  }
+  journal: {
+    style: {
+      fill: "#1d1d24"
+      stroke: "#f4d35e"
+      stroke-width: 2
+      font-color: "#f4d35e"
+      bold: true
+    }
+  }
+  projection: {
+    style: {
+      fill: "#1d1d24"
+      stroke: "#ffb347"
+      font-color: "#f4f4f0"
+    }
+  }
+  push: {
+    style: {
+      fill: "#1d1d24"
+      stroke: "#6eb5ff"
+      font-color: "#f4f4f0"
+    }
+  }
+  browser: {
+    style: {
+      fill: "#f4d35e"
+      stroke: "#f4d35e"
+      font-color: "#0e0e10"
+      bold: true
+    }
+  }
+  external: {
+    style: {
+      fill: "#26262e"
+      stroke: "#8a8a96"
+      stroke-dash: 4
+      font-color: "#f4f4f0"
+    }
+  }
+}
+
+direction: down
+
+sources: command + fact intake {
+  class: intake
+  compose: "compose form POST /messages/send (templ bucketed limiter)"
+  hooks: "/hooks/message · /hooks/fax · /hooks/status (Bearer secret, hooksIdem 1h, fail-closed 503)"
+  receivers: "matrix /sync loop · signal socket reader → Service.Receive (same lane as webhooks)"
+  faxui: "fax send · resend POST (fax.Service)"
+  flags: "thread flag toggles POST /messages/{id}/{flag}?on=N (desired state)"
+  agent: "POST /api/calls/{id}/summary-draft · /review (CallsIdem: exactly one of the two ever drafts)"
+  ownerwrites: "contacts · snippets · dial windows · push devices · call notes · enroll (cqrs aggregates)"
+}
+
+tables: machine tables — the ONE home of lifecycle legality (internal/domain) {
+  class: decision
+  delivery: "deliveryMoves + DeliveryAdvance — out-of-order verdicts legal from EVERY state (A1.7 owner call)"
+  faxmoves: "faxMoves + FaxAdvance — outbound lifecycle vs inbound received FACT"
+  append: "AppendToThread — thread append invariants (store's append transaction consults it, no parallel SQL CASE)"
+}
+
+deciders: cqrs deciders (internal/cqrs) {
+  class: decision
+  list: "threads · faxes · contacts · transcripts · snippets · dial(+windows) · pushdevices · callnotes · callreviews · enroll · agentaudit"
+}
+
+journalcore: journal — system.db (go-cqrs-lite engine) {
+  class: journal
+  append: "append-only streams (owner-keyed)"
+  dedup: "sys.Dedup() — ONE CAS home (hooksIdem · CallsIdem · fax replay guard)"
+  rYW: "read-your-writes: awaitOwnWrite — worker checkpoint, 250ms budget"
+  retention: "retention tombstones → TrimStream trims stream bytes (GDPR arm)"
+}
+
+projections: projections {
+  class: projection
+  views: "thread/message views · fax views · contact views · transcripts · snippets · dial windows · push_devices · call_notes · call_reviews · enroll tokens · agent audit"
+  readiness: "ProjectionReadinessCheck → /healthz projections leg (passkey-on)"
+}
+
+notifier: Notifier.Project — the ONE home of notification policy (switch, internal/server) {
+  class: push
+  policy: "message events → list + transcript · ThreadFlagChanged → list ONLY (no thread id on purpose) · FaxAdvanced → fax list · ReviewSaved → review chip · contacts/voicemail → payload-less NUDGES"
+}
+
+hubs: ExtensionHubs — one cqrshtmx.Broadcaster per signed-in extension {
+  class: push
+  lang: "remembers wp-lang per extension for fragments"
+  shutdown: "Shutdown() releases live streams pre-drain (restarts ≪ 30s)"
+}
+
+sse: "/events SSE — Broadcaster.ServeSSE (session-required)" {
+  class: push
+}
+
+morphs: island + tab morph surfaces {
+  class: browser
+  surfaces: "thread list · #thread-transcript · fax list · voicemail re-fetch · contacts panel · refreshNav — all hx-swap morph:innerHTML (idiomorph, ONE bundle)"
+  zero: "threads nudge with thread id 0 skips the transcript push (an empty payload would wipe the open conversation)"
+}
+
+externalin: external fact sources {
+  class: external
+  bridge: telnyx-webhooks bridge (pbx-artmann)
+  dialplan: "FS dialplan POST /hooks/ring (fire-and-forget 202)"
+}
+
+sources -> deciders: commands + inbound facts
+deciders -> tables: "consult verbatim at the decision"
+tables -> deciders: legal / illegal (Rejection)
+deciders -> journalcore: append events
+journalcore -> projections: fold (worker)
+projections -> notifier: service ChangeFunc (wired in app.go)
+notifier -> hubs: render swap-safe fragments
+hubs -> sse: broadcast
+sse -> morphs: "event-stream pushes"
+sources.agent -> journalcore.dedup: idem windows guard replays
+journalcore.retention -> journalcore.append: tombstones then trims
+projections.readiness -> sse: 503 names a failed/draining worker
+externalin.bridge -> sources.hooks: multipart + Bearer
+externalin.dialplan -> sources.hooks: ring hook (no journal — push lane only)

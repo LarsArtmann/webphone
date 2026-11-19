@@ -1,0 +1,108 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    theme-id: 200
+  }
+}
+
+classes: {
+  repo: {
+    style: {
+      fill: "#1d1d24"
+      stroke: "#ffb347"
+      font-color: "#ffb347"
+      bold: true
+    }
+  }
+  host: {
+    style: {
+      fill: "#26262e"
+      stroke: "#8a8a96"
+      stroke-dash: 4
+      font-color: "#f4f4f0"
+    }
+  }
+  consumer: {
+    style: {
+      fill: "#1d1d24"
+      stroke: "#6eb5ff"
+      font-color: "#f4f4f0"
+    }
+  }
+  flow: {
+    style: {
+      fill: "#6eb5ff"
+      stroke: "#6eb5ff"
+      font-color: "#0e0e10"
+      bold: true
+    }
+  }
+}
+
+direction: down
+
+webphone: webphone (this repo) {
+  class: repo
+  version: "flake.nix webphoneVersion (release.sh greps/seds it) — MUST stay in flake.nix"
+  pkg: "nix build .#webphone — single Go binary, vendored deps, vendorHash pinned"
+  gates: "nix flake check: package · tests · treefmt · island-lint · island-js · island-typecheck · kvm-gated backup VM"
+}
+
+stack: nix-international-telephony (the stack) {
+  class: repo
+  import: "imports webphone nixosModules.default — RIDES webphone main (per-train lock bump)"
+  caddy: "Caddy front: TLS · reverse_proxy (unbuffered /events + /health) · WSS /sip proxy → FreeSWITCH"
+  freeswitch: "FreeSWITCH with MIRRORED module set (+xml_int.curl credential bridge) — telephony-eval check pins the module universe"
+  ringhook: "ringhook.py loopback shim → POST /hooks/ring from the dialplan"
+  typed: "typed fronts: oauth2 · crm · textagent · passkey · dashboard · backup (secrets via LoadCredential, never rendered)"
+}
+
+pbxartmann: pbx-artmann (deployment config) {
+  class: repo
+  pin: "consumes the stack via a REV PIN — its narHash covers the WHOLE stack tree (must be CLEAN before relock)"
+  bridge: "telnyx-webhooks.py — the gateway seam's consumer (loopback vs webhook contracts)"
+}
+
+operator: Operator browsers + Android app {
+  class: consumer
+  web: "HTTPS to Caddy vhost (SSO-gated /health)"
+  android: "webphone-android (P1 native shell — push via ntfy+FCM)"
+}
+
+host: "the host /var/lib/webphone (dataDir assertion)" {
+  class: host
+  data: "system.db · usermgmt.db · blob tree · traces (ride the backup tar)"
+  backup: "backup module: null = single snapshot · set = dated history + prune (webphone-backup + restore-drill checks)"
+}
+
+catalog: catalog.home.lan (EventCatalog federation hub) {
+  class: consumer
+  specs: "webphone catalog export — asyncapi.yaml (/hooks/* + SSE) + openapi.json (bare filenames, path: pinned)"
+}
+
+monitoring: scrapers {
+  class: consumer
+  metrics: "/metrics (aggregates only — no route labels)"
+}
+
+release: release ritual (docs/release-runbook.md) {
+  class: flow
+  order: "PUSH webphone → stack re-pins (lock bump) → stack tree CLEAN → pbx-artmann re-locks → release.sh gates on vulnix"
+}
+
+webphone -> stack: "flake input (rides main)"
+stack -> pbxartmann: "flake input (rev pin)"
+release -> webphone: 1
+release -> stack: 2
+release -> pbxartmann: 3
+operator.web -> stack.caddy: HTTPS
+operator.android -> webphone: "registers devices (/api/push-devices)"
+stack.caddy -> webphone: reverse_proxy
+stack.caddy -> stack.freeswitch: "/sip WSS"
+stack.freeswitch -> stack.ringhook: dialplan ring arm
+stack.ringhook -> webphone: POST /hooks/ring (loopback)
+pbxartmann.bridge -> webphone: "{url}/message|/fax webhooks"
+webphone -> host: reads/writes dataDir
+host.backup -> host.data: snapshots + restore drills
+webphone -> catalog: "webphone catalog (pure render)"
+monitoring -> webphone: scrape /metrics

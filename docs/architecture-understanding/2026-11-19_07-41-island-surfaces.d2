@@ -1,0 +1,118 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    theme-id: 200
+  }
+}
+
+classes: {
+  islandmod: {
+    style: {
+      fill: "#f4d35e"
+      stroke: "#f4d35e"
+      font-color: "#0e0e10"
+    }
+  }
+  shelljs: {
+    style: {
+      fill: "#ffb347"
+      stroke: "#ffb347"
+      font-color: "#0e0e10"
+    }
+  }
+  neutral: {
+    style: {
+      fill: "#1d1d24"
+      stroke: "#f4d35e"
+      stroke-dash: 4
+      font-color: "#f4d4a0"
+    }
+  }
+  server: {
+    style: {
+      fill: "#1d1d24"
+      stroke: "#6eb5ff"
+      font-color: "#f4f4f0"
+    }
+  }
+  machine: {
+    style: {
+      fill: "#101014"
+      stroke: "#f4d35e"
+      font-color: "#f4d35e"
+    }
+  }
+}
+
+direction: down
+
+browser: browser — one document, island never unloads {
+  main: "main.js — the import root (TestIslandModulesMatchImportClosure: EVERY island/app module is in its closure)" {
+    class: islandmod
+  }
+  callmods: "call plane: calls.js · ice.js · connection.js — NEVER import each other (acyclicity enforced by arch_test)" {
+    class: islandmod
+  }
+  statemods: "state.js + auth.js — the neutral substrate everything MAY import" {
+    class: neutral
+  }
+  mediamods: "audio.js · mic.js · pcsetup.js · audioout.js · sipverdict.js" {
+    class: islandmod
+  }
+  featuremods: "panels.js · transcribe.js · dialgate.js · postcall.js · typeahead.js · latency.js · notify.js · i18n.js · ui.js · shortcuts.js · session.js · csrf.js · config.js · selftest.js" {
+    class: islandmod
+  }
+  shell: "shell.js (classic script, OUTSIDE the closure) — tab→island affordances: data-dial · live-call badge · live-context slot · agent pill · command palette · morph focus move" {
+    class: shelljs
+  }
+  theme: "theme-preload.js — pre-paint island collapse (html class)" {
+    class: shelljs
+  }
+  events: "custom events: wp:calls-changed (ice syncs without importing calls) · wp:session-opened · wp:drafts-changed" {
+    class: neutral
+  }
+}
+
+surfaces: server surfaces {
+  configjs: "/config.js — window.PBX_CONFIG: sipDomain · websocketPath · iceServers · phoneApi · contacts · crm (+asr · dialCooldownSeconds · metrics · agent ONLY when on)" {
+    class: server
+  }
+  api: "/api/* — session · csrf · calls (+note/review/summary-draft) · transcribe · transcripts · contacts · dials · push-devices · metrics/latency · auth/webauthn (session-gated, CSRF)" {
+    class: server
+  }
+  sse: "/events — SSE (Broadcaster.ServeSSE, session-required, lang-aware fragments)" {
+    class: server
+  }
+  hooks: "/hooks/* — message · fax · status · ring (Bearer secret, machine-facing, never browser)" {
+    class: machine
+  }
+  partials: "/partials/live-context + tab partials (htmx targets)" {
+    class: server
+  }
+  loginpage: "/login + /enroll (standalone assets dirs: login-page.js · webauthn.js — outside the island closure)" {
+    class: server
+  }
+  phoneapi: "/phone-api/* — proxied PBX (voicemail recordings, Range passthrough)" {
+    class: server
+  }
+}
+
+statemods -> callmods: everyone may read state
+statemods -> mediamods: everyone may read state
+main -> callmods: imports
+main -> mediamods: imports
+main -> featuremods: imports
+main -> statemods: imports
+callmods -> events: "publish/subscribe (NO cross-imports)"
+shell -> callmods: "reads DOM state only (works when island scripts fail)"
+theme -> shell: pre-seeds collapse class
+
+browser.main -> surfaces.configjs: boot probe reads PBX_CONFIG
+browser.featuremods -> surfaces.api: authedFetch (CSRF via csrf.js)
+browser.callmods -> surfaces.api: "recordCrmCall · notes autosave · dial-gate ask · latency beacons"
+browser.shell -> surfaces.partials: "htmx.ajax live-context + tab nav"
+browser.shell -> surfaces.sse: "EventSource → morph:innerHTML swaps"
+browser.featuremods -> surfaces.phoneapi: voicemail + MMS audio
+surfaces.sse -> browser.shell: swap-safe fragments
+surfaces.hooks -> surfaces.sse: "inbound facts → Notifier → hubs (server-side only)"
+browser.statemods -> surfaces.loginpage: "session adopts via /api/session POST → adoptServerSession"

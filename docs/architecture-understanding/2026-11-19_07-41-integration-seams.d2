@@ -1,0 +1,114 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    theme-id: 200
+  }
+}
+
+classes: {
+  seam: {
+    style: {
+      fill: "#1d1d24"
+      stroke: "#6eb5ff"
+      font-color: "#f4f4f0"
+    }
+  }
+  config: {
+    style: {
+      fill: "#6eb5ff"
+      stroke: "#6eb5ff"
+      font-color: "#0e0e10"
+      bold: true
+    }
+  }
+  external: {
+    style: {
+      fill: "#26262e"
+      stroke: "#8a8a96"
+      stroke-dash: 4
+      font-color: "#f4f4f0"
+    }
+  }
+  machine: {
+    style: {
+      fill: "#101014"
+      stroke: "#f4d35e"
+      font-color: "#f4d35e"
+    }
+  }
+}
+
+direction: down
+
+core: webphone seams (config-gated · OFF = byte-identical · both-or-neither everywhere) {
+  class: seam
+
+  gateway: "gateway seam — loopback (dev, zero PBX) | webhook (multipart {url}/message|/fax, Bearer secret, provider_ref receipt) · SelfSendRejection (identities) · honest Content-Type parts"
+  pbxseam: "pbx seam — pbx.Client (directory verify fail-closed · CDR page) · /phone-api proxy (rides PhoneAPI.HTTPClient, Range passthrough) · GET /internal/directory/{ext} (xml_curl bridge, loopback+Bearer, machineSurface)"
+  crmseam: "CRM seam (Kith) — crm.Resolver: names 6h/5min · context 2min/15min · cap 1024/256 · transport failures never cached · single-flight · server-to-server only (browser never talks to the CRM) · data mesh, not replica"
+  paperlessseam: "paperless seam — inbound faxes only · fire-and-forget after persist+notify · duplicate refusal = inert success · blob store stays storage truth"
+  asrseam: "ASR seam — asr.url ALONE enables · POST /api/transcribe → {url}/v1/audio/transcriptions · local-provider doctrine (GDPR) · auto-start on Established"
+  agentseam: "textagent seam — review API /draft (+framed transcript, tail-cap 6000) · loopback http is the normal url shape · summarize + detached review artifact"
+  pushseam: "push seam — ntfy (JSON to server root, topic in body, priority 5/3) + FCM (RS256 JWT-bearer, no SDK): two INDEPENDENT transports · ErrUnregistered prunes the device row · write-only token doctrine"
+  chatseam: "chat-network seam — domain.Network (sms|signal|session|matrix) inside Address · sender registry (unregistered = Rejection) · receivers call the SAME Service.Receive"
+  identityseam: "identity — passkey: userauth in-process usermgmt v4 (own usermgmt.db) · sso: Pocket ID OIDC · /login is THE front door (loginpage ExtraSection)"
+}
+
+off: "config keys: crm.{url,token,token_file,ca_file} · paperless.{url,token} · asr.{url,token,model} · push.ntfy.* · push.fcm.credentials_file · gateway.{mode,url,webhook_secret} · auth.passkey.* · auth.oauth2.* · textagent.{url,secret}" {
+  class: config
+}
+
+pbx: FreeSWITCH (stack) {
+  class: external
+}
+bridged: telnyx-webhooks bridge (pbx-artmann) {
+  class: external
+}
+kith: Kith CRM {
+  class: external
+}
+paperlessd: Paperless {
+  class: external
+}
+speaches: Speaches / local ASR {
+  class: external
+}
+agentapi: textagent review API (stack-side) {
+  class: external
+}
+ntfyd: ntfy server {
+  class: external
+}
+fcmd: FCM {
+  class: external
+}
+android: webphone-android (registers via CSRF dance) {
+  class: external
+}
+matrixhs: Matrix homeserver {
+  class: external
+}
+signald: Signal daemon {
+  class: external
+}
+pocketid: Pocket ID IdP {
+  class: external
+}
+
+core.gateway -> bridged: "{url}/message|/fax multipart + Bearer"
+bridged -> core.gateway: "receipt {provider_ref} + status hooks"
+core.gateway -> pbx: loopback (dev)
+core.pbxseam -> pbx: directory verify · CDR · proxy
+pbx -> core.pbxseam: xml_curl directory asks
+core.crmseam -> kith: "GET /api/contacts/by-phone · /context (bearer)"
+kith -> core.crmseam: Person{Ref,Name} + Context
+core.paperlessseam -> paperlessd: archive inbound fax documents
+core.asrseam -> speaches: whole audio segments (multipart)
+core.agentseam -> agentapi: "POST /draft (transcript hint)"
+core.pushseam -> ntfyd: "publish JSON (priority 5 ring / 3 end)"
+core.pushseam -> fcmd: messages:send
+core.pushseam -> android: draft_ready facts
+core.chatseam -> matrixhs: "/sync (cursor in app_flags) · send"
+core.chatseam -> signald: socket read · send
+core.identityseam -> pocketid: OIDC (discovery eager, PKCE)
+off -> core: gates every seam (fail-closed boot on wrong halves)

@@ -1,0 +1,199 @@
+vars: {
+  d2-config: {
+    layout-engine: elk
+    theme-id: 200
+  }
+}
+
+classes: {
+  actor: {
+    style: {
+      fill: "#f4d35e"
+      stroke: "#f4d35e"
+      font-color: "#0e0e10"
+      bold: true
+    }
+  }
+  front: {
+    style: {
+      fill: "#6eb5ff"
+      stroke: "#6eb5ff"
+      font-color: "#0e0e10"
+      bold: true
+    }
+  }
+  surface: {
+    style: {
+      fill: "#ffb347"
+      stroke: "#ffb347"
+      font-color: "#0e0e10"
+    }
+  }
+  service: {
+    style: {
+      fill: "#1d1d24"
+      stroke: "#ffb347"
+      font-color: "#f4f4f0"
+    }
+  }
+  seam: {
+    style: {
+      fill: "#1d1d24"
+      stroke: "#6eb5ff"
+      font-color: "#f4f4f0"
+    }
+  }
+  base: {
+    style: {
+      fill: "#101014"
+      stroke: "#4a4a55"
+      font-color: "#c9c9d4"
+    }
+  }
+  external: {
+    style: {
+      fill: "#26262e"
+      stroke: "#8a8a96"
+      stroke-dash: 4
+      font-color: "#f4f4f0"
+    }
+  }
+  delta: {
+    style: {
+      fill: "#101014"
+      stroke: "#f4d35e"
+      stroke-width: 2
+      font-color: "#f4d35e"
+      bold: true
+    }
+  }
+  settled: {
+    style: {
+      fill: "#101014"
+      stroke: "#6a9a5c"
+      font-color: "#9fce8f"
+    }
+  }
+}
+
+direction: down
+
+operator: Operator (browser) {
+  class: actor
+  island: SIP island
+  tabs: HTMX tabs
+  login: "/login front door"
+}
+
+front: TLS front — Caddy (stack module) {
+  class: front
+  style.stroke-dash: 4
+  web: reverse_proxy + /events + /health unbuffered
+  sip: /sip WSS bridge
+}
+
+webphone: webphone single binary — target state (2026-11-19) {
+  style: {
+    stroke: "#ffb347"
+    stroke-width: 2
+    font-color: "#ffb347"
+    bold: true
+  }
+
+  cmd: cmd/webphone — process concerns {
+    class: base
+    export: "delta: webphone export-legacy -table … -check — confirm tool gates the frozen-ladder DROP (TODO_LIST)"
+  }
+
+  app: internal/app — composition root (samber/do v2) {
+    class: surface
+    hotreload: "delta: ownership hot-reload — MapSource atomic-swap (design DONE 2026-11-18, implement owner-gated)"
+  }
+
+  http: HTTP surface — four carves = end state {
+    class: surface
+    wiring: "wiring — Deps · chain · mount"
+    auth: server/auth — login · session · passkey · sso
+    htmlhub: "server (html hub) — pages · panels · actions · notifier · sse: SETTLED residual (carve RULED OUT 2026-11-12)"
+    platform: server/platform — assets · metrics · csp · trace · proxy
+    api: server/api — JSON surfaces
+    hooks: server/hooks — webhook ingest
+    adminlane: "delta: admin D4 delegation — approve-on-behalf-of · per-contact scopes (write-shaped admin actions REJECTED today by design)"
+  }
+
+  identity: identity {
+    class: seam
+    userauth: userauth — in-process usermgmt v4
+    auditlog: "delta: AuditLog bounded read projection WIRED (owner-gated refresh trigger — the ring is bounded 10k, upstream ask closed)"
+    sso: sso — Pocket ID OIDC
+    authmap: authmap — Lines[] ownership
+    session: session — SQLite rows, sliding TTL
+    sipcred: sipcred
+  }
+
+  comms: comms services {
+    class: service
+    messaging: messaging.Service — sender registry
+    matrix: matrix — /sync loop
+    signal: signal — socket reader
+    faxsvc: fax.Service
+    gateway: "gateway — loopback | webhook"
+  }
+
+  operator_services: operator services {
+    class: service
+    crmres: crm.Resolver
+    textagent: textagent
+    asr: asr.Client
+    push: push — ntfy + FCM
+    reports: reports (pure)
+    retention: retention
+  }
+
+  journal: ONE journal world {
+    class: seam
+    cqrs: cqrs — deciders + projections
+    readmodels: readmodels — gates + views (purity pinned)
+    store: "store — sessions SQL only (import-only ladder DROPPED after export-or-confirm)"
+    delivery: "delta: deliveryMoves tightened — out-of-order verdict rows deleted at the table (owner call A1.7)"
+  }
+
+  shell: shell layer {
+    class: base
+    views: web/views — templ surfaces
+    assets: web/assets — island JS
+  }
+
+  fleet: fleet frame (owner ruling 2026-11-12) {
+    class: seam
+    preset: "delta: go-appkit preset adopted LAST — after upstream asks #59 strict readiness · #60 aggregates-only metrics · #61 httpx success-status"
+  }
+}
+
+sysdb: system.db {
+  shape: cylinder
+  class: base
+}
+usermgmtdb: usermgmt.db {
+  shape: cylinder
+  class: base
+  coverage: "delta: backup coverage verified (backup-script covers webphone.db/system.db/files today — usermgmt.db unverified)"
+}
+
+operator -> front: HTTPS
+front -> webphone.http: reverse_proxy
+front -> pbxstack: /sip WSS proxy
+pbxstack: FreeSWITCH PBX (stack) {
+  class: external
+}
+android: webphone-android {
+  class: external
+  lines: "delta: renders line picker from lines[{extension,did}] wire (TODO §f-5)"
+}
+webphone.cmd -> webphone.app: starts
+webphone.app -> webphone.http: Deps
+webphone.http -> webphone.shell: renders
+webphone.identity -> usermgmtdb: journals
+webphone.journal.cqrs -> sysdb: journal + projections
+webphone.operator_services.push -> android: ring + draft_ready
+webphone.journal.store -> sysdb: sessions
