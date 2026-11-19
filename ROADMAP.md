@@ -147,7 +147,7 @@ re-check:
 - sip.js: revisit on a 0.22 release, a reconnect-hang fix, or a
   security advisory (evaluation: `docs/reviews/archived/2026-09-18_sip-js-0.22-evaluation.md`).
 - Attended-transfer GO day (M19 re-open trigger, routed 2026-11-14 from
-  docs/status/2026-10-27_13-56_multicall-agent-ux-train-final-status.md
+  docs/status/archived/2026-10-27_13-56_multicall-agent-ux-train-final-status.md
   §f5/§f50): a stack FS lab with Replaces dialplan handling plus an
   attended-REFER-with-Replaces VM scenario; the island consult-flow
   sketch waits in
@@ -235,7 +235,7 @@ the stack browser E2E passed on the bumped tree. What remains:
 ## Open questions (owner calls)
 
 - **Native Linux desktop app still wanted?** (routed 2026-11-14 from
-  docs/status/2026-10-27_16-35_typescript-plan-session-status-and-self-review.md
+  docs/status/archived/2026-10-27_16-35_typescript-plan-session-status-and-self-review.md
   §g2 — the question sat only in that report): the 2026-10-23 demand said
   "native Linux and Android", but the shipped P1 path delivers Android
   only and KMP was rejected partly because the Linux WebRTC leg is weak.
@@ -261,14 +261,14 @@ the stack browser E2E passed on the bumped tree. What remains:
   by nature (the step lives upstream) and it interacts with per-package vs
   union attribution — see the `-coverpkg` idea above. Owner policy call.
 - **CI-bar subset policy for docs/test-only changes** (§g-Q1, raised
-  2026-10-06 in `docs/status/2026-10-06_04-12_round3-assistant-legs-brutal-review.md`
+  2026-10-06 in `docs/status/archived/2026-10-06_04-12_round3-assistant-legs-brutal-review.md`
   and re-surfaced in the 13:12 review; routed 2026-11-06 — it lived only in
   timestamped reports). Which CI legs may be skipped for a docs-only or
   test-only commit, and which must NEVER be (tonight's red argues the
   formatter gate must never be the dropped subset)? Pairs with the session-exit
   fmt-first checklist question in that same report.
 - **`--border-strong` vs WCAG 1.4.11** (routed 2026-11-06 from the
-  `docs/status/2026-10-04_19-42_cascade-fix-verification-t4-t8-status.md` §g.3;
+  `docs/status/archived/2026-10-04_19-42_cascade-fix-verification-t4-t8-status.md` §g.3;
   it lived only in that timestamped report). The strong border token measures
   1.86:1 (light) / 1.53:1 (dark) against its surface, below 1.4.11's 3:1 for
   non-text UI. Decide: ACCEPT AND RECORD (the border is decorative separation,
