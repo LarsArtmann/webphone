@@ -51,7 +51,7 @@
         ./nix/apps.nix
         ./nix/checks.nix
         ./nix/module-check.nix
-        ./nix/vm-tests.nix
+        ./nix/vm-tests
         ./nix/devshell.nix
         ./nix/treefmt.nix
       ];

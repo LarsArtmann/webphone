@@ -1,7 +1,7 @@
 # The fast checks: the package itself, the formatter gate, the island
 # JS tests, the vulnix-triage fixture smoke, the Nix linters, and the
 # island no-undef gate. The module-eval check and the VM-backed tests
-# live in ./module-check.nix and ./vm-tests.nix.
+# live in ./module-check*.nix and ./vm-tests/.
 # `self` is a TOP-level flake-parts module arg (not perSystem) — it is
 # declared here and reaches the perSystem body via lexical closure.
 {

@@ -611,11 +611,10 @@ class FakePhoneAPI:
                 # (both the server-side client and the /phone-api proxy), so the
                 # fake sees prefixed paths; normalize once at the handler door.
                 path = self.path
-                if path.startswith("/phone-api"):
-                    path = path[len("/phone-api"):]
+                path = path.removeprefix("/phone-api")
                 return path
 
-            def do_GET(self):  # noqa: N802 - http.server API
+            def do_GET(self):
                 path = self._stripped_path()
                 if path.endswith("/summary"):
                     fresh = sum(1 for m in outer.messages if not m["read"])
@@ -642,7 +641,7 @@ class FakePhoneAPI:
                     return
                 self._json(404, {"error": "not found"})
 
-            def do_DELETE(self):  # noqa: N802 - http.server API
+            def do_DELETE(self):
                 uuid = self._stripped_path().rstrip("/").rsplit("/", 1)[-1]
                 before = len(outer.messages)
                 outer.messages = [m for m in outer.messages if m["uuid"] != uuid]
@@ -659,7 +658,7 @@ class FakePhoneAPI:
             message["audio_url"] = f"/phone-api/vm/{message['uuid']}{suffix}"
         self._thread = threading.Thread(target=self._server.serve_forever, daemon=True)
 
-    def start(self) -> "FakePhoneAPI":
+    def start(self) -> FakePhoneAPI:
         self._thread.start()
         return self
 
@@ -684,7 +683,9 @@ def mint_enroll_token(
     one-shot, under the SAME config file + data dir the booted server
     holds (the shared-journal contract). Retried once: both processes
     open the SQLite journal, and a busy lock is a race, not a verdict."""
-    os.makedirs(datadir, exist_ok=True)  # SQLite cannot open the enroll journal in a missing parent dir
+    os.makedirs(
+        datadir, exist_ok=True
+    )  # SQLite cannot open the enroll journal in a missing parent dir
     env = dict(os.environ)
     env.update(
         {
@@ -733,9 +734,9 @@ def journey_passkey(driver, domain_base: str, c: Check, token: str, email: str) 
     # value is the proof the submit handler is bound (never click before).
     wait(
         driver,
-        lambda d: (
-            lambda els: bool(els) and els[0].get_attribute("value") == token
-        )(d.find_elements("css selector", "#enroll-token")),
+        lambda d: (lambda els: bool(els) and els[0].get_attribute("value") == token)(
+            d.find_elements("css selector", "#enroll-token")
+        ),
         timeout=15,
     )
     try:
@@ -763,8 +764,10 @@ def journey_passkey(driver, domain_base: str, c: Check, token: str, email: str) 
         driver.find_element("css selector", "#lp-login-btn").click()
         wait(
             driver,
-            lambda d: d.current_url.rstrip("/") == domain_base
-            and bool(d.find_elements("css selector", "#reg-status")),
+            lambda d: (
+                d.current_url.rstrip("/") == domain_base
+                and bool(d.find_elements("css selector", "#reg-status"))
+            ),
             timeout=20,
         )
         c.ok("J-passkey login lands on the shell", True)
@@ -855,7 +858,11 @@ def journey_line_switcher(driver, base: str, c: Check) -> None:
             f"whoami={who[:80]}",
         )
     except Exception as err:  # noqa: BLE001 - journey assertion failure, not control flow
-        c.ok("J-switch reload lands with whoami on the second line", False, str(err)[:120])
+        c.ok(
+            "J-switch reload lands with whoami on the second line",
+            False,
+            str(err)[:120],
+        )
     try:
         wait(
             driver,
@@ -867,11 +874,9 @@ def journey_line_switcher(driver, base: str, c: Check) -> None:
         c.ok("J-switch SSE resubscribes after the reload", False, str(err)[:120])
 
 
-def journey_dial_gate(driver, base: str, c: Check, seed: "Seed", remote: str) -> None:
+def journey_dial_gate(driver, base: str, c: Check, seed: Seed, remote: str) -> None:
     def gate(extension_override: bool) -> tuple[int, bytes]:
-        body = json.dumps(
-            {"remote": remote, "override": extension_override}
-        ).encode()
+        body = json.dumps({"remote": remote, "override": extension_override}).encode()
         return seed.request("POST", "/api/dials", body, "application/json")
 
     status, first = gate(False)
@@ -934,9 +939,7 @@ def journey_voicemail(driver, base: str, c: Check) -> None:
     driver.get(base + "/voicemail")
     try:
         rows = wait(driver, lambda d: d.find_elements("css selector", "[data-vm-play]"))
-        c.ok(
-            "J-vm rows render from the phone API", len(rows) == 2, f"rows={len(rows)}"
-        )
+        c.ok("J-vm rows render from the phone API", len(rows) == 2, f"rows={len(rows)}")
     except Exception as err:  # noqa: BLE001 - journey assertion failure, not control flow
         c.ok("J-vm rows render from the phone API", False, str(err)[:120])
         return
@@ -963,7 +966,9 @@ def journey_voicemail(driver, base: str, c: Check) -> None:
         click_retry("[data-vm-play='e2e-dead-uuid']")
         wait(
             driver,
-            lambda d, b=before: len(d.find_elements("css selector", "#toasts .toast")) > b,
+            lambda d, b=before: (
+                len(d.find_elements("css selector", "#toasts .toast")) > b
+            ),
             timeout=15,
         )
         peak = before + 1
@@ -989,8 +994,8 @@ def journey_voicemail(driver, base: str, c: Check) -> None:
             click_retry(f"[hx-post*='uuid={uuid}']")
             wait(
                 driver,
-                lambda d, u=uuid: not d.find_elements(
-                    "css selector", f"[data-vm-play='{u}']"
+                lambda d, u=uuid: (
+                    not d.find_elements("css selector", f"[data-vm-play='{u}']")
                 ),
                 timeout=15,
             )
@@ -1000,7 +1005,9 @@ def journey_voicemail(driver, base: str, c: Check) -> None:
     try:
         wait(
             driver,
-            lambda d: d.find_elements("css selector", "#voicemail-panel .wp-empty-state"),
+            lambda d: d.find_elements(
+                "css selector", "#voicemail-panel .wp-empty-state"
+            ),
         )
         c.ok("J-vm empty state after the last delete", True)
     except Exception as err:  # noqa: BLE001 - journey assertion failure, not control flow
