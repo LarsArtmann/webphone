@@ -31,6 +31,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`/metrics` totals read the journal only** — the legacy
+  webphone.db contribution to `webphone_threads_total`/
+  `webphone_messages_total` is retired: every reachable deployment
+  reads zero from the frozen tables (the A35 importer stamped its
+  marker before its deletion; fresh boots never wrote legacy rows), so
+  the per-scrape reads were permanently-zero cost and a future
+  "no such table" 500 once the storage ladder's DROP migration lands.
+  `ReadCounts` shrinks to `CountSessions`; `FlagPresent` retires with
+  it (the import markers' last reader).
 - `FindThread` is now **`ResolveThreadID`** (2026-11-20, pareto T12, the
   naming review's first big-blast-radius rename): the readmodels gate
   method, both implementations (store + journal), the messaging call
