@@ -23,6 +23,7 @@ import (
 	"github.com/larsartmann/go-error-family"
 
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/push"
 	"github.com/larsartmann/webphone/internal/readmodels"
 )
 
@@ -40,7 +41,7 @@ type SavePushDevice struct {
 	*command.BasicCommand
 	Owner     string
 	DeviceID  string
-	Transport string
+	Transport push.Transport
 	Token     string
 	Now       time.Time
 }
@@ -102,7 +103,7 @@ func decideSavePushDevice(s pushDevicesState, ver event.Version, cmd SavePushDev
 	}
 	evt, err := event.New(event.Type(metaengine.EventTypeName(domain.PushDeviceRegistered{})), cmd.StreamID(), PushDevicesStreamType, ver.Increment(), domain.PushDeviceRegistered{
 		Key:       domain.PushDeviceKey{Owner: cmd.Owner, DeviceID: cmd.DeviceID},
-		Transport: cmd.Transport,
+		Transport: string(cmd.Transport),
 		Token:     cmd.Token,
 		UpdatedAt: cmd.Now,
 	}, event.WithSchemaVersion(1))
@@ -163,7 +164,7 @@ func pushDevicesProjection() metaengine.QueryDecl[pushDevicesKeyInput, readmodel
 				return e.Key, readmodels.PushDeviceView{
 					Owner:     e.Key.Owner,
 					DeviceID:  e.Key.DeviceID,
-					Transport: e.Transport,
+					Transport: push.Transport(e.Transport),
 					Token:     e.Token,
 					UpdatedAt: e.UpdatedAt.UnixNano(),
 				}
@@ -225,7 +226,7 @@ func NewPushDevices(sys *system.System) *PushDevices {
 // NEW id past the per-owner cap answers the ErrListFull rejection.
 //
 // brandid-lint:ignore(BD003) store-seam transport: the client-generated device id keys journal rows (strong-id wire ruling)
-func (s *PushDevices) Upsert(ctx context.Context, owner domain.Extension, deviceID, transport, token string) error { //nolint:branching-flow // verbatim port of the retired engine store's Upsert signature (parity rule)
+func (s *PushDevices) Upsert(ctx context.Context, owner domain.Extension, deviceID string, transport push.Transport, token string) error { //nolint:branching-flow // verbatim port of the retired engine store's Upsert signature (parity rule)
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

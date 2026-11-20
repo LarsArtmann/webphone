@@ -258,6 +258,15 @@ func (r summaryFanRegistry) List(ctx context.Context, owner domain.Extension) ([
 	return out, nil
 }
 
+// Test-side transport names: the summary fan tests register a fake
+// sender under a non-vocabulary key and seed rows through the gate
+// directly (bypassing the API door's ParseTransport) — conversions,
+// never string drift.
+const (
+	recordingTransportName = push.Transport("recording")
+	panicTransportName     = push.Transport("panic")
+)
+
 func (r summaryFanRegistry) Remove(ctx context.Context, owner domain.Extension, deviceID string) error {
 	return r.devices.Remove(ctx, owner, deviceID)
 }
@@ -291,14 +300,14 @@ func TestSummaryDraftFansOutToRegisteredDevices(t *testing.T) {
 	server, c, devices, _ := summaryServerWithPush(t, transport)
 	ctx := context.Background()
 	for _, device := range []string{"dev-1", "dev-2"} {
-		if err := devices.Upsert(ctx, mustExt(t, "1001"), device, "recording", "tok-"+device); err != nil {
+		if err := devices.Upsert(ctx, mustExt(t, "1001"), device, recordingTransportName, "tok-"+device); err != nil {
 			t.Fatal(err)
 		}
 	}
 	// Another extension's device must never receive owner 1001's fact.
 	other := clientFor(t, server)
 	other.login("2002", "pw")
-	if err := devices.Upsert(ctx, mustExt(t, "2002"), "dev-other", "recording", "tok-other"); err != nil {
+	if err := devices.Upsert(ctx, mustExt(t, "2002"), "dev-other", recordingTransportName, "tok-other"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -330,7 +339,7 @@ func TestSummaryDraftPushPrunesDeadDevice(t *testing.T) {
 	transport := &recordingTransport{enabled: true, err: push.ErrUnregistered}
 	_, c, devices, _ := summaryServerWithPush(t, transport)
 	ctx := context.Background()
-	if err := devices.Upsert(ctx, mustExt(t, "1001"), "dev-dead", "recording", "tok-dead"); err != nil {
+	if err := devices.Upsert(ctx, mustExt(t, "1001"), "dev-dead", recordingTransportName, "tok-dead"); err != nil {
 		t.Fatal(err)
 	}
 	c.login("1001", "pw")
@@ -387,7 +396,7 @@ func TestSummaryDraftPushPanicDoesNotKillServer(t *testing.T) {
 	transport := &panicTransport{}
 	_, c, devices, _ := summaryServerWithPush(t, transport)
 	ctx := context.Background()
-	if err := devices.Upsert(ctx, mustExt(t, "1001"), "dev-panic", "panic", "tok"); err != nil {
+	if err := devices.Upsert(ctx, mustExt(t, "1001"), "dev-panic", panicTransportName, "tok"); err != nil {
 		t.Fatal(err)
 	}
 	c.login("1001", "pw")
@@ -460,7 +469,7 @@ func TestSummaryDraftReplayFansNoSecondPush(t *testing.T) {
 	transport := &recordingTransport{enabled: true}
 	_, c, devices, fanout := summaryServerWithPush(t, transport)
 	ctx := context.Background()
-	if err := devices.Upsert(ctx, mustExt(t, "1001"), "dev-f1", "recording", "tok-f1"); err != nil {
+	if err := devices.Upsert(ctx, mustExt(t, "1001"), "dev-f1", recordingTransportName, "tok-f1"); err != nil {
 		t.Fatal(err)
 	}
 	c.login("1001", "pw")

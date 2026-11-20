@@ -144,11 +144,12 @@ func (a pushRegistryAdapter) List(ctx context.Context, owner domain.Extension) (
 	}
 	out := make([]push.Device, 0, len(views))
 	for _, v := range views {
-		// The row's transport string passed the registration door's
-		// ParseTransport at upsert; a row that predates the door (or a
-		// hand-seeded test row) parses or skips — never a fan-time
+		// The row's transport passed the registration door's
+		// ParseTransport at upsert and rides the view typed; the guard
+		// stays for journal rows that predate the door (or a
+		// hand-seeded test row) — parse or skip, never a fan-time
 		// lookup miss.
-		transport, err := push.ParseTransport(v.Transport)
+		transport, err := push.ParseTransport(string(v.Transport))
 		if err != nil {
 			continue
 		}

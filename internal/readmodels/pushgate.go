@@ -9,6 +9,7 @@ import (
 	"context"
 
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/push"
 )
 
 // PushDevicesMaxPerExtension bounds one extension's registered devices
@@ -22,18 +23,18 @@ const PushDevicesMaxPerExtension = 8
 //
 // brandid-lint:ignore(BD003) engine projection row: the json tags are the storage schema (strong-id wire ruling)
 type PushDeviceView struct {
-	Owner     string `json:"owner"`
-	DeviceID  string `json:"device_id"`
-	Transport string `json:"transport"`
-	Token     string `json:"token"`
-	UpdatedAt int64  `json:"updated_at"`
+	Owner     string         `json:"owner"`
+	DeviceID  string         `json:"device_id"`
+	Transport push.Transport `json:"transport"`
+	Token     string         `json:"token"`
+	UpdatedAt int64          `json:"updated_at"`
 }
 
 // PushDeviceGate is the registered-device seam as the push surfaces
 // see it (register/rotate, fan-out list, deregister). The
 // journal-backed service (internal/cqrs) is the implementation.
 type PushDeviceGate interface {
-	Upsert(ctx context.Context, owner domain.Extension, deviceID, transport, token string) error
+	Upsert(ctx context.Context, owner domain.Extension, deviceID string, transport push.Transport, token string) error
 	List(ctx context.Context, owner domain.Extension) ([]PushDeviceView, error)
 	Remove(ctx context.Context, owner domain.Extension, deviceID string) error
 }

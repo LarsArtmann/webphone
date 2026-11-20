@@ -149,7 +149,7 @@ func TestHookRingFansOutToRegisteredDevices(t *testing.T) {
 	transport := &fakeTransport{enabled: true}
 	handlers, devices := newRingHandlers(t, transport)
 	owner := domain.MustParseExtension("1001")
-	if err := devices.Upsert(context.Background(), owner, "device-aaaa", string(push.TransportNtfy), "wp-topic"); err != nil {
+	if err := devices.Upsert(context.Background(), owner, "device-aaaa", push.TransportNtfy, "wp-topic"); err != nil {
 		t.Fatal(err)
 	}
 
@@ -222,7 +222,7 @@ func TestHookRingPrunesDeadDevices(t *testing.T) {
 	transport := &fakeTransport{enabled: true, err: push.ErrUnregistered}
 	handlers, devices := newRingHandlers(t, transport)
 	owner := domain.MustParseExtension("1001")
-	if err := devices.Upsert(context.Background(), owner, "device-aaaa", string(push.TransportNtfy), "wp-topic"); err != nil {
+	if err := devices.Upsert(context.Background(), owner, "device-aaaa", push.TransportNtfy, "wp-topic"); err != nil {
 		t.Fatal(err)
 	}
 

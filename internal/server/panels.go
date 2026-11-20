@@ -571,7 +571,7 @@ func (h *handlers) settingsPanel(r *http.Request, sess session.Session) (templ.C
 			for _, device := range registered {
 				pushDevices = append(pushDevices, views.PushDeviceRow{
 					ID:        device.DeviceID,
-					Transport: device.Transport,
+					Transport: string(device.Transport),
 					UpdatedAt: time.Unix(0, device.UpdatedAt),
 				})
 			}

@@ -95,7 +95,7 @@ func (h *Handlers) ListPushDevices(w http.ResponseWriter, r *http.Request) {
 	for _, view := range views {
 		body.Devices = append(body.Devices, apiPushDevice{
 			DeviceID:  view.DeviceID,
-			Transport: view.Transport,
+			Transport: string(view.Transport),
 			UpdatedAt: view.UpdatedAt,
 		})
 	}
@@ -133,12 +133,12 @@ func (h *Handlers) SavePushDevice(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "transport is not configured on this server", http.StatusUnprocessableEntity)
 		return
 	}
-	if !validDeviceToken(body.Transport, body.Token) {
+	if !validDeviceToken(transport, body.Token) {
 		http.Error(w, "token is not a plausible device address for the transport", http.StatusUnprocessableEntity)
 		return
 	}
 
-	err = h.deps.Devices.Upsert(r.Context(), sess.Extension, body.DeviceID, body.Transport, body.Token)
+	err = h.deps.Devices.Upsert(r.Context(), sess.Extension, body.DeviceID, transport, body.Token)
 	if err != nil {
 		if storeAtCapacity(w, err, "device list is full — deregister one first") {
 			return
@@ -183,11 +183,11 @@ func validDeviceID(id string) bool {
 // ntfy topic (ValidNtfyTopic) or an FCM registration token (long,
 // colon/hyphen/alnum charset — Google's shape is stable enough to
 // bound, not to pin).
-func validDeviceToken(transport, token string) bool {
+func validDeviceToken(transport push.Transport, token string) bool {
 	if token == "" || len(token) > tokenMaxLen {
 		return false
 	}
-	if push.Transport(transport) == push.TransportNtfy {
+	if transport == push.TransportNtfy {
 		return push.ValidNtfyTopic(token)
 	}
 	return asciiIdentifier(token, ":-_")
