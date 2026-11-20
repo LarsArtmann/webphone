@@ -16,6 +16,7 @@
   --border-strong: #3c4557;
   --text: #e7ebf1;
   --muted: #97a1b2;
+  /* Mirrored from app.css (the token pair doctrine); Go twin: views.AccentColor. */
   --accent: #17a467;
   --accent-strong: #3fd694;
   --accent-soft: rgb(63 214 148 / 13%);

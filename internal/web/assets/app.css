@@ -29,6 +29,8 @@
   --border-strong: #3c4557;
   --text: #e7ebf1;
   --muted: #97a1b2;
+  /* The brand GREEN's CSS design home — the Go-side twin (favicon +
+     manifest theme-color) is views.AccentColor; keep them in sync. */
   --accent: #17a467;
   --accent-strong: #3fd694;
   --accent-soft: rgb(63 214 148 / 13%);

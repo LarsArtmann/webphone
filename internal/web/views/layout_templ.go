@@ -197,7 +197,7 @@ func Shell(props ShellProps) templ.Component {
 			Title:          "WebPhone",
 			Description:    "Self-hosted unified communications: calls, messages, fax and voicemail over SIP/WebRTC.",
 			ThemeColor:     "#0e8752",
-			DarkThemeColor: "#17a467",
+			DarkThemeColor: AccentColor,
 			CSSPath:        "/assets/app.css",
 			Favicon:        "/favicon.svg",
 			Nonce:          "",

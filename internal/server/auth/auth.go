@@ -155,7 +155,7 @@ func NewLoginPage(deps Deps) (*loginpage.Handler, error) {
 		// The favicon's brand-initial square rides the app's GREEN
 		// accent (the owner's brand ruling; the library default is
 		// indigo, which reads default-SaaS on this product).
-		AccentColor: "#17a467",
+		AccentColor: views.AccentColor,
 		// A live session post-login lands on the shell, where the boot
 		// probe resumes and registers.
 		Redirect: "/",

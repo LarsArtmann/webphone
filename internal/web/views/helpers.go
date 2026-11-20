@@ -8,6 +8,15 @@ import (
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
+// AccentColor is the brand GREEN's Go-side one source: the favicon
+// brand-initial square (loginpage AccentColor) and the shell manifest's
+// dark theme-color render this exact value. The CSS design home is the
+// `--accent` token in app.css + island/style.css (the mirrored pair);
+// those bytes and this constant are kept in sync by hand — a comment
+// beside each token names this constant. Owner ruling 2026-11-11: the
+// app is green, never a default-SaaS indigo.
+const AccentColor = "#17a467"
+
 // fmtInt renders counts for templ (templ children cannot call strconv
 // directly with a plain int conversion).
 func fmtInt(n int) string { return strconv.Itoa(n) }
