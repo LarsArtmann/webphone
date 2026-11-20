@@ -175,7 +175,7 @@ func NewLoginPage(deps Deps) (*loginpage.Handler, error) {
 		// break-glass lifeline under the passkey ceremony, the primary
 		// method when the identity layer is off), Pocket ID above it
 		// when the OIDC seam is wired.
-		ExtraSection: views.LoginPageExtra(!passkeyOn, deps.SSO != nil),
+		ExtraSection: views.LoginPageExtra(views.LoginLanes{PasskeyOn: passkeyOn, SSOOn: deps.SSO != nil}),
 	})
 }
 

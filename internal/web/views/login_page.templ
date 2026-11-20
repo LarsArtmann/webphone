@@ -14,19 +14,21 @@ import (
 // SIP-password form. The island card no longer renders any login form;
 // an anonymous root navigation redirects here.
 //
-// showPrimary marks the extension form as the page's PRIMARY method
-// (the passkey-off deployment): bare form, no disclosure. With the
-// passkey ceremony on the page, the form is the break-glass lifeline one
-// disclosure away — signing into a phone must never depend on the IdP
-// or on a passkey being present. showSSO renders the OIDC (Pocket ID)
-// door above it.
+// lanes states the deployment's facts; the section derives its
+// presentation from them. The extension form is the page's PRIMARY
+// method exactly when the passkey ceremony is off (bare form, no
+// disclosure); with the ceremony on the page, the form is the
+// break-glass lifeline one disclosure away — signing into a phone must
+// never depend on the IdP or on a passkey being present. SSOOn renders
+// the OIDC (Pocket ID) door above it.
 //
 // English-only copy: the login page is a server-rendered surface (the
 // library's own copy is English; D3 keeps shell copy English), and the
 // page carries no island runtime — its behavior lives in
 // /assets/login-page.js.
-templ LoginPageExtra(showPrimary bool, showSSO bool) {
-	if showSSO {
+templ LoginPageExtra(lanes LoginLanes) {
+	{{ primary := !lanes.PasskeyOn }}
+	if lanes.SSOOn {
 		<div class="space-y-2">
 			@display.Button(display.ButtonProps{
 				BaseProps: utils.BaseProps{
@@ -38,14 +40,14 @@ templ LoginPageExtra(showPrimary bool, showSSO bool) {
 				Size:    display.ButtonSizeMD,
 			})
 		</div>
-		if showPrimary {
+		if primary {
 			<div class="lp-divider my-6 text-center text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500">
 				<div class="mb-2 border-t border-gray-200 dark:border-gray-700" aria-hidden="true"></div>
 				or
 			</div>
 		}
 	}
-	if showPrimary {
+	if primary {
 		@loginExtensionForm()
 	} else {
 		<details class="mt-4">
@@ -56,6 +58,16 @@ templ LoginPageExtra(showPrimary bool, showSSO bool) {
 		</details>
 	}
 	<script src="/assets/login-page.js" defer></script>
+}
+
+// LoginLanes is the /login page's fact set: which sign-in lanes exist
+// on the deployment. Callers state facts — never presentation bools —
+// and the section derives its shape from them (primary = passkey off).
+type LoginLanes struct {
+	// PasskeyOn: the identity layer's WebAuthn ceremony is on the page.
+	PasskeyOn bool
+	// SSOOn: the OIDC (Pocket ID) door exists.
+	SSOOn bool
 }
 
 // loginExtensionForm is the extension + SIP-password form. Its ids

@@ -13,9 +13,9 @@ import (
 // a single DOM-contract id. The island card no longer renders any login
 // form — /login is the one front door.
 func TestLoginPageExtraAdaptsToPasskeyMode(t *testing.T) {
-	primary := renderComponent(t, LoginPageExtra(true, false))
-	breakglass := renderComponent(t, LoginPageExtra(false, false))
-	withSSO := renderComponent(t, LoginPageExtra(false, true))
+	primary := renderComponent(t, LoginPageExtra(LoginLanes{PasskeyOn: false}))
+	breakglass := renderComponent(t, LoginPageExtra(LoginLanes{PasskeyOn: true}))
+	withSSO := renderComponent(t, LoginPageExtra(LoginLanes{SSOOn: true}))
 
 	extensionIDs := []string{
 		`id="login-form"`,
