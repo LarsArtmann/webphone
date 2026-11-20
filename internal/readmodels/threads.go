@@ -90,7 +90,7 @@ type ThreadGate interface {
 	AppendMessage(ctx context.Context, msg domain.Message) error
 	AdvanceOutbound(ctx context.Context, id domain.MessageID, step domain.DeliveryStep) error
 	MessageByProviderRef(ctx context.Context, ref string) (domain.Message, error)
-	FindThread(ctx context.Context, owner domain.Extension, remote domain.Address, now time.Time) (domain.ThreadID, error)
+	ResolveThreadID(ctx context.Context, owner domain.Extension, remote domain.Address, now time.Time) (domain.ThreadID, error)
 	GetThread(ctx context.Context, owner domain.Extension, id domain.ThreadID) (domain.Thread, error)
 	MarkThreadRead(ctx context.Context, owner domain.Extension, id domain.ThreadID) error
 	SetThreadFlag(ctx context.Context, owner domain.Extension, id domain.ThreadID, flag ThreadFlag, on bool) error

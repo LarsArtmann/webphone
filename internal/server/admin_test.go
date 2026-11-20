@@ -164,7 +164,7 @@ func TestAdminPanelShowsEveryOwnersData(t *testing.T) {
 	// though the admin session IS 1001.
 	neighbor := domain.MustParseExtension("1002")
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+4989555777")
-	threadID, err := server.messages.FindThread(ctx, neighbor, remote, time.Now().Add(-time.Minute))
+	threadID, err := server.messages.ResolveThreadID(ctx, neighbor, remote, time.Now().Add(-time.Minute))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -219,7 +219,7 @@ func TestAdminFindFilter(t *testing.T) {
 
 	neighbor := domain.MustParseExtension("1002")
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+4989555777")
-	threadID, err := server.messages.FindThread(ctx, neighbor, remote, time.Now().Add(-time.Minute))
+	threadID, err := server.messages.ResolveThreadID(ctx, neighbor, remote, time.Now().Add(-time.Minute))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -266,7 +266,7 @@ func TestAdminThreadDeepLink(t *testing.T) {
 	ctx := context.Background()
 	neighbor := domain.MustParseExtension("1002")
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+4915112345678")
-	threadID, err := server.messages.FindThread(ctx, neighbor, remote, time.Now())
+	threadID, err := server.messages.ResolveThreadID(ctx, neighbor, remote, time.Now())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -303,7 +303,7 @@ func TestAdminAttachmentAndFaxDocumentFallback(t *testing.T) {
 	ctx := context.Background()
 	neighbor := domain.MustParseExtension("1002")
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+491519876543")
-	threadID, err := server.messages.FindThread(ctx, neighbor, remote, time.Now())
+	threadID, err := server.messages.ResolveThreadID(ctx, neighbor, remote, time.Now())
 	if err != nil {
 		t.Fatal(err)
 	}

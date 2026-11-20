@@ -28,9 +28,9 @@ func TestThreadAppendCreatesAndAdvances(t *testing.T) {
 	owner := mustExt(t, "100")
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+491701")
 
-	id, err := backend.FindThread(ctx, owner, remote, time.Now())
+	id, err := backend.ResolveThreadID(ctx, owner, remote, time.Now())
 	if err != nil {
-		t.Fatalf("FindThread: %v", err)
+		t.Fatalf("ResolveThreadID: %v", err)
 	}
 
 	first := domain.NewInboundMessage(domain.GenerateMessageID(), id, owner, remote, "hello", 0, time.Now())
@@ -80,7 +80,7 @@ func TestThreadDuplicateMessageRejected(t *testing.T) {
 	owner := mustExt(t, "100")
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+491701")
 
-	id, _ := backend.FindThread(ctx, owner, remote, time.Now())
+	id, _ := backend.ResolveThreadID(ctx, owner, remote, time.Now())
 	msg := domain.NewInboundMessage(domain.GenerateMessageID(), id, owner, remote, "once", 0, time.Now())
 	if err := backend.AppendMessage(ctx, msg); err != nil {
 		t.Fatalf("append: %v", err)
@@ -98,7 +98,7 @@ func TestThreadDeliveryMachine(t *testing.T) {
 	owner := mustExt(t, "100")
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+491701")
 
-	threadID, _ := backend.FindThread(ctx, owner, remote, time.Now())
+	threadID, _ := backend.ResolveThreadID(ctx, owner, remote, time.Now())
 	msg := domain.NewOutboundMessage(domain.GenerateMessageID(), threadID, owner, remote, "out", 0, time.Now())
 	if err := backend.AppendMessage(ctx, msg); err != nil {
 		t.Fatalf("append: %v", err)
@@ -154,7 +154,7 @@ func TestThreadFlagsReadSearchArchive(t *testing.T) {
 	owner := mustExt(t, "100")
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+491701")
 
-	threadID, _ := backend.FindThread(ctx, owner, remote, time.Now())
+	threadID, _ := backend.ResolveThreadID(ctx, owner, remote, time.Now())
 	if err := backend.AppendMessage(ctx, domain.NewInboundMessage(
 		domain.GenerateMessageID(), threadID, owner, remote, "needle body", 0, time.Now())); err != nil {
 		t.Fatalf("append: %v", err)
@@ -225,7 +225,7 @@ func TestThreadAttachmentsRideAndHydrate(t *testing.T) {
 	owner := mustExt(t, "100")
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+491701")
 
-	threadID, _ := backend.FindThread(ctx, owner, remote, time.Now())
+	threadID, _ := backend.ResolveThreadID(ctx, owner, remote, time.Now())
 	msg := domain.NewInboundMessage(domain.GenerateMessageID(), threadID, owner, remote, "mms", 2, time.Now())
 	msg.Attachments = []domain.Attachment{
 		{ID: domain.GenerateAttachmentID(), MessageID: msg.ID, Name: "b.png", MimeType: "image/png", SizeBytes: 3, Path: "blob/b"},
@@ -273,7 +273,7 @@ func TestThreadOwnerScopingAndAdminSeams(t *testing.T) {
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+491701")
 
 	for _, owner := range []domain.Extension{a, b} {
-		threadID, _ := backend.FindThread(ctx, owner, remote, time.Now())
+		threadID, _ := backend.ResolveThreadID(ctx, owner, remote, time.Now())
 		if err := backend.AppendMessage(ctx, domain.NewInboundMessage(
 			domain.GenerateMessageID(), threadID, owner, remote, "mine", 0, time.Now())); err != nil {
 			t.Fatalf("append for %s: %v", owner, err)

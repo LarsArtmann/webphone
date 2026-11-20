@@ -25,6 +25,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `FindThread` is now **`ResolveThreadID`** (2026-11-20, pareto T12, the
+  naming review's first big-blast-radius rename): the readmodels gate
+  method, both implementations (store + journal), the messaging call
+  sites and every test/comment reference — the old name lied slightly
+  (it resolves an existing thread's id; creation is the first append's
+  job, as the doc comment always said).
 - The **workflow-e2e browser lane is now a blocking CI job**
   (2026-11-19): eight consecutive green advisory runs earned the gate —
   `continue-on-error` is gone and a red browser journey is a red main.

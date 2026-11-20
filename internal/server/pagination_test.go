@@ -20,7 +20,7 @@ func TestThreadPaginationLoadsOlderPages(t *testing.T) {
 	ctx := context.Background()
 	base := time.Now().Add(-time.Hour)
 
-	threadID, err := server.messages.FindThread(ctx, owner, remote, base)
+	threadID, err := server.messages.ResolveThreadID(ctx, owner, remote, base)
 	if err != nil {
 		t.Fatal(err)
 	}

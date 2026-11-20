@@ -22,9 +22,9 @@ func TestThreadPagesBeyondTheEngineCeiling(t *testing.T) {
 	ctx := context.Background()
 	owner := mustExt(t, "100")
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+491701")
-	id, err := backend.FindThread(ctx, owner, remote, time.Now())
+	id, err := backend.ResolveThreadID(ctx, owner, remote, time.Now())
 	if err != nil {
-		t.Fatalf("FindThread: %v", err)
+		t.Fatalf("ResolveThreadID: %v", err)
 	}
 	base := time.Now().Add(-time.Hour)
 	for i := range 205 {

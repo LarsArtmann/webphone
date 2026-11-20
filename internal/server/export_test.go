@@ -57,7 +57,7 @@ func TestExportDataZipsEverythingTheExtensionOwns(t *testing.T) {
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
 	ctx := context.Background()
 
-	threadID, err := server.messages.FindThread(ctx, owner, remote, time.Now())
+	threadID, err := server.messages.ResolveThreadID(ctx, owner, remote, time.Now())
 	if err != nil {
 		t.Fatal(err)
 	}

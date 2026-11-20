@@ -22,7 +22,7 @@ func newAdminReadsFixture(t *testing.T) (*Messages, domain.Extension, domain.Ext
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
 	now := time.Now()
 
-	firstThread, err := messages.FindThread(ctx, first, remote, now)
+	firstThread, err := messages.ResolveThreadID(ctx, first, remote, now)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -34,7 +34,7 @@ func newAdminReadsFixture(t *testing.T) (*Messages, domain.Extension, domain.Ext
 		t.Fatal(err)
 	}
 
-	secondThread, err := messages.FindThread(ctx, second, remote, now.Add(time.Minute))
+	secondThread, err := messages.ResolveThreadID(ctx, second, remote, now.Add(time.Minute))
 	if err != nil {
 		t.Fatal(err)
 	}

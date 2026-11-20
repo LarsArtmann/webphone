@@ -1,6 +1,6 @@
 // The concurrent first-sight probe (TODO_LIST full-code-review row): two
 // simultaneous Receive lanes for the same unseen (owner, remote) race
-// FindThread's projection scan. BOTH outcomes are legal, and the probe
+// ResolveThreadID's projection scan. BOTH outcomes are legal, and the probe
 // accepts either: (a) the fold lands between the two scans — the second
 // lane RESOLVES the first lane's thread and appends to it, zero
 // refusals; (b) both lanes miss — each mints a fresh thread identity,

@@ -25,7 +25,7 @@ func BenchmarkLegacyThreadListRead(b *testing.B) {
 	owner := domain.MustParseExtension("100")
 	for i := range 50 {
 		remote := domain.MustParseAddress(domain.NetworkSMS, fmt.Sprintf("+49170%06d", i))
-		threadID, err := messages.FindThread(ctx, owner, remote, time.Now())
+		threadID, err := messages.ResolveThreadID(ctx, owner, remote, time.Now())
 		if err != nil {
 			b.Fatal(err)
 		}

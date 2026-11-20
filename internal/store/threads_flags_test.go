@@ -18,7 +18,7 @@ import (
 func seedThread(t *testing.T, messages *Messages, owner domain.Extension, remote domain.Address) domain.ThreadID {
 	t.Helper()
 	ctx := context.Background()
-	threadID, err := messages.FindThread(ctx, owner, remote, time.Now())
+	threadID, err := messages.ResolveThreadID(ctx, owner, remote, time.Now())
 	if err != nil {
 		t.Fatal(err)
 	}

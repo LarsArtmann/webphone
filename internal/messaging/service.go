@@ -129,7 +129,7 @@ func (s *Service) Send(
 	}
 
 	now := s.clock()
-	threadID, err := s.messages.FindThread(ctx, owner, to, now)
+	threadID, err := s.messages.ResolveThreadID(ctx, owner, to, now)
 	if err != nil {
 		return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.thread_resolve", "resolve thread")
 	}
@@ -204,7 +204,7 @@ func (s *Service) Send(
 // its persisted form.
 func (s *Service) Receive(ctx context.Context, inbound domain.InboundMessage) (domain.Message, error) {
 	now := domain.OrClock(inbound.ReceivedAt, s.clock)
-	threadID, err := s.messages.FindThread(ctx, inbound.Owner, inbound.From, now)
+	threadID, err := s.messages.ResolveThreadID(ctx, inbound.Owner, inbound.From, now)
 	if err != nil {
 		return domain.Message{}, errorfamily.WrapInfrastructuref(err, "store.thread_resolve", "resolve thread")
 	}

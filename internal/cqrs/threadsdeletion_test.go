@@ -20,7 +20,7 @@ func TestThreadDeleteRemovesRowsAndJournal(t *testing.T) {
 	owner := mustExt(t, "100")
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+491701")
 
-	threadID, _ := backend.FindThread(ctx, owner, remote, time.Now())
+	threadID, _ := backend.ResolveThreadID(ctx, owner, remote, time.Now())
 	msg := domain.NewInboundMessage(domain.GenerateMessageID(), threadID, owner, remote, "bye", 1, time.Now())
 	msg.Attachments = []domain.Attachment{
 		{ID: domain.GenerateAttachmentID(), MessageID: msg.ID, Name: "x.png", MimeType: "image/png", Path: "blob/x"},
@@ -59,7 +59,7 @@ func TestThreadRestartReloadsState(t *testing.T) {
 	owner := mustExt(t, "100")
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+491701")
 
-	threadID, _ := backend.FindThread(ctx, owner, remote, time.Now())
+	threadID, _ := backend.ResolveThreadID(ctx, owner, remote, time.Now())
 	if err := backend.AppendMessage(ctx, domain.NewInboundMessage(
 		domain.GenerateMessageID(), threadID, owner, remote, "persist", 0, time.Now())); err != nil {
 		t.Fatalf("append: %v", err)
@@ -103,9 +103,9 @@ func TestThreadSweepDeletesJournalViewsAndBlobs(t *testing.T) {
 	freshRemote := domain.MustParseAddress(domain.NetworkSMS, "+491new")
 
 	oldAt := time.Now().Add(-10 * 24 * time.Hour)
-	oldID, err := backend.FindThread(ctx, owner, oldRemote, oldAt)
+	oldID, err := backend.ResolveThreadID(ctx, owner, oldRemote, oldAt)
 	if err != nil {
-		t.Fatalf("FindThread old: %v", err)
+		t.Fatalf("ResolveThreadID old: %v", err)
 	}
 	oldMsg := domain.NewInboundMessage(domain.GenerateMessageID(), oldID, owner, oldRemote, "ancient", 0, oldAt)
 	oldMsg.Attachments = []domain.Attachment{{
@@ -115,9 +115,9 @@ func TestThreadSweepDeletesJournalViewsAndBlobs(t *testing.T) {
 	if err := backend.AppendMessage(ctx, oldMsg); err != nil {
 		t.Fatalf("append old: %v", err)
 	}
-	freshID, err := backend.FindThread(ctx, owner, freshRemote, time.Now())
+	freshID, err := backend.ResolveThreadID(ctx, owner, freshRemote, time.Now())
 	if err != nil {
-		t.Fatalf("FindThread fresh: %v", err)
+		t.Fatalf("ResolveThreadID fresh: %v", err)
 	}
 	if err := backend.AppendMessage(ctx, domain.NewInboundMessage(
 		domain.GenerateMessageID(), freshID, owner, freshRemote, "live", 0, time.Now())); err != nil {

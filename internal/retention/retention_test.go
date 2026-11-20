@@ -95,7 +95,7 @@ func appendMessage(t *testing.T, messages *store.Messages, owner domain.Extensio
 	t.Helper()
 	ctx := context.Background()
 	addr := domain.MustParseAddress(domain.NetworkSMS, remote)
-	thread, err := messages.FindThread(ctx, owner, addr, at)
+	thread, err := messages.ResolveThreadID(ctx, owner, addr, at)
 	if err != nil {
 		t.Fatalf("find thread: %v", err)
 	}

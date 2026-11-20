@@ -138,12 +138,12 @@ func (s *Threads) MessageByProviderRef(ctx context.Context, ref string) (domain.
 	return domain.Message{}, store.ErrNotFound
 }
 
-// FindThread resolves the thread id for an address; creation is the first
+// ResolveThreadID resolves the thread id for an address; creation is the first
 // append's fact (the composer's candidate id is adopted then), so an
 // unknown address answers a FRESH id — the legacy empty-row insert
 // disappears by design (Errata: no thread row exists until a message
 // lands).
-func (s *Threads) FindThread(
+func (s *Threads) ResolveThreadID(
 	ctx context.Context, owner domain.Extension, remote domain.Address, now time.Time,
 ) (domain.ThreadID, error) {
 	key := ThreadStreamKey(owner, remote.Network(), remote)

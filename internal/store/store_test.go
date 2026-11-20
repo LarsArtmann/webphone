@@ -19,7 +19,7 @@ func TestListMessagesFansAttachmentsOutInOnePass(t *testing.T) {
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
 	now := time.Now()
 
-	threadID, err := messages.FindThread(ctx, owner, remote, now)
+	threadID, err := messages.ResolveThreadID(ctx, owner, remote, now)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,7 +79,7 @@ func TestMessageLifecycle(t *testing.T) {
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
 	now := time.Now()
 
-	threadID, err := messages.FindThread(ctx, owner, remote, now)
+	threadID, err := messages.ResolveThreadID(ctx, owner, remote, now)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -185,7 +185,7 @@ func TestMessageLifecycle(t *testing.T) {
 }
 
 // TestAppendWithoutPriorThread pins AppendMessage's creation fallback:
-// the service normally pre-creates the row via FindThread, but an
+// the service normally pre-creates the row via ResolveThreadID, but an
 // append into a fresh (owner, remote) pair must still create the thread
 // (adopting the message's thread id) and count the inbound as unread.
 func TestAppendWithoutPriorThread(t *testing.T) {
@@ -221,7 +221,7 @@ func TestAttachmentOwnerScoped(t *testing.T) {
 	ctx := context.Background()
 	owner := domain.MustParseExtension("1001")
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
-	threadID, _ := messages.FindThread(ctx, owner, remote, time.Now())
+	threadID, _ := messages.ResolveThreadID(ctx, owner, remote, time.Now())
 
 	msg := domain.Message{
 		ID: domain.GenerateMessageID(), ThreadID: threadID, Owner: owner, Remote: remote,
@@ -261,7 +261,7 @@ func TestMessageProviderRefUniqueness(t *testing.T) {
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
 	now := time.Now()
 
-	threadID, err := messages.FindThread(ctx, owner, remote, now)
+	threadID, err := messages.ResolveThreadID(ctx, owner, remote, now)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -296,7 +296,7 @@ func TestSearchThreads(t *testing.T) {
 	// Thread one: the match lives in an OLDER message body, not the
 	// preview — the search must scan every message, not just the last.
 	first := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
-	firstID, err := messages.FindThread(ctx, owner, first, time.Now())
+	firstID, err := messages.ResolveThreadID(ctx, owner, first, time.Now())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -318,7 +318,7 @@ func TestSearchThreads(t *testing.T) {
 
 	// Thread two: matches only by remote number.
 	second := domain.MustParseAddress(domain.NetworkSMS, "+491601234567")
-	secondID, err := messages.FindThread(ctx, owner, second, time.Now())
+	secondID, err := messages.ResolveThreadID(ctx, owner, second, time.Now())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -331,7 +331,7 @@ func TestSearchThreads(t *testing.T) {
 	}
 
 	// A different owner's thread with the same body must stay invisible.
-	otherID, err := messages.FindThread(ctx, other, first, time.Now())
+	otherID, err := messages.ResolveThreadID(ctx, other, first, time.Now())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -412,11 +412,11 @@ func TestSameNumberCarriesTwoNetworkThreads(t *testing.T) {
 	sms := domain.MustParseAddress(domain.NetworkSMS, "+441632960961")
 	signal := domain.MustParseAddress(domain.NetworkSignal, "+441632960961")
 
-	smsThread, err := messages.FindThread(ctx, owner, sms, time.Now())
+	smsThread, err := messages.ResolveThreadID(ctx, owner, sms, time.Now())
 	if err != nil {
 		t.Fatal(err)
 	}
-	signalThread, err := messages.FindThread(ctx, owner, signal, time.Now())
+	signalThread, err := messages.ResolveThreadID(ctx, owner, signal, time.Now())
 	if err != nil {
 		t.Fatal(err)
 	}

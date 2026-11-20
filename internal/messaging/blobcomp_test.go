@@ -22,7 +22,7 @@ import (
 	"github.com/larsartmann/webphone/internal/readmodels"
 )
 
-// failingAppendGate answers every FindThread through the real journal
+// failingAppendGate answers every ResolveThreadID through the real journal
 // backend but refuses the append — the persist-failure arm without a
 // full disk.
 type failingAppendGate struct {

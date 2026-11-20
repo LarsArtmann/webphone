@@ -188,7 +188,7 @@ func TestDualRunThreads(t *testing.T) {
 	for i := range fixtures {
 		fx := &fixtures[i]
 		remote := domain.MustParsePhone(fx.remote)
-		threadID, err := messages.FindThread(ctx, owner, remote, fx.msgs[0].CreatedAt)
+		threadID, err := messages.ResolveThreadID(ctx, owner, remote, fx.msgs[0].CreatedAt)
 		if err != nil {
 			t.Fatal(err)
 		}

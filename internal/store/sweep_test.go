@@ -20,7 +20,7 @@ func TestSweepDeletesOnlyExpiredContent(t *testing.T) {
 	now := time.Now()
 	old := now.Add(-48 * time.Hour)
 
-	oldThread, err := messages.FindThread(ctx, owner, domain.MustParseAddress(domain.NetworkSMS, "+441632960961"), old)
+	oldThread, err := messages.ResolveThreadID(ctx, owner, domain.MustParseAddress(domain.NetworkSMS, "+441632960961"), old)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -38,7 +38,7 @@ func TestSweepDeletesOnlyExpiredContent(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	liveThread, err := messages.FindThread(ctx, owner, domain.MustParseAddress(domain.NetworkSMS, "+441632960977"), now)
+	liveThread, err := messages.ResolveThreadID(ctx, owner, domain.MustParseAddress(domain.NetworkSMS, "+441632960977"), now)
 	if err != nil {
 		t.Fatal(err)
 	}

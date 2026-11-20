@@ -25,7 +25,7 @@ func BenchmarkThreadAppendDispatch(b *testing.B) {
 	ctx := context.Background()
 	owner := mustExt(t, "100")
 	remote := domain.MustParseAddress(domain.NetworkSMS, "+4917000001")
-	threadID, err := backend.FindThread(ctx, owner, remote, time.Now())
+	threadID, err := backend.ResolveThreadID(ctx, owner, remote, time.Now())
 	if err != nil {
 		b.Fatal(err)
 	}
@@ -97,7 +97,7 @@ func BenchmarkThreadListRead(b *testing.B) {
 	owner := mustExt(t, "100")
 	for i := range 50 {
 		remote := domain.MustParseAddress(domain.NetworkSMS, fmt.Sprintf("+49170%06d", i))
-		threadID, err := backend.FindThread(ctx, owner, remote, time.Now())
+		threadID, err := backend.ResolveThreadID(ctx, owner, remote, time.Now())
 		if err != nil {
 			b.Fatal(err)
 		}

@@ -426,10 +426,10 @@ func (s *Messages) attachAttachments(ctx context.Context, msgs []domain.Message)
 	return nil
 }
 
-// FindThread returns the owner's thread for a remote address on its
+// ResolveThreadID returns the owner's thread for a remote address on its
 // network, creating it (persisted) when absent. Callers use it to
 // resolve where a message goes.
-func (s *Messages) FindThread(
+func (s *Messages) ResolveThreadID(
 	ctx context.Context, owner domain.Extension, remote domain.Address, now time.Time,
 ) (domain.ThreadID, error) {
 	var id string
