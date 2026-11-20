@@ -607,15 +607,8 @@ a deliberate code change, regenerate:
 | sso.userinfo                                 | Rejection                  | internal/sso/sso.go               |
 | sso.userinfo.claims                          | Rejection                  | internal/sso/sso.go               |
 | sso.verifier                                 | Infrastructure, Rejection  | internal/sso/sso.go               |
-| store.attachment_get                         | Infrastructure             | internal/store/messages.go        |
-| store.attachment_get_any                     | Infrastructure             | internal/store/messages.go        |
-| store.attachment_insert                      | Infrastructure             | internal/store/messages.go        |
 | store.attachment_save                        | Infrastructure             | internal/messaging/service.go     |
-| store.attachment_scan                        | Infrastructure             | internal/store/messages.go        |
-| store.attachments_list                       | Infrastructure             | internal/store/messages.go        |
-| store.attachments_rows                       | Infrastructure             | internal/store/messages.go        |
 | store.close                                  | Infrastructure             | internal/store/db.go              |
-| store.count_archived                         | Infrastructure             | internal/store/messages.go        |
 | store.counts                                 | Infrastructure             | internal/store/sweep.go           |
 | store.exec                                   | Infrastructure             | internal/store/sweep.go           |
 | store.fax_create                             | Infrastructure             | internal/fax/service.go           |
@@ -623,28 +616,13 @@ a deliberate code change, regenerate:
 | store.flag_read                              | Infrastructure             | internal/store/appflags.go        |
 | store.flag_write                             | Infrastructure             | internal/store/appflags.go        |
 | store.message_append                         | Infrastructure             | internal/messaging/service.go     |
-| store.message_insert                         | Infrastructure             | internal/store/messages.go        |
-| store.message_scan                           | Infrastructure             | internal/store/messages.go        |
 | store.migrate                                | Infrastructure             | internal/store/db.go              |
 | store.open                                   | Infrastructure             | internal/store/db.go              |
 | store.outbound_status                        | Infrastructure             | internal/messaging/service.go     |
 | store.ping                                   | Infrastructure             | internal/store/db.go              |
 | store.query                                  | Infrastructure             | internal/store/db.go              |
 | store.sweep_scan                             | Infrastructure             | internal/store/sweep.go           |
-| store.thread_find                            | Infrastructure             | internal/store/messages.go        |
-| store.thread_flag                            | Infrastructure, Rejection  | internal/store/messages.go        |
-| store.thread_get                             | Infrastructure             | internal/store/messages.go        |
-| store.thread_get_any                         | Infrastructure             | internal/store/messages.go        |
-| store.thread_insert                          | Infrastructure             | internal/store/messages.go        |
-| store.thread_lookup                          | Infrastructure             | internal/store/messages.go        |
-| store.thread_mark_read                       | Infrastructure             | internal/store/messages.go        |
-| store.thread_reread                          | Infrastructure             | internal/store/messages.go        |
 | store.thread_resolve                         | Infrastructure             | internal/messaging/service.go     |
-| store.thread_scan                            | Infrastructure             | internal/store/messages.go        |
-| store.thread_update                          | Infrastructure             | internal/store/messages.go        |
-| store.threads_list_all                       | Infrastructure             | internal/store/messages.go        |
-| store.tx_begin                               | Infrastructure             | internal/store/messages.go        |
-| store.tx_commit                              | Infrastructure             | internal/store/messages.go        |
 | textagent.badid                              | Rejection                  | internal/textagent/client.go      |
 | textagent.decode                             | Infrastructure             | internal/textagent/client.go      |
 | textagent.encode                             | Infrastructure             | internal/textagent/client.go      |

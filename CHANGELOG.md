@@ -31,6 +31,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The test-only legacy messages store is deleted** —
+  `internal/store/messages.go` (test-only since the journal swap; the
+  composition root stopped registering it 2026-11-12) plus its seven
+  dead-surface test files. `ErrNotFound` moved to `db.go` (the
+  journal-backed seams' absence sentinel); the retention sweep's
+  behavior pins now seed the frozen tables with raw SQL, keeping the
+  sweep honest until the §5 DROP migration removes the tables
+  themselves. The README's `readmodels.db` note now says explicitly
+  the orphan is safe to delete.
 - **`/metrics` totals read the journal only** — the legacy
   webphone.db contribution to `webphone_threads_total`/
   `webphone_messages_total` is retired: every reachable deployment

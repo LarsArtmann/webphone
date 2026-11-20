@@ -697,7 +697,8 @@ home since the SUPERB phases), and `files/` (the content-addressed
 blob tree for attachments and fax documents). Back up all of them
 together. (`readmodels.db` is retired: deployments upgrading through
 v2.10+ had their engine-side history imported into the journal once;
-the leftover file is an inert orphan and is no longer backed up.)
+the leftover file is an inert orphan, is no longer backed up, and is
+safe to delete — nothing reads it, on any version since v2.12.)
 
 Online, per snapshot (no downtime — what `services.webphone.backup.*`
 in the NixOS module wires as a daily timer):

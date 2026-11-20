@@ -51,8 +51,12 @@ var depthBudgetNames = map[string]depthCeiling{
 	// empties — the package only shrinks from here.
 	"store": {loc: 1900, exports: 60},
 	// The composition root: one field per optional seam (the DI
-	// surface's documented shape) plus the adapters.
-	"app": {loc: 1650, exports: 40},
+	// surface's documented shape) plus the adapters. Raised 1650 → 1700
+	// 2026-11-20 with the projection-DLQ observability decorator
+	// (dlq.go, TC): the dead-letter seam is composition-root-owned by
+	// doctrine; the store package's messages.go deletion the same day
+	// did NOT credit app. Direction stays DOWN.
+	"app": {loc: 1700, exports: 40},
 }
 
 const (
