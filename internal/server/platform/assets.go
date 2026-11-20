@@ -87,7 +87,7 @@ func (p *Hub) Assets() http.Handler {
 	// client renders is bandwidth spent for nothing.
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.Header.Get("Accept"), "text/html") {
-			p.shell.NotFoundPage(w, r)
+			p.server.NotFoundPage(w, r)
 			return
 		}
 		http.NotFound(w, r)

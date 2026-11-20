@@ -14,7 +14,7 @@ import (
 // panels (voicemail, history) keep working byte-for-byte: same paths, same
 // JSON, no password in the browser beyond the island's own memory copy.
 func (p *Hub) ProxyPhoneAPI(w http.ResponseWriter, r *http.Request) {
-	sess, ok := p.shell.RequireSession(w, r)
+	sess, ok := p.server.RequireSession(w, r)
 	if !ok {
 		return
 	}
@@ -69,6 +69,6 @@ func (p *Hub) ProxyPhoneAPI(w http.ResponseWriter, r *http.Request) {
 	// without any server-side polling of the PBX. The nudge carries no
 	// payload; the panel re-fetches its partial on receipt.
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 && strings.HasPrefix(rest, "/voicemail/") {
-		p.shell.NotifyVoicemail(sess.Extension)
+		p.server.NotifyVoicemail(sess.Extension)
 	}
 }

@@ -200,7 +200,7 @@ func (a *Handlers) PasskeyEnrollFinish(w http.ResponseWriter, r *http.Request) {
 // against the three POST endpoints above.
 func (a *Handlers) EnrollPage(w http.ResponseWriter, r *http.Request) {
 	props := views.EnrollProps{
-		Lang:      a.shell.Lang(r),
+		Lang:      a.server.Lang(r),
 		CSRFToken: csrfToken(r),
 	}
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")

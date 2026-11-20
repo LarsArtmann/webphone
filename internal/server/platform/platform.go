@@ -5,7 +5,7 @@
 // directory bridge, /config.js, and the per-extension data export. The
 // HTTP wiring (mux, middleware chain, flood budgets) stays in
 // internal/server; these handlers reach the session gate and the HTML
-// error plumbing through the narrow Shell seam, and the voicemail SSE
+// error plumbing through the narrow Server seam, and the voicemail SSE
 // nudge keeps its one home in the server package.
 package platform
 
@@ -63,11 +63,11 @@ type Deps struct {
 	Island  *IslandLatency
 }
 
-// Shell is the narrow wiring seam the carved handlers ride on,
+// Server is the narrow wiring seam the carved handlers ride on,
 // implemented by the server's handlers hub: the session gate and the
 // render/error plumbing the machine surfaces borrow. Exported methods so
 // internal/server can implement it.
-type Shell interface {
+type Server interface {
 	// RequireSession gates a handler on the attached session; on
 	// failure it has already written the 401.
 	RequireSession(w http.ResponseWriter, r *http.Request) (session.Session, bool)
@@ -89,14 +89,14 @@ type Shell interface {
 // methods off it. The server's wiring mounts the routes; the Shell seam
 // is the server's handlers hub.
 type Hub struct {
-	deps  Deps
-	shell Shell
+	deps   Deps
+	server Server
 }
 
 // New wires the platform hub. The server's New builds the narrowed Deps
 // and mounts the routes through the returned hub.
-func New(deps Deps, shell Shell) *Hub {
-	return &Hub{deps: deps, shell: shell}
+func New(deps Deps, server Server) *Hub {
+	return &Hub{deps: deps, server: server}
 }
 
 // asrOn is the config-honest ASR gate (nil-safe over the optional seam).

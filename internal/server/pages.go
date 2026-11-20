@@ -62,7 +62,7 @@ type handlers struct {
 	// authHub is the carved auth surface (internal/server/auth): BOTH
 	// login modes, the ceremonies, the session spine and the library
 	// login page. The hub reaches the session gate and the render
-	// plumbing back through this handlers value (the auth.Shell seam —
+	// plumbing back through this handlers value (the auth.Server seam —
 	// the 401 wording and the render helpers keep their one home here).
 	authHub *auth.Handlers
 	// cookies is the wired session-cookie policy (Secure mirrors the

@@ -423,7 +423,7 @@ func New(deps Deps) http.Handler {
 	// The carved auth surface (internal/server/auth): BOTH login modes,
 	// the ceremonies, the session spine and the library login page. The
 	// hub reaches the session gate and the render plumbing back through
-	// h (the auth.Shell seam), so the 401 wording and the render helpers
+	// h (the auth.Server seam), so the 401 wording and the render helpers
 	// keep their one home in this package.
 	authHub := auth.New(auth.Deps{
 		Config:    deps.Config,
@@ -468,7 +468,7 @@ func New(deps Deps) http.Handler {
 	// tree, /metrics, the CSP intake, the flight-recorder snapshot, the
 	// /phone-api proxy, the directory bridge, /config.js and the export.
 	// The hub reaches the session gate and the render/error plumbing back
-	// through h (the platform.Shell seam); the SSE nudge vocabulary keeps
+	// through h (the platform.Server seam); the SSE nudge vocabulary keeps
 	// its one home in this package.
 	platformHub := platform.New(platform.Deps{
 		Version:      DisplayVersion(),

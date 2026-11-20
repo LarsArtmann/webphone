@@ -76,7 +76,7 @@ type exportTranscript struct {
 // blobs remain in the server's blob store where they are swept by
 // retention.
 func (p *Hub) ExportData(w http.ResponseWriter, r *http.Request) {
-	sess, ok := p.shell.RequireSession(w, r)
+	sess, ok := p.server.RequireSession(w, r)
 	if !ok {
 		return
 	}

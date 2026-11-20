@@ -47,7 +47,7 @@ func loginContentSecurityPolicy(nonce string) string {
 // copy, so the sentence is built server-side, not island-side).
 func (a *Handlers) LoginPage(w http.ResponseWriter, r *http.Request) {
 	if a.loginPage == nil {
-		a.shell.NotFound(w, r)
+		a.server.NotFound(w, r)
 		return
 	}
 	if code := r.URL.Query().Get("sso_error"); code != "" && r.URL.Query().Get("error") == "" {

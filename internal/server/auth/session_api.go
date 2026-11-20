@@ -71,7 +71,7 @@ func (a *Handlers) CreateSession(w http.ResponseWriter, r *http.Request) {
 // served only to the cookie that proved itself at login. no-store keeps
 // the credential out of every cache.
 func (a *Handlers) GetSession(w http.ResponseWriter, r *http.Request) {
-	sess, ok := a.shell.RequireSession(w, r)
+	sess, ok := a.server.RequireSession(w, r)
 	if !ok {
 		return
 	}

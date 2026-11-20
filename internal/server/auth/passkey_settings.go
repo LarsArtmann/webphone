@@ -50,7 +50,7 @@ func (a *Handlers) PasskeySectionProps(sess session.Session) views.PasskeysSecti
 // An extension login (no identity) has no own passkeys to revoke — the
 // uniform 404 is the anti-enumeration answer, not an error shape.
 func (a *Handlers) RevokePasskey(w http.ResponseWriter, r *http.Request) {
-	sess, ok := a.shell.RequireSession(w, r)
+	sess, ok := a.server.RequireSession(w, r)
 	if !ok {
 		return
 	}
@@ -64,11 +64,11 @@ func (a *Handlers) RevokePasskey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err := a.deps.UserAuth.RemoveCredential(r.Context(), mapped.Email, r.PathValue("id")); err != nil {
-		a.shell.SafeDetail(r, "revoke passkey", err)
-		a.shell.NotifyToast(w, "error", views.T(a.shell.Lang(r), "passkeys.revokeFailed"))
+		a.server.SafeDetail(r, "revoke passkey", err)
+		a.server.NotifyToast(w, "error", views.T(a.server.Lang(r), "passkeys.revokeFailed"))
 	} else {
 		AuthAudit("passkey_revoked", "email", mapped.Email, "credential "+r.PathValue("id"))
-		a.shell.NotifyToast(w, "ok", views.T(a.shell.Lang(r), "passkeys.revoked"))
+		a.server.NotifyToast(w, "ok", views.T(a.server.Lang(r), "passkeys.revoked"))
 	}
-	a.shell.Partial(w, r, views.TabSettings)
+	a.server.Partial(w, r, views.TabSettings)
 }

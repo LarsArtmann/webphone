@@ -139,8 +139,8 @@ type SessionIdentity struct {
 // person is signed in). Empty = the classic extension login.
 func (a *Handlers) sessionIdentityResponse(ctx context.Context, extension domain.Extension, loginEmail string) SessionIdentity {
 	response := SessionIdentity{Extension: extension.String()}
-	response.DID = a.shell.IdentityFor(extension)
-	if mapped, ok := a.shell.MappedIdentityWith(extension, loginEmail); ok {
+	response.DID = a.server.IdentityFor(extension)
+	if mapped, ok := a.server.MappedIdentityWith(extension, loginEmail); ok {
 		response.DisplayName = mapped.DisplayName
 		response.Lines = make([]SessionLine, 0, len(mapped.Lines))
 		for _, owned := range mapped.Lines {

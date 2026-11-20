@@ -32,7 +32,7 @@ type SwitchRequest struct {
 // reloads, and the boot probe re-registers, resubscribes and re-renders
 // everything for the new line.
 func (a *Handlers) SwitchExtension(w http.ResponseWriter, r *http.Request) {
-	sess, ok := a.shell.RequireSession(w, r)
+	sess, ok := a.server.RequireSession(w, r)
 	if !ok {
 		return
 	}

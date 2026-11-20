@@ -80,12 +80,12 @@ type Deps struct {
 	TextAgent *textagent.Client
 }
 
-// Shell is the narrow wiring seam the carved handlers ride on,
+// Server is the narrow wiring seam the carved handlers ride on,
 // implemented by the server's handlers hub: the session gate (the ONE
 // 401 writer for missing sessions) and the HTML render plumbing the two
 // HTML surfaces borrow (the settings partial re-render and the styled
 // 404). Exported methods so internal/server can implement it.
-type Shell interface {
+type Server interface {
 	// RequireSession gates a handler on the attached session; on
 	// failure it has already written the 401.
 	RequireSession(w http.ResponseWriter, r *http.Request) (session.Session, bool)
@@ -112,8 +112,8 @@ type Shell interface {
 // it. The server's wiring mounts the routes; the Shell seam is the
 // server's handlers hub.
 type Handlers struct {
-	deps  Deps
-	shell Shell
+	deps   Deps
+	server Server
 	// cookies is the wired session-cookie policy (Secure mirrors the
 	// TLS-fronted deployment; r.TLS is nil behind the proxy).
 	cookies session.CookiePolicy
@@ -129,10 +129,10 @@ type Handlers struct {
 }
 
 // New wires the auth hub. The server's New builds the narrowed Deps, its
-// own Shell implementation, the cookie policies and the library login
+// own Server implementation, the cookie policies and the library login
 // page, then mounts the routes through the returned hub.
-func New(deps Deps, shell Shell, cookies session.CookiePolicy, csrfCfg httputil.CSRFConfig, loginPage *loginpage.Handler) *Handlers {
-	return &Handlers{deps: deps, shell: shell, cookies: cookies, csrfCfg: csrfCfg, loginPage: loginPage}
+func New(deps Deps, server Server, cookies session.CookiePolicy, csrfCfg httputil.CSRFConfig, loginPage *loginpage.Handler) *Handlers {
+	return &Handlers{deps: deps, server: server, cookies: cookies, csrfCfg: csrfCfg, loginPage: loginPage}
 }
 
 // NewLoginPage builds the library login page over the embedded identity

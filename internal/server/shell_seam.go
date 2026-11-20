@@ -8,7 +8,7 @@ import (
 	"github.com/larsartmann/webphone/internal/web/views"
 )
 
-// The auth.Shell seam (the carved auth package rides on this hub):
+// The auth.Server seam (the carved auth package rides on this hub):
 // exported wrappers so internal/server/auth can borrow the session
 // gate and the render plumbing without reaching into unexported
 // methods — the wording and helpers keep their one home here.
