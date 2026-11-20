@@ -23,17 +23,18 @@ import (
 // SIP-password form. The island card no longer renders any login form;
 // an anonymous root navigation redirects here.
 //
-// primary marks the extension form as the page's PRIMARY method (the
-// passkey-off deployment): bare form, no disclosure. With the passkey
-// ceremony on the page, the form is the break-glass lifeline one
+// showPrimary marks the extension form as the page's PRIMARY method
+// (the passkey-off deployment): bare form, no disclosure. With the
+// passkey ceremony on the page, the form is the break-glass lifeline one
 // disclosure away — signing into a phone must never depend on the IdP
-// or on a passkey being present.
+// or on a passkey being present. showSSO renders the OIDC (Pocket ID)
+// door above it.
 //
 // English-only copy: the login page is a server-rendered surface (the
 // library's own copy is English; D3 keeps shell copy English), and the
 // page carries no island runtime — its behavior lives in
 // /assets/login-page.js.
-func LoginPageExtra(primary bool, sso bool) templ.Component {
+func LoginPageExtra(showPrimary bool, showSSO bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -50,7 +51,7 @@ func LoginPageExtra(primary bool, sso bool) templ.Component {
 		}
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
-		if sso {
+		if showSSO {
 			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<div class=\"space-y-2\">")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
@@ -71,14 +72,14 @@ func LoginPageExtra(primary bool, sso bool) templ.Component {
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			if primary {
+			if showPrimary {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "<div class=\"lp-divider my-6 text-center text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500\"><div class=\"mb-2 border-t border-gray-200 dark:border-gray-700\" aria-hidden=\"true\"></div>or</div>")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 			}
 		}
-		if primary {
+		if showPrimary {
 			templ_7745c5c3_Err = loginExtensionForm().Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err

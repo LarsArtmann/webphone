@@ -272,10 +272,10 @@ type Deps struct {
 	// root; the server only ever sees the seam.
 	ASR asr.Provider
 	// ASRLocality is the config-honest trust label for the ASR seam
-	// ("local" | "remote", asr.LocalityOf): the caption-strip footer chip
+	// (asr.LocalityOf): the caption-strip footer chip
 	// and the Settings row name where caller audio is processed. Empty
 	// when the seam is off.
-	ASRLocality string
+	ASRLocality asr.Locality
 	// TextAgent is the OPTIONAL supervised text-agent seam (the stack's
 	// services.telephony.textagent review API on loopback). Nil: the
 	// drafts routes answer the styled 404 and the Messages tab renders

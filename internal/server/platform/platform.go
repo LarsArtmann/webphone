@@ -48,7 +48,7 @@ type Deps struct {
 	// transcribe affordances).
 	ASR asr.Provider
 	// ASRLocality is the config-honest trust label riding /config.js.
-	ASRLocality string
+	ASRLocality asr.Locality
 	// Trace is the OPTIONAL flight-recorder seam; nil means the snapshot
 	// surface does not exist.
 	Trace TraceRecorder

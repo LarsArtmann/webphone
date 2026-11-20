@@ -14,18 +14,19 @@ import (
 // SIP-password form. The island card no longer renders any login form;
 // an anonymous root navigation redirects here.
 //
-// primary marks the extension form as the page's PRIMARY method (the
-// passkey-off deployment): bare form, no disclosure. With the passkey
-// ceremony on the page, the form is the break-glass lifeline one
+// showPrimary marks the extension form as the page's PRIMARY method
+// (the passkey-off deployment): bare form, no disclosure. With the
+// passkey ceremony on the page, the form is the break-glass lifeline one
 // disclosure away — signing into a phone must never depend on the IdP
-// or on a passkey being present.
+// or on a passkey being present. showSSO renders the OIDC (Pocket ID)
+// door above it.
 //
 // English-only copy: the login page is a server-rendered surface (the
 // library's own copy is English; D3 keeps shell copy English), and the
 // page carries no island runtime — its behavior lives in
 // /assets/login-page.js.
-templ LoginPageExtra(primary bool, sso bool) {
-	if sso {
+templ LoginPageExtra(showPrimary bool, showSSO bool) {
+	if showSSO {
 		<div class="space-y-2">
 			@display.Button(display.ButtonProps{
 				BaseProps: utils.BaseProps{
@@ -37,14 +38,14 @@ templ LoginPageExtra(primary bool, sso bool) {
 				Size:    display.ButtonSizeMD,
 			})
 		</div>
-		if primary {
+		if showPrimary {
 			<div class="lp-divider my-6 text-center text-xs uppercase tracking-wide text-gray-400 dark:text-gray-500">
 				<div class="mb-2 border-t border-gray-200 dark:border-gray-700" aria-hidden="true"></div>
 				or
 			</div>
 		}
 	}
-	if primary {
+	if showPrimary {
 		@loginExtensionForm()
 	} else {
 		<details class="mt-4">

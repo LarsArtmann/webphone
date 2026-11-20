@@ -58,35 +58,45 @@ var ErrUnauthorized = errors.New("asr rejected the bearer token")
 
 // Locality classifies where a provider URL processes caller audio — the
 // config-honest trust label the Settings tab and the caption strip
-// render (M17). "local" names infrastructure the operator runs
+// render (M17). LocalityLocal names infrastructure the operator runs
 // (loopback, RFC1918/private, .lan/.home.arpa, or a dotless hostname);
-// everything else is "remote". An unparseable URL answers "remote"
+// everything else is LocalityRemote. An unparseable URL answers remote
 // (the honest default: assume the outside world).
-func LocalityOf(rawURL string) string {
+type Locality string
+
+const (
+	// LocalityLocal names infrastructure the operator runs.
+	LocalityLocal Locality = "local"
+	// LocalityRemote is everything else — the honest default.
+	LocalityRemote Locality = "remote"
+)
+
+// LocalityOf classifies a provider URL's trust locality.
+func LocalityOf(rawURL string) Locality {
 	parsed, err := url.Parse(rawURL)
 	if err != nil || parsed.Hostname() == "" {
-		return "remote"
+		return LocalityRemote
 	}
 	host := strings.ToLower(parsed.Hostname())
 	if host == "localhost" || host == "::1" || strings.HasSuffix(host, ".lan") || strings.HasSuffix(host, ".home.arpa") {
-		return "local"
+		return LocalityLocal
 	}
 	if strings.HasPrefix(host, "127.") || strings.HasPrefix(host, "10.") || strings.HasPrefix(host, "192.168.") {
-		return "local"
+		return LocalityLocal
 	}
 	if strings.HasPrefix(host, "172.") {
 		if second, ok := strings.CutPrefix(host, "172."); ok {
 			if octet, _, found := strings.Cut(second, "."); found {
 				if n, err := strconv.Atoi(octet); err == nil && n >= 16 && n <= 31 {
-					return "local"
+					return LocalityLocal
 				}
 			}
 		}
 	}
 	if !strings.Contains(host, ".") {
-		return "local"
+		return LocalityLocal
 	}
-	return "remote"
+	return LocalityRemote
 }
 
 const (

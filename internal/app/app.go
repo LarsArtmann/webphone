@@ -245,7 +245,7 @@ func New(cfg config.Config, log *slog.Logger) (*App, error) {
 				Language: cfg.ASR.Language,
 			})
 		}
-		if cfg.ASR.Provider == "whispercpp" {
+		if cfg.ASR.Provider == config.ASRProviderWhisperCPP {
 			return asr.NewWhisperCppClient(asr.ClientConfig{BaseURL: cfg.ASR.URL, Token: cfg.ASR.Token, Model: cfg.ASR.Model})
 		}
 		return asr.NewClient(asr.ClientConfig{BaseURL: cfg.ASR.URL, Token: cfg.ASR.Token, Model: cfg.ASR.Model})
@@ -573,7 +573,7 @@ func probeRefreshIf(dashboardEnabled bool) time.Duration {
 // asrLocality derives the seam's config-honest trust label ("local" |
 // "remote", asr.LocalityOf); empty when the seam is off (no label may
 // imply processing that does not happen).
-func asrLocality(cfg config.Config) string {
+func asrLocality(cfg config.Config) asr.Locality {
 	if !cfg.ASR.Enabled() {
 		return ""
 	}

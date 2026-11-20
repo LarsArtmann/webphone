@@ -417,6 +417,32 @@ type Paperless struct {
 // this method never sees one).
 func (p Paperless) Enabled() bool { return p.URL != "" && p.Token != "" }
 
+// ASRProvider is the closed set of transcription wire kinds the ASR
+// seam speaks — the config-side enum validation, the app-side client
+// selection and the Settings row all key on it (one home, no stringly
+// drift between them).
+type ASRProvider string
+
+const (
+	// ASRProviderOpenAI is the default OpenAI-compatible multipart wire;
+	// the config zero value ("") means the same.
+	ASRProviderOpenAI ASRProvider = "openai"
+	// ASRProviderGoogle is Google Cloud Speech-to-Text V2 JSON.
+	ASRProviderGoogle ASRProvider = "google"
+	// ASRProviderWhisperCPP is the native whisper.cpp server /inference wire.
+	ASRProviderWhisperCPP ASRProvider = "whispercpp"
+)
+
+// Valid reports whether p names a wire the seam speaks (the zero
+// value counts as the openai default).
+func (p ASRProvider) Valid() bool {
+	switch p {
+	case "", ASRProviderOpenAI, ASRProviderGoogle, ASRProviderWhisperCPP:
+		return true
+	}
+	return false
+}
+
 // ASR configures the optional speech-to-text provider. Two provider
 // kinds share the seam: "openai" (default — any OpenAI-compatible
 // /v1/audio/transcriptions server, e.g. Speaches or whisper.cpp) and
@@ -431,8 +457,10 @@ func (p Paperless) Enabled() bool { return p.URL != "" && p.Token != "" }
 // enables and location/token stay optional overrides.
 type ASR struct {
 	// Provider selects the wire: "" or "openai" = OpenAI-compatible
-	// multipart; "google" = Google Cloud Speech-to-Text V2 JSON.
-	Provider string `json:"provider,omitempty" koanf:"provider"`
+	// multipart; "google" = Google Cloud Speech-to-Text V2 JSON;
+	// "whispercpp" = the native whisper.cpp server wire. The closed
+	// set lives in the ASRProvider constants.
+	Provider ASRProvider `json:"provider,omitempty" koanf:"provider"`
 	// URL is the provider base (e.g. http://127.0.0.1:8081) on the
 	// openai wire; an optional endpoint override on the google wire.
 	// Empty = disabled on openai, derived regional endpoint on google.
@@ -459,7 +487,7 @@ type ASR struct {
 }
 
 // Google reports whether the google provider kind is selected.
-func (a ASR) Google() bool { return a.Provider == "google" }
+func (a ASR) Google() bool { return a.Provider == ASRProviderGoogle }
 
 // TextAgent configures the optional supervised text-agent seam (the
 // stack's services.telephony.textagent review API on loopback). URL
@@ -968,7 +996,7 @@ func validate(cfg Config) error {
 		return err
 	}
 	switch {
-	case cfg.ASR.Provider != "" && cfg.ASR.Provider != "openai" && cfg.ASR.Provider != "google" && cfg.ASR.Provider != "whispercpp":
+	case !cfg.ASR.Provider.Valid():
 		return errorfamily.Newf(errorfamily.Rejection, "config.asr.provider", "asr.provider %q is not one of \"openai\", \"google\", \"whispercpp\"", cfg.ASR.Provider)
 	case cfg.ASR.Google() && cfg.ASR.Project == "":
 		return errorfamily.NewRejection("config.asr.project", "asr.provider is google without asr.project: the recognizer path needs the cloud project id")

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/larsartmann/webphone/internal/asr"
 	"github.com/larsartmann/webphone/internal/config"
 )
 
@@ -70,7 +71,7 @@ func (p *Hub) ConfigJS(w http.ResponseWriter, _ *http.Request) {
 		Metrics *bool `json:"metrics,omitempty"`
 		// ASRLocality is the config-honest trust label ("local"|"remote"):
 		// the caption-strip footer chip names where caller audio goes.
-		ASRLocality string `json:"asrLocality,omitempty"`
+		ASRLocality asr.Locality `json:"asrLocality,omitempty"`
 		// SIPCredential tells the island the login ORDER changes: the
 		// session must be minted BEFORE the REGISTER (the derived
 		// credential comes back in the login/resume answers).

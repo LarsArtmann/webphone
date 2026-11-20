@@ -7,6 +7,7 @@ import (
 	"github.com/larsartmann/templ-components/forms"
 	"github.com/larsartmann/templ-components/icons"
 	"github.com/larsartmann/templ-components/utils"
+	"github.com/larsartmann/webphone/internal/asr"
 	"github.com/larsartmann/webphone/internal/domain"
 )
 
@@ -36,12 +37,13 @@ type SettingsPanelProps struct {
 	CRMState string
 	// ASR reports the optional live-transcription seam; ASRDetail names
 	// the provider kind and model (asr.Provider.Describe) when it is on,
-	// ASRLocality carries the config-honest trust label (M17: "local" =
-	// loopback/private provider, "remote" = external) that names WHERE
-	// caller audio goes; empty when the seam is off.
+	// ASRLocality carries the config-honest trust label (M17:
+	// asr.LocalityLocal = loopback/private provider, asr.LocalityRemote =
+	// external) that names WHERE caller audio goes; empty when the seam
+	// is off.
 	ASR         bool
 	ASRDetail   string
-	ASRLocality string
+	ASRLocality asr.Locality
 	// Paperless reports the optional inbound-fax archive (config-fax
 	// audit T7, 2026-10-30): the row renders ONLY when the seam is
 	// configured and states the CONFIG fact — never an uptime claim
@@ -488,7 +490,7 @@ func asrDetailWithLocality(props SettingsPanelProps) string {
 	if !props.ASR {
 		return props.ASRDetail
 	}
-	if props.ASRLocality == "local" {
+	if props.ASRLocality == asr.LocalityLocal {
 		return props.ASRDetail + " · " + T(props.Lang, "settings.asr.local")
 	}
 	return props.ASRDetail + " · " + T(props.Lang, "settings.asr.remote")
