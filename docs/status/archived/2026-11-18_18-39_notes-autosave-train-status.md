@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-20 (docs-health v10 sweep): cadence heal — the new e2e-rework status report (2026-11-20_11-17) pushed unarchived to 67 > 66; both archive gates (check-rows --strict, bare-rows) passed before the move; superseded mid-flight snapshot (the 21-55 closeout owns the end state).
+
 # Notes autosave train — session status
 
 > Snapshot-rot header: claims verified as of 2026-11-18 18:39 CET.
