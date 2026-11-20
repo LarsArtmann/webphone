@@ -12,6 +12,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - The **workflow-e2e browser lane is now a blocking CI job**
   (2026-11-19): eight consecutive green advisory runs earned the gate —
   `continue-on-error` is gone and a red browser journey is a red main.
+- **The browser e2e gained the five deferred journeys** (2026-11-20,
+  pareto T07–T09): passkey (CLI-minted enroll token → `/enroll` →
+  `/login` driven through chromedriver's virtual authenticator on a
+  domain origin), admin inventory + deep link, line switcher (two
+  owned lines, "DID · extension" labels, reload + SSE resubscribe),
+  dial-gate chip (window → deny → inline state → "Dial anyway" →
+  spent override), and voicemail (play through the session-gated
+  `/phone-api` proxy, honest toast-once on the dead recording,
+  delete, empty state) — 40 checks, twice-consecutive green locally.
+  The harness's fake phone API now normalizes the app's
+  `/phone-api`-prefixed upstream paths and serves CSP-clean relative
+  recording URLs (the absolute cross-port form was media-blocked by
+  the strict CSP).
 - **A resent fax owns its own document copy** (2026-11-19, full-code-review
   M1): a resend used to reference the original job's blob path, and the
   retention sweep could unlink that shared file while the retry row was
