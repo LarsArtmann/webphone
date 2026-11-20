@@ -254,6 +254,34 @@ func ContactsDomainDecl() system.DomainConfig {
 
 // ─── the backend the server keeps calling ──────────────────────────
 
+// NewContactsSystem boots a contacts-only system over dsn — the
+// `export-legacy -check` one-shot's read companion (cmd/webphone). It
+// opens the SAME journal (<dataDir>/system.db) the server folds, with
+// the contacts projection registered so the persisted view is readable
+// through the normal composition. Run it with the server quiesced at
+// DROP-window time: it reads the PERSISTED projection plus whatever
+// its own projection host folds during the boot; it dispatches no
+// commands and never writes contact events.
+func NewContactsSystem(ctx context.Context, dsn string) (*system.System, error) {
+	sys, err := system.New(ctx, Domain(ContactsDomainDecl()), system.DeploymentConfig{
+		Engines: map[string]system.EngineConfig{
+			"db": {Driver: "sqlite", DSN: dsn, Pragmas: []string{"wal"}},
+		},
+		Instances: []system.InstanceConfig{
+			{Role: system.RoleSourceOfTruth, Engine: "db", Durability: system.DurabilityNormal},
+			{Role: system.RoleProjections, Engine: "db", Durability: system.DurabilityNormal},
+		},
+	})
+	if err != nil {
+		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.contacts_check_boot", "boot contacts check system at %s", dsn)
+	}
+	if err := sys.Start(ctx); err != nil {
+		_ = sys.Close() //cqrs-lint:ignore(C023) deliberate cleanup idiom: best-effort close; the primary error/drain owns reporting
+		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.contacts_check_boot", "start contacts check system at %s", dsn)
+	}
+	return sys, nil
+}
+
 // Contacts is the dispatch-backed personal-contacts store: the
 // contract readmodels' gate declares (Save upsert keeping id and
 // age on rename, newest-first owner-scoped List, owner-scoped Delete

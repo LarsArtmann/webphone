@@ -138,6 +138,13 @@ func run() error {
 	if len(os.Args) >= 2 && os.Args[1] == "contracts" {
 		return runContracts(os.Args[2:])
 	}
+	// The export-legacy one-shot is the §5 DROP-window safety tool:
+	// dump the legacy contacts table read-only (sha256 + count header)
+	// or classify it against the journal projection (-check exits
+	// nonzero while legacy-only rows lack written confirmations).
+	if len(os.Args) >= 2 && os.Args[1] == "export-legacy" {
+		return runExportLegacy(os.Args[2:])
+	}
 	cfg, err := config.Load()
 	if err != nil {
 		return bootErr(bootConfigInvalid, propagatef("load config: %w", err))
