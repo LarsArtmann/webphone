@@ -46,6 +46,18 @@ func (s *Store) Save(subDir, ext string, content []byte) (domain.RelPath, error)
 		return domain.RelPath{}, errorfamily.WrapInfrastructuref(err, "blob.name", "generate file name")
 	}
 	rel := filepath.Join(subDir, string(name)+ext)
+
+	// Brand BEFORE the write (2026-11-19 review L4): a malformed path
+	// shape must fail before any bytes land, or the just-written file
+	// would be orphaned with no returned path to roll back — the
+	// unspool callers only know paths Save RETURNED. Unreachable today
+	// (both call sites pass closed-set extension literals), kept as
+	// defense-in-depth.
+	branded, err := domain.ParseRelPath(filepath.ToSlash(rel))
+	if err != nil {
+		return domain.RelPath{}, errorfamily.WrapInfrastructuref(err, "blob.name", "brand stored path")
+	}
+
 	abs := filepath.Join(s.root, rel)
 
 	// Atomic write (fsync file + rename + fsync dir): "Save returned" must
@@ -54,11 +66,6 @@ func (s *Store) Save(subDir, ext string, content []byte) (domain.RelPath, error)
 	// at every call site — a row must never reference non-durable content.
 	if err := atomicwrite.WriteWithPerm(abs, content, 0o640); err != nil {
 		return domain.RelPath{}, errorfamily.WrapInfrastructuref(err, "blob.write", "write %s", rel)
-	}
-
-	branded, err := domain.ParseRelPath(filepath.ToSlash(rel))
-	if err != nil {
-		return domain.RelPath{}, errorfamily.WrapInfrastructuref(err, "blob.name", "brand stored path")
 	}
 	return branded, nil
 }

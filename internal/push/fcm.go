@@ -72,6 +72,16 @@ type FcmSender struct {
 	mu          sync.Mutex
 	tokenValue  string
 	tokenExpiry time.Time
+	inflight    chan tokenResult
+}
+
+// tokenResult is the single-flight handoff: every goroutine that
+// arrives while one grant exchange is running shares its outcome
+// instead of stacking its own network attempt behind the mutex
+// (sso.providerFor's shape).
+type tokenResult struct {
+	token string
+	err   error
 }
 
 // NewFcmSender loads the service-account credentials file and builds
@@ -257,16 +267,48 @@ func (s *FcmSender) post(ctx context.Context, payload []byte, accessToken string
 const fcmUnregisteredMarker = "UNREGISTERED"
 
 // fetchAccessToken returns a cached OAuth2 access token, minting a
-// fresh JWT-bearer grant when the cached one is stale.
+// fresh JWT-bearer grant when the cached one is stale. The mint is
+// SINGLE-FLIGHT: valid-cache readers pass without waiting, joiners
+// wait on the buffered channel, and only the leader exchanges — the
+// mutex never spans the network round-trip (a held-lock mint could
+// serialize a whole fan behind one grant).
 func (s *FcmSender) fetchAccessToken(ctx context.Context) (string, error) {
 	s.mu.Lock()
-	defer s.mu.Unlock()
 	if s.tokenValue != "" && time.Now().Before(s.tokenExpiry.Add(-tokenExpirySlack)) {
-		return s.tokenValue, nil
+		tok := s.tokenValue
+		s.mu.Unlock()
+		return tok, nil
 	}
+	if s.inflight != nil {
+		ch := s.inflight
+		s.mu.Unlock()
+		res := <-ch
+		return res.token, res.err
+	}
+	ch := make(chan tokenResult, 1)
+	s.inflight = ch
+	s.mu.Unlock()
+
+	token, expiry, err := s.exchangeToken(ctx)
+
+	s.mu.Lock()
+	s.inflight = nil
+	if err == nil {
+		s.tokenValue = token
+		s.tokenExpiry = expiry
+	}
+	s.mu.Unlock()
+	ch <- tokenResult{token: token, err: err}
+	close(ch)
+	return token, err
+}
+
+// exchangeToken runs the JWT-bearer grant WITHOUT holding any lock —
+// the single-flight leader's network leg.
+func (s *FcmSender) exchangeToken(ctx context.Context) (string, time.Time, error) {
 	assertion, expiry, err := s.signedJWT()
 	if err != nil {
-		return "", err
+		return "", time.Time{}, err
 	}
 	form := url.Values{
 		"grant_type": {fcmGrantType},
@@ -274,13 +316,13 @@ func (s *FcmSender) fetchAccessToken(ctx context.Context) (string, error) {
 	}
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, s.tokenURI, strings.NewReader(form.Encode()))
 	if err != nil {
-		return "", errorfamily.WrapInfrastructuref(err, "push.fcm_token", "build token request")
+		return "", time.Time{}, errorfamily.WrapInfrastructuref(err, "push.fcm_token", "build token request")
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 
 	resp, err := s.client.Do(req)
 	if err != nil {
-		return "", errorfamily.WrapInfrastructuref(err, "push.fcm_token", "exchange fcm access token")
+		return "", time.Time{}, errorfamily.WrapInfrastructuref(err, "push.fcm_token", "exchange fcm access token")
 	}
 	grantBody, _ := io.ReadAll(io.LimitReader(resp.Body, fcmBodyLimit))
 	_ = resp.Body.Close() //nolint:erraudit // best-effort socket return; the body is drained
@@ -291,21 +333,19 @@ func (s *FcmSender) fetchAccessToken(ctx context.Context) (string, error) {
 	}
 	if resp.StatusCode == http.StatusOK {
 		if err := json.Unmarshal(grantBody, &grant); err != nil {
-			return "", errorfamily.WrapInfrastructuref(err, "push.fcm_token", "decode fcm token grant")
+			return "", time.Time{}, errorfamily.WrapInfrastructuref(err, "push.fcm_token", "decode fcm token grant")
 		}
 	}
 	if resp.StatusCode != http.StatusOK || grant.AccessToken == "" {
 		if resp.StatusCode == http.StatusUnauthorized || resp.StatusCode == http.StatusForbidden {
-			return "", errorfamily.WrapRejectionf(ErrUnauthorized, "push.fcm_token", "fcm token endpoint rejected the service account (%d)", resp.StatusCode)
+			return "", time.Time{}, errorfamily.WrapRejectionf(ErrUnauthorized, "push.fcm_token", "fcm token endpoint rejected the service account (%d)", resp.StatusCode)
 		}
-		return "", errorfamily.Newf(errorfamily.Infrastructure, "push.fcm_token", "fcm token endpoint answered %d", resp.StatusCode)
+		return "", time.Time{}, errorfamily.Newf(errorfamily.Infrastructure, "push.fcm_token", "fcm token endpoint answered %d", resp.StatusCode)
 	}
 	if grant.ExpiresIn <= 0 {
 		grant.ExpiresIn = int(time.Until(expiry).Seconds())
 	}
-	s.tokenValue = grant.AccessToken
-	s.tokenExpiry = time.Now().Add(time.Duration(grant.ExpiresIn) * time.Second)
-	return s.tokenValue, nil
+	return grant.AccessToken, time.Now().Add(time.Duration(grant.ExpiresIn) * time.Second), nil
 }
 
 // signedJWT mints the RS256 assertion for the JWT-bearer grant and
