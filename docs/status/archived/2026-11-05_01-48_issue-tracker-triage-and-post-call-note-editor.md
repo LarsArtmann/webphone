@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-19 (docs-gates cadence drain, 67>66): issue-tracker ledger closed with per-row verdicts; the live remainder (T18 FCM invalidateToken harvest) routes in TODO_LIST.
+
 # Status: Issue-Tracker Triage + Post-Call Note Editor (2026-11-05 01:48 CET)
 
 **Claims verified as of 2026-11-05 01:48 CET.** Push/CI statements rot fastest; the concurrent-session picture changed three times during this session alone.
@@ -7,6 +9,8 @@ Session scope: one instruction, "review ALL open GitHub issues and fix them". 15
 ## a) FULLY DONE
 
 **Tracker: 12 of 15 issues resolved, each with an evidence comment.**
+
+<!-- check-rows:ledger -->
 
 | Issue                   | Resolution                      | Evidence anchor                                                                                                                                     |
 | ----------------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
