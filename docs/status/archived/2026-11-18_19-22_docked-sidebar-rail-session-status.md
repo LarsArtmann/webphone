@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-20 (docs-health v10 sweep): cadence heal — the new T15-gap status report (2026-11-20_18-13) pushed unarchived over the 66 pin; both archive gates (check-rows --strict, bare-rows) passed before the move; shipped-train snapshot (the rail is the documented AGENTS baseline since 2026-11-15).
+
 # Session status: the docked sidebar rail (and the concurrent line-ownership train it landed beside)
 
 > **Snapshot-rot header: claims verified as of 2026-11-18 19:22 CET.** Push and CI
