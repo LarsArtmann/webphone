@@ -1,7 +1,7 @@
 {
   "version": "1.0",
   "threshold": 1,
-  "recordedAt": "2026-11-19T20:18:05.974634882Z",
+  "recordedAt": "2026-11-20T11:22:23.50780187Z",
   "entries": [
     {
       "hash": "0074763f10c77d08",
@@ -327,6 +327,14 @@
       "tokens": 3
     },
     {
+      "hash": "43e92f0334cd2c43",
+      "files": [
+        "internal/push/fcm.go",
+        "internal/sso/sso.go"
+      ],
+      "tokens": 4
+    },
+    {
       "hash": "4b666670c30bf96c",
       "files": [
         "internal/web/views/contacts.templ",
@@ -335,6 +343,14 @@
         "internal/web/views/history.templ"
       ],
       "tokens": 4
+    },
+    {
+      "hash": "4d13e08de0f2d1ea",
+      "files": [
+        "internal/cqrs/contacts.go",
+        "internal/cqrs/enroll.go"
+      ],
+      "tokens": 6
     },
     {
       "hash": "4ebddc0af69e86e9",
@@ -351,6 +367,14 @@
       "files": [
         "internal/web/views/layout.templ",
         "internal/web/views/enroll.templ"
+      ],
+      "tokens": 4
+    },
+    {
+      "hash": "583db7927a0732d8",
+      "files": [
+        "internal/push/fcm.go",
+        "internal/sso/sso.go"
       ],
       "tokens": 4
     },
@@ -723,6 +747,14 @@
       "tokens": 2
     },
     {
+      "hash": "b2845392cec6f330",
+      "files": [
+        "internal/sso/sso.go",
+        "internal/push/fcm.go"
+      ],
+      "tokens": 4
+    },
+    {
       "hash": "b3d1a5087046a970",
       "files": [
         "internal/web/views/history.templ",
@@ -743,6 +775,14 @@
         "internal/web/views/admin.templ"
       ],
       "tokens": 16
+    },
+    {
+      "hash": "b8825e41bc6eb38a",
+      "files": [
+        "internal/sso/sso.go",
+        "internal/push/fcm.go"
+      ],
+      "tokens": 6
     },
     {
       "hash": "b96984bc4d7e3b4b",

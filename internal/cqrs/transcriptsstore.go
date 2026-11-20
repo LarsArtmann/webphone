@@ -272,6 +272,13 @@ func (s *Transcripts) Count(ctx context.Context) (int64, error) {
 // the real removals. The loop converges because every batch removes
 // what it scanned (projection lag can only leave rows for the next
 // pass, never lose them).
+//
+// Seq IS the append wall-clock (2026-11-19 review F4): Append stamps
+// it time.Now().UnixNano() and this sweep filters on it, so a future
+// writer stamping Seq differently (per-call counters, for example)
+// silently changes WHAT RETENTION DELETES while every test stays
+// green only by convention. Treat any Seq-stamping change as a
+// retention-semantics change and re-pin SweepBefore with it.
 func (s *Transcripts) SweepBefore(ctx context.Context, cutoff time.Time) (int64, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()

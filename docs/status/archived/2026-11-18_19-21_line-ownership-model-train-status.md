@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-20 (docs-health v10 sweep): cadence heal — the new T10–T15 mid-flight status report (2026-11-20_12-20) pushed unarchived to 67 > 66; both archive gates (check-rows --strict, bare-rows) passed before the move; shipped-train snapshot superseded by the 20-03 follow-up + the AGENTS line-ownership doctrine.
+
 # Status — line-ownership data model train (shipped) + honest self-audit
 
 > STATUS SNAPSHOT — claims verified as of **2026-11-18 19:21 CET**. CI/verdict
