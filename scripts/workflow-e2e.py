@@ -903,13 +903,32 @@ def journey_dial_gate(driver, base: str, c: Check, seed: "Seed", remote: str) ->
 
 
 def journey_voicemail(driver, base: str, c: Check) -> None:
-    driver.get(base + "/voicemail")
-    rows = wait(driver, lambda d: d.find_elements("css selector", "[data-vm-play]"))
-    c.ok("J-vm rows render from the phone API", len(rows) == 2, f"rows={len(rows)}")
+    from selenium.common.exceptions import StaleElementReferenceException
 
-    live_btn = driver.find_element("css selector", "[data-vm-play='e2e-live-uuid']")
-    live_btn.click()
+    # The boot-time voicemail re-fetch morphs the panel shortly after
+    # load: re-find + click with a stale-retry instead of holding a
+    # reference across the swap.
+    def click_retry(selector: str) -> None:
+        for _ in range(8):
+            try:
+                driver.find_element("css selector", selector).click()
+                return
+            except StaleElementReferenceException:
+                time.sleep(0.4)
+        driver.find_element("css selector", selector).click()
+
+    driver.get(base + "/voicemail")
     try:
+        rows = wait(driver, lambda d: d.find_elements("css selector", "[data-vm-play]"))
+        c.ok(
+            "J-vm rows render from the phone API", len(rows) == 2, f"rows={len(rows)}"
+        )
+    except Exception as err:  # noqa: BLE001 - journey assertion failure, not control flow
+        c.ok("J-vm rows render from the phone API", False, str(err)[:120])
+        return
+
+    try:
+        click_retry("[data-vm-play='e2e-live-uuid']")
         wait(
             driver,
             lambda d: d.execute_script(
@@ -922,13 +941,12 @@ def journey_voicemail(driver, base: str, c: Check) -> None:
     except Exception as err:  # noqa: BLE001 - journey assertion failure, not control flow
         c.ok("J-vm live recording plays", False, str(err)[:120])
 
-    dead_btn = driver.find_element("css selector", "[data-vm-play='e2e-dead-uuid']")
     try:
         # Toasts live 6s and dedup identical consecutive messages: the
         # "exactly once" contract is the PEAK count over a full settle
         # window, one above the pre-click baseline and never two.
         before = len(driver.find_elements("css selector", "#toasts .toast"))
-        dead_btn.click()
+        click_retry("[data-vm-play='e2e-dead-uuid']")
         wait(
             driver,
             lambda d, b=before: len(d.find_elements("css selector", "#toasts .toast")) > b,
@@ -954,10 +972,7 @@ def journey_voicemail(driver, base: str, c: Check) -> None:
     driver.execute_script("window.confirm = function () { return true; };")
     for uuid, label in (("e2e-live-uuid", "live"), ("e2e-dead-uuid", "dead")):
         try:
-            row_button = driver.find_element(
-                "css selector", f"[hx-post*='uuid={uuid}']"
-            )
-            row_button.click()
+            click_retry(f"[hx-post*='uuid={uuid}']")
             wait(
                 driver,
                 lambda d, u=uuid: not d.find_elements(
@@ -1046,35 +1061,54 @@ def main() -> int:
         # auth.users folds into passkey mode (the ONE identity home), so
         # the config carries the full passkey half: rp pair + one SIP
         # password file per mapped extension (read per LOGIN, never at
-        # boot — fixture paths are enough for the journeys).
+        # boot — fixture paths are enough for the journeys). The file is
+        # written HERE because the enroll token must be minted BEFORE
+        # boot: the one-shot opens the journal alone, the server joins
+        # it after (the smoke's shared-journal ordering — minting against
+        # a live server raced the verify 503).
+        config = {
+            "auth": {
+                "users": {
+                    "ops@example.org": {
+                        "display_name": "Ops User",
+                        "extensions": ["1001", "1002"],
+                        "admin": True,
+                    }
+                },
+                "extension_password_files": {
+                    "1001": f"{workdir}/sip-password-1001",
+                    "1002": f"{workdir}/sip-password-1002",
+                },
+                "passkey": {
+                    "rp_id": "webphone.test",
+                    "rp_origins": [domain_base],
+                },
+            },
+            "identities": {
+                "1001": "+49 30 1110001",
+                "1002": "+49 30 1110002",
+            },
+        }
+        config_path = f"{workdir}/config-{port}.json"
+        with open(config_path, "w", encoding="utf-8") as handle:
+            json.dump(config, handle)
+        token = ""
+        try:
+            token = mint_enroll_token(
+                binary,
+                config_path,
+                f"{workdir}/data-{port}",
+                f"127.0.0.1:{port}",
+                "ops@example.org",
+            )
+        except Exception as err:  # noqa: BLE001 - pre-boot step, judged as a check below
+            print(f"workflow e2e: enroll mint failed before boot: {err}")
         _, base, datadir, stop_server = boot(
             binary,
             workdir,
             port=port,
-            config={
-                "auth": {
-                    "users": {
-                        "ops@example.org": {
-                            "display_name": "Ops User",
-                            "extensions": ["1001", "1002"],
-                            "admin": True,
-                        }
-                    },
-                    "extension_password_files": {
-                        "1001": f"{workdir}/sip-password-1001",
-                        "1002": f"{workdir}/sip-password-1002",
-                    },
-                    "passkey": {
-                        "rp_id": "webphone.test",
-                        "rp_origins": [domain_base],
-                    },
-                },
-                "identities": {
-                    "1001": "+49 30 1110001",
-                    "1002": "+49 30 1110002",
-                },
-            },
             env_extra={
+                "WEBPHONE_CONFIG": config_path,
                 "WEBPHONE_DIAL__COOLDOWN": "2m",
                 "WEBPHONE_PHONE_API_URL": phone_api.base,
             },
@@ -1121,18 +1155,7 @@ def main() -> int:
                     except Exception as err:  # noqa: BLE001 - journey isolation, not control flow
                         c.ok(name, False, str(err)[:160])
 
-                try:
-                    token = mint_enroll_token(
-                        binary,
-                        f"{workdir}/config-{port}.json",
-                        datadir,
-                        f"127.0.0.1:{port}",
-                        "ops@example.org",
-                    )
-                    c.ok("J-passkey CLI mints the enroll token", True)
-                except Exception as err:  # noqa: BLE001 - journey isolation, not control flow
-                    token = ""
-                    c.ok("J-passkey CLI mints the enroll token", False, str(err)[:160])
+                c.ok("J-passkey CLI mints the enroll token", bool(token), token[:24])
                 if token:
                     attempt(
                         "J-passkey ceremonies",
