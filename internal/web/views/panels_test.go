@@ -538,7 +538,7 @@ var idAttrRe = regexp.MustCompile(`id="(att-transcript-[^"]+)"`)
 // TestVoicemailRowTranscribeButtonGatedOnASR mirrors the attachment gate
 // for the voicemail player row.
 func TestVoicemailRowTranscribeButtonGatedOnASR(t *testing.T) {
-	msg := VoicemailItem{UUID: "u1", Seconds: 12, AudioURL: "/phone-api/voicemail/1001/messages/u1/audio"}
+	msg := VoicemailMessage{UUID: "u1", Seconds: 12, AudioURL: "/phone-api/voicemail/1001/messages/u1/audio"}
 	on := renderComponent(t, VoicemailRow(msg, nil, LangEN, true))
 	if !strings.Contains(on, "data-transcribe-src") || !strings.Contains(on, "vm-transcript-u1") {
 		t.Errorf("asr on: voicemail transcribe affordance missing: %s", on)

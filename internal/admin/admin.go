@@ -25,7 +25,7 @@ import (
 // "no admin, nothing listed" — the same nil-gated seam doctrine as Deps'
 // other optional services.
 type Service struct {
-	users      *authmap.Map
+	users      *authmap.Ownership
 	identities map[string]string
 }
 
@@ -33,7 +33,7 @@ type Service struct {
 // identities feed (extension → presented DID). Identity keys must be
 // normalized extensions — config.Load guarantees it, so a violation here
 // is a composition defect and fails loudly.
-func New(users *authmap.Map, identities map[string]string) (*Service, error) {
+func New(users *authmap.Ownership, identities map[string]string) (*Service, error) {
 	parsed := make(map[string]string, len(identities))
 	for ext, did := range identities {
 		// The config identities validation contract: keys must be

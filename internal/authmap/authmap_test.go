@@ -175,7 +175,7 @@ func TestNewRejectsUnownableOwnershipShapes(t *testing.T) {
 }
 
 func TestNilMapFailsClosed(t *testing.T) {
-	var m *Map
+	var m *Ownership
 	if _, ok := m.Resolve("lars@example.com"); ok {
 		t.Fatal("nil map must not resolve")
 	}

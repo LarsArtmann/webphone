@@ -40,12 +40,12 @@ const dbDriver = "sqlite"
 // config is enabled; nil on Deps means the mode is off and every passkey
 // surface 404s.
 type Service struct {
-	users  *usermgmt.Service
-	db     *sql.DB
-	enroll readmodels.EnrollGate
-	mapped *authmap.Map
-	cfg    PasskeyRuntime
-	log    *slog.Logger
+	users     *usermgmt.Service
+	db        *sql.DB
+	enroll    readmodels.EnrollGate
+	ownership *authmap.Ownership
+	cfg       PasskeyRuntime
+	log       *slog.Logger
 }
 
 // PasskeyRuntime is the resolved passkey configuration the service needs
@@ -137,12 +137,12 @@ func New(ctx context.Context, cfg PasskeyRuntime, dataDir string, enroll readmod
 		db.Close()                                                                                                   //nolint:errcheck // best-effort cleanup on a failed boot path
 		return nil, errorfamily.Wrapf(err, errorfamily.Classify(err), "userauth.service", "create usermgmt service") //nolint:erraudit // ctx is bound to the call; the wrap adds the code the journal greps
 	}
-	mapped, err := authmap.New(cfg.Users, cfg.ExtensionPasswordFiles)
+	ownership, err := authmap.New(cfg.Users, cfg.ExtensionPasswordFiles)
 	if err != nil {
 		db.Close()                                                                                          //nolint:errcheck // best-effort cleanup on a failed boot path
 		return nil, errorfamily.WrapRejection(err, "userauth.mapping", "build the email→extension mapping") //nolint:erraudit // pure config verdict: nothing failed, no ctx to carry
 	}
-	svc := &Service{users: users, db: db, enroll: enroll, mapped: mapped, cfg: cfg, log: log}
+	svc := &Service{users: users, db: db, enroll: enroll, ownership: ownership, cfg: cfg, log: log}
 	return svc, nil
 }
 
@@ -210,7 +210,7 @@ func (s *Service) FinishLogin(ctx context.Context, userID identitymodel.UserID, 
 // email has no mapping (login fails closed — a passkey alone must never
 // mint a session for an unmapped account).
 func (s *Service) Resolve(email string) (MappedUser, bool) {
-	return s.mapped.Resolve(email)
+	return s.ownership.Resolve(email)
 }
 
 // MappedByExtension reverse-resolves: which mapped user (if any) a
@@ -219,7 +219,7 @@ func (s *Service) Resolve(email string) (MappedUser, bool) {
 // the whoami line regardless of how they signed in. Deterministic on
 // shared extensions (see authmap).
 func (s *Service) MappedByExtension(extension domain.Extension) (MappedUser, bool) {
-	return s.mapped.MappedByExtension(extension)
+	return s.ownership.MappedByExtension(extension)
 }
 
 // MappedByLogin resolves the identity a SESSION should display: the
@@ -227,7 +227,7 @@ func (s *Service) MappedByExtension(extension domain.Extension) (MappedUser, boo
 // else the deterministic extension lookup (see authmap — the one home
 // of the rule).
 func (s *Service) MappedByLogin(extension domain.Extension, loginEmail string) (MappedUser, bool) {
-	return s.mapped.MappedByLogin(extension, loginEmail)
+	return s.ownership.MappedByLogin(extension, loginEmail)
 }
 
 // SIPPassword reads the extension's directory password from its
@@ -236,7 +236,7 @@ func (s *Service) MappedByLogin(extension domain.Extension, loginEmail string) (
 // whitespace-only files are Rejections (the 2026-10-01 outage class: an
 // empty secret must fail loudly, never mint a passwordless session).
 func (s *Service) SIPPassword(extension domain.Extension) (string, error) {
-	return s.mapped.SIPPassword(extension)
+	return s.ownership.SIPPassword(extension)
 }
 
 // Register creates the usermgmt account if it does not exist yet and

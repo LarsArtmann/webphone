@@ -197,7 +197,7 @@ func (h *handlers) voicemailPanel(r *http.Request, sess session.Session) (templ.
 	vSummary, vItems := voicemailItems(summary, messages)
 	return views.VoicemailPanel(views.VoicemailPanelProps{
 		Enabled: true, Summary: vSummary, Messages: vItems,
-		CRM: h.crmDirectory(r.Context(), sess.Extension, crmNumbers(vItems, func(msg views.VoicemailItem) string { return msg.CIDNumber })), Lang: h.lang(r),
+		CRM: h.crmDirectory(r.Context(), sess.Extension, crmNumbers(vItems, func(msg views.VoicemailMessage) string { return msg.CIDNumber })), Lang: h.lang(r),
 		ASR: h.asrOn(),
 	}), nil
 }
@@ -262,11 +262,11 @@ func cdrEntries(rows []pbx.CDR) []views.CDREntry {
 
 // voicemailItems converts the PBX voicemail feed into the panel's view
 // shapes — the ONE boundary conversion for the voicemail surface.
-func voicemailItems(summary pbx.VoicemailSummary, messages []pbx.VoicemailMessage) (views.VoicemailSummary, []views.VoicemailItem) {
+func voicemailItems(summary pbx.VoicemailSummary, messages []pbx.VoicemailMessage) (views.VoicemailSummary, []views.VoicemailMessage) {
 	out := views.VoicemailSummary{New: summary.New, Old: summary.Old}
-	items := make([]views.VoicemailItem, 0, len(messages))
+	items := make([]views.VoicemailMessage, 0, len(messages))
 	for _, msg := range messages {
-		items = append(items, views.VoicemailItem{
+		items = append(items, views.VoicemailMessage{
 			UUID: msg.UUID, CIDNumber: msg.CIDNumber, CIDName: msg.CIDName,
 			Seconds: msg.Seconds, Created: msg.Created, Read: msg.Read, AudioURL: msg.AudioURL,
 		})

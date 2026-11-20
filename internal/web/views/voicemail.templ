@@ -15,7 +15,7 @@ import (
 type VoicemailPanelProps struct {
 	Enabled  bool
 	Summary  VoicemailSummary
-	Messages []VoicemailItem
+	Messages []VoicemailMessage
 	Error    string
 	// CRM carries the optional CRM integration's answers for the numbers
 	// this panel renders (name + deep link); an absent number renders raw;
@@ -70,7 +70,7 @@ templ VoicemailPanel(props VoicemailPanelProps) {
 	</section>
 }
 
-templ VoicemailRow(msg VoicemailItem, contacts CRMContacts, lang Lang, asr bool) {
+templ VoicemailRow(msg VoicemailMessage, contacts CRMContacts, lang Lang, asr bool) {
 	// Stable ids are the idiomorph persistence contract: the panel re-fetch
 	// morphs #tab-content on every "voicemail" nudge, and idiomorph keeps
 	// any element whose id exists in BOTH trees morphing it in place — so a
@@ -163,7 +163,7 @@ templ VoicemailRow(msg VoicemailItem, contacts CRMContacts, lang Lang, asr bool)
 	</article>
 }
 
-func vmCaller(msg VoicemailItem, contacts CRMContacts, lang Lang) string {
+func vmCaller(msg VoicemailMessage, contacts CRMContacts, lang Lang) string {
 	if msg.CIDNumber != "" {
 		if contact, ok := contacts[msg.CIDNumber]; ok && contact.Name != "" {
 			return contact.Name

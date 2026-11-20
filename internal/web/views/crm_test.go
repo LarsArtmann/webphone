@@ -115,7 +115,7 @@ func TestVoicemailRowLinksTheKnownCRMContact(t *testing.T) {
 		URL:  "https://crm.example/contacts/01M",
 	}}
 
-	msg := VoicemailItem{UUID: "u1", CIDNumber: "+441632960961", CIDName: "Alice", Seconds: 12,
+	msg := VoicemailMessage{UUID: "u1", CIDNumber: "+441632960961", CIDName: "Alice", Seconds: 12,
 		AudioURL: "/phone-api/voicemail/1001/messages/u1/audio"}
 
 	page := renderComponent(t, VoicemailRow(msg, linked, LangEN, false))
@@ -137,7 +137,7 @@ func TestVoicemailRowLinksTheKnownCRMContact(t *testing.T) {
 		t.Errorf("CRM miss must keep the vmCaller ladder without a link:\n%s", miss)
 	}
 
-	anonymous := VoicemailItem{UUID: "u2", CIDName: "Withheld", Seconds: 8,
+	anonymous := VoicemailMessage{UUID: "u2", CIDName: "Withheld", Seconds: 8,
 		AudioURL: "/phone-api/voicemail/1001/messages/u2/audio"}
 	anon := renderComponent(t, VoicemailRow(anonymous, linked, LangEN, false))
 	if strings.Contains(anon, "<a class") || !strings.Contains(anon, "Withheld") || strings.Contains(anon, "Withheld ()") {

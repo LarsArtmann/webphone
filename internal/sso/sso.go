@@ -78,9 +78,9 @@ type Challenge struct {
 // Client performs the authorization-code + PKCE dance against one
 // provider. Safe for concurrent use.
 type Client struct {
-	cfg    Config
-	mapped *authmap.Map
-	http   *http.Client
+	cfg       Config
+	ownership *authmap.Ownership
+	http      *http.Client
 
 	mu        sync.Mutex
 	provider  *oidc.Provider
@@ -109,7 +109,7 @@ func New(cfg Config) (*Client, error) {
 	case cfg.RedirectURL == "":
 		return nil, errorfamily.NewRejection("sso.redirect_url", "auth.oauth2.redirect_url is required (the registered callback, e.g. https://pbx.example.org/api/auth/oauth2/callback)")
 	}
-	mapped, err := authmap.New(cfg.Users, cfg.ExtensionPasswordFiles)
+	ownership, err := authmap.New(cfg.Users, cfg.ExtensionPasswordFiles)
 	if err != nil {
 		return nil, errorfamily.WrapRejection(err, "sso.mapping", "build the email→extension mapping")
 	}
@@ -117,9 +117,9 @@ func New(cfg Config) (*Client, error) {
 		cfg.Scopes = []string{oidc.ScopeOpenID, "email", "profile"}
 	}
 	return &Client{
-		cfg:    cfg,
-		mapped: mapped,
-		http:   &http.Client{Timeout: 15 * time.Second},
+		cfg:       cfg,
+		ownership: ownership,
+		http:      &http.Client{Timeout: 15 * time.Second},
 	}, nil
 }
 
@@ -223,12 +223,12 @@ func (c *Client) Complete(ctx context.Context, code, verifier, nonce string) (au
 				"the IdP account %q carries none of the allowed groups (%s) — add the account to a required access group in the IdP").WithContext("email", claims.Email).WithContext("allowed_groups", strings.Join(c.cfg.AllowedGroups, ", "))
 		}
 	}
-	mapped, ok := c.mapped.Resolve(claims.Email)
+	mapped, ok := c.ownership.Resolve(claims.Email)
 	if !ok {
 		return empty, "", errorfamily.NewRejection("sso.unmapped_email",
 			"the IdP account %q is not in the users mapping (auth.users) — add the mapping or remove the account").WithContext("email", claims.Email)
 	}
-	password, err := c.mapped.SIPPassword(mapped.SessionLine().Extension)
+	password, err := c.ownership.SIPPassword(mapped.SessionLine().Extension)
 	if err != nil {
 		return empty, "", err //nolint:wrapcheck // authmap owns the classification and the operator copy
 	}
@@ -237,11 +237,11 @@ func (c *Client) Complete(ctx context.Context, code, verifier, nonce string) (au
 
 // Resolve exposes the mapping for callers that render identities (the
 // server's whoami line reverse-resolves by extension).
-func (c *Client) Resolve(email string) (authmap.User, bool) { return c.mapped.Resolve(email) }
+func (c *Client) Resolve(email string) (authmap.User, bool) { return c.ownership.Resolve(email) }
 
 // MappedByExtension reverse-resolves a session extension to its mapped user.
 func (c *Client) MappedByExtension(extension domain.Extension) (authmap.User, bool) {
-	return c.mapped.MappedByExtension(extension)
+	return c.ownership.MappedByExtension(extension)
 }
 
 // MappedByLogin resolves the identity a SESSION should display: the
@@ -250,7 +250,7 @@ func (c *Client) MappedByExtension(extension domain.Extension) (authmap.User, bo
 // Mirrors the userauth seam so an SSO-only deployment resolves whoami
 // and Settings identity through the SAME ownership model.
 func (c *Client) MappedByLogin(extension domain.Extension, loginEmail string) (authmap.User, bool) {
-	return c.mapped.MappedByLogin(extension, loginEmail)
+	return c.ownership.MappedByLogin(extension, loginEmail)
 }
 
 // claims is the identity payload this login needs. The ID token carries

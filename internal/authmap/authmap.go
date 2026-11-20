@@ -87,19 +87,21 @@ func (u User) Extensions() []domain.Extension {
 	return out
 }
 
-// Map resolves authenticated emails to their owned lines and the
-// runtime file carrying each line's SIP directory password.
-type Map struct {
+// Ownership is the config join of humans to lines (DOMAIN_LANGUAGE's
+// ownership term): it resolves authenticated emails to their owned
+// lines and the runtime file carrying each line's SIP directory
+// password.
+type Ownership struct {
 	users         map[string]User
 	passwordFiles map[string]string
 }
 
-// New builds a Map. Both the user map and the password-file map are
+// New builds the Ownership join. Both the user map and the password-file map are
 // required: a mapped line without a password file would fail every
 // login at the last step, so the misconfiguration surfaces here instead.
 // Empty maps are legal (the mode is off); a user without lines, a user
 // naming one extension twice, or a mapped line without a file is not.
-func New(users map[string]User, passwordFiles map[string]string) (*Map, error) {
+func New(users map[string]User, passwordFiles map[string]string) (*Ownership, error) {
 	normalized := make(map[string]User, len(users))
 	for email, user := range users {
 		key := strings.ToLower(strings.TrimSpace(email))
@@ -125,13 +127,13 @@ func New(users map[string]User, passwordFiles map[string]string) (*Map, error) {
 	}
 	files := make(map[string]string, len(passwordFiles))
 	maps.Copy(files, passwordFiles)
-	return &Map{users: normalized, passwordFiles: files}, nil
+	return &Ownership{users: normalized, passwordFiles: files}, nil
 }
 
 // Resolve maps an email to its owned lines; ok=false when the email has
 // no mapping (login fails closed — an IdP identity alone must never
 // mint a session for an unmapped account).
-func (m *Map) Resolve(email string) (User, bool) {
+func (m *Ownership) Resolve(email string) (User, bool) {
 	if m == nil {
 		return User{}, false
 	}
@@ -145,7 +147,7 @@ func (m *Map) Resolve(email string) (User, bool) {
 // whoami identity between boots). This is the FALLBACK resolver: a
 // session that knows its own login email resolves through MappedByLogin
 // instead.
-func (m *Map) MappedByExtension(extension domain.Extension) (User, bool) {
+func (m *Ownership) MappedByExtension(extension domain.Extension) (User, bool) {
 	if m == nil {
 		return User{}, false
 	}
@@ -162,7 +164,7 @@ func (m *Map) MappedByExtension(extension domain.Extension) (User, bool) {
 // multi-user substrate — on a shared line, each session names its own
 // human), falling back to the deterministic line lookup for extension
 // logins, stale emails, and unmapped accounts.
-func (m *Map) MappedByLogin(extension domain.Extension, loginEmail string) (User, bool) {
+func (m *Ownership) MappedByLogin(extension domain.Extension, loginEmail string) (User, bool) {
 	if m == nil {
 		return User{}, false
 	}
@@ -178,7 +180,7 @@ func (m *Map) MappedByLogin(extension domain.Extension, loginEmail string) (User
 // by email) — the admin surface's user listing. Go map order is random;
 // a shared-line or multi-account fleet must not reshuffle between
 // requests.
-func (m *Map) Users() []User {
+func (m *Ownership) Users() []User {
 	if m == nil {
 		return nil
 	}
@@ -194,7 +196,7 @@ func (m *Map) Users() []User {
 // the secrets pipeline takes effect on the next login. Empty or
 // whitespace-only files are Rejections (the 2026-10-01 outage class: an
 // empty secret must fail loudly, never mint a passwordless session).
-func (m *Map) SIPPassword(extension domain.Extension) (string, error) {
+func (m *Ownership) SIPPassword(extension domain.Extension) (string, error) {
 	if m == nil {
 		return "", errorfamily.NewRejection("authmap.password_file.missing",
 			"no password-file mapping configured for passwordless login")

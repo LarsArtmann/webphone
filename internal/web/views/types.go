@@ -18,9 +18,9 @@ type VoicemailSummary struct {
 	Old int
 }
 
-// VoicemailItem is one stored voicemail row: the fields the panel and
+// VoicemailMessage is one stored voicemail row: the fields the panel and
 // its rows render.
-type VoicemailItem struct {
+type VoicemailMessage struct {
 	UUID      string
 	CIDNumber string
 	CIDName   string

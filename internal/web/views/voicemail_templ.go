@@ -24,7 +24,7 @@ import (
 type VoicemailPanelProps struct {
 	Enabled  bool
 	Summary  VoicemailSummary
-	Messages []VoicemailItem
+	Messages []VoicemailMessage
 	Error    string
 	// CRM carries the optional CRM integration's answers for the numbers
 	// this panel renders (name + deep link); an absent number renders raw;
@@ -200,7 +200,7 @@ func VoicemailPanel(props VoicemailPanelProps) templ.Component {
 	})
 }
 
-func VoicemailRow(msg VoicemailItem, contacts CRMContacts, lang Lang, asr bool) templ.Component {
+func VoicemailRow(msg VoicemailMessage, contacts CRMContacts, lang Lang, asr bool) templ.Component {
 	return templruntime.GeneratedTemplate(func(templ_7745c5c3_Input templruntime.GeneratedComponentInput) (templ_7745c5c3_Err error) {
 		templ_7745c5c3_W, ctx := templ_7745c5c3_Input.Writer, templ_7745c5c3_Input.Context
 		if templ_7745c5c3_CtxErr := ctx.Err(); templ_7745c5c3_CtxErr != nil {
@@ -754,7 +754,7 @@ func VoicemailRow(msg VoicemailItem, contacts CRMContacts, lang Lang, asr bool) 
 	})
 }
 
-func vmCaller(msg VoicemailItem, contacts CRMContacts, lang Lang) string {
+func vmCaller(msg VoicemailMessage, contacts CRMContacts, lang Lang) string {
 	if msg.CIDNumber != "" {
 		if contact, ok := contacts[msg.CIDNumber]; ok && contact.Name != "" {
 			return contact.Name
