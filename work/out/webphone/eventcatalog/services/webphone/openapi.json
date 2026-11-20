@@ -1738,40 +1738,46 @@
           },
           "did": {
             "deprecated": false,
-            "description": "Presented PSTN number (config identities), when known.",
+            "description": "The active line's presented PSTN number (config identities), when known.",
             "nullable": false,
             "type": "string"
           },
           "display_name": {
             "deprecated": false,
-            "description": "The passkey user's display name, when the extension is passkey-mapped.",
+            "description": "The mapped user's display name, when the login is mapped.",
             "nullable": false,
             "type": "string"
           },
           "extension": {
             "deprecated": false,
-            "description": "The signed-in extension.",
+            "description": "The signed-in (active) extension.",
             "nullable": false,
             "type": "string"
           },
-          "extensions": {
+          "lines": {
             "deprecated": false,
-            "description": "Every extension mapped to the signed-in user (mapped logins only); more than one renders the line switcher.",
+            "description": "Every line the signed-in user owns (mapped logins only), in mapping order; more than one renders the line switcher.",
             "items": {
               "deprecated": false,
               "nullable": false,
-              "type": "string"
-            },
-            "nullable": false,
-            "type": "array"
-          },
-          "numbers": {
-            "deprecated": false,
-            "description": "Every number mapped to the passkey user, deduplicated.",
-            "items": {
-              "deprecated": false,
-              "nullable": false,
-              "type": "string"
+              "properties": {
+                "did": {
+                  "deprecated": false,
+                  "description": "The number this line presents (config identities), when declared.",
+                  "nullable": false,
+                  "type": "string"
+                },
+                "extension": {
+                  "deprecated": false,
+                  "description": "A PBX extension the signed-in user owns.",
+                  "nullable": false,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "extension"
+              ],
+              "type": "object"
             },
             "nullable": false,
             "type": "array"
@@ -1841,40 +1847,46 @@
           },
           "did": {
             "deprecated": false,
-            "description": "Presented PSTN number (config identities), when known.",
+            "description": "The active line's presented PSTN number (config identities), when known.",
             "nullable": false,
             "type": "string"
           },
           "display_name": {
             "deprecated": false,
-            "description": "The passkey user's display name, when the extension is passkey-mapped.",
+            "description": "The mapped user's display name, when the login is mapped.",
             "nullable": false,
             "type": "string"
           },
           "extension": {
             "deprecated": false,
-            "description": "The signed-in extension.",
+            "description": "The signed-in (active) extension.",
             "nullable": false,
             "type": "string"
           },
-          "extensions": {
+          "lines": {
             "deprecated": false,
-            "description": "Every extension mapped to the signed-in user (mapped logins only); more than one renders the line switcher.",
+            "description": "Every line the signed-in user owns (mapped logins only), in mapping order; more than one renders the line switcher.",
             "items": {
               "deprecated": false,
               "nullable": false,
-              "type": "string"
-            },
-            "nullable": false,
-            "type": "array"
-          },
-          "numbers": {
-            "deprecated": false,
-            "description": "Every number mapped to the passkey user, deduplicated.",
-            "items": {
-              "deprecated": false,
-              "nullable": false,
-              "type": "string"
+              "properties": {
+                "did": {
+                  "deprecated": false,
+                  "description": "The number this line presents (config identities), when declared.",
+                  "nullable": false,
+                  "type": "string"
+                },
+                "extension": {
+                  "deprecated": false,
+                  "description": "A PBX extension the signed-in user owns.",
+                  "nullable": false,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "extension"
+              ],
+              "type": "object"
             },
             "nullable": false,
             "type": "array"
@@ -2266,40 +2278,46 @@
           },
           "did": {
             "deprecated": false,
-            "description": "Presented PSTN number (config identities), when known.",
+            "description": "The active line's presented PSTN number (config identities), when known.",
             "nullable": false,
             "type": "string"
           },
           "display_name": {
             "deprecated": false,
-            "description": "The passkey user's display name, when the extension is passkey-mapped.",
+            "description": "The mapped user's display name, when the login is mapped.",
             "nullable": false,
             "type": "string"
           },
           "extension": {
             "deprecated": false,
-            "description": "The signed-in extension.",
+            "description": "The signed-in (active) extension.",
             "nullable": false,
             "type": "string"
           },
-          "extensions": {
+          "lines": {
             "deprecated": false,
-            "description": "Every extension mapped to the signed-in user (mapped logins only); more than one renders the line switcher.",
+            "description": "Every line the signed-in user owns (mapped logins only), in mapping order; more than one renders the line switcher.",
             "items": {
               "deprecated": false,
               "nullable": false,
-              "type": "string"
-            },
-            "nullable": false,
-            "type": "array"
-          },
-          "numbers": {
-            "deprecated": false,
-            "description": "Every number mapped to the passkey user, deduplicated.",
-            "items": {
-              "deprecated": false,
-              "nullable": false,
-              "type": "string"
+              "properties": {
+                "did": {
+                  "deprecated": false,
+                  "description": "The number this line presents (config identities), when declared.",
+                  "nullable": false,
+                  "type": "string"
+                },
+                "extension": {
+                  "deprecated": false,
+                  "description": "A PBX extension the signed-in user owns.",
+                  "nullable": false,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "extension"
+              ],
+              "type": "object"
             },
             "nullable": false,
             "type": "array"

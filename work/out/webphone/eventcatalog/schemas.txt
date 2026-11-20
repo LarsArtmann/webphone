@@ -2,7 +2,7 @@
 
 > All message and entity schemas in this catalog.
 
-## Message Received (v1.0.0)
+## Message Received (v1.1.0)
 Context: Message Received @ Webphone
 ```json
 {
@@ -26,7 +26,7 @@ Context: Message Received @ Webphone
 }
 ```
 
-## Message Delivery Advanced (v1.0.0)
+## Message Delivery Advanced (v1.1.0)
 Context: Message Delivery Advanced @ Webphone
 ```json
 {
@@ -50,7 +50,7 @@ Context: Message Delivery Advanced @ Webphone
 }
 ```
 
-## Thread Flag Changed (v1.0.0)
+## Thread Flag Changed (v1.1.0)
 Context: Thread Flag Changed @ Webphone
 ```json
 {
@@ -68,7 +68,7 @@ Context: Thread Flag Changed @ Webphone
 }
 ```
 
-## Fax Advanced (v1.0.0)
+## Fax Advanced (v1.1.0)
 Context: Fax Advanced @ Webphone
 ```json
 {
@@ -88,6 +88,30 @@ Context: Fax Advanced @ Webphone
   "required": [
     "owner",
     "fax"
+  ]
+}
+```
+
+## Review Saved (v1.1.0)
+Context: Review Saved @ Webphone
+```json
+{
+  "type": "object",
+  "properties": {
+    "call_id": {
+      "type": "string",
+      "nullable": false,
+      "deprecated": false
+    },
+    "owner": {
+      "type": "string",
+      "nullable": false,
+      "deprecated": false
+    }
+  },
+  "required": [
+    "owner",
+    "call_id"
   ]
 }
 ```
