@@ -36,9 +36,9 @@
             owner = "a-h";
             repo = "templ";
             rev = "v0.3.1100";
-            hash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+            hash = "sha256-QViQAMtCqaXS4GodlSCW/nE4Sox+EF49sbb7h9RBIS0=";
           };
-          vendorHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+          vendorHash = "sha256-MMAoHofeZzGNFsjxY4nrPRyaiKOk4fLYY+kIVmdAL3g=";
           subPackages = [ "cmd/templ" ];
           meta = {
             description = "Templ compiler pinned to go.mod's library version (the committed codegen must match the library)";
@@ -187,7 +187,7 @@
                 ];
               };
 
-              vendorHash = "sha256-AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=";
+              vendorHash = "sha256-yixN5HYyQyMrrM9Biskf9+7RGQsJdQGCVxMoLbwTG2E=";
 
               proxyVendor = true;
 
