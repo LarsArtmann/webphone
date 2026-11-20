@@ -284,6 +284,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- Push devices whose registration a provider refuses at the
+  resource level are now pruned instead of warned about forever: an
+  ntfy 403 (the ACL refuses this topic — the topic IS the device
+  identity) and FCM's two device-scoped 403 codes
+  (`SENDER_ID_MISMATCH`, `THIRD_PARTY_PERMISSION_DENIED`) now answer
+  `ErrUnregistered`, riding the existing prune lane. A server-side
+  credential failure (401 everywhere) still never prunes — an ntfy
+  token rotation must not mass-delete the registry.
 - The favicon is the brand green again — the tab icon painted a
   Tailwind-stock teal (`#0f766e`) against the app's `#17a467` accent,
   so the browser chrome disagreed with the product it belonged to. The
