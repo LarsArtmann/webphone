@@ -54,8 +54,7 @@ and WAIT FOR INSTRUCTIONS.
 - **T13 — type tails**: `asr.Locality` typed through the whole chain
   (app → server.Deps → platform.Deps → /config.js → the Settings view
   prop; the `"local"` magic-string comparison replaced by
-  `asr.LocalityLocal`), `config.ASRProvider` closed-set enum +`
-  Valid()` collapsing the four stringly homes, and
+  `asr.LocalityLocal`), `config.ASRProvider` closed-set enum +`Valid()` collapsing the four stringly homes, and
   `LoginPageExtra(showPrimary, showSSO)` question-form params. Views
   regenerated with the PINNED compiler (v0.3.1100); asr, config,
   server/..., views, app suites green; `nix fmt` clean. Commit
@@ -175,12 +174,12 @@ rendering both plan tables.
 21. The four oldest status reports still fail the archive gates —
     a real annotate pass (check-rows + bare-rows) would drop the
     cadence pressure structurally.
-22–50. The plan's gated remainder as the owner unlocks them: R21
-register tick, R22/R23 lens lanes, v2.15.0 release order,
-ThreadGate Q1–Q5, the §5 DROP window itself (now gated by T10's
-tool, needs the dump + confirmations ritual), loginpage
-`ExtraSection` follow-ups if any, the reopen-trigger registry
-sweep at the next cadence window.
+    22–50. The plan's gated remainder as the owner unlocks them: R21
+    register tick, R22/R23 lens lanes, v2.15.0 release order,
+    ThreadGate Q1–Q5, the §5 DROP window itself (now gated by T10's
+    tool, needs the dump + confirmations ritual), loginpage
+    `ExtraSection` follow-ups if any, the reopen-trigger registry
+    sweep at the next cadence window.
 
 ## g) Questions for the owner (cannot be self-answered)
 
