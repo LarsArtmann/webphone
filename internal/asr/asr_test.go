@@ -238,3 +238,32 @@ func TestWhisperCppInferencePath(t *testing.T) {
 		t.Errorf("multipart shape: file=%v model=%v", sawFile, sawModel)
 	}
 }
+
+func TestLocalityOfClassifiesTheTrustTable(t *testing.T) {
+	cases := []struct {
+		url  string
+		want asr.Locality
+	}{
+		{"http://localhost:9933", asr.LocalityLocal},
+		{"http://127.0.0.1:9933", asr.LocalityLocal},
+		{"http://127.254.1.2", asr.LocalityLocal},
+		{"http://10.1.2.3", asr.LocalityLocal},
+		{"http://192.168.1.10", asr.LocalityLocal},
+		{"http://172.16.0.1", asr.LocalityLocal},
+		{"http://172.31.255.255", asr.LocalityLocal},
+		{"http://speaches.lan:9933", asr.LocalityLocal},
+		{"http://whisper.home.arpa", asr.LocalityLocal},
+		{"http://nas", asr.LocalityLocal},
+		{"http://172.15.0.1", asr.LocalityRemote},
+		{"http://172.32.0.1", asr.LocalityRemote},
+		{"http://api.openai.com", asr.LocalityRemote},
+		{"http://8.8.8.8", asr.LocalityRemote},
+		{"", asr.LocalityRemote},
+		{"://not a url", asr.LocalityRemote},
+	}
+	for _, tc := range cases {
+		if got := asr.LocalityOf(tc.url); got != tc.want {
+			t.Errorf("LocalityOf(%q) = %q, want %q", tc.url, got, tc.want)
+		}
+	}
+}

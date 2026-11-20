@@ -983,3 +983,17 @@ func TestLoadFaxCapability(t *testing.T) {
 		t.Errorf("a file declaring both directions off must disable every lane, got send=%v receive=%v", cfg.Fax.SendEnabled(), cfg.Fax.ReceiveEnabled())
 	}
 }
+
+func TestASRProviderVocabularyIsClosed(t *testing.T) {
+	for _, valid := range []ASRProvider{"", ASRProviderOpenAI, ASRProviderGoogle, ASRProviderWhisperCPP} {
+		if !valid.Valid() {
+			t.Errorf("ASRProvider %q must be valid (the zero value IS the openai default)", string(valid))
+		}
+	}
+	for _, raw := range []string{"openai-compatible", "whisper", "OpenAI", "google-v2"} {
+		p := ASRProvider(raw)
+		if p.Valid() {
+			t.Errorf("ASRProvider %q must be rejected — the vocabulary is closed", raw)
+		}
+	}
+}
