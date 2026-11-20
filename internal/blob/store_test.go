@@ -60,3 +60,38 @@ func TestSaveLoadRoundtrip(t *testing.T) {
 		}
 	}
 }
+
+// TestSaveMalformedExtensionLeavesNoOrphanedFile pins the
+// brand-before-write order (2026-11-19 review L4): a path shape
+// ParseRelPath refuses must fail Save BEFORE any bytes land, so a
+// refused save leaves no file behind that no returned path could ever
+// roll back. The subdirectory the call created may stay (directories
+// are not orphans); files are.
+func TestSaveMalformedExtensionLeavesNoOrphanedFile(t *testing.T) {
+	s, err := blob.New(filepath.Join(t.TempDir(), "blobs"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	const escaping = "/../../../../../../../escape"
+	if _, err := s.Save("faxes", escaping, []byte("bytes")); err == nil {
+		t.Fatalf("malformed extension %q was accepted", escaping)
+	}
+
+	files := []string{}
+	err = filepath.WalkDir(s.Root(), func(path string, d os.DirEntry, walkErr error) error {
+		if walkErr != nil {
+			return walkErr
+		}
+		if !d.IsDir() {
+			files = append(files, path)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(files) != 0 {
+		t.Fatalf("refused Save left %d file(s) under the blob root: %v", len(files), files)
+	}
+}

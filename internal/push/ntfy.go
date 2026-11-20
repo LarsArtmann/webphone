@@ -153,8 +153,16 @@ func (s *NtfySender) publish(ctx context.Context, body []byte, topic string) err
 		return nil
 	}
 	switch resp.StatusCode {
-	case http.StatusUnauthorized, http.StatusForbidden:
+	case http.StatusUnauthorized:
 		return errorfamily.WrapRejectionf(ErrUnauthorized, "push.ntfy_send", "ntfy rejected the credential (%d)", resp.StatusCode)
+	case http.StatusForbidden:
+		// 403 is RESOURCE-scoped: ntfy's ACL refused THIS topic, and the
+		// topic IS the device identity, so the device is unreachable
+		// until its registration changes — the fan prunes it like any
+		// dead registration. A server-token rotation outage answers 401
+		// everywhere and never 403, so the mass-prune footgun stays
+		// closed.
+		return errorfamily.WrapInfrastructuref(ErrUnregistered, "push.ntfy_send", "ntfy refuses topic %q (%d)", topic, resp.StatusCode)
 	case http.StatusNotFound:
 		return errorfamily.WrapInfrastructuref(ErrUnregistered, "push.ntfy_send", "ntfy topic %q not found", topic)
 	default:

@@ -252,12 +252,34 @@ func (s *FcmSender) post(ctx context.Context, payload []byte, accessToken string
 		s.tokenValue = ""
 		s.tokenExpiry = time.Time{}
 		s.mu.Unlock()
+		if resp.StatusCode == http.StatusForbidden && fcmRegistrationUnusable(errorBody) {
+			// These two documented 403 codes are DEVICE-scoped: the
+			// registration token belongs to another sender project, so
+			// THIS server can never deliver to it no matter how fresh
+			// the grant is — the fan prunes it like any dead
+			// registration. Any other 403 (IAM scope, API-disabled) is
+			// server config and must not mass-prune the registry.
+			return errorfamily.WrapInfrastructuref(ErrUnregistered, "push.fcm_send", "fcm registration is not reachable from this sender (%d)", resp.StatusCode)
+		}
 		return errorfamily.WrapRejectionf(ErrUnauthorized, "push.fcm_send", "fcm rejected the access token (%d)", resp.StatusCode)
 	case resp.StatusCode == http.StatusNotFound || strings.Contains(string(errorBody), fcmUnregisteredMarker):
 		return errorfamily.WrapInfrastructuref(ErrUnregistered, "push.fcm_send", "fcm reports the device token dead (%d)", resp.StatusCode)
 	default:
 		return errorfamily.Newf(errorfamily.Infrastructure, "push.fcm_send", "fcm answered %d", resp.StatusCode)
 	}
+}
+
+// fcmRegistrationUnusable reports whether the error body carries one of
+// FCM's two documented 403 codes that mean the REGISTRATION (not the
+// grant) is unusable from this sender: SENDER_ID_MISMATCH (token minted
+// by another sender project) and THIRD_PARTY_PERMISSION_DENIED (web-push
+// registration not authorized for this sender). The codes ride the
+// error.details / error.message shapes, which is why the match is a
+// case-insensitive substring over the drained body.
+func fcmRegistrationUnusable(errorBody []byte) bool {
+	body := strings.ToLower(string(errorBody))
+	return strings.Contains(body, "sender_id_mismatch") ||
+		strings.Contains(body, "third_party_permission_denied")
 }
 
 // fcmUnregisteredMarker is the error reason FCM carries for a dead
