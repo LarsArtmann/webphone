@@ -26,17 +26,11 @@ func TestAppFlagsRoundTripAndAbsence(t *testing.T) {
 	messages := newTestDB(t)
 	ctx := context.Background()
 
-	if present, err := FlagPresent(ctx, messages.db, FlagLegacyContactsImported); err != nil || present {
-		t.Fatalf("absent flag: present=%v err=%v, want false/nil", present, err)
-	}
-	if value, ok, err := FlagValue(ctx, messages.db, FlagLegacyContactsImported); err != nil || ok || value != "" {
-		t.Fatalf("absent value: %q/%v/%v, want empty/false/nil", value, ok, err)
+	if present, ok, err := FlagValue(ctx, messages.db, FlagLegacyContactsImported); err != nil || ok || present != "" {
+		t.Fatalf("absent value: %q/%v/%v, want empty/false/nil", present, ok, err)
 	}
 
 	seedAppFlag(t, messages, FlagLegacyContactsImported, "2026-11-07")
-	if present, err := FlagPresent(ctx, messages.db, FlagLegacyContactsImported); err != nil || !present {
-		t.Fatalf("present flag: present=%v err=%v", present, err)
-	}
 	if value, ok, err := FlagValue(ctx, messages.db, FlagLegacyContactsImported); err != nil || !ok || value != "2026-11-07" {
 		t.Fatalf("value = %q/%v/%v, want the stamped date", value, ok, err)
 	}

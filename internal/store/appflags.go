@@ -26,21 +26,11 @@ const FlagLegacyContactsImported = "legacy_contacts_imported"
 // unification. The const stays for the same reason.
 const FlagThreadsJournalImported = "threads_journal_imported"
 
-// FlagPresent reports whether an app_flags row exists for key.
-func FlagPresent(ctx context.Context, db *sql.DB, key string) (bool, error) {
-	var one int
-	err := db.QueryRowContext(ctx, `SELECT 1 FROM app_flags WHERE key = ?`, key).Scan(&one)
-	if err != nil {
-		if err == sql.ErrNoRows {
-			return false, nil
-		}
-		return false, errorfamily.WrapInfrastructuref(err, "store.flag_read", "read app flag %s", key)
-	}
-	return true, nil
-}
-
 // FlagValue reads one app_flags row's value (false = absent). The
-// matrix sync cursor rides this beside the one-time import markers.
+// matrix sync cursor rides this beside the one-time import markers
+// (presence checks rode FlagPresent until the metrics surface, the
+// markers' last reader, retired 2026-11-20 with the frozen-ladder
+// counts).
 func FlagValue(ctx context.Context, db *sql.DB, key string) (string, bool, error) {
 	var value string
 	err := db.QueryRowContext(ctx, `SELECT value FROM app_flags WHERE key = ?`, key).Scan(&value)

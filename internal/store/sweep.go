@@ -82,27 +82,22 @@ func execRows(ctx context.Context, db *sql.DB, op, query string, args ...any) (i
 // Contacts are deliberately out of scope: they are the user's
 // address book, not transient content — retention never touches them.
 
-// Counts are the AGGREGATE table sizes the metrics surface reports
-// (plan T26a): totals across ALL extensions, never per-owner values.
-type Counts struct {
-	Threads  int64
-	Messages int64
-	Sessions int64
-}
-
-// ReadCounts reads the aggregate sizes in one call. Contacts, faxes,
-// and transcripts are counted by the read-model engine (readmodels
-// Count) — their SQL tables are retired storage.
-func ReadCounts(ctx context.Context, db *sql.DB) (Counts, error) {
-	var c Counts
+// CountSessions reads the sessions-table size for the metrics
+// surface. Sessions stay SQL by the D2 ruling — this is the ONE live
+// webphone.db count the surface still reports; the legacy
+// threads/messages counts retired with the frozen ladder (2026-11-20):
+// every reachable deployment reads zero from those tables (the A35
+// importer stamped its marker before the 2026-11-09 unification deleted
+// it; fresh boots never wrote legacy rows), so the per-scrape reads
+// were permanently-zero cost — and a "no such table" 500 once the §5
+// DROP migration lands.
+func CountSessions(ctx context.Context, db *sql.DB) (int64, error) {
+	var sessions int64
 	err := db.QueryRowContext(ctx, `
-		SELECT
-			(SELECT COUNT(*) FROM threads),
-			(SELECT COUNT(*) FROM messages),
-			(SELECT COUNT(*) FROM sessions)
-	`).Scan(&c.Threads, &c.Messages, &c.Sessions)
+		SELECT COUNT(*) FROM sessions
+	`).Scan(&sessions)
 	if err != nil {
-		return c, errorfamily.WrapInfrastructuref(err, "store.counts", "count aggregates")
+		return 0, errorfamily.WrapInfrastructuref(err, "store.counts", "count sessions")
 	}
-	return c, nil
+	return sessions, nil
 }

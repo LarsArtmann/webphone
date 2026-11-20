@@ -56,8 +56,8 @@ func TestPersistenceFailuresAreInfrastructure(t *testing.T) {
 		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
 	}
 
-	if _, err := store.ReadCounts(ctx, db); err == nil {
-		t.Fatal("ReadCounts on closed db: want error")
+	if _, err := store.CountSessions(ctx, db); err == nil {
+		t.Fatal("CountSessions on closed db: want error")
 	} else {
 		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
 	}

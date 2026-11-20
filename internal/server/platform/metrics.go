@@ -18,27 +18,15 @@ var processStart = time.Now()
 // data — a scraped metrics endpoint must not become a data leak, so
 // the pinning test fails on any extension-like string in the body.
 func (p *Hub) Metrics(w http.ResponseWriter, r *http.Request) {
-	counts, err := store.ReadCounts(r.Context(), p.deps.DB)
-	if err != nil {
-		http.Error(w, "counts unavailable", http.StatusInternalServerError)
-		return
-	}
-	// Threads and messages live in the journal-backed projections since
-	// the A34 swap, but pre-import history still counts from the legacy
-	// tables: until the A35 importer stamps its marker the two stores hold
-	// DISJOINT row sets, so the honest total is the SUM. Once the marker
-	// flips the journal holds every row and the legacy tables would
-	// double-count — their contribution drops to zero by reading the same
-	// flag the importer sets.
-	imported, err := store.FlagPresent(r.Context(), p.deps.DB, store.FlagThreadsJournalImported)
-	if err != nil {
-		http.Error(w, "counts unavailable", http.StatusInternalServerError)
-		return
-	}
-	legacyThreads, legacyMessages := counts.Threads, counts.Messages
-	if imported {
-		legacyThreads, legacyMessages = 0, 0
-	}
+	// Threads/messages/faxes/contacts/transcripts all count from the
+	// journal-backed stores (the engine's native COUNT). The legacy
+	// webphone.db contribution retired with the frozen ladder
+	// (2026-11-20): every reachable deployment reads zero from the
+	// frozen tables (the A35 importer stamped its marker before the
+	// 2026-11-09 unification deleted it; fresh boots never wrote legacy
+	// rows), so the per-scrape legacy reads + the imported-marker check
+	// were permanently-zero cost — and a "no such table" 500 once the §5
+	// DROP migration lands.
 	threadCount, err := p.deps.Messages.CountThreads(r.Context())
 	if err != nil {
 		http.Error(w, "counts unavailable", http.StatusInternalServerError)
@@ -84,12 +72,17 @@ func (p *Hub) Metrics(w http.ResponseWriter, r *http.Request) {
 		fmt.Sprintf(`{version="%s"}`, p.deps.Version))
 	writeMetric("webphone_uptime_seconds", "Seconds since process start.", "gauge",
 		int64(time.Since(processStart).Seconds()))
-	writeMetric("webphone_threads_total", "Stored conversation threads across all extensions.", "gauge", legacyThreads+threadCount)
-	writeMetric("webphone_messages_total", "Stored messages (all directions) across all extensions.", "gauge", legacyMessages+messageCount)
+	writeMetric("webphone_threads_total", "Stored conversation threads across all extensions.", "gauge", threadCount)
+	writeMetric("webphone_messages_total", "Stored messages (all directions) across all extensions.", "gauge", messageCount)
 	writeMetric("webphone_faxes_total", "Stored fax jobs across all extensions.", "gauge", faxCount)
 	writeMetric("webphone_contacts_total", "Stored personal contacts across all extensions.", "gauge", contactCount)
 	writeMetric("webphone_transcripts_total", "Stored live-call transcript segments across all extensions.", "gauge", transcriptCount)
-	writeMetric("webphone_sessions_stored", "Session rows in the store (expired rows are swept lazily).", "gauge", counts.Sessions)
+	sessions, err := store.CountSessions(r.Context(), p.deps.DB)
+	if err != nil {
+		http.Error(w, "counts unavailable", http.StatusInternalServerError)
+		return
+	}
+	writeMetric("webphone_sessions_stored", "Session rows in the store (expired rows are swept lazily).", "gauge", sessions)
 	// CRM integration observability: the resolver's upstream-outcome
 	// counters (aggregates by construction — no numbers, no contact
 	// names). The family is absent entirely when the integration is off,
