@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **`webphone export-legacy` — the §5 DROP-window safety tool**
+  (2026-11-20, pareto T10, per the 2026-11-14 design memo): `-table
+  contacts -format json|csv` dumps every legacy contacts row through a
+  RAW read-only sqlite handle (never `store.Open` — a dump binary must
+  be inert at any schema version, including after the DROP itself) with
+  a self-describing header (count, sha256 over the row payload,
+  timestamp; a missing `webphone.db` dumps zero rows — the
+  fresh-install proof of absence). `-check` classifies legacy rows
+  against the journal projection by the digit-string key (in-both /
+  legacy-only / unparseable / new-world totals) and exits NONZERO while
+  legacy-only rows exist without a per-owner written confirmation file
+  covering them — the machine gate the storage ladder's final DROP
+  migration cites.
+
 ### Changed
 
 - The **workflow-e2e browser lane is now a blocking CI job**

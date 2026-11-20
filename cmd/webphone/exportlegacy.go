@@ -86,12 +86,12 @@ func resolveDataDir(flagValue string) (string, error) {
 // legacyContactRow is one raw legacy contacts row, verbatim values plus
 // the ISO rendering of the unix-second stamp.
 type legacyContactRow struct {
-	ID            string `json:"id"`
-	Owner         string `json:"owner"`
-	Name          string `json:"name"`
-	Phone         string `json:"phone"`
-	CreatedAt     int64  `json:"created_at"`
-	CreatedAtISO  string `json:"created_at_iso"`
+	ID           string `json:"id"`
+	Owner        string `json:"owner"`
+	Name         string `json:"name"`
+	Phone        string `json:"phone"`
+	CreatedAt    int64  `json:"created_at"`
+	CreatedAtISO string `json:"created_at_iso"`
 }
 
 // readLegacyContacts SELECTs the v1 contacts shape read-only. A missing
