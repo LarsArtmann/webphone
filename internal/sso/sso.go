@@ -317,42 +317,51 @@ func (c *Client) clientSecret() (string, error) {
 
 // providerFor lazily discovers the provider and caches the success. A
 // failed discovery is NOT cached: an IdP that was down for one login must
-// be retried on the next, not remembered forever.
+// be retried on the next, not remembered forever. The discovery is
+// single-flight over a buffered channel: the leader hands its result to
+// ONE parked joiner and closes the channel, so a joiner that wakes from
+// the close must re-read state instead of trusting the zero result (the
+// fcm single-flight trap, pinned by TestFcmTokenMintIsSingleFlight).
 func (c *Client) providerFor(ctx context.Context) (*oidc.Provider, error) {
-	c.mu.Lock()
-	if c.provider != nil && time.Since(c.fetchedAt) < providerTTL {
-		p := c.provider
+	for {
+		c.mu.Lock()
+		if c.provider != nil && time.Since(c.fetchedAt) < providerTTL {
+			p := c.provider
+			c.mu.Unlock()
+			return p, nil
+		}
+		if c.inflight != nil {
+			ch := c.inflight
+			c.mu.Unlock()
+			res := <-ch
+			if res.p != nil || res.err != nil {
+				return res.p, res.err
+			}
+			continue // missed the handoff: the leader filled the cache
+		}
+		ch := make(chan providerResult, 1)
+		c.inflight = ch
 		c.mu.Unlock()
-		return p, nil
-	}
-	if c.inflight != nil {
-		ch := c.inflight
+
+		dctx, cancel := context.WithTimeout(ctx, discoveryTimeout)
+		provider, err := oidc.NewProvider(dctx, c.cfg.Issuer)
+		cancel()
+
+		c.mu.Lock()
+		c.inflight = nil
+		if err == nil {
+			c.provider = provider
+			c.fetchedAt = time.Now()
+		}
 		c.mu.Unlock()
-		res := <-ch
-		return res.p, res.err
+		ch <- providerResult{p: provider, err: err}
+		close(ch)
+		if err != nil {
+			return nil, errorfamily.WrapRejection(err, "sso.discovery",
+				"discover the OIDC provider (check auth.oauth2.issuer and that the IdP is reachable)")
+		}
+		return provider, nil
 	}
-	ch := make(chan providerResult, 1)
-	c.inflight = ch
-	c.mu.Unlock()
-
-	dctx, cancel := context.WithTimeout(ctx, discoveryTimeout)
-	provider, err := oidc.NewProvider(dctx, c.cfg.Issuer)
-	cancel()
-
-	c.mu.Lock()
-	c.inflight = nil
-	if err == nil {
-		c.provider = provider
-		c.fetchedAt = time.Now()
-	}
-	c.mu.Unlock()
-	ch <- providerResult{p: provider, err: err}
-	close(ch)
-	if err != nil {
-		return nil, errorfamily.WrapRejection(err, "sso.discovery",
-			"discover the OIDC provider (check auth.oauth2.issuer and that the IdP is reachable)")
-	}
-	return provider, nil
 }
 
 func randomToken() (string, error) {

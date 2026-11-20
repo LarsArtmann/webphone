@@ -18,8 +18,10 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/larsartmann/go-error-family"
 	errorfamilytest "github.com/larsartmann/go-error-family/errorfamilytest"
@@ -297,6 +299,82 @@ func TestFcmSendClassifiesDeadTokenAndRejectedCredential(t *testing.T) {
 		}
 		errorfamilytest.AssertFamily(t, err, errorfamily.Rejection)
 	})
+}
+
+// TestFcmTokenMintIsSingleFlight pins the single-flight contract the
+// 2026-11-19 review asked for: N concurrent sends facing an empty token
+// cache share ONE grant exchange, every one of them ships the shared
+// token (NOT the zero value a closed channel hands joiners that missed
+// the direct handoff), and a follow-up send rides the cache without a
+// new grant — the mutex must never serialize N mints either.
+func TestFcmTokenMintIsSingleFlight(t *testing.T) {
+	var grants atomic.Int32
+	release := make(chan struct{})
+	tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		if grants.Add(1) == 1 {
+			<-release // park the leader until the joiners pile up
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(`{"access_token":"shared-token","expires_in":3600}`))
+	}))
+	defer tokenServer.Close()
+
+	var sendMu sync.Mutex
+	auths := []string{}
+	sendServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		sendMu.Lock()
+		auths = append(auths, r.Header.Get("Authorization"))
+		sendMu.Unlock()
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer sendServer.Close()
+
+	credentialsPath, _ := writeTestCredentials(t, tokenServer.URL)
+	sender, err := NewFcmSender(credentialsPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sender.sendURL = sendServer.URL
+
+	const callers = 8
+	results := make(chan error, callers)
+	for i := 0; i < callers; i++ {
+		go func() {
+			results <- sender.Send(context.Background(), "device-token", Ring{Event: EventRing, From: "+15550000001", CallID: "call-1"})
+		}()
+	}
+
+	time.Sleep(150 * time.Millisecond)
+	close(release)
+
+	for i := 0; i < callers; i++ {
+		if err := <-results; err != nil {
+			t.Fatalf("concurrent send: %v", err)
+		}
+	}
+	sendMu.Lock()
+	if len(auths) != callers {
+		sendMu.Unlock()
+		t.Fatalf("%d sends reached the server, want %d", len(auths), callers)
+	}
+	for _, auth := range auths {
+		if auth != "Bearer shared-token" {
+			sendMu.Unlock()
+			t.Fatalf("send authorization %q, want %q (a joiner shipped the zero token)", auth, "Bearer shared-token")
+		}
+	}
+	sendMu.Unlock()
+	if got := grants.Load(); got != 1 {
+		t.Fatalf("grant exchanges: %d, want exactly 1", got)
+	}
+
+	// The cached second wave makes no new grant.
+	if err := sender.Send(context.Background(), "device-token", Ring{Event: EventRingEnd, From: "+15550000001", CallID: "call-1"}); err != nil {
+		t.Fatalf("cached send: %v", err)
+	}
+	if got := grants.Load(); got != 1 {
+		t.Fatalf("grant exchanges after cached send: %d, want 1", got)
+	}
 }
 
 func TestFcmCredentialsFailClosed(t *testing.T) {

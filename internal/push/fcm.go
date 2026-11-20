@@ -295,34 +295,48 @@ const fcmUnregisteredMarker = "UNREGISTERED"
 // mutex never spans the network round-trip (a held-lock mint could
 // serialize a whole fan behind one grant).
 func (s *FcmSender) fetchAccessToken(ctx context.Context) (string, error) {
-	s.mu.Lock()
-	if s.tokenValue != "" && time.Now().Before(s.tokenExpiry.Add(-tokenExpirySlack)) {
-		tok := s.tokenValue
+	for {
+		s.mu.Lock()
+		if s.tokenValue != "" && time.Now().Before(s.tokenExpiry.Add(-tokenExpirySlack)) {
+			tok := s.tokenValue
+			s.mu.Unlock()
+			return tok, nil
+		}
+		if s.inflight != nil {
+			ch := s.inflight
+			s.mu.Unlock()
+			res := <-ch
+			// The leader hands its result to ONE parked joiner (direct
+			// channel handoff) and then CLOSES the channel, so every
+			// other joiner wakes from the close holding the ZERO
+			// result — returning that would ship an empty token with a
+			// nil error. A real result (non-empty token, or an error)
+			// is the handoff; the zero result means "missed it" and
+			// the loop re-reads the cache the leader filled. A missed
+			// FAILURE leaves the cache empty, so that joiner mints
+			// again itself — bounded by the concurrent caller set.
+			if res.token != "" || res.err != nil {
+				return res.token, res.err
+			}
+			continue
+		}
+		ch := make(chan tokenResult, 1)
+		s.inflight = ch
 		s.mu.Unlock()
-		return tok, nil
-	}
-	if s.inflight != nil {
-		ch := s.inflight
+
+		token, expiry, err := s.exchangeToken(ctx)
+
+		s.mu.Lock()
+		s.inflight = nil
+		if err == nil {
+			s.tokenValue = token
+			s.tokenExpiry = expiry
+		}
 		s.mu.Unlock()
-		res := <-ch
-		return res.token, res.err
+		ch <- tokenResult{token: token, err: err}
+		close(ch)
+		return token, err
 	}
-	ch := make(chan tokenResult, 1)
-	s.inflight = ch
-	s.mu.Unlock()
-
-	token, expiry, err := s.exchangeToken(ctx)
-
-	s.mu.Lock()
-	s.inflight = nil
-	if err == nil {
-		s.tokenValue = token
-		s.tokenExpiry = expiry
-	}
-	s.mu.Unlock()
-	ch <- tokenResult{token: token, err: err}
-	close(ch)
-	return token, err
 }
 
 // exchangeToken runs the JWT-bearer grant WITHOUT holding any lock —
