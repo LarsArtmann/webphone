@@ -222,3 +222,54 @@ func TestFanSyncErrorsAnswerImmediately(t *testing.T) {
 	}
 	errorfamilytest.AssertCode(t, err, "push.registry")
 }
+
+// panickySender explodes on every send — the Fan's detached goroutine
+// must recover the panic (owner ruling 2026-10-27: an unhandled error
+// without a visible surface is a bug; a panic without containment is
+// worse: process death). hit signals the send was reached so the pin
+// below is deterministic.
+type panickySender struct {
+	enabled bool
+	hit     chan struct{}
+}
+
+func (p *panickySender) Enabled() bool    { return p.enabled }
+func (p *panickySender) Describe() string { return "panicky" }
+
+func (p *panickySender) Send(_ context.Context, _ string, _ push.Ring) error {
+	select {
+	case p.hit <- struct{}{}:
+	default:
+	}
+	panic("transport exploded mid-send")
+}
+
+func (p *panickySender) SendDraft(_ context.Context, _ string, _ push.Draft) error {
+	select {
+	case p.hit <- struct{}{}:
+	default:
+	}
+	panic("transport exploded mid-send")
+}
+
+func TestFanContainsAPanickingTransport(t *testing.T) {
+	panicky := &panickySender{enabled: true, hit: make(chan struct{}, 1)}
+	registry := &fakeRegistry{devices: []push.Device{
+		{DeviceID: "d1", Transport: push.TransportNtfy, Token: "topic-panic"},
+	}}
+	fanout := push.NewFanout(map[push.Transport]push.Sender{
+		push.TransportNtfy: panicky,
+	}, registry)
+
+	if err := fanout.Fan(context.Background(), owner, push.Ring{}); err != nil {
+		t.Fatalf("Fan answered %v; the send panic lives in the detached fan, never in the synchronous validation", err)
+	}
+
+	select {
+	case <-panicky.hit:
+	case <-time.After(2 * time.Second):
+		t.Fatal("the detached fan never reached the transport send")
+	}
+
+	time.Sleep(50 * time.Millisecond)
+}
