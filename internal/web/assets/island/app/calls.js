@@ -989,7 +989,10 @@ function referOnNotify(notification) {
   const status = body.match(/^SIP\/2\.0 (\d{3})/m);
   // accept() rejects only on prompt dismissal; the transfer verdict
   // below carries the user surface.
-  notification.accept().catch(() => {});
+  notification.accept().catch(() => {
+    // Prompt dismissal is the user's answer — the NOTIFY verdict below
+    // is the surface, so the rejection itself is deliberately unobserved.
+  });
   if (status && /^2/.test(status[1])) {
     log(t("transferComplete"));
     announce(t("transferComplete"), "ok");
@@ -1462,7 +1465,10 @@ function showDialCooldown(target, verdict) {
 export async function placeCall(raw, { force = false, latencyT0 } = {}) {
   // The dial click is a user gesture: unlock the shared AudioContext so
   // the ringback is audible (audio.js).
-  resumeAudio().catch(() => {});
+  resumeAudio().catch(() => {
+    // A refused resume degrades to the room alarm path — dialling
+    // proceeds either way.
+  });
   const userAgent = state.userAgent;
   if (!userAgent) {
     announce(t("notConnected"), "error");
@@ -1656,7 +1662,10 @@ export function answerIncoming(target) {
   if (!entry) return false;
   // The accept click is a user gesture — bring the shared AudioContext
   // out of Chrome's suspended state so call audio starts immediately.
-  resumeAudio().catch(() => {});
+  resumeAudio().catch(() => {
+    // A refused resume falls back to the default output path; the call
+    // itself must not wait on it.
+  });
   settleIncomingAfterRemoval();
   bindSession(entry.invitation, entry.from);
   entry.invitation
@@ -1685,7 +1694,9 @@ export function rejectIncoming(target) {
   }
   if (!entry) return;
   // Gesture: unlock the shared context for every later tone.
-  resumeAudio().catch(() => {});
+  resumeAudio().catch(() => {
+    // The reject path needs no audio; a refused unlock is inert here.
+  });
   entry.invitation.reject();
   settleIncomingAfterRemoval();
   if (!state.incomingSessions.length) releaseWarmMic();

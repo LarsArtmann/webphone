@@ -223,11 +223,16 @@ els.logout.addEventListener("click", async () => {
   logoutArmedAt = 0;
   try {
     [...sessions.values()].forEach(({ session }) => {
-      // Logout tears the page down next: a failed bye has no surface
-      // left to render and the server ends the call anyway.
-      session.bye().catch(() => {});
+      session.bye().catch(() => {
+        // Logout tears the page down next: a failed bye has no surface
+        // left to render and the server ends the call anyway.
+      });
     });
-    if (state.userAgent) await state.userAgent.stop().catch(() => {});
+    if (state.userAgent)
+      await state.userAgent.stop().catch(() => {
+        // The teardown in finally runs regardless; the watchdog owns
+        // hung stops, so the rejection has no surface left either.
+      });
   } finally {
     disconnect();
     destroySession();

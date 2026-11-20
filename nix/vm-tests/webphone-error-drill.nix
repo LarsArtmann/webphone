@@ -1,6 +1,5 @@
 # The KVM-gated error-contract drill VM test: the designed boot failure and the
-_:
-{
+_: {
   perSystem =
     {
       pkgs,

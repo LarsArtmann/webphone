@@ -1,6 +1,5 @@
 # The KVM-gated OIDC-lane VM test: the typed oauth2 lane against a real stub IdP.
-_:
-{
+_: {
   perSystem =
     {
       pkgs,

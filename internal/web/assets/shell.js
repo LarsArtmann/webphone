@@ -921,7 +921,10 @@
           "/partials/live-context?remote=" + encodeURIComponent(remote),
           { target: "#wp-live-context", swap: "innerHTML" },
         )
-        .catch(function () {});
+        .catch(function () {
+          // Deliberately silent: the slot staying empty is the failure
+          // surface (the doctrine comment above owns the reasoning).
+        });
     };
     document.addEventListener("wp:calls-changed", updateLiveContext);
     updateLiveContext();
@@ -1171,6 +1174,8 @@
       // The stub environments some surfaces run in have no fetch at all;
       // a refresh is best-effort decoration, never a thrower.
       if (typeof fetch !== "function") return;
+      // best-effort: a failed refresh leaves the pill stale until the
+      // next drafts-changed event; there is no other surface for it.
       fetch("/api/session", { credentials: "same-origin" })
         .then(function (res) {
           if (!res.ok) return null;
@@ -1191,7 +1196,10 @@
             ),
           );
         })
-        .catch(function () {});
+        .catch(function () {
+          // best-effort decoration: the pill stays stale until the next
+          // wp:drafts-changed nudge re-runs this refresh.
+        });
     };
     document.addEventListener("wp:drafts-changed", refreshAgentMode);
 

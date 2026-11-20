@@ -1,6 +1,5 @@
 # The KVM-gated backup VM test: boot the REAL service with backup.enable and
-_:
-{
+_: {
   perSystem =
     {
       pkgs,

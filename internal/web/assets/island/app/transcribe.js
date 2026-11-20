@@ -238,9 +238,10 @@ function ensureRunning(ctx) {
   if (!ctx || typeof ctx.resume !== "function") return;
   const retry = () => {
     if (ctx.state === "closed") return;
-    // A refused resume waits for the next pointerdown/keydown retry —
-    // the "waiting for a click" warn above is the visible surface.
-    ctx.resume().catch(() => {});
+    ctx.resume().catch(() => {
+      // A refused resume waits for the next pointerdown/keydown retry —
+      // the "waiting for a click" warn above is the visible surface.
+    });
   };
   if (ctx.state === "suspended") {
     log(
@@ -429,8 +430,9 @@ export function startLiveTranscription(id, entry, onText, { language } = {}) {
  */
 function releaseCapture(ctx, stream) {
   if (ctx && typeof ctx.close === "function") {
-    // Teardown: a refused close dies with the page anyway.
-    ctx.close().catch(() => {});
+    ctx.close().catch(() => {
+      // Teardown: a refused close dies with the page anyway.
+    });
   }
   if (stream && stream.getTracks) {
     stream.getTracks().forEach((track) => {
