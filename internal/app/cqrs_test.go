@@ -161,7 +161,11 @@ func TestCqrsPoisonEventDeadLetters(t *testing.T) {
 			projectionhost.WithBackoff(time.Millisecond, 5*time.Millisecond),
 		},
 	}
-	svc, err := newCqrs(testConfig(t, false), discardLogger(), domain)
+	// The capturing logger pins the operator surface: the poison landing
+	// itself WARNs through the logging decorator (the library's sendToDLQ
+	// is silent without it).
+	poisonLog, poisonBuf := captureBufLogger()
+	svc, err := newCqrs(testConfig(t, false), poisonLog, domain)
 	if err != nil {
 		t.Fatalf("newCqrs with poison domain: %v", err)
 	}
@@ -204,6 +208,13 @@ func TestCqrsPoisonEventDeadLetters(t *testing.T) {
 			t.Fatal("poison event never reached the dead-letter store")
 		}
 		time.Sleep(20 * time.Millisecond)
+	}
+
+	// The poison landing must have WARNed greppably (TC: DLQ operator
+	// visibility — the moment half of the surface).
+	if out := poisonBuf.String(); !strings.Contains(out, "projection dead-lettered an event") ||
+		!strings.Contains(out, "cqrsPoisonFact") {
+			t.Fatalf("poison landing must WARN through the decorator, got:\n%s", out)
 	}
 
 	// After the dead-letter the checkpoint advances and the worker

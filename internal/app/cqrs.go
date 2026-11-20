@@ -221,7 +221,10 @@ func newCqrs(cfg config.Config, log *slog.Logger, domain system.DomainConfig) (*
 	}
 
 	domain.ProjectionHostOptions = append(domain.ProjectionHostOptions,
-		projectionhost.WithDeadLetterStore(dlq, cqrsDLQThreshold),
+		// The host writes through the logging decorator (poison landings
+		// WARN); the raw store stays on CqrsService.DLQ for the admin
+		// reads (boot depth check, future replay tooling).
+		projectionhost.WithDeadLetterStore(loggingDeadLetterStore{DeadLetterStore: dlq, log: log}, cqrsDLQThreshold),
 		projectionhost.WithLogger(log),
 	)
 
@@ -249,6 +252,7 @@ func (s *CqrsService) Start(ctx context.Context) error {
 		return errorfamily.WrapInfrastructuref(err, "cqrs.start", "start system workers")
 	}
 	s.started = true
+	warnDLQDepth(ctx, s.DLQ, s.log)
 	return nil
 }
 
