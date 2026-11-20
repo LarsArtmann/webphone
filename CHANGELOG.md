@@ -284,6 +284,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- The favicon is the brand green again — the tab icon painted a
+  Tailwind-stock teal (`#0f766e`) against the app's `#17a467` accent,
+  so the browser chrome disagreed with the product it belonged to. The
+  square now carries the accent with the dark `--on-accent` ink, and a
+  pin test holds the favicon, the PWA manifest's `theme_color` and the
+  `--accent` token to `views.AccentColor` so the green cannot fork
+  again.
 - The ended call card's "Summarize → draft SMS" button no longer renders
   when the ASR seam is off — with no transcript seam no transcript can
   exist, so the button could only ever 404 into an announce. The gate
