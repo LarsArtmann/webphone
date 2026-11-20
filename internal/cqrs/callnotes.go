@@ -338,6 +338,30 @@ func noteDispatchError(err error, op string) error {
 	return errorfamily.WrapInfrastructuref(err, NoteDispatchCode, "dispatch %s", op)
 }
 
+// upsertSlot is the TWO upsert lanes' shared discipline (one home):
+// lock, pre-read, echo-skip, dispatch under the same lock, then the D7
+// read-your-writes await. isEcho names what an unchanged slot looks
+// like; dispatch runs the command; op names the wrap for a dispatch
+// failure. The bool answers the gate contract: true only when a fresh
+// event was dispatched (echoes and read failures answer false).
+func (s *Notes) upsertSlot(ctx context.Context, owner domain.Extension, callID, op string, isEcho func(*readmodels.CallNoteView) bool, dispatch func() error) (bool, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	view, err := s.Get(ctx, owner, callID)
+	if err != nil {
+		return false, err
+	}
+	if view != nil && isEcho(view) {
+		return false, nil
+	}
+	if err := dispatch(); err != nil {
+		return false, noteDispatchError(err, op)
+	}
+	awaitOwnWrite(ctx, s.sys, NotesStreamType, owner.String(), notesCollection, s.vers)
+	return true, nil
+}
+
 // Set upserts the owner's note for one call; the decision keeps an
 // existing disposition. A NEW call past the cap refuses with the
 // ErrNoteListFull Conflict contract. The D7 await keeps the read-your-writes
@@ -352,24 +376,14 @@ func noteDispatchError(err error, op string) error {
 // which is the pre-echo behavior, not a new one). A first save always
 // changes (the slot mints, whatever the body).
 func (s *Notes) Set(ctx context.Context, owner domain.Extension, callID, body string) (bool, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	view, err := s.Get(ctx, owner, callID)
-	if err != nil {
-		return false, err
-	}
-	if view != nil && view.Body == body {
-		return false, nil
-	}
-	if err := dispatchOwnerCommand(ctx, s.sys, "note.save", owner.String(),
-		func(base *command.BasicCommand) *SaveCallNote {
-			return &SaveCallNote{BasicCommand: base, Owner: owner.String(), CallID: callID, Body: body, At: time.Now()}
-		}); err != nil {
-		return false, noteDispatchError(err, "note.save")
-	}
-	awaitOwnWrite(ctx, s.sys, NotesStreamType, owner.String(), notesCollection, s.vers)
-	return true, nil
+	return s.upsertSlot(ctx, owner, callID, "note.save",
+		func(view *readmodels.CallNoteView) bool { return view.Body == body },
+		func() error {
+			return dispatchOwnerCommand(ctx, s.sys, "note.save", owner.String(),
+				func(base *command.BasicCommand) *SaveCallNote {
+					return &SaveCallNote{BasicCommand: base, Owner: owner.String(), CallID: callID, Body: body, At: time.Now()}
+				})
+		})
 }
 
 // SetDisposition records the operator's verdict on the same slot; the
@@ -382,24 +396,14 @@ func (s *Notes) Set(ctx context.Context, owner domain.Extension, callID, body st
 // guard stays the authority under races. A first disposition always
 // changes (the slot mints).
 func (s *Notes) SetDisposition(ctx context.Context, owner domain.Extension, callID string, disposition domain.Disposition) (bool, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	view, err := s.Get(ctx, owner, callID)
-	if err != nil {
-		return false, err
-	}
-	if view != nil && view.Disposition == disposition.String() {
-		return false, nil
-	}
-	if err := dispatchOwnerCommand(ctx, s.sys, "note.disposition_save", owner.String(),
-		func(base *command.BasicCommand) *SaveCallDisposition {
-			return &SaveCallDisposition{BasicCommand: base, Owner: owner.String(), CallID: callID, Disposition: disposition, At: time.Now()}
-		}); err != nil {
-		return false, noteDispatchError(err, "note.disposition_save")
-	}
-	awaitOwnWrite(ctx, s.sys, NotesStreamType, owner.String(), notesCollection, s.vers)
-	return true, nil
+	return s.upsertSlot(ctx, owner, callID, "note.disposition_save",
+		func(view *readmodels.CallNoteView) bool { return view.Disposition == disposition.String() },
+		func() error {
+			return dispatchOwnerCommand(ctx, s.sys, "note.disposition_save", owner.String(),
+				func(base *command.BasicCommand) *SaveCallDisposition {
+					return &SaveCallDisposition{BasicCommand: base, Owner: owner.String(), CallID: callID, Disposition: disposition, At: time.Now()}
+				})
+		})
 }
 
 // Delete removes one call's note slot outright: the per-owner cap
