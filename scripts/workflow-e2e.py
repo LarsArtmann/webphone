@@ -606,17 +606,27 @@ class FakePhoneAPI:
                 if code != 204:
                     self.wfile.write(body)
 
+            def _stripped_path(self) -> str:
+                # The app prepends /phone-api to the configured phone API URL
+                # (both the server-side client and the /phone-api proxy), so the
+                # fake sees prefixed paths; normalize once at the handler door.
+                path = self.path
+                if path.startswith("/phone-api"):
+                    path = path[len("/phone-api"):]
+                return path
+
             def do_GET(self):  # noqa: N802 - http.server API
-                if self.path.endswith("/summary"):
+                path = self._stripped_path()
+                if path.endswith("/summary"):
                     fresh = sum(1 for m in outer.messages if not m["read"])
                     old = sum(1 for m in outer.messages if m["read"])
                     self._json(200, {"new": fresh, "old": old})
                     return
-                if "/messages" in self.path:
+                if "/messages" in path:
                     self._json(200, {"messages": outer.messages})
                     return
-                if self.path.startswith("/vm/"):
-                    if self.path == "/vm/e2e-live-uuid.wav":
+                if path.startswith("/vm/"):
+                    if path == "/vm/e2e-live-uuid.wav":
                         self.send_response(200)
                         self.send_header("Content-Type", "audio/wav")
                         self.send_header("Content-Length", str(len(wav)))
@@ -627,13 +637,13 @@ class FakePhoneAPI:
                         self.send_header("Content-Length", "0")
                         self.end_headers()
                     return
-                if self.path.startswith("/history"):
+                if path.startswith("/history"):
                     self._json(200, {"entries": []})
                     return
                 self._json(404, {"error": "not found"})
 
             def do_DELETE(self):  # noqa: N802 - http.server API
-                uuid = self.path.rstrip("/").rsplit("/", 1)[-1]
+                uuid = self._stripped_path().rstrip("/").rsplit("/", 1)[-1]
                 before = len(outer.messages)
                 outer.messages = [m for m in outer.messages if m["uuid"] != uuid]
                 self._json(204 if len(outer.messages) < before else 404, {})
@@ -641,9 +651,12 @@ class FakePhoneAPI:
         self._server = HTTPServer(("127.0.0.1", 0), Handler)
         self.port = self._server.server_address[1]
         self.base = f"http://127.0.0.1:{self.port}"
+        # RELATIVE on purpose: the browser resolves it against the page origin,
+        # so playback rides the session-gated same-origin /phone-api proxy
+        # (CSP-clean media; the proxy forwards Range and copies 206 back).
         for message in self.messages:
             suffix = ".wav" if message["uuid"] == "e2e-live-uuid" else "/missing.wav"
-            message["audio_url"] = f"{self.base}/vm/{message['uuid']}{suffix}"
+            message["audio_url"] = f"/phone-api/vm/{message['uuid']}{suffix}"
         self._thread = threading.Thread(target=self._server.serve_forever, daemon=True)
 
     def start(self) -> "FakePhoneAPI":
@@ -671,6 +684,7 @@ def mint_enroll_token(
     one-shot, under the SAME config file + data dir the booted server
     holds (the shared-journal contract). Retried once: both processes
     open the SQLite journal, and a busy lock is a race, not a verdict."""
+    os.makedirs(datadir, exist_ok=True)  # SQLite cannot open the enroll journal in a missing parent dir
     env = dict(os.environ)
     env.update(
         {
