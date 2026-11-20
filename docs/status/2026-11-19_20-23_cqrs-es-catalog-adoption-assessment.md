@@ -73,15 +73,28 @@ only; no benchmarks, no flake check, no CI verdict read for HEAD.
    `TestRunCatalogWritesSpecifications` but never RAN even the narrow
    `go test ./internal/domain -run Catalog` — seconds of cost, skipped to
    keep the session read-only. Remaining: one command. Effort S.
+   > RESOLVED 2026-11-20 (verification-ring session): the pin suite ran
+   > green, and both fresh export trees carry `review.saved` at version
+   > 1.1.0 — TA's mechanical half independently verified.
 2. **Hub contract check ran against a stand-in schema.** The script exited
    0 against a schema I wrote inline; the hub's live v2 URL was not
    fetched (offline-safe shortcut). Remaining: run with the real contract
    (or confirm the hub-side gate is the authority anyway). Effort S.
+   > RESOLVED 2026-11-20: the LIVE oracle ran clean over both fresh
+   > exports; the vendored CI copy is sha256-identical to live; the
+   > hub's -plain lint consumption confirmed at
+   > eventcatalog-hub@84fcada scripts/lint-sources.sh:272. TB's full
+   > evidence in the TODO_LIST verification-ring row.
 3. **cqrs inventory depth.** Counts come from exhaustive greps; I did not
    individually read all ~25 non-test cqrs files (e.g. per-aggregate
    snapshot presence, fold-by-fold view shapes). The aggregates'
    conclusions rest on the greps + AGENTS.md cross-checks. Effort M to
    deepen; not needed for the assessment verdicts.
+   > DEEPENED 2026-11-20 (TF): the snapshot map is now verified from
+   > source — threads carries D8's EveryNEvents(200)+ReadPressure(50);
+   > the ten other aggregates are per-owner streams via
+   > dispatchOwnerCommand; the assessment's "snapshots never assessed"
+   > premise was half-stale (see the snapshot verdict row).
 
 ## c) NOT STARTED
 
@@ -89,12 +102,25 @@ only; no benchmarks, no flake check, no CI verdict read for HEAD.
    block + mirror + `wantEventIDs` row + parity pair (+ possible
    CatalogVersion bump, see question 1). Offered in chat; awaiting owner
    GO. Priority high, effort S.
+   > DONE 2026-11-19 evening (verification session) + 2026-11-20
+   > independent verification: the event row, mirror, bump 1.0.0→1.1.0,
+   > and the WithVersion stamp on all five events landed; render
+   > verified in both trees. TODO_LIST row struck with evidence.
 2. **Recurrence guard** `TestCatalogSeamEventSetParity` — reflect over
    `domain.Event` implementers, require each to appear in `BuildCatalog`.
    Would have caught the gap at landing time. Effort S.
+   > LANDED 2026-11-19 as the mechanically enforceable half:
+   > TestCatalogSchemaParity gained a pairs↔catalog COUNT cross-check
+   > (the two hand lists must agree); full implementer enumeration
+   > stays impossible via reflection (unexported marker method) — the
+   > honest ceiling, recorded in the TODO row.
 3. **HARVEST of section (f)** into TODO_LIST.md per docs-health — the
    skill's loop-closing step; deliberately deferred because the owner
    instructed report-then-wait.
+   > DONE: seven rows harvested (TODO_LIST § 2026-11-19 catalog/CQRS
+   > assessment harvest); ALL SEVEN now struck or ruled with evidence
+   > as of 2026-11-20 — the 20:51 plan's TA–TH executed to completion
+   > (docs/planning/2026-11-19_20-51_SUPERB-catalog-integrity-verification-ring.md).
 
 ## d) TOTALLY FUCKED UP
 
