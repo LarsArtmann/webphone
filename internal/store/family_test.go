@@ -13,7 +13,6 @@ import (
 
 	"github.com/larsartmann/go-error-family"
 	errorfamilytest "github.com/larsartmann/go-error-family/errorfamilytest"
-	"github.com/larsartmann/webphone/internal/domain"
 	"github.com/larsartmann/webphone/internal/store"
 )
 
@@ -36,25 +35,10 @@ func TestPersistenceFailuresAreInfrastructure(t *testing.T) {
 	// A closed database makes every query fail with the driver's own
 	// error; the store's wraps must classify those as Infrastructure.
 	db := openTestDB(t)
-	messages := store.NewMessages(db)
 	if err := db.Close(); err != nil {
 		t.Fatal(err)
 	}
 	ctx := context.Background()
-	owner := domain.MustParseExtension("1001")
-
-	if _, err := messages.ListThreads(ctx, owner); err == nil {
-		t.Fatal("ListThreads on closed db: want error")
-	} else {
-		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
-		errorfamilytest.AssertCode(t, err, "store.query")
-	}
-
-	if err := messages.MarkThreadRead(ctx, owner, domain.GenerateThreadID()); err == nil {
-		t.Fatal("MarkThreadRead on closed db: want error")
-	} else {
-		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
-	}
 
 	if _, err := store.CountSessions(ctx, db); err == nil {
 		t.Fatal("CountSessions on closed db: want error")
@@ -62,10 +46,10 @@ func TestPersistenceFailuresAreInfrastructure(t *testing.T) {
 		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
 	}
 
-	if _, err := messages.CountArchived(ctx, owner); err == nil {
-		t.Fatal("CountArchived on closed db: want error")
+	if _, _, err := store.FlagValue(ctx, db, "any-key"); err == nil {
+		t.Fatal("FlagValue on closed db: want error")
 	} else {
 		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
-		errorfamilytest.AssertCode(t, err, "store.count_archived")
+		errorfamilytest.AssertCode(t, err, "store.flag_read")
 	}
 }

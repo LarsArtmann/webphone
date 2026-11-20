@@ -22,6 +22,15 @@ import (
 // documented pattern for stable error values; the sentinel keeps its
 // errors.New identity. ErrListFull moved home to internal/readmodels
 // with the contacts read model (the SQL contacts store is gone).
+//
+// ErrNotFound's definition lives HERE (not with the retired messages
+// ladder it once shipped beside): cqrs's journal-backed seams return it
+// as their absence sentinel, and internal/store/messages.go was
+// deleted 2026-11-20 with the frozen-ladder cleanup (test-only since
+// the journal swap; the retention sweep's behavior pins seed the
+// frozen tables with raw SQL now).
+var ErrNotFound = errors.New("not found")
+
 func init() {
 	errorfamily.RegisterClassifications(map[error]errorfamily.Family{
 		ErrNotFound: errorfamily.Rejection,

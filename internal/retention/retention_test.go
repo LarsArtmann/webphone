@@ -25,10 +25,11 @@ import (
 // expiry.
 
 // sweepWorld wires the stores exactly the way the composition root
-// wires them (app.go): one store db (the legacy ladder's frozen rows),
+// wires them (app.go): one store db (the legacy ladder's frozen rows,
+// seeded with raw SQL since the Messages type's 2026-11-20 deletion),
 // one blob root, and ONE journal system carrying the threads, faxes
 // and transcripts the retention legs sweep.
-func sweepWorld(t *testing.T) (*sql.DB, *blob.Store, *system.System, *store.Messages) {
+func sweepWorld(t *testing.T) (*sql.DB, *blob.Store, *system.System) {
 	t.Helper()
 	db, err := store.Open(":memory:")
 	if err != nil {
@@ -44,7 +45,7 @@ func sweepWorld(t *testing.T) (*sql.DB, *blob.Store, *system.System, *store.Mess
 		t.Fatalf("boot core system: %v", err)
 	}
 	t.Cleanup(func() { _ = coreSys.Close() })
-	return db, blobs, coreSys, store.NewMessages(db)
+	return db, blobs, coreSys
 }
 
 // journalSweepersOf bundles the journal legs over the sweep world's
@@ -86,34 +87,48 @@ func mustExist(t *testing.T, path, what string) {
 	}
 }
 
-// appendMessage persists one message, optionally carrying an
-// attachment whose stored path is taken verbatim — including corrupt
-// shapes, which the store row happily holds (the path is validated
-// only at unlink time). It returns the thread id so tests can assert
-// on the surviving thread.
-func appendMessage(t *testing.T, messages *store.Messages, owner domain.Extension, remote string, at time.Time, blobRel string) domain.ThreadID {
+// seedLegacyMessage persists one legacy thread + message row, the
+// message optionally carrying an attachment whose stored path is
+// taken verbatim — including corrupt shapes, which the store row
+// happily holds (the path is validated only at unlink time). It
+// returns the thread id so tests can assert on the surviving thread.
+// Raw SQL since the Messages type's 2026-11-20 deletion: the frozen
+// tables stay until the §5 DROP migration and these pins must keep
+// proving the sweep empties them.
+func seedLegacyMessage(t *testing.T, db *sql.DB, owner, remote string, at time.Time, blobRel string) string {
 	t.Helper()
-	ctx := context.Background()
-	addr := domain.MustParseAddress(domain.NetworkSMS, remote)
-	thread, err := messages.ResolveThreadID(ctx, owner, addr, at)
-	if err != nil {
-		t.Fatalf("find thread: %v", err)
+	thread := "t-" + remote[len(remote)-4:]
+	msg := "m-" + remote[len(remote)-4:]
+	if _, err := db.ExecContext(context.Background(),
+		`INSERT INTO threads (id, owner, remote, last_activity_at, unread) VALUES (?,?,?,?,0)`,
+		thread, owner, remote, at.Unix()); err != nil {
+		t.Fatalf("seed thread %s: %v", thread, err)
 	}
-	msg := domain.Message{
-		ID: domain.GenerateMessageID(), ThreadID: thread, Owner: owner,
-		Remote: addr, Direction: domain.DirectionOutbound, Channel: domain.ChannelSMS,
-		Body: "retention pin", Status: domain.StatusSent, CreatedAt: at,
+	if _, err := db.ExecContext(context.Background(),
+		`INSERT INTO messages (id, thread_id, owner, remote, direction, channel, body, status, provider_ref, created_at)
+			 VALUES (?,?,?,?, 'outbound','sms','retention pin','sent','',?)`,
+		msg, thread, owner, remote, at.Unix()); err != nil {
+		t.Fatalf("seed message %s: %v", msg, err)
 	}
 	if blobRel != "" {
-		msg.Attachments = []domain.Attachment{{
-			ID: domain.GenerateAttachmentID(), Name: "doc.bin",
-			MimeType: "application/octet-stream", SizeBytes: 4, Path: blobRel,
-		}}
-	}
-	if err := messages.AppendMessage(ctx, msg); err != nil {
-		t.Fatalf("append message: %v", err)
+		if _, err := db.ExecContext(context.Background(),
+			`INSERT INTO attachments (id, message_id, name, mime_type, size_bytes, path)
+				 VALUES (?,?,?,?,4,?)`,
+			"a-"+msg, msg, "doc.bin", "application/octet-stream", blobRel); err != nil {
+			t.Fatalf("seed attachment for %s: %v", msg, err)
+		}
 	}
 	return thread
+}
+
+func countMessages(t *testing.T, db *sql.DB, thread string) int {
+	t.Helper()
+	var count int
+	if err := db.QueryRowContext(context.Background(),
+		`SELECT COUNT(*) FROM messages WHERE thread_id = ?`, thread).Scan(&count); err != nil {
+		t.Fatalf("count messages for %s: %v", thread, err)
+	}
+	return count
 }
 
 func mustFaxJob(t *testing.T, owner domain.Extension, remote string, at time.Time, docRel string) domain.FaxJob {
@@ -131,7 +146,7 @@ func mustFaxJob(t *testing.T, owner domain.Extension, remote string, at time.Tim
 }
 
 func TestSweepOnceExpiresOldTenantsAndUnlinksTheirBlobs(t *testing.T) {
-	db, blobs, coreSys, messages := sweepWorld(t)
+	db, blobs, coreSys := sweepWorld(t)
 	ctx := context.Background()
 	faxes := cqrs.NewFaxes(coreSys)
 	transcripts := cqrs.NewTranscripts(coreSys)
@@ -145,8 +160,8 @@ func TestSweepOnceExpiresOldTenantsAndUnlinksTheirBlobs(t *testing.T) {
 	oldFaxDoc := mustSaveBlob(t, blobs, "faxes", ".pdf", "old-fax")
 	liveFaxDoc := mustSaveBlob(t, blobs, "faxes", ".pdf", "live-fax")
 
-	oldThread := appendMessage(t, messages, owner, "+441632960961", old, oldMsgBlob)
-	liveThread := appendMessage(t, messages, owner, "+441632960977", now, liveMsgBlob)
+	oldThread := seedLegacyMessage(t, db, owner.String(), "+441632960961", old, oldMsgBlob)
+	liveThread := seedLegacyMessage(t, db, owner.String(), "+441632960977", now, liveMsgBlob)
 	liveFax := mustFaxJob(t, owner, "+15550000012", now, liveFaxDoc)
 	if err := faxes.Create(ctx, mustFaxJob(t, owner, "+15550000011", old, oldFaxDoc)); err != nil {
 		t.Fatalf("create old fax: %v", err)
@@ -178,11 +193,11 @@ func TestSweepOnceExpiresOldTenantsAndUnlinksTheirBlobs(t *testing.T) {
 	mustExist(t, blobPath(blobs, liveMsgBlob), "live message attachment")
 	mustExist(t, blobPath(blobs, liveFaxDoc), "live fax document")
 
-	if msgs, err := messages.ListMessages(ctx, owner, liveThread, 10); err != nil || len(msgs) != 1 {
-		t.Fatalf("live message lost: %v %v", msgs, err)
+	if n := countMessages(t, db, liveThread); n != 1 {
+		t.Fatalf("live message lost: %d", n)
 	}
-	if _, err := messages.ListMessages(ctx, owner, oldThread, 10); err != nil {
-		t.Fatalf("listing an empty swept thread must not error: %v", err)
+	if n := countMessages(t, db, oldThread); n != 0 {
+		t.Fatalf("swept thread's messages must be gone: %d", n)
 	}
 	if _, err := faxes.Get(ctx, owner, liveFax.ID); err != nil {
 		t.Fatalf("live fax lost: %v", err)
@@ -200,18 +215,17 @@ func TestSweepOnceExpiresOldTenantsAndUnlinksTheirBlobs(t *testing.T) {
 // skipped — the sweep must not die on it and must not skip the
 // NEIGHBOURING valid blob in the same pass.
 func TestSweepOnceSkipsCorruptBlobPath(t *testing.T) {
-	db, blobs, _, messages := sweepWorld(t)
-	ctx := context.Background()
+	db, blobs, _ := sweepWorld(t)
 	owner := domain.MustParseExtension("1001")
 	now := time.Now()
 	old := now.Add(-48 * time.Hour)
 	cutoff := now.Add(-24 * time.Hour)
 
 	validBlob := mustSaveBlob(t, blobs, "attachments", ".png", "valid-bytes")
-	appendMessage(t, messages, owner, "+441632960961", old, "/abs/escape")
-	appendMessage(t, messages, owner, "+441632960963", old, validBlob)
+	seedLegacyMessage(t, db, owner.String(), "+441632960961", old, "/abs/escape")
+	seedLegacyMessage(t, db, owner.String(), "+441632960963", old, validBlob)
 
-	sum := sweepOnce(ctx, db, blobs, retention0Sweepers(), cutoff)
+	sum := sweepOnce(context.Background(), db, blobs, retention0Sweepers(), cutoff)
 
 	if sum.messages != 2 || sum.blobs != 1 {
 		t.Fatalf("corrupt path must skip itself, not the sweep: %+v", sum)
@@ -226,18 +240,17 @@ func TestSweepOnceSkipsCorruptBlobPath(t *testing.T) {
 func TestStartDisabledWindowKeepsEverything(t *testing.T) {
 	for _, window := range []time.Duration{0, -time.Hour} {
 		t.Run(window.String(), func(t *testing.T) {
-			db, blobs, _, messages := sweepWorld(t)
+			db, blobs, _ := sweepWorld(t)
 			ctx := context.Background()
 			owner := domain.MustParseExtension("1001")
 			ancient := time.Now().Add(-365 * 24 * time.Hour)
-			thread := appendMessage(t, messages, owner, "+441632960965", ancient, "")
+			thread := seedLegacyMessage(t, db, owner.String(), "+441632960965", ancient, "")
 
 			Start(ctx, db, blobs, retention0Sweepers(), window)
 			time.Sleep(50 * time.Millisecond)
 
-			msgs, err := messages.ListMessages(ctx, owner, thread, 10)
-			if err != nil || len(msgs) != 1 {
-				t.Fatalf("disabled retention must delete nothing: %v %v", msgs, err)
+			if n := countMessages(t, db, thread); n != 1 {
+				t.Fatalf("disabled retention must delete nothing: %d", n)
 			}
 		})
 	}
@@ -248,22 +261,18 @@ func TestStartDisabledWindowKeepsEverything(t *testing.T) {
 // retention and shut down a minute later still swept), and ctx
 // cancellation retires the goroutine without a second pass.
 func TestStartSweepsImmediatelyThenHonorsContext(t *testing.T) {
-	db, blobs, _, messages := sweepWorld(t)
+	db, blobs, _ := sweepWorld(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	owner := domain.MustParseExtension("1001")
 	ancient := time.Now().Add(-365 * 24 * time.Hour)
-	thread := appendMessage(t, messages, owner, "+441632960967", ancient, "")
+	thread := seedLegacyMessage(t, db, owner.String(), "+441632960967", ancient, "")
 
 	Start(ctx, db, blobs, retention0Sweepers(), 24*time.Hour)
 
 	deadline := time.Now().Add(2 * time.Second)
 	for {
-		msgs, err := messages.ListMessages(ctx, owner, thread, 10)
-		if err != nil {
-			t.Fatalf("list after start: %v", err)
-		}
-		if len(msgs) == 0 {
+		if n := countMessages(t, db, thread); n == 0 {
 			break
 		}
 		if time.Now().After(deadline) {
