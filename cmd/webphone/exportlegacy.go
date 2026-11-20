@@ -1,21 +1,23 @@
 package main
 
 import (
+	"bytes"
 	"context"
 	"crypto/sha256"
 	"database/sql"
-	"bytes"
 	"encoding/csv"
 	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
 	"time"
 
 	errorfamily "github.com/larsartmann/go-error-family"
+	_ "modernc.org/sqlite" // registers the "sqlite" driver for the read-only legacy handle
 
 	"github.com/larsartmann/webphone/internal/config"
 	"github.com/larsartmann/webphone/internal/cqrs"
@@ -148,12 +150,12 @@ func runExportLegacyDump(dir, format string) error {
 	}
 	generated := time.Now().UTC().Format(time.RFC3339)
 	if format == "csv" {
-		return dumpLegacyCSV(rows, generated)
+		return dumpLegacyCSV(os.Stdout, rows, generated)
 	}
-	return dumpLegacyJSON(rows, generated)
+	return dumpLegacyJSON(os.Stdout, rows, generated)
 }
 
-func dumpLegacyJSON(rows []legacyContactRow, generated string) error {
+func dumpLegacyJSON(w io.Writer, rows []legacyContactRow, generated string) error {
 	payload, err := json.Marshal(rows)
 	if err != nil {
 		return bootErr(bootGeneric, errorfamily.WrapInfrastructure(err, "webphone.cli.export_legacy", "marshal rows"))
@@ -170,19 +172,22 @@ func dumpLegacyJSON(rows []legacyContactRow, generated string) error {
 	if err != nil {
 		return bootErr(bootGeneric, errorfamily.WrapInfrastructure(err, "webphone.cli.export_legacy", "marshal dump envelope"))
 	}
-	fmt.Println(string(out))
-	return nil
+	_, err = fmt.Fprintln(w, string(out))
+	return err
 }
 
-func dumpLegacyCSV(rows []legacyContactRow, generated string) error {
+func dumpLegacyCSV(w io.Writer, rows []legacyContactRow, generated string) error {
 	body, err := csvBody(rows)
 	if err != nil {
 		return err
 	}
 	sum := sha256.Sum256(body)
-	fmt.Printf("# table=contacts count=%d sha256=%s generated=%s\n", len(rows), hex.EncodeToString(sum[:]), generated)
-	fmt.Print(string(body))
-	return nil
+	_, err = fmt.Fprintf(w, "# table=contacts count=%d sha256=%s generated=%s\n", len(rows), hex.EncodeToString(sum[:]), generated)
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(body)
+	return err
 }
 
 // csvBody renders the CSV payload (header row + one row per contact)
@@ -289,13 +294,29 @@ func runExportLegacyCheck(dir, confirmationsPath string) error {
 	if err != nil {
 		return err
 	}
-	printCheckReport(classification, confirmationsPath)
+	printCheckReport(os.Stdout, classification, confirmationsPath)
 	if len(classification.Unconfirmed) > 0 {
 		return bootErr(bootGeneric, staticBootError(fmt.Sprintf(
 			"%d legacy-only contact row(s) remain unconfirmed — re-import them (a re-save in the UI re-classifies them as in-both) or record per-owner written confirmations via -confirmations before the §5 DROP window",
 			len(classification.Unconfirmed))))
 	}
 	return nil
+}
+
+// rowClass is one legacy row's classification before confirmations:
+// unparseable rows can never auto-migrate, the rest split by the digit
+// key's presence in the owner's new-world list.
+func rowClass(r legacyContactRow, newWorld map[string]bool) string {
+	if _, err := domain.ParseExtension(r.Owner); err != nil {
+		return "unparseable"
+	}
+	if _, err := domain.ParsePhone(r.Phone); err != nil {
+		return "unparseable"
+	}
+	if newWorld[confirmKey(r.Owner, r.Phone)] {
+		return "in-both"
+	}
+	return "legacy-only"
 }
 
 // classifyLegacyContacts walks the legacy rows once: rows whose owner
@@ -329,15 +350,14 @@ func classifyLegacyContacts(ctx context.Context, svc *cqrs.Contacts, rows []lega
 	classification.NewWorldTotal = total
 	classification.LegacyTotal = len(rows)
 	for _, r := range rows {
-		if _, perr := domain.ParseExtension(r.Owner); perr != nil {
-			classification.Unparseable++
-		} else if _, perr := domain.ParsePhone(r.Phone); perr != nil {
-			classification.Unparseable++
-		} else if newWorld[confirmKey(r.Owner, r.Phone)] {
+		switch rowClass(r, newWorld) {
+		case "in-both":
 			classification.InBoth++
-			continue
-		} else {
+			continue // present in the journal world — no confirmation needed
+		case "legacy-only":
 			classification.LegacyOnly++
+		default:
+			classification.Unparseable++
 		}
 		if covered[confirmKey(r.Owner, r.Phone)] {
 			classification.ConfirmedCount++
@@ -356,20 +376,20 @@ func classifyLegacyContacts(ctx context.Context, svc *cqrs.Contacts, rows []lega
 
 // printCheckReport renders the verdict a human archives beside the
 // dump: totals first, then every unconfirmed row named per owner.
-func printCheckReport(c checkClassification, confirmationsPath string) {
+func printCheckReport(w io.Writer, c checkClassification, confirmationsPath string) {
 	source := "(no confirmation file)"
 	if confirmationsPath != "" {
 		source = confirmationsPath
 	}
-	fmt.Printf("legacy contacts check\n")
-	fmt.Printf("  legacy total        %d\n", c.LegacyTotal)
-	fmt.Printf("  in both worlds      %d\n", c.InBoth)
-	fmt.Printf("  legacy-only         %d\n", c.LegacyOnly)
-	fmt.Printf("  unparseable         %d\n", c.Unparseable)
-	fmt.Printf("  new-world total     %d\n", c.NewWorldTotal)
-	fmt.Printf("  confirmed losses    %d  %s\n", c.ConfirmedCount, source)
-	fmt.Printf("  unconfirmed         %d\n", len(c.Unconfirmed))
+	fmt.Fprintf(w, "legacy contacts check\n")
+	fmt.Fprintf(w, "  legacy total        %d\n", c.LegacyTotal)
+	fmt.Fprintf(w, "  in both worlds      %d\n", c.InBoth)
+	fmt.Fprintf(w, "  legacy-only         %d\n", c.LegacyOnly)
+	fmt.Fprintf(w, "  unparseable         %d\n", c.Unparseable)
+	fmt.Fprintf(w, "  new-world total     %d\n", c.NewWorldTotal)
+	fmt.Fprintf(w, "  confirmed losses    %d  %s\n", c.ConfirmedCount, source)
+	fmt.Fprintf(w, "  unconfirmed         %d\n", len(c.Unconfirmed))
 	for _, r := range c.Unconfirmed {
-		fmt.Printf("    owner=%s phone=%q name=%q created=%s\n", r.Owner, r.Phone, r.Name, r.CreatedAtISO)
+		fmt.Fprintf(w, "    owner=%s phone=%q name=%q created=%s\n", r.Owner, r.Phone, r.Name, r.CreatedAtISO)
 	}
 }
