@@ -55,6 +55,18 @@ jobs:
       - name: Validate against the vendored frontmatter contract
         run: python3 scripts/check-catalog-contract.py --export work/out/webphone --contract docs/contracts/catalog-frontmatter.v2.schema.json
 
+      # The hub's per-source governance lint consumes the SECOND tree
+      # (.eventcatalog-hub.json lint block → `catalog -plain`, the
+      # WithPlainRefIDs render path — eventcatalog-hub
+      # scripts/lint-sources.sh). A regression in the plain lane alone
+      # would surface as a red HUB build naming webphone; checking the
+      # tree here too makes it this repo's red first.
+      - name: Export the plain-refs governance tree
+        run: go run ./cmd/webphone catalog -o work/lint/webphone -plain
+
+      - name: Validate the plain tree against the same contract
+        run: python3 scripts/check-catalog-contract.py --export work/lint/webphone --contract docs/contracts/catalog-frontmatter.v2.schema.json
+
   # The live smoke (plan T15.5 finding, 2026-10-30): the 6-scenario
   # self-booting suite (restart, boot-failure, ASR, dial-gate, faxcap)
   # never ran in CI — every verdict was a human running it locally. The
