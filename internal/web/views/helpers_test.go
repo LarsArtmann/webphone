@@ -1,10 +1,13 @@
 package views
 
 import (
+	"io/fs"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/larsartmann/webphone/internal/domain"
+	"github.com/larsartmann/webphone/internal/web/assets"
 )
 
 func TestAvatarForNumberTailDigits(t *testing.T) {
@@ -188,5 +191,33 @@ func TestNetworkLabel(t *testing.T) {
 		if got := networkLabel(n); got != want {
 			t.Fatalf("networkLabel(%s) = %q, want %q", n, got, want)
 		}
+	}
+}
+
+func TestAccentColorIsTheOneBrandGreen(t *testing.T) {
+	assetFS := assets.FS()
+
+	favicon, err := fs.ReadFile(assetFS, "island/favicon.svg")
+	if err != nil {
+		t.Fatalf("read favicon.svg: %v", err)
+	}
+	if !strings.Contains(string(favicon), `fill="`+AccentColor+`"`) {
+		t.Errorf("favicon.svg square is not the brand green %s — the token system and the tab icon have split brains", AccentColor)
+	}
+
+	manifest, err := fs.ReadFile(assetFS, "island/manifest.webmanifest")
+	if err != nil {
+		t.Fatalf("read manifest.webmanifest: %v", err)
+	}
+	if !strings.Contains(string(manifest), `"theme_color": "`+AccentColor+`"`) {
+		t.Errorf("manifest theme_color is not the brand green %s", AccentColor)
+	}
+
+	appCSS, err := fs.ReadFile(assetFS, "app.css")
+	if err != nil {
+		t.Fatalf("read app.css: %v", err)
+	}
+	if !strings.Contains(string(appCSS), "--accent: "+AccentColor+";") {
+		t.Errorf("app.css --accent is not the brand green %s (the constant's comment names the token as the CSS home)", AccentColor)
 	}
 }
