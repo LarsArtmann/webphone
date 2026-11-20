@@ -69,20 +69,38 @@ func TestNtfySendPublishesRingJSON(t *testing.T) {
 }
 
 func TestNtfySendClassifiesFailures(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusUnauthorized)
-	}))
-	defer server.Close()
-	sender, err := push.NewNtfySender(server.URL, "bad")
-	if err != nil {
-		t.Fatal(err)
+	cases := []struct {
+		name   string
+		status int
+		want   error
+		family errorfamily.Family
+	}{
+		// 401 is the SERVER credential (a token rotation outage answers
+		// 401 everywhere) — the fan must not mass-prune devices on it.
+		{"server credential", http.StatusUnauthorized, push.ErrUnauthorized, errorfamily.Rejection},
+		// 403 is RESOURCE-scoped: the ACL refused THIS topic, and the
+		// topic IS the device identity — the fan prunes it.
+		{"topic refused", http.StatusForbidden, push.ErrUnregistered, errorfamily.Infrastructure},
+		{"topic gone", http.StatusNotFound, push.ErrUnregistered, errorfamily.Infrastructure},
 	}
-	err = sender.Send(context.Background(), "wp-topic", push.Ring{Event: push.EventRing})
-	if !errors.Is(err, push.ErrUnauthorized) {
-		t.Fatalf("401 error = %v, want ErrUnauthorized", err)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.WriteHeader(tc.status)
+			}))
+			defer server.Close()
+			sender, err := push.NewNtfySender(server.URL, "bad")
+			if err != nil {
+				t.Fatal(err)
+			}
+			err = sender.Send(context.Background(), "wp-topic", push.Ring{Event: push.EventRing})
+			if !errors.Is(err, tc.want) {
+				t.Fatalf("%d error = %v, want %v", tc.status, err, tc.want)
+			}
+			errorfamilytest.AssertFamily(t, err, tc.family)
+			errorfamilytest.AssertCode(t, err, "push.ntfy_send")
+		})
 	}
-	errorfamilytest.AssertFamily(t, err, errorfamily.Rejection)
-	errorfamilytest.AssertCode(t, err, "push.ntfy_send")
 }
 
 func TestNtfySenderDisabledWhenUnconfigured(t *testing.T) {

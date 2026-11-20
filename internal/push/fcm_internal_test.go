@@ -242,6 +242,61 @@ func TestFcmSendClassifiesDeadTokenAndRejectedCredential(t *testing.T) {
 		}
 		errorfamilytest.AssertFamily(t, err, errorfamily.Rejection)
 	})
+
+	t.Run("registration unusable 403", func(t *testing.T) {
+		// SENDER_ID_MISMATCH is DEVICE-scoped: the token belongs to
+		// another sender project, so this server can never deliver —
+		// the fan prunes it like any dead registration.
+		tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"access_token":"t","expires_in":3600}`))
+		}))
+		defer tokenServer.Close()
+		mismatch := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusForbidden)
+			_, _ = w.Write([]byte(`{"error":{"code":403,"message":"Sender ID mismatch","status":"PERMISSION_DENIED","details":[{"@type":"type.googleapis.com/google.firebase.fcm.v1.FcmError","errorCode":"SENDER_ID_MISMATCH"}]}}`))
+		}))
+		defer mismatch.Close()
+		credentialsPath, _ := writeTestCredentials(t, tokenServer.URL)
+		sender, err := NewFcmSender(credentialsPath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		sender.sendURL = mismatch.URL
+		err = sender.Send(context.Background(), "t", Ring{Event: EventRing})
+		if !errors.Is(err, ErrUnregistered) {
+			t.Fatalf("sender-mismatch 403 error = %v, want ErrUnregistered", err)
+		}
+		errorfamilytest.AssertFamily(t, err, errorfamily.Infrastructure)
+		errorfamilytest.AssertCode(t, err, "push.fcm_send")
+	})
+
+	t.Run("plain permission 403 stays credential-classified", func(t *testing.T) {
+		// PERMISSION_DENIED without a device-scoped FcmError code is
+		// server config (IAM scope, API-disabled) — the registry must
+		// survive it.
+		tokenServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"access_token":"t","expires_in":3600}`))
+		}))
+		defer tokenServer.Close()
+		permission := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusForbidden)
+			_, _ = w.Write([]byte(`{"error":{"code":403,"message":"Caller missing scope","status":"PERMISSION_DENIED"}}`))
+		}))
+		defer permission.Close()
+		credentialsPath, _ := writeTestCredentials(t, tokenServer.URL)
+		sender, err := NewFcmSender(credentialsPath)
+		if err != nil {
+			t.Fatal(err)
+		}
+		sender.sendURL = permission.URL
+		err = sender.Send(context.Background(), "t", Ring{Event: EventRing})
+		if !errors.Is(err, ErrUnauthorized) {
+			t.Fatalf("plain 403 error = %v, want ErrUnauthorized", err)
+		}
+		errorfamilytest.AssertFamily(t, err, errorfamily.Rejection)
+	})
 }
 
 func TestFcmCredentialsFailClosed(t *testing.T) {
