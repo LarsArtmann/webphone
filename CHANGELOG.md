@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Projection dead-letter observability** — a poison event landing in
+  the projection DLQ now WARNs greppably (`projection dead-lettered an
+  event`), and every boot re-WARNs while durable entries remain (count
+  + oldest age); the worker's silent `sendToDLQ` was the event-sourced
+  core's one unobservable failure mode. Operator copy: README §
+  Troubleshooting.
 - **`webphone export-legacy` — the §5 DROP-window safety tool**
   (2026-11-20, pareto T10, per the 2026-11-14 design memo): `-table
   contacts -format json|csv` dumps every legacy contacts row through a

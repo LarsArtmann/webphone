@@ -214,7 +214,7 @@ func TestCqrsPoisonEventDeadLetters(t *testing.T) {
 	// visibility — the moment half of the surface).
 	if out := poisonBuf.String(); !strings.Contains(out, "projection dead-lettered an event") ||
 		!strings.Contains(out, "cqrsPoisonFact") {
-			t.Fatalf("poison landing must WARN through the decorator, got:\n%s", out)
+		t.Fatalf("poison landing must WARN through the decorator, got:\n%s", out)
 	}
 
 	// After the dead-letter the checkpoint advances and the worker

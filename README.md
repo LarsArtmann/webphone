@@ -753,6 +753,24 @@ bundle — seam files, contract row, family-test pin, prior history:
 python3 scripts/error-context.py "send failed: [gateway.http] provider 502"
 ```
 
+### Troubleshooting: projection dead-letters (poison events)
+
+An event that fails one projection three times in a row (a payload a fold
+cannot decode, a handler bug) is parked in the dead-letter table
+(`projection_dead_letters` in `system.db`) and the worker moves on — the
+app keeps serving, but that projection is silently missing data from that
+event onward. Two journal lines are the operator surface:
+
+```console
+WARN projection dead-lettered an event projection=... event_type=... error=... hint="fix the handler, then replay; the entry persists in system.db (projection_dead_letters)"
+WARN projection dead-letter queue carries poison events from a previous run count=N oldest_age=2h
+```
+
+The first fires at the moment a projection rejects an event; the second
+fires at every boot while entries remain (they survive restarts). See the
+`projection_dead_letters` table for the full entries; entries carry the
+original event for replay once the handler is fixed.
+
 ### Troubleshooting: 403 logins behind a TLS proxy
 
 **Symptom:** every browser login (and every form POST) returns 403 once the
