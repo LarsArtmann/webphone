@@ -13,6 +13,7 @@
     "result-*/**",
     ".git/**",
     "**/CHANGELOG.md",
-    "docs/contracts/**"
+    "docs/contracts/**",
+    "work/**"
   ]
 }
