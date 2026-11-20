@@ -1,3 +1,5 @@
+> ARCHIVED 2026-11-20 (docs-gates cadence drain, 67>66): the v8 sweep's measured outcome tables are ledger-marked; its §f brainstorm items stay freshness-verified against TODO_LIST/ROADMAP at every battery run.
+
 # Status — docs-health v8 sweep: living docs re-verified, 68 reports archived, the battery adopted (2026-11-06)
 
 **Snapshot-rot header: every claim below was verified 2026-11-06 ~11:00–12:30 CET at
@@ -11,6 +13,8 @@ living docs must be superb, archive FULLY done and UPDATED .md files" — execut
 full AUDIT (BUILD + HARVEST + VERIFY + ANNOTATE) over the September cohort AND the
 report backlog, with the `docs-gates` battery adopted so the next sweep is one command
 instead of a re-derived ritual.
+
+<!-- check-rows:ledger -->
 
 | Axis                              | Before                                 | After                                                              |
 | --------------------------------- | -------------------------------------- | ------------------------------------------------------------------ |
@@ -156,6 +160,8 @@ green would be the Verschlimmbesserung the skill's case study documents.
 Every archived file carries its own `> ARCHIVED 2026-11-06 …` banner naming the reason;
 the classes below are the shared criteria. Reading this table plus one banner answers
 "why is this archived" for any of them.
+
+<!-- check-rows:ledger -->
 
 | Class                                               | Count | Deciding reason                                                                                             | Files                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
 | --------------------------------------------------- | ----- | ----------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

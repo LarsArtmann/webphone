@@ -13,12 +13,13 @@
 **Scope line.** The owner ordered all 20 skills "SUPERBLY fully and to the
 MAX". Three overlapping sessions ran battery-class work on this repo that
 same day (morning review train 07:41–08:40, an afternoon release-readiness
-+ CQRS-assessment + evening triple-review chain, and THIS session). This
-session's distinctive contribution: the mechanical gates nobody else ran
-(full no-cache buildflow, audit-verify replay, erraudit/art-dupl/banned-libs
-direct, banned-lib adjudication), a VERIFICATION pass over the morning
-artifacts, a 15-fix code train, and the docs-gates/TODO_LIST/doc-hygiene
-closeout.
+
+- CQRS-assessment + evening triple-review chain, and THIS session). This
+  session's distinctive contribution: the mechanical gates nobody else ran
+  (full no-cache buildflow, audit-verify replay, erraudit/art-dupl/banned-libs
+  direct, banned-lib adjudication), a VERIFICATION pass over the morning
+  artifacts, a 15-fix code train, and the docs-gates/TODO_LIST/doc-hygiene
+  closeout.
 
 ## a) FULLY DONE
 
