@@ -4,7 +4,7 @@
 # typed SSO lane on. This is the SINGLE source both the
 # `oauth2-enabled-output-golden` check and the golden fixture come from
 # (the check diffs the rendered text against
-# nix/module-output-oauth2.golden). Regenerate the fixture after an
+# nix/testdata/module-output-oauth2.golden). Regenerate the fixture after an
 # intentional change with the module-output.nix recipe, importing THIS
 # file instead.
 #

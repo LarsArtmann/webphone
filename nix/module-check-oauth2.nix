@@ -294,7 +294,7 @@ in
     # zero-config golden.
     name = "oauth2-enabled-output-golden";
     path = pkgs.runCommand "oauth2-enabled-output-golden" { } ''
-      if diff -u ${./module-output-oauth2.golden} ${
+      if diff -u ${./testdata/module-output-oauth2.golden} ${
         pkgs.writeText "module-output-oauth2.actual" (
           import ./module-output-oauth2.nix { inherit lib base; }
         )
@@ -302,7 +302,7 @@ in
         echo "oauth2-enabled module output matches the committed golden (vhost + backup script + settings JSON incl. the hostName derivations)" >> $out
       else
         cat $out >&2
-        echo "webphone-module check: oauth2-enabled output drifted from nix/module-output-oauth2.golden" >&2
+        echo "webphone-module check: oauth2-enabled output drifted from nix/testdata/module-output-oauth2.golden" >&2
         exit 1
       fi
     '';

@@ -43,6 +43,21 @@ but usable against any SIP/WebSocket PBX (FreeSWITCH/sofia or compatible).
 | Deployment      | Single static binary, SQLite + content-addressed blob store, `/healthz`, five-part operator boot-error contract (exit 1 designed / 2 panic), NixOS module                                                                                                                                |
 | Recording       | Done PBX-side by the telephony stack (stereo WAV, `/recordings/` behind operator auth); this app shows CDR history rows only                                                                                                                                                             |
 
+## Install
+
+Pick the lane that matches your host:
+
+```console
+nix run github:LarsArtmann/webphone              # run straight from the flake
+nix build github:LarsArtmann/webphone#webphone   # build the closure, keep ./result
+```
+
+On a NixOS host the flake exports a module
+(`nixosModules.default`, see [Deployment](#deployment)) that wires the
+systemd unit, the Caddy vhost, backups and the typed option tree; on a
+non-Nix host a plain `go build ./cmd/webphone` produces the same single
+static binary (Go 1.27+, no cgo, SQLite via modernc).
+
 ## Quick start
 
 ```console

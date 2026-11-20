@@ -92,7 +92,7 @@ _: {
                 # CADDY-FREE (2026-11-15 ruling): port 443 belongs to the
                 # stub IdP and real ACME would be network noise; the
                 # caddy-keyed derivations (callback, passkey rp) stay
-                # covered by nix/module-output-oauth2.golden, so the VM
+                # covered by nix/testdata/module-output-oauth2.golden, so the VM
                 # pins the callback explicitly instead.
                 oauth2 = {
                   enable = true;
