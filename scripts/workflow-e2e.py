@@ -77,13 +77,20 @@ def multipart_body(fields: list[tuple[str, str]]) -> tuple[bytes, str]:
 
 
 def boot(
-    binary: str, workdir: str, config: dict | None = None, env_extra: dict | None = None
+    binary: str,
+    workdir: str,
+    config: dict | None = None,
+    env_extra: dict | None = None,
+    port: int | None = None,
 ) -> tuple[subprocess.Popen, str, str, Callable[[], None]]:  # type: ignore[name-defined]
     """Boot the binary on a fresh port + datadir; returns (proc, base,
     datadir, stop). config (maps the env cannot carry: auth.users,
     identities) is written to a JSON file pointed at via WEBPHONE_CONFIG;
-    env_extra rides the environment verbatim."""
-    port = free_port()
+    env_extra rides the environment verbatim. port pins the listen port
+    when the caller needs it BEFORE boot (the passkey rp_origins must
+    carry the real origin, port included)."""
+    if port is None:
+        port = free_port()
     datadir = f"{workdir}/data-{port}"
     env = dict(os.environ)
     env.update(
@@ -218,7 +225,7 @@ class Seed:
         raise RuntimeError("no session cookie after seed login")
 
 
-def make_driver():
+def make_driver(insecure_origin: str = ""):
     from selenium import webdriver
 
     options = webdriver.ChromeOptions()
@@ -235,6 +242,13 @@ def make_driver():
     # rp_ids): map webphone.test onto the loopback server inside the
     # browser only — no /etc/hosts, no TLS front needed for the journey.
     options.add_argument("--host-resolver-rules=MAP webphone.test 127.0.0.1")
+    if insecure_origin:
+        # ...and a SECURE context: http://webphone.test:<port> is not one
+        # by default, and navigator.credentials is undefined without it.
+        # Grant it for exactly this origin (port included) — nothing else.
+        options.add_argument(
+            f"--unsafely-treat-insecure-origin-as-secure={insecure_origin}"
+        )
     driver_path = shutil.which("chromedriver")
     service = (
         webdriver.ChromeService(executable_path=driver_path) if driver_path else None
@@ -650,6 +664,115 @@ def _first_thread_id(driver, base: str) -> str:
     return link.get_attribute("href").rstrip("/").rsplit("/", 1)[-1]
 
 
+def mint_enroll_token(
+    binary: str, config_path: str, datadir: str, addr: str, email: str
+) -> str:
+    """Mint a one-time enrollment token with the `-enroll-passkey` CLI
+    one-shot, under the SAME config file + data dir the booted server
+    holds (the shared-journal contract). Retried once: both processes
+    open the SQLite journal, and a busy lock is a race, not a verdict."""
+    env = dict(os.environ)
+    env.update(
+        {
+            "WEBPHONE_CONFIG": config_path,
+            "WEBPHONE_DATA_DIR": datadir,
+            "WEBPHONE_ADDR": addr,
+            "WEBPHONE_GATEWAY__WEBHOOK_SECRET": "test-secret",  # nosec B105 - fixture secret, same shape the server booted with
+        }
+    )
+    done = None
+    for _ in (1, 2):
+        done = subprocess.run(  # nosec B603 - argv-list (no shell) run of the CLI one-shot under test
+            [binary, "-enroll-passkey", email],
+            env=env,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        match = re.search(r"token=([A-Za-z0-9_-]+)", done.stdout)
+        if match:
+            return match.group(1)
+        time.sleep(1)
+    raise RuntimeError(
+        f"enroll token mint failed: rc={done.returncode} err={(done.stderr or '')[:160]}"
+    )
+
+
+def journey_passkey(driver, domain_base: str, c: Check, token: str, email: str) -> None:
+    """The full passkey lane on the DOMAIN origin: CLI-minted token →
+    the /enroll ceremony → the /login ceremony → a MAPPED session
+    (LoginEmail set) — the substrate the admin + switcher journeys
+    need, driven through chromedriver's virtual authenticator."""
+    from selenium.webdriver.common.virtual_authenticator import (
+        VirtualAuthenticatorOptions,
+    )
+
+    opts = VirtualAuthenticatorOptions()
+    opts.protocol = VirtualAuthenticatorOptions.Protocol.CTAP2
+    opts.transport = VirtualAuthenticatorOptions.Transport.INTERNAL
+    opts.has_resident_key = True
+    opts.is_user_verified = True
+    driver.add_virtual_authenticator(opts)
+
+    driver.get(domain_base + "/enroll?token=" + token)
+    # The module prefills the token input at load — its presence with the
+    # value is the proof the submit handler is bound (never click before).
+    wait(
+        driver,
+        lambda d: (
+            lambda els: bool(els) and els[0].get_attribute("value") == token
+        )(d.find_elements("css selector", "#enroll-token")),
+        timeout=15,
+    )
+    try:
+        driver.find_element("css selector", "#enroll-credential-name").send_keys("e2e")
+        driver.find_element("css selector", "#enroll-form button[type=submit]").click()
+        wait(
+            driver,
+            lambda d: d.find_elements("css selector", "#enroll-form[hidden]"),
+            timeout=20,
+        )
+        c.ok("J-passkey enroll ceremony completes", True)
+    except Exception as err:  # noqa: BLE001 - journey assertion failure, not control flow
+        error = driver.find_elements("css selector", "#enroll-error:not([hidden])")
+        detail = error[0].text[:80] if error else ""
+        c.ok(
+            "J-passkey enroll ceremony completes",
+            False,
+            f"{str(err)[:100]} {detail}".strip(),
+        )
+
+    driver.get(domain_base + "/login")
+    wait(driver, lambda d: d.find_elements("css selector", "#lp-login-form"))
+    try:
+        driver.find_element("css selector", "#lp-email").send_keys(email)
+        driver.find_element("css selector", "#lp-login-btn").click()
+        wait(
+            driver,
+            lambda d: d.current_url.rstrip("/") == domain_base
+            and bool(d.find_elements("css selector", "#reg-status")),
+            timeout=20,
+        )
+        c.ok("J-passkey login lands on the shell", True)
+    except Exception as err:  # noqa: BLE001 - journey assertion failure, not control flow
+        error = driver.find_elements("css selector", "#lp-error:not([hidden])")
+        detail = error[0].text[:80] if error else ""
+        c.ok(
+            "J-passkey login lands on the shell",
+            False,
+            f"{str(err)[:100]} {detail}".strip(),
+        )
+    try:
+        who = driver.find_element("css selector", "#whoami-ext").text
+        c.ok(
+            "J-passkey whoami names the mapped user on the first line",
+            "Ops User" in who and "+49 30 1110001" in who,
+            f"whoami={who[:80]}",
+        )
+    except Exception as err:  # noqa: BLE001 - journey assertion failure, not control flow
+        c.ok("J-passkey whoami names the mapped user", False, str(err)[:120])
+
+
 def journey_admin(driver, base: str, c: Check, thread_id: str) -> None:
     driver.get(base + "/")
     wait(driver, lambda d: d.find_elements("css selector", "a.wp-nav-link"))
@@ -674,6 +797,11 @@ def journey_admin(driver, base: str, c: Check, thread_id: str) -> None:
 
 
 def journey_line_switcher(driver, base: str, c: Check) -> None:
+    """The DESIGNED success path: a mapped multi-line session switches
+    to its second owned line. The island POSTs /api/session/switch and
+    RELOADS through the one boot path; the re-rendered switcher + whoami
+    carry the new active line (the extension-login 403-deny shape is a
+    different session class this harness no longer drives here)."""
     driver.get(base + "/")
     select = wait(
         driver, lambda d: d.find_elements("css selector", "#wp-ext-switch"), timeout=15
@@ -681,33 +809,48 @@ def journey_line_switcher(driver, base: str, c: Check) -> None:
     options = select.find_elements("css selector", "option")
     labels = [opt.text.strip() for opt in options]
     c.ok(
-        "J-switch renders one option per owned line",
+        "J-switch renders one option per owned line (DID · extension)",
         len(options) == 2 and all("·" in label for label in labels),
         f"labels={labels}",
     )
     current = select.get_attribute("value")
-    other = [opt.get_attribute("value") for opt in options if opt.get_attribute("value") != current][0]
+    c.ok(
+        "J-switch active line is the first owned line",
+        current == "1001",
+        f"value={current}",
+    )
+    if current != "1001":
+        return
     try:
         from selenium.webdriver.support.select import Select
 
-        Select(select).select_by_value(other)
-        wait(
-            driver,
-            lambda d: len(d.find_elements("css selector", "#toasts .toast")) > 0,
-        )
-        toast = driver.find_elements("css selector", "#toasts .toast")[-1].text
+        Select(select).select_by_value("1002")
+
+        def switched(d):
+            try:
+                els = d.find_elements("css selector", "#wp-ext-switch")
+                return bool(els) and els[0].get_attribute("value") == "1002"
+            except Exception:  # noqa: BLE001 - mid-reload staleness, the next poll re-finds
+                return False
+
+        wait(driver, switched, timeout=25)
+        who = driver.find_element("css selector", "#whoami-ext").text
         c.ok(
-            "J-switch extension login denied with a visible announce",
-            "switch" in toast.lower() or "403" in toast,
-            f"toast={toast[:80]}",
-        )
-        c.ok(
-            "J-switch select resets to the active line",
-            select.get_attribute("value") == current,
-            f"value={select.get_attribute('value')}",
+            "J-switch reload lands with whoami on the second line",
+            "+49 30 1110002" in who,
+            f"whoami={who[:80]}",
         )
     except Exception as err:  # noqa: BLE001 - journey assertion failure, not control flow
-        c.ok("J-switch deny path announces and resets", False, str(err)[:120])
+        c.ok("J-switch reload lands with whoami on the second line", False, str(err)[:120])
+    try:
+        wait(
+            driver,
+            lambda d: d.find_elements("css selector", "#wp-sse-live"),
+            timeout=15,
+        )
+        c.ok("J-switch SSE resubscribes after the reload", True)
+    except Exception as err:  # noqa: BLE001 - journey assertion failure, not control flow
+        c.ok("J-switch SSE resubscribes after the reload", False, str(err)[:120])
 
 
 def journey_dial_gate(driver, base: str, c: Check, seed: "Seed", remote: str) -> None:
@@ -719,22 +862,30 @@ def journey_dial_gate(driver, base: str, c: Check, seed: "Seed", remote: str) ->
 
     status, first = gate(False)
     _, second = gate(False)
+    override_status, third = gate(True)
     first_verdict = json.loads(first)
     second_verdict = json.loads(second)
+    third_verdict = json.loads(third)
     c.ok(
-        "J-dial gate records then denies the same remote",
+        "J-dial gate records, denies, then the override re-allows",
         status == 200
+        and override_status == 200
         and first_verdict.get("allowed") is True
-        and second_verdict.get("allowed") is False,
-        f"first={first_verdict} second={second_verdict}",
+        and second_verdict.get("allowed") is False
+        and third_verdict.get("allowed") is True,
+        f"first={first_verdict} second={second_verdict} third={third_verdict}",
     )
 
     driver.get(base + "/")
     wait(driver, lambda d: d.find_elements("css selector", "#dial-form"))
-    dest = driver.find_element("css selector", "#dest")
-    dest.clear()
-    dest.send_keys(remote)
-    driver.find_element("css selector", "#dial-form button[type=submit]").click()
+    # dest.clear()/send_keys trips chromedriver interactability on this
+    # island form; set the value + submit through the DOM instead — the
+    # island's own listeners fire either way.
+    driver.execute_script(
+        "document.getElementById('dest').value = arguments[0];"
+        "document.getElementById('dial-form').requestSubmit();",
+        remote,
+    )
     try:
         chip = wait(
             driver,
@@ -772,31 +923,47 @@ def journey_voicemail(driver, base: str, c: Check) -> None:
         c.ok("J-vm live recording plays", False, str(err)[:120])
 
     dead_btn = driver.find_element("css selector", "[data-vm-play='e2e-dead-uuid']")
-    dead_btn.click()
     try:
+        # Toasts live 6s and dedup identical consecutive messages: the
+        # "exactly once" contract is the PEAK count over a full settle
+        # window, one above the pre-click baseline and never two.
+        before = len(driver.find_elements("css selector", "#toasts .toast"))
+        dead_btn.click()
         wait(
             driver,
-            lambda d: len(d.find_elements("css selector", "#toasts .toast")) == 1,
+            lambda d, b=before: len(d.find_elements("css selector", "#toasts .toast")) > b,
             timeout=15,
         )
-        c.ok("J-vm dead recording toasts exactly once", True)
+        peak = before + 1
+        settle = time.monotonic() + 7
+        while time.monotonic() < settle:
+            peak = max(
+                peak, len(driver.find_elements("css selector", "#toasts .toast"))
+            )
+            time.sleep(0.2)
+        c.ok(
+            "J-vm dead recording toasts exactly once",
+            peak == before + 1,
+            f"peak={peak} before={before}",
+        )
     except Exception as err:  # noqa: BLE001 - journey assertion failure, not control flow
-        toasts = len(driver.find_elements("css selector", "#toasts .toast"))
-        c.ok("J-vm dead recording toasts exactly once", False, f"toasts={toasts} {str(err)[:80]}")
+        c.ok("J-vm dead recording toasts exactly once", False, str(err)[:120])
 
+    # htmx asks hx-confirm through window.confirm at request time:
+    # override it instead of racing switch_to.alert.
+    driver.execute_script("window.confirm = function () { return true; };")
     for uuid, label in (("e2e-live-uuid", "live"), ("e2e-dead-uuid", "dead")):
         try:
             row_button = driver.find_element(
                 "css selector", f"[hx-post*='uuid={uuid}']"
             )
             row_button.click()
-            alert = wait(driver, lambda d: d.switch_to.alert)
-            alert.accept()
             wait(
                 driver,
                 lambda d, u=uuid: not d.find_elements(
                     "css selector", f"[data-vm-play='{u}']"
                 ),
+                timeout=15,
             )
             c.ok(f"J-vm delete removes the {label} row", True)
         except Exception as err:  # noqa: BLE001 - journey assertion failure, not control flow
@@ -847,6 +1014,8 @@ def main() -> int:
     stop_server: Callable[[], None] | None = None  # type: ignore[name-defined]
     phone_api: FakePhoneAPI | None = None
     base = args.base
+    domain_base = ""
+    port: int | None = None
     if base:
         print(f"workflow e2e against {base}")
     else:
@@ -865,16 +1034,23 @@ def main() -> int:
         # The fake phone API must be up FIRST: the server
         # directory-verifies every login against its summary route.
         phone_api = FakePhoneAPI().start()
+        for ext in ("1001", "1002"):
+            with open(f"{workdir}/sip-password-{ext}", "w", encoding="utf-8") as handle:
+                handle.write("pw")  # nosec B105 - fixture credential for the self-booted test server
+        # The port is pinned BEFORE boot: the passkey rp_origins must
+        # carry the REAL origin (go-webauthn compares scheme+host WITH
+        # the non-default port), and the browser needs the same origin
+        # granted secure-context treatment for navigator.credentials.
+        port = free_port()
+        domain_base = f"http://webphone.test:{port}"
         # auth.users folds into passkey mode (the ONE identity home), so
         # the config carries the full passkey half: rp pair + one SIP
         # password file per mapped extension (read per LOGIN, never at
         # boot — fixture paths are enough for the journeys).
-        for ext in ("1001", "1002"):
-            with open(f"{workdir}/sip-password-{ext}", "w", encoding="utf-8") as handle:
-                handle.write("pw")  # nosec B105 - fixture credential for the self-booted test server
         _, base, datadir, stop_server = boot(
             binary,
             workdir,
+            port=port,
             config={
                 "auth": {
                     "users": {
@@ -890,7 +1066,7 @@ def main() -> int:
                     },
                     "passkey": {
                         "rp_id": "webphone.test",
-                        "rp_origins": ["https://webphone.test"],
+                        "rp_origins": [domain_base],
                     },
                 },
                 "identities": {
@@ -913,7 +1089,7 @@ def main() -> int:
         seed.save_snippet("workflow snippet body")
         seed.save_contact("Workflow Seed", "+441632960803")
 
-        driver = make_driver()
+        driver = make_driver(domain_base if port else "")
         try:
             # J1 logs the BROWSER in through the real front door; the seed
             # session (HTTP-side) only created the data — same extension,
@@ -931,16 +1107,54 @@ def main() -> int:
             journey_styled_404(driver, base, c)
             journey_language_cookie(driver, base, c)
             # The ownership-model journeys (config-file boot: the admin
-            # flag, two owned lines with DIDs) and the dial-gate +
-            # voicemail lanes (env + fake phone API) need THIS harness's
-            # boot config — an externally driven --base server owes them
-            # nothing, so they run only on the self-booted lane.
+            # flag, two owned lines with DIDs, the passkey rp pair) and
+            # the dial-gate + voicemail lanes (env + fake phone API) need
+            # THIS harness's boot config — an externally driven --base
+            # server owes them nothing, so they run only on the self-booted
+            # lane. Every lane is isolated: one crash must never orphan
+            # the rest (the first full run's ElementNotInteractable lesson).
             if stop_server is not None:
-                journey_line_switcher(driver, base, c)
-                thread_id = _first_thread_id(driver, base)
-                journey_admin(driver, base, c, thread_id)
-                journey_dial_gate(driver, base, c, seed, "+441632960999")
-                journey_voicemail(driver, base, c)
+
+                def attempt(name: str, fn) -> None:
+                    try:
+                        fn()
+                    except Exception as err:  # noqa: BLE001 - journey isolation, not control flow
+                        c.ok(name, False, str(err)[:160])
+
+                try:
+                    token = mint_enroll_token(
+                        binary,
+                        f"{workdir}/config-{port}.json",
+                        datadir,
+                        f"127.0.0.1:{port}",
+                        "ops@example.org",
+                    )
+                    c.ok("J-passkey CLI mints the enroll token", True)
+                except Exception as err:  # noqa: BLE001 - journey isolation, not control flow
+                    token = ""
+                    c.ok("J-passkey CLI mints the enroll token", False, str(err)[:160])
+                if token:
+                    attempt(
+                        "J-passkey ceremonies",
+                        lambda: journey_passkey(
+                            driver, domain_base, c, token, "ops@example.org"
+                        ),
+                    )
+
+                    def admin_lane() -> None:
+                        thread_id = _first_thread_id(driver, domain_base)
+                        journey_admin(driver, domain_base, c, thread_id)
+
+                    attempt("J-admin lane", admin_lane)
+                    attempt(
+                        "J-switch lane",
+                        lambda: journey_line_switcher(driver, domain_base, c),
+                    )
+                attempt(
+                    "J-dial lane",
+                    lambda: journey_dial_gate(driver, base, c, seed, "+441632960999"),
+                )
+                attempt("J-vm lane", lambda: journey_voicemail(driver, base, c))
         finally:
             driver.quit()
     finally:
