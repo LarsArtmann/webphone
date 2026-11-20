@@ -67,7 +67,10 @@ func (h *Handlers) ConfirmCallDisposition(w http.ResponseWriter, r *http.Request
 		body.Seconds = 0
 	}
 
-	if err := h.deps.Notes.SetDisposition(r.Context(), sess.Extension, callID, disposition); err != nil {
+	// The changed verdict is the gate's Set symmetry; the disposition
+	// lane owes no SSE nudge and the CRM retry keys on its own idem, so
+	// the handler consumes only the error half today.
+	if _, err := h.deps.Notes.SetDisposition(r.Context(), sess.Extension, callID, disposition); err != nil {
 		if errors.Is(err, readmodels.ErrNoteListFull) {
 			http.Error(w, "the note list is full — delete another note first", http.StatusConflict)
 			return

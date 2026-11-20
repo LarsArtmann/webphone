@@ -25,7 +25,8 @@ var _ = Describe("A call-note slot", func() {
 
 	When("first touched by a disposition", func() {
 		It("mints the slot with the verdict and an empty body", func() {
-			Expect(s.SetDisposition(ctx, owner, "call-1", domain.DispositionVoicemail)).To(Succeed())
+			_, err := s.SetDisposition(ctx, owner, "call-1", domain.DispositionVoicemail)
+			Expect(err).To(Succeed())
 			view := awaitNote(notesSuiteT, s, owner, "call-1")
 			Expect(view.Disposition).To(Equal(domain.DispositionVoicemail.String()))
 			Expect(view.Body).To(BeEmpty())
@@ -46,10 +47,13 @@ var _ = Describe("A call-note slot", func() {
 
 	When("the operator re-selects the verdict already on record", func() {
 		It("is inert — the slot's stamp does not move", func() {
-			Expect(s.SetDisposition(ctx, owner, "call-3", domain.DispositionAnswered)).To(Succeed())
+			_, err := s.SetDisposition(ctx, owner, "call-3", domain.DispositionAnswered)
+			Expect(err).To(Succeed())
 			first := awaitNote(notesSuiteT, s, owner, "call-3")
 
-			Expect(s.SetDisposition(ctx, owner, "call-3", domain.DispositionAnswered)).To(Succeed())
+			changed, err := s.SetDisposition(ctx, owner, "call-3", domain.DispositionAnswered)
+			Expect(err).To(Succeed())
+			Expect(changed).To(BeFalse())
 			second, err := s.Get(ctx, owner, "call-3")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(second).NotTo(BeNil())
@@ -63,12 +67,14 @@ var _ = Describe("A call-note slot", func() {
 
 	When("the operator corrects the verdict", func() {
 		It("journals the correction and preserves the prose", func() {
-			Expect(s.SetDisposition(ctx, owner, "call-4", domain.DispositionMissed)).To(Succeed())
+			_, err := s.SetDisposition(ctx, owner, "call-4", domain.DispositionMissed)
+			Expect(err).To(Succeed())
 			changed, err := s.Set(ctx, owner, "call-4", "left a callback promise")
 			Expect(err).NotTo(HaveOccurred())
 			Expect(changed).To(BeTrue())
 
-			Expect(s.SetDisposition(ctx, owner, "call-4", domain.DispositionAnswered)).To(Succeed())
+			changed, err = s.SetDisposition(ctx, owner, "call-4", domain.DispositionAnswered)
+			Expect(err).To(Succeed())
 			view := awaitNote(notesSuiteT, s, owner, "call-4")
 			Expect(view.Disposition).To(Equal(domain.DispositionAnswered.String()))
 			Expect(view.Body).To(Equal("left a callback promise"))
@@ -90,7 +96,8 @@ var _ = Describe("A call-note slot", func() {
 
 	When("the slot is deleted", func() {
 		It("frees the cap and answers nil reads", func() {
-			Expect(s.SetDisposition(ctx, owner, "call-6", domain.DispositionIVR)).To(Succeed())
+			_, err := s.SetDisposition(ctx, owner, "call-6", domain.DispositionIVR)
+			Expect(err).To(Succeed())
 			awaitNote(notesSuiteT, s, owner, "call-6")
 
 			Expect(s.Delete(ctx, owner, "call-6")).To(Succeed())
@@ -100,7 +107,7 @@ var _ = Describe("A call-note slot", func() {
 			}).Should(BeTrue(), "the slot must read nil after the journal folds the delete")
 			Expect(s.Count(ctx, owner)).To(Equal(0))
 
-			err := s.Delete(ctx, owner, "call-6")
+			err = s.Delete(ctx, owner, "call-6")
 			Expect(err).To(MatchError(readmodels.ErrNoteMissing))
 		})
 	})

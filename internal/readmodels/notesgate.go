@@ -74,7 +74,13 @@ type NotesGate interface {
 	// other tabs rides changes only. A first save always changes (the
 	// slot mints, whatever the body).
 	Set(ctx context.Context, owner domain.Extension, callID, body string) (bool, error)
-	SetDisposition(ctx context.Context, owner domain.Extension, callID string, disposition domain.Disposition) error
+	// SetDisposition upserts the operator's verdict for one call; the
+	// returned bool names whether the slot CHANGED — Set's symmetry. The
+	// chips are click-shaped, so a same-verdict re-click is an echo:
+	// echoes are journal-silent (the decider's same-disposition guard is
+	// the authority under races), and a first disposition always
+	// changes (the slot mints).
+	SetDisposition(ctx context.Context, owner domain.Extension, callID string, disposition domain.Disposition) (bool, error)
 	// Delete removes one call's note slot outright (the explicit
 	// DELETE lane — the empty-body clear keeps the slot, the delete
 	// frees the per-owner cap). A missing slot is the ErrNoteMissing

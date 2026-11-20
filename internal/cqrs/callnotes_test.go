@@ -60,8 +60,8 @@ func TestNoteMergeSemantics(t *testing.T) {
 		t.Fatalf("note save must land body with empty disposition: %+v", view)
 	}
 
-	if err := s.SetDisposition(ctx, owner, "call-a", domain.DispositionAnswered); err != nil {
-		t.Fatalf("SetDisposition: %v", err)
+	if changed, err := s.SetDisposition(ctx, owner, "call-a", domain.DispositionAnswered); err != nil || !changed {
+		t.Fatalf("SetDisposition: err=%v changed=%v (a first verdict mints the slot)", err, changed)
 	}
 	deadline := time.Now().Add(5 * time.Second)
 	for {
@@ -202,7 +202,7 @@ func TestNoteStateSurvivesRestart(t *testing.T) {
 	if _, err := s.Set(ctx, owner, "call-a", "across boots"); err != nil {
 		t.Fatalf("Set: %v", err)
 	}
-	if err := s.SetDisposition(ctx, owner, "call-a", domain.DispositionAnswered); err != nil {
+	if _, err := s.SetDisposition(ctx, owner, "call-a", domain.DispositionAnswered); err != nil {
 		t.Fatalf("SetDisposition: %v", err)
 	}
 
@@ -232,7 +232,7 @@ func TestNoteVerdictFirstAndClearedBody(t *testing.T) {
 	ctx := context.Background()
 	owner := mustExt(t, "1001")
 
-	if err := s.SetDisposition(ctx, owner, "call-9", domain.DispositionVoicemail); err != nil {
+	if _, err := s.SetDisposition(ctx, owner, "call-9", domain.DispositionVoicemail); err != nil {
 		t.Fatalf("set disposition on noteless call: %v", err)
 	}
 	view := awaitNote(t, s, owner, "call-9")

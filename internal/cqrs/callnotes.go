@@ -374,18 +374,32 @@ func (s *Notes) Set(ctx context.Context, owner domain.Extension, callID, body st
 
 // SetDisposition records the operator's verdict on the same slot; the
 // decision keeps an existing note body. It shares the note's cap.
-func (s *Notes) SetDisposition(ctx context.Context, owner domain.Extension, callID string, disposition domain.Disposition) error {
+//
+// The returned bool is Set's symmetry: whether the slot CHANGED. The
+// chips are click-shaped, so a same-verdict re-click is an echo (what
+// a double-tap or a re-mounted editor POSTs right after its read).
+// Echoes skip the dispatch entirely; the decider's same-disposition
+// guard stays the authority under races. A first disposition always
+// changes (the slot mints).
+func (s *Notes) SetDisposition(ctx context.Context, owner domain.Extension, callID string, disposition domain.Disposition) (bool, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
+	view, err := s.Get(ctx, owner, callID)
+	if err != nil {
+		return false, err
+	}
+	if view != nil && view.Disposition == disposition.String() {
+		return false, nil
+	}
 	if err := dispatchOwnerCommand(ctx, s.sys, "note.disposition_save", owner.String(),
 		func(base *command.BasicCommand) *SaveCallDisposition {
 			return &SaveCallDisposition{BasicCommand: base, Owner: owner.String(), CallID: callID, Disposition: disposition, At: time.Now()}
 		}); err != nil {
-		return noteDispatchError(err, "note.disposition_save")
+		return false, noteDispatchError(err, "note.disposition_save")
 	}
 	awaitOwnWrite(ctx, s.sys, NotesStreamType, owner.String(), notesCollection, s.vers)
-	return nil
+	return true, nil
 }
 
 // Delete removes one call's note slot outright: the per-owner cap
