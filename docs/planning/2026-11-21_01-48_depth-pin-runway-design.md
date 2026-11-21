@@ -12,15 +12,15 @@
 Fresh measurements (the arch test's own definition: hand-written
 non-test, non-templ Go lines; exports = top-level capitalized decls):
 
-| Package             | Measured | Ceiling | Headroom | Notes                        |
-| ------------------- | -------- | ------- | -------- | ---------------------------- |
-| `internal/app`      | 1681     | 1700    | **19**   | nearest bite                 |
-| `internal/config`   | 1487     | 1500 \* | **13**   | \* default, UNPINNED         |
-| `internal/server`   | 5271     | 5300    | 29       | html hub residual, named pin |
-| `internal/server/api` | 1844   | 1900    | 56       | carved JSON surface          |
-| `internal/server/platform` | 1424 | 1500 \* | 76    | \* default, UNPINNED         |
-| `internal/domain`   | 2282     | 2500    | 218      | exports axis: **162/180**    |
-| `internal/cqrs`     | 5763     | 6000    | 237      | the ONE-journal world        |
+| Package                    | Measured | Ceiling | Headroom | Notes                        |
+| -------------------------- | -------- | ------- | -------- | ---------------------------- |
+| `internal/app`             | 1681     | 1700    | **19**   | nearest bite                 |
+| `internal/config`          | 1487     | 1500 \* | **13**   | \* default, UNPINNED         |
+| `internal/server`          | 5271     | 5300    | 29       | html hub residual, named pin |
+| `internal/server/api`      | 1844     | 1900    | 56       | carved JSON surface          |
+| `internal/server/platform` | 1424     | 1500 \* | 76       | \* default, UNPINNED         |
+| `internal/domain`          | 2282     | 2500    | 218      | exports axis: **162/180**    |
+| `internal/cqrs`            | 5763     | 6000    | 237      | the ONE-journal world        |
 
 The 2026-11-19/20 trains (DLQ decorator, export-legacy, note-join,
 moduledrift pins) each consumed 20–60 lines of headroom in the top
