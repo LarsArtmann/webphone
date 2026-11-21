@@ -14,6 +14,59 @@ front matter does not carry their history (one home per fact, per the rule above
 
 ## Open tasks
 
+### 2026-11-21 release-v2150-chain harvest (from the 07-44 release-train report §f)
+
+- [ ] **release: wait for quiet, then re-run v2.15.0** (07-44 report §f 1-2): load
+      < 30 trending down, webphone commit cadence < 5/8min, clean tree; before the
+      re-run `nix flake check --no-build` is the eval authority; the re-run needs
+      `WEBPHONE_RELEASE_SKIP_VERSION_GUARD=1` (the half-release bump `2be14b73` is
+      already on main — step 3 answers "already 2.15.0").
+- [ ] **release: step 5-9 chain** (07-44 report §f 5-6): tag push + ls-remote verify,
+      gh release notes eyeball ([2.15.0] section non-empty, the sidebar-rail bullet
+      present — verify the fold kept it), lychee, stack relock (telephony
+      webphone→v2.15.0), aarch64 cross-builds + ELF b700 guard.
+- [ ] **watch: telephony CI at 508c789** (07-44 report §f 8): the lens vendorHash fix
+      (0b83c4f) is what greens the serialized VM suites that have been red since
+      2026-11-19; if the fe6eb88 run completes red on the PRE-fix pin, annotate it
+      superseded.
+- [ ] **pbx-artmann relock + staging** (07-44 report §f 9-11): one
+      `nix flake update telephony` covers the lens fix + the webphone tag once step 7
+      lands; lock-drift-probe requires webphone pin MATCH + ALREADY-LATEST; restage
+      over a settled tree only; baseline block at the CHANGELOG tail, root read in
+      the same breath.
+- [ ] **owner handover + post-deploy probes** (07-44 report §f 12-15): switch command
+      + paste-backs (unit states, /version=v2.15.0, rail screenshot), rollback ladder
+      in the handover, post-switch ui-track vs the pre-rail captures, verify-live
+      arms, CHANGELOG deploy ledger + FEATURES closure stamp, webphone-smoke --base.
+- [ ] **owner calls: mobile bottom bar + T2-vs-T3** (07-44 report §f 16-17): all-8
+      slots vs 5+More; per-page layouts vs presence workspace ordering — both
+      retracted-fabrication questions, genuinely open.
+- [ ] **update-vendor-hash entry-refusal** (07-44 report §f 19): refuse when
+      vendorHash.nix already holds the sentinel fake — today the EXIT trap restores
+      the poison; selftest-pin the refusal.
+- [ ] **daemon sentinel denylist proposal** (07-44 report §f 20): the auto-commit
+      daemon must never commit `sha256-AAAA…`/`sha256-0000…` sentinel content —
+      three poisoning occurrences now (2026-11-02 + two in pbx-lens).
+- [ ] **release.sh step-0 eval precondition** (07-44 report §f 21): the dry-run checks
+      preconditions, not tree health — an eval-red main passed and cost a full
+      buildflow cycle; `nix flake check --no-build` belongs in step 1.
+- [ ] **release-window convention** (07-44 report §f 30-31): a release needs a quiet
+      window (assert_clean_tree cannot beat the daemon; step 7 raced it too — commit
+      became "ahead by 1" mid-commit); sessions pause commits or the release locks
+      the tree; also identify the 985-commits/8min churn loop and propose the daemon
+      mtime-debounce.
+- [ ] **docs-gates v0.3.1 upgrade parity** (07-44 report §f 26): the pbx-artmann
+      daemon sweep to 67d7d27b is CI-green, but the documented bar is a fresh parity
+      diff against the frozen oracle + battery; also record the upgrade in that
+      repo's CHANGELOG or pin back to the tag form.
+- [ ] **small residue** (07-44 report §f 22-25, 27-29, 32-36): delete the local
+      release-line branch post-merge; island node suite's 2 base failures (drafts
+      pill state) — repair train or recorded acceptance; INDEX.md row for the 07-44
+      report; CHANGELOG "Fixed" entries for the eval-red main heal, the lens hash,
+      the tag ancestry merge; stale-prod-watch tolerance for source-2.15.0 vs
+      prod-2.14.0; lens CI verdict on 0b83c4f; rail report §f rows 47-50 harvest
+      check; closing pbx-artmann battery; trash the scratch logs.
+
 ### 2026-11-21 report-harvest batch (from the 02-15 and 02-28 status reports' §f)
 
 - [ ] **v2.15.0 concurrent-train end-state watch** (harvested 2026-11-21
@@ -66,7 +119,7 @@ front matter does not carry their history (one home per fact, per the rule above
   with a non-binding SIGHUP recommendation). The IMPLEMENT arm
   stays owner-gated on the trigger call (19-21 §g q2 / 20-03 §g
   q3); a ruling spawns a fresh row.
-- [ ] **pma daemon push heuristic** (§f-8): don't push while test
+- ~~**pma daemon push heuristic** (§f-8): don't push while test
       files are seconds old (the 19-21 §d/§e commit-race class) — the
       push lives in pma/go-commit's `WithAutoPush`/`pushProject`
       (projects-management-automation, operations.go), a fleet-wide
@@ -75,7 +128,7 @@ front matter does not carry their history (one home per fact, per the rule above
       Webphone-side mitigations already shipped: one-call stage+commit
       discipline per unit (20-03 report). **Priority:** Low ·
       **Effort:** M (pma repo). Mirror row in pma's own TODO_LIST when
-      picked up.
+      picked up.~~ → code half done 2026-11-21 (pma `1bf82129`): the push-heat gate landed in pma — `CommitSettings.PushDeferSeconds` (default 0 = off, so the deployed daemon is byte-neutral until armed), `commitWithPushHeatGate` (a hot tree commits WITHOUT the immediate push; a per-repo cool-down timer owns it), the `pushProject` gate, and the `CommitWithoutPush` seam, pinned by pushheat/commitwithoutpush tests; the mirror row (PD) lives in pma's TODO_LIST. REMAINS owner/deployment: rebuild+redeploy the daemon, arm the one-repo canary (webphone — its 60-min push-stall bar backstops a stuck deferral), watch a day, then fleet; rollback = the knob back to 0.
 
 ### UI/UX destination trains (ratified 2026-11-11 — plan: docs/planning/2026-11-11_15-11_ui-ux-destination.md)
 
