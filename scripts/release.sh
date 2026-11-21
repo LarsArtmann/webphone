@@ -39,13 +39,24 @@ run() {
 	if [ "$DRY_RUN" = "1" ]; then echo "  [dry-run] $*"; else "$@"; fi
 }
 
+# Scrub the WEBPHONE_RELEASE_* overrides out of the environment BEFORE
+# any child process runs: the app's env parser maps every WEBPHONE_*
+# variable onto a config key, and a leaking variable fails
+# TestLoadCleanConfigWarnsNothing inside the gates (2026-11-08, the
+# 2.10.0 train: RELEASE_SKIP_VERSION_GUARD; re-fired 2026-11-21 by the
+# 2.15.0 attempt-2 launch carrying RELEASE_MAX_LOAD into the go-test
+# child). load_gate reads the scrubbed copy; the version guard keeps its
+# own later scrub (nothing WEBPHONE_* parses before it).
+release_max_load="${WEBPHONE_RELEASE_MAX_LOAD:-}"
+unset WEBPHONE_RELEASE_MAX_LOAD
+
 # Load precondition (2026-09-23 tail lesson: two E2E marker-stalls at host
 # load 60-174 were load-shaped, not code-shaped; a quiet-host check is
 # cheap and masks nothing, where an E2E auto-retry would mask real
 # regressions — chosen as the default pending owner ratification, 02:47
 # §g1). Override deliberately via WEBPHONE_RELEASE_MAX_LOAD=999.
 load_gate() {
-	local max="${WEBPHONE_RELEASE_MAX_LOAD:-8}"
+	local max="${release_max_load:-8}"
 	local one five
 	read -r one five _ </proc/loadavg
 	if awk -v l="$one" -v m="$max" 'BEGIN { exit !(l + 0 >= m + 0) }'; then
