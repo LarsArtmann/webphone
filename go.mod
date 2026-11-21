@@ -36,12 +36,12 @@ require (
 	github.com/larsartmann/go-flightrecorder v0.2.1
 	github.com/larsartmann/go-health v0.10.0
 	github.com/larsartmann/go-health-dashboard v0.13.3
-	github.com/larsartmann/go-idempotency v0.3.2
-	github.com/larsartmann/go-paperless v0.5.2
+	github.com/larsartmann/go-idempotency v0.6.0
+	github.com/larsartmann/go-paperless v0.5.3
 	github.com/larsartmann/go-retry v0.9.0
 	github.com/larsartmann/go-sse v0.7.0
 	github.com/larsartmann/go-sse/ssetest v0.5.0
-	github.com/larsartmann/httputil v1.8.0
+	github.com/larsartmann/httputil v1.9.0
 	github.com/larsartmann/httputil/server_timing v1.0.3
 	github.com/larsartmann/templ-components v1.27.0
 	github.com/larsartmann/templ-components/icons v1.27.0
@@ -49,8 +49,8 @@ require (
 	github.com/onsi/ginkgo/v2 v2.34.0
 	github.com/onsi/gomega v1.44.0
 	github.com/samber/do/v2 v2.1.0
-	github.com/sixafter/nanoid v1.66.0
-	golang.org/x/oauth2 v0.37.0
+	github.com/sixafter/nanoid v1.67.0
+	golang.org/x/oauth2 v0.38.0
 	modernc.org/sqlite v1.62.0
 )
 
@@ -125,8 +125,8 @@ require (
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
 	github.com/samber/go-type-to-string v1.8.0 // indirect
 	github.com/segmentio/asm v1.2.1 // indirect
-	github.com/sixafter/aes-ctr-drbg v1.21.0 // indirect
-	github.com/sixafter/prng-chacha v1.18.0 // indirect
+	github.com/sixafter/aes-ctr-drbg v1.22.0 // indirect
+	github.com/sixafter/prng-chacha v1.19.0 // indirect
 	github.com/sony/gobreaker v1.0.0 // indirect
 	github.com/tinylib/msgp v1.6.5 // indirect
 	github.com/x448/float16 v0.8.4 // indirect
