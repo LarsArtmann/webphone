@@ -107,6 +107,12 @@ type CDR struct {
 	// NO_ANSWER, …) — the Reports tab renders it verbatim. Empty on
 	// rows the API did not populate.
 	HangupCause string `json:"hangup_cause"`
+	// UUID is the call's uuid as recorded by the PBX — the join key the
+	// pbx-lens deep link addresses (the operator API emits it; the
+	// product uses it for the read-only link only, never as a join
+	// against webphone-side call data). Empty on rows the API did not
+	// populate (the link simply does not render).
+	UUID string `json:"uuid"`
 }
 
 // HistoryPage is the /history response shape.

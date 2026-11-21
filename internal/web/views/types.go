@@ -77,4 +77,10 @@ type CDREntry struct {
 	Start             string
 	Billsec           int
 	HangupCause       string
+	// UUID is the PBX call uuid (the wire fact, decoded at the boundary).
+	UUID string
+	// LensURL is the server-built read-only pbx-lens deep link for this
+	// row (the browser-facing base + the uuid, path-escaped). Empty
+	// renders no lens anchor: lens off, or the row carries no uuid.
+	LensURL string
 }

@@ -36,7 +36,8 @@ type HistoryPanelProps struct {
 	CRM CRMContacts
 	// Transcripts are the extension's own live-call transcript groups
 	// (owner-scoped store, newest call first). They render as their own
-	// section — the CDR rows carry no call uuid, so joining the two lists
+	// section — the CDR uuid and the transcript CallID are DIFFERENT id
+	// spaces (PBX record vs island SIP Call-ID), so joining the two lists
 	// would be guesswork, not correlation.
 	Transcripts []TranscriptGroup
 	Lang        Lang
@@ -168,8 +169,9 @@ templ HistoryPanel(props HistoryPanelProps) {
 // transcript (copy/download/delete) render only when lines exist.
 type TranscriptGroup struct {
 	// CallID addresses the call for the delete affordance (the store's
-	// DeleteCall key — the CDR rows carry no call uuid, so this is the
-	// ONLY correlation handle the transcript section has).
+	// DeleteCall key — the CDR uuid is a DIFFERENT id space (PBX record
+	// vs island SIP Call-ID), so this stays the transcript section's only
+	// correlation handle).
 	CallID    string
 	// Remote is the call's remote party; empty on the note-only join
 	// (renders the noted-call label instead of a blank name).
@@ -395,6 +397,14 @@ templ CDRRow(cdr CDREntry, contacts CRMContacts, lang Lang) {
 						title={ T(lang, "contacts.saveAs") }
 					>@icons.Icon(icons.Star, "wp-icon")</button>
 				</span>
+			}
+			// The read-only pbx-lens deep link (2026-11-15 do-not-merge
+			// ruling's integration half): a NEW TAB so a live island call
+			// never unloads; renders only when the deployment configured a
+			// browser-facing lens origin AND the row carries the PBX uuid
+			// (both empty = byte-identical product).
+			if cdr.LensURL != "" {
+				<a class="wp-mini" href={ cdr.LensURL } target="_blank" rel="noopener noreferrer">{ T(lang, "history.row.openLens") }</a>
 			}
 		</td>
 	</tr>

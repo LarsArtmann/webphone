@@ -73,6 +73,13 @@ type Config struct {
 	// CRM is the OPTIONAL integration with the Ledger CRM (contact name
 	// enrichment + call-activity logging). Zero value = disabled.
 	CRM CRM `json:"crm" koanf:"crm"`
+	// Lens is the OPTIONAL read-only integration with pbx-lens (the call
+	// analytics app): History rows gain a deep link into the lens call
+	// detail. Zero value = disabled: rendered bytes stay identical. The
+	// URL is the BROWSER-facing base (the operator's lens origin), never
+	// the stack's loopback lensUrl — a loopback base is a dead link by
+	// construction and validation fails the boot on it.
+	Lens Lens `json:"lens" koanf:"lens"`
 	// Paperless is the OPTIONAL downstream archive for inbound faxes
 	// (Paperless-ngx via go-paperless). Zero value = disabled: faxes stay
 	// blob-store-only, which is and remains the storage truth.
@@ -393,6 +400,19 @@ type CRM struct {
 	// the machine makes. One file, one client: the trust boundary stays
 	// as narrow as the need (issue #9). Empty = the system trust store.
 	CAFile string `json:"ca_file,omitempty" koanf:"ca_file"`
+}
+
+// Lens configures the optional pbx-lens deep-link seam (the 2026-11-15
+// do-not-merge ruling's read-only half): History rows link into the
+// lens call detail when a browser-facing lens origin is configured.
+// Zero value = the links never render (byte-identical product).
+type Lens struct {
+	// URL is the lens origin the OPERATOR'S BROWSER reaches (e.g.
+	// "https://lens.example"). Deliberately NOT the stack's loopback
+	// lensUrl — that one serves the textagent over loopback, and a
+	// loopback base in a browser link is dead by construction.
+	// Absolute http(s) only, no credentials: validation fails the boot.
+	URL string `json:"url" koanf:"url"`
 }
 
 // Paperless configures the optional Paperless-ngx archive for inbound
@@ -1035,6 +1055,9 @@ func validate(cfg Config) error {
 	if err := validateCRMCAFile(cfg.CRM); err != nil {
 		return err
 	}
+	if err := validateLens(cfg.Lens); err != nil {
+		return err
+	}
 	if err := validateDial(cfg.Dial); err != nil {
 		return err
 	}
@@ -1042,6 +1065,28 @@ func validate(cfg Config) error {
 		return err
 	}
 	return validatePush(cfg.Push)
+}
+
+// validateLens checks the optional lens deep-link base: absolute
+// http(s), no embedded credentials, and not a loopback host (the
+// browser-facing link class — the stack's loopback lensUrl serves the
+// textagent, never a History-row anchor).
+func validateLens(cfgLens Lens) error {
+	if cfgLens.URL == "" {
+		return nil
+	}
+	u, err := url.Parse(cfgLens.URL)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
+		return errorfamily.Newf(errorfamily.Rejection, "config.lens.url", "lens.url %q is not an absolute http(s) URL (e.g. https://lens.example)", cfgLens.URL)
+	}
+	if u.User != nil {
+		return errorfamily.Newf(errorfamily.Rejection, "config.lens.url", "lens.url %q carries credentials — the link renders in the operator's browser and cannot carry a secret", cfgLens.URL)
+	}
+	host := u.Hostname()
+	if ip := net.ParseIP(host); host == "localhost" || (ip != nil && ip.IsLoopback()) {
+		return errorfamily.Newf(errorfamily.Rejection, "config.lens.url", "lens.url %q is a loopback host — use the browser-facing lens origin, not the stack's loopback lensUrl (a browser link to loopback is dead by construction)", cfgLens.URL)
+	}
+	return nil
 }
 
 // validateCRMCreateURL checks the optional new-contact form template: the

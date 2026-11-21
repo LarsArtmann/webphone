@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"net/url"
 	"slices"
 	"sort"
 	"strconv"
@@ -256,6 +257,7 @@ func cdrEntries(rows []pbx.CDR) []views.CDREntry {
 			Start:             cdr.Start,
 			Billsec:           cdr.Billsec,
 			HangupCause:       cdr.HangupCause,
+			UUID:              cdr.UUID,
 		})
 	}
 	return out
@@ -365,6 +367,7 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 		filtered = filtered[:historyPageSize]
 	}
 	entries := cdrEntries(filtered)
+	applyLensLinks(entries, h.deps.Config.Lens.URL)
 	numbers := crmNumbers(entries, views.CDRDialTarget)
 	numbers = append(numbers, transcriptNumbers...)
 	return views.HistoryPanel(views.HistoryPanelProps{
@@ -501,6 +504,31 @@ func historyDispositionFilter(raw string) domain.Disposition {
 		return ""
 	}
 	return disposition
+}
+
+// applyLensLinks fills the read-only pbx-lens deep link on every CDR row
+// that carries the PBX uuid, when the deployment configured a
+// browser-facing lens origin (the 2026-11-15 do-not-merge ruling's
+// integration half). Zero config or uuid-less rows keep LensURL empty —
+// the anchor does not render and the bytes stay identical.
+func applyLensLinks(entries []views.CDREntry, base string) {
+	if base == "" {
+		return
+	}
+	for i := range entries {
+		if entries[i].UUID != "" {
+			entries[i].LensURL = lensCallURL(base, entries[i].UUID)
+		}
+	}
+}
+
+// lensCallURL builds one row's pbx-lens link: the configured base plus
+// lens's own call-detail route, uuid PATH-ESCAPED so a hostile PBX row
+// cannot steer the anchor outside the configured origin (the link's
+// threat model — the uuid is machine-sourced input rendered into an
+// href).
+func lensCallURL(base, uuid string) string {
+	return strings.TrimRight(base, "/") + "/calls/freeswitch-cdr/" + url.PathEscape(uuid)
 }
 
 // historyTranscriptGroups caps the History tab's transcript section: the

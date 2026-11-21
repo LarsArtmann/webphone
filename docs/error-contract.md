@@ -357,6 +357,7 @@ a deliberate code change, regenerate:
 | config.gateway.webhook_url                   | Rejection                  | internal/config/config.go         |
 | config.gateway_secret_sources                | Rejection                  | internal/config/config.go         |
 | config.identities                            | Rejection                  | internal/config/config.go         |
+| config.lens.url                              | Rejection                  | internal/config/config.go         |
 | config.matrix.access_token                   | Rejection                  | internal/config/config.go         |
 | config.matrix.homeserver                     | Rejection                  | internal/config/config.go         |
 | config.matrix.owner                          | Rejection                  | internal/config/config.go         |
