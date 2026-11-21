@@ -87,8 +87,10 @@ func (w engineWindow) Sweep(ctx context.Context, collection string, now time.Tim
 // land within the scaled shortTTL, and a -race scheduling stall
 // outlasting it makes the second Record legitimately re-claim the
 // expired window, which the assertion reads as an extension (run
-// 42407471289; ci-flake-ledger row). The durable fix is upstream — an
-// injectable clock instead of wall sleeps.
+// 42407471289; ci-flake-ledger row). The durable fix is upstream —
+// go-idempotency#15 asks for a contract-suite clock seam (v0.6.0's
+// WithClock pins only the MemoryStore, which this suite never sees:
+// the window under audit is the metaengine journal store).
 func TestDedupWindowSatisfiesIdempotencyContract(t *testing.T) {
 	contract.RunTestsStrict(t, func(t *testing.T) idempotency.Store {
 		sys, err := cqrs.NewCoreSystem(context.Background(), "file:"+filepath.Join(t.TempDir(), "system.db"))
