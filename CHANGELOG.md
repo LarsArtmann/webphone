@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Note prose joins the History query corpus** (2026-11-21): a call
+  whose ONLY match is its post-call note body now surfaces in the
+  transcript search results exactly as segment text does — rendered
+  with an honest "Noted call (no transcript)" label, the note editor
+  carrying the prose, and no transcript affordances (copy/download/
+  delete address a transcript that does not exist). `NotesGate`
+  gained `SearchBodies` (the transcript Search's case-insensitive
+  contains contract, owner-scoped, newest first; a deleted slot leaves
+  the corpus — pinned by test).
 - **Projection dead-letter observability** — a poison event landing in
   the projection DLQ now WARNs greppably (`projection dead-lettered an
   event`), and every boot re-WARNs while durable entries remain (count
