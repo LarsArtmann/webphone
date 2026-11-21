@@ -2,6 +2,17 @@
 
 > **Snapshot-rot header:** claims verified as of **2026-11-21 02:15 CET**
 > (push/CI statements rot fastest — they are timestamped, not timeless).
+> **Landing-time addendum (02:35):** while landing THIS report the
+> battery surfaced two harvest debts from the concurrent 02:28 report —
+> both closed in the landing commit (its open §f rows harvested into
+> TODO_LIST; the archived 2026-10-08 asr row's "pin the failed
+> auto-transcribe render" ask now HAS its pin: the
+> "a failed auto-transcribe renders the honest failure line into the
+> target" spec in island-tests/shell.test.mjs, suite green). Also:
+> **the concurrent v2.15.0 release train is ACTIVE** (their report's
+> §f item 1: do not double-fire `release.sh`) — question (g-1) below
+> is now partially self-answered: the release half of T01 is THEIRS;
+> the host-switch half stays owner-gated regardless.
 > Plan under execution:
 > [docs/planning/2026-11-19_19-46_SUPERB-pareto-backlog-execution-plan.md](../planning/2026-11-19_19-46_SUPERB-pareto-backlog-execution-plan.md)
 > (T01–T27 + micro m01–m27). Prior session reports:

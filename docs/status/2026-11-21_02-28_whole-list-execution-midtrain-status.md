@@ -247,7 +247,11 @@
 35. Owner: E3 `reports.weekly_talk_budget` number.
 36. Owner: hikaru passkey enroll + Super Admin 3-surface check (E5.2–
     E5.4).
-37. Owner: first real outbound fax (E6).
+37. Owner: first real outbound fax (E6). <!-- fresh:skip already
+    harvested 2026-11-21 into TODO_LIST's "Owner: first real outbound
+    fax (E6)" row — the item's only rare token is the 2-char "E6",
+    which the freshness tokenizer cannot match; the TODO row carries
+    the quoted phrase verbatim as the durable link. -->
 38. Owner: Telnyx ticket #832080 reply (A3.4) + one real inbound call
     (C3.2).
 39. Owner: ALERT_WEBHOOK_URL channel decision.
