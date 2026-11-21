@@ -1022,10 +1022,17 @@ named exit code. webphone's textagent has a 3 s probe and a 502 toast (covers un
 for D3 LANDED 2026-10-29 (M18/F75-F77):
 `docs/planning/2026-10-29_16-17_D3-agent-liveness-design.md` — liveness ladder, slot release,
 named exit codes, and the webphone seam map; still owner-GO + security-review gated.
-3. **Detection column in the error contract (L9).** `docs/error-contract.md` answers "what does the
+3. ~~**Detection column in the error contract (L9).** `docs/error-contract.md` answers "what does the
 operator SEE"; ai-phone's failure table also answers "how would anyone KNOW it happened"
 (counters, warm-start timings, a logged line-override). Add a detection column for the quiet
-classes at the next pass over that document.
+classes at the next pass over that document.~~ → done 2026-11-21 (whole-list session) — the
+section SHIPPED 2026-10-29 (six quiet classes, docs/error-contract.md § "Detection column"); this
+pass closed the section's own ride-along contract, which three post-10-29 classes had violated:
+the projection DLQ (2026-11-20 — WARN per landing + boot `warnDLQDepth` re-WARN + the passkey-gated
+`/healthz` projections leg), the detached review job (2026-10-28 — the `failed` review state under
+the History transcript + the `review: transcript fetch failed` WARN), and the backup oneshot
+(systemd journal + the KVM-gated backup-drill check). Rows verified against code at the pass
+(dlq.go, review_api.go, push.go); the chat-receiver class was already covered in the main table.
 4. ~~**Caller-perceived latency (L3).** The histogram covers HTTP durations by status class; nothing~~ → done 2026-11-21 (struck on verification) — the measure-first instrumentation SHIPPED 2026-11-08 as the island latency beacons (`metrics.island_beacon`): `dial_to_audio` (dial-press → first audible media, t0 = the form submit) and `asr_round_trip` legs answer exactly this question server-owned in `/metrics`; the row predates them and sat unswept.
 measures dial press → first audible media, or the ASR segment round trip. ai-phone's rule is the
 sharpest phrasing of why that matters: t0 is the last speech, and the silence is INSIDE the
