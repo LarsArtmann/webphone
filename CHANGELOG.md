@@ -342,7 +342,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`SENDER_ID_MISMATCH`, `THIRD_PARTY_PERMISSION_DENIED`) now answer
   `ErrUnregistered`, riding the existing prune lane. A server-side
   credential failure (401 everywhere) still never prunes — an ntfy
-  token rotation must not mass-delete the registry.
+  token rotation must not mass-delete the registry — and neither does
+  a 403 against a tokenless deployment: an ACL-protected server
+  refusing every unauthenticated publish indicts the deployment, not
+  any single device, so that verdict stays a loud retryable error.
 - The FCM token mint's single-flight joiner no longer ships the zero
   result: the leader hands its grant to ONE parked joiner by direct
   channel handoff and then closes the channel, so every other joiner
