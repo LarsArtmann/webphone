@@ -768,14 +768,19 @@ against the tree at harvest time):
 - ~~Chip-X 24px hit area (F14)~~ → verified LANDED at HEAD before this sweep — the glyph stays 18px and the invisible `::after` (`inset: -3px`) extends the hit to 24px with the F14 comment at the site (app.css)
 - ~~History empty state rewording (F15)~~ → verified LANDED 2026-11-07 (T16) — the review card itself carries the FIXED banner; `history.needsAPI.pre/post` carries the three-beat shape (en+de)
 - ~~Radius/spacing token adoption (F17)~~ → done 2026-11-11 — the stragglers swept: voicemail waveform, mono input, admin-ext chip → `--radius-sm` byte-identical; island `#lang`/small buttons/audio-out selects (8px literals between the tokens) normalized onto `--radius`; tw.css/login.css rebuilt; the 2px fax-step bar stays (a 4px-tall shape no token describes)
-- [ ] **Add-to-CRM view pin test** (routed 2026-11-21 from the archived
+- ~~[ ] **Add-to-CRM view pin test** (routed 2026-11-21 from the archived
       2026-11-08_12-55 report §b-2/§f-11): the `crm.create_url` affordance
       landed 2026-11-08 (config + views + server plumbing `809c24ad`) but
       the plan's done-when pin never shipped — a dedicated view test with
       the three arms (CRM-miss renders the affordance / matched number
       does not / absent config renders nothing, byte-identical). The
-      existing suites cover keys and plumbing, not the conditional.
-      **Priority:** Low · **Effort:** S
+      existing suites cover keys and plumbing, not the conditional.~~ →
+      struck STALE same hour (2026-11-21): the 12-55 report predates the
+      17-19 session by five hours — `TestCRMCreateLinkArms`
+      (internal/web/views/crm_test.go:69) pins all three arms and landed
+      via `69e0acfb` that evening. The 2026-11-21 drain session routed
+      before reading the same day's later report; the archived 12-55
+      arrows resolve HERE and the verdict is done-at `69e0acfb`.
 - ~~Phase-4 release preflight (harvested 2026-11-08 from the 17-22
   SUPERB report §f-2 residue): the KVM/local-only flake legs —
   `nix build .#checks.x86_64-linux.webphone-module`, the
