@@ -42,19 +42,25 @@ front matter does not carry their history (one home per fact, per the rule above
       slots vs 5+More; per-page layouts vs presence workspace ordering — both
       retracted-fabrication questions, genuinely open.
 - ~~**update-vendor-hash entry-refusal** (07-44 report §f 19): refuse when
-      vendorHash.nix already holds the sentinel fake — today the EXIT trap restores
-      the poison; selftest-pin the refusal.~~ → done 2026-11-21 (whole-list
-      session): the pbx-lens flake app refuses at entry when vendorHash.nix holds
-      a sentinel (`sha256-[A0]{20,}=`); the deliberate-repair override
-      `UPDATE_VENDOR_HASH_ALLOW_SENTINEL=1` skips backup/restore entirely (a
-      poisoned pin has nothing worth restoring). Pinned END-TO-END by pbx-lens
-      `scripts/check-vendor-hash-refusal.sh` (the REAL app via nix run against a
-      poisoned fixture repo; asserts the message, the nonzero exit, and that the
-      refusal path creates no .bak), wired into verify-all beside the doc gates.
-      Landed pbx-lens `aa4c830`+`c775eb6` (pushed).
-- [ ] **daemon sentinel denylist proposal** (07-44 report §f 20): the auto-commit
-      daemon must never commit `sha256-AAAA…`/`sha256-0000…` sentinel content —
-      three poisoning occurrences now (2026-11-02 + two in pbx-lens).
+  vendorHash.nix already holds the sentinel fake — today the EXIT trap restores
+  the poison; selftest-pin the refusal.~~ → done 2026-11-21 (whole-list
+  session): the pbx-lens flake app refuses at entry when vendorHash.nix holds
+  a sentinel (`sha256-[A0]{20,}=`); the deliberate-repair override
+  `UPDATE_VENDOR_HASH_ALLOW_SENTINEL=1` skips backup/restore entirely (a
+  poisoned pin has nothing worth restoring). Pinned END-TO-END by pbx-lens
+  `scripts/check-vendor-hash-refusal.sh` (the REAL app via nix run against a
+  poisoned fixture repo; asserts the message, the nonzero exit, and that the
+  refusal path creates no .bak), wired into verify-all beside the doc gates.
+  Landed pbx-lens `aa4c830`+`c775eb6` (pushed).
+- ~~**daemon sentinel denylist proposal** (07-44 report §f 20): the auto-commit
+  daemon must never commit `sha256-AAAA…`/`sha256-0000…` sentinel content —
+  three poisoning occurrences now (2026-11-02 + two in pbx-lens).~~ →
+  proposed 2026-11-21 (whole-list session): pma
+  `docs/decisions/2026-11-21_sentinel-denylist-proposal.md` (commit
+  `52322091`) + the pma TODO "SD" row — pre-commit scan refuses the sweep,
+  WARNs one greppable line, nil=ON default, explicit-false escape, pbx-lens
+  canary. OWNER-GATED (the daemon runs live); a fourth occurrence is the
+  trigger to decide.
 - ~~**release.sh step-0 eval precondition** (07-44 report §f 21): the dry-run checks
   preconditions, not tree health — an eval-red main passed and cost a full
   buildflow cycle; `nix flake check --no-build` belongs in step 1.~~ → done
