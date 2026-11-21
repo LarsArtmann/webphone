@@ -292,6 +292,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `ErrUnregistered`, riding the existing prune lane. A server-side
   credential failure (401 everywhere) still never prunes — an ntfy
   token rotation must not mass-delete the registry.
+- The FCM token mint's single-flight joiner no longer ships the zero
+  result: the leader hands its grant to ONE parked joiner by direct
+  channel handoff and then closes the channel, so every other joiner
+  woke holding `tokenResult{}` and sent with an empty Bearer (a 401
+  that invalidated the cache the leader had just filled). Joiners now
+  re-read the filled cache on the zero result; `sso.providerFor`'s
+  discovery carried the identical latent shape and got the same fix
+  (a missed joiner there returned a nil provider with a nil error).
+  Pinned by `TestFcmTokenMintIsSingleFlight` (8 concurrent sends, one
+  grant, all shipped the shared token; the pre-fix shape reproduced
+  empty tokens 1-in-6 runs in an isolated probe) and
+  `TestSaveMalformedExtensionLeavesNoOrphanedFile` (the
+  brand-before-write reorder's edge: a refused Save leaves no file).
 - The favicon is the brand green again — the tab icon painted a
   Tailwind-stock teal (`#0f766e`) against the app's `#17a467` accent,
   so the browser chrome disagreed with the product it belonged to. The
