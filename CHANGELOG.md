@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+
+- **Typed feed maps at the config boundary (F7)**: `identities` keys
+  and `matrix.owner`/`signal.owner` decode as `domain.Extension` — a
+  strict parse-at-decode door where a sanitizable-but-unnormalized
+  spelling ("10 01") fails the boot AT LOAD instead of silently
+  missing its lookup later. The DID join rides the parsed value
+  end-to-end (config → authmap → admin inventory → self-send guard),
+  so no raw-vs-parsed spelling can disagree; the old validate-loop and
+  admin re-validation are deleted. Wire and stored bytes unchanged.
+
 ### Fixed
 
 
