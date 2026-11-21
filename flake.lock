@@ -3,17 +3,17 @@
     "docs-gates": {
       "flake": false,
       "locked": {
-        "lastModified": 1793951718,
-        "narHash": "sha256-hy9RjF4z+IASaSr23dtPs6HAJNQD1jI6Pb3djE+RPMQ=",
+        "lastModified": 1794674958,
+        "narHash": "sha256-c3u4wl9FQAHeryVJluyMefhz6T300oeZwqEBmm43qk4=",
         "owner": "Artmann-Technologies",
         "repo": "docs-gates",
-        "rev": "2278406afdfd1b8df7674e2e594b6ea880694c90",
+        "rev": "67d7d27bd6167c63839c72a790174ba36165e951",
         "type": "github"
       },
       "original": {
         "owner": "Artmann-Technologies",
+        "ref": "v0.3.1",
         "repo": "docs-gates",
-        "rev": "2278406afdfd1b8df7674e2e594b6ea880694c90",
         "type": "github"
       }
     },

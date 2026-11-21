@@ -22,7 +22,7 @@
     # tree. The rev is locked, so rule behaviour cannot drift under us; a
     # deliberate bump is the only way the gates change.
     docs-gates = {
-      url = "github:Artmann-Technologies/docs-gates/2278406afdfd1b8df7674e2e594b6ea880694c90";
+      url = "github:Artmann-Technologies/docs-gates/v0.3.1";
       flake = false;
     };
   };
