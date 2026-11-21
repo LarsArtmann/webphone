@@ -89,7 +89,7 @@ age_days() {
 		echo -1
 		return
 	}
-	echo $(( ($(date +%s) - $(date -d "$stamp" +%s)) / 86400 ))
+	echo $((($(date +%s) - $(date -d "$stamp" +%s)) / 86400))
 }
 
 # classify <file> -> prints "READY" or "BLOCKED <why-first-line>"

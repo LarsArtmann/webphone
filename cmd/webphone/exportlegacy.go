@@ -7,7 +7,7 @@ import (
 	"database/sql"
 	"encoding/csv"
 	"encoding/hex"
-	"encoding/json"
+	"encoding/json/v2"
 	"flag"
 	"fmt"
 	"io"
@@ -15,6 +15,8 @@ import (
 	"path/filepath"
 	"sort"
 	"time"
+
+	"encoding/json/jsontext"
 
 	errorfamily "github.com/larsartmann/go-error-family"
 	_ "modernc.org/sqlite" // registers the "sqlite" driver for the read-only legacy handle
@@ -168,7 +170,7 @@ func dumpLegacyJSON(w io.Writer, rows []legacyContactRow, generated string) erro
 		RowsSHA256: hex.EncodeToString(sum[:]),
 		Rows:       rows,
 	}
-	out, err := json.MarshalIndent(env, "", "  ")
+	out, err := json.Marshal(env, jsontext.WithIndentPrefix(""), jsontext.WithIndent("  "))
 	if err != nil {
 		return bootErr(bootGeneric, errorfamily.WrapInfrastructure(err, "webphone.cli.export_legacy", "marshal dump envelope"))
 	}

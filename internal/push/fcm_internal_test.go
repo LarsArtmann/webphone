@@ -338,7 +338,7 @@ func TestFcmTokenMintIsSingleFlight(t *testing.T) {
 
 	const callers = 8
 	results := make(chan error, callers)
-	for i := 0; i < callers; i++ {
+	for range callers {
 		go func() {
 			results <- sender.Send(context.Background(), "device-token", Ring{Event: EventRing, From: "+15550000001", CallID: "call-1"})
 		}()
@@ -347,7 +347,7 @@ func TestFcmTokenMintIsSingleFlight(t *testing.T) {
 	time.Sleep(150 * time.Millisecond)
 	close(release)
 
-	for i := 0; i < callers; i++ {
+	for range callers {
 		if err := <-results; err != nil {
 			t.Fatalf("concurrent send: %v", err)
 		}
