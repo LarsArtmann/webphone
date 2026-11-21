@@ -31,29 +31,29 @@ session-field drift.
 
 ## a) FULLY DONE
 
-| Item | Evidence                                                                                                        |
-| ---- | --------------------------------------------------------------------------------------------------------------- |
-| ~~   | Research: both repos' seams, DTOs, parsers, tests, freshness-gate wiring                                        |
-| ~~   | SUPERB plan doc with Pareto + coarse/fine tables + mermaid                                                      |
-| ~~   | Pure payload builders extracted (fcm×2, ntfy×2) — Send/SendDraft now marshal through them                       |
-| ~~   | Fixture renderers + CLI fold (`webphone contracts` writes wire/)                                                |
-| ~~   | 9 committed fixtures, byte-deterministic (json.Deterministic — v2 map order is random)                          |
-| ~~   | Pin test (both credential arms, event keys on both transports, register keys)                                   |
-| ~~   | Freshness gate extended (script + `contracts-fresh` nix check diff wire/)                                       |
-| ~~   | Runbook android leg + contracts README fixture section + CHANGELOG + TODO_LIST row                              |
-| ~~   | Local gates on webphone half: push+server+cmd tests, art-dupl v0.7.2 (0 new clones), format-check, docs battery |
-| ~~   | Train-start buildflow + docs battery repair (concurrent session's rc=20 markdown also healed)                   |
-| ~~   | CI green on the final tree, pushed                                                                              |
-| ~~   | Android: `WireFacts.kt` pure decoders (fromFcmData/fromNtfyFrame) written                                       |
+| Item                                                                                                                | Evidence                                                                                                                                                                                       |
+| ------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~Research: both repos' seams, DTOs, parsers, tests, freshness-gate wiring~~                                        | ~~session; plan §1~~ v: verified: the plan §1 carries it                                                                                                                                       |
+| ~~SUPERB plan doc with Pareto + coarse/fine tables + mermaid~~                                                      | ~~docs/planning/2026-11-10_14-36_SUPERB-android-wire-contract-sync.md (daemon-committed ce9f77f2)~~ v: verified: docs/planning/2026-11-10_14-36 exists (daemon-committed ce9f77f2 per the row) |
+| ~~Pure payload builders extracted (fcm×2, ntfy×2) — Send/SendDraft now marshal through them~~                       | ~~internal/push/fcm.go, ntfy.go~~ v: verified: internal/push/fcm.go + ntfy.go marshal through them at HEAD                                                                                     |
+| ~~Fixture renderers + CLI fold (`webphone contracts` writes wire/)~~                                                | ~~internal/push/fixtures.go, internal/server/wirefixtures.go, cmd/webphone/contracts.go~~ v: verified: internal/push/fixtures.go + server/wirefixtures.go + cmd/webphone/contracts.go at HEAD  |
+| ~~9 committed fixtures, byte-deterministic (json.Deterministic — v2 map order is random)~~                          | ~~docs/contracts/wire/~~ v: verified: docs/contracts/wire/ lives at HEAD; json.Deterministic pinned                                                                                            |
+| ~~Pin test (both credential arms, event keys on both transports, register keys)~~                                   | ~~internal/server/wirefixtures_test.go~~ v: verified: TestWireFixtureFilesPinTheConsumerContract at HEAD                                                                                       |
+| ~~Freshness gate extended (script + `contracts-fresh` nix check diff wire/)~~                                       | ~~scripts/contracts-fresh.sh, nix/checks.nix — `nix build .#checks…contracts-fresh` green~~ v: verified: contracts-fresh check green in every flake check since                                |
+| ~~Runbook android leg + contracts README fixture section + CHANGELOG + TODO_LIST row~~                              | ~~docs/release-runbook.md, docs/contracts/README.md, CHANGELOG.md, TODO_LIST.md~~ v: verified: the runbook's wire-fixture re-vendor leg + README section at HEAD                               |
+| ~~Local gates on webphone half: push+server+cmd tests, art-dupl v0.7.2 (0 new clones), format-check, docs battery~~ | ~~session log~~ v: verified per the session log; CI carried them                                                                                                                               |
+| ~~Train-start buildflow + docs battery repair (concurrent session's rc=20 markdown also healed)~~                   | ~~buildflow history 74/74; battery PASS~~ v: verified: buildflow 74/74 history row                                                                                                             |
+| ~~CI green on the final tree, pushed~~                                                                              | ~~run 42832784499 success~~ v: verified: run 42832784499 success per the row                                                                                                                   |
+| ~~Android: `WireFacts.kt` pure decoders (fromFcmData/fromNtfyFrame) written~~                                       | ~~app/src/main/…/push/WireFacts.kt (daemon-committed 79f17ea, UNPUSHED)~~ v: verified: landed in webphone-android (79f17ea per the row; carried by the later pushes)                           |
 
 ## b) PARTIALLY DONE
 
-| Item | State                      | Remaining                                                                                                                     |
-| ---- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| ~~   | A2 parsers extracted       | WireFacts.kt exists                                                                                                           |
-| ~~   | SessionApi drift FIX       | designed (parse `password`/`sip_credential`; fetch `/config.js` `sipDomain`/`websocketPath`; origin-derived ws fallback kept) |
-| ~~   | Android ledger             | none                                                                                                                          |
-| ~~   | Detailed narrative commits | webphone fix commit `6936be2a` only; android + earlier webphone units rode `chore:` daemon commits                            |
+| Item                           | State                                                                                                                             | Remaining                                                                                                                                                            |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~A2 parsers extracted~~       | ~~WireFacts.kt exists~~                                                                                                           | ~~FcmReceiver + NtfySubscriptionService.routeMessage still parse inline — delegate to WireFacts~~ v: verified: done at webphone-android 2c578b5 (this report's §f-1) |
+| ~~SessionApi drift FIX~~       | ~~designed (parse `password`/`sip_credential`; fetch `/config.js` `sipDomain`/`websocketPath`; origin-derived ws fallback kept)~~ | ~~not written; extract pure `parseSessionIdentity` + `registerPayload` for testability~~ v: verified: landed at 2c578b5 + 7dd7e53 (§f-2)                             |
+| ~~Android ledger~~             | ~~none~~                                                                                                                          | ~~CHANGELOG/TODO_LIST/AGENTS sync-ritual rows~~ v: verified: done at 748e6f3 (§f-5)                                                                                  |
+| ~~Detailed narrative commits~~ | ~~webphone fix commit `6936be2a` only; android + earlier webphone units rode `chore:` daemon commits~~                            | ~~accept (history is pushed) — narrative the android commit~~ v: verified: done at baafd6f + a58a68c (§f-7)                                                          |
 
 ## c) NOT STARTED
 
