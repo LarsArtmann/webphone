@@ -298,7 +298,6 @@ a deliberate code change, regenerate:
 
 | Code                                         | Families                   | First site                        |
 | -------------------------------------------- | -------------------------- | --------------------------------- |
-| admin.identities                             | Rejection                  | internal/admin/admin.go           |
 | admin.password_file.missing                  | Rejection                  | internal/admin/admin.go           |
 | agent.summarize                              | Transient                  | internal/server/api/review_api.go |
 | api.note_delete                              | Infrastructure             | internal/server/api/note_api.go   |

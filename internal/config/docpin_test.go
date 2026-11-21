@@ -34,7 +34,7 @@ func configLeafPaths(t *testing.T) []string {
 			if prefix != "" {
 				path = prefix + "." + name
 			}
-			if field.Type.Kind() == reflect.Struct {
+			if field.Type.Kind() == reflect.Struct && hasTaggedFields(field.Type) {
 				walk(field.Type, path)
 				continue
 			}
@@ -44,6 +44,24 @@ func configLeafPaths(t *testing.T) []string {
 	walk(reflect.TypeFor[Config](), "")
 	sort.Strings(out)
 	return out
+}
+
+// hasTaggedFields reports whether a nested struct is a config SECTION
+// (carries its own koanf-tagged fields) or a config VALUE (a typed
+// scalar like domain.Extension, whose only field is unexported). A
+// VALUE struct is a leaf: recursing into it would silently drop the
+// key from the inventory (matrix.owner vanished the day Owner became
+// a domain.Extension, 2026-11-21).
+func hasTaggedFields(rt reflect.Type) bool {
+	for field := range rt.Fields() {
+		if field.PkgPath != "" {
+			continue
+		}
+		if name, _, _ := strings.Cut(field.Tag.Get("koanf"), ","); name != "" && name != "-" {
+			return true
+		}
+	}
+	return false
 }
 
 // readmeConfigTable parses README.md's "## Configuration" table into

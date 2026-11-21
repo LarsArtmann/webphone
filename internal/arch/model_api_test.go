@@ -58,6 +58,12 @@ var implicitInterfaceMethods = map[string]bool{
 	"MarshalJSON":   true,
 	"UnmarshalJSON": true,
 	"Error":         true,
+	// encoding.Text(Un)Marshaler: invoked by the frameworks, never by a
+	// visible call site — json marshals map keys through TextMarshaler,
+	// and the config decode door (koanf/mapstructure) constructs typed
+	// keys through TextUnmarshaler (the F7 typed feed maps, 2026-11-21).
+	"MarshalText":   true,
+	"UnmarshalText": true,
 }
 
 var exportedMethodRe = regexp.MustCompile(`func \([a-z] \*?([A-Z][A-Za-z0-9]*)\) ([A-Z][A-Za-z0-9]*)\(`)
