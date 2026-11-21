@@ -50,6 +50,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The trace observer and the latency histogram share one
+  /metrics exclusion** — `TraceMiddleware` no longer observes metric
+  self-scrapes (a fast 200 could never fire the capture trigger, so
+  the observation was dead weight; skipped scrapes also bypass the
+  response-recorder wrap). Pinned by
+  `TestTraceMiddlewareSkipsMetricsScrapes`.
+
 - **Hardening parity is structural** — the NixOS module's service and
   backup oneshot now read ONE shared `commonHardening` directive set
   (the ~20-line sandbox spine was comment-tied before; a directive
