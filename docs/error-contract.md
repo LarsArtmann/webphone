@@ -447,6 +447,7 @@ a deliberate code change, regenerate:
 | cqrs.note_missing                            | Rejection                  | internal/cqrs/callnotes.go        |
 | cqrs.note_register                           | Infrastructure             | internal/cqrs/callnotes.go        |
 | cqrs.note_save                               | Infrastructure             | internal/cqrs/callnotes.go        |
+| cqrs.note_search                             | Infrastructure             | internal/cqrs/callnotes.go        |
 | cqrs.open                                    | Infrastructure             | internal/app/cqrs.go              |
 | cqrs.owner_stream                            | Rejection                  | internal/cqrs/dialwindows.go      |
 | cqrs.push_device_fold                        | Corruption                 | internal/cqrs/pushdevices.go      |

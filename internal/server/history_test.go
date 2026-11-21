@@ -314,3 +314,68 @@ func TestHistoryDispositionFilter(t *testing.T) {
 		t.Errorf("an unknown disposition value must fall back to unfiltered: %.600s", page)
 	}
 }
+
+// TestHistoryQuerySurfacesNoteOnlyCalls pins the note half of the
+// History query corpus: a call whose ONLY match is its note body
+// surfaces in the transcript section like segment text does — the
+// noted-call label names the shape honestly, the note editor carries
+// the prose, and the transcript affordances (copy/download/delete) stay
+// absent because there is no transcript to address. Without a query
+// the join stays dormant (the plain view lists whole transcripts only).
+func TestHistoryQuerySurfacesNoteOnlyCalls(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.RequestURI(), "/phone-api/voicemail/") {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"new":0,"old":0}`))
+			return
+		}
+		if strings.HasPrefix(r.URL.RequestURI(), "/phone-api/history") {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"entries":[]}`))
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	t.Cleanup(upstream.Close)
+
+	provider, _ := fakeProvider(t, http.StatusOK, "x")
+	server := newTestServerWithPhoneAPI(t, upstream.URL, func(d *Deps) { d.ASR = asrClientFor(t, provider.URL) })
+	c := signIn(t, server)
+
+	if resp, body := postTranscript(t, c, "call-lines", "in", "+4989123456", "talked about the zabbix plan"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("transcript: %d %s", resp.StatusCode, body)
+	}
+	if resp, body := putCallNote(t, c, "call-noteonly", "order the zabbix widget"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("note: %d %s", resp.StatusCode, body)
+	}
+	if resp, body := putCallNote(t, c, "call-quiet", "voicemail backlog"); resp.StatusCode != http.StatusNoContent {
+		t.Fatalf("quiet note: %d %s", resp.StatusCode, body)
+	}
+
+	_, body := c.do(http.MethodGet, "/partials/history?q=zabbix", nil, "")
+	page := string(body)
+	if !strings.Contains(page, "Noted call (no transcript)") {
+		t.Errorf("the note-only join must render its honest label: %.600s", page)
+	}
+	if !strings.Contains(page, ">order the zabbix widget</textarea>") {
+		t.Errorf("the matching note body must ride the editor: %.600s", page)
+	}
+	if !strings.Contains(page, "talked about the zabbix plan") {
+		t.Errorf("the line-matched transcript must still render: %.600s", page)
+	}
+	if strings.Contains(page, `data-delete-transcript="call-noteonly"`) {
+		t.Errorf("a note-only row must not offer the transcript delete: %.600s", page)
+	}
+	if !strings.Contains(page, `data-delete-transcript="call-lines"`) {
+		t.Errorf("a line-matched row keeps its transcript affordances: %.600s", page)
+	}
+	if strings.Contains(page, "voicemail backlog") {
+		t.Errorf("a note matching nothing must not leak into the query view: %.600s", page)
+	}
+
+	_, body = c.do(http.MethodGet, "/partials/history", nil, "")
+	page = string(body)
+	if strings.Contains(page, "Noted call (no transcript)") {
+		t.Errorf("without a query the note-only join stays dormant: %.600s", page)
+	}
+}

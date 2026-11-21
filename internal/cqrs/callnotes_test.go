@@ -366,3 +366,72 @@ func TestNoteDeleteFreesCapPressure(t *testing.T) {
 	}
 	awaitNote(t, s, owner, "call-new")
 }
+
+// TestNoteSearchBodiesJoinsNoteProseIntoTheCorpus pins the History
+// query's note half: the search covers note bodies with the same
+// case-insensitive contains contract the transcript search uses, stays
+// owner-scoped, and orders newest first.
+func TestNoteSearchBodiesJoinsNoteProseIntoTheCorpus(t *testing.T) {
+	s := bootNotes(t, t.TempDir())
+	ctx := context.Background()
+	owner := mustExt(t, "1001")
+	other := mustExt(t, "1002")
+
+	if _, err := s.Set(ctx, owner, "call-older", "ring the zabbix team"); err != nil {
+		t.Fatalf("Set older: %v", err)
+	}
+	awaitNote(t, s, owner, "call-older")
+	if _, err := s.Set(ctx, owner, "call-newer", "ZABBIX widget ordered"); err != nil {
+		t.Fatalf("Set newer: %v", err)
+	}
+	awaitNote(t, s, owner, "call-newer")
+	if _, err := s.Set(ctx, owner, "call-unrelated", "voicemail backlog"); err != nil {
+		t.Fatalf("Set unrelated: %v", err)
+	}
+	awaitNote(t, s, owner, "call-unrelated")
+	if _, err := s.Set(ctx, other, "call-other-owner", "zabbix but not mine"); err != nil {
+		t.Fatalf("Set other owner: %v", err)
+	}
+	awaitNote(t, s, other, "call-other-owner")
+
+	hits, err := s.SearchBodies(ctx, owner, "ZABBIX")
+	if err != nil {
+		t.Fatalf("SearchBodies: %v", err)
+	}
+	if len(hits) != 2 {
+		t.Fatalf("case-insensitive contains must hit both notes, got %d: %+v", len(hits), hits)
+	}
+	if hits[0].CallID != "call-newer" || hits[1].CallID != "call-older" {
+		t.Fatalf("newest first ordering broken: %+v", hits)
+	}
+
+	if none, err := s.SearchBodies(ctx, owner, "not-there"); err != nil || len(none) != 0 {
+		t.Fatalf("no-hit search must answer empty: %v %+v", err, none)
+	}
+}
+
+// TestNoteSearchBodiesDeleteRemovesFromCorpus pins the GDPR half of the
+// corpus join: a deleted slot stops matching — the search reads the
+// live slot set, never a stale copy.
+func TestNoteSearchBodiesDeleteRemovesFromCorpus(t *testing.T) {
+	s := bootNotes(t, t.TempDir())
+	ctx := context.Background()
+	owner := mustExt(t, "1001")
+
+	if _, err := s.Set(ctx, owner, "call-gone", "ephemeral zabbix secret"); err != nil {
+		t.Fatalf("Set: %v", err)
+	}
+	awaitNote(t, s, owner, "call-gone")
+	if err := s.Delete(ctx, owner, "call-gone"); err != nil {
+		t.Fatalf("Delete: %v", err)
+	}
+	awaitNoteGone(t, s, owner, "call-gone")
+
+	hits, err := s.SearchBodies(ctx, owner, "zabbix")
+	if err != nil {
+		t.Fatalf("SearchBodies: %v", err)
+	}
+	if len(hits) != 0 {
+		t.Fatalf("deleted slot must leave the search corpus: %+v", hits)
+	}
+}

@@ -258,36 +258,43 @@ templ TranscriptSection(props HistoryPanelProps) {
 				} else if !props.AgentEnabled {
 					<p class="wp-muted wp-review-unconfigured">{ T(props.Lang, "history.review.notConfigured") }</p>
 				}
-				// Copy affordance: the button only marks the row — shell.js
-				// owns the clipboard write + toast (works when island scripts
-				// fail; label localized here, toast English by D3).
-				<button
-					class="wp-mini"
-					data-copy-transcript
-					aria-label={ T(props.Lang, "history.transcript.copy") }
-					title={ T(props.Lang, "history.transcript.copy") }
-				>@icons.Icon(icons.Clipboard, "wp-icon")</button>
-				// Download affordance (#40): same row-locality — shell.js
-				// builds a text/plain blob from the rendered transcript and
-				// triggers one file save named after the call.
-				<button
-					class="wp-mini"
-					data-download-transcript={ group.CallID }
-					aria-label={ T(props.Lang, "history.transcript.download") }
-					title={ T(props.Lang, "history.transcript.download") }
-				>@icons.Icon(icons.Download, "wp-icon")</button>
-				// End-user erasure (GDPR leg): confirm-gated delete of the
-				// whole call. The button only carries data — shell.js owns
-				// the confirm + DELETE + row removal (the shell works when
-				// island scripts fail). F3: the danger tint marks the one
-				// destructive action among this row's quiet mini buttons.
-				<button
-					class="wp-mini wp-danger"
-					data-delete-transcript={ group.CallID }
-					data-confirm={ T(props.Lang, "history.transcript.deleteConfirm") }
-					aria-label={ T(props.Lang, "history.transcript.delete") }
-					title={ T(props.Lang, "history.transcript.delete") }
-				>@icons.Icon(icons.Trash, "wp-icon")</button>
+				// Transcript affordances (copy/download/delete) render only
+				// when a transcript exists — the note-only query join has no
+				// lines to copy, no transcript to download, and no transcript
+				// to erase (a delete would 404; the note editor below owns
+				// the note slot's own lifecycle).
+				if len(group.Lines) > 0 {
+					// Copy affordance: the button only marks the row — shell.js
+					// owns the clipboard write + toast (works when island scripts
+					// fail; label localized here, toast English by D3).
+					<button
+						class="wp-mini"
+						data-copy-transcript
+						aria-label={ T(props.Lang, "history.transcript.copy") }
+						title={ T(props.Lang, "history.transcript.copy") }
+					>@icons.Icon(icons.Clipboard, "wp-icon")</button>
+					// Download affordance (#40): same row-locality — shell.js
+					// builds a text/plain blob from the rendered transcript and
+					// triggers one file save named after the call.
+					<button
+						class="wp-mini"
+						data-download-transcript={ group.CallID }
+						aria-label={ T(props.Lang, "history.transcript.download") }
+						title={ T(props.Lang, "history.transcript.download") }
+					>@icons.Icon(icons.Download, "wp-icon")</button>
+					// End-user erasure (GDPR leg): confirm-gated delete of the
+					// whole call. The button only carries data — shell.js owns
+					// the confirm + DELETE + row removal (the shell works when
+					// island scripts fail). F3: the danger tint marks the one
+					// destructive action among this row's quiet mini buttons.
+					<button
+						class="wp-mini wp-danger"
+						data-delete-transcript={ group.CallID }
+						data-confirm={ T(props.Lang, "history.transcript.deleteConfirm") }
+						aria-label={ T(props.Lang, "history.transcript.delete") }
+						title={ T(props.Lang, "history.transcript.delete") }
+					>@icons.Icon(icons.Trash, "wp-icon")</button>
+				}
 				// Post-call note (M16): one freeform box per call. The form
 				// is inert markup until shell.js wires it (without JS the
 				// buttons do nothing, the transcript stays readable) — the
