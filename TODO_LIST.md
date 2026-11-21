@@ -326,16 +326,16 @@ each verified still-open at harvest time (the plan doc keeps its detail):
 - [x] ~~nix: add `meta.description` to the vulnix app (nix/apps.nix; plan T6 µ23).~~ → done — VERIFIED ALREADY-SHIPPED (meta.description present at both app sites in nix/apps.nix; landed with the sibling session's sweep)
 - ~~**Hardening-parity pin** (harvested 2026-11-18 from the 2026-10-28 nix-review report's own §e, at the cadence drain): the backup oneshot's systemd directive list is comment-tied to the main unit's ("sandbox parity with the main unit") — no shared definition, no pin, and docs/dedup-registry.md carries no row for it. Decide: a shared `commonHardening` attrset (parity structural) vs extending the unit-hardening-pins fixture; then the dedup-registry ruling row.~~ → done 2026-11-21 (whole-list session, T17) — decided STRUCTURAL: `commonHardening` attrset in package/nixos-module.nix; both the service and the backup oneshot read the same ~20-directive spine (`//` merge), deltas stay at their units (service: INET/INET6 + restart policy; backup: AF_UNIX-only + ReadWritePaths). Chosen over the fixture extension (the fixture verifies two values; the attrset makes all-twenty parity un-driftable — a directive added lands on BOTH units). Verified: webphone-module check green + both module-output goldens byte-identical (behavior-preserving); dedup-registry sweep-log row landed.
 - ~~File the drafted BuildFlow bandit-provider issue
-      (docs/drafts/2026-10-11_buildflow-bandit-stdout-findings.md; owner banner
-      still unchecked).~~ → done 2026-11-21 (pareto T26): FILED as
-      LarsArtmann/BuildFlow#113 after the verify-before-filing gates —
-      provider re-verified bare at BuildFlow `ceb25caa1` (python_tools.go:45,
-      output_parser.go:111-120), fresh reproduction 339 furniture findings /
-      one shared id at webphone HEAD, no existing issue (only the closed #64
-      statix class, which does not cover bandit); body passed the
-      check-draft voice gate (body-issue, ai-drafted, unsolicited) and the
-      provenance banner ships UNCHECKED for owner review (the appkit-asks
-      precedent). Final text: docs/drafts/2026-11-21_bandit-issue-final.md.
+  (docs/drafts/2026-10-11_buildflow-bandit-stdout-findings.md; owner banner
+  still unchecked).~~ → done 2026-11-21 (pareto T26): FILED as
+  LarsArtmann/BuildFlow#113 after the verify-before-filing gates —
+  provider re-verified bare at BuildFlow `ceb25caa1` (python_tools.go:45,
+  output_parser.go:111-120), fresh reproduction 339 furniture findings /
+  one shared id at webphone HEAD, no existing issue (only the closed #64
+  statix class, which does not cover bandit); body passed the
+  check-draft voice gate (body-issue, ai-drafted, unsolicited) and the
+  provenance banner ships UNCHECKED for owner review (the appkit-asks
+  precedent). Final text: docs/drafts/2026-11-21_bandit-issue-final.md.
 - [x] **DONE 2026-11-08 (P4-7): file-size-check configurable cap** — ALREADY
       SHIPPED upstream: buildflow #91 (closed COMPLETED 2026-11-06) fixed the
       inert `max_file_size` override at the root (the CLI clobbered the
