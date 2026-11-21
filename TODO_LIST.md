@@ -86,13 +86,31 @@ front matter does not carry their history (one home per fact, per the rule above
       daemon sweep to 67d7d27b is CI-green, but the documented bar is a fresh parity
       diff against the frozen oracle + battery; also record the upgrade in that
       repo's CHANGELOG or pin back to the tag form.
-- [ ] **small residue** (07-44 report §f 22-25, 27-29, 32-36): delete the local
-      release-line branch post-merge; island node suite's 2 base failures (drafts
-      pill state) — repair train or recorded acceptance; INDEX.md row for the 07-44
-      report; CHANGELOG "Fixed" entries for the eval-red main heal, the lens hash,
-      the tag ancestry merge; stale-prod-watch tolerance for source-2.15.0 vs
-      prod-2.14.0; lens CI verdict on 0b83c4f; rail report §f rows 47-50 harvest
-      check; closing pbx-artmann battery; trash the scratch logs.
+- ~~**small residue** (07-44 report §f 22-25, 27-29, 32-36): delete the local
+  release-line branch post-merge; island node suite's 2 base failures (drafts
+  pill state) — repair train or recorded acceptance; INDEX.md row for the 07-44
+  report; CHANGELOG "Fixed" entries for the eval-red main heal, the lens hash,
+  the tag ancestry merge; stale-prod-watch tolerance for source-2.15.0 vs
+  prod-2.14.0; lens CI verdict on 0b83c4f; rail report §f rows 47-50 harvest
+  check; closing pbx-artmann battery; trash the scratch logs.~~ → done
+  2026-11-21 (whole-list session), item by item: `release-line` deleted
+  (merged); the island node suite is 370/370 ZERO failures (the 2
+  drafts-pill base failures healed with the consolidation train); the
+  07-44 report rides INDEX.md; the eval-red heal (81b52f3b, vm-tests
+  import path) and the tag-ancestry merge are test-infra/git-surgery —
+  changelog-SILENT per the bar's test-only exemption — and the lens
+  vendorHash fix belongs to pbx-lens's own CHANGELOG; the
+  stale-prod tolerance is the watch's existing 24h young-release grace
+  (`STALE_PROD_THRESHOLD_HOURS` — a fresh v2.15.0 release never files
+  against prod-2.14.0 inside a day); lens CI was red TWICE on the
+  styles-guard tailwind pin lagging the nixpkgs lock (4.3.4 vs 4.3.5,
+  one banner line) — healed `f907d26` per the guard comment's own
+  rule; the rail report's §f 47/48 are owner-parked (T2 scheduling +
+  the deployed-rail review both gate on the owner deploy) and 49's
+  rollback ladder lives in the owner-handover row above; the
+  pbx-artmann battery rides row "docs-gates v0.3.1 upgrade parity"
+  below; work/{new,old}-list.txt trashed (work/lint stays — the
+  `-plain` CI lane's output home).
 
 ### 2026-11-21 report-harvest batch (from the 02-15 and 02-28 status reports' §f)
 
