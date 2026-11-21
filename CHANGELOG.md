@@ -10,6 +10,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 
+- **Dependency bump train 2 — templ v0.3.1118, CLI-paired**: the
+  library, the devshell compiler pin (rev + version + the CLI's own
+  vendorHash), and the 16 regenerated views move together — the
+  committed codegen always comes from the same compiler the library
+  pins. Full suite 37/37 green; both the `.#templ` package and
+  `.#webphone` build green on the re-pinned hashes.
 - **Dependency bump train 1 — the go-cqrs-lite engine wave**:
   `system` v4.18.0→v4.19.0, `metaengine` v4.23.0→v4.26.0 (the RawQuery
   crash-loop fix's wave), `metaengine/sqliteengine` v4.8.0→v4.9.1.

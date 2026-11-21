@@ -31,14 +31,14 @@
         # github.com/a-h/templ line (the AGENTS.md templ rule).
         templ = pkgs.buildGoModule.override { go = pkgs.go_1_27; } {
           pname = "templ";
-          version = "0.3.1100";
+          version = "0.3.1118";
           src = pkgs.fetchFromGitHub {
             owner = "a-h";
             repo = "templ";
             rev = "v0.3.1118";
             hash = "sha256-4ARBfwLD37FSCC3pgYWomsXRThl8NkHLte8awD0/Ddo=";
           };
-          vendorHash = "sha256-MMAoHofeZzGNFsjxY4nrPRyaiKOk4fLYY+kIVmdAL3g=";
+          vendorHash = "sha256-SI3Y7eqw+sLvBmRi7r4Oc30ovIKvFRGxdXF8fyKog9g=";
           subPackages = [ "cmd/templ" ];
           meta = {
             description = "Templ compiler pinned to go.mod's library version (the committed codegen must match the library)";
@@ -187,7 +187,7 @@
                 ];
               };
 
-              vendorHash = "sha256-ASWaoR4u4hWtLlNhYj790jnNlFDiHgH6rjjREvk39eY=";
+              vendorHash = "sha256-uSGayJIK7h99Y7v/9GqXhfQraAqWcXmUD1OQr8TzBt4=";
 
               proxyVendor = true;
 
