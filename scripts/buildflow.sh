@@ -56,8 +56,13 @@ fi
 
 "${RUN[@]}" "$@"
 EXTRA=()
-buildflow list steps 2>/dev/null | grep -q gitleaks && EXTRA+=(-s gitleaks)
-buildflow list steps 2>/dev/null | grep -q codespell && EXTRA+=(-s codespell)
-if ((${#EXTRA[@]} > 0)); then
-	"${RUN[@]}" "${EXTRA[@]}"
-fi
+buildflow list steps 2>/dev/null | grep -q gitleaks && EXTRA+=(gitleaks)
+buildflow list steps 2>/dev/null | grep -q codespell && EXTRA+=(codespell)
+# One --step per invocation, chained: the CLI REJECTS a repeated --step
+# flag ("pflag last-wins would have run only the last one"), so the old
+# two-flags-in-one-call shape refused the whole scan (2026-11-21, the
+# 2.15.0 attempt-4 gates died on this AFTER every gate had passed).
+# set -e keeps the fail-fast: a failed scan aborts the wrapper.
+for extra in "${EXTRA[@]}"; do
+	"${RUN[@]}" -s "$extra"
+done
