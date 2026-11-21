@@ -290,35 +290,19 @@ in
             StateDirectoryMode = "0750";
             UMask = "0077";
 
-            # Hardening: the service needs almost nothing — network, its state
-            # directory, and nothing else.
-            NoNewPrivileges = true;
-            PrivateTmp = true;
-            PrivateDevices = true;
-            ProtectSystem = "strict";
-            ProtectHome = true;
-            ProtectClock = true;
-            ProtectHostname = true;
-            ProtectKernelLogs = true;
-            ProtectKernelModules = true;
-            ProtectKernelTunables = true;
-            ProtectControlGroups = true;
-            ProtectProc = "invisible";
+            # Hardening: the service needs almost nothing — network, its
+            # state directory, and nothing else. The shared spine rides
+            # commonHardening (parity with the backup oneshot is
+            # structural); the service-specific deltas are the INET/INET6
+            # address families (SIP WSS + provider webhooks) and restart
+            # policy below.
+          }
+          // commonHardening
+          // {
             RestrictAddressFamilies = [
               "AF_INET"
               "AF_INET6"
               "AF_UNIX"
-            ];
-            RestrictNamespaces = true;
-            RestrictRealtime = true;
-            RestrictSUIDSGID = true;
-            LockPersonality = true;
-            MemoryDenyWriteExecute = true;
-            CapabilityBoundingSet = "";
-            SystemCallArchitectures = "native";
-            SystemCallFilter = [
-              "@system-service"
-              "~@privileged @resources"
             ];
             Restart = "on-failure";
             RestartSec = 5;
@@ -339,34 +323,14 @@ in
             StateDirectory = builtins.replaceStrings [ "/var/lib/" ] [ "" ] cfg.backup.destDir;
             StateDirectoryMode = "0750";
             UMask = "0077";
-            # Sandbox parity with the main unit (the oneshot reads the
-            # same private data): everything the backup needs is local
-            # files — AF_UNIX only, no capabilities, no exotic syscalls
-            # (sqlite3/rsync/date/find all sit inside @system-service).
-            NoNewPrivileges = true;
-            PrivateTmp = true;
-            PrivateDevices = true;
-            ProtectSystem = "strict";
-            ProtectHome = true;
-            ProtectClock = true;
-            ProtectHostname = true;
-            ProtectKernelLogs = true;
-            ProtectKernelModules = true;
-            ProtectKernelTunables = true;
-            ProtectControlGroups = true;
-            ProtectProc = "invisible";
+            # Sandbox parity with the main unit is STRUCTURAL (commonHardening
+            # above — the 2026-11-21 pin): everything the backup needs is
+            # local files, so its only delta is AF_UNIX-only address families
+            # (no network at all) plus write access to its destination.
+          }
+          // commonHardening
+          // {
             RestrictAddressFamilies = [ "AF_UNIX" ];
-            RestrictNamespaces = true;
-            RestrictRealtime = true;
-            RestrictSUIDSGID = true;
-            LockPersonality = true;
-            MemoryDenyWriteExecute = true;
-            CapabilityBoundingSet = "";
-            SystemCallArchitectures = "native";
-            SystemCallFilter = [
-              "@system-service"
-              "~@privileged @resources"
-            ];
             ReadWritePaths = [ cfg.backup.destDir ];
           };
           # Online copy: sqlite's .backup API takes a consistent snapshot

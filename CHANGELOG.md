@@ -50,6 +50,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **Hardening parity is structural** — the NixOS module's service and
+  backup oneshot now read ONE shared `commonHardening` directive set
+  (the ~20-line sandbox spine was comment-tied before; a directive
+  added to the spine lands on both units). Rendered units are
+  byte-identical (module-output goldens unchanged); the ruling row
+  lives in docs/dedup-registry.md.
 - **The test-only legacy messages store is deleted** —
   `internal/store/messages.go` (test-only since the journal swap; the
   composition root stopped registering it 2026-11-12) plus its seven
