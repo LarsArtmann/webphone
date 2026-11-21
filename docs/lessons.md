@@ -1320,3 +1320,26 @@ itself were the client's local network (ERR_NETWORK_CHANGED →
 ERR_NAME_NOT_RESOLVED); the machinery recovered by design the moment
 DNS returned — the defects fixed here are what the outage EXPOSED,
 not the outage.
+
+## The phase gate runs `-race` per task commit, not per train (2026-10-27 §e1, rowed 2026-11-11)
+
+A timing-dependent fan-out spec survived ~12 h of same-day trains
+because `-race` ran only at train end — every intermediate commit was
+certified by the plain suite. The rule: any task commit touching a
+concurrent surface (goroutines, channels, shared maps, SSE fan-out)
+runs `go test -race ./<touched-pkg>/` IN the task's commit loop; the
+train-end race pass is a backstop, not the gate. Cost measured: the
+scoped `-race` package run is minutes, the red it catches is a
+session-class debug otherwise.
+
+## Synchronize before assert; fixtures before parsers (2026-10-27 §e2/§e4, rowed 2026-11-11)
+
+Two craft rules from the same train: (1) a test that asserts on an
+async fold must first OBSERVE the fold (poll-to-convergence or the
+await helper) — asserting on a read that races the write makes the
+suite flake-shaped from birth, and the flake always surfaces on the
+loaded CI runner, never locally; (2) when pinning an external
+producer's wire shape, capture the producer's RENDERED bytes into a
+fixture FIRST and make the parser test read those bytes — hand-typing
+the "expected" JSON encodes what you think the producer sends, which
+is exactly the assumption the test exists to check.

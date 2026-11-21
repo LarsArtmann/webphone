@@ -26,12 +26,22 @@ type TraceRecorder interface {
 	Snapshot(ctx context.Context) (string, error)
 }
 
-// traceMiddleware reports every completed request to the recorder. It is
-// added to the chain ONLY when the seam is wired, so an untraced
-// deployment pays nothing at all.
+// traceMiddleware reports every completed request to the recorder —
+// except /metrics self-scrapes, which the latency histogram already
+// excludes (the 2026-11-21 alignment ruling, TODO drain of T22 open
+// leg f26: a fast 200 scrape can never fire the 2s/5xx capture
+// trigger, so observing it was dead weight AND the only surface whose
+// exclusion the two observers disagreed on; skipped requests also skip
+// the ResponseRecorder wrap, so scrapes ride the uninstrumented
+// handler). The middleware is added to the chain ONLY when the seam is
+// wired, so an untraced deployment pays nothing at all.
 func TraceMiddleware(rec TraceRecorder) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.URL.Path == "/metrics" {
+				next.ServeHTTP(w, r)
+				return
+			}
 			start := time.Now()
 			recorder := httputil.NewResponseRecorder(w)
 			next.ServeHTTP(recorder, r)
