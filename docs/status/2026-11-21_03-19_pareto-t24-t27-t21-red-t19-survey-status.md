@@ -178,18 +178,18 @@ session STOPS here per the owner's status-report-then-wait order.
 
 ## f) Next actions (the pareto tail this session owes)
 
-| # | Item | Owner | Pri |
-| --- | --- | --- | --- |
-| 1 | T21 fix-forward: pin `settings.auth.passkey.rp_id/rp_origins` in the sso-only fixture, re-run `nix build -L .#checks.x86_64-linux.telephony-webphone-sso-only`, green → stack CHANGELOG + the webphone TODO §f-6 strike | agent | High |
-| 2 | T19 implement: re-vendor fixtures (sync copy), `Line(extension, did?)` + label helper in SessionApi, WireContractTest pins (lines parse + old parallel lists asserted GONE), `scripts/verify-gate.sh` green, android CHANGELOG + mirror TODO row | agent | High |
-| 3 | T20: check the android wire-fixture triggers; execute only FIRED follow-ups | agent | Med |
-| 4 | T22 pma leg: mirror row into pma's TODO_LIST (the heuristic itself is a careful LIVE-daemon train) | agent | Med |
-| 5 | T22 hub leg: mirror/verify the hub runner durable-fix row in the hub repo | agent | Med |
-| 6 | T01–T03: coordinate with the concurrent session's deploy chain (take over ONLY if their train stalls) | agent+owner | High |
-| 7 | CI-watcher fix (exit-1 grace window + heartbeat) | agent | Med |
-| 8 | Final report-back: render BOTH plan tables (T01–T27 + m01–m27) with outcomes | agent | High |
-| 9 | Verify the concurrent v2.15.0 train's end state (tag cut, gh release) per the harvest row | agent | Low |
-| 10 | Answer §g-3 and reconcile TODO_LIST canonicity once | owner | Med |
+| #  | Item                                                                                                                                                                                                                                             | Owner       | Pri  |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- | ---- |
+| 1  | T21 fix-forward: pin `settings.auth.passkey.rp_id/rp_origins` in the sso-only fixture, re-run `nix build -L .#checks.x86_64-linux.telephony-webphone-sso-only`, green → stack CHANGELOG + the webphone TODO §f-6 strike                          | agent       | High |
+| 2  | T19 implement: re-vendor fixtures (sync copy), `Line(extension, did?)` + label helper in SessionApi, WireContractTest pins (lines parse + old parallel lists asserted GONE), `scripts/verify-gate.sh` green, android CHANGELOG + mirror TODO row | agent       | High |
+| 3  | T20: check the android wire-fixture triggers; execute only FIRED follow-ups                                                                                                                                                                      | agent       | Med  |
+| 4  | T22 pma leg: mirror row into pma's TODO_LIST (the heuristic itself is a careful LIVE-daemon train)                                                                                                                                               | agent       | Med  |
+| 5  | T22 hub leg: mirror/verify the hub runner durable-fix row in the hub repo                                                                                                                                                                        | agent       | Med  |
+| 6  | T01–T03: coordinate with the concurrent session's deploy chain (take over ONLY if their train stalls)                                                                                                                                            | agent+owner | High |
+| 7  | CI-watcher fix (exit-1 grace window + heartbeat)                                                                                                                                                                                                 | agent       | Med  |
+| 8  | Final report-back: render BOTH plan tables (T01–T27 + m01–m27) with outcomes                                                                                                                                                                     | agent       | High |
+| 9  | Verify the concurrent v2.15.0 train's end state (tag cut, gh release) per the harvest row                                                                                                                                                        | agent       | Low  |
+| 10 | Answer §g-3 and reconcile TODO_LIST canonicity once                                                                                                                                                                                              | owner       | Med  |
 
 ## g) Questions for the owner
 
