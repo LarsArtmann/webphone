@@ -855,6 +855,14 @@ swap, fax badge, 2 empty states) lives in CHANGELOG + the per-library reports �
       any /healthz poll during an incident), or the next flight-recorder train. Evidence:
       docs/review/libs/go-appkit.md § module table (2026-11-12) +
       docs/planning/2026-11-14_t23-appkit-flightrecorderhealth.md (2026-11-15 verification).
+      DEMAND CHECK 2026-11-21 (pareto T27): gate HOLDS, adoption stays deferred — (a) zero
+      webphone health-batch wedge sightings in docs/status + docs/lessons since the gate armed
+      2026-11-12 (the corpus's "wedge" stories are CI-runner and dev-machine go-get classes,
+      not app incidents); (b) the request-trigger arm is STRONGER than the row assumed where
+      monitoring is on: the stack's `telephony-health` curls webphone `/healthz` per tick
+      (monitoring.nix), and a failing leg makes that poll itself a 5xx/slow traced request —
+      the snapshot fires WITHOUT the module. The remaining gap is the narrow "background loop
+      dies while every HTTP answer stays fast-200" class; reopen per the registry trigger.
 
 ### Fleet-libs reopen-trigger registry (2026-11-04, T25 — the ONE table)
 
