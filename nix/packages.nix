@@ -35,8 +35,8 @@
           src = pkgs.fetchFromGitHub {
             owner = "a-h";
             repo = "templ";
-            rev = "v0.3.1100";
-            hash = "sha256-QViQAMtCqaXS4GodlSCW/nE4Sox+EF49sbb7h9RBIS0=";
+            rev = "v0.3.1118";
+            hash = "sha256-4ARBfwLD37FSCC3pgYWomsXRThl8NkHLte8awD0/Ddo=";
           };
           vendorHash = "sha256-MMAoHofeZzGNFsjxY4nrPRyaiKOk4fLYY+kIVmdAL3g=";
           subPackages = [ "cmd/templ" ];
