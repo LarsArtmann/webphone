@@ -47,9 +47,13 @@ front matter does not carry their history (one home per fact, per the rule above
 - [ ] **daemon sentinel denylist proposal** (07-44 report §f 20): the auto-commit
       daemon must never commit `sha256-AAAA…`/`sha256-0000…` sentinel content —
       three poisoning occurrences now (2026-11-02 + two in pbx-lens).
-- [ ] **release.sh step-0 eval precondition** (07-44 report §f 21): the dry-run checks
-      preconditions, not tree health — an eval-red main passed and cost a full
-      buildflow cycle; `nix flake check --no-build` belongs in step 1.
+- ~~**release.sh step-0 eval precondition** (07-44 report §f 21): the dry-run checks
+  preconditions, not tree health — an eval-red main passed and cost a full
+  buildflow cycle; `nix flake check --no-build` belongs in step 1.~~ → done
+  2026-11-21 (whole-list session): step 1 gained `run nix flake check
+      --no-build` right after the version-binding guard (dry-run-aware via the
+  `run` wrapper); an eval-red tree now dies at step 1 instead of after a
+  full buildflow cycle.
 - [ ] **release-window convention** (07-44 report §f 30-31): a release needs a quiet
       window (assert_clean_tree cannot beat the daemon; step 7 raced it too — commit
       became "ahead by 1" mid-commit); sessions pause commits or the release locks

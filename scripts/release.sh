@@ -144,6 +144,13 @@ if [ "$skip_version_guard" != "1" ] && [ -n "$tag_version" ] && [ "$flake_versio
 fi
 echo "ok: flake.nix webphoneVersion=$flake_version matches newest tag v$tag_version"
 
+# Eval precondition (2026-11-21, 07-44 report §f 21): step 1 checked
+# preconditions, not tree health — an eval-red main once passed every
+# check here and burned a full buildflow cycle before step 4's
+# `nix flake check` caught it. Eval constructs nothing and is cheap
+# next to the gates; fail HERE instead.
+run nix flake check --no-build
+
 step "2/9 fold-check: CHANGELOG has a dated $VERSION section"
 grep -q "^## \[$VERSION\] " CHANGELOG.md || {
 	echo "CHANGELOG has no '## [$VERSION] - date' section; fold [Unreleased] first (runbook step 1)" >&2

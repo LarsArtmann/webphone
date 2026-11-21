@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+
+- **release.sh evals the tree at step 1 before burning gate cycles**:
+  a `nix flake check --no-build` precondition now fails an eval-red
+  main immediately — previously such a tree passed every step-1 check
+  and cost a full buildflow cycle before step 4 caught it.
+
 ## [2.15.0] - 2026-11-21
 
 ### Added
