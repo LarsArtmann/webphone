@@ -133,47 +133,47 @@ The status request arrived while A25's final full buildflow run was still owed.
 ## e) WHAT WE SHOULD IMPROVE
 
 ~~1. **Narrative commits keep losing the race.** AGENTS.md already says~~ v: verified: the same-call stage+commit rule is AGENTS canon (Concurrent sessions)
-   stage+commit in ONE call with verification; I staged but deferred the
-   narrative commit — the daemon chunked the train. Next trains: commit the
-   narrative at each phase boundary IMMEDIATELY after the phase's tests pass.
+stage+commit in ONE call with verification; I staged but deferred the
+narrative commit — the daemon chunked the train. Next trains: commit the
+narrative at each phase boundary IMMEDIATELY after the phase's tests pass.
 ~~2. **`go vet` is not in my local loop.** The repo's own bar caught it, but an~~ v: verified: buildflow's test-compile (go vet) gates every train
-   hour earlier costs less than a red full run. Add `go vet ./...` to the
-   per-aggregate verification trio (build/test/vet).
+hour earlier costs less than a red full run. Add `go vet ./...` to the
+per-aggregate verification trio (build/test/vet).
 ~~3. **Zero-event dispatch needed empirical proving** — it works (pinned by~~ v: verified: pinned by the enroll tests (burn-inert) + the plan Errata
-   tests now), and the finding is in the plan Errata so no future aggregate
-   re-litigates it.
+tests now), and the finding is in the plan Errata so no future aggregate
+re-litigates it.
 ~~4. **Smoke needs the devshell** — should be written into AGENTS.md commands~~ v: verified: the AGENTS commands carry nix develop -c on every smoke invocation
-   (currently only implied by the nix develop prefix).
+(currently only implied by the nix develop prefix).
 
 ## f) NEXT — the queue (ranked, ~47 plan items remain)
 
-| #  | Item                                                                                                               | Size | Note                                                                                                                                                                                                                                                                |
-| -- | ------------------------------------------------------------------------------------------------------------------ | ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-~~| 1  | A25 finish: full no-cache buildflow green + narrative commit + push + CI-watch                                     | S    | the sliver left                                                                                                                                                                                                                                                     |~~ v: verified: the train completed same day (the 17-19/17-22 reports land the closeout)
-~~| 2  | A26 contacts aggregate (flagship parity: cap 500, rename-keeps-id+createdAt, never-sweep)                          | M    | P4                                                                                                                                                                                                                                                                  |~~ v: verified: contacts answer from system.db since the 2026-11-09 ONE-journal-world closeout (AGENTS bullet of that name)
-~~| 3  | A27 transcripts aggregate (5000/owner trim stays; per-CALL floor keeps loop)                                       | M    | P4                                                                                                                                                                                                                                                                  |~~ v: verified: the per-owner 5000 bound is declarative (WithCapPerGroup); the per-call floor loop documented in AGENTS
-~~| 4  | A28 call notes + reviews aggregates (409 Conflict vs 2000 Rejection)                                               | M    | P4                                                                                                                                                                                                                                                                  |~~ v: verified: call_notes (409 note_list_full Conflict) + call_reviews (2000 REJECT cap) both ride system.db per AGENTS
-~~| 5  | A29 P4 importers ×4 + markers + dual-run diffs                                                                     | M    | P4                                                                                                                                                                                                                                                                  |~~ v: verified: the importers + markers + dual-run diffs shipped with the P4 trains (2026-11-08/09)
-~~| 6  | A30 P4 gates + release train (one release per phase, D4)                                                           | M    | P4 — RESOLVED 2026-11-19: shipped as the consolidated v2.14.0 release train (2026-11-11) via the standing release.sh dance; per-phase releases superseded by the runbook's one-tag posture (docs/status/2026-11-19_15-20_release-readiness.md owns the current one) |~~ v: verified: the row's own RESOLVED note (v2.14.0 consolidation, one-tag posture)
-~~| 7  | A31 core stream design doc (per-thread streams; AppendToThread as ONE Decide; R7 retry)                            | H    | P5 map                                                                                                                                                                                                                                                              |~~ v: verified: per-thread streams keyed owner+network+remote live (migration v5; AGENTS chat-network seam)
-~~| 8  | A32 delivery machine integration (DeliveryAdvance → decisions; self-send 422 arm preserved)                        | H    | P5                                                                                                                                                                                                                                                                  |~~ v: verified: DeliveryAdvance verdicts decide on the journal (AGENTS machine-tables bullet)
-~~| 9  | A33 message projections (byte-identical fragments, `wp-bubble`/`wp-thread-row` pins)                               | H    | P5                                                                                                                                                                                                                                                                  |~~ v: verified: byte-identical fragments with the greppable row classes (wp-bubble, wp-thread-row per AGENTS)
-~~| 10 | A34 messaging.Service swap (Receive/Send/flags dispatch; nudge rules intact)                                       | H    | P5                                                                                                                                                                                                                                                                  |~~ v: verified: Receive/Send/flags dispatch through the journal (AGENTS ONE journal world)
-~~| 11 | A35 THE importer (webphone.db → streams; pre-cutover snapshot; dual-run diff)                                      | H    | the risky moment                                                                                                                                                                                                                                                    |~~ v: verified: the webphone.db importer lived in the v2.12.0 upgrade chain (AGENTS upgrade-chain note)
-~~| 12 | A36 retention port — **BLOCKED on upstream go-cqrs-lite#118** (trim/Tombstone)                                     | H    | needs upstream ship + bump                                                                                                                                                                                                                                          |~~ v: verified: go-cqrs-lite#118 shipped; TrimStream is the GDPR arm, test-pinned per aggregate (AGENTS)
-~~| 13 | A37 core parity battery (owner_scoping, admin_reads, threads_flags, byte-pins)                                     | H    | P5                                                                                                                                                                                                                                                                  |~~ v: verified: owner_scoping + admin_reads pins live (store/admin_reads_test.go, readmodels, cqrs/faxes)
-~~| 14 | A38 P5 gates + release + stack browser E2E (445s budget)                                                           | H    | P5 ship                                                                                                                                                                                                                                                             |~~ v: verified: the storage-ladder closeout landed 2026-11-12 with full gates
-~~| 15 | A39 fax aggregate (faxMoves decider; provider_ref dedup → durable idempotency)                                     | M    | P6                                                                                                                                                                                                                                                                  |~~ v: verified: cqrs.Faxes answers from system.db (AGENTS admin surface bullet)
-~~| 16 | A40 fax importer + retention + P6 release                                                                          | M    | P6                                                                                                                                                                                                                                                                  |~~ v: verified: faxes ride system.db backups since the journal swap (AGENTS A43 note)
-~~| 17 | A41 handler unification sweep (every write surface dispatches)                                                     | M    | P7                                                                                                                                                                                                                                                                  |~~ v: verified: every write surface dispatches; deciders own legality (AGENTS ONE journal world)
-~~| 18 | A42 contracts/catalog diff pins (openapi byte check, asyncapi, EventCatalog)                                       | M    | P7                                                                                                                                                                                                                                                                  |~~ v: verified: openapi golden + contracts-fresh + the hub export gates all live (AGENTS machine-contract surfaces)
-~~| 19 | A43 dedup migration to sys.Dedup() + readmodels.db death certificate                                               | M    | P7                                                                                                                                                                                                                                                                  |~~ v: verified: sys.Dedup() is the ONE CAS home; readmodels.db is the inert orphan (AGENTS)
-~~| 20 | A44 sessions + app_flags ruling per D2 (`auth:` + session suite)                                                   | M    | P7                                                                                                                                                                                                                                                                  |~~ v: verified: sessions stay SQL per the D2 ruling; app_flags lives on (matrix sync cursor)
-~~| 21 | A45 ladder freeze (no new store/db.go steps; retirement plan doc)                                                  | S    | P7                                                                                                                                                                                                                                                                  |~~ v: verified: the hand ladder is FROZEN (store/db.go header; retirement plan doc 2026-11-09)
-~~| 22 | A46 doctrine rewrite (AGENTS.md no-ES → ES; machine-tables → deciders; fleet-libs re-score)                        | M    | P7                                                                                                                                                                                                                                                                  |~~ v: verified: AGENTS carries the rewritten doctrine (ONE journal world; machine tables consumed at the decision)
-~~| 23 | A47 final battery + release (full flake check, VM tests WITHOUT readmodels.db, vulnix, version bump, stack re-pin) | H    | 100% shipped                                                                                                                                                                                                                                                        |~~ v: verified: v2.14.0 (2026-11-11) + v2.15.0 (2026-11-21) shipped through the full battery
-~~| 24 | Regenerate `docs/status/INDEX.md` after this report (done in this commit)                                          | S    | hygiene                                                                                                                                                                                                                                                             |~~ v: verified: done in that commit; status-index --check keeps it honest
-~~| 25 | Monitor upstream go-cqrs-lite#118 (the A36 unblocker); file/ping if idle                                           | S    | unblock A36                                                                                                                                                                                                                                                         |~~ v: verified: #118 shipped upstream; TrimStream is in the tree and pinned
+| #  | Item | Size                                                                                                               | Note |
+| -- | ---- | ------------------------------------------------------------------------------------------------------------------ | ---- |
+| ~~ | 1    | A25 finish: full no-cache buildflow green + narrative commit + push + CI-watch                                     | S    |
+| ~~ | 2    | A26 contacts aggregate (flagship parity: cap 500, rename-keeps-id+createdAt, never-sweep)                          | M    |
+| ~~ | 3    | A27 transcripts aggregate (5000/owner trim stays; per-CALL floor keeps loop)                                       | M    |
+| ~~ | 4    | A28 call notes + reviews aggregates (409 Conflict vs 2000 Rejection)                                               | M    |
+| ~~ | 5    | A29 P4 importers ×4 + markers + dual-run diffs                                                                     | M    |
+| ~~ | 6    | A30 P4 gates + release train (one release per phase, D4)                                                           | M    |
+| ~~ | 7    | A31 core stream design doc (per-thread streams; AppendToThread as ONE Decide; R7 retry)                            | H    |
+| ~~ | 8    | A32 delivery machine integration (DeliveryAdvance → decisions; self-send 422 arm preserved)                        | H    |
+| ~~ | 9    | A33 message projections (byte-identical fragments, `wp-bubble`/`wp-thread-row` pins)                               | H    |
+| ~~ | 10   | A34 messaging.Service swap (Receive/Send/flags dispatch; nudge rules intact)                                       | H    |
+| ~~ | 11   | A35 THE importer (webphone.db → streams; pre-cutover snapshot; dual-run diff)                                      | H    |
+| ~~ | 12   | A36 retention port — **BLOCKED on upstream go-cqrs-lite#118** (trim/Tombstone)                                     | H    |
+| ~~ | 13   | A37 core parity battery (owner_scoping, admin_reads, threads_flags, byte-pins)                                     | H    |
+| ~~ | 14   | A38 P5 gates + release + stack browser E2E (445s budget)                                                           | H    |
+| ~~ | 15   | A39 fax aggregate (faxMoves decider; provider_ref dedup → durable idempotency)                                     | M    |
+| ~~ | 16   | A40 fax importer + retention + P6 release                                                                          | M    |
+| ~~ | 17   | A41 handler unification sweep (every write surface dispatches)                                                     | M    |
+| ~~ | 18   | A42 contracts/catalog diff pins (openapi byte check, asyncapi, EventCatalog)                                       | M    |
+| ~~ | 19   | A43 dedup migration to sys.Dedup() + readmodels.db death certificate                                               | M    |
+| ~~ | 20   | A44 sessions + app_flags ruling per D2 (`auth:` + session suite)                                                   | M    |
+| ~~ | 21   | A45 ladder freeze (no new store/db.go steps; retirement plan doc)                                                  | S    |
+| ~~ | 22   | A46 doctrine rewrite (AGENTS.md no-ES → ES; machine-tables → deciders; fleet-libs re-score)                        | M    |
+| ~~ | 23   | A47 final battery + release (full flake check, VM tests WITHOUT readmodels.db, vulnix, version bump, stack re-pin) | H    |
+| ~~ | 24   | Regenerate `docs/status/INDEX.md` after this report (done in this commit)                                          | S    |
+| ~~ | 25   | Monitor upstream go-cqrs-lite#118 (the A36 unblocker); file/ping if idle                                           | S    |
 
 (Items beyond 25 are the per-task micro-steps already enumerated in the plan's
 Table B — not duplicated here.)
@@ -181,19 +181,19 @@ Table B — not duplicated here.)
 ## g) QUESTIONS I CANNOT ANSWER MYSELF
 
 ~~1. **A36/retention upstream dependency:** go-cqrs-lite#118 (journal trim) is~~ v: verified: moot — #118 shipped upstream (TrimStream in the tree since 2026-11-09)
-   the P5 deletion gate. When Phase 5 reaches A36 and #118 still hasn't
-   shipped: do you want me to (a) implement it myself in go-cqrs-lite and
-   release (I own that repo), (b) defer A36 and ship P5 without the
-   retention/GDPR arm (the §4.9 P5 abort says don't), or (c) park the whole
-   Phase-5 train until upstream moves?
+the P5 deletion gate. When Phase 5 reaches A36 and #118 still hasn't
+shipped: do you want me to (a) implement it myself in go-cqrs-lite and
+release (I own that repo), (b) defer A36 and ship P5 without the
+retention/GDPR arm (the §4.9 P5 abort says don't), or (c) park the whole
+Phase-5 train until upstream moves?
 ~~2. **One release per phase (D4) with the daemon racing commits:** Phases land~~ v: verified: answered by the one-tag posture (row 6's RESOLVED note; the runbook owns it)
-   as many daemon chunks + at most one surviving narrative commit. Should the
-   version bump + tag for each phase release happen at phase END (current
-   reading), or do you want a single release at the end of P7 covering the
-   whole SUPERB migration?
+as many daemon chunks + at most one surviving narrative commit. Should the
+version bump + tag for each phase release happen at phase END (current
+reading), or do you want a single release at the end of P7 covering the
+whole SUPERB migration?
 ~~3. **Concurrent-session coordination:** the other session bumped~~ v: verified: answered — the AGENTS Concurrent-sessions section codifies the posture (additive merges, never revert, fix-forward protocol)
-   loginpage→v4.17.0 / cqrs-htmx→v4.18.1 / usermgmt→v4.20.0 and is doing CRM
-   create-form work mid-train. My phases touch app.go/server.go readmodels
-   seams they also edit. Do you want me to keep working straight through
-   (current posture: additive merges, never revert, re-View before edit), or
-   pause between phases when their activity touches the same files?
+loginpage→v4.17.0 / cqrs-htmx→v4.18.1 / usermgmt→v4.20.0 and is doing CRM
+create-form work mid-train. My phases touch app.go/server.go readmodels
+seams they also edit. Do you want me to keep working straight through
+(current posture: additive merges, never revert, re-View before edit), or
+pause between phases when their activity touches the same files?
