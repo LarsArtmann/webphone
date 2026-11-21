@@ -63,6 +63,23 @@
 # suppress-everything anti-pattern the 2026-10-28 retirement called out).
 baseline: .buildflow-baseline.json
 #
+# max_file_size (§D10 disposition, 2026-11-21): the 350-line default
+# contradicts the repo's RATIFIED size governor — the per-package depth
+# budget (internal/arch/depthbudget_test.go: 1500 default ceiling,
+# named pins with reasons, ratchet direction DOWN). A second, stricter
+# per-FILE governor on top of it produced 47 error findings over the
+# NAMED-PIN mass (config.go/server.go/panels.go/… — the html hub is a
+# ruled residual) after BuildFlow's 2026-11-16 provider registration
+# change promoted the class to gating; the corpus did not grow. One
+# governor wins: the depth budget owns size, file-size-check becomes
+# the per-file backstop at the SAME 1500 ceiling (largest non-generated
+# file today: config.go 1381; largest test file: config_test.go 999).
+# Split-on-sight stays the doctrine for NEW files; a file crossing
+# 1500 lines reds this gate and the fix is a carve, never a bump of
+# BOTH numbers. Overridable by the owner (the §D10 posture call was
+# presented as landed-with-default in the 2026-11-21 session report).
+max_file_size: 1500
+#
 # tool_paths: govulncheck must be built with the module's Go (1.27).
 # BuildFlow resolved a stale go1.26-built nix store copy whose
 # source-processing packages cannot load the go1.27 module — 94
