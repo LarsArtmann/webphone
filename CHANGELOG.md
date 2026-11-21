@@ -10,6 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 
+- **Dependency bump train 1 — the go-cqrs-lite engine wave**:
+  `system` v4.18.0→v4.19.0, `metaengine` v4.23.0→v4.26.0 (the RawQuery
+  crash-loop fix's wave), `metaengine/sqliteengine` v4.8.0→v4.9.1.
+  Full suite 37/37 green on the wave; vendorHash re-pinned from the FOD
+  probe and proven by a real package build.
 - **Typed feed maps at the config boundary (F7)**: `identities` keys
   and `matrix.owner`/`signal.owner` decode as `domain.Extension` — a
   strict parse-at-decode door where a sanitizable-but-unnormalized
