@@ -7,7 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.15.0] - 2026-11-21
+
 ### Added
+
 
 - **Read-only pbx-lens deep links on History rows** (the 2026-11-15
   do-not-merge ruling's integration half): `lens.url` (browser-facing
