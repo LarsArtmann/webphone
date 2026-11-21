@@ -170,3 +170,72 @@ func exemptionNote(exempt bool) string {
 	}
 	return ""
 }
+
+// templBudgetPins are the .templ-tree ceilings, in non-blank
+// non-comment templ lines. The views tree is the repo's largest
+// hand-written presentation artifact (3136 lines measured 2026-11-19,
+// 3150 at the 2026-11-21 note-join train) while its Go side measures
+// ~1200 — the Go-only budget above saw none of it. One pin for the one
+// tree; a second templ home (a new surface package) gets its own row
+// with a reason. Ratchet rules identical to the package budget.
+var templBudgetPins = map[string]int{
+	"web/views": 3300,
+}
+
+// TestTemplDepthBudget walks every internal/ .templ tree and asserts
+// its pinned ceiling — the depth ratchet's templ column (registry act
+// 2026-11-21: the row asked for a column or a views-only pin; the pin
+// is the honest shape, because .templ files have no package boundary
+// to hang a per-package number on).
+func TestTemplDepthBudget(t *testing.T) {
+	counts := map[string]int{}
+	err := filepath.WalkDir("..", func(path string, d os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if d.IsDir() {
+			name := d.Name()
+			if name == "vendor" || name == "testdata" || name == "arch" {
+				return filepath.SkipDir
+			}
+			return nil
+		}
+		if !strings.HasSuffix(d.Name(), ".templ") {
+			return nil
+		}
+		rel, err := filepath.Rel("..", path)
+		if err != nil {
+			return err
+		}
+		// Group by the internal/<tree> root (views has no subpackages
+		// today; a nested surface joins its tree's count).
+		parts := strings.Split(rel, string(filepath.Separator))
+		key := strings.Join(parts[:2], "/")
+		raw, err := os.Open(path)
+		if err != nil {
+			return err
+		}
+		defer raw.Close()
+		scanner := bufio.NewScanner(raw)
+		for scanner.Scan() {
+			line := strings.TrimSpace(scanner.Text())
+			if line != "" && !strings.HasPrefix(line, "//") {
+				counts[key]++
+			}
+		}
+		return scanner.Err()
+	})
+	if err != nil {
+		t.Fatalf("walk .templ trees: %v", err)
+	}
+	for key, n := range counts {
+		ceiling, pinned := templBudgetPins[key]
+		if !pinned {
+			ceiling = 1000
+		}
+		if n > ceiling {
+			t.Errorf("%s: %d templ lines exceed the %d ceiling%s — split the surface (a new views subpackage gets its own pin) or lower its depth; raising the pin needs a reason in this table's same commit",
+				key, n, ceiling, exemptionNote(pinned))
+		}
+	}
+}
