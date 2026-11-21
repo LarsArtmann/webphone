@@ -613,6 +613,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   carries a named, measured pin (cqrs/domain/server/api/store/app);
   raising a pin is a ratchet act with its reason in the same commit.
   Mutation-proven on a planted 170-export package.
+- **Type-and-name polish tail rode the same trains:** the login page's
+  extra-section props are `LoginLanes{PasskeyOn, SSOOn}` (no positional
+  bools), the push transport is typed end-to-end (`push.Transport`
+  through the registration gate, command, projection row and app
+  adapter — wire and stored bytes unchanged), the naming review's last
+  renames landed (`views.VoicemailMessage`, `authmap.Ownership` — the
+  `Shell` pair is the auth/platform carve above), and the note-slot
+  upsert has one home (`Notes.upsertSlot`) so `Set`/`SetDisposition`
+  cannot drift apart.
 
 ### Fixed
 
