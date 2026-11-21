@@ -165,6 +165,21 @@ re-run the formatter if it moved styled files.
   wait-for-quiet chained job NEVER ran (log gone, no process). On a
   contended host, plan MANUAL re-execution of the tail steps rather
   than arming background retries.
+- **The release window is exclusive (2026-11-21, the v2.15.0 resume)**:
+  from step 4 through step 9 the release owns the host's quiet budget —
+  the step-7 load gate fired at 22.5 (≥ 8) while the RESUMING session's
+  own parallel go-test/flake-check gates ran beside it, and step 7's
+  stack commit has raced the daemon to "ahead by 1" mid-gate before
+  (07-44 §f 30). The convention: (1) write the TODO marker row BEFORE
+  firing (the 13:04 §e-4 discipline — any session sees who owns the
+  train); (2) once fired, the firing session runs NOTHING heavy in
+  parallel — other work waits or stays grep-level; (3) concurrent
+  sessions keep the STACK repo untouched for the release's duration
+  (step 7 commits and pushes there); (4) the daemon cannot be paused —
+  its commit churn is bounded by the pma push-heat gate's
+  `push_defer_seconds` mtime-debounce (landed 2026-11-21, owner canary
+  pending), which is the durable half of the 985-commits/8min churn
+  class this row used to carry.
 
 ## webphone-android wire-fixture re-vendor leg (2026-11-10)
 
