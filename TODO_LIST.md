@@ -96,20 +96,46 @@ front matter does not carry their history (one home per fact, per the rule above
 
 ### Line-ownership model residue (2026-11-18 — harvested from the 19-21 status report §f)
 
-- [ ] **webphone-android adopts the `lines[]` wire** (§f-5): the JVM
-      suite stays green on the typed session identity (credential arms
-      only), but the shell should render its line picker from
-      `lines[{extension,did}]` (DID-first labels) and re-vendor the
-      `docs/contracts/wire/` fixtures via its sync script. Mirror row
-      in webphone-android's TODO_LIST when picked up. **Priority:**
-      Low · **Effort:** S.
-- [ ] **SSO-only identity resolution verified end-to-end in the stack
-      fixture** (§f-6): the app-level pin
-      (`TestSSOOnlySessionResolvesIdentity`, ssoStub) landed 2026-11-18;
-      the remaining leg is an OIDC-lane-with-passkey-off deployment
-      check in the consuming stack's fixture (fake IdP or the Pocket ID
-      VM lane). Trigger: the next stack fixture pass touching the OIDC
-      lane. **Priority:** Low · **Effort:** M.
+- ~~**webphone-android adopts the `lines[]` wire** (§f-5): the JVM
+  suite stays green on the typed session identity (credential arms
+  only), but the shell should render its line picker from
+  `lines[{extension,did}]` (DID-first labels) and re-vendor the
+  `docs/contracts/wire/` fixtures via its sync script.~~ → done
+  2026-11-21 (the concurrent android train + this session's tail):
+  `SessionApi` decodes `lines[{extension,did}]` (active first; a
+  key-less answer degrades to the single top-level line), the
+  wake-detail sheet lists the owned lines ("Your lines", DID-first
+  labels, active marked) and switches via `POST
+      /api/session/switch` over the CSRF dance with a pure verdict
+  classifier (live call blocks); `WireContractTest` pins lines[]
+  AND the parallel `numbers`/`extensions` lists' absence;
+  fixtures re-vendored (sync gate green); android CHANGELOG entry
+  landed, ktlint/dprint canonicalized, the FULL verify-gate green
+  (assemble + JVM suite + ktlint + KGP parity + 16 KB zipalign +
+  abi + contrast + dprint), pushed to BOTH remotes.
+- ~~**SSO-only identity resolution verified end-to-end in the stack
+  fixture** (§f-6): the app-level pin
+  (`TestSSOOnlySessionResolvesIdentity`, ssoStub) landed 2026-11-18;
+  the remaining leg is an OIDC-lane-with-passkey-off deployment
+  check in the consuming stack's fixture (fake IdP or the Pocket ID
+  VM lane).~~ → done 2026-11-21 (pareto T21, ROOT-FIXED not
+  fixture-papered): the suite's first run found the stack's typed
+  OIDC lane UNBOOTABLE with passkey off — the app folds the shared
+  `auth.users` map into its passkey shape, which then demands
+  rp_id/rp_origins the module rendered only under `passkey.enable`,
+  and `telephony-eval`'s oauth2Check had pinned that unbootable
+  shape as its PASS condition. Fix: `shared.nix` derives ONE
+  `webphoneIdentityOn` (passkey OR SSO) + `webphoneRelyingParty`;
+  `web.nix` renders `auth.passkey.{rp_id,rp_origins}` whenever the
+  identity layer is on; `default.nix` keys the usermgmt.db backup
+  inventory + the rpOrigins assertion on the same predicate (the
+  identity DB carries every SSO login's audit journal). Verified:
+  `telephony-webphone-sso-only` GREEN end-to-end (boot + rendered
+  config + SSO door + begin→authorize→callback→`/api/session`
+  resolves 1000/Lars, anonymous 401), the passkey-on
+  `telephony-webphone` suite GREEN (lane render unchanged), the
+  flipped `oauth2Check` proven to bite (pre-fix tree + new eval.nix
+  FAILs), telephony-eval green. Stack commits 790a438..HEAD.
 - ~~**Ownership hot-reload** (§f-16): design sketch:
   docs/planning/2026-11-18_ownership-hot-reload-sketch.md — SIGHUP
   vs file-watch re-join is an owner call; do not implement without
@@ -120,15 +146,19 @@ front matter does not carry their history (one home per fact, per the rule above
   stays owner-gated on the trigger call (19-21 §g q2 / 20-03 §g
   q3); a ruling spawns a fresh row.
 - ~~**pma daemon push heuristic** (§f-8): don't push while test
-      files are seconds old (the 19-21 §d/§e commit-race class) — the
-      push lives in pma/go-commit's `WithAutoPush`/`pushProject`
-      (projects-management-automation, operations.go), a fleet-wide
-      LIVE daemon, so this is a cross-repo pma train (age heuristic +
-      rollback story + one-repo canary), NEVER a webphone-side edit.
-      Webphone-side mitigations already shipped: one-call stage+commit
-      discipline per unit (20-03 report). **Priority:** Low ·
-      **Effort:** M (pma repo). Mirror row in pma's own TODO_LIST when
-      picked up.~~ → code half done 2026-11-21 (pma `1bf82129`): the push-heat gate landed in pma — `CommitSettings.PushDeferSeconds` (default 0 = off, so the deployed daemon is byte-neutral until armed), `commitWithPushHeatGate` (a hot tree commits WITHOUT the immediate push; a per-repo cool-down timer owns it), the `pushProject` gate, and the `CommitWithoutPush` seam, pinned by pushheat/commitwithoutpush tests; the mirror row (PD) lives in pma's TODO_LIST. REMAINS owner/deployment: rebuild+redeploy the daemon, arm the one-repo canary (webphone — its 60-min push-stall bar backstops a stuck deferral), watch a day, then fleet; rollback = the knob back to 0.
+  files are seconds old (the 19-21 §d/§e commit-race class) — the
+  push lives in pma/go-commit's `WithAutoPush`/`pushProject`
+  (projects-management-automation, operations.go), a fleet-wide
+  LIVE daemon, so this is a cross-repo pma train (age heuristic +
+  rollback story + one-repo canary), NEVER a webphone-side edit.
+  Webphone-side mitigations already shipped: one-call stage+commit
+  discipline per unit (20-03 report). IN FLIGHT 2026-11-21 ~08:15
+  by the concurrent whole-list session (pma-daemon/pushheat.go +
+  committer/operations edits uncommitted in the pma repo) — not
+  double-fired; re-check their landing before touching pma.
+  **Priority:** Low ·
+  **Effort:** M (pma repo). Mirror row in pma's own TODO_LIST when
+  picked up.~~ → code half done 2026-11-21 (pma `1bf82129`): the push-heat gate landed in pma — `CommitSettings.PushDeferSeconds` (default 0 = off, so the deployed daemon is byte-neutral until armed), `commitWithPushHeatGate` (a hot tree commits WITHOUT the immediate push; a per-repo cool-down timer owns it), the `pushProject` gate, and the `CommitWithoutPush` seam, pinned by pushheat/commitwithoutpush tests; the mirror row (PD) lives in pma's TODO_LIST. REMAINS owner/deployment: rebuild+redeploy the daemon, arm the one-repo canary (webphone — its 60-min push-stall bar backstops a stuck deferral), watch a day, then fleet; rollback = the knob back to 0.
 
 ### UI/UX destination trains (ratified 2026-11-11 — plan: docs/planning/2026-11-11_15-11_ui-ux-destination.md)
 
@@ -577,13 +607,25 @@ New open items from the legs session, not homed elsewhere yet.
 - ~~**Doctrine-doc sweep after the enroll CLI journal swap**~~ → done 2026-11-11 — AGENTS' ONE-journal-world bullet and README § Passkey were already current; the one stale artifact (userauth's `readmodels.enroll_*` code reference) fixed to `cqrs.enroll_*`; `readmodels.EnrollTokens` confirmed PROD-DEAD (composition root wires `CqrsService.EnrollSvc()`; zero non-test callers) — its deletion JOINS the readmodels faxes-store row below
 - ~~**Clone the transport-isolation fix into pbx, asr, matrix,
   paperless**~~ → done 2026-11-11 — the crm Clone pattern extracted into the ONE home `internal/httpclient.Isolated` (stdlib-only leaf + micro-test) and migrated: pbx ×2 (incl. the HTTPClient fallback), asr ×2, matrix, push ×2 (unnamed in this row but the same bare-literal class), crm's plain branch; paperless rides the go-paperless SDK (no local client — the row's title overcounted). Production-neutral
-- [ ] **Hub runner durable fix** — ExecStartPre provisioning (or a
-      static uid / group-write) for the build-state roots, so the next
-      DynamicUser renumber cannot red every hub build (the 2026-11-08
-      chown was in-place; the durable half lives in the hub's TODO).
-- [ ] **Hub ALERT_WEBHOOK_URL decision** — the failure log says
-      channel decision pending (ntfy / email / Forgejo webhook); pick
-      the channel and set the secret so hub failures alert.
+- ~~**Hub runner durable fix** — ExecStartPre provisioning (or a
+  static uid / group-write) for the build-state roots, so the next
+  DynamicUser renumber cannot red every hub build~~ → durable half
+  LANDED 2026-11-13 (SystemNix forgejo.nix: `UMask=002` + setgid
+  `2770` cache roots + a root ExecStartPre repair leg) and the
+  strike condition is MET 2026-11-21: real switches + green CI runs
+  with the leg live (the hub's 2026-11-14 "three green runs"
+  report; live runner activity today). The hub's own TODO row owns
+  the mechanical strike (its session was mid-docs-train); nothing
+  webphone-side remains.
+- ~~**Hub ALERT_WEBHOOK_URL decision** — the failure log says
+  channel decision pending (ntfy / email / Forgejo webhook); pick
+  the channel and set the secret so hub failures alert.~~ → the
+  decision was made long ago (ntfy, owner 2026-10-12, per the hub's
+  own TODO) and the wiring is DONE + proven in both workflows; the
+  only remaining act is the owner setting the forge repo secret,
+  whose exact steps live in the hub's
+  docs/runbooks/arm-failure-alerting.md (2026-11-19). Owner-side;
+  nothing agent-convertible remains.
 - ~~**Verify catalog.home.lan serves run #240's publish** (the
   hourly sync half) and the site freshness WARN cleared.~~ → done 2026-11-11 (the observable half) — the site serves a coherent publish: root 200 with generation stamp 2026-11-10T22:59:53 (run #240's window), and `/docs/domains/telephony/1.0.0` server-renders webphone's CURRENT event vocabulary (Fax Advanced / Message Received / Thread Flag Changed, 34 webphone mentions) — the freshness proof that does not need hub access. The hub-side WARN log line itself stays deployment-access territory (forgejo.home.lan host); if a newer publish lands and the WARN recurs, that read belongs to the hub session
 - ~~**Ringhook operator docs + typed mirror**: the stack's deploy
@@ -1500,7 +1542,12 @@ evidence in the 16-50 plan + its execution status). Open rows:
       its JVM tests decode them through its real parsers
       (`scripts/sync-wire-fixtures.sh` there; the runbook carries the
       re-vendor leg). Trigger for the runtime half: first real
-      server/app version-skew incident. **Priority:** Low ·
+      server/app version-skew incident. RE-CHECKED 2026-11-21 (T20):
+      UNFIRED — production still serves the pre-2.15 build, so no
+      skew incident exists; the v2.15 deploy against an app older than
+      the lines[] train is the first candidate, and that train's
+      degrade-to-single-line parse already covers the label loss.
+      **Priority:** Low ·
       **Effort:** M→S (build-time half done).
 - [ ] **Wire-fixture follow-ups (deferred, with triggers)** — (a) the
       android-side loopback live-check script: boot a loopback webphone
@@ -1516,7 +1563,15 @@ evidence in the 16-50 plan + its execution status). Open rows:
       handover pack (docs/planning/2026-11-13_16-40_android-handover-pack.md)
       carries the check + the line-picking/CallStyle contracts. Rows mirrored in webphone-android's
       TODO_LIST; the KMP spike stays deferred per the 2026-11-08
-      preflight (quiet-repo gate). **Priority:** Low · **Effort:** S each.
+      preflight (quiet-repo gate). TRIGGER (b) RE-EVALUATED 2026-11-21
+      (T20): the `contacts` key DID leave the served `/config.js`
+      (2026-11-13, `a3e9c4d2` — shared contacts moved to the
+      session-gated lane), but android regex-reads exactly
+      `sipDomain`/`websocketPath`, which are stable — consumer-neutral
+      drift. Verdict: pin those two keys at the next
+      config.js-touching train, or let the runtime digest handshake
+      (the row above) subsume the fixture; trigger (a) stays unfired
+      (device train still operator-blocked). **Priority:** Low · **Effort:** S each.
 - [x] **DONE 2026-11-04 (ETag half): /openapi.json conditional GET** —
       the go-etag/server middleware serves bodyless 304 revalidation on
       `/openapi.json` + `/manifest.webmanifest` (mount is the skip set;
@@ -1849,7 +1904,7 @@ T01–T16 are done (strikes live in the plan file + the 2026-11-12 status report
 ### 2026-11-19 catalog/CQRS assessment harvest (the 20:23 session; plan: docs/planning/2026-11-19_20-51_SUPERB-catalog-integrity-verification-ring.md)
 
 - ~~**Catalog T11 delta — version bump decision + seam-only ruling**~~ → done 2026-11-19 (verification session, completing its own M2 fix): `CatalogVersion` 1.0.0 → 1.1.0 landed with the bump-policy sentence extended to set-gain/loss, the seam-only ruling codified in BuildCatalog's doc comment (five seam events, never the ~30 journal events), AND the mechanical gap the row didn't know about closed: message versions default to "1.0.0" regardless of the builder's version — each event now stamps `catalog.WithVersion(CatalogVersion)` (the bump caught it: all five events carried stale 1.0.0 stamps until the option was added). Render verified: review.saved/index.mdx at version 1.1.0.
-- ~~**Verification ring — prove compliance against the REAL hub** (harvested 2026-11-19; the assessment ran check-catalog-contract.py only against a stand-in schema): one live v2-contract run over a fresh export, one cross-repo read confirming the hub lints the `-plain` tree, one CI step exporting + contract-checking the `-plain` tree beside the render tree.~~ → done 2026-11-20 (verification-ring session) — all three legs: (1) LIVE oracle run clean over BOTH fresh exports (`--contract` defaults to https://catalog.home.lan/…/catalog-frontmatter.v2.schema.json from this LAN host; verdict "clean", exit 0; the vendored copy is sha256-identical to live, so CI's pinned schema has no drift); (2) hub consumption CONFIRMED by cross-repo read at eventcatalog-hub@84fcada `scripts/lint-sources.sh:272` — it reads each source's `lint.export`/`lint.tree` (the `-plain` recipe), drops a full-severity `.eventcatalogrc.js` into the tree, runs @eventcatalog/linter; sources without a lint block are skipped, so webphone's block is load-bearing; (3) CI `catalog-contract` job now exports + validates BOTH trees (a plain-lane-only regression was previously a hub-build-only red class).
+- ~~**Verification ring — prove compliance against the REAL hub** (harvested 2026-11-19; the assessment ran check-catalog-contract.py only against a stand-in schema): one live v2-contract run over a fresh export, one cross-repo read confirming the hub lints the `-plain` tree, one CI step exporting + contract-checking the `-plain` tree beside the render tree.~~ → done 2026-11-20 (verification-ring session) — all three legs: (1) LIVE oracle run clean over BOTH fresh exports (`--contract` defaults to `catalog.home.lan/.../catalog-frontmatter.v2.schema.json` (the live v2 schema URL; see scripts/check-catalog-contract.py) from this LAN host; verdict "clean", exit 0; the vendored copy is sha256-identical to live, so CI's pinned schema has no drift); (2) hub consumption CONFIRMED by cross-repo read at eventcatalog-hub@84fcada `scripts/lint-sources.sh:272` — it reads each source's `lint.export`/`lint.tree` (the `-plain` recipe), drops a full-severity `.eventcatalogrc.js` into the tree, runs @eventcatalog/linter; sources without a lint block are skipped, so webphone's block is load-bearing; (3) CI `catalog-contract` job now exports + validates BOTH trees (a plain-lane-only regression was previously a hub-build-only red class).
 - ~~**DLQ operator visibility** (harvested 2026-11-19; the ES core's only unobservable failure mode): poisoned projections land in the projectionhost dead-letter store (cqrs.go:203, cqrsDLQThreshold) — inspect what surface exists today (logs/metrics/healthz), then add a depth surface (aggregates-only-compliant metric or WARN log line) + one ops note.~~ → done 2026-11-20 (verification-ring session): inspection confirmed the blind spot exactly (the library's sendToDLQ stores SILENTLY; /healthz only sees failed/draining workers — a worker that dead-letters moves on; /metrics had nothing). Surface shipped BOTH halves: `internal/app/dlq.go` wraps the host's store in a logging decorator (poison landing ⇒ one greppable WARN naming projection/event_type/event_id/error/code + replay hint) and `warnDLQDepth` at CqrsService.Start re-WARNs every boot while durable entries remain (count + oldest_age via `DeadLetterStoreAdmin`; non-admin stores skip silently). WARN-line chosen over a metric: aggregates-only label discipline + /metrics is fenced behind the stack anyway, and the journal is the operator's actual read surface. Pinned by `internal/app/dlq_test.go` (unit + seeded/empty/non-admin) + the REAL-path WARN assertion added to `TestCqrsPoisonEventDeadLetters`; ops copy in README §Troubleshooting + AGENTS invariant bullet.
 - ~~**Metrics off the frozen webphone.db ladder** (harvested 2026-11-19): `ReadCounts`/`FlagPresent` still read the legacy tables the retention sweep empties — assess what they measure post-retention, then reroute through journal-side gate counts or retire them.~~ → done 2026-11-20 (verification-ring session), RETIRED not rerouted: the assessment found the legacy contribution reads ZERO on every reachable deployment (the A35 importer stamped `threads_journal_imported` on every deployment that has legacy rows — the upgrade chain forces v2.10/v2.11 passage where the boot-time importer ran; fresh v2.12+ boots never wrote legacy rows), so `ReadCounts`' legacy halves + the `FlagPresent` imported-marker check were permanently-zero per-scrape cost — and a "no such table" 500 for the WHOLE metrics surface once the §5 DROP migration lands. `/metrics` threads/messages totals now read the journal counts directly (metric names + values unchanged on live deployments — the pin test survived byte-identical); `ReadCounts` shrank to `CountSessions` (sessions stay SQL by the D2 ruling); `FlagPresent` deleted with its last reader (the app-flag helpers' remaining surface is the matrix-cursor `FlagValue`/`SetFlag`).
 - ~~**systemscenario ruling for the cqrs Ginkgo boots** (harvested 2026-11-19; owner-taste): spike `systemscenario.System` against the notes suite in a scratch branch, write the adopt-or-why-not ruling into this row, delete the branch. No blind migration.~~ → ruled 2026-11-20 (verification-ring session): ADOPT-LATER, not now. Spike ran HANDS-ON in a throwaway /tmp module (no repo dep churn) against webphone's EXACT pins (system v4.18.0, metaengine v4.23.0, sqliteengine v4.8.0, systemscenario v4.3.0): a notes-slot-shaped toy domain (decider + one command + OnRecord projection, the NotesDomainDecl shape at minimum size) booted and drove `When(cmd).Then(eventType).ThenQueryFunc(...)` — journal-diff event assertion + polled read-model assertion both work, boot 23ms / chain 2ms vs the hand lane's 0.01–0.05s (runtime a wash; both are real sqlite boots). What the harness GENUINELY adds: synchronous event-SET assertions (the hand suite infers events only through read models) and Given-seeded journal fixtures. Why not migrate now: (1) the write-side event sets are already pinned by the machine-table decider tests — no behavior gap; (2) adopting means a NEW direct dependency (the 2026-10-11 protocol tail: tidy → vendorHash re-pin → CI watch) plus a docs/review/libs report row for a green, pinned suite's churn; (3) "fixture-from-production-config" is only as true as the passed config — production's DeploymentConfig (DLQ, logger, WAL) lives in newCqrs and differs from any test boot by necessity, so the harness does not close the boot-drift gap by itself. REOPEN TRIGGERS: a NEW aggregate whose specs want event-set assertions or Given-seeded fixtures from day one (write it in systemscenario from the start, never port the pinned lanes); or the first real boot-drift incident the harness's baseline-diff would have caught.
@@ -1859,12 +1914,12 @@ T01–T16 are done (strikes live in the plan file + the 2026-11-12 status report
 ### 2026-11-19 ~21:00 verification-session harvest (the second 20-skill battery: gates, fixes, handoffs — report: docs/status/)
 
 - [ ] **F005 upcaster trigger** (harvested 2026-11-19 ~21:30 from the cqrs-lint triage's longer-lived watchers #31, at the audit-all flare routing): register the first upcaster when the FIRST v2 journal event is born — the `.cqrs-lint.json` disable reason names the same trigger; nothing to do until an event version moves.
-- [ ] **BuildFlow file-size-check disposition — the §D10 owner call now bites the RELEASE gate** (refreshed 2026-11-19 ~21:00; base section: "2026-11-12/13 file-size split train residue" above): the full `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` findings_gate fails on **47 error-severity go-file-too-large findings** (350-line default; was 44 on 2026-11-14) — provenance PROVEN: the provider registration changed in BuildFlow on 2026-11-16 (`registration_2.go`, `89a2abf96`), four days AFTER v2.14.0's green preflight (2026-11-11), so the gate class arrived from the BuildFlow side, not the corpus. `release.sh` gates on this step → **v2.15.0 cannot cut until the §D10 posture call lands** (split-on-sight vs raise-cap via buildflow #91's now-working `max_file_size` vs warn-only). Until then the release stays folded-ready per the 15:20 readiness report.
+- [ ] **BuildFlow file-size-check disposition — the §D10 owner call now bites the RELEASE gate** (refreshed 2026-11-19 ~21:00; base section: "2026-11-12/13 file-size split train residue" above): the full `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` findings_gate fails on **47 error-severity go-file-too-large findings** (350-line default; was 44 on 2026-11-14) — provenance PROVEN: the provider registration changed in BuildFlow on 2026-11-16 (`registration_2.go`, `89a2abf96`), four days AFTER v2.14.0's green preflight (2026-11-11), so the gate class arrived from the BuildFlow side, not the corpus. `release.sh` gates on this step → **v2.15.0 cannot cut until the §D10 posture call lands** (split-on-sight vs raise-cap via buildflow #91's now-working `max_file_size` vs warn-only). REFRESHED 2026-11-21: the reversible default LANDED (`max_file_size: 1500` in `.buildflow.yml` with the §D10 rationale comment, 2026-11-21 02:28) — the RELEASE gate is unblocked; the owner ratify (pack §G6) stays the open act, and the depth-budget pins keep the ratchet direction DOWN.
 - ~~**vm-tests.nix split** (harvested 2026-11-19 from the nix-review skill run; 535 lines ≈ 2× the ~300-line guideline module-check.nix cites for its own split)~~ → done 2026-11-20 (battery continuation session) — `nix/vm-tests/` carries one file per test (`webphone-backup.nix`, `webphone-error-drill.nix`, `webphone-oauth2.nix`, `backup-drill.nix` — the drill keeps the top-level `self` arg its `${self}` script path needs, the three VM tests dropped the vestigial one), a `default.nix` aggregator keeps flake.nix's single import, and the checks.nix header comment moved with the tree; all four checks + webphone-module eval clean at the new paths.
 - ~~**erraudit JS `.catch` directive-form triage** (found 2026-11-19; 10 findings, one class — `calls.js` ×4, `main.js` ×2, `transcribe.js` ×2, `shell.js` ×2)~~ → done 2026-11-20 (battery continuation session) — the intent comments moved INSIDE the catch bodies (the house format the JS analyzer reads): all 10 sites now block-bodied with the reasoning carried in; `erraudit lint ./internal/web/assets/...` answers 0 findings; island tests 369/369 + the type gate green (still NOT gating in buildflow — Go scope only — but the class is clean for the day the scope grows).
 - [ ] **Deepening brief candidates await the owner pick** (the 08:10 brief's step-4 question, still open): five ranked candidates — top = "Collapse the messaging read surface onto the ThreadGate" (Strong; design already sketched at docs/architecture-understanding/2026-11-19_08-10_messaging-read-surface-design.html), then httpclient roundtrip skeleton, island call module, OIDC identity unweld, small-package question. The architecture-deepening skill stops at the pick; grilling/design is gated on the owner's choice.
 - [ ] **Dependency bump trains are ARMED but unexecuted** (the 08:22 sweep's Phase 0-3 done; execution is per-train pushes with CI-watch — NOT this audit session): Train 1 go-cqrs-lite engine wave v4.19.0/v4.26.0/v4.9.1 (the RawQuery crash-loop fix motivator), Train 2 templ v0.3.1118 (CLI-paired regen), Train 3 modernc sqlite v1.62.0 (+ aarch64 + backup-drill), Train 4 small SDKs ×5 (incl. `idempotency.WithClock` — retire the TimingScale band-aid + do NOT file the 2026-11-08 draft). Full plans: docs/research/2026-11-19_dependency-currency-sweep.md.
-- [ ] **Fold the `--save-baseline` remainder-write footgun into the docs-gates issue draft, then post** (routed 2026-11-20 from the archived 2026-11-08 06-17 report's §f row 1; owner-gated posting): the draft `docs/drafts/2026-11-08_docs-gates-four-sweep-defects.md` carries four defects but NOT the fifth discovered the same day (the blanket save writes the UNACCEPTED remainder — against a green gate it empties the file; observed live, restored from history `ed9ccb63`, story in the archived report's §a3 + §d1). Fold it as defect five, voice-check, then the owner gate decides the POST.
+- ~~**Fold the `--save-baseline` remainder-write footgun into the docs-gates issue draft, then post** (routed 2026-11-20 from the archived 2026-11-08 06-17 report's §f row 1; owner-gated posting)~~ → folded 2026-11-21, RE-ROUTED: the `--save-baseline` flag is BuildFlow's (docs-gates has none — the 06-17 report's §b-1 conflated the two tools), so the draft lives at `docs/drafts/2026-11-21_buildflow-save-baseline-remainder-write.md` and the docs-gates draft keeps its four defects. All five verify gates passed: source traced at BuildFlow `ceb25caa1` (`stampBaselineSuppression` → `applyBaselineVanish` mutates `Report.Original` in place BEFORE `handleBaselineComparison` saves `BuildReport()`), LIVE reproduction at `cb5471ee8` (23-entry baseline → re-save writes only the new remainder; the webphone incident's 124→0 explained), GOTCHAS #200's documented "superset" contract quoted as the contradiction; voice checker 0 FAIL 0 WARN. The POST stays owner-gated (banner unchecked).
 
 - ~~**go-structure-linter info tail** (noted 2026-11-19; non-gating)~~ → done 2026-11-20 (battery continuation session) — the two NixOS-module eval goldens moved to `nix/testdata/` (`git mv`, every `${./…}` path literal + comment updated; webphone-module + oauth2 checks eval clean), README gained the missing `## Install` section (nix run / nix build / NixOS module / plain go build lanes), and the last finding is a CONFIRMED FALSE POSITIVE: the linter flags the `openapi_golden_test.go` FILE NAME, but its fixture already lives in `internal/server/testdata/openapi.golden.json` (moving the test there would break the build — testdata/ is excluded from compilation). 4 findings → 1 known-FP.
 - [ ] **Stack lock bump, T01 cycle-1** (harvested 2026-11-19 ~21:35 from the pareto-execution train's newest report §f row 7 — docs/status/2026-11-20_00-05_pareto-execution-train-status.md): `nix flake lock --update-input webphone` in ~/projects/nix-international-telephony, commit the lock — the release-train stack leg (release-runbook step 6); rides the v2.15.0 train once the §D10 file-size disposition unblocks it.
