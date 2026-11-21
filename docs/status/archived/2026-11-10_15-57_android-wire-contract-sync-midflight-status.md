@@ -33,27 +33,27 @@ session-field drift.
 
 | Item                                                                                                            | Evidence                                                                                        |
 | --------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
-| Research: both repos' seams, DTOs, parsers, tests, freshness-gate wiring                                        | session; plan §1                                                                                |
-| SUPERB plan doc with Pareto + coarse/fine tables + mermaid                                                      | docs/planning/2026-11-10_14-36_SUPERB-android-wire-contract-sync.md (daemon-committed ce9f77f2) |
-| Pure payload builders extracted (fcm×2, ntfy×2) — Send/SendDraft now marshal through them                       | internal/push/fcm.go, ntfy.go                                                                   |
-| Fixture renderers + CLI fold (`webphone contracts` writes wire/)                                                | internal/push/fixtures.go, internal/server/wirefixtures.go, cmd/webphone/contracts.go           |
-| 9 committed fixtures, byte-deterministic (json.Deterministic — v2 map order is random)                          | docs/contracts/wire/                                                                            |
-| Pin test (both credential arms, event keys on both transports, register keys)                                   | internal/server/wirefixtures_test.go                                                            |
-| Freshness gate extended (script + `contracts-fresh` nix check diff wire/)                                       | scripts/contracts-fresh.sh, nix/checks.nix — `nix build .#checks…contracts-fresh` green         |
-| Runbook android leg + contracts README fixture section + CHANGELOG + TODO_LIST row                              | docs/release-runbook.md, docs/contracts/README.md, CHANGELOG.md, TODO_LIST.md                   |
-| Local gates on webphone half: push+server+cmd tests, art-dupl v0.7.2 (0 new clones), format-check, docs battery | session log                                                                                     |
-| Train-start buildflow + docs battery repair (concurrent session's rc=20 markdown also healed)                   | buildflow history 74/74; battery PASS                                                           |
-| CI green on the final tree, pushed                                                                              | run 42832784499 success                                                                         |
-| Android: `WireFacts.kt` pure decoders (fromFcmData/fromNtfyFrame) written                                       | app/src/main/…/push/WireFacts.kt (daemon-committed 79f17ea, UNPUSHED)                           |
+~~| Research: both repos' seams, DTOs, parsers, tests, freshness-gate wiring                                        | session; plan §1                                                                                |~~ v: verified: the plan §1 carries it
+~~| SUPERB plan doc with Pareto + coarse/fine tables + mermaid                                                      | docs/planning/2026-11-10_14-36_SUPERB-android-wire-contract-sync.md (daemon-committed ce9f77f2) |~~ v: verified: docs/planning/2026-11-10_14-36 exists (daemon-committed ce9f77f2 per the row)
+~~| Pure payload builders extracted (fcm×2, ntfy×2) — Send/SendDraft now marshal through them                       | internal/push/fcm.go, ntfy.go                                                                   |~~ v: verified: internal/push/fcm.go + ntfy.go marshal through them at HEAD
+~~| Fixture renderers + CLI fold (`webphone contracts` writes wire/)                                                | internal/push/fixtures.go, internal/server/wirefixtures.go, cmd/webphone/contracts.go           |~~ v: verified: internal/push/fixtures.go + server/wirefixtures.go + cmd/webphone/contracts.go at HEAD
+~~| 9 committed fixtures, byte-deterministic (json.Deterministic — v2 map order is random)                          | docs/contracts/wire/                                                                            |~~ v: verified: docs/contracts/wire/ lives at HEAD; json.Deterministic pinned
+~~| Pin test (both credential arms, event keys on both transports, register keys)                                   | internal/server/wirefixtures_test.go                                                            |~~ v: verified: TestWireFixtureFilesPinTheConsumerContract at HEAD
+~~| Freshness gate extended (script + `contracts-fresh` nix check diff wire/)                                       | scripts/contracts-fresh.sh, nix/checks.nix — `nix build .#checks…contracts-fresh` green         |~~ v: verified: contracts-fresh check green in every flake check since
+~~| Runbook android leg + contracts README fixture section + CHANGELOG + TODO_LIST row                              | docs/release-runbook.md, docs/contracts/README.md, CHANGELOG.md, TODO_LIST.md                   |~~ v: verified: the runbook's wire-fixture re-vendor leg + README section at HEAD
+~~| Local gates on webphone half: push+server+cmd tests, art-dupl v0.7.2 (0 new clones), format-check, docs battery | session log                                                                                     |~~ v: verified per the session log; CI carried them
+~~| Train-start buildflow + docs battery repair (concurrent session's rc=20 markdown also healed)                   | buildflow history 74/74; battery PASS                                                           |~~ v: verified: buildflow 74/74 history row
+~~| CI green on the final tree, pushed                                                                              | run 42832784499 success                                                                         |~~ v: verified: run 42832784499 success per the row
+~~| Android: `WireFacts.kt` pure decoders (fromFcmData/fromNtfyFrame) written                                       | app/src/main/…/push/WireFacts.kt (daemon-committed 79f17ea, UNPUSHED)                           |~~ v: verified: landed in webphone-android (79f17ea per the row; carried by the later pushes)
 
 ## b) PARTIALLY DONE
 
 | Item                       | State                                                                                                                         | Remaining                                                                                     |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
-| A2 parsers extracted       | WireFacts.kt exists                                                                                                           | FcmReceiver + NtfySubscriptionService.routeMessage still parse inline — delegate to WireFacts |
-| SessionApi drift FIX       | designed (parse `password`/`sip_credential`; fetch `/config.js` `sipDomain`/`websocketPath`; origin-derived ws fallback kept) | not written; extract pure `parseSessionIdentity` + `registerPayload` for testability          |
-| Android ledger             | none                                                                                                                          | CHANGELOG/TODO_LIST/AGENTS sync-ritual rows                                                   |
-| Detailed narrative commits | webphone fix commit `6936be2a` only; android + earlier webphone units rode `chore:` daemon commits                            | accept (history is pushed) — narrative the android commit                                     |
+~~| A2 parsers extracted       | WireFacts.kt exists                                                                                                           | FcmReceiver + NtfySubscriptionService.routeMessage still parse inline — delegate to WireFacts |~~ v: verified: done at webphone-android 2c578b5 (this report's §f-1)
+~~| SessionApi drift FIX       | designed (parse `password`/`sip_credential`; fetch `/config.js` `sipDomain`/`websocketPath`; origin-derived ws fallback kept) | not written; extract pure `parseSessionIdentity` + `registerPayload` for testability          |~~ v: verified: landed at 2c578b5 + 7dd7e53 (§f-2)
+~~| Android ledger             | none                                                                                                                          | CHANGELOG/TODO_LIST/AGENTS sync-ritual rows                                                   |~~ v: verified: done at 748e6f3 (§f-5)
+~~| Detailed narrative commits | webphone fix commit `6936be2a` only; android + earlier webphone units rode `chore:` daemon commits                            | accept (history is pushed) — narrative the android commit                                     |~~ v: verified: done at baafd6f + a58a68c (§f-7)
 
 ## c) NOT STARTED
 
@@ -66,23 +66,23 @@ session-field drift.
 
 ## d) TOTALLY FUCKED UP (owned, fixed, lessons below)
 
-1. **~30 min of red main caused by me, raced out by the daemon:** my first
+~~1. **~30 min of red main caused by me, raced out by the daemon:** my first~~ v: verified: healed same train; the shrink-the-race-window lesson is AGENTS canon
    pin-test version asserted the ntfy `event` key with a plain substring
    grep (the key lives inside an escaped JSON string) — I caught+fixed it
    locally, but the daemon pushed the broken version (add9580c) between my
    write and my fix; run 42828291169 failed `go test -race`. Healed by the
    later commits; final run green.
-2. **art-dupl clone group (same push):** I duplicated the marshal loop in
+~~2. **art-dupl clone group (same push):** I duplicated the marshal loop in~~ v: verified: fixed via push.RenderWireFixtures; the run-the-clone-gate-per-unit rule adopted (e-1)
    push+server renderers. The repo has an explicit new-clones gate — I ran
    plain tests but NOT art-dupl before considering the unit done. Fixed by
    the one-home loop in server (`push.RenderWireFixtures` now yields payload
    VALUES); 0 new clones verified with the CI-pinned v0.7.2.
-3. **Nondeterministic fixture bytes mid-train:** moving the marshal loop to
+~~3. **Nondeterministic fixture bytes mid-train:** moving the marshal loop to~~ v: verified: fixed with json.Deterministic — the determinism-probe rule adopted (e-2); AGENTS carries the catalog-exporter lesson
    `encoding/json/v2` silently changed FCM `data` map ordering (v2 iterates
    maps RANDOMLY — 3 renders, 3 orders). Fixed with
    `json.Deterministic(true)` (the catalog exporter's own lesson); freshness
    gate verified stable ×3.
-4. **dprint-red plan doc:** my plan-doc table wasn't canonical (the rc=20
+~~4. **dprint-red plan doc:** my plan-doc table wasn't canonical (the rc=20~~ v: verified: repaired same train; the dprint-before-daemon rule adopted (e-3)
    class); local battery repaired it, but the daemon had already pushed the
    raw version, redding the docs battery job on two runs.
 
@@ -114,7 +114,7 @@ session-field drift.
 8. ~~f1.2-tail: confirm webphone CI stays green through the concurrent session's pushes (attributed, not mine to fix).~~ done — run 42851723276 all-green on 722cef89 after this train healed the red it could own (format bytes, cadence archive, the tw.css CWD leak)
 9. ~~Final buildflow tail (BUILDFLOW_NO_RESULT_CACHE=1) on webphone tree.~~ done — full run 80 steps with one local-load flake (TestAutoReviewDispatchRoundTrip, 3/3 green isolated, CI green on identical bytes) cleared by the failed-only rerun (rc=0)
 10. ~~d1.1: deferred rows (loopback live-check script; runtime digest handshake w/ trigger; device-train checklist refresh).~~ done at `3f955f2`
-11. Consider a `/config.js` key fixture (android now reads it — keys pinned today only by island boot) — small webphone addition + re-vendor. **→ deferred with trigger — TODO rows in both repos name the config.js key fixture**
+~~11. Consider a `/config.js` key fixture (android now reads it — keys pinned today only by island boot) — small webphone addition + re-vendor. **→ deferred with trigger — TODO rows in both repos name the config.js key fixture**~~ r: routed to TODO_LIST the wire-fixture follow-ups row (trigger (b): the config.js key fixture with its named trigger)
 12. ~~Update the android README honesty marker: session-field drift found+fixed via fixtures (replaces "caught at first device boot").~~ done in webphone-android (`a58a68c`)
 13. ~~Re-run `scripts/audit-verify.sh` + docs battery after ledger edits land.~~ done (docs-health pass audit-verify 91/91 + docs battery all green after the archive sweep)
 14. ~~Watch the android forgejo→github mirror lag after push (PAT/workflow-scope trap documented in their AGENTS).~~ done — both remotes pushed directly, tips verified equal (`a58a68c` is the webphone-android tip), no mirror lag possible
