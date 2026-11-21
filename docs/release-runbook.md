@@ -131,14 +131,18 @@ re-run the formatter if it moved styled files.
     login card's markup). The
     next release tag
     MUST run step 7's browser E2E against the new lock; no exemption.
-- **Load precondition**: `release.sh` step 7 refuses to start the
-  stack E2E/VM gates while `/proc/loadavg` (1-minute) is ≥ 8
-  (`WEBPHONE_RELEASE_MAX_LOAD` overrides deliberately). Default
-  mechanism = the gate, NOT an E2E auto-retry — a retry masks real
-  regressions at +10 min per true failure (owner ratification of the
-  choice pending, 02:47 §g1). Nothing of YOURS runs during a release
-  E2E: the v2.6.0 attempt-2 stall was self-inflicted (own background
-  `nix flake check` competing for KVM/CPU).
+- **Load precondition**: `release.sh` step 7 WAITS for drain before the
+  stack E2E/VM gates — it polls `/proc/loadavg` (1-minute) every 30s
+  until it drops below 8, capped at 30 min (`WEBPHONE_RELEASE_MAX_LOAD`
+  moves the bar, `WEBPHONE_RELEASE_LOAD_WAIT_SECS` the cap; 2026-11-21,
+  the v2.15.0 lesson — a single sample sat in the gate's own residual
+  and the re-run paid the whole gates again). The 1-min average is
+  itself a 60s mean, so one below-bar reading is already "sustained".
+  Default mechanism = the gate, NOT an E2E auto-retry — a retry masks
+  real regressions at +10 min per true failure (owner ratification of
+  the choice pending, 02:47 §g1). Nothing of YOURS runs during a
+  release E2E: the v2.6.0 attempt-2 stall was self-inflicted (own
+  background `nix flake check` competing for KVM/CPU).
 - **The flake heuristic**: same E2E step stalls TWICE in a row = dig
   into code; DIFFERENT steps inside the post-FS-restart tail = host
   load — wait for sustained quiet and retry once. (Derived from two
@@ -180,6 +184,16 @@ re-run the formatter if it moved styled files.
   `push_defer_seconds` mtime-debounce (landed 2026-11-21, owner canary
   pending), which is the durable half of the 985-commits/8min churn
   class this row used to carry.
+- **Resuming a stalled tail (2026-11-21, the v2.15.0 resume)**: once the
+  TAG is on origin, steps 1-5 are already proven — re-running them
+  costs ~25 min of gates for nothing. From a clean clone AT THE TAG,
+  `scripts/release.sh X.Y.Z --resume-tail` skips 1-5 and runs only the
+  remainder (lychee, stack, aarch64, gh release); it refuses unless
+  HEAD is the tag commit, so the tail verifies the shipped tree. This
+  replaces the hand-written manual tail of the v2.15.0 resume (a
+  60-line script re-creating the script's own steps 7-9). Without the
+  flag, an existing tag still resumes the OLD way (gates re-run, only
+  the tag push skipped) — conservative by design.
 
 ## webphone-android wire-fixture re-vendor leg (2026-11-10)
 

@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **release.sh `--resume-tail` + wait-for-drain load gate**: a stalled
+  post-tag tail no longer re-pays ~25 min of gates — `--resume-tail`
+  skips steps 1-5 (the tag on origin is the evidence; HEAD must BE the
+  tag commit) and runs only lychee/stack/aarch64/gh release; the step-7
+  load gate now polls every 30s until the 1-min average drops below the
+  bar (30-min cap, `WEBPHONE_RELEASE_LOAD_WAIT_SECS`) instead of failing
+  on a single sample taken inside the gates' own load residual (both
+  §e-1/§e-2 of the 2026-11-21 19:50 report; runbook updated).
 - **Dependency bump train 4 — small SDKs ×5**: httputil v1.9.0 (additive
   `Capabilities.Pusher`), go-paperless v0.5.3, go-idempotency
   v0.3.2→v0.6.0 (test-side pin; the contract suite over the journal

@@ -20,7 +20,7 @@
 #   -> gates: buildflow (no result cache), go test, nix flake check, smoke,
 #      vulnix (runtime-closure advisory scan, network)
 #   -> annotated tag, push main + tag, ls-remote verify
-#   -> lychee link check (after push so tag links resolve)
+#   -> lychee link check (after push so the new tag links resolve)
 #   -> stack: relock webphone input, commit, browser E2E + webphone VM test
 #      + nix flake check, push
 #   -> aarch64: cross-build package + island-lint check
@@ -107,17 +107,6 @@ assert_clean_tree() {
 	}
 }
 
-cd "$REPO"
-
-step "1/9 preconditions"
-[ -z "$(git status --porcelain)" ] || {
-	echo "tree not clean" >&2
-	exit 1
-}
-[ "$(git branch --show-current)" = "main" ] || {
-	echo "not on main" >&2
-	exit 1
-}
 # Host health preflight (2026-09-24/25 outage: /run/binfmt vanished ~19:10
 # and every nix build on the host died for 9+ hours with a cryptic
 # 'getting attributes of path "/run/binfmt"' MID-GATE — after buildflow had
@@ -126,136 +115,180 @@ step "1/9 preconditions"
 # carries no binfmt rules and systemd-binfmt.service "finished OK" at the
 # 22:35 reboot without creating it, so a service restart heals nothing —
 # the interpreter symlink must be planted by hand (see the message).
-# Failing HERE turns that into an actionable message instead of a
+# Failing EARLY turns that into an actionable message instead of a
 # mid-gate cryptic death.
-if [ "$DRY_RUN" != "1" ] && [ ! -e /run/binfmt ]; then
-	fix_bin="$(ls -d /nix/store/*-qemu-aarch64-binfmt-P/bin/* 2>/dev/null | head -1)"
-	echo "host nix is broken: /run/binfmt is missing, so every nix build on this host fails (the generation cannot recreate it — restarting systemd-binfmt heals nothing). Fix (root): sudo mkdir -p /run/binfmt && sudo ln -s ${fix_bin:-<qemu-aarch64-binfmt-P binary>} /run/binfmt/aarch64-linux — full story + durable fix: docs/planning/2026-09-24_19-25_owner-terminal-command-sheet.md §0" >&2
-	exit 1
-fi
-git fetch origin --tags --quiet
-# Unpushed-commits preflight (2026-09-30, T6 of the pareto plan): the
-# ritual must fail LOUDLY on unpushed local state instead of pinning it
-# into a tag. ls-remote is the remote truth; the fetched ref alone can
-# lag a racing daemon push.
-remote_main="$(git ls-remote origin refs/heads/main | cut -f1)"
-local_main="$(git rev-parse main)"
-if [ "$local_main" != "$remote_main" ]; then
-	if git merge-base --is-ancestor "$remote_main" "$local_main" 2>/dev/null; then
-		echo "main is AHEAD of origin ($(git rev-list --count "$remote_main..$local_main" 2>/dev/null || echo '?') unpushed commit(s)) — push first; the tag must not pin unpushed state" >&2
-	else
-		echo "main diverged from origin/main — fetch/rebase before releasing" >&2
-	fi
-	exit 1
-fi
-RESUME_TAG=0
-if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-	if git ls-remote --tags origin "refs/tags/$TAG" | grep -q .; then
-		echo "tag $TAG already on origin: resuming after step 5 (stack, aarch64, gh release)"
-		RESUME_TAG=1
-	else
-		echo "tag $TAG exists locally but not on origin; delete it first (git tag -d $TAG)" >&2
+assert_binfmt() {
+	if [ "$DRY_RUN" != "1" ] && [ ! -e /run/binfmt ]; then
+		fix_bin="$(ls -d /nix/store/*-qemu-aarch64-binfmt-P/bin/* 2>/dev/null | head -1)"
+		echo "host nix is broken: /run/binfmt is missing, so every nix build on this host fails (the generation cannot recreate it — restarting systemd-binfmt heals nothing). Fix (root): sudo mkdir -p /run/binfmt && sudo ln -s ${fix_bin:-<qemu-aarch64-binfmt-P binary>} /run/binfmt/aarch64-linux — full story + durable fix: docs/planning/2026-09-24_19-25_owner-terminal-command-sheet.md §0" >&2
 		exit 1
 	fi
-fi
-echo "ok: clean main at $(git rev-parse --short HEAD), $TAG is free"
-
-# Version-binding guard (2026-10-01 nix-review batch): flake.nix
-# webphoneVersion is a manual single point of failure — nothing else
-# checks it against git tag history. Before the step-3 bump the binding
-# MUST equal the newest tag's version, or the previous release's flake
-# bump was never tagged (drift the eval can never see). False-positive
-# edge: a deliberate bump-before-tag commit trips this by design
-# (that IS the drift being surfaced); override with
-# WEBPHONE_RELEASE_SKIP_VERSION_GUARD=1.
-flake_version="$(sed -n 's/.*webphoneVersion = "\([^"]*\)".*/\1/p' flake.nix | head -1)"
-tag_version="$(git describe --tags --abbrev=0 2>/dev/null || echo '')"
-tag_version="${tag_version#v}"
-# Unset the override BEFORE any child process runs: the app's env parser
-# maps every WEBPHONE_* variable onto a config key, so a leaking
-# RELEASE_SKIP_VERSION_GUARD becomes an unknown-config-key WARN that
-# fails TestLoadCleanConfigWarnsNothing inside the gates (observed
-# 2026-11-08, the 2.10.0 train).
-skip_version_guard="${WEBPHONE_RELEASE_SKIP_VERSION_GUARD:-0}"
-unset WEBPHONE_RELEASE_SKIP_VERSION_GUARD
-
-if [ "$skip_version_guard" != "1" ] && [ -n "$tag_version" ] && [ "$flake_version" != "$tag_version" ]; then
-	echo "flake.nix webphoneVersion='$flake_version' but the newest tag is 'v$tag_version': a flake bump was never tagged, or this is a bump-before-tag commit. Reconcile before releasing (override: WEBPHONE_RELEASE_SKIP_VERSION_GUARD=1)." >&2
-	exit 1
-fi
-echo "ok: flake.nix webphoneVersion=$flake_version matches newest tag v$tag_version"
-
-# Eval precondition (2026-11-21, 07-44 report §f 21): step 1 checked
-# preconditions, not tree health — an eval-red main once passed every
-# check here and burned a full buildflow cycle before step 4's
-# `nix flake check` caught it. Eval constructs nothing and is cheap
-# next to the gates; fail HERE instead.
-run nix flake check --no-build
-
-step "2/9 fold-check: CHANGELOG has a dated $VERSION section"
-grep -q "^## \[$VERSION\] " CHANGELOG.md || {
-	echo "CHANGELOG has no '## [$VERSION] - date' section; fold [Unreleased] first (runbook step 1)" >&2
-	exit 1
 }
-echo "ok"
 
-step "3/9 version bump: flake.nix webphoneVersion = $VERSION"
-if grep -q "webphoneVersion = \"$VERSION\";" flake.nix; then
-	echo "already $VERSION"
+cd "$REPO"
+
+# --resume-tail (2026-11-21, §e-1 of the 19:50 report): a stalled
+# post-tag tail used to cost a full re-run of steps 1-4 (~25 min of
+# gates) because RESUME_TAG alone only skipped the tag push. The tag on
+# origin IS the evidence steps 1-5 passed, so the tail mode skips
+# straight to the remainder (lychee, stack, aarch64, gh release). The
+# tail must verify the SHIPPED tree: HEAD must BE the tag commit (the
+# runbook's clean-clone ritual), because step 8 builds the working tree.
+if [ "$RESUME_TAIL" = "1" ]; then
+	step "1-5/9 skipped (--resume-tail: tag $TAG on origin is the evidence)"
+	assert_binfmt
+	git fetch origin --tags --quiet
+	if ! git ls-remote --tags origin "refs/tags/$TAG^{}" | grep -q .; then
+		echo "--resume-tail: tag $TAG is not resolvable on origin — nothing to resume from (run a full release instead)" >&2
+		exit 1
+	fi
+	tag_commit="$(git rev-parse -q --verify "$TAG^{}" || true)"
+	if [ -z "$tag_commit" ]; then
+		echo "--resume-tail: tag $TAG not present locally after fetch" >&2
+		exit 1
+	fi
+	if [ "$(git rev-parse HEAD)" != "$tag_commit" ]; then
+		echo "--resume-tail: HEAD $(git rev-parse --short HEAD) is not the $TAG commit $(git rev-parse --short "$tag_commit") — run from a clean clone at the tag (runbook ritual) so the tail verifies the shipped tree" >&2
+		exit 1
+	fi
+	[ -z "$(git status --porcelain)" ] || { echo "tree not clean" >&2; exit 1; }
+	RESUME_TAG=1
+	echo "ok: resuming the tail at the shipped tree $TAG ($(git rev-parse --short HEAD))"
 else
-	if [ "$DRY_RUN" = "1" ]; then
-		echo "  [dry-run] sed flake.nix webphoneVersion -> $VERSION + commit 'release: $TAG'"
+	step "1/9 preconditions"
+	[ -z "$(git status --porcelain)" ] || {
+		echo "tree not clean" >&2
+		exit 1
+	}
+	[ "$(git branch --show-current)" = "main" ] || {
+		echo "not on main" >&2
+		exit 1
+	}
+	assert_binfmt
+	git fetch origin --tags --quiet
+	# Unpushed-commits preflight (2026-09-30, T6 of the pareto plan): the
+	# ritual must fail LOUDLY on unpushed local state instead of pinning it
+	# into a tag. ls-remote is the remote truth; the fetched ref alone can
+	# lag a racing daemon push.
+	remote_main="$(git ls-remote origin refs/heads/main | cut -f1)"
+	local_main="$(git rev-parse main)"
+	if [ "$local_main" != "$remote_main" ]; then
+		if git merge-base --is-ancestor "$remote_main" "$local_main" 2>/dev/null; then
+			echo "main is AHEAD of origin ($(git rev-list --count "$remote_main..$local_main" 2>/dev/null || echo '?') unpushed commit(s)) — push first; the tag must not pin unpushed state" >&2
+		else
+			echo "main diverged from origin/main — fetch/rebase before releasing" >&2
+		fi
+		exit 1
+	fi
+	RESUME_TAG=0
+	if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+		if git ls-remote --tags origin "refs/tags/$TAG" | grep -q .; then
+			echo "tag $TAG already on origin: resuming after step 5 (stack, aarch64, gh release) — gates re-run; pass --resume-tail to skip them"
+			RESUME_TAG=1
+		else
+			echo "tag $TAG exists locally but not on origin; delete it first (git tag -d $TAG)" >&2
+			exit 1
+		fi
+	fi
+	echo "ok: clean main at $(git rev-parse --short HEAD), $TAG is free"
+
+	# Version-binding guard (2026-10-01 nix-review batch): flake.nix
+	# webphoneVersion is a manual single point of failure — nothing else
+	# checks it against git tag history. Before the step-3 bump the binding
+	# MUST equal the newest tag's version, or the previous release's flake
+	# bump was never tagged (drift the eval can never see). False-positive
+	# edge: a deliberate bump-before-tag commit trips this by design
+	# (that IS the drift being surfaced); override with
+	# WEBPHONE_RELEASE_SKIP_VERSION_GUARD=1.
+	flake_version="$(sed -n 's/.*webphoneVersion = "\([^"]*\)".*/\1/p' flake.nix | head -1)"
+	tag_version="$(git describe --tags --abbrev=0 2>/dev/null || echo '')"
+	tag_version="${tag_version#v}"
+	# Unset the override BEFORE any child process runs: the app's env parser
+	# maps every WEBPHONE_* variable onto a config key, so a leaking
+	# RELEASE_SKIP_VERSION_GUARD becomes an unknown-config-key WARN that
+	# fails TestLoadCleanConfigWarnsNothing inside the gates (observed
+	# 2026-11-08, the 2.10.0 train).
+	skip_version_guard="${WEBPHONE_RELEASE_SKIP_VERSION_GUARD:-0}"
+	unset WEBPHONE_RELEASE_SKIP_VERSION_GUARD
+
+	if [ "$skip_version_guard" != "1" ] && [ -n "$tag_version" ] && [ "$flake_version" != "$tag_version" ]; then
+		echo "flake.nix webphoneVersion='$flake_version' but the newest tag is 'v$tag_version': a flake bump was never tagged, or this is a bump-before-tag commit. Reconcile before releasing (override: WEBPHONE_RELEASE_SKIP_VERSION_GUARD=1)." >&2
+		exit 1
+	fi
+	echo "ok: flake.nix webphoneVersion=$flake_version matches newest tag v$tag_version"
+
+	# Eval precondition (2026-11-21, 07-44 report §f 21): step 1 checked
+	# preconditions, not tree health — an eval-red main once passed every
+	# check here and burned a full buildflow cycle before step 4's
+	# `nix flake check` caught it. Eval constructs nothing and is cheap
+	# next to the gates; fail HERE instead.
+	run nix flake check --no-build
+
+	step "2/9 fold-check: CHANGELOG has a dated $VERSION section"
+	grep -q "^## \[$VERSION\] " CHANGELOG.md || {
+		echo "CHANGELOG has no '## [$VERSION] - date' section; fold [Unreleased] first (runbook step 1)" >&2
+		exit 1
+	}
+	echo "ok"
+
+	step "3/9 version bump: flake.nix webphoneVersion = $VERSION"
+	if grep -q "webphoneVersion = \"$VERSION\";" flake.nix; then
+		echo "already $VERSION"
 	else
-		sed -i "s/webphoneVersion = \"[^\"]*\";/webphoneVersion = \"$VERSION\";/" flake.nix
-		git add flake.nix
-		git commit -m "release: $TAG"
+		if [ "$DRY_RUN" = "1" ]; then
+			echo "  [dry-run] sed flake.nix webphoneVersion -> $VERSION + commit 'release: $TAG'"
+		else
+			sed -i "s/webphoneVersion = \"[^\"]*\";/webphoneVersion = \"$VERSION\";/" flake.nix
+			git add flake.nix
+			git commit -m "release: $TAG"
+		fi
 	fi
-fi
 
-step "4/9 gates (fail-fast)"
-# scripts/buildflow.sh, NOT bare buildflow (attempt-1 trap, 2026-09-24):
-# the wrapper re-execs inside `nix develop -c` when the ambient go is below
-# the go.mod floor — a bare call launched outside a develop shell fails all
-# Go steps on the host's older GOTOOLCHAIN=local go. The wrapper also
-# appends the gitleaks/codespell scans that fast mode skips (T21).
-run env BUILDFLOW_NO_RESULT_CACHE=1 scripts/buildflow.sh
-# Same trap class for the direct go call: webphone-smoke.py self-heals the
-# same way, and `nix develop -c` is cheap here (the preflight above already
-# proved nix works; the devShell is cached) — so the test suite runs on the
-# go.mod-floor toolchain no matter how this script was launched.
-run nix develop -c go test -count=1 ./...
-run nix flake check
-run python3 scripts/webphone-smoke.py
-# Vulnix cadence (TODO row closed 2026-09-20): every train scans the
-# RUNTIME closure. Range-matched findings against patched nixpkgs versions
-# (the glibc class) trip this — triage against the locked tree's patch level
-# before shipping, as documented in AGENTS.md.
-run nix run .#vulnix
+	step "4/9 gates (fail-fast)"
+	# scripts/buildflow.sh, NOT bare buildflow (attempt-1 trap, 2026-09-24):
+	# the wrapper re-execs inside `nix develop -c` when the ambient go is below
+	# the go.mod floor — a bare call launched outside a develop shell fails all
+	# Go steps on the host's older GOTOOLCHAIN=local go. The wrapper also
+	# appends the gitleaks/codespell scans that fast mode skips (T21).
+	run env BUILDFLOW_NO_RESULT_CACHE=1 scripts/buildflow.sh
+	# Same trap class for the direct go call: webphone-smoke.py self-heals the
+	# same way, and `nix develop -c` is cheap here (the preflight above already
+	# proved nix works; the devShell is cached) — so the test suite runs on the
+	# go.mod-floor toolchain no matter how this script was launched.
+	run nix develop -c go test -count=1 ./...
+	run nix flake check
+	run python3 scripts/webphone-smoke.py
+	# Vulnix cadence (TODO row closed 2026-09-20): every train scans the
+	# RUNTIME closure. Range-matched findings against patched nixpkgs versions
+	# (the glibc class) trip this — triage against the locked tree's patch level
+	# before shipping, as documented in AGENTS.md.
+	run nix run .#vulnix
 
-step "5/9 tag + push + verify"
-if [ "$RESUME_TAG" = "1" ]; then
-	echo "skipped: $TAG already pushed"
-else
-	if [ "$DRY_RUN" != "1" ]; then
-		assert_clean_tree
-	fi
-	# Signed tags (plan T27c): the release is an artifact others may
-	# clone — a GPG signature makes provenance checkable offline
-	# (the daemon's sweep commits already sign, so the key exists).
-	run git tag -s "$TAG" -m "webphone $TAG"
-	if [ "$DRY_RUN" != "1" ]; then
-		git tag -v "$TAG" >/dev/null 2>&1 || {
-			echo "tag $TAG did not verify against a trusted key" >&2
-			exit 1
-		}
-	fi
-	run git push origin main "$TAG"
-	if [ "$DRY_RUN" != "1" ]; then
-		git ls-remote --tags origin "refs/tags/$TAG^{}" | grep -q . || {
-			echo "tag $TAG not resolvable on remote (peeled object missing)" >&2
-			exit 1
-		}
-		echo "remote has $TAG"
+	step "5/9 tag + push + verify"
+	if [ "$RESUME_TAG" = "1" ]; then
+		echo "skipped: $TAG already pushed"
+	else
+		if [ "$DRY_RUN" != "1" ]; then
+			assert_clean_tree
+		fi
+		# Signed tags (plan T27c): the release is an artifact others may
+		# clone — a GPG signature makes provenance checkable offline
+		# (the daemon's sweep commits already sign, so the key exists).
+		run git tag -s "$TAG" -m "webphone $TAG"
+		if [ "$DRY_RUN" != "1" ]; then
+			git tag -v "$TAG" >/dev/null 2>&1 || {
+				echo "tag $TAG did not verify against a trusted key" >&2
+				exit 1
+			}
+		fi
+		run git push origin main "$TAG"
+		if [ "$DRY_RUN" != "1" ]; then
+			git ls-remote --tags origin "refs/tags/$TAG^{}" | grep -q . || {
+				echo "tag $TAG not resolvable on remote (peeled object missing)" >&2
+				exit 1
+			}
+			echo "remote has $TAG"
+		fi
 	fi
 fi
 
