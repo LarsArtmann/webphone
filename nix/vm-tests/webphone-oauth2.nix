@@ -117,6 +117,18 @@ _: {
               # The stub IdP: the issuer name resolves to loopback over a
               # locally-trusted TLS cert — the app's discovery leg runs
               # for real, no external network.
+              # The stub IdP as a boot-started unit (the house pattern —
+              # the stack suites' itsp/gemini/telnyx stubs): a bare
+              # `python3 /etc/idp-stub.py &` through the driver's shell
+              # session DIES with the session — the v2.15.0 preflight
+              # found discovery waiting 60s on a stub that never lived
+              # (a failed unit fails the suite with its journal instead).
+              systemd.services.idp-stub = {
+                description = "Loopback stub OIDC issuer (webphone-oauth2)";
+                after = [ "network.target" ];
+                wantedBy = [ "multi-user.target" ];
+                serviceConfig.ExecStart = "${pkgs.python3}/bin/python3 /etc/idp-stub.py";
+              };
               security.pki.certificateFiles = [ "${idpCert}/cert.pem" ];
               networking.hosts."127.0.0.1" = [ "idp.example.org" ];
               environment.etc = {
@@ -180,12 +192,13 @@ _: {
                 f"grep -q 'webphone-vm' {cfg_path}"
             )
 
-            # The stub IdP goes LIVE before the begin probe: discovery is
-            # boot-lazy but BEGIN-EAGER (sso.Challenge fetches the
-            # well-known doc on every door push), so an honest redirect
-            # assert needs a reachable issuer. Loopback https over the
-            # locally-trusted cert; the name resolves via /etc/hosts.
-            machine.succeed("python3 /etc/idp-stub.py >/tmp/idp-stub.log 2>&1 &")
+            # The stub IdP is a boot-started unit (see the node config):
+            # discovery is boot-lazy but BEGIN-EAGER (sso.Challenge
+            # fetches the well-known doc on every door push), so an
+            # honest redirect assert needs a reachable issuer. Loopback
+            # https over the locally-trusted cert; the name resolves via
+            # /etc/hosts.
+            machine.wait_for_unit("idp-stub.service")
             machine.wait_until_succeeds(
                 "curl -sf https://idp.example.org/.well-known/openid-configuration "
                 "| grep -q authorization_endpoint",
@@ -209,7 +222,7 @@ _: {
             # discovery cache (15 min TTL, successes only) still composes
             # the redirect — the failure would surface at the callback's
             # token exchange, not at begin.
-            machine.succeed("pkill -f idp-stub.py")
+            machine.succeed("systemctl stop idp-stub.service")
             machine.wait_until_fails(
                 "curl -sf https://idp.example.org/.well-known/openid-configuration",
                 timeout=60,

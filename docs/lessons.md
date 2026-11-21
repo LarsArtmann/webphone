@@ -1343,3 +1343,24 @@ producer's wire shape, capture the producer's RENDERED bytes into a
 fixture FIRST and make the parser test read those bytes — hand-typing
 the "expected" JSON encodes what you think the producer sends, which
 is exactly the assumption the test exists to check.
+
+## VM-suite stubs are units, and a preflight that never runs the full check ships the check red (2026-11-21)
+
+The v2.15.0 release preflight (buildflow full, no result cache) caught
+`webphone-oauth2` RED at a tree whose CI was green: the fast-lane CI
+job builds a check SUBSET (format/island/typecheck plus the webphone
+package), so the KVM-gated VM suite had not RUN since the greening
+session's 2026-11-15 pass. Two classes:
+
+- A VM helper service started with `machine.succeed("python3
+  /etc/stub.py &")` dies with the driver's shell session — silently,
+  because the background job's failure is not observed and the port
+  wait burns its full budget before a visible red. Boot-started
+  systemd units are the house pattern (the stack's itsp/gemini/telnyx
+  stubs): a failed unit fails the suite in seconds WITH its journal.
+  The stack's own SSO-only suite paid the same lesson the same
+  morning (its vm-testing lessons carry it).
+- A release candidate's preflight must include everything release.sh
+  will run — a check CI's fast lane skips is a check nobody ran, and
+  the preflight battery exists precisely so the RELEASE is not the
+  first full `nix flake check` since the last tag.
