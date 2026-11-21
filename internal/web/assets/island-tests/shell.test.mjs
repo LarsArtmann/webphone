@@ -1499,6 +1499,30 @@ test("a data-transcribe-src click fetches the audio, POSTs the seam, renders the
   assert.equal(target.hidden, false);
 });
 
+test("a failed auto-transcribe renders the honest failure line into the target", async () => {
+  // The 2026-10-08 asr-continuation row, pinned: a failed transcribe
+  // (audio fetch OR seam POST) must render "Transcription failed (…)"
+  // INTO the transcript node — visible, named, once — never a silent
+  // empty div beside a button that looks done.
+  globalThis.fetch = async (url) => {
+    if (String(url).startsWith("/vm-audio/")) {
+      return { ok: true, status: 200, blob: async () => ({ type: "audio/wav" }) };
+    }
+    return { ok: false, status: 503 };
+  };
+  const btn = doc.getElementById("vm-btn-spec");
+  btn.selector = "[data-transcribe-src]";
+  btn.setAttribute("data-transcribe-src", "/vm-audio/1001/dead.wav");
+  btn.setAttribute("data-transcribe-target", "vm-transcript-spec");
+  const target = doc.getElementById("vm-transcript-spec");
+
+  doc.dispatch("click", { target: btn });
+  await settle();
+
+  assert.equal(target.hidden, false, "the transcript node stays visible");
+  assert.match(target.textContent, /^Transcription failed \(HTTP 503\)$/);
+});
+
 test("auto-start transcribes rendered audio once per src+target, only with the seam on", async () => {
   const calls = [];
   globalThis.fetch = async (url, options = {}) => {

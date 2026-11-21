@@ -14,6 +14,28 @@ front matter does not carry their history (one home per fact, per the rule above
 
 ## Open tasks
 
+### 2026-11-21 report-harvest batch (from the 02-15 and 02-28 status reports' §f)
+
+- [ ] **v2.15.0 concurrent-train end-state watch** (harvested 2026-11-21
+      from the 02-28 report §f): re-check the concurrent v2.15.0 train's
+      end state (tag cut? pushed? gh release?) — do NOT double-fire
+      `release.sh`; if their train stalls, run `scripts/release.sh 2.15.0`
+      from a clean clone per the preflight rule (battery + race + lychee
+      + docs battery green at the fold first).
+- [ ] **Owner: host switch on pbx.artmann** (harvested 2026-11-21 from
+      the 02-28 report §f): the deploy authorization is ssh-owner-only —
+      the 00-51 §g Q2 sequence stands.
+- ~~**Pin the failed auto-transcribe render** (harvested from the
+      archived 2026-10-08 SUPERB-asr-continuation report's open row:
+      "Check what the attachment transcript div renders after a failed
+      auto-transcribe; pin it")~~ → done 2026-11-21 (pareto T18 follow-up):
+      the render IS the honest line — `Transcription failed (HTTP <n>)`
+      lands IN the transcript node (shell.js `runTranscribe`'s catch),
+      visible and named, never a silent empty div; now pinned by the
+      "a failed auto-transcribe renders the honest failure line into the
+      target" spec in island-tests/shell.test.mjs (suite green,
+      fail 0).
+
 ### Line-ownership model residue (2026-11-18 — harvested from the 19-21 status report §f)
 
 - [ ] **webphone-android adopts the `lines[]` wire** (§f-5): the JVM
