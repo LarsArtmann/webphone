@@ -156,12 +156,22 @@ func (s *NtfySender) publish(ctx context.Context, body []byte, topic string) err
 	case http.StatusUnauthorized:
 		return errorfamily.WrapRejectionf(ErrUnauthorized, "push.ntfy_send", "ntfy rejected the credential (%d)", resp.StatusCode)
 	case http.StatusForbidden:
-		// 403 is RESOURCE-scoped: ntfy's ACL refused THIS topic, and the
-		// topic IS the device identity, so the device is unreachable
-		// until its registration changes — the fan prunes it like any
-		// dead registration. A server-token rotation outage answers 401
-		// everywhere and never 403, so the mass-prune footgun stays
-		// closed.
+		// 403 with a credential is RESOURCE-scoped: ntfy's ACL refused
+		// THIS topic, and the topic IS the device identity, so the device
+		// is unreachable until its registration changes — the fan prunes
+		// it like any dead registration. A server-token rotation outage
+		// answers 401 everywhere and never 403, so that mass-prune
+		// footgun stays closed. The REMAINING footgun is the tokenless
+		// deployment against an ACL-protected server: every publish 403s
+		// for POLICY (unauthenticated publishes are refused server-wide),
+		// which says nothing about any single device — pruning on it
+		// would evict every device of every owner on the next ring and
+		// flood them back through re-registration (battery session §d7,
+		// 2026-11-20). Tokenless 403 therefore stays Infrastructure: a
+		// loud, retryable non-verdict.
+		if s.token == "" {
+			return errorfamily.Newf(errorfamily.Infrastructure, "push.ntfy_send", "ntfy refuses unauthenticated publishes to topic %q (%d) — a server-wide ACL posture, not this device's registration", topic, resp.StatusCode)
+		}
 		return errorfamily.WrapInfrastructuref(ErrUnregistered, "push.ntfy_send", "ntfy refuses topic %q (%d)", topic, resp.StatusCode)
 	case http.StatusNotFound:
 		return errorfamily.WrapInfrastructuref(ErrUnregistered, "push.ntfy_send", "ntfy topic %q not found", topic)

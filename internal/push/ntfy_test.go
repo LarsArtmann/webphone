@@ -72,29 +72,46 @@ func TestNtfySendClassifiesFailures(t *testing.T) {
 	cases := []struct {
 		name   string
 		status int
+		token  string
+		// want nil means: NO prune sentinel — the verdict must be a
+		// plain Infrastructure error that is neither ErrUnregistered
+		// nor ErrUnauthorized (the tokenless-403 posture).
 		want   error
 		family errorfamily.Family
 	}{
 		// 401 is the SERVER credential (a token rotation outage answers
 		// 401 everywhere) — the fan must not mass-prune devices on it.
-		{"server credential", http.StatusUnauthorized, push.ErrUnauthorized, errorfamily.Rejection},
-		// 403 is RESOURCE-scoped: the ACL refused THIS topic, and the
-		// topic IS the device identity — the fan prunes it.
-		{"topic refused", http.StatusForbidden, push.ErrUnregistered, errorfamily.Infrastructure},
-		{"topic gone", http.StatusNotFound, push.ErrUnregistered, errorfamily.Infrastructure},
+		{"server credential", http.StatusUnauthorized, "bad", push.ErrUnauthorized, errorfamily.Rejection},
+		// 403 WITH a credential is RESOURCE-scoped: the ACL refused THIS
+		// topic, and the topic IS the device identity — the fan prunes it.
+		{"topic refused with credential", http.StatusForbidden, "bad", push.ErrUnregistered, errorfamily.Infrastructure},
+		// 403 WITHOUT a credential is a server-wide posture: an
+		// ACL-protected server refuses every unauthenticated publish, so
+		// the verdict indicts the DEPLOYMENT, not this device — pruning
+		// would evict every owner's devices on the next ring (battery
+		// session §d7). Stays plain Infrastructure: loud, retryable.
+		{"server refuses unauthenticated publishes", http.StatusForbidden, "", nil, errorfamily.Infrastructure},
+		{"topic gone", http.StatusNotFound, "bad", push.ErrUnregistered, errorfamily.Infrastructure},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if tc.token == "" && r.Header.Get("Authorization") != "" {
+					t.Errorf("tokenless sender sent an Authorization header: %q", r.Header.Get("Authorization"))
+				}
 				w.WriteHeader(tc.status)
 			}))
 			defer server.Close()
-			sender, err := push.NewNtfySender(server.URL, "bad")
+			sender, err := push.NewNtfySender(server.URL, tc.token)
 			if err != nil {
 				t.Fatal(err)
 			}
 			err = sender.Send(context.Background(), "wp-topic", push.Ring{Event: push.EventRing})
-			if !errors.Is(err, tc.want) {
+			if tc.want == nil {
+				if errors.Is(err, push.ErrUnregistered) || errors.Is(err, push.ErrUnauthorized) {
+					t.Fatalf("%d tokenless error = %v, want NO prune/credential sentinel", tc.status, err)
+				}
+			} else if !errors.Is(err, tc.want) {
 				t.Fatalf("%d error = %v, want %v", tc.status, err, tc.want)
 			}
 			errorfamilytest.AssertFamily(t, err, tc.family)
