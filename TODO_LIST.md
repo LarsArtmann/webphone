@@ -93,6 +93,13 @@ front matter does not carry their history (one home per fact, per the rule above
       `release.sh`; if their train stalls, run `scripts/release.sh 2.15.0`
       from a clean clone per the preflight rule (battery + race + lychee
       + docs battery green at the fold first).
+      → **RESUMED 17:05 CET 2026-11-21 by the whole-list session — DO NOT
+      DOUBLE-FIRE.** The firing session stalled >2h (last release-lane
+      commit 14:42, no process, no report; tag + stack relock DONE, gh
+      release missing). Resume runs the script's own resume path (gates
+      re-verify, then lychee → stack gates → aarch64 ELF guard → gh
+      release) from a clean clone at origin/main. Marker per the 13:04
+      §e-4 discipline; strike lands with the end-state evidence.
 - [ ] **Owner: host switch on pbx.artmann** (harvested 2026-11-21 from
       the 02-28 report §f): the deploy authorization is ssh-owner-only —
       the 00-51 §g Q2 sequence stands.
