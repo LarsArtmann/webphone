@@ -68,11 +68,20 @@ front matter does not carry their history (one home per fact, per the rule above
       --no-build` right after the version-binding guard (dry-run-aware via the
   `run` wrapper); an eval-red tree now dies at step 1 instead of after a
   full buildflow cycle.
-- [ ] **release-window convention** (07-44 report §f 30-31): a release needs a quiet
-      window (assert_clean_tree cannot beat the daemon; step 7 raced it too — commit
-      became "ahead by 1" mid-commit); sessions pause commits or the release locks
-      the tree; also identify the 985-commits/8min churn loop and propose the daemon
-      mtime-debounce.
+- ~~**release-window convention** (07-44 report §f 30-31): a release needs a quiet
+  window (assert_clean_tree cannot beat the daemon; step 7 raced it too — commit
+  became "ahead by 1" mid-commit); sessions pause commits or the release locks
+  the tree; also identify the 985-commits/8min churn loop and propose the daemon
+  mtime-debounce.~~ → done 2026-11-21 (whole-list session): the runbook's
+  hard-won rules gained "The release window is exclusive" — marker row
+  BEFORE firing (13:04 §e-4 discipline, practiced on the v2.15.0
+  resume), the firing session runs NOTHING heavy in parallel (the
+  step-7 load gate fired at 22.5 beside the resuming session's own
+  go-test gates — live evidence), concurrent sessions keep the STACK
+  repo untouched for the release's duration, and the daemon churn half
+  is CLOSED by code: the pma push-heat gate's `push_defer_seconds`
+  mtime-debounce (landed `1bf82129`, owner canary pending) is the
+  durable fix for the commit-storm class.
 - [ ] **docs-gates v0.3.1 upgrade parity** (07-44 report §f 26): the pbx-artmann
       daemon sweep to 67d7d27b is CI-green, but the documented bar is a fresh parity
       diff against the frozen oracle + battery; also record the upgrade in that
