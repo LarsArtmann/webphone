@@ -36,7 +36,7 @@ func passwordFile(t *testing.T, dir, password string) string {
 	return path
 }
 
-func newTestService(t *testing.T, identities map[string]string, users map[string]authmap.User, passwordFiles map[string]string) *Service {
+func newTestService(t *testing.T, identities map[domain.Extension]string, users map[string]authmap.User, passwordFiles map[string]string) *Service {
 	t.Helper()
 	mapped, err := authmap.New(users, passwordFiles)
 	if err != nil {
@@ -86,7 +86,7 @@ func TestNumbersInventoriesMappedAndIdentityLines(t *testing.T) {
 	dir := t.TempDir()
 	files := map[string]string{"1001": passwordFile(t, dir, "alpha"), "1002": passwordFile(t, dir, "beta")}
 	service := newTestService(t,
-		map[string]string{"1001": "+49301111", "1099": "+49309999"},
+		map[domain.Extension]string{domain.MustParseExtension("1001"): "+49301111", domain.MustParseExtension("1099"): "+49309999"},
 		map[string]authmap.User{
 			"boss@example.com":   {Email: "boss@example.com", Lines: lines(ext(t, "1001")), Admin: true},
 			"worker@example.com": {Email: "worker@example.com", Lines: lines(ext(t, "1001"), ext(t, "1002"))},
@@ -155,12 +155,21 @@ func TestSIPPasswordDelegatesToAuthmap(t *testing.T) {
 	}
 }
 
-func TestNewRejectsUnnormalizedIdentityKey(t *testing.T) {
+func TestNewPassesTheTypedFeedThrough(t *testing.T) {
 	mapped, err := authmap.New(nil, nil)
 	if err != nil {
 		t.Fatalf("authmap.New: %v", err)
 	}
-	if _, err := New(mapped, map[string]string{"10 01": "+4930"}); err == nil {
-		t.Error("a non-extension identities key must fail loudly (composition defect)")
+	// The old unnormalized-key rejection moved UP a layer: config's
+	// parse-at-decode door (domain.Extension.UnmarshalText) refuses a
+	// "10 01" spelling at LOAD, so New's feed is typed and carries its
+	// own proof — the pass-through is the contract now (config_test's
+	// decode-door cases pin the refusal end to end).
+	service, err := New(mapped, map[domain.Extension]string{domain.MustParseExtension("1001"): "+4930"})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	if got := service.Numbers()[0].DID; got != "+4930" {
+		t.Errorf("identities feed did not pass through: DID %q", got)
 	}
 }

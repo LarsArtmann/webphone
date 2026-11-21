@@ -73,7 +73,7 @@ type Service struct {
 	gateway    gateway.FaxGateway
 	onChange   domain.ChangeFunc
 	clock      func() time.Time
-	identities map[string]string
+	identities map[domain.Extension]string
 	archiver   Archiver
 }
 
@@ -88,7 +88,7 @@ const selfSendDetail = "faxes cannot be sent to your own number"
 // entry = guard off). archiver is the optional Paperless-ngx filing home
 // for inbound faxes (nil = integration off).
 func New(
-	faxes Store, blobs *blob.Store, gw gateway.FaxGateway, onChange domain.ChangeFunc, identities map[string]string, archiver Archiver,
+	faxes Store, blobs *blob.Store, gw gateway.FaxGateway, onChange domain.ChangeFunc, identities map[domain.Extension]string, archiver Archiver,
 ) *Service {
 	return &Service{
 		faxes: faxes, blobs: blobs, gateway: gw, onChange: onChange, clock: time.Now,

@@ -55,9 +55,11 @@ type Config struct {
 	// messages present to the outside world — the own-number feed (DECIDED
 	// 2026-09-20: static map now, stack identity endpoint as the upgrade
 	// path). Display-only: the value renders verbatim, so owner-formatted
-	// numbers ("+49 30 12345678") survive; keys must be normalized
-	// extensions or lookups by the signed-in extension silently miss.
-	Identities map[string]string `json:"identities" koanf:"identities"`
+	// numbers ("+49 30 12345678") survive. Keys decode through
+	// domain.Extension.UnmarshalText — the STRICT parse-at-decode door —
+	// so a non-normalized key fails the boot AT LOAD instead of silently
+	// missing lookups.
+	Identities map[domain.Extension]string `json:"identities" koanf:"identities"`
 	Gateway    Gateway           `json:"gateway" koanf:"gateway"`
 	// Fax declares what this DEPLOYMENT can actually do with fax, per
 	// direction. It is a deployment fact, not a code fact: the fax code
@@ -546,8 +548,10 @@ type Matrix struct {
 	AccessToken string `json:"access_token,omitempty" koanf:"access_token"`
 	// Owner is the webphone extension whose Messages tab owns every
 	// matrix conversation (the account serves the deployment; threads
-	// are owner-scoped everywhere and need their home).
-	Owner string `json:"owner,omitempty" koanf:"owner"`
+	// are owner-scoped everywhere and need their home). Decodes through
+	// domain.Extension.UnmarshalText — strict: a sanitizable-but-
+	// unnormalized form fails the boot.
+	Owner domain.Extension `json:"owner,omitempty" koanf:"owner"`
 }
 
 // Enabled reports whether the matrix lane is configured.
@@ -565,7 +569,9 @@ type Signal struct {
 	// from; the multi-account daemon needs it to pick the lane.
 	Account string `json:"account,omitempty" koanf:"account"`
 	// Owner is the webphone extension owning every signal conversation.
-	Owner string `json:"owner,omitempty" koanf:"owner"`
+	// Decodes through domain.Extension.UnmarshalText (strict: a
+	// sanitizable-but-unnormalized form fails the boot).
+	Owner domain.Extension `json:"owner,omitempty" koanf:"owner"`
 	// AttachmentsDir is signal-cli's received-attachment directory (e.g.
 	// /var/lib/signal-cli/attachments — files named by their id, no
 	// extension). Empty keeps inbound attachments fenced (the v1
@@ -963,10 +969,11 @@ func validate(cfg Config) error {
 		}
 	}
 	for ext, did := range cfg.Identities {
-		parsed, err := domain.ParseExtension(ext)
-		if err != nil || parsed.String() != ext {
-			return errorfamily.Newf(errorfamily.Rejection, "config.identities", "identities: key %q is not a normalized extension (sanitize it exactly as it appears after login)", ext)
-		}
+		// The keys are domain.Extensions already: the strict
+		// parse-at-decode door (UnmarshalText) rejected every
+		// non-normalized spelling at LOAD, so the old normalized-key
+		// re-check here is dead weight. The DID stays display-verbatim
+		// but must carry dialable characters.
 		if _, err := domain.ParsePhone(did); err != nil {
 			return errorfamily.Newf(errorfamily.Rejection, "config.identities", "identities: DID for extension %q has no dialable characters", ext)
 		}
@@ -1280,7 +1287,7 @@ func validateMatrix(m Matrix) error {
 		return errorfamily.NewRejection("config.matrix.user_id", "matrix.homeserver is set without matrix.user_id: the lane needs all of homeserver, user_id, access_token, owner")
 	case m.AccessToken == "":
 		return errorfamily.NewRejection("config.matrix.access_token", "matrix.homeserver is set without matrix.access_token: the homeserver rejects anonymous clients (deliver the token via environmentFile)")
-	case m.Owner == "":
+	case m.Owner.IsZero():
 		return errorfamily.NewRejection("config.matrix.owner", "matrix.homeserver is set without matrix.owner: matrix conversations need the extension whose Messages tab owns them")
 	}
 	if u, err := url.Parse(m.Homeserver); err != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" {
@@ -1288,9 +1295,6 @@ func validateMatrix(m Matrix) error {
 	}
 	if _, err := domain.ParseAddress(domain.NetworkMatrix, m.UserID); err != nil {
 		return errorfamily.Newf(errorfamily.Rejection, "config.matrix.user_id", "matrix.user_id %q is not a Matrix user id (@localpart:server)", m.UserID)
-	}
-	if _, err := domain.ParseExtension(m.Owner); err != nil {
-		return errorfamily.Newf(errorfamily.Rejection, "config.matrix.owner", "matrix.owner %q is not a valid extension", m.Owner)
 	}
 	return nil
 }
@@ -1304,7 +1308,7 @@ func validateSignal(s Signal) error {
 	switch {
 	case s.Account == "":
 		return errorfamily.NewRejection("config.signal.account", "signal.socket_path is set without signal.account: the multi-account daemon needs the number to send from")
-	case s.Owner == "":
+	case s.Owner.IsZero():
 		return errorfamily.NewRejection("config.signal.owner", "signal.socket_path is set without signal.owner: signal conversations need the extension whose Messages tab owns them")
 	}
 	if !strings.HasPrefix(s.SocketPath, "/") {
@@ -1312,9 +1316,6 @@ func validateSignal(s Signal) error {
 	}
 	if s.AttachmentsDir != "" && !strings.HasPrefix(s.AttachmentsDir, "/") {
 		return errorfamily.Newf(errorfamily.Rejection, "config.signal.attachments_dir", "signal.attachments_dir %q is not an absolute path (e.g. /var/lib/signal-cli/attachments)", s.AttachmentsDir)
-	}
-	if _, err := domain.ParseExtension(s.Owner); err != nil {
-		return errorfamily.Newf(errorfamily.Rejection, "config.signal.owner", "signal.owner %q is not a valid extension", s.Owner)
 	}
 	return nil
 }

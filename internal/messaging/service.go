@@ -52,7 +52,7 @@ type Service struct {
 	senders    map[domain.Network]gateway.MessageGateway
 	onChange   domain.ChangeFunc
 	clock      func() time.Time
-	identities map[string]string
+	identities map[domain.Extension]string
 }
 
 // selfSendDetail is the local refusal text for a send addressed to the
@@ -66,7 +66,7 @@ const selfSendDetail = "messages cannot be sent to your own number"
 // DID is refused locally before the gateway roundtrip (nil or missing
 // entry = guard off).
 func New(
-	messages readmodels.ThreadGate, blobs *blob.Store, gw gateway.MessageGateway, onChange domain.ChangeFunc, identities map[string]string,
+	messages readmodels.ThreadGate, blobs *blob.Store, gw gateway.MessageGateway, onChange domain.ChangeFunc, identities map[domain.Extension]string,
 ) *Service {
 	return &Service{
 		messages:   messages,

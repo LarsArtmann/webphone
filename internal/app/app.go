@@ -590,7 +590,7 @@ func asrLocality(cfg config.Config) asr.Locality {
 // identity layer (the arch invariant keeps userauth config-free, so
 // THIS package owns the translation). Exported for the CLI enrollment
 // path, which builds the same runtime the server boots with.
-func PasskeyRuntime(p config.Passkey, identities map[string]string) userauth.PasskeyRuntime {
+func PasskeyRuntime(p config.Passkey, identities map[domain.Extension]string) userauth.PasskeyRuntime {
 	return userauth.PasskeyRuntime{
 		RPID:                   p.RPID,
 		RPDisplayName:          p.RPDisplayName,
@@ -606,7 +606,7 @@ func PasskeyRuntime(p config.Passkey, identities map[string]string) userauth.Pas
 // modes and the admin inventory. Identifiers pass through config
 // normalization untouched — Load owns that — and the Admin flag rides
 // for every consumer (only the admin service reads it).
-func mappedUsers(users map[string]config.PasskeyUser, identities map[string]string) map[string]authmap.User {
+func mappedUsers(users map[string]config.PasskeyUser, identities map[domain.Extension]string) map[string]authmap.User {
 	out := make(map[string]authmap.User, len(users))
 	for email, user := range users {
 		mapped := authmap.User{Email: email, DisplayName: user.DisplayName, Admin: user.Admin}
@@ -616,7 +616,10 @@ func mappedUsers(users map[string]config.PasskeyUser, identities map[string]stri
 			if err != nil {
 				panic(fmt.Sprintf("auth mapping for %q holds unparseable extension %q after config validation: %v", email, raw, err)) //cqrs-lint:ignore(C009) post-validation impossible state: fail loudly at boot (DO-1)
 			}
-			mapped.Lines = append(mapped.Lines, authmap.Line{Extension: ext, DID: identities[raw]})
+			// The DID lookup rides the SAME parsed value — with typed
+			// identities keys there is no raw-vs-parsed spelling left to
+			// disagree (the F7 finding's split-brain class, dead by type).
+			mapped.Lines = append(mapped.Lines, authmap.Line{Extension: ext, DID: identities[ext]})
 		}
 		out[email] = mapped
 	}
@@ -627,7 +630,7 @@ func mappedUsers(users map[string]config.PasskeyUser, identities map[string]stri
 // mapping is the SHARED one (auth.users, folded into the passkey shape by
 // config.Load) so passkey and SSO can never disagree about who may sign
 // in or where an extension's SIP password lives.
-func SSOConfig(a config.Auth, identities map[string]string) sso.Config {
+func SSOConfig(a config.Auth, identities map[domain.Extension]string) sso.Config {
 	users := a.Users
 	if len(users) == 0 {
 		users = a.Passkey.Users

@@ -37,7 +37,7 @@ func TestAdminServiceResolvesTheSharedMapping(t *testing.T) {
 				"1002": adminPassword(t, dir, "worker"),
 			},
 		},
-		Identities: map[string]string{"1001": "+49301111"},
+		Identities: map[domain.Extension]string{domain.MustParseExtension("1001"): "+49301111"},
 	}
 	service, err := AdminService(cfg)
 	if err != nil {

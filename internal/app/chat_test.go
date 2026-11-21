@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/larsartmann/webphone/internal/config"
+	"github.com/larsartmann/webphone/internal/domain"
 )
 
 // TestAppStartRunsChatReceiverLoops pins the wiring the chat-network
@@ -48,7 +49,7 @@ func TestAppStartRunsChatReceiverLoops(t *testing.T) {
 		Homeserver:  homeserver.URL,
 		UserID:      "@webphone:example.org",
 		AccessToken: "test-token",
-		Owner:       "100",
+		Owner:       domain.MustParseExtension("100"),
 	}
 
 	application, err := New(cfg, discardLogger())

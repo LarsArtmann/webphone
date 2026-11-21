@@ -6,6 +6,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/larsartmann/webphone/internal/domain"
 )
 
 // scrubEnv clears every WEBPHONE_* variable for the duration of the test:
@@ -508,7 +510,7 @@ func TestLoadValidatesIdentities(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.Identities["1001"] != "+49 30 12345678" {
+	if cfg.Identities[domain.MustParseExtension("1001")] != "+49 30 12345678" {
 		t.Fatalf("identities: got %v", cfg.Identities)
 	}
 

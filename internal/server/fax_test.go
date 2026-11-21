@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/larsartmann/webphone/internal/config"
+	"github.com/larsartmann/webphone/internal/domain"
 )
 
 func TestFaxSendAndDocument(t *testing.T) {
@@ -98,7 +99,7 @@ func TestFaxProviderRefusalAnswers422(t *testing.T) {
 // roundtrip — and the job is saved as failed (evidence-preserving).
 func TestFaxToOwnNumberIsRefusedLocally(t *testing.T) {
 	server := newTestServerWithConfig(t, "", func(cfg *config.Config) {
-		cfg.Identities = map[string]string{"1001": "+17287289311"}
+		cfg.Identities = map[domain.Extension]string{domain.MustParseExtension("1001"): "+17287289311"}
 	})
 	c := clientFor(t, server)
 	c.login("1001", "pw")

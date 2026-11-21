@@ -52,6 +52,31 @@ func (e Extension) IsZero() bool { return e.value == "" }
 // this to stay serializable in both modes.
 func (e Extension) MarshalJSON() ([]byte, error) { return json.Marshal(e.String()) }
 
+// MarshalText renders the raw extension for the TEXT lanes JSON does
+// not route through MarshalJSON — map keys above all: a
+// map[Extension]V marshals its keys through TextMarshaler. Same bytes
+// as MarshalJSON, so every wire shape stays identical.
+func (e Extension) MarshalText() ([]byte, error) { return []byte(e.value), nil }
+
+// UnmarshalText is the parse-at-decode door for config-boundary maps
+// and fields: STRICT where ParseExtension sanitizes — a form that
+// would sanitize differently ("100-1") is REJECTED, because a map key
+// that silently normalizes misses its own lookup (one line, two
+// spellings). The config identities rule, previously a validate-loop
+// invariant, is enforced here at the boundary instead.
+func (e *Extension) UnmarshalText(text []byte) error {
+	parsed, err := ParseExtension(string(text))
+	if err != nil {
+		return err
+	}
+	if parsed.value != string(text) {
+		return errorfamily.Newf(errorfamily.Rejection, "domain.extension",
+			"extension %q is not a normalized extension (sanitize it exactly as it appears after login)", string(text))
+	}
+	*e = parsed
+	return nil
+}
+
 // Phone is a sanitized remote number (digits with an optional leading +,
 // plus * and # which some dialplans use). The island's dial field uses the
 // same rule, so history rows and threads key identically.

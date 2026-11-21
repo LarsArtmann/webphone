@@ -104,7 +104,7 @@ func newSwitchServer(t *testing.T) (*testServer, *client) {
 	t.Helper()
 	svc := newSwitchIdentity(t)
 	server := newTestServerWithConfig(t, "", func(cfg *config.Config) {
-		cfg.Identities = map[string]string{"1000": "+17287289311", "1001": "+17287289312"}
+		cfg.Identities = map[domain.Extension]string{domain.MustParseExtension("1000"): "+17287289311", domain.MustParseExtension("1001"): "+17287289312"}
 	}, func(deps *Deps) {
 		deps.UserAuth = svc
 	})

@@ -11,6 +11,7 @@ import (
 	"testing"
 
 	"github.com/larsartmann/webphone/internal/config"
+	"github.com/larsartmann/webphone/internal/domain"
 )
 
 func TestSessionGatesAndFlows(t *testing.T) {
@@ -370,7 +371,7 @@ func TestShellRendersValidJSONCSRFHxHeaders(t *testing.T) {
 // absence stays silent, never a placeholder.
 func TestIdentitySurfacesOwnNumber(t *testing.T) {
 	srv := newTestServerWithConfig(t, "", func(cfg *config.Config) {
-		cfg.Identities = map[string]string{"1001": "+49 30 12345678"}
+		cfg.Identities = map[domain.Extension]string{domain.MustParseExtension("1001"): "+49 30 12345678"}
 	})
 	c := clientFor(t, srv)
 

@@ -101,7 +101,7 @@ func newPasskeyServerWithConfig(t *testing.T, tweak func(*config.Config), depsMu
 	t.Cleanup(func() { _ = svc.Shutdown() })
 
 	server := newTestServerWithConfig(t, "", func(cfg *config.Config) {
-		cfg.Identities = map[string]string{"1000": "+17287289311"}
+		cfg.Identities = map[domain.Extension]string{domain.MustParseExtension("1000"): "+17287289311"}
 		if tweak != nil {
 			tweak(cfg)
 		}

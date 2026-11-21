@@ -30,7 +30,7 @@ func (g *countingGateway) SendMessage(_ context.Context, _ gateway.OutboundMessa
 	return gateway.Receipt{ProviderRef: "counted"}, nil
 }
 
-func newSelfSendService(t *testing.T, identities map[string]string) (*messaging.Service, *countingGateway) {
+func newSelfSendService(t *testing.T, identities map[domain.Extension]string) (*messaging.Service, *countingGateway) {
 	t.Helper()
 	blobs, err := blob.New(t.TempDir())
 	if err != nil {
@@ -46,7 +46,7 @@ func newSelfSendService(t *testing.T, identities map[string]string) (*messaging.
 }
 
 func TestSendToOwnNumberIsRefusedLocally(t *testing.T) {
-	svc, gw := newSelfSendService(t, map[string]string{"100": "+15550001111"})
+	svc, gw := newSelfSendService(t, map[domain.Extension]string{domain.MustParseExtension("100"): "+15550001111"})
 
 	msg, err := svc.Send(context.Background(),
 		domain.MustParseExtension("100"), domain.MustParseAddress(domain.NetworkSMS, "+15550001111"), "to myself", nil)
@@ -70,7 +70,7 @@ func TestSendToOwnNumberIsRefusedLocally(t *testing.T) {
 // on: the DID from config and the destination sanitize to the same
 // dialable string even when their formatting differs.
 func TestSendToOwnNumberMatchesSanitizedDID(t *testing.T) {
-	svc, gw := newSelfSendService(t, map[string]string{"100": "+1 (555) 000-1111"})
+	svc, gw := newSelfSendService(t, map[domain.Extension]string{domain.MustParseExtension("100"): "+1 (555) 000-1111"})
 
 	_, err := svc.Send(context.Background(),
 		domain.MustParseExtension("100"), domain.MustParseAddress(domain.NetworkSMS, "+15550001111"), "still myself", nil)
@@ -85,9 +85,9 @@ func TestSendToOwnNumberMatchesSanitizedDID(t *testing.T) {
 // identities map (or no DID for this owner) leaves the gateway in charge —
 // loopback dev and unconfigured installs keep working.
 func TestSendWithoutIdentitiesSkipsTheGuard(t *testing.T) {
-	for name, identities := range map[string]map[string]string{
+	for name, identities := range map[string]map[domain.Extension]string{
 		"nil map":     nil,
-		"other owner": {"200": "+15550002222"},
+		"other owner": {domain.MustParseExtension("200"): "+15550002222"},
 	} {
 		t.Run(name, func(t *testing.T) {
 			svc, gw := newSelfSendService(t, identities)

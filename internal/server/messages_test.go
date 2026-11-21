@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/larsartmann/webphone/internal/config"
+	"github.com/larsartmann/webphone/internal/domain"
 )
 
 func TestMessageSendAndThreadFlow(t *testing.T) {
@@ -223,7 +224,7 @@ func TestSendClassifiesGatewayOutageAs502(t *testing.T) {
 // thread must never carry the notice.
 func TestThreadViewWarnsOnSelfSend(t *testing.T) {
 	server := newTestServerWithConfig(t, "", func(c *config.Config) {
-		c.Identities = map[string]string{"1001": "+17287289311"}
+		c.Identities = map[domain.Extension]string{domain.MustParseExtension("1001"): "+17287289311"}
 	})
 	c := clientFor(t, server)
 	c.login("1001", "pw")

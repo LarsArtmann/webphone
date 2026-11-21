@@ -73,7 +73,7 @@ func newAdminServer(t testing.TB, phoneAPIURL string) (*testServer, session.Stor
 	if err != nil {
 		t.Fatal(err)
 	}
-	identities := map[string]string{"1001": "+49301111", "1002": "+49302222"}
+	identities := map[domain.Extension]string{domain.MustParseExtension("1001"): "+49301111", domain.MustParseExtension("1002"): "+49302222"}
 	var sessions session.Store = session.NewMemStore(time.Hour)
 	server := newTestServerWithPhoneAPI(t, phoneAPIURL, func(deps *Deps) {
 		deps.Admin, err = admin.New(mapped, identities)

@@ -13,6 +13,7 @@ package admin
 import (
 	"maps"
 	"slices"
+	"strings"
 
 	"github.com/larsartmann/go-error-family"
 
@@ -26,26 +27,17 @@ import (
 // other optional services.
 type Service struct {
 	users      *authmap.Ownership
-	identities map[string]string
+	identities map[domain.Extension]string
 }
 
 // New builds the service over the resolved mapping and the config
-// identities feed (extension → presented DID). Identity keys must be
-// normalized extensions — config.Load guarantees it, so a violation here
-// is a composition defect and fails loudly.
-func New(users *authmap.Ownership, identities map[string]string) (*Service, error) {
-	parsed := make(map[string]string, len(identities))
-	for ext, did := range identities {
-		// The config identities validation contract: keys must be
-		// NORMALIZED extensions (sanitize would change a non-normalized
-		// key, silently splitting one line into two spellings).
-		if normalized, err := domain.ParseExtension(ext); err != nil || normalized.String() != ext {
-			return nil, errorfamily.Newf(errorfamily.Rejection, "admin.identities",
-				"identities key %q is not a normalized extension (config validation owns this invariant)", ext)
-		}
-		parsed[ext] = did
-	}
-	return &Service{users: users, identities: parsed}, nil
+// identities feed (extension → presented DID). Typed keys carry their
+// own proof of normalization — config's parse-at-decode door
+// (domain.Extension.UnmarshalText) rejected every non-normalized
+// spelling at LOAD — so the old re-validation loop here is dead weight
+// and the feed passes through as-is.
+func New(users *authmap.Ownership, identities map[domain.Extension]string) (*Service, error) {
+	return &Service{users: users, identities: identities}, nil
 }
 
 // IsAdmin answers whether the login email maps to an account carrying
@@ -105,13 +97,13 @@ func (s *Service) Numbers() []Number {
 	if s == nil {
 		return nil
 	}
-	usersByLine := make(map[string][]string)
+	usersByLine := make(map[domain.Extension][]string)
 	for _, user := range s.users.Users() {
 		for _, owned := range user.Lines {
-			usersByLine[owned.Extension.String()] = append(usersByLine[owned.Extension.String()], user.Email)
+			usersByLine[owned.Extension] = append(usersByLine[owned.Extension], user.Email)
 		}
 	}
-	seen := make(map[string]bool)
+	seen := make(map[domain.Extension]bool)
 	for ext := range usersByLine {
 		seen[ext] = true
 	}
@@ -119,11 +111,12 @@ func (s *Service) Numbers() []Number {
 		seen[ext] = true
 	}
 	out := make([]Number, 0, len(seen))
-	for _, raw := range slices.Sorted(maps.Keys(seen)) {
-		ext := domain.MustParseExtension(raw)
-		users := slices.Clone(usersByLine[raw])
+	for _, ext := range slices.SortedFunc(maps.Keys(seen), func(a, b domain.Extension) int {
+		return strings.Compare(a.String(), b.String())
+	}) {
+		users := slices.Clone(usersByLine[ext])
 		slices.Sort(users)
-		out = append(out, Number{Extension: ext, DID: s.identities[raw], Users: users})
+		out = append(out, Number{Extension: ext, DID: s.identities[ext], Users: users})
 	}
 	return out
 }

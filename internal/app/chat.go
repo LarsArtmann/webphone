@@ -50,18 +50,18 @@ func wireChatNetworks(
 		} else {
 			cancel()
 		}
-		owner := domain.MustParseExtension(cfg.Matrix.Owner)
+		owner := cfg.Matrix.Owner
 		if err := messagingSvc.RegisterSender(domain.NetworkMatrix, client); err != nil {
 			return nil, wrapf("matrix: %w", err)
 		}
 		receiver := matrix.NewReceiver(client, owner, messagingSvc, appFlagCursor{db: db, key: "matrix.sync_cursor"}, log)
 		loops = append(loops, receiver.Run)
-		log.Info("matrix lane wired", "homeserver", cfg.Matrix.Homeserver, "user", cfg.Matrix.UserID, "owner", cfg.Matrix.Owner)
+		log.Info("matrix lane wired", "homeserver", cfg.Matrix.Homeserver, "user", cfg.Matrix.UserID, "owner", cfg.Matrix.Owner.String())
 	}
 
 	if cfg.Signal.Enabled() {
 		client := signal.New(cfg.Signal.SocketPath, cfg.Signal.Account, log)
-		owner := domain.MustParseExtension(cfg.Signal.Owner)
+		owner := cfg.Signal.Owner
 		if err := messagingSvc.RegisterSender(domain.NetworkSignal, client); err != nil {
 			return nil, wrapf("signal: %w", err)
 		}
@@ -70,7 +70,7 @@ func wireChatNetworks(
 		// so the boot check would only duplicate it. Wiring is enough.
 		receiver := signal.NewReceiver(client, owner, messagingSvc, messagingSvc, cfg.Signal.AttachmentsDir, log)
 		loops = append(loops, receiver.Run)
-		log.Info("signal lane wired", "socket", cfg.Signal.SocketPath, "account", cfg.Signal.Account, "owner", cfg.Signal.Owner, "attachments_dir", cfg.Signal.AttachmentsDir)
+		log.Info("signal lane wired", "socket", cfg.Signal.SocketPath, "account", cfg.Signal.Account, "owner", cfg.Signal.Owner.String(), "attachments_dir", cfg.Signal.AttachmentsDir)
 	}
 
 	return loops, nil

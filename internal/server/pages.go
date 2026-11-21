@@ -147,11 +147,12 @@ func (h *handlers) renderShell(w http.ResponseWriter, r *http.Request, tab views
 }
 
 // identityFor returns the extension's presented PSTN number (config
-// identities) for display, or "" when none is configured. Validation at
-// config load guarantees keys are normalized extensions, so the lookup
-// by the signed-in extension cannot silently miss.
+// identities) for display, or "" when none is configured. The map's
+// keys are domain.Extensions — decoded through the strict
+// parse-at-decode door — so the lookup by the signed-in extension
+// cannot silently miss.
 func (h *handlers) identityFor(ext domain.Extension) string {
-	return h.deps.Config.Identities[ext.String()]
+	return h.deps.Config.Identities[ext]
 }
 
 // safeDetail logs the full error for the operator (English op text,

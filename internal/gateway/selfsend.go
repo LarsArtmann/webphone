@@ -22,9 +22,9 @@ import (
 // NetworkSMS (an address to one's own DID on a chat network is not this
 // lane's business).
 func SelfSendRejection(
-	identities map[string]string, owner domain.Extension, to domain.Phone, detail string,
+	identities map[domain.Extension]string, owner domain.Extension, to domain.Phone, detail string,
 ) *ErrProviderRejected {
-	did, ok := identities[owner.String()]
+	did, ok := identities[owner]
 	if !ok {
 		return nil
 	}

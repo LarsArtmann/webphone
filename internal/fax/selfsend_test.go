@@ -27,7 +27,7 @@ func (g *countingFaxGateway) SendFax(_ context.Context, _ gateway.OutboundFax) (
 	return gateway.Receipt{ProviderRef: "counted"}, nil
 }
 
-func newSelfSendFaxService(t *testing.T, identities map[string]string) (*fax.Service, *countingFaxGateway) {
+func newSelfSendFaxService(t *testing.T, identities map[domain.Extension]string) (*fax.Service, *countingFaxGateway) {
 	t.Helper()
 	blobs, err := blob.New(t.TempDir())
 	if err != nil {
@@ -40,7 +40,7 @@ func newSelfSendFaxService(t *testing.T, identities map[string]string) (*fax.Ser
 var testPDF = []byte("%PDF-1.4\n%test\ntrailer<<>>\n%%EOF\n")
 
 func TestFaxToOwnNumberIsRefusedLocally(t *testing.T) {
-	svc, gw := newSelfSendFaxService(t, map[string]string{"100": "+15550001111"})
+	svc, gw := newSelfSendFaxService(t, map[domain.Extension]string{domain.MustParseExtension("100"): "+15550001111"})
 
 	job, err := svc.Send(context.Background(),
 		domain.MustParseExtension("100"), domain.MustParsePhone("+15550001111"), "doc.pdf", testPDF)
