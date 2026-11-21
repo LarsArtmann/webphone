@@ -47,6 +47,7 @@ C1:   C2:   C3:   C4:   C5:   C6:   C7:   C8:   C9:   C10:  C11:
 D1:   D2:   D3:   D4:   D5:   D6:   D7:   D8:   D9:   D10:  D11:  D12:  D13:  D14:  D15:  D16:  D17:  D18:
 E1:   E2:   E3:   E4:   E5:   E6:   E7:   E8:   E9:   E10:  E11:  E12:  E13:  E14:
 F:    (all yes, or list exceptions)
+G1:   G2:   G3:   G4:   G5:   G6:   G7:   G8:
 ```
 
 ---
@@ -830,6 +831,77 @@ in the same sitting:
   upstream-constructor option stays declined unless F14 flips.
 - **Dashboard fence** — shipped and pinned (E7); cutover + HSTS remain E8/C3
   as genuine calls.
+
+---
+
+## G. 2026-11-21 addendum — the whole-list train's rulings (8)
+
+Added by the 2026-11-21 whole-list execution train (T25's owner-pack
+addendum): five rulings the plan named plus three that armed mid-train.
+Same answer contract as above; `G: all yes` blesses every recommendation.
+
+### G1. Deepening pick — which architecture candidate gets the design train **[pick 1–5]**
+
+The architecture-deepening brief ranked five candidates; the skill stops at
+the pick by design. **1 = "Collapse the messaging read surface onto the
+ThreadGate" (Strong; design already sketched)**, 2 = httpclient roundtrip
+skeleton, 3 = island call module, 4 = OIDC identity unweld, 5 = the
+small-package question. Evidence:
+`docs/architecture-understanding/2026-11-19_08-10_messaging-read-surface-design.html`.
+
+### G2. Bump-train timing — fire the four armed trains now or hold **[1 = fire / 2 = hold to a cadence]**
+
+Armed at latest (behind upstream): (1) go-cqrs-lite engine wave
+(v4.19.0/v4.26.0/v4.9.1), (2) templ v0.3.1118 + CLI-paired regen,
+(3) modernc sqlite v1.62.0 (+ aarch64 + backup-drill belt), (4) small
+SDKs ×5 + retiring the TimingScale band-aid via `idempotency.WithClock`.
+Each rides `go mod tidy` → vendorHash re-pin → CI-watch. Recommendation:
+**fire (1)–(3) sequentially after v2.15.0 tags**, (4) last (it deletes
+code). Holding is legal; nothing is security-red.
+
+### G3. pbx-lens register — five questions for the read-only lens seam **[per-question]**
+
+`lens.url` shipped 2026-11-21 (History-row anchor, `wp-mini`, new tab,
+never loopback, no credentials). (a) Stay History-CDR-row-only or extend
+to transcript groups/voicemail rows? (b) Text-minimal anchor or a lens
+badge/icon? (c) Confirm the never-loopback validation is right even for
+development fronting. (d) Ratify the stack typed option shape
+`services.telephony.webphone.lens.url` (the T12 stack leg, ready to
+land). (e) If a second lens tool appears: one URL per tool (a `lens.*`
+namespace) or a map? Recommendation: (a) rows-only for now, (b) text, (c)
+keep, (d) yes, (e) namespace.
+
+### G4. DOMAIN_LANGUAGE — ratify or delete **[1 = ratify / 2 = delete]**
+
+The 2026-10-14 ratification memo (file head) still stands unanswered.
+The vocabulary is load-bearing in code regardless; the question is only
+whether the prose anchor exists. Recommendation: **ratify** (three
+names-for-one-concept finds predate it).
+
+### G5. Storage-ladder §5 DROP — set the date **[date]**
+
+The `webphone export-legacy` tool (the precondition) SHIPPED 2026-11-20
+(T07) with `-check`. The DROP migration deletes the legacy store path
+after a proven export. Recommendation: **set a date ≥ 2 weeks out**, run
+`export-legacy -check` on prod data first.
+
+### G6. §D10 file-size posture — ratify the 1500 default **[ratify]**
+
+`max_file_size: 1500` landed in `.buildflow.yml` (the depth budget stays
+the ONE governor; the per-file cap is the backstop at the same number).
+Verified twice in full no-cache batteries: 47 findings → 0. Overridable.
+
+### G7. v2.15.0 deploy authorization (the 00-51 §g Q2) **[GO / defer]**
+
+The fold is on main; the release train stalled pre-tag on host load.
+GO = run the runbook (release.sh from a clean clone, stack relock,
+pbx-artmann re-pin, `/version` verify). ssh is owner-only either way.
+
+### G8. Prod capture credentials (the 00-51 §g Q3) **[provision / defer]**
+
+T02/T03 (authenticated prod capture matrix, night-run pair, ring-guard
+positive path) are blocked ONLY on `WEBPHONE_CAPTURE_EXTENSION` /
+`WEBPHONE_CAPTURE_PASSWORD` being provisioned in the session env.
 
 ---
 

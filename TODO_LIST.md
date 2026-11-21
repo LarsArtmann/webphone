@@ -897,6 +897,10 @@ trigger fires, never on a schedule.
 | The library ships a parse-with-rules hook or a new linter rule                                       | go-branded-id          | migrate the invariant INTO the seam / adopt the rule                                                                   |
 | A second binary in this repo, or an interactive operator CLI beyond the three ritual one-shots       | cmdguard               | re-run as an adoption audit (docs/review/libs/cmdguard.md, 2026-11-11)                                                 |
 
+Sweep log (dated lines, newest last):
+
+- 2026-11-21 (whole-list session, T25's m25.2): ZERO triggers fired. Machine-checked arms: go-appkit remote tags top out at `v0.12.0` (the beyond-v0.12.0-new-battery trigger not fired); templ-components `v1.27.2` sits 2 patches above the v1.27.0 pin but that trigger is component-shaped (new status/toast component), not version-shaped — the delta rides the small-SDK bump train's `bump-preflight.sh` diff read. Event-shaped arms: no second Go consumer of `internal/domain`, no public `Idempotency-Key` contract, no self-managed blob format/event signing, no drop-folder or live-reload demand, no `Type=notify`/unix-socket surface, no structured CLI output, no non-systemd target, no new file-persisting feature (export-legacy rode `WriteIfChanged` already), no latency investigation, no missed-update reports, no second retry loop, no dashboard-without-Caddy deployment, no ~10k-rows read model, no second readiness consumer, no reactive-state surface, no dashboard SDK swap (v0.13.3 pinned 11-13). The wedge-incident arm = the flightrecorderhealth demand check (DONE 2026-11-21, gate HOLDS — see the row above). Journey arms: dial-gate + voicemail browser journeys DONE 2026-11-20; the admin surface has no open journey row (module-output goldens + the ui-capture `admin` surface are the standing covers). Wire-fixture runtime half's trigger (first real server/app version-skew incident) not fired.
+
 ### Fax enablement (owner + carrier action, 2026-10-30)
 
 The app now DECLARES the fax lanes instead of offering a form that can
