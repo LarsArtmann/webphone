@@ -35,10 +35,14 @@ _: {
               # Self-signed leaf for the stub IdP; the VM's system trust
               # store adopts it so the app's Go HTTP client (system pool)
               # verifies https://idp.example.org without any app-side knob.
+              # 3650 days: a runCommand cert is CACHED by its input hash —
+              # a short -days is a time bomb that reds the check N days
+              # after its first build with zero tree change (found
+              # 2026-11-21: the -days 3 cert expired under the suite).
               idpCert = pkgs.runCommand "webphone-oauth2-idp-cert" { } ''
                 mkdir $out
                 ${pkgs.openssl}/bin/openssl req -x509 -newkey rsa:2048 -nodes \
-                  -keyout $out/key.pem -out $out/cert.pem -days 3 \
+                  -keyout $out/key.pem -out $out/cert.pem -days 3650 \
                   -subj "/CN=idp.example.org" \
                   -addext "subjectAltName=DNS:idp.example.org"
               '';
