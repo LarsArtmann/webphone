@@ -498,11 +498,11 @@ New open items from the legs session, not homed elsewhere yet.
       the channel and set the secret so hub failures alert.
 - ~~**Verify catalog.home.lan serves run #240's publish** (the
   hourly sync half) and the site freshness WARN cleared.~~ → done 2026-11-11 (the observable half) — the site serves a coherent publish: root 200 with generation stamp 2026-11-10T22:59:53 (run #240's window), and `/docs/domains/telephony/1.0.0` server-renders webphone's CURRENT event vocabulary (Fax Advanced / Message Received / Thread Flag Changed, 34 webphone mentions) — the freshness proof that does not need hub access. The hub-side WARN log line itself stays deployment-access territory (forgejo.home.lan host); if a newer publish lands and the WARN recurs, that read belongs to the hub session
-- [ ] **Ringhook operator docs + typed mirror**: the stack's deploy
-      docs gain the enable recipe (config keys, secret slot, expected
-      dialplan arms); consider a typed ringhook front in webphone's own
-      NixOS module for non-stack hosts; a ringhook health leg joining
-      telephony-health; the operator command sheet recipe.
+- ~~**Ringhook operator docs + typed mirror**: the stack's deploy
+  docs gain the enable recipe (config keys, secret slot, expected
+  dialplan arms); consider a typed ringhook front in webphone's own
+  NixOS module for non-stack hosts; a ringhook health leg joining
+  telephony-health; the operator command sheet recipe.~~ → done 2026-11-21 (pareto T18): the enable recipe was ALREADY the ops-runbook's "Ringhook surfaces" section (config keys, secret slot derivation, dialplan arms, verify commands, off posture); the health leg LANDED in the stack (`telephony-health` curls the shim's `/ringhook/health` per tick when enabled — two new needles in `telephony-eval`'s `ringhookCheck`, fixture enables monitoring, check built green; stack commit fe6eb88). The typed webphone-side mirror is DECLINED with reasoning: the shim exists BECAUSE the dialplan is store-rendered and cannot hold a secret — its arms and the secret-forwarding are intrinsically stack-side (FreeSWITCH-owned); webphone's own module already exposes the receiver's complete surface (the shared `gateway.webhook_secret*` the shim signs with + the `/hooks/ring` lane), so a webphone-module `ringhook.*` front would re-own a dialplan webphone does not manage.
 - ~~**Confirm crm's own gates on the vendorHash repair** (`37a1957`):
   the hub build proves the build; crm's treefmt/buildflow verdicts
   were not read this session.~~ → done 2026-11-11 — crm's full test suite green (`nix develop -c env -u GOEXPERIMENT go test -count=1 ./...` EXIT=0, all internal packages ok at e383ba9); treefmt step is not_applicable there (no treefmt.toml — the tool answers REJECTION honestly, not a red); the vendorHash repair never touched crm's tree (webphone-side pin only)
