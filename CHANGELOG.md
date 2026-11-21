@@ -28,6 +28,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   legacy-only rows exist without a per-owner written confirmation file
   covering them — the machine gate the storage ladder's final DROP
   migration cites.
+- **Cadence pre-drain sweep** (2026-11-21, pareto T16):
+  `scripts/status-predrain.sh` classifies every unarchived status report
+  READY/BLOCKED through the real archive gates (annotate
+  `check-rows --strict` + `bare-rows`), oldest first, and prints the
+  exact banner + `git mv` ritual for each READY file — so cadence
+  pressure is drained before it reds CI, not discovered by it. Wired
+  into `scripts/docs-gates.sh` as the advisory `predrain` WARN lane
+  (never fails the battery; CI skips it like table-damage). Fixture
+  self-test pins the classifier. First run found the pin at 66/66 with
+  14 gates-green candidates; the 8 oldest were drained the same train.
 
 ### Changed
 

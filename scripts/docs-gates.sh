@@ -25,6 +25,11 @@
 #                          every other gate because uniformity is not shape.
 #                          A planted fixture MUST trip it first: a gate that
 #                          cannot fail is decoration.
+#   4. predrain (WARN)    — status-predrain.sh over docs/status/: which
+#                          reports pass BOTH archive gates (READY) and what
+#                          blocks the rest, so cadence pressure is drained
+#                          BEFORE it reds CI. Advisory: never fails the
+#                          battery (the cadence battery stays enforcement).
 #
 # Run from a checkout (the hash/tag rules need .git):
 #   nix develop -c bash scripts/docs-gates.sh            # human: format, then judge
@@ -195,6 +200,21 @@ else
 fi
 
 run_gate "strike-safety" strike_safety_gate
+
+# The cadence PRE-DRAIN WARN lane (pareto T16, 2026-11-21): points at the
+# archive work BEFORE cadence reds CI. Advisory by design — never fails the
+# battery; the cadence battery itself stays the enforcement.
+predrain_warn_lane() {
+	bash scripts/status-predrain.sh --limit 6 ||
+		echo "predrain: WARN — sweep failed (advisory lane, battery verdict unchanged)" >&2
+	return 0
+}
+
+if [ ! -f "$ANNOTATE_GO" ] || ! command -v go >/dev/null 2>&1; then
+	skip_gate "predrain" "needs go + the docs-health annotate.go (local advisory lane)"
+else
+	run_gate "predrain" predrain_warn_lane
+fi
 
 echo "docs-gates: verdict matrix"
 rc=0
