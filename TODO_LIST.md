@@ -82,10 +82,18 @@ front matter does not carry their history (one home per fact, per the rule above
   is CLOSED by code: the pma push-heat gate's `push_defer_seconds`
   mtime-debounce (landed `1bf82129`, owner canary pending) is the
   durable fix for the commit-storm class.
-- [ ] **docs-gates v0.3.1 upgrade parity** (07-44 report §f 26): the pbx-artmann
-      daemon sweep to 67d7d27b is CI-green, but the documented bar is a fresh parity
-      diff against the frozen oracle + battery; also record the upgrade in that
-      repo's CHANGELOG or pin back to the tag form.
+- ~~**docs-gates v0.3.1 upgrade parity** (07-44 report §f 26): the pbx-artmann
+  daemon sweep to 67d7d27b is CI-green, but the documented bar is a fresh parity
+  diff against the frozen oracle + battery; also record the upgrade in that
+  repo's CHANGELOG or pin back to the tag form.~~ → verified done in-tree
+  2026-11-21 (whole-list session): pbx-artmann's flake pins the TAG form
+  (`github:Artmann-Technologies/docs-gates/v0.3.1`), and its own
+  CHANGELOG's 2026-11-21 night entry records the v0.3.0→v0.3.1 bump with
+  the battery evidence ("ci green at the tag, relocked, the four
+  docs-gates-fed checks built green at the new pin") — the unstable
+  67d7d27b sweep was superseded by the tag re-pin the same night. The
+  repo's CI is Forgejo-side (GitHub 404s on the private repo), so the
+  CHANGELOG's recorded verdict stands as the evidence home.
 - ~~**small residue** (07-44 report §f 22-25, 27-29, 32-36): delete the local
   release-line branch post-merge; island node suite's 2 base failures (drafts
   pill state) — repair train or recorded acceptance; INDEX.md row for the 07-44
