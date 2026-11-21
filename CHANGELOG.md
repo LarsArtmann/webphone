@@ -9,7 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-
+- **Dependency bump train 4 — small SDKs ×5**: httputil v1.9.0 (additive
+  `Capabilities.Pusher`), go-paperless v0.5.3, go-idempotency
+  v0.3.2→v0.6.0 (test-side pin; the contract suite over the journal
+  dedup window stays TimingScale 5 — v0.6.0's `WithClock` is
+  MemoryStore-only and cannot reach the metaengine window, ask filed as
+  go-idempotency#15), nanoid v1.67.0 (+prng-chacha/aes-ctr-drbg rides),
+  golang.org/x/oauth2 v0.38.0. Full suite green; contract suite 3×
+  green under `-race`; vendorHash re-pinned and proven by the package
+  build.
 - **Dependency bump train 3 — modernc.org/sqlite v1.62.0** (libc
   v1.80.1 rides): the pure-Go SQLite driver under both journals. Full
   suite 37/37 green; vendorHash re-pinned and proven by the package

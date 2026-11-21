@@ -104,7 +104,7 @@ nix develop -c go get github.com/larsartmann/httputil@v1.9.0 github.com/larsartm
 nix develop -c go mod tidy
 ```
 
-- Migration (only code change in the sweep): `idempotency_contract_test.go` — construct the store with `idempotency.WithClock` (fake/pinned clock), delete the TimingScale 5 stall budget; run the 13-invariant suite under `-race` repeatedly (the flake it papers over was scheduler-dependent).
+- Migration (only code change in the sweep): `idempotency_contract_test.go` — construct the store with `idempotency.WithClock` (fake/pinned clock), delete the TimingScale 5 stall budget; run the 13-invariant suite under `-race` repeatedly (the flake it papers over was scheduler-dependent). **ERRATUM 2026-11-21 (train-4 execution): this migration is inexecutable as written.** v0.6.0's `WithClock` is a `MemoryStoreOption` (`clock.go`) and the `contract` package still wall-sleeps its TTL subtests (`contract.Options` carries only `TimingScale`); the store under audit is the metaengine journal window, so no MemoryStore exists on the path to pin and the band-aid cannot be retired consumer-side. The five bumps landed anyway (TimingScale 5 kept); the clock ask was re-verified against v0.6.0 source and filed as go-idempotency#15 — the reopen trigger for deleting the band-aid.
 - Delivering-layer gates: httputil middleware behavior (CSP/SecurityHeaders/Nonce pins already in server tests — they run in `go test ./internal/server/...`), the paperless seam stays optional/OFF (nil-safe adapter; `sdk.CustomFieldValue` call site unchanged — symbol moved, not changed), SSO tests (`internal/sso`).
 - Then the standard tail + vendorHash re-pin + `nix flake check` + smoke.
 
