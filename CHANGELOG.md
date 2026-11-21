@@ -10,6 +10,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 
+- **Dependency bump train 3 — modernc.org/sqlite v1.62.0** (libc
+  v1.80.1 rides): the pure-Go SQLite driver under both journals. Full
+  suite 37/37 green; vendorHash re-pinned and proven by the package
+  build, the aarch64 cross-build, and the backup-drill check.
 - **Dependency bump train 2 — templ v0.3.1118, CLI-paired**: the
   library, the devshell compiler pin (rev + version + the CLI's own
   vendorHash), and the 16 regenerated views move together — the
