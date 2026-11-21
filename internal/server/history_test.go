@@ -379,3 +379,60 @@ func TestHistoryQuerySurfacesNoteOnlyCalls(t *testing.T) {
 		t.Errorf("without a query the note-only join stays dormant: %.600s", page)
 	}
 }
+
+// TestHistoryRendersLensDeepLinks pins the read-only pbx-lens
+// integration (the 2026-11-15 do-not-merge ruling's integration half):
+// with lens.url configured, every History row carrying the PBX uuid
+// renders an "Open in pbx-lens" anchor into a new tab; with lens off
+// (and on uuid-less rows) the anchor is absent — the zero-config bytes
+// stay identical. A hostile uuid stays path-escaped inside the
+// configured origin.
+func TestHistoryRendersLensDeepLinks(t *testing.T) {
+	upstream := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.RequestURI(), "/phone-api/voicemail/") {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"new":0,"old":0}`))
+			return
+		}
+		if strings.HasPrefix(r.URL.RequestURI(), "/phone-api/history") {
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(`{"entries":[
+				{"context":"public","caller_id_number":"+441632960961","caller_id_name":"Alice","destination_number":"1001","start":"2026-09-18 09:00","billsec":30,"uuid":"11111111-2222-3333-4444-555555555555"},
+				{"context":"from-internal","caller_id_number":"1001","caller_id_name":"","destination_number":"+493012345678","start":"2026-09-18 10:00","billsec":12,"uuid":"../../etc/passwd"},
+				{"context":"public","caller_id_number":"+491700000000","caller_id_name":"Bob","destination_number":"1001","start":"2026-09-18 11:00","billsec":0}
+			]}`))
+			return
+		}
+		http.NotFound(w, r)
+	}))
+	t.Cleanup(upstream.Close)
+
+	// Lens off: no anchor anywhere (the zero-config product is
+	// byte-identical).
+	offServer := newTestServerWithPhoneAPI(t, upstream.URL)
+	c := signIn(t, offServer)
+	_, body := c.do(http.MethodGet, "/partials/history", nil, "")
+	if page := string(body); strings.Contains(page, "openLens") || strings.Contains(page, "pbx-lens") || strings.Contains(page, "lens.example") {
+		t.Errorf("lens off must render no lens affordance: %.400s", page)
+	}
+
+	// Lens on: uuid rows link, the hostile uuid stays escaped inside
+	// the origin, the uuid-less row renders nothing.
+	onServer := newTestServerWithPhoneAPI(t, upstream.URL, func(d *Deps) { d.Config.Lens.URL = "https://lens.example/" })
+	c = signIn(t, onServer)
+	_, body = c.do(http.MethodGet, "/partials/history", nil, "")
+	page := string(body)
+	for _, want := range []string{
+		"Open in pbx-lens",
+		`href="https://lens.example/calls/freeswitch-cdr/11111111-2222-3333-4444-555555555555"`,
+		`href="https://lens.example/calls/freeswitch-cdr/..%2F..%2Fetc%2Fpasswd"`,
+		`target="_blank"`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Errorf("lens-on history must render %q: %.600s", want, page)
+		}
+	}
+	if got := strings.Count(page, "calls/freeswitch-cdr/"); got != 2 {
+		t.Errorf("exactly the two uuid-carrying rows may link, got %d: %.600s", got, page)
+	}
+}

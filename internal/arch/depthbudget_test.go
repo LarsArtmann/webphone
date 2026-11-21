@@ -60,6 +60,13 @@ var depthBudgetNames = map[string]depthCeiling{
 	// doctrine; the store package's messages.go deletion the same day
 	// did NOT credit app. Direction stays DOWN.
 	"app": {loc: 1700, exports: 40},
+	// One struct, one loader, per-section validation: every optional
+	// seam adds its section + its validator (asr, push, chat, dial,
+	// lens…). Named pin 2026-11-21 at the lens seam (1532 measured),
+	// per the depth-pin runway note's ruling: the split candidate is
+	// section-seams into internal/config/validate when the pin bites
+	// again — NOT a package split (the one-struct loader is the point).
+	"config": {loc: 1600, exports: 60},
 }
 
 const (

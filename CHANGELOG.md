@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Read-only pbx-lens deep links on History rows** (the 2026-11-15
+  do-not-merge ruling's integration half): `lens.url` (browser-facing
+  origin, absolute http(s), no credentials, never loopback — validation
+  fails the boot otherwise) arms an "Open in pbx-lens" anchor on every
+  CDR row carrying the PBX uuid, opening in a new tab so a live island
+  call never unloads. Zero config or uuid-less rows render
+  byte-identically; the uuid is path-escaped so a hostile PBX row
+  cannot steer the anchor outside the configured origin.
 - **Note prose joins the History query corpus** (2026-11-21): a call
   whose ONLY match is its post-call note body now surfaces in the
   transcript search results exactly as segment text does — rendered

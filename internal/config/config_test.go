@@ -997,3 +997,38 @@ func TestASRProviderVocabularyIsClosed(t *testing.T) {
 		}
 	}
 }
+
+// TestLensURLValidation pins the lens deep-link base's fail-closed
+// shapes: the browser-facing origin must be absolute http(s) without
+// credentials, and a loopback host refuses the boot (the link opens in
+// the operator's browser — the stack's loopback lensUrl is dead by
+// construction here).
+func TestLensURLValidation(t *testing.T) {
+	valid := []string{
+		"",
+		"https://lens.example",
+		"http://lens.internal.example:8080/",
+	}
+	for _, raw := range valid {
+		var cfg Config
+		cfg.Lens.URL = raw
+		if err := validateLens(cfg.Lens); err != nil {
+			t.Errorf("lens.url %q must validate: %v", raw, err)
+		}
+	}
+	invalid := map[string]string{
+		"lens.example":             "not an absolute URL",
+		"ftp://lens.example":       "non-http scheme",
+		"https://u:p@lens.example": "credentials",
+		"http://localhost":         "loopback host",
+		"http://127.0.0.1":         "loopback IP",
+	}
+	for raw, why := range invalid {
+		var cfg Config
+		cfg.Lens.URL = raw
+		err := validateLens(cfg.Lens)
+		if err == nil {
+			t.Errorf("lens.url %q must be rejected (%s)", raw, why)
+		}
+	}
+}
