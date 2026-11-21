@@ -16,19 +16,36 @@ front matter does not carry their history (one home per fact, per the rule above
 
 ### 2026-11-21 release-v2150-chain harvest (from the 07-44 release-train report §f)
 
-- [ ] **release: wait for quiet, then re-run v2.15.0** (07-44 report §f 1-2): load
-      < 30 trending down, webphone commit cadence < 5/8min, clean tree; before the
-      re-run `nix flake check --no-build` is the eval authority; the re-run needs
-      `WEBPHONE_RELEASE_SKIP_VERSION_GUARD=1` (the half-release bump `2be14b73` is
-      already on main — step 3 answers "already 2.15.0").
-- [ ] **release: step 5-9 chain** (07-44 report §f 5-6): tag push + ls-remote verify,
-      gh release notes eyeball ([2.15.0] section non-empty, the sidebar-rail bullet
-      present — verify the fold kept it), lychee, stack relock (telephony
-      webphone→v2.15.0), aarch64 cross-builds + ELF b700 guard.
-- [ ] **watch: telephony CI at 508c789** (07-44 report §f 8): the lens vendorHash fix
-      (0b83c4f) is what greens the serialized VM suites that have been red since
-      2026-11-19; if the fe6eb88 run completes red on the PRE-fix pin, annotate it
-      superseded.
+- ~~**release: wait for quiet, then re-run v2.15.0** (07-44 report §f 1-2): load
+  < 30 trending down, webphone commit cadence < 5/8min, clean tree; before the
+  re-run `nix flake check --no-build` is the eval authority; the re-run needs
+  `WEBPHONE_RELEASE_SKIP_VERSION_GUARD=1` (the half-release bump `2be14b73` is
+  already on main — step 3 answers "already 2.15.0").~~ → done 2026-11-21: the
+  firing session cut the tag at the 14:42 quiet window (`75913f1a`, signed);
+  after their 2h20m stall the whole-list session resumed per this row's own
+  clause — marker `bc73dd30`, clean-clone resume at the 18:09 window with steps
+  1-6 all green (the new step-1 eval precondition included, no override needed
+  on resume: tag==flake version), then the manual tail at the 19:0x window.
+- ~~**release: step 5-9 chain** (07-44 report §f 5-6): tag push + ls-remote verify,
+  gh release notes eyeball ([2.15.0] section non-empty, the sidebar-rail bullet
+  present — verify the fold kept it), lychee, stack relock (telephony
+  webphone→v2.15.0), aarch64 cross-builds + ELF b700 guard.~~ → done
+  2026-11-21: tag `v2.15.0` signed + verified on origin (`48e01294` → commit
+  `75913f1a`); lychee 667 links / 0 errors; stack relocked to the TAG commit
+  (attribution `b543560`, the pre-staged sha corrected to the actual tag
+  target) with browser E2E + webphone VM builds + FULL stack `nix flake check`
+  ALL GREEN on the pushed tip (`9703f3f`, after the doc-counts 52→53 heal);
+  aarch64 cross-builds green with the ELF guard reading real `b700` bytes;
+  gh release published with the full [2.15.0] section (rail bullet included):
+  github.com/LarsArtmann/webphone/releases/tag/v2.15.0.
+- ~~**watch: telephony CI at 508c789** (07-44 report §f 8): the lens vendorHash fix
+  (0b83c4f) is what greens the serialized VM suites that have been red since
+  2026-11-19; if the fe6eb88 run completes red on the PRE-fix pin, annotate it
+  superseded.~~ → closed by supersession 2026-11-21: the release's step-7
+  full stack `nix flake check` (all 53 checks, green at `9703f3f`) re-verifies
+  every VM suite the Forgejo run at that sha would have — a stronger proof than
+  the pending run's verdict, and the stack tip has since moved twice. The lens
+  pin's own proof: the suite list includes `telephony-lens` green.
 - [ ] **pbx-artmann relock + staging** (07-44 report §f 9-11): one
       `nix flake update telephony` covers the lens fix + the webphone tag once step 7
       lands; lock-drift-probe requires webphone pin MATCH + ALREADY-LATEST; restage
@@ -122,19 +139,23 @@ front matter does not carry their history (one home per fact, per the rule above
 
 ### 2026-11-21 report-harvest batch (from the 02-15 and 02-28 status reports' §f)
 
-- [ ] **v2.15.0 concurrent-train end-state watch** (harvested 2026-11-21
-      from the 02-28 report §f): re-check the concurrent v2.15.0 train's
-      end state (tag cut? pushed? gh release?) — do NOT double-fire
-      `release.sh`; if their train stalls, run `scripts/release.sh 2.15.0`
-      from a clean clone per the preflight rule (battery + race + lychee
-      + docs battery green at the fold first).
-      → **RESUMED 17:05 CET 2026-11-21 by the whole-list session — DO NOT
-      DOUBLE-FIRE.** The firing session stalled >2h (last release-lane
-      commit 14:42, no process, no report; tag + stack relock DONE, gh
-      release missing). Resume runs the script's own resume path (gates
-      re-verify, then lychee → stack gates → aarch64 ELF guard → gh
-      release) from a clean clone at origin/main. Marker per the 13:04
-      §e-4 discipline; strike lands with the end-state evidence.
+- ~~**v2.15.0 concurrent-train end-state watch** (harvested 2026-11-21
+  from the 02-28 report §f): re-check the concurrent v2.15.0 train's
+  end state (tag cut? pushed? gh release?) — do NOT double-fire
+  `release.sh`; if their train stalls, run `scripts/release.sh 2.15.0`
+  from a clean clone per the preflight rule (battery + race + lychee
+  - docs battery green at the fold first).~~ → COMPLETE 2026-11-21
+    ~19:30 CET: the firing session stalled >2h after cutting the tag
+    (`75913f1a`, 14:42); the whole-list session resumed per this row's own
+    stall clause (marker `bc73dd30` at 17:05), drove the script's resume
+    path (steps 1-6 green at the 18:09 window incl. buildflow no-cache,
+    go tests, flake check, smoke 200 checks, vulnix triaged, lychee
+    667/0), then the runbook-sanctioned manual tail for the load-gated
+    remainder (stack relock+attribution+E2E+VM+full flake check green and
+    pushed `9703f3f`; aarch64 ELF `b700`; gh release published). Two
+    heals rode the tail: the pre-staged lock-guard attribution named the
+    13:04 tip instead of the actual tag commit (`b543560`), and FEATURES'
+    check count was 52 vs the derived 53 (`9703f3f`).
 - [ ] **Owner: host switch on pbx.artmann** (harvested 2026-11-21 from
       the 02-28 report §f): the deploy authorization is ssh-owner-only —
       the 00-51 §g Q2 sequence stands.
@@ -1982,5 +2003,5 @@ T01–T16 are done (strikes live in the plan file + the 2026-11-12 status report
 - ~~**Fold the `--save-baseline` remainder-write footgun into the docs-gates issue draft, then post** (routed 2026-11-20 from the archived 2026-11-08 06-17 report's §f row 1; owner-gated posting)~~ → folded 2026-11-21, RE-ROUTED: the `--save-baseline` flag is BuildFlow's (docs-gates has none — the 06-17 report's §b-1 conflated the two tools), so the draft lives at `docs/drafts/2026-11-21_buildflow-save-baseline-remainder-write.md` and the docs-gates draft keeps its four defects. All five verify gates passed: source traced at BuildFlow `ceb25caa1` (`stampBaselineSuppression` → `applyBaselineVanish` mutates `Report.Original` in place BEFORE `handleBaselineComparison` saves `BuildReport()`), LIVE reproduction at `cb5471ee8` (23-entry baseline → re-save writes only the new remainder; the webphone incident's 124→0 explained), GOTCHAS #200's documented "superset" contract quoted as the contradiction; voice checker 0 FAIL 0 WARN. The POST stays owner-gated (banner unchecked).
 
 - ~~**go-structure-linter info tail** (noted 2026-11-19; non-gating)~~ → done 2026-11-20 (battery continuation session) — the two NixOS-module eval goldens moved to `nix/testdata/` (`git mv`, every `${./…}` path literal + comment updated; webphone-module + oauth2 checks eval clean), README gained the missing `## Install` section (nix run / nix build / NixOS module / plain go build lanes), and the last finding is a CONFIRMED FALSE POSITIVE: the linter flags the `openapi_golden_test.go` FILE NAME, but its fixture already lives in `internal/server/testdata/openapi.golden.json` (moving the test there would break the build — testdata/ is excluded from compilation). 4 findings → 1 known-FP.
-- [ ] **Stack lock bump, T01 cycle-1** (harvested 2026-11-19 ~21:35 from the pareto-execution train's newest report §f row 7 — docs/status/2026-11-20_00-05_pareto-execution-train-status.md): `nix flake lock --update-input webphone` in ~/projects/nix-international-telephony, commit the lock — the release-train stack leg (release-runbook step 6); rides the v2.15.0 train once the §D10 file-size disposition unblocks it.
+- ~~**Stack lock bump, T01 cycle-1** (harvested 2026-11-19 ~21:35 from the pareto-execution train's newest report §f row 7 — docs/status/2026-11-20_00-05_pareto-execution-train-status.md): `nix flake lock --update-input webphone` in ~/projects/nix-international-telephony, commit the lock — the release-train stack leg (release-runbook step 6); rides the v2.15.0 train once the §D10 file-size disposition unblocks it.~~ → done 2026-11-21 (the v2.15.0 train): the stack's webphone input pins the TAG commit `75913f1a9a31` (`github:LarsArtmann/webphone/v2.15.0` override, idempotent over the pre-stage), the CHANGELOG attribution row carries the rev (lock-guard green), and the full stack flake check passed on the pushed tip `9703f3f`.
 - ~~**T18 FCM invalidateToken on 401/403** (harvested 2026-11-19 ~21:40 from the gates-ladder report's §f row 5, F51, at the audit-all flare routing)~~ → done 2026-11-20 (battery continuation session) with the resource-scope nuance the row's wording missed: 401 is the SERVER credential (an ntfy token-rotation outage answers 401 everywhere — pruning there would mass-delete the registry), so 401 keeps its no-prune verdict; 403 is RESOURCE-scoped and NOW prunes — ntfy's ACL refuses THIS topic (the topic IS the device identity), and FCM's two documented device-scoped 403 codes (`SENDER_ID_MISMATCH`, `THIRD_PARTY_PERMISSION_DENIED`, verified against the Firebase error-code reference) mark a registration unreachable from this sender; any other FCM 403 (IAM scope, API-disabled) stays credential-classified. Pinned by the reworked `TestNtfySendClassifiesFailures` (3 cases) + two new `TestFcmSendClassifiesDeadTokenAndRejectedCredential` subtests; the fan's existing prune lane consumes the sentinel unchanged.
