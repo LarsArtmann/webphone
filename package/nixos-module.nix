@@ -106,6 +106,40 @@ let
     "::1"
   ];
   metricsExposed = !cfg.caddy.enable && !lib.elem listenHost loopbackHosts;
+
+  # The shared sandbox spine (2026-11-21 hardening-parity pin): the
+  # service AND the backup oneshot read the SAME directive set, so
+  # parity is structural instead of comment-tied (the 2026-10-28
+  # nix-review finding). Unit-specific deltas stay at their units: the
+  # service adds the INET/INET6 address families (SIP WSS + provider
+  # webhooks), the backup keeps AF_UNIX only and gains ReadWritePaths
+  # for its destination. A directive added here lands on BOTH units —
+  # that is the pin (docs/dedup-registry.md owns the ruling row).
+  commonHardening = {
+    NoNewPrivileges = true;
+    PrivateTmp = true;
+    PrivateDevices = true;
+    ProtectSystem = "strict";
+    ProtectHome = true;
+    ProtectClock = true;
+    ProtectHostname = true;
+    ProtectKernelLogs = true;
+    ProtectKernelModules = true;
+    ProtectKernelTunables = true;
+    ProtectControlGroups = true;
+    ProtectProc = "invisible";
+    RestrictNamespaces = true;
+    RestrictRealtime = true;
+    RestrictSUIDSGID = true;
+    LockPersonality = true;
+    MemoryDenyWriteExecute = true;
+    CapabilityBoundingSet = "";
+    SystemCallArchitectures = "native";
+    SystemCallFilter = [
+      "@system-service"
+      "~@privileged @resources"
+    ];
+  };
 in
 {
   imports = [
