@@ -60,7 +60,7 @@ type Config struct {
 	// so a non-normalized key fails the boot AT LOAD instead of silently
 	// missing lookups.
 	Identities map[domain.Extension]string `json:"identities" koanf:"identities"`
-	Gateway    Gateway           `json:"gateway" koanf:"gateway"`
+	Gateway    Gateway                     `json:"gateway" koanf:"gateway"`
 	// Fax declares what this DEPLOYMENT can actually do with fax, per
 	// direction. It is a deployment fact, not a code fact: the fax code
 	// is complete either way, but a lane only exists when a number is

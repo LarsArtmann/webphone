@@ -1,6 +1,7 @@
 package domain
 
 import (
+	"encoding/json"
 	"errors"
 	"testing"
 )
@@ -35,6 +36,40 @@ func TestParseExtension(t *testing.T) {
 				t.Fatalf("ParseExtension(%q) = %q, want %q", tt.raw, got, tt.want)
 			}
 		})
+	}
+}
+
+func TestExtensionTextDoorsAreStrict(t *testing.T) {
+	// The config decode door (koanf/mapstructure → UnmarshalText) is the
+	// ONE place identities keys and chat owners become Extensions. Its
+	// strictness is the fail-closed key rule: a form that would sanitize
+	// differently is REJECTED, because a silently-normalized map key
+	// misses its own lookup (one line, two spellings).
+	var ext Extension
+	if err := ext.UnmarshalText([]byte("1001")); err != nil || ext.String() != "1001" {
+		t.Fatalf("UnmarshalText(normal) = %q, %v; want 1001, nil", ext, err)
+	}
+	var sloppy Extension
+	if err := sloppy.UnmarshalText([]byte("10 01")); err == nil {
+		t.Fatalf("UnmarshalText(non-normalized) = %q, nil; want rejection (sanitize would change it)", sloppy)
+	}
+	var junk Extension
+	if err := junk.UnmarshalText([]byte("---")); err == nil {
+		t.Fatal("UnmarshalText(no dialable chars) must reject")
+	}
+
+	// MarshalText is the map-key lane: json renders map[Extension]V keys
+	// through it, and the bytes must equal MarshalJSON's (the raw value).
+	text, err := MustParseExtension("1001").MarshalText()
+	if err != nil || string(text) != "1001" {
+		t.Fatalf("MarshalText = %q, %v; want 1001, nil", text, err)
+	}
+	wire, err := json.Marshal(map[Extension]string{MustParseExtension("1001"): "+4930"})
+	if err != nil {
+		t.Fatalf("marshal typed map: %v", err)
+	}
+	if string(wire) != `{"1001":"+4930"}` {
+		t.Fatalf("typed map keys marshal wrong: %s", wire)
 	}
 }
 
