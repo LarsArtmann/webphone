@@ -85,7 +85,7 @@ _: {
               '';
             in
             {
-              imports = [ ../package/nixos-module.nix ];
+              imports = [ ../../package/nixos-module.nix ];
               services.webphone = {
                 enable = true;
                 package = self'.packages.webphone;

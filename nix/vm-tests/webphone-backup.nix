@@ -25,7 +25,7 @@ _: {
           nodes.machine =
             { pkgs, ... }:
             {
-              imports = [ ../package/nixos-module.nix ];
+              imports = [ ../../package/nixos-module.nix ];
               services.webphone = {
                 enable = true;
                 package = self'.packages.webphone;
