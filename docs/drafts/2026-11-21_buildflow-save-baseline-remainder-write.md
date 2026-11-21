@@ -13,7 +13,7 @@ lives here and the docs-gates draft stays at its four defects.
 
 **Proposed title:** `--save-baseline after the stay-vanish change writes only the unaccepted remainder — against a fully-accepted baseline it silently empties the file`
 
-```markdown
+````markdown
 > [!NOTE]
 > This filing was drafted by GLM via Crush from an AI-run investigation, not at my request. When the failure traces to an external report, that source is linked in the body.
 >
@@ -40,6 +40,7 @@ The P-11 stay-vanish change (2026-10-12) broke that ordering:
 	...
 	handleBaselineComparison(cmd, workflowResult)      // → --save-baseline
 ```
+````
 
 `applyBaselineVanish` mutates the step reports in place —
 
@@ -82,8 +83,8 @@ only from git history (`ed9ccb63`).
    ones).
 
 💘 Generated with Crush
-```
 
+```
 **Filing checklist (skill order):** verify-before-filing → all five
 gates passed this session: source traced end-to-end at `ceb25caa1`
 (order + in-place mutation + report conversion quoted above), live
@@ -94,3 +95,4 @@ Gate 5: no existing issue (only #28/#40, different defects — searched
 line-accurate greps at the exact commit you post from. github-voice →
 run `check-draft --kind body-issue --ai-drafted --unsolicited` before
 posting; `gh issue create --body-file <file>`, never `-`.
+```
