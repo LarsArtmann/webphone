@@ -1,5 +1,7 @@
 # Whole-list resume: red-main heal + governance rows + cross-repo trains (2026-11-21 03:16)
 
+> ARCHIVED 2026-11-21 (docs-health v10 sweep): pre-drain verified (check-rows --strict + bare-rows green), drained for cadence — the pin sat at 66/66 with 12 gates-passing candidates
+
 > Claims verified as of 03:16 CET — push/CI/load statements rot fastest.
 > Session mandate: resume the 22:05 pareto whole-list execution after the
 > 02:28 hard wait. Predecessor: `2026-11-21_02-28_whole-list-execution-midtrain-status.md`.

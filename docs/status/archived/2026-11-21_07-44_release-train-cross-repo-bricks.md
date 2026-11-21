@@ -1,5 +1,7 @@
 # 2026-11-21 07:44 — release train v2.15.0: three cross-repo bricks found and repaired, release blocked on the host storm
 
+> ARCHIVED 2026-11-21 (docs-health v10 sweep): pre-drain verified (check-rows --strict + bare-rows green), drained for cadence — the pin sat at 66/66 with 12 gates-passing candidates
+
 Session arc: resume the 2026-11-15 sidebar-rail handover → discover six days of parallel
 sessions had already landed the rail, folded the CHANGELOG, and drained cadence → the real
 remaining work was "cut v2.15.0 and deploy" → cutting it surfaced three UNRELATED bricks

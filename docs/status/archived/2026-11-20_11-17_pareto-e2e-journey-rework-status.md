@@ -1,5 +1,7 @@
 # Pareto T07–T09 journey rework status — 2026-11-20 11:17
 
+> ARCHIVED 2026-11-21 (docs-health v10 sweep): pre-drain verified (check-rows --strict + bare-rows green), drained for cadence — the pin sat at 66/66 with 12 gates-passing candidates
+
 > Snapshot-rot header: claims verified as of 11:17 CET. `origin/main`
 > (5b75b8b6) is RED in the `workflow e2e (browser)` job — the daemon
 > swept this train's half-reworked journey file and the T06 promotion

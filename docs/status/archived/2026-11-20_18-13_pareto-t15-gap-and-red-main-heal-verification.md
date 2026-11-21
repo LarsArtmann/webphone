@@ -1,5 +1,7 @@
 # Pareto T15 gap + red-main heal verification — status
 
+> ARCHIVED 2026-11-21 (docs-health v10 sweep): pre-drain verified (check-rows --strict + bare-rows green), drained for cadence — the pin sat at 66/66 with 12 gates-passing candidates
+
 > Snapshot-rot header: claims verified as of 2026-11-20 18:13 CET.
 > Scope: the delta since this session's 12:20 report
 > (`2026-11-20_12-20_pareto-trains-t10-t15-midflight-status.md` — the

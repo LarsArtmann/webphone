@@ -1,5 +1,7 @@
 # Pareto execution — T10–T15 mid-flight status
 
+> ARCHIVED 2026-11-21 (docs-health v10 sweep): pre-drain verified (check-rows --strict + bare-rows green), drained for cadence — the pin sat at 66/66 with 12 gates-passing candidates
+
 > Snapshot-rot header: claims verified as of 2026-11-20 12:20 CET.
 > Scope: THIS session's run only (the resumed pareto train from the
 > e2e-journey rework forward). Local suite runs cited below were run

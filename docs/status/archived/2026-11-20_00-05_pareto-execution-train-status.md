@@ -1,5 +1,7 @@
 # Pareto execution train status — 2026-11-20 00:05
 
+> ARCHIVED 2026-11-21 (docs-health v10 sweep): pre-drain verified (check-rows --strict + bare-rows green), drained for cadence — the pin sat at 66/66 with 12 gates-passing candidates
+
 > Snapshot-rot header: claims verified as of 00:05 CET. CI on
 > `origin/main` reads GREEN via `scripts/ci-verdict.sh`; two daemon
 > commits (492b6064, 60909463) were unpushed at snapshot time. This

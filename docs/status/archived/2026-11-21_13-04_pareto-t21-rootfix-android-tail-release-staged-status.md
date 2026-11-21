@@ -1,5 +1,7 @@
 # Pareto T21 root-fix + android tail + release staged — 2026-11-21 13:04
 
+> ARCHIVED 2026-11-21 (docs-health v10 sweep): pre-drain verified (check-rows --strict + bare-rows green), drained for cadence — the pin sat at 66/66 with 12 gates-passing candidates
+
 > **Snapshot-rot warning:** push/CI/load statements rot fastest. Facts
 > verified at 13:04 CET: webphone origin/main = `483118e9` (CI GREEN,
 > name-verified 09:41); stack origin/main = `313a20e`; NO `v2.15.0` tag

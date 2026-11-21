@@ -1,5 +1,7 @@
 # Pareto execution — T15–T18 trains landed; T19+ ladder open (session status)
 
+> ARCHIVED 2026-11-21 (docs-health v10 sweep): pre-drain verified (check-rows --strict + bare-rows green), drained for cadence — the pin sat at 66/66 with 12 gates-passing candidates
+
 > **Snapshot-rot header:** claims verified as of **2026-11-21 02:15 CET**
 > (push/CI statements rot fastest — they are timestamped, not timeless).
 > **Landing-time addendum (02:35):** while landing THIS report the

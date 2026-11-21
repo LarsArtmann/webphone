@@ -1,5 +1,7 @@
 # Whole-list execution session — mid-train status (2026-11-21 02:28 CET)
 
+> ARCHIVED 2026-11-21 (docs-health v10 sweep): pre-drain verified (check-rows --strict + bare-rows green), drained for cadence — the pin sat at 66/66 with 12 gates-passing candidates
+
 > Claims verified as of 2026-11-21 02:26–02:28 CET at HEAD `2be14b73`
 > (working tree clean, all pushes landed via the daemon). Mandate: the
 > 22:05 pareto plan's WHOLE remaining list. Landscape shift on entry:

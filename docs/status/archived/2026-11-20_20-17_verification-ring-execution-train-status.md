@@ -1,5 +1,7 @@
 # Verification-ring execution train status — 2026-11-20 20:17
 
+> ARCHIVED 2026-11-21 (docs-health v10 sweep): pre-drain verified (check-rows --strict + bare-rows green), drained for cadence — the pin sat at 66/66 with 12 gates-passing candidates
+
 > Snapshot-rot header: claims verified as of 20:17 CET. CI on the
 > pushed tip `6498c8ca` reads GREEN via `scripts/ci-verdict.sh` (exit
 > 0, workflow-name-verified). Scope: THIS session only — executing

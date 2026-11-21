@@ -1,5 +1,7 @@
 # Whole-list execution: T23 android landed, pma push-heat gate shipped, hub-fix verification interrupted (2026-11-21 13:13)
 
+> ARCHIVED 2026-11-21 (docs-health v10 sweep): pre-drain verified (check-rows --strict + bare-rows green), drained for cadence — the pin sat at 66/66 with 12 gates-passing candidates
+
 > Claims verified as of 13:13 CET — push/CI/load statements rot fastest.
 > Session mandate: the standing "WHOLE TODO LIST" directive (22:05 pareto
 > plan), resumed from the 03:16 report's ranked queue. Predecessor:

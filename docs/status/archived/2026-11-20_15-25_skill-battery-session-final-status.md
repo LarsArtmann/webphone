@@ -1,5 +1,7 @@
 # Status — the 20-skill battery session (second run): final comprehensive report
 
+> ARCHIVED 2026-11-21 (docs-health v10 sweep): pre-drain verified (check-rows --strict + bare-rows green), drained for cadence — the pin sat at 66/66 with 12 gates-passing candidates
+
 > SNAPSHOT-ROT HEADER: claims verified as of **2026-11-20 15:25 CET**.
 > The session's WORK window was **2026-11-19 ~19:55 → ~21:40 CET** (single
 > continuous run; the machine slept, and this report was written on resume
