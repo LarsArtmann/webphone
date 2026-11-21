@@ -161,12 +161,18 @@ templ HistoryPanel(props HistoryPanelProps) {
 }
 
 // TranscriptGroup is one reassembled call transcript for the History
-// tab: the call's remote party plus its segments in spoken order.
+// tab: the call's remote party plus its segments in spoken order. The
+// note-only query join produces groups with NO lines and NO remote —
+// the note slot carries neither, and the CDR rows cannot be joined
+// (they carry no call id) — so the affordances that address a
+// transcript (copy/download/delete) render only when lines exist.
 type TranscriptGroup struct {
 	// CallID addresses the call for the delete affordance (the store's
 	// DeleteCall key — the CDR rows carry no call uuid, so this is the
 	// ONLY correlation handle the transcript section has).
 	CallID    string
+	// Remote is the call's remote party; empty on the note-only join
+	// (renders the noted-call label instead of a blank name).
 	Remote    string
 	Direction string // "in" | "out"
 	StartedAt time.Time
@@ -201,11 +207,18 @@ templ TranscriptSection(props HistoryPanelProps) {
 					<span aria-hidden="true">
 						if group.Direction == "in" {
 							@icons.Icon(icons.ArrowDown, "wp-icon")
-						} else {
+						} else if group.Direction == "out" {
 							@icons.Icon(icons.ArrowUp, "wp-icon")
 						}
 					</span>
-					<strong>{ displayName(group.Remote, props.CRM) }</strong>
+					if group.Remote == "" {
+						// The note-only query join: the note slot carries no
+						// remote, and the CDR rows cannot be joined — name
+						// the shape honestly instead of a blank.
+						<strong class="wp-muted">{ T(props.Lang, "history.transcripts.noteOnly") }</strong>
+					} else {
+						<strong>{ displayName(group.Remote, props.CRM) }</strong>
+					}
 					// Confirmed-verdict badge (T3): renders ONLY for the five
 					// operator-confirmable verdicts — unknown or absent renders
 					// NOTHING (never a success glyph for an unconfirmed call,
@@ -221,7 +234,9 @@ templ TranscriptSection(props HistoryPanelProps) {
 					}
 					<span class="wp-muted">{ formatStamp(props.Lang, group.StartedAt) }</span>
 				</summary>
-				<p class="wp-transcript-text">{ strings.Join(group.Lines, " ") }</p>
+				if len(group.Lines) > 0 {
+					<p class="wp-transcript-text">{ strings.Join(group.Lines, " ") }</p>
+				}
 				// The automatic review's durable artifact (issue #8, T13): the
 				// AI's assessment renders under the transcript in its lifecycle
 				// state. A row with NO review renders the not-configured chip

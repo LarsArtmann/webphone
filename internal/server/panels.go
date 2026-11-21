@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"net/http"
 	"slices"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -378,10 +379,14 @@ func (h *handlers) historyPanel(r *http.Request, sess session.Session) (templ.Co
 // yield nil — the section simply does not render. An active query turns
 // the fetch into the owner-scoped LIKE search: the section then shows
 // only calls whose transcript text matched (matching lines only — the
-// hint in the view says so). An active disposition filter narrows the
-// groups to calls whose note slot carries that confirmed verdict (T3)
-// and widens the window, since the verdict lives on the note slot and
-// older transcribed calls must stay reachable for the join.
+// hint in the view says so), PLUS note-only joins — a call whose note
+// body matches surfaces like segment text does, with no transcript
+// lines and no remote (the note slot carries none; the CDR rows cannot
+// be joined — they carry no call id). An active disposition filter
+// narrows the groups to calls whose note slot carries that confirmed
+// verdict (T3) and widens the window, since the verdict lives on the
+// note slot and older transcribed calls must stay reachable for the
+// join.
 func (h *handlers) recentTranscripts(r *http.Request, sess session.Session, query string, disposition domain.Disposition) []views.TranscriptGroup {
 	if h.deps.Transcripts == nil {
 		return nil
@@ -417,14 +422,7 @@ func (h *handlers) recentTranscripts(r *http.Request, sess session.Session, quer
 				noteDisposition = view.Disposition
 			}
 		}
-		reviewState, reviewText, reviewConfidence := "", "", 0
-		if h.deps.Reviews != nil {
-			if view, err := h.deps.Reviews.Get(r.Context(), sess.Extension, tx.CallID); err != nil {
-				slog.Warn("history: review fetch failed", "error", err, "extension", sess.Extension.String())
-			} else if view != nil {
-				reviewState, reviewText, reviewConfidence = view.State, view.Text, view.Confidence
-			}
-		}
+		reviewState, reviewText, reviewConfidence := h.transcriptReviewFields(r, sess, tx.CallID)
 		if disposition != "" && noteDisposition != disposition.String() {
 			continue
 		}
@@ -435,7 +433,62 @@ func (h *handlers) recentTranscripts(r *http.Request, sess session.Session, quer
 			ReviewState: reviewState, ReviewText: reviewText, ReviewConfidence: reviewConfidence,
 		})
 	}
+	// The note-only join (2026-11-21): note prose belongs to the query
+	// corpus, so a call whose ONLY match is its note body still surfaces
+	// — exactly the ask the transcript search answers for segment text.
+	// Groups already present own their call id (their transcript lines
+	// matched); note-only hits append behind them, newest note first,
+	// until the window caps, and the disposition filter keeps ruling
+	// them (the verdict lives on the very slot that matched).
+	if query != "" && h.deps.Notes != nil && len(groups) < window {
+		hits, err := h.deps.Notes.SearchBodies(r.Context(), sess.Extension, query)
+		if err != nil {
+			slog.Warn("history: note search failed", "error", err, "extension", sess.Extension.String())
+		} else {
+			present := make(map[string]bool, len(groups))
+			for _, g := range groups {
+				present[g.CallID] = true
+			}
+			for _, hit := range hits {
+				if present[hit.CallID] || len(groups) >= window {
+					continue
+				}
+				if disposition != "" && hit.Disposition != disposition.String() {
+					continue
+				}
+				present[hit.CallID] = true
+				reviewState, reviewText, reviewConfidence := h.transcriptReviewFields(r, sess, hit.CallID)
+				groups = append(groups, views.TranscriptGroup{
+					CallID: hit.CallID, StartedAt: time.Unix(hit.UpdatedAt, 0),
+					Note: hit.Body, Disposition: hit.Disposition,
+					ReviewState: reviewState, ReviewText: reviewText, ReviewConfidence: reviewConfidence,
+				})
+			}
+			// The merged set stays newest-first: transcript groups order by
+			// their newest segment, note-only groups by their note stamp.
+			sort.SliceStable(groups, func(i, j int) bool { return groups[i].StartedAt.After(groups[j].StartedAt) })
+		}
+	}
 	return groups
+}
+
+// transcriptReviewFields reads one call's automatic-review artifact for
+// a transcript group (both the transcript-matched loop and the note-only
+// join read it; a missing review or a nil seam stays zero-valued — no
+// review just means nobody asked for one).
+func (h *handlers) transcriptReviewFields(r *http.Request, sess session.Session, callID string) (state, text string, confidence int) {
+	if h.deps.Reviews == nil {
+		return "", "", 0
+	}
+	view, err := h.deps.Reviews.Get(r.Context(), sess.Extension, callID)
+	if err != nil {
+		slog.Warn("history: review fetch failed", "error", err, "extension", sess.Extension.String())
+		return "", "", 0
+	}
+	if view == nil {
+		return "", "", 0
+	}
+	return view.State, view.Text, view.Confidence
 }
 
 // historyDispositionFilter validates the disposition query param: only

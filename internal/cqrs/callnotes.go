@@ -18,6 +18,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -436,4 +437,28 @@ func (s *Notes) Count(ctx context.Context, owner domain.Extension) (int, error) 
 		return 0, errorfamily.WrapInfrastructuref(err, "cqrs.note_count", "list note slots for %s", owner.String())
 	}
 	return len(views), nil
+}
+
+// SearchBodies answers the owner's note slots whose body contains the
+// needle (ASCII case-insensitive contains — the transcript Search
+// contract), newest first. The scan walks the owner's whole slot set,
+// which the per-owner cap already bounds, mirroring how the transcript
+// search reads the full owner corpus rather than a window.
+func (s *Notes) SearchBodies(ctx context.Context, owner domain.Extension, needle string) ([]readmodels.CallNoteView, error) {
+	views, err := s.reader.Scan(ctx,
+		metaengine.WithFilter("owner", metaengine.FilterEq, owner.String()),
+		metaengine.WithSort("updated_at", true),
+		metaengine.WithLimit(0),
+	)
+	if err != nil {
+		return nil, errorfamily.WrapInfrastructuref(err, "cqrs.note_search", "search note bodies of %s", owner.String())
+	}
+	haystack := strings.ToLower(needle)
+	out := make([]readmodels.CallNoteView, 0, len(views))
+	for _, v := range views {
+		if strings.Contains(strings.ToLower(v.Body), haystack) {
+			out = append(out, v)
+		}
+	}
+	return out, nil
 }

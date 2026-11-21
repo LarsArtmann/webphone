@@ -90,4 +90,10 @@ type NotesGate interface {
 	// Count answers how many note slots the owner holds (the Settings
 	// cap-visibility row). Infrastructure failure wraps and returns.
 	Count(ctx context.Context, owner domain.Extension) (int, error)
+	// SearchBodies answers the owner's note slots whose body contains
+	// the needle (ASCII case-insensitive contains — the transcript
+	// Search contract), newest first. The History query joins note
+	// prose into the transcript result set: a call whose ONLY match is
+	// its note must still surface, exactly as segment text does.
+	SearchBodies(ctx context.Context, owner domain.Extension, needle string) ([]CallNoteView, error)
 }
