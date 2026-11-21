@@ -4,6 +4,11 @@
 # Usage:
 #   scripts/release.sh X.Y.Z          # real release (gates run, tag pushes)
 #   scripts/release.sh X.Y.Z --dry-run
+#   scripts/release.sh X.Y.Z --resume-tail
+#     Resume AFTER a stalled post-tag tail: the tag on origin is the
+#     evidence steps 1-5 passed, so they are skipped (HEAD must BE the
+#     tag commit — clean clone per the runbook) and only the remainder
+#     runs: lychee, stack, aarch64, gh release.
 #
 # Preconditions you must do BEFORE calling this (runbook step 1):
 #   - CHANGELOG: fold [Unreleased] into a dated "## [X.Y.Z] - YYYY-MM-DD" section
@@ -24,9 +29,16 @@ set -euo pipefail
 
 VERSION="${1:-}"
 DRY_RUN=0
-case " ${*:2} " in *" --dry-run "*) DRY_RUN=1 ;; esac
+RESUME_TAIL=0
+for arg in ${*:2}; do
+	case "$arg" in
+	--dry-run) DRY_RUN=1 ;;
+	--resume-tail) RESUME_TAIL=1 ;;
+	*) echo "unknown flag: $arg (usage: $0 X.Y.Z [--dry-run] [--resume-tail])" >&2; exit 2 ;;
+	esac
+done
 if [ -z "$VERSION" ]; then
-	echo "usage: $0 X.Y.Z [--dry-run]" >&2
+	echo "usage: $0 X.Y.Z [--dry-run] [--resume-tail]" >&2
 	exit 2
 fi
 VERSION="${VERSION#v}"
@@ -49,21 +61,39 @@ run() {
 # own later scrub (nothing WEBPHONE_* parses before it).
 release_max_load="${WEBPHONE_RELEASE_MAX_LOAD:-}"
 unset WEBPHONE_RELEASE_MAX_LOAD
+release_load_wait="${WEBPHONE_RELEASE_LOAD_WAIT_SECS:-}"
+unset WEBPHONE_RELEASE_LOAD_WAIT_SECS
 
 # Load precondition (2026-09-23 tail lesson: two E2E marker-stalls at host
 # load 60-174 were load-shaped, not code-shaped; a quiet-host check is
 # cheap and masks nothing, where an E2E auto-retry would mask real
 # regressions — chosen as the default pending owner ratification, 02:47
-# §g1). Override deliberately via WEBPHONE_RELEASE_MAX_LOAD=999.
+# §g1). Waits for drain instead of sampling once (2026-11-21, the v2.15.0
+# lesson: after the script's own ~25 min of gates, a single 1-min sample
+# sits in the gate residual and a re-run paid the whole gates again):
+# polls every 30s until the 1-min average drops below the bar, capped at
+# WEBPHONE_RELEASE_LOAD_WAIT_SECS (default 1800). The 1-min average is
+# itself a 60s mean, so one below-bar reading is already "sustained".
+# Override the bar deliberately via WEBPHONE_RELEASE_MAX_LOAD=999.
 load_gate() {
 	local max="${release_max_load:-8}"
-	local one five
-	read -r one five _ </proc/loadavg
-	if awk -v l="$one" -v m="$max" 'BEGIN { exit !(l + 0 >= m + 0) }'; then
-		echo "host load $one >= $max (5min: $five): the browser E2E and VM tests are timing-sensitive under contention. Wait for sustained quiet, or override with WEBPHONE_RELEASE_MAX_LOAD." >&2
-		exit 1
-	fi
-	echo "ok: host load $one (< $max)"
+	local wait_max="${release_load_wait:-1800}"
+	local interval=30
+	local waited=0 one five
+	while :; do
+		read -r one five _ </proc/loadavg
+		if awk -v l="$one" -v m="$max" 'BEGIN { exit !(l + 0 < m + 0) }'; then
+			echo "ok: host load $one (< $max) after ${waited}s of waiting"
+			return 0
+		fi
+		if [ "$waited" -ge "$wait_max" ]; then
+			echo "host load $one >= $max for ${waited}s (cap ${wait_max}s): the browser E2E and VM tests are timing-sensitive under contention. Wait for sustained quiet, raise the cap with WEBPHONE_RELEASE_LOAD_WAIT_SECS, or the bar with WEBPHONE_RELEASE_MAX_LOAD." >&2
+			exit 1
+		fi
+		echo "  load $one >= $max — waiting for drain (${waited}s/${wait_max}s cap, 5min: $five)"
+		sleep "$interval"
+		waited=$((waited + interval))
+	done
 }
 
 # The daemon commits continuously; the gates take tens of minutes. A
