@@ -1,8 +1,8 @@
 # go-flightrecorder — adjacent library audit (closeout T24)
 
 **Verdict:** the opt-in debugging seam rides the library exactly as designed: one `Recorder` configured with snapshot dir/retention/compression/min-age, `SnapshotIfAsync` off a detached request context, `OnErrorOrLatency(2s)` as the trigger, `Close` drained last via the container's Shutdowner. The server-side `TraceRecorder` interface keeps the framework OUT of the handler packages — the app adapter is the only place that sees the library.
-**Pin:** v0.2.1 (direct) · **Latest:** v0.2.1 · **Currency:** current · **Status:** direct dep
-**Audited:** 2026-11-04 · **Prior reports:** none (first audit).
+**Pin:** v0.2.1 (direct) · **Latest:** v0.2.1 · **Currency:** current (2026-11-22 re-verify: the library is dormant — no tag and no `[Unreleased]` accrual since 2026-10-18; the seam wiring re-verified green in-tree) · **Status:** direct dep
+**Audited:** 2026-11-04 · **re-verified:** 2026-11-13, 2026-11-22 · **Prior reports:** none (first audit).
 **Run all commands from the webphone checkout root** (repo-relative paths).
 
 ## Usage (verified)

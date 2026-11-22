@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>webphone × LarsArtmann stack — 25-library utilization audit (2026-11-04 · currency 2026-11-13)</title>
+    <title>webphone × LarsArtmann stack — 25-library utilization audit (2026-11-04 · currency 2026-11-22)</title>
     <style>
       /* =========================================================================
          BAUHAUS LIGHT — Editorial template
@@ -923,8 +923,8 @@
             <div class="label">Mean adoption /100 (9 scored)</div>
           </div>
           <div class="score-card score-warn">
-            <div class="score">3</div>
-            <div class="label">Pins behind latest (1 scored submodule + 2 adjacent; no consumed surface changed)</div>
+            <div class="score">6</div>
+            <div class="label">Module pins behind latest (cqrs-htmx ×4 family train + templ-components + branded-id; every one adjudicated — 5 ride the next deps train, templ bump declined standalone)</div>
           </div>
           <div class="score-card score-good">
             <div class="score">0</div>
@@ -995,6 +995,34 @@
             now checks only the resolvable form and FLAGS a wrong-shape-tagged
             release (self-test pins the incident class); the release was unblocked
             by pushing the correctly-shaped tag on the same verified commit.
+            Full-fleet re-audit <strong>2026-11-22</strong> (audit-verify replay
+            <strong>124/124 green</strong>; 468 webphone commits and a 2026-11-21
+            upstream family train since the last sweep): <strong>every one of the 25
+            reports re-verified</strong> against remote tags and the current tree.
+            go-cqrs-lite is fully current — the 2026-11-20 engine wave swept system
+            v4.19.0 / metaengine v4.26.0 / sqliteengine v4.9.1 and closed the catalog
+            holdout (all 11 direct modules at remote latest). Six pins sit behind,
+            each with a written adjudication: the <strong>cqrs-htmx family train
+            (2026-11-21)</strong> is 4 tags ahead (root v4.19.0, usermgmt v4.21.0,
+            loginpage v4.19.0, identity-model v4.18.0) with every new capability
+            ruled N/A or passive for webphone — <strong>bump on the next deps train,
+            nothing to wire</strong> (the go-jose CPU-DoS patch is already in our
+            closure at v4.1.8; usermgmt/oauth2 is not in the graph); usermgmt
+            v4.21.0's default command-idempotency guard is passive armor;
+            <strong>templ-components v1.27.1/v1.27.2 bump DECLINED standalone</strong>
+            (the JSON-LD `</` and `</script>` hardening touch surfaces webphone never
+            renders — 0 ld+json, 0 ScriptComponent, 0 auto-fit-grid via the tw.css
+            @source evidence; ride the next templ train); <strong>go-branded-id
+            v0.8.0</strong> is a zero-API go-floor bump — ride the next train;
+            go-datastar's v0.7.0/v0.8.0-static rides its consumers' requires.
+            Idempotency's pin walked v0.3.2 → v0.6.0 by the fleet treadmill (18
+            invariants now; NO-GO premise unmoved). Two evidence repairs without
+            verdict movement (error-family's reconnect rows, health's v0.10.0 gloss —
+            it is the Routes release, breaking but inert here). Forward items on
+            watch: cqrs-htmx 4-tag bump, go1.27.4 toolchain roll
+            (GO-2026-97054 MaxBytesReader, fixed upstream in go1.27.4), dashboard's
+            in-flight native OIDC login (a future in-process alternative to the
+            Caddy fence), and go-cqrs-lite's core/v5 pre-tag finalization.
           </p>
           <div class="callout callout-teal">
             <strong>The bottom line — both top findings LANDED 2026-11-04</strong>
