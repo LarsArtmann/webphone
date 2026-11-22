@@ -2,7 +2,7 @@
 
 **Verdict:** the sharpest NEW finding of this audit series: webphone's one runtime file-write path persisted user data with a bare `os.WriteFile` — no fsync, no atomic rename — while this library exists precisely for that. **Adoption: LANDED 2026-11-04 (v0.6.2) — `blob.Save` rides `WriteWithPerm(…, 0o640)`, both CLI spec writers ride `WriteIfChanged`; vendorHash re-pinned in the same train.**
 **Pin:** v0.6.2 · **Latest:** v0.6.2 (local checkout tag) · **Status:** direct dependency
-**Audited:** 2026-11-04 · **Prior reports:** none (first audit).
+**Audited:** 2026-11-04 · **Re-verified:** 2026-11-22 (currency + `[Unreleased]` read — verdict unchanged). · **Prior reports:** none (first audit).
 
 ## Errata — verified write ordering (T01, 2026-11-04)
 
@@ -45,6 +45,15 @@ Step-0 verification of the plan (`docs/planning/2026-11-04_18-41_SUPERB-fleet-li
 **ADOPT for `blob.Save`** (the durability argument stands on its own) and opportunistically for the two CLI writers. Sequencing note: a new direct dependency means the vendorHash re-pin ritual rides the same commit (`go mod tidy` → re-pin → CI-watch), per the dependency-bump doctrine. Alternative if the dependency is unwanted: hand-roll fsync+rename at blob.Save (12 lines) — but then the one home for the pattern is a comment, not a library.
 
 **Refresh trigger:** any new file-persisting feature (exports, backups beyond the NixOS oneshot, log rotation).
+
+## 2026-11-22 re-verify
+
+Currency: pin v0.6.2 = remote latest (local checkout tag v0.6.2). `[Unreleased]` read in full — two Go-module items, neither touching the durability contract webphone rides (fsync + rename + dir-fsync unchanged in `WriteWithPerm`):
+
+- **`WriteFuncWithPerm(path, fn, perm)`** — the streaming sibling of the `WriteWithPerm` `blob.Save` rides, closing the 0644-default mode gap for streamed writes (previously only byte-slice writes could pick a mode). No webphone consumer today — the fit analysis's "content is already fully in memory" stands — but it becomes the natural pick if the refresh trigger's exports/backups ever stream.
+- **Parent-dir `MkdirAll` on every write entrypoint** — belt-and-braces for webphone, which pre-creates directories at the call sites (`internal/blob/store.go:40`, `os.MkdirAll(…, 0o750)`); no action needed, and the library stops depending on caller hygiene.
+
+The rest of `[Unreleased]` is website/CI plumbing (landing redesign, sitemap postbuild gate, lockfile drift guards, a deterministic collision test for the temp-path contract). Verify block replayed green: 0 bare `os.WriteFile` in `internal/blob/store.go`, 0 in `cmd/webphone/{catalog,contracts}.go`, 5 `atomicwrite` hits — `internal/blob/store.go:67` (`WriteWithPerm(…, 0o640)`) plus `WriteIfChanged` at `cmd/webphone/catalog.go:67,75` and `cmd/webphone/contracts.go:40,59`.
 
 ## How to verify
 

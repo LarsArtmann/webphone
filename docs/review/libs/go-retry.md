@@ -2,7 +2,7 @@
 
 **Verdict:** partial fit, ADOPTED on the fitting half (2026-11-04, closeout T17): the chat reconnect loops now ride `retry.ComputeDelay` (exponential + ≤50% additive jitter, hard-capped, saturation-hardened) instead of the hand-rolled deterministic doubling, and gate on `errorfamily.Classify` so Rejections stop the loop LOUDLY. The bounded-attempts model (`retry.Do`) still fits nothing — a reconnect loop cannot exhaust — and stays declined.
 **Pin:** v0.9.0 (go.mod:41, **DIRECT since 2026-11-04**; previously indirect via go-paperless + go-cqrs-lite/middleware) · **Latest:** v0.9.0 · **Currency:** current · **Status:** direct dep
-**Audited:** 2026-11-04 · **Prior reports:** none (first audit).
+**Audited:** 2026-11-04 · **Re-verified:** 2026-11-22 (currency + `[Unreleased]` read — verdict unchanged). · **Prior reports:** none (first audit).
 
 ## Status
 
@@ -35,6 +35,10 @@
 **ADOPTED 2026-11-04 (the delay half + the classification half; closeout T17):** `nextDelay` rides `retry.ComputeDelay` (additive jitter kills the thundering-herd lockstep; the hard cap is the library's saturation-tested math, not a hand-rolled branch), and `chatloop.Backoff` gates on `errorfamily.Classify` — **Rejections stop loudly, everything else retries**. That gate is deliberately NARROWER than `errorfamily.IsRetryable` (which also stops Infrastructure): a garbage homeserver response (Infrastructure decode failure) must not kill inbound-message intake until app restart; only the "retrying changes nothing" class (matrix auth/permission per `matrix.classify`, signal daemon RPC refusal) ends the loop, with an Error log as the visible surface. Full `retry.Do` adoption still fits nothing current (bounded attempts vs reconnect-until-ctx). vendorHash needed NO re-pin: the promote changed only go.mod's comment column — the module content was already in graph and go.sum.
 
 **Refresh trigger:** a second retry-shaped loop (e.g. ASR segment uploads) — the natural home for `retry.Do`; an upstream ComputeDelay semantics change (jitter strategy, cap behavior).
+
+## 2026-11-22 re-verify
+
+Currency: pin v0.9.0 = remote latest (local checkout tag v0.9.0). `[Unreleased]` is CI-only — the lint action pin raised v2.13.2 → v2.15.0 plus a wrapcheck exemption for errorfamily constructor signatures (the fleet convention; v2.15's signature-based wrapcheck otherwise flags them as unwrapped externals) — zero Go-module changes, so nothing threatens the `ComputeDelay` contract (exponential + ≤50% additive jitter, hard-capped, saturation-hardened) that `chatloop.nextDelay` rides. Verify block replayed green: `NextBackoff` still deleted (0 hits); `internal/chatloop/chatloop.go:56` `retry.ComputeDelay(firstWait, ceiling, 2, attempt)` with `firstWait = time.Second` (:35) and the `Classify(err) == Rejection` stop-gate at :79; 9 `attempt` hits across `internal/matrix/receiver.go` + `internal/signal/receiver.go`; DIRECT pin v0.9.0 at go.mod:41. Both pin tests present: `TestNextDelayJittersWithinTheLadder` (internal/chatloop/chatloop_test.go:18) and `TestBackoffStopsOnRejection` (:43) — not run here (no `go test` per audit rules; static presence only).
 
 ## How to verify
 
