@@ -53,6 +53,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 
 
+- **`export-legacy` tolerates a concurrent writer**: the legacy dump
+  handle now carries `busy_timeout(5000)` like every other sqlite
+  handle in the repo, so a momentary write lock on a live database
+  waits instead of failing the dump with "database is locked"
+  (pinned by `TestExportLegacyWaitsOutAHeldWriteLock`; the handle
+  stays WAL-free and inert per the §5 design memo).
 - **release.sh evals the tree at step 1 before burning gate cycles**:
   a `nix flake check --no-build` precondition now fails an eval-red
   main immediately — previously such a tree passed every step-1 check

@@ -185,7 +185,9 @@ exclude:
 #   deployment zone per the Reports ruling), D006
 #   errTraceRequestFailed sentinel (recorder trigger vocabulary,
 #   erraudit-clean), E023 database/sql mixing (sessions SQL per the D2
-#   ruling + DLQ engine-tier exempt — the rule's own text), F009
+#     ruling + DLQ engine-tier exempt — the rule's own text; the
+#     export-legacy raw read-only history handle joined the class
+#     2026-11-22, design memo §2: never store.Open), F009
 #   visibility poll time.After (the in-process D7 read-your-writes
 #   budget, not a durable timer), F021 fold-count advisories (deliberate
 #   view decomposition).
@@ -197,11 +199,13 @@ exclude:
 #   actions.go); N distinct files ARE the work, nothing to hoist or
 #   batch. ACCEPT (inherent per-item I/O); re-litigate only if a loop
 #   ever re-reads the SAME path per iteration.
-#   EXPECTED SCOPED COUNTS (2026-11-12; a scoped run reading MORE than
-#   these means a lost directive or a new finding — diff before
-#   assuming anything; the F031 loss hid because the total coincidentally
-#   stayed 12): cqrs-lint 11 (C014x2, D006, E023x4, F009, F021x3 — the
-#   armed keep-visible set), samber-linter 0, io-surface 6, jscpd 16
+#   EXPECTED SCOPED COUNTS (re-pinned 2026-11-22; a scoped run reading
+#   MORE than these means a lost directive or a new finding — diff
+#   before assuming anything; the F031 loss hid because the total
+#   coincidentally stayed 12): cqrs-lint 13 (C014x2, D006, E023x6,
+#   F009, F021x3 — the armed keep-visible set; export-legacy's E023x2
+#   joined 2026-11-22 while its P012 was directive'd and its P013
+#   busy_timeout-fixed), samber-linter 0, io-surface 6, jscpd 16
 #   (island-test fixtures, ACCEPT row in docs/dedup-registry.md),
 #   bandit furniture-only (real issues 0 — all six sites nosec'd; the
 #   ~244 text rows are the upstream #64-class parser disease, draft at
