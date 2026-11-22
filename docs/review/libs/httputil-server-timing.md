@@ -11,7 +11,7 @@
 | Module         | `github.com/larsartmann/httputil/server_timing` (zero-dep module) |
 | Pinned         | v1.0.3 direct                                                     |
 | Latest release | v1.0.3                                                            |
-| Usage          | 1 import site (internal/server/server.go:28), env-gated                                           |
+| Usage          | 1 import site (internal/server/server.go:28), env-gated           |
 
 ## What the library offers
 

@@ -17,12 +17,12 @@ Event-sourced, encrypted-at-rest credential store: `credentials.Build(ctx, Optio
 
 ## Webphone overlap analysis (verified)
 
-| Credential                                                      | Webphone's answer                                                                                                  | Evidence                                      |
-| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | --------------------------------------------- |
-| SIP extension directory passwords                               | per-extension files read **per login, never cached**; empty/missing = loud Rejection (the 2026-10-01 outage class) | internal/authmap/authmap.go:194-219           |
-| Webhook secret / credential-brokering secret / CRM token / paperless token | file reads at boot; NixOS module wires them through systemd `LoadCredential`                                       | internal/config/config.go:812,831,852,874     |
-| OIDC client secret                                              | `ClientSecretFile` read at the sso seam; wired via systemd `LoadCredential`; rotation = unit restart                               | internal/sso/sso.go:306; AGENTS.md OIDC lane  |
-| Session-carried directory password (for the `/phone-api` proxy) | SQLite session rows, swept on read; at-rest accepted deliberately                                                  | internal/session (store seam)                 |
+| Credential                                                                 | Webphone's answer                                                                                                  | Evidence                                     |
+| -------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | -------------------------------------------- |
+| SIP extension directory passwords                                          | per-extension files read **per login, never cached**; empty/missing = loud Rejection (the 2026-10-01 outage class) | internal/authmap/authmap.go:194-219          |
+| Webhook secret / credential-brokering secret / CRM token / paperless token | file reads at boot; NixOS module wires them through systemd `LoadCredential`                                       | internal/config/config.go:812,831,852,874    |
+| OIDC client secret                                                         | `ClientSecretFile` read at the sso seam; wired via systemd `LoadCredential`; rotation = unit restart               | internal/sso/sso.go:306; AGENTS.md OIDC lane |
+| Session-carried directory password (for the `/phone-api` proxy)            | SQLite session rows, swept on read; at-rest accepted deliberately                                                  | internal/session (store seam)                |
 
 Adopting the library would add a second stateful component with its own master-key rotation problem **inside** a single-binary product, to store secrets the OS already holds — strictly more keys to manage, zero capability gained. The one-time-reveal admin UI would also widen webphone's auth surface, which the platform currently fences.
 

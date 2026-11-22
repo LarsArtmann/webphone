@@ -23,9 +23,9 @@ Both patches were read against what webphone actually renders (rg first), not ag
 
 ## Status
 
-|               |                                                                                                                                                                                 |
-| ------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Module family | root + icons + utils (+ datastar/htmx indirect; feedback/navigation/recipes/charts/errorpage present upstream)                                                                  |
+|               |                                                                                                                                                                                                                                                                            |
+| ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Module family | root + icons + utils (+ datastar/htmx indirect; feedback/navigation/recipes/charts/errorpage present upstream)                                                                                                                                                             |
 | Usage         | `.templ` surfaces (2026-11-22 code-only re-measure): icons ×26 call sites (16 distinct of 105 constants), display ×38 (Button ×19, EmptyState ×9 + SimpleEmptyState ×2, Badge ×6, DefinitionList ×2), forms ×8 (Input ×7, Textarea ×1), layout.Base ×2, utils.BaseProps ×8 |
 
 ## What the library offers
