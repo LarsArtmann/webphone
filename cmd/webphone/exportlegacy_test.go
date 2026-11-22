@@ -139,6 +139,46 @@ func TestExportLegacyMissingDatabaseDumpsZeroRows(t *testing.T) {
 	}
 }
 
+// TestExportLegacyWaitsOutAHeldWriteLock pins the busy_timeout half of
+// the legacy DSN (2026-11-22): an operator dumping against a LIVE
+// database must not lose the export to a momentary writer lock. The
+// WAL half stays deliberately absent: the dump is inert at any schema
+// version (design memo §2, the P012 directive at the open site).
+func TestExportLegacyWaitsOutAHeldWriteLock(t *testing.T) {
+	dir := t.TempDir()
+	seedLegacyContacts(t, dir)
+	ctx := context.Background()
+	holder, err := sql.Open("sqlite", filepath.Join(dir, "webphone.db"))
+	if err != nil {
+		t.Fatalf("open lock holder: %v", err)
+	}
+	defer func() { _ = holder.Close() }()
+	conn, err := holder.Conn(ctx)
+	if err != nil {
+		t.Fatalf("lock holder conn: %v", err)
+	}
+	defer func() { _ = conn.Close() }()
+	if _, err := conn.ExecContext(ctx, "BEGIN EXCLUSIVE"); err != nil {
+		t.Fatalf("hold exclusive lock: %v", err)
+	}
+	release := make(chan struct{})
+	go func() {
+		defer close(release)
+		time.Sleep(300 * time.Millisecond)
+		if _, err := conn.ExecContext(ctx, "COMMIT"); err != nil {
+			t.Errorf("release held lock: %v", err)
+		}
+	}()
+	rows, err := readLegacyContacts(dir)
+	if err != nil {
+		t.Fatalf("read under held lock (busy_timeout must wait it out): %v", err)
+	}
+	<-release
+	if len(rows) != 4 {
+		t.Fatalf("held-lock read yielded %d rows, want 4", len(rows))
+	}
+}
+
 func TestExportLegacyCheckExitsNonzeroWhileUnconfirmed(t *testing.T) {
 	dir := t.TempDir()
 	seedLegacyContacts(t, dir)

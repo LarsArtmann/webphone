@@ -109,7 +109,8 @@ func readLegacyContacts(dir string) ([]legacyContactRow, error) {
 	}
 	// query_only(1): the dump must be inert at ANY point in the schema
 	// chain — no migrations, no WAL stamping (design memo §2).
-	db, err := sql.Open("sqlite", "file:"+path+"?_pragma=query_only(1)")
+	// cqrs-lint:ignore(P012) journal_mode is persistent state the WRITING binary owns; §2 forbids WAL-stamping a foreign-schema legacy file (busy_timeout below is the one inert pragma this handle carries)
+	db, err := sql.Open("sqlite", "file:"+path+"?_pragma=query_only(1)&_pragma=busy_timeout(5000)")
 	if err != nil {
 		return nil, bootErr(bootGeneric, errorfamily.WrapInfrastructure(err, "webphone.cli.export_legacy", "open "+path+" read-only"))
 	}
