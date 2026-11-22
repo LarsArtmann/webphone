@@ -551,7 +551,7 @@ type Matrix struct {
 	// are owner-scoped everywhere and need their home). Decodes through
 	// domain.Extension.UnmarshalText — strict: a sanitizable-but-
 	// unnormalized form fails the boot.
-	Owner domain.Extension `json:"owner,omitempty" koanf:"owner"`
+	Owner domain.Extension `json:"owner" koanf:"owner"`
 }
 
 // Enabled reports whether the matrix lane is configured.
@@ -571,7 +571,7 @@ type Signal struct {
 	// Owner is the webphone extension owning every signal conversation.
 	// Decodes through domain.Extension.UnmarshalText (strict: a
 	// sanitizable-but-unnormalized form fails the boot).
-	Owner domain.Extension `json:"owner,omitempty" koanf:"owner"`
+	Owner domain.Extension `json:"owner" koanf:"owner"`
 	// AttachmentsDir is signal-cli's received-attachment directory (e.g.
 	// /var/lib/signal-cli/attachments — files named by their id, no
 	// extension). Empty keeps inbound attachments fenced (the v1

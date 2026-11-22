@@ -34,7 +34,10 @@ for arg in ${*:2}; do
 	case "$arg" in
 	--dry-run) DRY_RUN=1 ;;
 	--resume-tail) RESUME_TAIL=1 ;;
-	*) echo "unknown flag: $arg (usage: $0 X.Y.Z [--dry-run] [--resume-tail])" >&2; exit 2 ;;
+	*)
+		echo "unknown flag: $arg (usage: $0 X.Y.Z [--dry-run] [--resume-tail])" >&2
+		exit 2
+		;;
 	esac
 done
 if [ -z "$VERSION" ]; then
@@ -151,7 +154,10 @@ if [ "$RESUME_TAIL" = "1" ]; then
 		echo "--resume-tail: HEAD $(git rev-parse --short HEAD) is not the $TAG commit $(git rev-parse --short "$tag_commit") — run from a clean clone at the tag (runbook ritual) so the tail verifies the shipped tree" >&2
 		exit 1
 	fi
-	[ -z "$(git status --porcelain)" ] || { echo "tree not clean" >&2; exit 1; }
+	[ -z "$(git status --porcelain)" ] || {
+		echo "tree not clean" >&2
+		exit 1
+	}
 	RESUME_TAG=1
 	echo "ok: resuming the tail at the shipped tree $TAG ($(git rev-parse --short HEAD))"
 else
