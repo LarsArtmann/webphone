@@ -1,8 +1,19 @@
 # go-appkit — library utilization audit
 
 **Verdict:** RE-RULED 2026-11-12 (open-mind re-review, owner-triggered): the FRAMEWORK layer stays NO-GO — but on sharper evidence than "re-wraps", because that claim stopped being true of the whole library: FIVE modules the 2026-10-23 ruling never saw now exist (`httpx`, `config`, `preset`, `flightrecorderhealth`, `testkit`), and one of them (`flightrecorderhealth`) is the first genuine MODULE-LEVEL adoption candidate webphone has ever had from this family — a new capability, zero framework coupling, both hard deps already pinned. **Adoption: framework n/a; `flightrecorderhealth` = live candidate (demand-gated, TODO_LIST row).**
-**Pin:** none (absent from go.mod; `go-flightrecorder` v0.2.1 is now a CONSUMED direct dep (webphone's own flight-recorder seam, 2026-11-13: limiter, boot log, snapshot metrics, disk floor) and `go-health` v0.10.0 is a direct pin — both of flightrecorderhealth's hard deps are in the graph, one now load-bearing) · **Latest (root tag):** v0.12.0 (the 2026-11-05 check pinned v0.9.0 — the framework moved three minors in days; 13 tagged satellite modules beside root) · **Status:** not a dependency
-**Audited:** 2026-11-12 · **Supersedes:** the 2026-11-04 re-verification — that pass had gone stale: this report's own refresh trigger ("any appkit module that stops re-wrapping and provides a unique capability") FIRED twice over (httpx, flightrecorderhealth), so this is a re-rule, not a re-affirm · **Authoritative prior:** [2026-10-23 deep-dive](../../research/2026-10-23_go-appkit-deep-dive.html) (score 77/100 over 14 rows; the per-module calls there are superseded by the table below where they conflict).
+**Pin:** none (absent from go.mod; `go-flightrecorder` v0.2.1 is now a CONSUMED direct dep (webphone's own flight-recorder seam, 2026-11-13: limiter, boot log, snapshot metrics, disk floor) and `go-health` v0.10.0 is a direct pin — both of flightrecorderhealth's hard deps are in the graph, one now load-bearing) · **Latest (root tag):** v0.13.0 (2026-11-21 — swept at the 2026-11-22 re-verify; the 13 tagged satellites are ALL unmoved, flightrecorderhealth still v0.1.7) · **Status:** not a dependency
+**Audited:** 2026-11-12 · **2026-11-22 re-verify** (v0.13.0 adjudicated — NO-GO stands: asks unshipped + toolchain floor) · **Supersedes:** the 2026-11-04 re-verification — that pass had gone stale: this report's own refresh trigger ("any appkit module that stops re-wrapping and provides a unique capability") FIRED twice over (httpx, flightrecorderhealth), so this is a re-rule, not a re-affirm · **Authoritative prior:** [2026-10-23 deep-dive](../../research/2026-10-23_go-appkit-deep-dive.html) (score 77/100 over 14 rows; the per-module calls there are superseded by the table below where they conflict).
+
+## 2026-11-22 re-verify — v0.13.0 adjudicated: NO-GO stands
+
+The refresh trigger's first clause fired ("an appkit tag beyond v0.12.0") — the module table was swept, as the 11-12 pass prescribed:
+
+- **Root v0.13.0 (2026-11-21) is DX + adoption-surface work, not a new battery.** Two seams: `ServiceConfig.Listener net.Listener` (config.go:177 — listener injection: systemd socket activation, unix-socket IPC daemons; demand named by two OTHER fleet adoption reviews, go-compliance and nsfw-classifier, not webphone) and `ServiceConfig.LogHandler slog.Handler` (config.go:71 — any slog.Handler; LogLevel/LogFormat ignored in that mode, shutdown-line contract pinned for any handler). Beside them: README "Start here"/one-line-wins surfaces, `docs/CAPABILITIES.md`, `docs/MODULE_INVENTORY.md`, and a release-ritual step 7. Neither seam moves a webphone wall — Listener targets socket-activation daemons (webphone is `Type=simple` binding its own addr behind Caddy; the systemd row's trigger stays a `Type=notify` conversion), LogHandler is logging-DX (webphone's slog wiring is boot-owned; the exit-contract surface is the bootreport, unchanged).
+- **The three webphone asks are NOT in it** — #59 (strict/per-surface readiness), #60 (aggregates-only metrics), #61 (httpx success-status) — checked against the 0.13.0 changelog section AND every satellite `[Unreleased]`: health/httpx/flightrecorderhealth/preset/config are empty; only cqrs carries the `system.Standard` deployment note the 11-12 table already recorded. The asks remain the extraction backlog; nothing to re-adjudicate per-module.
+- **Toolchain floor: v0.13.0 cannot build on webphone's floor today.** Its go.mod declares `go 1.27.4`; webphone ships `go 1.27.3` (go.mod:3) — and cqrs-htmx re-pinned v0.13.0 → v0.12.0 the same day for exactly that reason (the 2026-11-21 "appkit hold"). Even a wanted adoption would wait on a floor bump.
+- **Satellites: all 13 unmoved** — flightrecorderhealth still v0.1.7, so the one live candidate row's demand gate (adopt on the first wedge incident the request-triggered arm misses) is unchanged and untested-against-nothing-new.
+
+**Adjudication: NO-GO stands, premise intact.** The 11-12 honest-summary trajectory (convergence) is neither advanced nor contradicted — v0.13.0 is the framework polishing its on-ramp for the simpler fleet apps, which is the battery-swap lane webphone already declined to lead on.
 
 ## What changed upstream since the 2026-10-23 ruling
 
@@ -62,9 +73,11 @@ All commands run from the **webphone checkout root** (repo-relative paths; `git 
 rg -n "go-appkit" go.mod | wc -l                          # expect 0
 rg -n "larsartmann/go-flightrecorder v" go.mod            # expect v0.2.1
 rg -n "larsartmann/go-health v" go.mod                    # expect v0.10.0
-git -C ../go-appkit tag --list 'v*' | sort -V | tail -1   # expect v0.12.0
+git -C ../go-appkit tag --list 'v*' | sort -V | tail -1   # expect v0.13.0 (2026-11-21; satellites all unmoved at the 2026-11-22 sweep)
 git -C ../go-appkit tag --list 'flightrecorderhealth/*' | sort -V | tail -1  # expect v0.1.7
 git -C ../go-appkit tag --list | rg '/' | cut -d/ -f1 | sort -u | wc -l      # expect 13
+rg -c "^go 1\.27\.3$" go.mod                             # expect 1 (the fleet floor — appkit v0.13.0 cannot build on it)
+git -C ../go-appkit show v0.13.0:go.mod | rg -c "^go 1\.27\.4$"   # expect 1 (the 2026-11-21 "appkit hold" reason, pinned at the tag)
 rg -n "NotFoundPanel" internal/web/views/error.templ      # the errorpages decline: the shell-integrated 404
 rg -c "errorfamily.HTTPStatus" ../go-appkit/httpx/errors.go                  # expect 2
 rg -c "func WithHealthRecorder" "$(go env GOMODCACHE)/github.com/larsartmann/go-health@v0.10.0/options.go"  # expect 1

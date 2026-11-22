@@ -1,8 +1,8 @@
 # go-codec — library utilization audit
 
 **Verdict:** NO-GO for direct PROD adoption stands — it is the event-store payload codec layer, and webphone's HTTP/JSON surfaces are not codec territory. The journal's wire vocabulary is now imported TEST-side to pin retention-tombstone replay compatibility. **Adoption: n/a (prod indirect by design + one test-side import).**
-**Pin:** v0.3.3 (direct require since 2026-11-11 — the test import below) · **Latest:** v0.3.3 · **Currency:** current · **Status:** direct (test-only), prod stays indirect (a direct require of every cqrs-htmx module and most go-cqrs-lite modules — metaengine/encoded.go:12 is the engine's import webphone rides)
-**Audited:** 2026-11-04 · **Updated:** 2026-11-11 (the D014 tombstone wire pin). **Prior reports:** none (first audit).
+**Pin:** v0.3.3 (direct require since 2026-11-11 — the test import below) · **Latest:** v0.3.3 · **Currency:** current · **Status:** direct (test-only), prod stays indirect (a direct require of every cqrs-htmx module and most go-cqrs-lite modules — metaengine/v4/encoded.go:12 is the engine's import webphone rides; webphone pins metaengine/v4 v4.26.0, go.mod:28)
+**Audited:** 2026-11-04 · **Updated:** 2026-11-11 (the D014 tombstone wire pin) · **2026-11-22 re-verify** — pin still v0.3.3 = latest; [Unreleased] CI-only; verdict unchanged. · **Prior reports:** none (first audit).
 
 ## Status
 
@@ -36,6 +36,8 @@ Do not adopt directly. The one named future trigger: if webphone ever persists i
 
 **Refresh trigger:** a self-managed versioned blob format; a signing/audit requirement over stored events (then `DeterministicCodec` is the entry point).
 
+**2026-11-22 re-verify** — pin v0.3.3 equals the remote latest (checkout tag v0.3.3). The [Unreleased] section is 4 lines of CI-only movement: golangci-lint raised to v2.15.0 with the fleet errorfamily wrapcheck exemption added to `.golangci.yml`; Added and Fixed both read "Nothing yet" — zero library-code change, zero intent touching webphone's consumed surface. That surface is unchanged: the one test-side import (internal/cqrs/tombstone_wire_test.go:9, `EncodingCBOR` at :93, `ForEncoding` at :139) and the transitive engine seam, which moved upstream to `metaengine/v4/encoded.go:12` when go-cqrs-lite carved v4 (verify-block path updated to match). No verdict movement: no direct prod adoption.
+
 ## How to verify
 
 All commands run from the **webphone checkout root** (repo-relative paths; `git -C` lines carry their own directory).
@@ -44,5 +46,5 @@ All commands run from the **webphone checkout root** (repo-relative paths; `git 
 rg -n "go-codec" go.mod                                   # DIRECT pin v0.3.3 (test import)
 rg -n "go-codec" --type go internal/ cmd/ | wc -l        # expect 1 (tombstone_wire_test.go only)
 rg -n "ForEncoding|EncodingCBOR" internal/cqrs/tombstone_wire_test.go | head -2   # the wire pin
-rg -n "go-codec" /home/lars/projects/go-cqrs-lite/metaengine/encoded.go | head -1   # the transitive consumer
+rg -n "go-codec" /home/lars/projects/go-cqrs-lite/metaengine/v4/encoded.go | head -1   # the transitive consumer (v4 path since the go-cqrs-lite carve)
 ```

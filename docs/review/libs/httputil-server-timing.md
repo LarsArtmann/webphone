@@ -2,7 +2,7 @@
 
 **Verdict:** wired exactly as designed (env-gated edge middleware on an SSE-safe writer); named spans unused. **Adoption 67/100 (moderate)** — 2 of 3 applicable rows.
 **Pin:** v1.0.3 (go.mod:45) · **Latest:** v1.0.3 · **Currency:** current · **Status:** direct dep (separate module of the httputil repo)
-**Audited:** 2026-11-04 · **Prior reports:** covered inside [httputil](httputil.md) and the [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html).
+**Audited:** 2026-11-04 · **2026-11-22 re-verify** — pin v1.0.3 still the latest; zero commits under `server_timing/` since the tag; verdict holds at 67/100. · **Prior reports:** covered inside [httputil](httputil.md) and the [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html).
 
 ## Status
 
@@ -11,7 +11,7 @@
 | Module         | `github.com/larsartmann/httputil/server_timing` (zero-dep module) |
 | Pinned         | v1.0.3 direct                                                     |
 | Latest release | v1.0.3                                                            |
-| Usage          | 1 import site (internal/server/server.go:25), env-gated           |
+| Usage          | 1 import site (internal/server/server.go:28), env-gated                                           |
 
 ## What the library offers
 
@@ -19,14 +19,14 @@
 
 ## How webphone uses it
 
-- `servertiming.ServerTimingMiddlewareWhen(timingEnabled)` in the middleware chain (internal/server/server.go:733), gated by `WEBPHONE_DEBUG_TIMING` env — off by default, so production responses carry no Server-Timing header.
+- `servertiming.ServerTimingMiddlewareWhen(func(*http.Request) bool { return timingEnabled })` in the middleware chain (internal/server/server.go:944; gate defined at :929), gated by `WEBPHONE_DEBUG_TIMING` env — off by default, so production responses carry no Server-Timing header.
 - Because the middleware wraps the response writer SSE-safely, `/events` streaming is unaffected when the gate is on.
 
 ## Gap analysis
 
 | # | Capability area                                                                                       | Status             | Evidence / reason                                                                                                       |
 | - | ----------------------------------------------------------------------------------------------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------- |
-| 1 | Edge middleware (env-gated)                                                                           | 🟢 Fully leveraged | server.go:733; nil-pred-disabled semantics used correctly                                                               |
+| 1 | Edge middleware (env-gated)                                                                           | 🟢 Fully leveraged | server.go:944; nil-pred-disabled semantics used correctly                                                               |
 | 2 | SSE-safe writer integration                                                                           | 🟢 Fully leveraged | inherited by the chain; SSE compatibility is why this module was chosen over hand-rolling                               |
 | 3 | **Named spans** (`MeasureServerTiming` in hot handlers: SSE broadcast, sqlite apply, gateway forward) | 🔴 Missed          | Only the auto `total` is produced; no handler records a named span, so a debug session sees one number, not a breakdown |
 
@@ -37,6 +37,8 @@
 The seam is small and the default-off gate is right for a phone app. Named spans are worth adding **only** when a latency investigation actually needs them (the Prometheus histogram already owns production latency visibility; Server-Timing is a per-request debug tool). Do not pre-instrument.
 
 **Refresh trigger:** a latency investigation where the histogram's aggregates cannot localize the cost; then instrument the suspected 2-3 spans behind the same env gate.
+
+**2026-11-22 re-verify** — pin v1.0.3 equals the remote latest (`server_timing/v1.0.3` is the newest tag; `git -C /home/lars/projects/httputil log server_timing/v1.0.3..HEAD -- server_timing/` is empty — the module is frozen at the pin). It has no CHANGELOG of its own; release notes ride the root repo's CHANGELOG, whose [Unreleased] carries only the go1.27.4 toolchain note and an `endpoints/` Accept fix — neither touches this module or signals intent for its consumers. The named-spans miss stands (`rg "MeasureServerTiming|RecordServerTiming" internal/` = 0, replayed today). No verdict movement: 67/100, currency current.
 
 ## How to verify
 
