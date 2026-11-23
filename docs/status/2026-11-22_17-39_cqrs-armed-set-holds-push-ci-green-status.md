@@ -99,18 +99,18 @@ work. Two honest process notes:
 
 ## f) Top next tasks
 
-| # | Task | Impact | Effort | Category |
-|---|------|--------|--------|----------|
-| 1 | Owner answers the three standing questions (g) — they gate tasks 3-5 and the upstream ask | Critical | S | Decision |
-| 2 | Full `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` run: certify the train, settle baseline-staleness + timing verdicts against a FULL run | High | M | Quality |
-| 3 | Characterize `9a6af21..d57a64a` in ~/projects/BuildFlow; rebuild/reinstall the binary if findings plumbing moved (PATH-shadow check first) | Medium | S | Tooling |
-| 4 | dprint.json → local wasm plugins (`nix build .#dprint-plugins`), re-run `docs-gates.sh --check` after | Medium | S | Tooling |
-| 5 | VACUUM the 1.09 GB buildflow state DB or record deliberate wait-for-GC | Medium | S | Maintenance |
-| 6 | Verify-at-source + file the cqrs-lint P012-on-query_only detector ask upstream | Low | S | Tooling |
-| 7 | AGENTS.md Buildflow-health one-liner for the binary-freshness class | Low | S | Documentation |
-| 8 | HARVEST both reports' durable (f) rows into TODO_LIST on owner go | Medium | S | Documentation |
-| 9 | docs/lessons.md entry for the `go test -overlay` negative-proof pattern | Low | S | Documentation |
-| 10 | Clean /tmp overlay artifacts | Low | S | Cleanup |
+| #  | Task                                                                                                                                       | Impact   | Effort | Category      |
+| -- | ------------------------------------------------------------------------------------------------------------------------------------------ | -------- | ------ | ------------- |
+| 1  | Owner answers the three standing questions (g) — they gate tasks 3-5 and the upstream ask                                                  | Critical | S      | Decision      |
+| 2  | Full `BUILDFLOW_NO_RESULT_CACHE=1 buildflow` run: certify the train, settle baseline-staleness + timing verdicts against a FULL run        | High     | M      | Quality       |
+| 3  | Characterize `9a6af21..d57a64a` in ~/projects/BuildFlow; rebuild/reinstall the binary if findings plumbing moved (PATH-shadow check first) | Medium   | S      | Tooling       |
+| 4  | dprint.json → local wasm plugins (`nix build .#dprint-plugins`), re-run `docs-gates.sh --check` after                                      | Medium   | S      | Tooling       |
+| 5  | VACUUM the 1.09 GB buildflow state DB or record deliberate wait-for-GC                                                                     | Medium   | S      | Maintenance   |
+| 6  | Verify-at-source + file the cqrs-lint P012-on-query_only detector ask upstream                                                             | Low      | S      | Tooling       |
+| 7  | AGENTS.md Buildflow-health one-liner for the binary-freshness class                                                                        | Low      | S      | Documentation |
+| 8  | HARVEST both reports' durable (f) rows into TODO_LIST on owner go                                                                          | Medium   | S      | Documentation |
+| 9  | docs/lessons.md entry for the `go test -overlay` negative-proof pattern                                                                    | Low      | S      | Documentation |
+| 10 | Clean /tmp overlay artifacts                                                                                                               | Low      | S      | Cleanup       |
 
 ## g) Questions for the owner
 
