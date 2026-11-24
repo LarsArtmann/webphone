@@ -66,6 +66,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.15.0] - 2026-11-21
 
+**Deployed 2026-11-22 14:37:11Z — live on pbx.artmann.tech** by the owner's
+activation (source ledger: the pbx-artmann CHANGELOG entry "## 2026-11-22
+(15:37 cet — deployed: the v2.15.0 absorb went live by the owner's
+activation)" — its no-ssh verify-live readback: 97 pass / 0 fail / 10 warn
+/ 12 skip, freshness arm matching). Live `/version` = v2.15.0 @ `75913f1a`;
+post-deploy anonymous read-only probes (2026-11-24) passed 6/6 — `/version`,
+`/login`, `/manifest.webmanifest`, `/openapi.json`, `/healthz`, and a bogus
+path answering the styled 404; `webphone-smoke --base` itself stays OFF prod
+(its foreign arms POST). Still not live: live transcription (no `asr.*` in
+the deployed config) and the xml_curl cutover; passkey + Pocket ID sign-in
+and CRM enrichment ARE config-live on the box (passkey wrapper since the
+2026-10-07 switch; the crm healthz authenticated probe answers `ok`), but
+the owner-side live proofs (first passkey login + fail-closed drill, the
+issue #9 acceptance) remain owed.
+
 ### Added
 
 
