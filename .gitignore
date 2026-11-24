@@ -10,6 +10,7 @@
 .pre-commit-config.yaml
 /.devenv
 /.direnv
+/.docs-gates-preflight.json
 
 # >>> buildflow-managed (.gitignore) >>>
 # Auto-managed by buildflow. Edit outside these markers; this block is regenerated on `buildflow --fix`.

@@ -1,9 +1,10 @@
 # TODO_LIST
 
-Short- and mid-term improvement tasks. Done work is DELETED, never struck
-through (docs-health: shipped work moves to CHANGELOG / FEATURES — one home
-per fact). Long-shot ideas and owner calls live in ROADMAP.md; every row
-cites its source report in Evidence.
+Short- and mid-term improvement tasks. Done work is STRUCK with evidence, never
+deleted (owner ruling 2026-11-11; the row form lives in AGENTS.md § Conventions);
+shipped work still moves to CHANGELOG / FEATURES. Only obsolete rows go
+outright, the removing commit naming why. Long-shot ideas and owner calls live
+in ROADMAP.md; every row cites its source report in Evidence.
 
 Last sweep: 2026-11-06 (docs-health v8, assistant): harvested the GitHub-issue
 train's residue (§ below), re-verified every living doc against HEAD `54c8bb17`,
@@ -23,6 +24,14 @@ front matter does not carry their history (one home per fact, per the rule above
 - [ ] **One home for the journal boot recipe** (F9): six `system.DeploymentConfig` literals (app + five cqrs helpers) → one helper; one full domain list consumed by `app.NewCqrs` (11 decls) and `cqrs.NewCoreSystem` (10); two CLI one-shots compose through app-owned builders. Effort S to M.
 - [ ] **Name the journal kernel** (F11): move the eight shared helpers out of aggregate files (`dispatchOwnerCommand` in dialwindows.go, `humanScaleVolume` in threadsviews.go) and `NewCoreSystem` into one file; in-package motion. Effort S.
 - [ ] **Test-drain row precedent is half right** (F10): `server/auth` has 0 test files; the carves that moved tests are api (5), hooks (7) and platform (5). Reword the standing-policy row; the next carve carries its tests. Effort S.
+- [ ] **Refresh the architecture D2 pair again** (archreview-status §f 29): the `2026-11-19_07-41` pair predates two edges (147 → 149 at `c592dd22`); new dated files, old generations stay. Effort S.
+- [ ] **Persist the review tooling in-repo** (archreview-status §f 30): the AST in-package coupling tool, the `-coverpkg` profile merge (maximum count per block) and the recount harness exist only under `/tmp/archreview`; series #8 re-derives them after a reboot. Effort S.
+- [ ] **Generate `docs/architecture-understanding/INDEX.md`** (archreview-status §f 31): the series table of contents is hand-maintained; `scripts/status-index.py` covers `docs/status` only. Effort S.
+- [ ] **`scripts/docs-gates.sh` vouches for the report `report_glob` names** (archreview-status §f 32): `status_f_gate` sorts every `docs/status/*.md`; the battery and `status-index.py` read `2*.md`; a non-conforming report name splits them. Effort S.
+- [ ] **CI leg for `scripts/status-index.py --check`** (07-23 report §f 45; archreview-status §f 33): a fast-checks job, so a report the generated table omits reds main the day it lands. Effort S.
+- [ ] **SKILLS: editorial template at phone width** (archreview-status §f 34) (repo: SKILLS): the two-column stat cards need a 390px viewport (six-character values at 2.6rem) and `.where` does not wrap long paths; report #7 carries a `<wbr>` patch for one line. Effort S.
+- [ ] **SKILLS: architecture-review method notes** (archreview-status §f 35) (repo: SKILLS): recount before the first splice; the profile-merge note; a kept home for render slices or drop that step from the checklist. Effort S.
+- [ ] **SKILLS: status-report Output section** (archreview-status §f 36) (repo: SKILLS): four HTML steps sit under the `.md` default. Effort S.
 
 ### 2026-11-24 fleet-libs re-audit harvest (from the 2026-11-23_00-52 status report §f; ledger: docs/planning/2026-11-24_01-24_SUPERB-post-deploy-pareto-replan.md §6)
 

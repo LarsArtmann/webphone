@@ -105,7 +105,9 @@ for r in e["runs"]:
 		total=${stats%% *}
 		n=${stats##* }
 		collected=$((collected + n))
-		rows_acc+="${mapped#*$'\n'}"$'\n'
+		if [ "$n" -gt 0 ]; then
+			rows_acc+="${mapped#*$'\n'}"$'\n'
+		fi
 		if [ "$n" -eq 0 ] || [ "$collected" -ge "$total" ]; then
 			break
 		fi
@@ -261,6 +263,8 @@ def row(i, name, conclusion):
             "conclusion": conclusion, "createdAt": "2026-11-23T00:00:00Z"}
 if mode == "endless":  # a full watch page every time; total never covered
     runs, total = [row(i, "watch", "success") for i in range(100)], 99999
+elif mode == "zero-runs":
+    runs, total = [], 0
 else:
     ci = "failure" if mode == "flood-red" else "success"
     pages = {1: [row(i, "watch", "success") for i in range(100)],
@@ -295,6 +299,7 @@ print(json.dumps({"total": total, "runs": runs}))
 	paging_case "100 watch rows page 1, CI failure on page 2 => RED" flood-red 2
 	paging_case "100 watch rows page 1, CI success on page 2 => GREEN" flood-green 0
 	paging_case "endless watch pages => page cap, greppable rc 3" endless 3 "PAGE-CAP-EXCEEDED"
+	paging_case "zero runs on the sha (unpushed, or CI not started) => NO-RUN rc 1" zero-runs 1 "NO-RUNS"
 	unset -f gh
 
 	if [ "$fail" = 0 ]; then

@@ -86,6 +86,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   watch-filled page 1 no longer reads NO-RUN (`10327ed8`: was rc 1, now
   rc 2).
 
+- **`ci-verdict.sh` answers NO-RUN for a sha with zero workflow runs**: the
+  paging rewrite left a page's stats line in the row list whenever a page
+  held no runs, so an unpushed commit (or the window before CI creates its
+  run) crashed the verdict with a traceback and rc 3 instead of the
+  documented rc 1; the self-test now pins the zero-run page.
+
 - **`export-legacy` tolerates a concurrent writer**: the legacy dump
   handle now carries `busy_timeout(5000)` like every other sqlite
   handle in the repo, so a momentary write lock on a live database

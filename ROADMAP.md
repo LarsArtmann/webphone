@@ -169,6 +169,10 @@ re-check:
 - CSP re-audit trigger: assets are same-origin by policy (CDN banned);
   if that stance ever changes, re-audit CSP against every moved
   script (idiomorph included) before shipping — 01:04 report §f/46.
+- Architecture review #8 (archreview-status §f 37): run it after the F6
+  ruling lands or at the next release; forward rule from review #7 —
+  scalability drops to 3.5 if the server pin rides a third time with
+  no carve.
 
 ## cqrs-htmx adoption long tail (plan P5-P7, 2026-09-18)
 
