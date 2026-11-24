@@ -9,6 +9,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`scripts/citation-sweep.py` — fleet-libs citation sweep (pareto T10)**:
+  every `file:line` cite in docs/review/libs/*.md re-resolved against the
+  tree (checkout-relative, absolute, `<lib>/`-qualified against ~/projects with
+  unique-suffix fallback, unique-basename; `-`/en-dash ranges); classes
+  OK / OUT-OF-RANGE / MISSING / AMBIGUOUS / UNKNOWN, `--self-test` proves
+  every class fires. First run surfaced 16 bad cites, all fixed: the
+  templ-components `.wp-error` pins (391→422, 206→208, 251→173), the
+  go-idempotency library cite qualified, four basename-ambiguous cites
+  made directory-qualified, six `internal/`-truncated paths completed,
+  and go-atomic-write's "four Save call sites" corrected to five (the
+  2026-11-19 retry-owns-its-copy fix); rides as an advisory tail in
+  `scripts/audit-verify.sh`, never gating its exit.
+- **fleet-tags.sh: the no-v heading blind spot closed and silent skips
+  made honest (00-52 §f 13/25, pareto T09)**: the version regex demanded a
+  v-prefixed heading, silently skipping 20 of the 24 fleet checkouts whose
+  CHANGELOGs write `## [1.2.3]`; the script now accepts the optional v,
+  excludes vendored CHANGELOGs, ends every sweep with a tally line (swept
+  vs skipped and why; a failed ls-remote is a SKIP, not a phantom untagged
+  verdict) and pins 6 self-test cases; the fixed re-sweep of all 24
+  checkouts and 53 CHANGELOGs found no real missing tags (go-cqrs-lite
+  root v4.14.1 is a release-train heading artifact).
 - **release.sh `--resume-tail` + wait-for-drain load gate**: a stalled
   post-tag tail no longer re-pays ~25 min of gates — `--resume-tail`
   skips steps 1-5 (the tag on origin is the evidence; HEAD must BE the
@@ -52,6 +73,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- **`ci-verdict.sh` pages past the watch-lane flood**: the CI verdict now
+  walks every `actions/runs?head_sha=` page until `total_count` is covered
+  (capped, greppable rc 3), so a RED tip whose CI run slid off the
+  watch-filled page 1 no longer reads NO-RUN (`10327ed8`: was rc 1, now
+  rc 2).
 
 - **`export-legacy` tolerates a concurrent writer**: the legacy dump
   handle now carries `busy_timeout(5000)` like every other sqlite
