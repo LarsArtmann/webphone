@@ -14,6 +14,16 @@ front matter does not carry their history (one home per fact, per the rule above
 
 ## Open tasks
 
+### 2026-11-24 architecture review #7 harvest (docs/architecture-understanding/2026-11-24_22-51_architecture-review.html)
+
+- [ ] **Server pin full: decide the third raise** (F6): `internal/server` measures 5300/5300 at HEAD `c592dd22`; ledger 5200 → 5250 → 5300, four raises, zero lowers. Owner ruling first: carve `internal/server/contracts` (apidocs + wirecontracts + wirefixtures, 742 LOC, zero references into the hub, one in) as a fifth surface carve, or ride with the runway note naming the seam. Effort M.
+- [ ] **Depth ratchet: first click down + the platform pin** (F6): lower `store` 1900 → 650 (measured 595); promote `server/platform` (1434) to the named pin the runway note ruled. Effort S.
+- [ ] **Client-side depth pins** (F7): measurement-only pins in the `templBudgetPins` shape for island/app (6955 non-blank), shell.js (3328), app.css (3860), island style.css (1335). No split; the shell.js split stays DECLINED. Effort S.
+- [ ] **Readiness-only DB rule: close the violation and pin it** (F8): `platform/metrics.go` reads `store.CountSessions` through `platform.Deps.DB`; move the count behind `session.Store`, drop `DB` from platform.Deps, add the arch pin. `auth:` convention applies. Effort S.
+- [ ] **One home for the journal boot recipe** (F9): six `system.DeploymentConfig` literals (app + five cqrs helpers) → one helper; one full domain list consumed by `app.NewCqrs` (11 decls) and `cqrs.NewCoreSystem` (10); two CLI one-shots compose through app-owned builders. Effort S to M.
+- [ ] **Name the journal kernel** (F11): move the eight shared helpers out of aggregate files (`dispatchOwnerCommand` in dialwindows.go, `humanScaleVolume` in threadsviews.go) and `NewCoreSystem` into one file; in-package motion. Effort S.
+- [ ] **Test-drain row precedent is wrong** (F10): `server/auth` has 0 test files; the carve pattern that moved tests is api (5) and hooks (7). Reword the standing-policy row; the next carve carries its tests. Effort S.
+
 ### 2026-11-24 fleet-libs re-audit harvest (from the 2026-11-23_00-52 status report §f; ledger: docs/planning/2026-11-24_01-24_SUPERB-post-deploy-pareto-replan.md §6)
 
 - ~~**Vulnerability id fix** (00-52 §f 2; plan T07): `GO-2026-97054` is wrong — the source says `GO-2026-6859` / `CVE-2026-97054` (`httputil/CHANGELOG.md:12`); fix `AGENTS.md:12`, `docs/review/libs/index.html:1023` and `:1082`.~~ → done 2026-11-24 — AGENTS:12 landed with the living-doc batch (`586ff894`), both index.html sites with the T07 index reconciliation (`9546b9e5`: vuln id corrected ×2, plus the go-health→go-error-family RegisterStdlibDefaults move, the 14-limit/14-Query Strengths counts, the metaengine/v4/cap.go path, the templ FULLY-RULED + etag v0.6.2 card updates); `rg GO-2026-97054` now matches only historical task text (the plan + the 00-52 report).

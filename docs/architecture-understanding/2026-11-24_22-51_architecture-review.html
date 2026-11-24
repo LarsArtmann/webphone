@@ -1,0 +1,2485 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Architecture review 2026-11-24: series #7, post-v2.15.0</title>
+    <style>
+      /* =========================================================================
+         BAUHAUS LIGHT — Editorial template
+         Design language: form follows function. Primary colors on warm paper.
+         Zero external dependencies: system fonts, no CDN, no build step.
+         Token architecture: see references/bauhaus-tokens.md
+         ========================================================================= */
+
+      :root {
+        /* --- Primitive palette (Bauhaus Light) --- */
+        --color-paper: #f4f4f0;
+        --color-paper-2: #ffffff;
+        --color-paper-3: #e8e8e2;
+        --color-ink: #111111;
+        --color-red: #e63946;
+        --color-blue: #1d3557;
+        --color-yellow: #f4d35e;
+        --color-hairline: rgba(17, 17, 17, 0.14);
+        --color-hairline-strong: rgba(17, 17, 17, 0.3);
+
+        /* --- Semantic layer (shared vocabulary with dark template) --- */
+        --surface: var(--color-paper);
+        --surface-raised: var(--color-paper-2);
+        --surface-sunken: var(--color-paper-3);
+        --text: var(--color-ink);
+        --text-muted: rgba(17, 17, 17, 0.72);
+        --text-faint: rgba(17, 17, 17, 0.5);
+        --border: var(--color-hairline);
+        --border-strong: var(--color-hairline-strong);
+        --accent: var(--color-red);
+        --problem: var(--color-red);
+        --solution: var(--color-blue);
+        --warning: var(--color-yellow);
+
+        /* --- Backward-compatible aliases (do not break consumer skills) --- */
+        --bg: var(--surface);
+        --bg-elevated: var(--surface-raised);
+        --bg-sunken: var(--surface-sunken);
+        --bg-card: var(--surface-raised);
+        --bg-code: var(--surface-sunken);
+        --ink: var(--text);
+        --ink-secondary: var(--text-muted);
+        --ink-muted: var(--text-faint);
+        --rose: var(--problem);
+        --rose-glow: color-mix(in srgb, var(--problem) 15%, transparent);
+        --emerald: var(--solution);
+        --emerald-glow: color-mix(in srgb, var(--solution) 15%, transparent);
+        --amber: var(--warning);
+        --amber-glow: color-mix(in srgb, var(--warning) 15%, transparent);
+        --amber-light: color-mix(in srgb, var(--warning) 22%, transparent);
+        --coral: var(--problem);
+        --coral-light: color-mix(in srgb, var(--problem) 12%, transparent);
+        --teal: var(--solution);
+        --teal-light: color-mix(in srgb, var(--solution) 12%, transparent);
+
+        /* --- Shape --- */
+        --radius: 0px;
+        --radius-sm: 0px;
+
+        /* --- Type stacks (system only — zero external fonts) --- */
+        --font-heading:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-body:
+          ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        --font-mono:
+          ui-monospace, "Cascadia Code", "Source Code Pro", "JetBrains Mono",
+          Menlo, Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        scroll-behavior: smooth;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        html {
+          scroll-behavior: auto;
+        }
+        *,
+        *::before,
+        *::after {
+          transition-duration: 0.01ms !important;
+          animation-duration: 0.01ms !important;
+        }
+      }
+      section[id],
+      [id] {
+        scroll-margin-top: 60px;
+      }
+
+      body {
+        background: var(--surface);
+        color: var(--text);
+        font-family: var(--font-body);
+        font-size: 16px;
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* --- Accessibility: keyboard focus --- */
+      :focus-visible {
+        outline: 2px solid var(--accent);
+        outline-offset: 2px;
+      }
+      a:focus-visible {
+        outline-offset: -1px;
+      }
+
+      /* --- Full-bleed top bar --- */
+      .top-bar {
+        background: var(--text);
+        color: var(--surface);
+        padding: 0.6rem 2rem;
+        font-family: var(--font-mono);
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      /* --- Layout: optional sticky sidebar TOC --- */
+      .layout {
+        display: flex;
+        gap: 2.5rem;
+        padding: 2rem;
+      }
+      .sidebar {
+        width: 220px;
+        flex-shrink: 0;
+        position: sticky;
+        top: 1rem;
+        align-self: flex-start;
+        height: calc(100vh - 2rem);
+        overflow-y: auto;
+        display: none;
+      }
+      .sidebar nav {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .sidebar .label {
+        font-family: var(--font-mono);
+        font-size: 0.68rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--accent);
+        margin-bottom: 0.75rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 2px solid var(--text);
+      }
+      .sidebar a {
+        font-size: 0.86rem;
+        color: var(--text);
+        text-decoration: none;
+        padding: 0.5rem 0.75rem;
+        border-left: 4px solid transparent;
+        font-weight: 600;
+        transition: all 0.15s ease;
+        line-height: 1.4;
+      }
+      .sidebar a:hover,
+      .sidebar a.active {
+        border-left-color: var(--accent);
+        background: color-mix(in srgb, var(--accent) 8%, transparent);
+        color: var(--accent);
+      }
+      .main {
+        flex: 1;
+        min-width: 0;
+      }
+
+      /* --- Headings --- */
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--font-heading);
+        font-weight: 900;
+        letter-spacing: -0.02em;
+        color: var(--text);
+      }
+      h1 {
+        font-size: clamp(1.9rem, 4.5vw, 2.8rem);
+        line-height: 1.05;
+        margin: 0 0 0.6rem;
+      }
+      h2 {
+        font-size: 1.5rem;
+        margin: 2.5rem 0 1rem;
+        padding-bottom: 0.4rem;
+        border-bottom: 3px solid var(--text);
+        display: flex;
+        align-items: baseline;
+        gap: 0.7rem;
+      }
+      h2 .num {
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        color: var(--accent);
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h3 {
+        font-size: 1.15rem;
+        margin: 0 0 0.4rem;
+        font-weight: 700;
+      }
+      h4 {
+        font-size: 1rem;
+        margin: 0 0 0.3rem;
+        font-weight: 700;
+      }
+      p {
+        margin: 0 0 1rem;
+      }
+
+      /* --- Hero --- */
+      .hero {
+        padding: 1.5rem 0 2rem;
+        margin-bottom: 1.5rem;
+        border-bottom: 3px solid var(--text);
+      }
+      .eyebrow {
+        font-family: var(--font-mono);
+        font-size: 0.72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.16em;
+        color: var(--accent);
+        margin-bottom: 0.9rem;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: var(--text-muted);
+        max-width: 70ch;
+        margin: 0 0 1rem;
+      }
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+      }
+      .tag {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.6rem;
+        background: var(--surface-sunken);
+        color: var(--text);
+        border: 1px solid var(--border-strong);
+      }
+      .tag.amber {
+        background: var(--warning);
+        border-color: var(--warning);
+        color: var(--text);
+      }
+      .tag.teal {
+        background: var(--solution);
+        border-color: var(--solution);
+        color: var(--surface);
+      }
+
+      /* Bauhaus signature: geometric shape cluster (optional) */
+      .hero-shapes {
+        position: relative;
+        height: 90px;
+        margin-bottom: 1.2rem;
+      }
+      .hero-shapes .circle {
+        position: absolute;
+        top: 0;
+        right: 180px;
+        width: 64px;
+        height: 64px;
+        background: var(--problem);
+        border-radius: 50%;
+      }
+      .hero-shapes .square {
+        position: absolute;
+        top: 26px;
+        right: 90px;
+        width: 56px;
+        height: 56px;
+        background: var(--solution);
+      }
+      .hero-shapes .tri {
+        position: absolute;
+        top: 8px;
+        right: 0;
+        width: 0;
+        height: 0;
+        border-left: 32px solid transparent;
+        border-right: 32px solid transparent;
+        border-bottom: 56px solid var(--warning);
+      }
+      .hero-shapes .bar {
+        position: absolute;
+        bottom: 0;
+        right: 230px;
+        width: 100px;
+        height: 14px;
+        background: var(--text);
+      }
+
+      /* --- Scorecard / stat cards --- */
+      .scorecard,
+      .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+        gap: 0;
+        margin: 1.5rem 0 2rem;
+        border: 3px solid var(--text);
+      }
+      .score-card,
+      .stat-card {
+        padding: 1.3rem 1rem;
+        text-align: center;
+        border-right: 3px solid var(--text);
+        background: var(--surface-raised);
+      }
+      .score-card:last-child,
+      .stat-card:last-child {
+        border-right: none;
+      }
+
+      .score,
+      .stat-value {
+        font-family: var(--font-heading);
+        font-size: 2.6rem;
+        font-weight: 900;
+        line-height: 1;
+        letter-spacing: -0.04em;
+      }
+      .score-card .label,
+      .stat-label {
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.12em;
+        margin-top: 0.5rem;
+      }
+      /* Semantic state classes — no nth-child decoration, no !important */
+      .score-good,
+      .stat-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .score-warn,
+      .stat-warn {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .score-bad,
+      .stat-bad {
+        background: var(--problem);
+        color: var(--surface);
+      }
+
+      /* --- General cards --- */
+      .card {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .card-problem {
+        border-left-color: var(--problem);
+      }
+      .card-solution {
+        border-left-color: var(--solution);
+      }
+      .card-warning {
+        border-left-color: var(--warning);
+      }
+
+      /* --- Issue cards --- */
+      .issue {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        padding: 1.2rem 1.4rem;
+        margin-bottom: 1rem;
+        border-left: 8px solid var(--border-strong);
+      }
+      .issue-critical {
+        border-left-color: var(--problem);
+      }
+      .issue-important {
+        border-left-color: var(--warning);
+      }
+      .issue-nice {
+        border-left-color: var(--solution);
+      }
+      .issue h3 {
+        margin-bottom: 0.3rem;
+      }
+      .issue .where {
+        font-family: var(--font-mono);
+        font-size: 0.78rem;
+        color: var(--text-faint);
+        margin: 0.2rem 0 0.6rem;
+      }
+      .issue p:last-child {
+        margin-bottom: 0;
+      }
+
+      /* --- Severity badges --- */
+      .severity {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        padding: 0.22rem 0.6rem;
+        margin-bottom: 0.6rem;
+        color: var(--surface);
+      }
+      .severity-critical {
+        background: var(--problem);
+      }
+      .severity-important {
+        background: var(--warning);
+        color: var(--text);
+      }
+      .severity-nice {
+        background: var(--solution);
+      }
+
+      /* --- Inline badges --- */
+      .badge {
+        display: inline-block;
+        font-family: var(--font-mono);
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        padding: 0.2rem 0.55rem;
+        border: 1px solid var(--text);
+        color: var(--text);
+      }
+      .badge-critical {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .badge-high {
+        background: var(--warning);
+      }
+      .badge-medium {
+        background: var(--surface-sunken);
+      }
+      .badge-low {
+        background: var(--surface-raised);
+        color: var(--text-muted);
+      }
+      .badge-fixed {
+        background: var(--solution);
+        color: var(--surface);
+      }
+
+      /* --- Callouts --- */
+      .callout {
+        margin: 0.8rem 0 0;
+        padding: 0.8rem 1rem;
+        border: 1px solid var(--border-strong);
+        border-left: 4px solid var(--border-strong);
+        background: var(--surface-sunken);
+        font-size: 0.92rem;
+      }
+      .callout strong {
+        display: inline-block;
+        margin-right: 0.4rem;
+      }
+      .callout-teal,
+      .callout-solution {
+        border-left-color: var(--solution);
+        background: color-mix(
+          in srgb,
+          var(--solution) 10%,
+          var(--surface-raised)
+        );
+      }
+      .callout-amber,
+      .callout-warning {
+        border-left-color: var(--warning);
+        background: color-mix(
+          in srgb,
+          var(--warning) 18%,
+          var(--surface-raised)
+        );
+      }
+
+      /* --- Strengths --- */
+      .strengths {
+        display: grid;
+        gap: 0.5rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .strength {
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 0.9rem;
+        padding: 0.75rem 0;
+        border-bottom: 2px solid var(--border);
+      }
+      .strength .check {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        color: var(--solution);
+        font-size: 1.3rem;
+        line-height: 1.3;
+      }
+      .strength .text strong {
+        display: block;
+        margin-bottom: 0.15rem;
+      }
+      .strength .text span {
+        color: var(--text-muted);
+        font-size: 0.92rem;
+      }
+
+      /* --- Tables --- */
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0 1.5rem;
+        font-size: 0.92rem;
+        border: 2px solid var(--text);
+      }
+      th {
+        text-align: left;
+        padding: 0.6rem 0.9rem;
+        background: var(--text);
+        color: var(--surface);
+        font-family: var(--font-mono);
+        font-size: 0.66rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border-right: 1px solid var(--border-strong);
+      }
+      th:last-child {
+        border-right: none;
+      }
+      td {
+        padding: 0.6rem 0.9rem;
+        border-top: 1px solid var(--border);
+        border-right: 1px solid var(--border);
+      }
+      td:last-child {
+        border-right: none;
+      }
+      tr:nth-child(even) td {
+        background: var(--surface-sunken);
+      }
+      table.compare td.yes {
+        color: var(--solution);
+        font-weight: 700;
+      }
+      table.compare td.no {
+        color: var(--problem);
+        font-weight: 700;
+      }
+
+      /* --- Code blocks + syntax highlighting --- */
+      pre {
+        background: var(--text);
+        color: var(--surface);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.65;
+        overflow-x: auto;
+        border: 2px solid var(--text);
+      }
+      code {
+        font-family: var(--font-mono);
+      }
+      p code,
+      li code,
+      td code {
+        font-size: 0.88em;
+        background: var(--surface-sunken);
+        padding: 0.1rem 0.35rem;
+      }
+      .tok-keyword {
+        color: var(--warning);
+      }
+      .tok-type {
+        color: var(--warning);
+      }
+      .tok-string {
+        color: #95e1d3;
+      }
+      .tok-comment {
+        color: rgba(244, 244, 240, 0.45);
+        font-style: italic;
+      }
+      .tok-func {
+        color: #6eb5ff;
+      }
+      .tok-number {
+        color: var(--warning);
+      }
+      .tok-generic {
+        color: var(--problem);
+      }
+      .tok-builtin {
+        color: #6eb5ff;
+      }
+      .tok-punct {
+        color: rgba(244, 244, 240, 0.7);
+      }
+      .tok-attr {
+        color: var(--warning);
+      }
+
+      /* --- Dependency tree / ASCII diagrams --- */
+      .dep-tree {
+        background: var(--surface-sunken);
+        border: 2px solid var(--text);
+        padding: 1rem 1.2rem;
+        margin: 1rem 0;
+        font-family: var(--font-mono);
+        font-size: 0.82rem;
+        line-height: 1.7;
+        white-space: pre;
+        overflow-x: auto;
+      }
+      .dep-tree .root {
+        color: var(--accent);
+        font-weight: 700;
+      }
+      .dep-tree .ok {
+        color: var(--solution);
+      }
+      .dep-tree .unwanted {
+        color: var(--problem);
+      }
+
+      /* --- Inline node-and-arrow diagrams --- */
+      .diagram {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 1rem;
+        margin: 1rem 0;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+      }
+      .node {
+        display: inline-block;
+        padding: 0.4rem 0.75rem;
+        font-family: var(--font-mono);
+        font-size: 0.8rem;
+        font-weight: 700;
+        background: var(--surface-sunken);
+        border: 1px solid var(--text);
+      }
+      .node-core {
+        background: var(--accent);
+        color: var(--surface);
+      }
+      .node-problem {
+        background: var(--problem);
+        color: var(--surface);
+      }
+      .node-good {
+        background: var(--solution);
+        color: var(--surface);
+      }
+      .arrow {
+        color: var(--text-faint);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Grids --- */
+      .grid-2 {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+      .grid-3 {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      /* --- Inline TOC --- */
+      .toc {
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+        padding: 1rem 1.3rem;
+        margin: 1rem 0 1.5rem;
+      }
+      .toc h3 {
+        margin-bottom: 0.5rem;
+      }
+      .toc ul {
+        list-style: none;
+        padding: 0;
+      }
+      .toc li {
+        margin: 0.25rem 0;
+      }
+      .toc a {
+        color: var(--text);
+        text-decoration: none;
+        font-size: 0.92rem;
+        font-weight: 600;
+      }
+      .toc a:hover {
+        color: var(--accent);
+      }
+
+      /* --- Migration / numbered steps --- */
+      .migration-step {
+        display: grid;
+        grid-template-columns: 56px 1fr;
+        gap: 1rem;
+        margin: 1rem 0;
+        padding: 1.1rem;
+        background: var(--surface-raised);
+        border: 2px solid var(--text);
+        border-left: 6px solid var(--accent);
+      }
+      .migration-num {
+        font-family: var(--font-mono);
+        font-weight: 900;
+        font-size: 1.8rem;
+        color: var(--accent);
+        line-height: 1;
+      }
+      .migration-content h4 {
+        margin-bottom: 0.2rem;
+      }
+      .migration-content p {
+        margin-bottom: 0;
+        color: var(--text-muted);
+        font-size: 0.94rem;
+      }
+
+      /* --- Before/After comparison --- */
+      .compare-header {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin: 1rem 0 0.5rem;
+      }
+      .compare-before,
+      .compare-after {
+        font-family: var(--font-mono);
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        padding: 0.4rem 0.7rem;
+        color: var(--surface);
+      }
+      .compare-before {
+        background: var(--problem);
+      }
+      .compare-after {
+        background: var(--solution);
+      }
+      .compare-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+        margin-bottom: 1rem;
+      }
+      .compare-row pre {
+        margin: 0;
+      }
+
+      /* --- Footer --- */
+      .footer {
+        margin-top: 2rem;
+        padding-top: 1rem;
+        border-top: 3px solid var(--text);
+        font-size: 0.82rem;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
+
+      /* --- Responsive --- */
+      @media (min-width: 1024px) {
+        .sidebar {
+          display: block;
+        }
+      }
+      @media (max-width: 768px) {
+        .layout {
+          flex-direction: column;
+          padding: 1rem;
+        }
+        .top-bar {
+          padding: 0.6rem 1rem;
+          flex-wrap: wrap;
+          gap: 0.3rem;
+        }
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+        .compare-header,
+        .compare-row {
+          grid-template-columns: 1fr;
+        }
+        .scorecard,
+        .stat-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-right: none;
+        }
+        .score-card:nth-child(1),
+        .stat-card:nth-child(1),
+        .score-card:nth-child(2),
+        .stat-card:nth-child(2) {
+          border-bottom: 3px solid var(--text);
+        }
+        .migration-step {
+          grid-template-columns: 1fr;
+        }
+        .hero-shapes {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Full-bleed top bar (optional — remove for quieter reports) -->
+    <div class="top-bar">
+      <span>Architecture review</span>
+      <span>2026-11-24 22-51 CET</span>
+      <span>Series #7 &middot; post-v2.15.0</span>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar" data-nav>
+        <nav>
+          <div class="label">Contents</div>
+          <a href="#summary">00 Summary</a>
+          <a href="#deltas">01 Prior deltas</a>
+          <a href="#scores">02 Scores</a>
+          <a href="#evidence">03 Evidence</a>
+          <a href="#findings">04 Findings</a>
+          <a href="#strengths">05 Already excellent</a>
+          <a href="#roadmap">06 Roadmap</a>
+          <a href="#appendix">07 Appendix</a>
+        </nav>
+      </aside>
+
+      <main class="main">
+        <header class="hero">
+          <div class="hero-shapes">
+            <div class="bar"></div>
+            <div class="circle"></div>
+            <div class="square"></div>
+            <div class="tri"></div>
+          </div>
+          <div class="eyebrow">Architecture review &middot; 2026-11-24</div>
+          <h1>Post-release re-score: the hub's runway is spent</h1>
+          <p class="subtitle">
+            Seventh in the series, five days and one release (v2.15.0) after #6.
+            Every #6 claim re-measured at HEAD <code>c592dd22</code>, the hub's
+            remaining mass dissected file by file, and the client side measured
+            for the first time.
+          </p>
+          <div class="meta">
+            <span class="tag amber">Scope: internal/* + cmd + client assets</span>
+            <span class="tag">Graph: 38 pkgs / 149 edges</span>
+            <span class="tag teal">Verdict: Good (4.36, held)</span>
+          </div>
+        </header>
+
+        <section class="scorecard" id="scorecard">
+          <div class="score-card score-good">
+            <div class="score">4.36</div>
+            <div class="label">Average (held from #6)</div>
+          </div>
+          <div class="score-card score-good">
+            <div class="score">0</div>
+            <div class="label">Import cycles (149 edges)</div>
+          </div>
+          <div class="score-card score-warn">
+            <div class="score">0</div>
+            <div class="label">Lines left at the server pin (5300/5300)</div>
+          </div>
+          <div class="score-card">
+            <div class="score">7</div>
+            <div class="label">New findings (P2&times;1, P3&times;6)</div>
+          </div>
+        </section>
+
+        <section id="summary">
+          <h2><span class="num">00</span>Summary</h2>
+          <p>
+            212 commits sit between #6 and tonight, but only ten of the 49 that
+            touch Go files are narrative commits; the other 39 are daemon sweeps.
+            The tree moved less than the count suggests: <code>internal/</code>
+            shed 164 hand-written lines and 366 test lines, the store package
+            lost 702 lines and its last internal import, and the graph gained
+            two edges and no cycle (38 packages, 149 edges, 147 at #6). What did
+            move is governance. Within 30 hours of #6 the depth-pin runway note, the
+            templ depth ratchet and config's named pin landed, and v2.15.0
+            shipped on 2026-11-21.
+          </p>
+          <p>
+            Every score holds. Three measurements sharpened the picture. The
+            server hub's depth pin is now exactly full (5,300 of 5,300) and the
+            pin ledger reads four raises and zero lowers in twelve days. The
+            hub's non-html mass is more separable than the carve ruling
+            assumed: its 742-line machine-contract family has zero references
+            into the rest of the hub. And the client side, about 15.9k raw
+            lines (14.8k non-blank), sits outside every size governor the server
+            side now applies.
+          </p>
+          <div class="callout callout-amber">
+            <strong>The bottom line</strong>
+            Verdict unchanged: no urgent restructuring. One decision is due
+            before the next hub-touching feature, not after it: the pin's third
+            raise in twelve days. The evidence below names a 742-line seam that
+            leaves the ruled-out html trio untouched, so the choice is now a
+            real one.
+          </div>
+        </section>
+
+        <section id="deltas">
+          <h2><span class="num">01</span>Prior deltas verified</h2>
+          <p>
+            #6's roadmap, re-probed at HEAD. Two items executed, one stands as
+            policy with no motion, one is tracked elsewhere.
+          </p>
+          <div class="table-wrap">
+            <table class="compare">
+              <thead>
+                <tr>
+                  <th>#6 roadmap item</th>
+                  <th>Severity</th>
+                  <th>Status tonight</th>
+                  <th>Evidence</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Pre-sketch the next split for the saturated pins</td>
+                  <td>P2</td>
+                  <td class="yes">Executed 2026-11-21</td>
+                  <td>
+                    <code>docs/planning/2026-11-21_01-48_depth-pin-runway-design.md</code>
+                    covers five packages plus domain's exports axis and ratifies
+                    pin-riding-with-reason. Residue: the note's own
+                    <code>server/platform</code> named-pin promotion is not done
+                    (still the 1500 default, measured 1434).
+                  </td>
+                </tr>
+                <tr>
+                  <td>Bring .templ under the depth ratchet</td>
+                  <td>P3</td>
+                  <td class="yes">Executed 2026-11-21</td>
+                  <td>
+                    <code>TestTemplDepthBudget</code> and
+                    <code>templBudgetPins</code>; views measured 3,143 tonight
+                    against its 3300 pin.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Drain the server-root test concentration by riding carves</td>
+                  <td>P3</td>
+                  <td class="no">Policy, no motion</td>
+                  <td>
+                    77 files and 15,629 test lines at the server root tonight
+                    (15,495 at #6: up 134). See F10 for what the row's
+                    precedent actually is.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Keep the two owner prompts alive</td>
+                  <td>P3</td>
+                  <td>Tracked</td>
+                  <td>
+                    ROADMAP carries the DOMAIN_LANGUAGE ratify-or-delete call;
+                    TODO_LIST carries the storage-ladder &sect;5 DROP row.
+                    Both unchanged.
+                  </td>
+                </tr>
+                <tr>
+                  <td>F5: annotate domain's exports axis</td>
+                  <td>P3 watch</td>
+                  <td>Not yet due</td>
+                  <td>
+                    162 of 180 exports, 18 slots free; the note schedules the
+                    annotation at 170 or the next brand family.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section id="scores">
+          <h2><span class="num">02</span>Seven-dimension scores, held</h2>
+          <p>
+            No dimension moved a half-point. The evidence base of each was
+            re-measured; where it strengthened (store, the templ ratchet, the
+            arch suite) and where it weakened (the full server pin, the
+            ungoverned client mass) is stated per row.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Dimension</th>
+                  <th>#6</th>
+                  <th>Tonight</th>
+                  <th>Evidence measured this session</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Coupling</td>
+                  <td>4.5</td>
+                  <td>4.5</td>
+                  <td>
+                    <code>server.Deps</code> has 34 fields: 17 interface-typed,
+                    12 concrete pointers, 5 values. The instability ladder is
+                    intact. One new blemish: a data read through the
+                    readiness-only database handle (F8).
+                  </td>
+                </tr>
+                <tr>
+                  <td>Cohesion</td>
+                  <td>4.5</td>
+                  <td>4.5</td>
+                  <td>
+                    store collapsed to 595 lines and became a pure leaf. Only
+                    36% of the hub is the ruled html trio. cqrs is 11
+                    near-independent aggregates around an eight-name kernel.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Modularity</td>
+                  <td>4.5</td>
+                  <td>4.5</td>
+                  <td>
+                    15 of 15 arch tests green (13 at #6), the templ ratchet
+                    among them. Island graph: 25 modules, 84 edges, 0 cycles.
+                    Pressure point: the server pin at zero headroom (F6).
+                  </td>
+                </tr>
+                <tr>
+                  <td>Composability</td>
+                  <td>4.5</td>
+                  <td>4.5</td>
+                  <td>
+                    26 commands over 11 deciders, the sender registry and the
+                    middleware chain unchanged. Debt: the journal's boot recipe
+                    is transcribed six times and its aggregate list has two
+                    homes (F9).
+                  </td>
+                </tr>
+                <tr>
+                  <td>Scalability</td>
+                  <td>4.0</td>
+                  <td>4.0</td>
+                  <td>
+                    Feature ripple is 1 to 4 packages across six features. But
+                    the hub pin is full, config sits 67 and 73 lines under two
+                    ceilings, and 15.9k client lines have none (F6, F7).
+                  </td>
+                </tr>
+                <tr>
+                  <td>Service orientation</td>
+                  <td>4.0</td>
+                  <td>4.0</td>
+                  <td>
+                    Raw SQL lives in two owning packages plus one CLI read.
+                    Three databases, each owned by one package. The CLI
+                    one-shots prove aggregate-level boot, but compose outside
+                    the root (F9).
+                  </td>
+                </tr>
+                <tr>
+                  <td>Dependency direction</td>
+                  <td>4.5</td>
+                  <td>4.5</td>
+                  <td>
+                    domain: 27 importers, instability 0.00, zero internal
+                    imports. store joined the 0.00 kernel. samber/do in one
+                    package, koanf in one.
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="callout callout-teal">
+            <strong>Verdict: Good (4.36, unchanged)</strong>
+            The lowest pair is still scalability and service orientation, both
+            governed by standing rulings. A forward rule for the next entry:
+            scalability drops to 3.5 if the server pin rides a third time with
+            no carve.
+          </div>
+        </section>
+
+        <section id="evidence">
+          <h2><span class="num">03</span>Evidence measured tonight</h2>
+
+          <h3 id="ev-structure">03.1 Structure and five-day delta</h3>
+          <div class="stat-grid">
+            <div class="stat-card">
+              <div class="stat-value">38</div>
+              <div class="stat-label">Packages</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">149</div>
+              <div class="stat-label">Internal edges</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">34,360</div>
+              <div class="stat-label">Hand-written Go lines</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">41,583</div>
+              <div class="stat-label">Test lines</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">625</div>
+              <div class="stat-label">Exported declarations</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">35</div>
+              <div class="stat-label">Exported interface types</div>
+            </div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Layer</th>
+                  <th>Packages</th>
+                  <th>Instability</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Kernel</td>
+                  <td>domain, store, httpclient, sipcred, vcard, web/assets (6)</td>
+                  <td>0.00</td>
+                </tr>
+                <tr>
+                  <td>Service seams</td>
+                  <td>
+                    authmap, config, pbx, asr, blob, textagent, gateway, push,
+                    session, crm, chatloop, reports, fax, messaging, userauth,
+                    admin, sso, paperless, retention, signal, matrix (21)
+                  </td>
+                  <td>0.14 to 0.83</td>
+                </tr>
+                <tr>
+                  <td>Contracts</td>
+                  <td>readmodels (1)</td>
+                  <td>0.20</td>
+                </tr>
+                <tr>
+                  <td>Journal</td>
+                  <td>cqrs (1)</td>
+                  <td>0.71</td>
+                </tr>
+                <tr>
+                  <td>HTTP surfaces</td>
+                  <td>server/hooks, server/auth, server/platform, server/api, server (5)</td>
+                  <td>0.56 to 0.92</td>
+                </tr>
+                <tr>
+                  <td>Presentation</td>
+                  <td>web/views (1)</td>
+                  <td>0.62</td>
+                </tr>
+                <tr>
+                  <td>Composition root</td>
+                  <td>app (1)</td>
+                  <td>0.97</td>
+                </tr>
+                <tr>
+                  <td>Process</td>
+                  <td>cmd/webphone (1)</td>
+                  <td>1.00</td>
+                </tr>
+                <tr>
+                  <td>Architecture tests</td>
+                  <td>arch (1, tests only)</td>
+                  <td>n/a</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Package</th>
+                  <th>#6</th>
+                  <th>Tonight</th>
+                  <th>Delta</th>
+                  <th>What moved</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>store</td>
+                  <td>1297</td>
+                  <td>595</td>
+                  <td class="yes">&minus;702</td>
+                  <td>Frozen ladder drained; lost its domain import (I 0.12 to 0.00)</td>
+                </tr>
+                <tr>
+                  <td>push</td>
+                  <td>882</td>
+                  <td>976</td>
+                  <td>+94</td>
+                  <td>FCM token single-flight, ntfy 403 policy</td>
+                </tr>
+                <tr>
+                  <td>server</td>
+                  <td>5217</td>
+                  <td>5300</td>
+                  <td class="no">+83</td>
+                  <td>Pin full</td>
+                </tr>
+                <tr>
+                  <td>cqrs</td>
+                  <td>5684</td>
+                  <td>5763</td>
+                  <td>+79</td>
+                  <td>Note-prose query join, legacy-contacts classification</td>
+                </tr>
+                <tr>
+                  <td>app</td>
+                  <td>1610</td>
+                  <td>1684</td>
+                  <td class="no">+74</td>
+                  <td>Dead-letter logging decorator</td>
+                </tr>
+                <tr>
+                  <td>config</td>
+                  <td>1459</td>
+                  <td>1533</td>
+                  <td class="no">+74</td>
+                  <td>Lens and typed-feed-map validation</td>
+                </tr>
+                <tr>
+                  <td>domain</td>
+                  <td>2261</td>
+                  <td>2307</td>
+                  <td>+46</td>
+                  <td>Catalog versioning, typed text doors on Extension</td>
+                </tr>
+                <tr>
+                  <td>server/api</td>
+                  <td>1841</td>
+                  <td>1844</td>
+                  <td>+3</td>
+                  <td>Flat</td>
+                </tr>
+                <tr>
+                  <td>all of internal/</td>
+                  <td>33,438</td>
+                  <td>33,274</td>
+                  <td class="yes">&minus;164</td>
+                  <td>Tests 41,254 to 40,888 (&minus;366)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 id="ev-ladder">03.2 Instability ladder</h3>
+          <p>
+            I = efferent / (afferent + efferent) over the 149 internal
+            production edges. Stable packages at the bottom, the wiring leaf at
+            the top, no high-fan-in package carrying high fan-out.
+          </p>
+          <div class="dep-tree"><span class="root">kernel   I=0.00</span>   domain (27 importers) &middot; store &middot; httpclient &middot; sipcred &middot; vcard &middot; web/assets
+<span class="ok">seams   I=0.14 to 0.38</span>   authmap &middot; config &middot; pbx &middot; readmodels 0.20 &middot; gateway &middot; push 0.25 &middot; session 0.29 &middot; crm 0.33 &middot; fax 0.38
+<span class="ok">upper   I=0.43 to 0.83</span>   userauth &middot; admin &middot; sso 0.50 &middot; hooks 0.56 &middot; messaging 0.57 &middot; views 0.62 &middot; paperless 0.67 &middot; cqrs 0.71 &middot; auth 0.83
+<span class="unwanted">top     I=0.87 to 1.00</span>   platform 0.87 &middot; api 0.89 &middot; server 0.92 (24 imports) &middot; app 0.97 (28 imports) &middot; cmd 1.00</div>
+          <p>
+            store moved from 0.12 to 0.00 since #6: it no longer imports domain,
+            which is why domain's afferent count reads 27 instead of 28.
+          </p>
+
+          <h3 id="ev-pins">03.3 Depth-pin ledger</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Package</th>
+                  <th>Measured</th>
+                  <th>Ceiling</th>
+                  <th>Headroom</th>
+                  <th>Ledger since 2026-11-12</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>server</td>
+                  <td>5300</td>
+                  <td>5300</td>
+                  <td class="no">0</td>
+                  <td>5200 &rarr; 5250 (11-18) &rarr; 5300 (11-21)</td>
+                </tr>
+                <tr>
+                  <td>app</td>
+                  <td>1684</td>
+                  <td>1700</td>
+                  <td class="no">16</td>
+                  <td>1650 &rarr; 1700 (11-20)</td>
+                </tr>
+                <tr>
+                  <td>config</td>
+                  <td>1533</td>
+                  <td>1600</td>
+                  <td>67</td>
+                  <td>
+                    default 1500 &rarr; named 1600 (11-21); config.go alone is
+                    1427 against the 1500 file ceiling
+                  </td>
+                </tr>
+                <tr>
+                  <td>server/platform</td>
+                  <td>1434</td>
+                  <td>1500 default</td>
+                  <td>66</td>
+                  <td>Unpinned; the runway note ruled a named pin</td>
+                </tr>
+                <tr>
+                  <td>server/api</td>
+                  <td>1844</td>
+                  <td>1900</td>
+                  <td>56</td>
+                  <td>Unchanged</td>
+                </tr>
+                <tr>
+                  <td>cqrs</td>
+                  <td>5763</td>
+                  <td>6000</td>
+                  <td>237</td>
+                  <td>Unchanged</td>
+                </tr>
+                <tr>
+                  <td>domain</td>
+                  <td>2307</td>
+                  <td>2500</td>
+                  <td>193</td>
+                  <td>Exports axis binds: 162 of 180</td>
+                </tr>
+                <tr>
+                  <td>store</td>
+                  <td>595</td>
+                  <td>1900</td>
+                  <td class="yes">1305</td>
+                  <td>Pin unchanged while the package halved</td>
+                </tr>
+                <tr>
+                  <td>web/views (.templ)</td>
+                  <td>3143</td>
+                  <td>3300</td>
+                  <td>157</td>
+                  <td>Pin created 2026-11-21</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Four raises, zero lowers, twelve days. The one pin with room to
+            click down is store's.
+          </p>
+
+          <h3 id="ev-hub">03.4 Hub anatomy</h3>
+          <p>
+            The server root is 5,300 lines in 19 files. Grouped by concern, the
+            html trio the 2026-11-12 ruling protects is a little over a third
+            of it.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Family</th>
+                  <th>Files</th>
+                  <th>Lines</th>
+                  <th>Share</th>
+                  <th>References into the rest of the hub</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Wiring and routing</td>
+                  <td>server.go</td>
+                  <td>1072</td>
+                  <td><code>██░░░░░░░░</code> 20.2%</td>
+                  <td>Imports every family</td>
+                </tr>
+                <tr>
+                  <td>Html trio</td>
+                  <td>pages.go, panels.go, actions.go</td>
+                  <td>1931</td>
+                  <td><code>████░░░░░░</code> 36.4%</td>
+                  <td>
+                    Mutual: pages uses panels' <code>csrfToken</code> and
+                    <code>errorPanel</code>; panels and actions use pages'
+                    <code>handlers</code>
+                  </td>
+                </tr>
+                <tr>
+                  <td>Machine contracts</td>
+                  <td>apidocs.go, wirecontracts.go, wirefixtures.go</td>
+                  <td>742</td>
+                  <td><code>█░░░░░░░░░</code> 14.0%</td>
+                  <td class="yes">0 out, 1 in (server.go &rarr; openapiHandler)</td>
+                </tr>
+                <tr>
+                  <td>Admin and audit</td>
+                  <td>admin.go, auth_audit.go</td>
+                  <td>386</td>
+                  <td><code>█░░░░░░░░░</code> 7.3%</td>
+                  <td>pages, panels</td>
+                </tr>
+                <tr>
+                  <td>Live updates</td>
+                  <td>sse.go, notifier.go</td>
+                  <td>338</td>
+                  <td><code>█░░░░░░░░░</code> 6.4%</td>
+                  <td>notifier reaches pages, panels and crm</td>
+                </tr>
+                <tr>
+                  <td>CRM glue</td>
+                  <td>crm.go, livecontext.go</td>
+                  <td>275</td>
+                  <td><code>█░░░░░░░░░</code> 5.2%</td>
+                  <td>pages</td>
+                </tr>
+                <tr>
+                  <td>Text-agent surface</td>
+                  <td>textagent_api.go</td>
+                  <td>252</td>
+                  <td><code>░░░░░░░░░░</code> 4.8%</td>
+                  <td>4 names across pages, panels and toast</td>
+                </tr>
+                <tr>
+                  <td>Shell plumbing</td>
+                  <td>notfound.go, shell_seam.go, unread.go, toast.go</td>
+                  <td>246</td>
+                  <td><code>░░░░░░░░░░</code> 4.6%</td>
+                  <td>toast and unread: 0 out</td>
+                </tr>
+                <tr>
+                  <td>Reports panel</td>
+                  <td>reports.go</td>
+                  <td>58</td>
+                  <td><code>░░░░░░░░░░</code> 1.1%</td>
+                  <td>pages, panels</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            The reference column is an AST measurement: package-level
+            identifiers used across files, with comments and string literals
+            excluded. textagent_api.go looks like a straggler of the api carve
+            by name, reaches pages, panels and toast for four names, and is
+            not one. The machine-contract family is the only sizable leaf.
+          </p>
+
+          <h3 id="ev-inside">03.5 Inside the packages</h3>
+          <p>
+            The same tool, grouped by aggregate for cqrs. Ten of its eleven
+            aggregates reference one to six names outside their own group, and
+            always from the same eight:
+            <code>awaitOwnWrite</code> (11 files), <code>streamVersions</code>
+            (10), <code>humanScaleVolume</code> (9),
+            <code>dispatchOwnerCommand</code> (8), <code>engineCount</code>
+            (4), <code>Domain</code> (3), <code>streamRef</code> and
+            <code>committedTail</code>. The thread family is the one group
+            that also references other aggregates, and only through the eight
+            <code>*DomainDecl</code> constructors <code>NewCoreSystem</code>
+            composes.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Package</th>
+                  <th>Files</th>
+                  <th>Shared kernel</th>
+                  <th>Reading</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>cqrs</td>
+                  <td>25</td>
+                  <td>8 names, scattered over 5 files</td>
+                  <td>11 independent aggregates (F11)</td>
+                </tr>
+                <tr>
+                  <td>server/api</td>
+                  <td>14</td>
+                  <td>
+                    <code>Handlers</code>, <code>Server</code>,
+                    <code>writeJSONBody</code> (6 files),
+                    <code>storeAtCapacity</code>
+                  </td>
+                  <td>Resource files independent</td>
+                </tr>
+                <tr>
+                  <td>server/platform</td>
+                  <td>12</td>
+                  <td><code>Hub</code> (8 files)</td>
+                  <td>One seam, file-shaped families</td>
+                </tr>
+                <tr>
+                  <td>server/auth</td>
+                  <td>8</td>
+                  <td>
+                    <code>Handlers</code>, <code>AuthAudit</code> (6),
+                    <code>writeJSON</code> (3)
+                  </td>
+                  <td>Independent; no test file of its own (F10)</td>
+                </tr>
+                <tr>
+                  <td>readmodels</td>
+                  <td>13</td>
+                  <td>none</td>
+                  <td>One gate per file</td>
+                </tr>
+                <tr>
+                  <td>app</td>
+                  <td>7</td>
+                  <td><code>New</code> (4), <code>wrapf</code> (2)</td>
+                  <td>Adapters already file-shaped</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 id="ev-tests">03.6 Tests: where they live</h3>
+          <p>
+            A union coverage pass ran tonight over every package:
+            <code>go test -count=1 -coverpkg=./internal/...,./cmd/...</code>.
+            37 packages ok, 0 failed. Coverage is 76.2% of all 18,052
+            statements and 82.6% of the 9,014 hand-written ones (the rest is
+            generated templ code). Three files have zero coverage, 37
+            statements between them.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Package</th>
+                  <th>Coverage</th>
+                  <th>Statements</th>
+                  <th>Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>cmd/webphone</td>
+                  <td>53.9%</td>
+                  <td>358</td>
+                  <td>main.go 21.3%; contracts.go has 0%</td>
+                </tr>
+                <tr>
+                  <td>signal</td>
+                  <td>68.9%</td>
+                  <td>222</td>
+                  <td>Socket receiver</td>
+                </tr>
+                <tr>
+                  <td>app</td>
+                  <td>69.5%</td>
+                  <td>442</td>
+                  <td>app.go 64.2%: the wiring itself</td>
+                </tr>
+                <tr>
+                  <td>server/auth</td>
+                  <td>76.7%</td>
+                  <td>343</td>
+                  <td>All of it from the server root's suite</td>
+                </tr>
+                <tr>
+                  <td>server/api</td>
+                  <td>80.4%</td>
+                  <td>608</td>
+                  <td>latency_api.go has 0% (11 statements)</td>
+                </tr>
+                <tr>
+                  <td>cqrs</td>
+                  <td>82.1%</td>
+                  <td>1579</td>
+                  <td>Largest uncovered mass: 282 statements</td>
+                </tr>
+                <tr>
+                  <td>server (root)</td>
+                  <td>84.7%</td>
+                  <td>1552</td>
+                  <td>77 test files, 15,629 lines, one compile unit</td>
+                </tr>
+                <tr>
+                  <td>domain</td>
+                  <td>99.1%</td>
+                  <td>232</td>
+                  <td>relpath.go is the low file at 92.9%</td>
+                </tr>
+                <tr>
+                  <td>whole tree, hand-written</td>
+                  <td>82.6%</td>
+                  <td>9014</td>
+                  <td>3 zero-coverage files</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 id="ev-ripple">03.7 Change ripple since #6</h3>
+          <p>
+            Per-commit co-change is not measurable in this window: 39 of the 49
+            Go-touching commits are daemon sweeps that bundle whatever was
+            dirty. Ripple is measured per feature instead, as the packages
+            holding Go files whose diff in the window touches the feature's
+            signature identifiers (tests and pin edits included).
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Feature</th>
+                  <th>Packages</th>
+                  <th>Which</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>pbx-lens deep links</td>
+                  <td>4</td>
+                  <td>config, pbx, server, web/views</td>
+                </tr>
+                <tr>
+                  <td>Note prose joins the query corpus</td>
+                  <td>3</td>
+                  <td>cqrs, readmodels, server (+ arch pin)</td>
+                </tr>
+                <tr>
+                  <td>Typed feed maps</td>
+                  <td>3</td>
+                  <td>admin, config, domain (+ arch test)</td>
+                </tr>
+                <tr>
+                  <td>Dead-letter surfacing</td>
+                  <td>1</td>
+                  <td>app (+ arch test)</td>
+                </tr>
+                <tr>
+                  <td>export-legacy one-shot</td>
+                  <td>1</td>
+                  <td>cmd/webphone</td>
+                </tr>
+                <tr>
+                  <td>ntfy 403 prune policy</td>
+                  <td>1</td>
+                  <td>push</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+          One to four packages per feature. server and views, #6's hottest
+          pair, co-changed in 5 of the window's 212 commits (#6 measured
+          6 of 200).
+          </p>
+
+          <h3 id="ev-client">03.8 The client side</h3>
+          <p>
+            Hand-written client code totals 15,892 raw lines (14,788
+            non-blank): the 25 island modules at 7,327 raw, shell.js, app.css,
+            the island stylesheet and the theme preload script.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Artifact</th>
+                  <th>Lines</th>
+                  <th>Size governor today</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>app.css</td>
+                  <td>3860</td>
+                  <td class="no">none</td>
+                </tr>
+                <tr>
+                  <td>shell.js</td>
+                  <td>3328</td>
+                  <td class="no">none (split declined 2026-10-27)</td>
+                </tr>
+                <tr>
+                  <td>island/app/calls.js</td>
+                  <td>1715</td>
+                  <td class="no">none (deepening candidate since 11-19)</td>
+                </tr>
+                <tr>
+                  <td>island/style.css</td>
+                  <td>1335</td>
+                  <td class="no">none</td>
+                </tr>
+                <tr>
+                  <td>island/app, 25 modules</td>
+                  <td>6955 non-blank</td>
+                  <td>Import closure and acyclicity are tested; size is not</td>
+                </tr>
+                <tr>
+                  <td>web/views, 16 .templ files</td>
+                  <td>3143</td>
+                  <td class="yes">Pin 3300, since 2026-11-21</td>
+                </tr>
+                <tr>
+                  <td>any Go package</td>
+                  <td>&nbsp;</td>
+                  <td class="yes">Default ceiling 1500</td>
+                </tr>
+                <tr>
+                  <td>any Go file</td>
+                  <td>&nbsp;</td>
+                  <td class="yes">Ceiling 1500</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            The island graph is healthy: 25 modules, 84 import edges, 0 cycles,
+            with a stable kernel in ui (16 importers), i18n (12), config (9)
+            and state (7). calls.js imports 13 modules and is the one module
+            past the server's per-file ceiling. 57 spec files with 12,148
+            lines cover the island.
+          </p>
+        </section>
+
+        <section id="findings">
+          <h2><span class="num">04</span>New findings</h2>
+          <p>
+            Numbering continues #6 (F1 to F5). Each card states the finding,
+            its impact, the recommended target state, effort and ordering.
+          </p>
+
+          <div class="issue issue-critical" id="f6">
+            <span class="severity severity-critical">P2 &middot; High</span>
+            <h3>F6. The server pin is full and the ratchet has only clicked up</h3>
+            <div class="where">
+              internal/arch/depthbudget_test.go &middot; exemption table &middot; measured at HEAD c592dd22
+            </div>
+            <p>
+              <strong>Finding.</strong> <code>internal/server</code> measures
+              5,300 hand-written lines against a pin of 5,300. The next line
+              added to the hub reds <code>TestPackageDepthBudget</code>. The
+              ledger since the budget's birth on 2026-11-12 reads four raises
+              and zero lowers (&sect;03.3). <code>internal/app</code> is 16
+              lines under its pin.
+            </p>
+            <p>
+              <strong>Impact.</strong> The runway note ratified pin-riding as
+              the standing valve and called each ride a loan the next carve
+              repays. For the hub no carve is sanctioned, so the loan has no
+              repayment path. The budget was built to force the
+              split-or-pin conversation; it now forces it on every hub train
+              and gets the same answer.
+            </p>
+            <p>
+              <strong>The seam the ruling never evaluated.</strong> The 11-12
+              ruling looked at pages, panels and actions. The machine-contract
+              family was not in scope, and it is a leaf (&sect;03.4): 742 lines
+              in three files, zero references into the rest of the hub, one
+              reference in, importing only server/api, server/auth,
+              server/hooks, gateway, push and session.
+            </p>
+            <div class="compare-header">
+              <div class="compare-before">Today</div>
+              <div class="compare-after">Proposed target</div>
+            </div>
+            <div class="compare-row">
+              <div class="dep-tree"><span class="unwanted">internal/server   5300 / 5300</span>  pin full
+  server.go                     1072
+  pages &middot; panels &middot; actions      1931  html trio
+  <span class="unwanted">apidocs &middot; wire &middot; fixtures  742</span>  a leaf inside the hub
+  seven other families          1555</div>
+              <div class="dep-tree"><span class="ok">internal/server   4558 / 5300</span>  742 lines of runway
+  server.go                     1072
+  pages &middot; panels &middot; actions      1931  untouched
+  seven other families          1555
+<span class="ok">internal/server/contracts   742</span>  default ceiling 1500
+  openapi &middot; asyncapi &middot; wire fixtures</div>
+            </div>
+            <div class="callout callout-teal">
+              <strong>Fix: decide the third raise before it happens</strong>
+              Proposed: move apidocs.go, wirecontracts.go and wirefixtures.go
+              into <code>internal/server/contracts</code> with their three
+              renderers and an exported OpenAPI handler; server.go keeps the
+              <code>GET /openapi.json</code> registration;
+              wirecontracts_test.go and wirefixtures_test.go (173 lines) ride
+              along, the two mux-level tests stay. Because this is a fifth
+              surface carve it amends the standing ruling that four surface
+              carves plus the depth budget are the end state: record it as an
+              addendum to the runway note,
+              an owner act, not a mechanical move. Two clicks need no
+              decision: lower store's pin from 1900 to 650 (measured 595) and
+              give server/platform the named pin the note already ruled.
+            </div>
+            <p>
+              <strong>Effort</strong> M for the carve (byte-pure motion, one
+              call site), S for the two clicks. <strong>Dependencies</strong>:
+              the owner ruling; nothing else.
+            </p>
+          </div>
+
+          <div class="issue issue-important" id="f7">
+            <span class="severity severity-important">P3 &middot; Medium</span>
+            <h3>F7. The client side has no size governor</h3>
+            <div class="where">
+              internal/web/assets/ &middot; shell.js &middot; app.css &middot; island/app/ &middot; island/style.css
+            </div>
+            <p>
+              <strong>Finding.</strong> About 15.9k raw client lines, 14.8k
+              non-blank (&sect;03.8), 46% of the hand-written Go. Three files
+              exceed the 1,500-line ceiling the server side now applies to
+              packages and files alike: app.css at 2.6 times, shell.js at 2.2
+              times, calls.js at 1.1 times. The depth budget measures Go
+              packages and .templ trees; file-size-check measures Go files; no
+              test under internal/web pins a line or byte count on any JS or
+              CSS file.
+            </p>
+            <p>
+              <strong>Impact.</strong> The templ gap #5 found closed on 11-21
+              for this exact reason. The same class is open for four larger
+              artifacts, and calls.js went from 1,701 lines at the 11-19
+              deepening brief to 1,715 tonight.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix: measurement-only pins, in the templBudgetPins shape</strong>
+              One registry act: island/app at 7,200 non-blank lines (measured
+              6,955), shell.js at 3,400 (3,328), app.css at 3,950 (3,860),
+              island style.css at 1,400 (1,335). A pin is not a split: the
+              shell.js split stays declined, and calls.js keeps the deepening
+              brief's named valve (dock and transcript surfaces out of the
+              call module) for the day it trips.
+            </div>
+            <p>
+              <strong>Effort</strong> S. <strong>Dependencies</strong>: none.
+            </p>
+          </div>
+
+          <div class="issue issue-important" id="f8">
+            <span class="severity severity-important">P3 &middot; Medium</span>
+            <h3>F8. The readiness-only database rule is already false, and no test would notice</h3>
+            <div class="where">
+              internal/server/server.go (Deps.DB comment) &middot; internal/server/platform/metrics.go
+            </div>
+            <p>
+              <strong>Finding.</strong> The <code>Deps.DB</code> comment is
+              explicit: "Readiness probes only (healthz)" and "Nothing else
+              may use"; data access is to ride the services above.
+              <code>platform/metrics.go</code> calls
+              <code>store.CountSessions(r.Context(), p.deps.DB)</code> for the
+              <code>webphone_sessions_stored</code> gauge (landed 2026-11-20),
+              and server.go hands the handle to <code>platform.Deps</code> for
+              that purpose. <code>session.Store</code> has no count method, so
+              the count went around the seam. No test references the rule.
+            </p>
+            <p>
+              <strong>Impact.</strong> Small in data terms: one aggregate
+              count, no rows. It is still the first data read through the
+              handle, and it makes platform import store for one metrics line.
+              A prose invariant that is already false teaches readers that the
+              next one is optional too.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix: put the count behind the session seam and pin the rule</strong>
+              Add <code>Count(ctx) (int64, error)</code> to
+              <code>session.Store</code> (both implementations), read it
+              through <code>platform.Deps.Sessions</code>, delete
+              <code>DB</code> from <code>platform.Deps</code> together with
+              the store import, and add an arch assertion that
+              <code>deps.DB</code> appears in server.go only inside the
+              readiness block. The session store interface changes, so the
+              <code>auth:</code> commit convention and the session-behavior
+              suite apply.
+            </div>
+            <p>
+              <strong>Effort</strong> S. <strong>Dependencies</strong>: none.
+            </p>
+          </div>
+
+          <div class="issue issue-important" id="f9">
+            <span class="severity severity-important">P3 &middot; Medium</span>
+            <h3>F9. The journal's boot recipe is transcribed six times and its aggregate list has two homes</h3>
+            <div class="where">
+              internal/app/cqrs.go &middot; internal/cqrs/{threadsregister,contacts,enroll,faxesstore}.go &middot; cmd/webphone/{main,exportlegacy}.go
+            </div>
+            <p>
+              <strong>Finding.</strong> The topology literal
+              (<code>system.DeploymentConfig</code>: one sqlite engine, WAL, a
+              source-of-truth instance and a projections instance) appears in
+              six non-test sites: <code>app/cqrs.go</code> for production and
+              the five <code>cqrs.New*System</code> helpers. The aggregate list
+              lives twice: <code>app.NewCqrs</code> composes 11 domain
+              declarations, <code>cqrs.NewCoreSystem</code> composes 10 (Enroll
+              is absent), with no parity test. Two CLI one-shots compose the
+              journal outside the composition root:
+              <code>-enroll-passkey</code> (<code>cqrs.NewEnrollSystem</code>,
+              <code>cqrs.NewEnrollTokens</code>, <code>userauth.New</code>) and
+              <code>export-legacy</code> (<code>cqrs.NewContactsSystem</code>,
+              <code>cqrs.NewContacts</code>), neither carrying the dead-letter
+              decorator production wires.
+            </p>
+            <p>
+              <strong>Impact.</strong> Aggregate number 12 is a two-list edit
+              by hand. A topology change is a six-site edit in which five sites
+              are test helpers that can drift from production silently. The
+              AGENTS.md invariant that cmd/webphone receives a fully built
+              app.App holds for the server boot and for neither one-shot.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix: one recipe, one list, builders owned by app</strong>
+              One cqrs helper owns the topology literal (the five helpers and
+              <code>app.newCqrs</code> call it). One
+              <code>cqrs.FullDomain()</code> (name proposed) is consumed by
+              <code>app.NewCqrs</code> and <code>NewCoreSystem</code>, so
+              parity is by construction. Two app-owned builders
+              (<code>app.EnrollOneShot</code>, <code>app.LegacyContactsCheck</code>,
+              names proposed) let cmd import only app. The one-shots are right
+              to boot a partial system; they should borrow the recipe, not
+              restate it.
+            </div>
+            <p>
+              <strong>Effort</strong> S to M. <strong>Dependencies</strong>:
+              none; cheapest right after a dependency train touches cqrs.
+            </p>
+          </div>
+
+          <div class="issue issue-nice" id="f10">
+            <span class="severity severity-nice">P3 &middot; Low</span>
+            <h3>F10. The auth carve moved the code and left the tests</h3>
+            <div class="where">
+              internal/server/auth (8 files, 1139 lines, 0 test files) &middot; internal/server/*_test.go
+            </div>
+            <p>
+              <strong>Finding.</strong> <code>server/auth</code> has 343
+              statements, 76.7% union coverage and no test file of its own.
+              Every test that reaches it compiles in the server root's
+              77-file, 15,629-line test package, which grew by 134 lines since
+              #6. By name the root holds 25 Session, 13 Passkey, 9 Login and 8
+              SSO test functions. The standing TODO row cites "the
+              auth/platform carve pattern" as the precedent for tests moving
+              with their surfaces. That precedent is api (5 test files) and
+              hooks (7 files, 674 lines). Auth moved none.
+            </p>
+            <p>
+              <strong>Impact.</strong> An auth change recompiles the root test
+              package, and unexported auth logic is exercised only through
+              HTTP. No standalone train is justified: those suites probe
+              routes the hub registers, so most of them belong where they are.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix: correct the precedent and make the next carve carry its tests</strong>
+              Reword the policy row (api and hooks are the precedent, not
+              auth) and add "tests ride the carve" as a checklist line on the
+              next carve. F6's contracts move takes wirecontracts_test.go and
+              wirefixtures_test.go (173 lines) out of the root.
+            </div>
+            <p>
+              <strong>Effort</strong> S for the wording; the motion rides F6.
+              <strong>Dependencies</strong>: F6.
+            </p>
+          </div>
+
+          <div class="issue issue-nice" id="f11">
+            <span class="severity severity-nice">P3 &middot; Low</span>
+            <h3>F11. The journal's shared kernel hides in aggregate files</h3>
+            <div class="where">internal/cqrs &middot; 25 files &middot; 248 package-level names</div>
+            <p>
+              <strong>Finding.</strong> &sect;03.5: each aggregate leans on
+              the same eight names, and two of those live in aggregate files.
+              <code>dispatchOwnerCommand</code> sits in dialwindows.go and
+              serves eight aggregates; <code>humanScaleVolume</code> sits in
+              threadsviews.go and serves nine. <code>NewCoreSystem</code>, the
+              all-aggregate list, sits in threadsregister.go.
+            </p>
+            <p>
+              <strong>Impact.</strong> Low. It is why every aggregate file
+              reads as coupled to a dozen siblings while the package's real
+              shape, 11 independent aggregates around an eight-name kernel, is
+              invisible. The per-aggregate extraction is ruled closed; if its
+              reopen trigger ever fires, it starts by untangling exactly these.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix: one in-package motion, no API change</strong>
+              Move the eight names and <code>NewCoreSystem</code> into a
+              <code>cqrs/journal.go</code> (name proposed). The ruling stands;
+              this only makes it legible.
+            </div>
+            <p>
+              <strong>Effort</strong> S. <strong>Dependencies</strong>: none.
+            </p>
+          </div>
+
+          <div class="issue issue-nice" id="f12">
+            <span class="severity severity-nice">P3 &middot; Low</span>
+            <h3>F12. "hub" carries three meanings</h3>
+            <div class="where">
+              docs/DOMAIN_LANGUAGE.md &middot; internal/server &middot; AGENTS.md
+            </div>
+            <p>
+              <strong>Finding.</strong> The glossary defines
+              <strong>hub</strong> as the per-extension SSE broadcaster
+              (<code>ExtensionHubs</code>). In code and docs the word also
+              names the server root package (<code>platformHub</code> 12
+              times, "the hub" throughout the carve rulings, "html hub" in
+              AGENTS.md) and the catalog federation hub. This report uses
+              "hub" in the second sense and says so here.
+            </p>
+            <p>
+              <strong>Impact.</strong> "The hub reaches the session gate"
+              cannot be decoded without context. The glossary is still a draft
+              awaiting its ratify-or-delete call, which makes now the cheap
+              moment.
+            </p>
+            <div class="callout callout-teal">
+              <strong>Fix: settle it with the glossary call</strong>
+              If ratified: keep hub for SSE and call the server root "the
+              server root". Until then, architecture documents name the
+              package at first use.
+            </div>
+            <p>
+              <strong>Effort</strong> S, wording. <strong>Dependencies</strong>:
+              the DOMAIN_LANGUAGE owner call already in ROADMAP.
+            </p>
+          </div>
+        </section>
+
+        <section id="strengths">
+          <h2><span class="num">&#9670;</span>What's already excellent</h2>
+          <div class="strengths">
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The graph is boring, and now cheaper</strong>
+                <span>
+                  38 packages, 149 internal production edges, 0 cycles.
+                  internal/ shed 164 hand-written and 366 test lines in five
+                  days. The full suite ran green tonight: 37 packages ok, 0
+                  failed.
+                </span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>The stable kernel widened</strong>
+                <span>
+                  store joined domain, httpclient, sipcred, vcard and
+                  web/assets at instability 0.00: it lost its last internal
+                  import and 54% of its lines as the frozen ladder drains.
+                </span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>SQL stays confined</strong>
+                <span>
+                  Raw SQL call sites: store 10, session 9, one read-only CLI
+                  query. Zero in cqrs, readmodels, server, platform and app.
+                  Three databases, one owning package each.
+                </span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Tests reach everything</strong>
+                <span>
+                  Union coverage 82.6% of hand-written statements. Three
+                  zero-coverage files, 37 statements between them. No module
+                  is untested for architectural reasons.
+                </span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Aggregates are independent inside one journal world</strong>
+                <span>
+                  10 of 11 aggregates in cqrs reference nothing
+                  aggregate-specific from another. The package's 5,763 lines
+                  are additive, not emergent.
+                </span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Feature ripple stays small</strong>
+                <span>
+                  Six features since #6, one to four packages each. Adding a
+                  feature is not a cross-cutting train.
+                </span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Boundaries are tests</strong>
+                <span>
+                15 arch tests, all green (13 at #6): the DAG, domain and
+                readmodels purity, injector confinement, wiring parity,
+                model-API consumers, error-registry freshness, the depth
+                budget and, since 11-21, the templ ratchet.
+                </span>
+              </div>
+            </div>
+            <div class="strength">
+              <div class="check">+</div>
+              <div class="text">
+                <strong>Governance answers</strong>
+                <span>
+                  The runway note, the templ ratchet and config's named pin
+                  landed within 30 hours of #6 asking. Frameworks stay
+                  contained: samber/do in one package, koanf in one, 353 error
+                  codes in one generated registry.
+                </span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="roadmap">
+          <h2><span class="num">06</span>Action roadmap</h2>
+          <p>
+            Ordered by impact. Items 1 to 6 are new; item 7 confirms tracked
+            rows. New items are harvested into TODO_LIST under the section
+            named in the appendix.
+          </p>
+          <div class="migration-step">
+            <div class="migration-num">1</div>
+            <div class="migration-content">
+              <h4>P2: decide the hub's third raise before it happens (F6)</h4>
+              <p>
+                Owner ruling first: carve internal/server/contracts (742
+                lines, zero references into the hub) as a fifth surface carve,
+                or ride the pin again with the runway note naming this seam.
+                Then the carve when the pin next bites, or now. Effort M.
+              </p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">2</div>
+            <div class="migration-content">
+              <h4>P3: client-side pins in the depth ratchet (F7)</h4>
+              <p>
+                Four measurement-only pins in the templBudgetPins shape. No
+                split. Effort S, one commit.
+              </p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">3</div>
+            <div class="migration-content">
+              <h4>P3: close the readiness-only database rule (F8)</h4>
+              <p>
+                Count sessions through session.Store, drop the raw handle from
+                platform.Deps, pin the rule with an arch test. Effort S.
+              </p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">4</div>
+            <div class="migration-content">
+              <h4>P3: one home for the journal boot recipe (F9)</h4>
+              <p>
+                One topology helper, one FullDomain list, two app-owned
+                one-shot builders. Effort S to M. Cheapest right after a
+                dependency train.
+              </p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">5</div>
+            <div class="migration-content">
+              <h4>P3: two clicks the ratchet can pay now (F6)</h4>
+              <p>
+                Lower store's pin from 1900 to 650, the ledger's first click
+                down; promote server/platform to the named pin the runway note
+                ruled. Effort S, one commit each.
+              </p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">6</div>
+            <div class="migration-content">
+              <h4>P3: name the journal's kernel (F11)</h4>
+              <p>
+                Move eight shared helpers and NewCoreSystem into one file.
+                In-package motion, no API change. Effort S.
+              </p>
+            </div>
+          </div>
+          <div class="migration-step">
+            <div class="migration-num">7</div>
+            <div class="migration-content">
+              <h4>Standing: correct the test-drain precedent; keep the owner prompts alive</h4>
+              <p>
+                Reword the policy row to cite api and hooks, not auth (F10);
+                the next carve carries its tests. The DOMAIN_LANGUAGE call
+                (ROADMAP, also closes F12) and the &sect;5 DROP row (TODO_LIST)
+                need no new work.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section id="appendix">
+          <h2><span class="num">07</span>Appendix</h2>
+          <h3>Method</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Measurement</th>
+                  <th>How</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Graph</td>
+                  <td>
+                    <code>go list -json ./internal/... ./cmd/...</code> at HEAD
+                    c592dd22, internal production imports only, DFS cycle check
+                  </td>
+                </tr>
+                <tr>
+                  <td>Size</td>
+                  <td>
+                    LOC and exports replicate <code>measureDepth</code> in
+                    internal/arch/depthbudget_test.go
+                  </td>
+                </tr>
+                <tr>
+                  <td>In-package coupling</td>
+                  <td>
+                    A throwaway go/parser and go/scanner tool counting
+                    package-level identifiers used across files of one package,
+                    comments and string literals excluded. Local shadowing is
+                    not resolved; every cited hit was inspected.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Coverage</td>
+                  <td>
+                    <code>go test -count=1 -coverpkg=./internal/...,./cmd/...</code>
+                    over all packages, duplicate profile blocks merged on
+                    maximum count
+                  </td>
+                </tr>
+                <tr>
+                  <td>Ripple</td>
+                  <td>
+                    Go files whose diff in 859904c2..HEAD touches a feature's
+                    signature identifiers, mapped to packages. The per-commit
+                    matrix is not reported: 39 of the 49 Go-touching commits in
+                    the window are daemon sweeps.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Five-day delta</td>
+                  <td>
+                    <code>git archive 859904c2</code> measured with the same
+                    counter as HEAD
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Harvest</h3>
+          <p>
+            Roadmap items 1 to 6 and the wording half of item 7 are new rows
+            in TODO_LIST.md, section "2026-11-24 architecture review #7
+            harvest", each pre-flighted against the docs-gates token bar. Item
+            7's two owner prompts stay where they are.
+          </p>
+          <h3>Known and tracked (not re-derived)</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>One home</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Server-root test drain rides carves</td>
+                  <td>TODO_LIST, standing-policy row</td>
+                </tr>
+                <tr>
+                  <td>Union coverage as a build step</td>
+                  <td>TODO_LIST <code>-coverpkg</code> row; ROADMAP policy call</td>
+                </tr>
+                <tr>
+                  <td>Storage-ladder &sect;5 DROP date</td>
+                  <td>TODO_LIST</td>
+                </tr>
+                <tr>
+                  <td>calls.js surface split</td>
+                  <td>2026-11-19 deepening brief, candidate 3</td>
+                </tr>
+                <tr>
+                  <td>File-size gate posture, owner ratify</td>
+                  <td>TODO_LIST &sect;D10 row (ceiling now 1500, 20 files over 350)</td>
+                </tr>
+                <tr>
+                  <td>DOMAIN_LANGUAGE ratify-or-delete</td>
+                  <td>ROADMAP</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Ruled closed by standing owner rulings (not re-litigated here)</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Question this review would otherwise raise</th>
+                  <th>Closing ruling</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Split into multiple Go modules?</td>
+                  <td>Single go.mod, ratified 2026-10-14, re-affirmed since</td>
+                </tr>
+                <tr>
+                  <td>Carve the html trio out of the server root?</td>
+                  <td>
+                    Ruled out 2026-11-12. F6 proposes a different family and
+                    leaves the trio untouched.
+                  </td>
+                </tr>
+                <tr>
+                  <td>Split cqrs by aggregate?</td>
+                  <td>One journal world; F11 only regroups files inside it</td>
+                </tr>
+                <tr>
+                  <td>Split shell.js?</td>
+                  <td>Declined 2026-10-27; F7 pins its size, nothing more</td>
+                </tr>
+                <tr>
+                  <td>Adopt a framework layer?</td>
+                  <td>go-appkit NO-GO 2026-11-12, asks filed upstream</td>
+                </tr>
+                <tr>
+                  <td>Server-side Go telephony?</td>
+                  <td>Rejected 2026-09-19</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <h3>Companion documents</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Document</th>
+                  <th>Path</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Series #6</td>
+                  <td>2026-11-19_20-35_architecture-review.html</td>
+                </tr>
+                <tr>
+                  <td>Series #5</td>
+                  <td>2026-11-19_07-53_architecture-review.html</td>
+                </tr>
+                <tr>
+                  <td>Runway note</td>
+                  <td>docs/planning/2026-11-21_01-48_depth-pin-runway-design.md</td>
+                </tr>
+                <tr>
+                  <td>Deepening brief (calls.js candidate)</td>
+                  <td>2026-11-19_08-10_webphone-deepening.html</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <footer class="footer">
+          <p>
+            Generated 2026-11-24 22-51 CET &middot; every probe value
+            measured this session at HEAD c592dd22 &middot; series home:
+            docs/architecture-understanding/INDEX.md
+          </p>
+        </footer>
+      </main>
+    </div>
+
+    <!-- Progressive-enhancement scrollspy. Nav still works without JS via anchor links. -->
+    <script>
+      (function () {
+        if (!("IntersectionObserver" in window)) return;
+        var nav = document.querySelector("[data-nav]");
+        if (!nav) return;
+        var links = nav.querySelectorAll('a[href^="#"]');
+        var ids = Array.from(links).map(function (l) {
+          return l.getAttribute("href").slice(1);
+        });
+        var sections = ids
+          .map(function (id) {
+            return document.getElementById(id);
+          })
+          .filter(Boolean);
+        if (!sections.length) return;
+        var observer = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (entry) {
+              if (entry.isIntersecting) {
+                links.forEach(function (link) {
+                  link.classList.toggle(
+                    "active",
+                    link.getAttribute("href") === "#" + entry.target.id,
+                  );
+                });
+              }
+            });
+          },
+          { rootMargin: "-80px 0px -60% 0px", threshold: 0 },
+        );
+        sections.forEach(function (s) {
+          observer.observe(s);
+        });
+      })();
+    </script>
+  </body>
+</html>
