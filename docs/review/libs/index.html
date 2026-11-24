@@ -1020,7 +1020,7 @@
             verdict movement (error-family's reconnect rows, health's v0.10.0 gloss —
             it is the Routes release, breaking but inert here). Forward items on
             watch: cqrs-htmx 4-tag bump, go1.27.4 toolchain roll
-            (GO-2026-97054 MaxBytesReader, fixed upstream in go1.27.4), dashboard's
+            (GO-2026-6859 / CVE-2026-97054 MaxBytesReader, fixed upstream in go1.27.4), dashboard's
             in-flight native OIDC login (a future in-process alternative to the
             Caddy fence), and go-cqrs-lite's core/v5 pre-tag finalization.
           </p>
@@ -1079,12 +1079,12 @@
               <tbody>
                 <tr><th scope="row"><a href="cqrs-htmx.md">cqrs-htmx</a></th><td>direct ×5</td><td>v4.18.1 / v4.19.0 family</td><td class="yes">100</td><td>Affirmed at the round-3 ceiling; setup stays rejected; loginpage v4.18.0 <code>ExtraSection</code> ADOPTED 2026-11-11 (<code>/login</code> = the auth front door in every mode); the 2026-11-21 family train is 4 tags ahead (root/usermgmt/loginpage/identity-model) — every new capability adjudicated N/A or passive (CSPBuilder, FlashErrorHandler, httperr.Retryable, K2 idempotency guard), <strong>bump on the next deps train</strong>; the AuditLog refresh trigger fired (bounded 10k ring) and stays declined — ephemeral storage changes nothing</td></tr>
                 <tr><th scope="row"><a href="go-health-dashboard.md">go-health-dashboard</a></th><td>direct</td><td>v0.13.3 / v0.13.3</td><td class="yes">88</td><td>Deep wiring; the auth seam (<code>WithMiddleware</code>) is the one open decision — and upstream is building native OIDC login (<code>WithOIDC</code>, stdlib-only, in [Unreleased]) which becomes the first in-process fence alternative when tagged; v0.13.3 LANDED 2026-11-13 with the <code>data-nonce</code> root bridge and retired the <code>/health</code> unsafe-eval CSP token the same day</td></tr>
-                <tr><th scope="row"><a href="httputil.md">httputil</a></th><td>direct</td><td>v1.9.0 / v1.9.0</td><td class="yes">95</td><td>Configured, not defaulted; MaxBodySize adopted 2026-11-04 (16 route mounts now; two ruled one-home funnels); v1.9.0 landed 2026-11-21 (train 4); upstream [Unreleased] flags GO-2026-97054 (MaxBytesReader crash, fixed go1.27.4) — the go1.27.4 toolchain roll is the one forward action</td></tr>
-                <tr><th scope="row"><a href="go-health.md">go-health</a></th><td>direct</td><td>v0.10.0 / v0.10.0</td><td class="yes">100</td><td>Injector-discovered probe, one readiness truth; <code>CoerceValidUTF8</code> wave landed 2026-11-04; v0.10.0 is the Routes release (breaking <code>DefaultRoutes()</code>/<code>WithVersion</code> — inert for webphone, 0 hits, which is why the bump landed untouched); <code>RegisterStdlibDefaults</code> still unconsumed (the one partial row)</td></tr>
+                <tr><th scope="row"><a href="httputil.md">httputil</a></th><td>direct</td><td>v1.9.0 / v1.9.0</td><td class="yes">95</td><td>Configured, not defaulted; MaxBodySize adopted 2026-11-04 (16 route mounts now; two ruled one-home funnels); v1.9.0 landed 2026-11-21 (train 4); upstream [Unreleased] flags GO-2026-6859 / CVE-2026-97054 (MaxBytesReader crash, fixed go1.27.4) — the go1.27.4 toolchain roll is the one forward action</td></tr>
+                <tr><th scope="row"><a href="go-health.md">go-health</a></th><td>direct</td><td>v0.10.0 / v0.10.0</td><td class="yes">100</td><td>Injector-discovered probe, one readiness truth; <code>CoerceValidUTF8</code> wave landed 2026-11-04; v0.10.0 is the Routes release (breaking <code>DefaultRoutes()</code>/<code>WithVersion</code> — inert for webphone, 0 hits, which is why the bump landed untouched);</td></tr>
                 <tr><th scope="row"><a href="go-cqrs-lite.md">go-cqrs-lite</a></th><td>direct ×11</td><td>engine wave 2026-11-20 / all 11 at latest</td><td class="yes">96</td><td><strong>SUPERB re-score 2026-11-09:</strong> ONE journal world — 11+ decider aggregates on the system composition root, snapshots (D8), <code>TrimStream</code> retention, <code>WithCapPerGroup</code> declarative caps; the 2026-11-20 engine wave (system v4.19.0, metaengine v4.26.0, sqliteengine v4.9.1) closed the catalog holdout — <strong>every module at remote latest</strong>; upstream [Unreleased] carries the core/v5 pre-tag finalization (the next structural migration, now the live forward item)</td></tr>
                 <tr><th scope="row"><a href="go-sse.md">go-sse</a></th><td>direct</td><td>v0.7.0 / v0.7.0</td><td>67</td><td>Thin by composition (cqrs-htmx wraps it); ssetest pins the wire contract; the v0.7.0 bump LANDED 2026-11-05 with the templ-wave — the library&rsquo;s CHANGELOG never cut the [0.7.0] heading and post-tag accrual is CI/tooling-only (zero consumed-surface delta); replay remains a deliberate MISS</td></tr>
                 <tr><th scope="row"><a href="httputil-server-timing.md">httputil/server_timing</a></th><td>direct</td><td>v1.0.3 / v1.0.3</td><td>67</td><td>Env-gated edge middleware exactly as designed; named spans unused (do not pre-instrument)</td></tr>
-                <tr><th scope="row"><a href="go-error-family.md">go-error-family</a></th><td>direct</td><td>v0.12.0 / v0.12.0</td><td>64</td><td>The error culture&rsquo;s backbone (126 import files, floor ≥ 115); Conflict family landed, retry-policy consumption unused — the 2026-11-22 re-verify repaired two stale rows (9 <code>RegisterClassifications</code> prod sites, not 1; the reconnect loops DO classify since T17) without verdict movement</td></tr>
+                <tr><th scope="row"><a href="go-error-family.md">go-error-family</a></th><td>direct</td><td>v0.12.0 / v0.12.0</td><td>64</td><td>The error culture&rsquo;s backbone (126 import files, floor ≥ 115); Conflict family landed, retry-policy consumption unused — the 2026-11-22 re-verify repaired two stale rows (9 <code>RegisterClassifications</code> prod sites, not 1; the reconnect loops DO classify since T17) without verdict movement; <code>RegisterStdlibDefaults</code> still never registered (row 6&rsquo;s 🟡 Partial stands)</td></tr>
                 <tr><th scope="row"><a href="templ-components.md">templ-components</a></th><td>direct ×3</td><td>v1.27.0 / v1.27.2</td><td>50</td><td>Deepening on deliberate boundaries; the cheap-wins territory fully RULED 2026-11-04; <strong>bump to v1.27.2 DECLINED standalone 2026-11-22</strong> — the JSON-LD `</` and `</script>` security hardening touch surfaces webphone never renders (0 ld+json, 0 ScriptComponent; the auto-fit-grid inline-style is absent from the tw.css @source set, so the strict CSP conflict is N/A); ride the next templ/tw.css train</td></tr>
                 <tr><th scope="row"><a href="go-etag.md">go-etag</a></th><td>direct (entitytag + server)</td><td>v0.6.2 / v0.6.2</td><td class="yes">adopted</td><td>assets conditional-GET rides <code>entitytag</code> (RFC-weak comparison) AND the server middleware mounted on <code>/openapi.json</code> + <code>/manifest.webmanifest</code> (304s; the mount is the Skip set); v0.6.1→v0.6.2 was the no-code treadmill (go-directive floor); the root-tag drift is RESOLVED upstream (v0.7.1 staircase, release.yml green)</td></tr>
                 <tr><th scope="row"><a href="go-retry.md">go-retry</a></th><td>direct</td><td>v0.9.0 / v0.9.0</td><td class="yes">adopted (fit half)</td><td>LANDED 2026-11-04: reconnect loops ride <code>ComputeDelay</code> jitter (hard-capped) + the Rejection-stops-loudly gate; <code>retry.Do</code> still declined (reconnect loops cannot exhaust)</td></tr>
@@ -1128,14 +1128,14 @@
               <div class="check">+</div>
               <div class="text">
                 <strong>metaengine dogfooding is the real thing</strong>
-                <span>11 Query declarations, boot-time capability assertions, durable dedup windows, three generated doc/export lanes — the 2026-10-24 catalog audit&rsquo;s zero-usage snapshot is ancient history.</span>
+                <span>14 Query declarations, boot-time capability assertions, durable dedup windows, three generated doc/export lanes — the 2026-10-24 catalog audit&rsquo;s zero-usage snapshot is ancient history.</span>
               </div>
             </div>
             <div class="strength">
               <div class="check">+</div>
               <div class="text">
                 <strong>httputil is configured, not defaulted</strong>
-                <span>Explicit CSP with two scoped per-subtree exceptions, 8 keyed rate limiters on a custom port-stripped extractor with the flip rule documented, SSE-safe server lifecycle, httpspec pinning the chain.</span>
+                <span>Explicit CSP with two scoped per-subtree exceptions, 14 keyed rate limiters on a custom port-stripped extractor with the flip rule documented, SSE-safe server lifecycle, httpspec pinning the chain.</span>
               </div>
             </div>
             <div class="strength">
@@ -1189,9 +1189,9 @@
           </div>
 
           <div class="issue issue-important" id="issue-3">
-            <span class="severity severity-important">1 of 3 LANDED 2026-11-04 &middot; 2 ruled</span>
+            <span class="severity severity-important">FULLY RULED 2026-11-04 &middot; 1 LANDED, the rest declined with evidence</span>
             <h3>templ-components cheap wins: StatusBadge, SimpleEmptyState, feedback.Alert</h3>
-            <div class="where">fax.templ FaxStatusBadge LANDED (display.Badge) &middot; messages OutboundStatusBadge DECLINED (byte-pinned &times;5 incl. the delivered &check; affordance; bubble-integrated :has() styling) &middot; SimpleEmptyState: 2 of 11 sites LANDED &mdash; the other 9 are subtitles, &lt;code&gt;-rich notices, or id-pinned hooks, not empty states &middot; errorBanner ruled separately</div>
+            <div class="where">fax.templ FaxStatusBadge LANDED (display.Badge) &middot; messages OutboundStatusBadge DECLINED (byte-pinned &times;5 incl. the delivered &check; affordance; bubble-integrated :has() styling) &middot; SimpleEmptyState: 2 of 11 sites LANDED &mdash; the other 9 are subtitles, &lt;code&gt;-rich notices, or id-pinned hooks, not empty states &middot; feedback.Alert DECLINED (<code>.wp-error</code> IS the htmx error-swap selector, pinned) &middot; panelHead stays the ONE home for all 7 panel headers (SSE-fragment-forbidden class) &middot; errorBanner ruled separately</div>
             <p>
               The fax badge now rides <code>display.Badge</code> with a webphone tone table
               (localized labels stay server-side). The messages badge swap is declined with
@@ -1218,7 +1218,7 @@
           <div class="issue issue-nice" id="issue-5">
             <span class="severity severity-important">3 of 3 LANDED (2026-11-04 + the 2026-11-05 templ-wave)</span>
             <h3>Close the three version gaps</h3>
-            <div class="where">go-health v0.8.1→v0.9.0→v0.10.0 LANDED (+dashboard v0.13.0→v0.13.2, tag completed upstream 2026-11-04) · go-sse v0.6.2→v0.7.0 LANDED 2026-11-05 (templ-wave published: templ v0.3.1100 + templ-components v1.27.0 + loginpage v4.16.0 + cqrs-htmx v4.16.0 / usermgmt v4.19.0) · go-etag LANDED BOTH halves (entitytag swap + server middleware mount: <code>/openapi.json</code> + manifest answer bodyless 304s; submodule stays v0.6.1 — the root v0.7.0 tag excludes it)</div>
+            <div class="where">go-health v0.8.1→v0.9.0→v0.10.0 LANDED (+dashboard v0.13.0→v0.13.2, tag completed upstream 2026-11-04) · go-sse v0.6.2→v0.7.0 LANDED 2026-11-05 (templ-wave published: templ v0.3.1100 + templ-components v1.27.0 + loginpage v4.16.0 + cqrs-htmx v4.16.0 / usermgmt v4.19.0) · go-etag LANDED BOTH halves (entitytag swap + server middleware mount: <code>/openapi.json</code> + manifest answer bodyless 304s; entitytag + server ride DIRECT v0.6.2 — the root v0.7.0 tag excludes the submodules)</div>
             <p>
               go-health v0.9.0&rsquo;s <code>CoerceValidUTF8</code> was the substantive one and
               landed (probe JSON can never break on invalid UTF-8). The go-sse v0.7.0 bump was
@@ -1294,12 +1294,12 @@ root webphone
             point counts (<code># expect N</code>) only where the value is structurally
             stable (a single-file grep, a removed symbol).
           </p>
-          <pre><code># re-derive the headline numbers (current values 2026-11-13)
+          <pre><code># re-derive the headline numbers (current values 2026-11-22)
 rg -l "larsartmann/go-error-family" --type go -g '!*_templ.go' internal/ cmd/ | wc -l   # 126 import files at the 2026-11-22 re-read (97 at audit → 133 → 124 → 126; point counts walk under live refactors, so the reports pin floors >= 115)
 rg -l "MaxBytesReader" --type go -g '!*_test.go' internal/ | wc -l           # 3 hand-rolled body-cap files left (the ruled one-home funnels)
 rg -n "os.WriteFile" internal/blob/store.go | wc -l                        # 0 — the durability finding LANDED on go-atomic-write
 rg -c "NewConflict|WrapConflict" --type go internal/ | wc -l               # Conflict family: adopted (note_list_full)
-rg -n "EnforceCap" /home/lars/projects/go-cqrs-lite/metaengine/cap.go       # the native trim (WithCapPerGroup rides it)
+rg -n "EnforceCap" /home/lars/projects/go-cqrs-lite/metaengine/v4/cap.go       # the native trim (WithCapPerGroup rides it)
 for m in go-sse go-health go-etag go-paperless; do git -C /home/lars/projects/$m describe --tags --abbrev=0; done
 
 # per-library evidence lives in the .md reports beside this file; each carries
