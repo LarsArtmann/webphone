@@ -136,7 +136,10 @@ class Sweeper:
             if len(cands) > 1:
                 shown = ", ".join(sorted(cands)[:3])
                 more = f", … +{len(cands) - 3} more" if len(cands) > 3 else ""
-                return ("AMBIGUOUS", f"{origin} matches {len(cands)} files: {shown}{more}")
+                return (
+                    "AMBIGUOUS",
+                    f"{origin} matches {len(cands)} files: {shown}{more}",
+                )
             target = cands[0]
         else:
             cands = self.basenames().get(path, [])
@@ -145,7 +148,10 @@ class Sweeper:
             if len(cands) > 1:
                 shown = ", ".join(sorted(cands)[:3])
                 more = f", … +{len(cands) - 3} more" if len(cands) > 3 else ""
-                return ("AMBIGUOUS", f"basename matches {len(cands)} files: {shown}{more}")
+                return (
+                    "AMBIGUOUS",
+                    f"basename matches {len(cands)} files: {shown}{more}",
+                )
             target = cands[0]
         n = self.line_count(target)
         if end > n:
@@ -157,7 +163,11 @@ class Sweeper:
     def sweep(self, report: str) -> tuple[list[str], collections.Counter]:
         findings: list[str] = []
         counts: collections.Counter = collections.Counter()
-        label = os.path.relpath(report, self.root) if report.startswith(self.root) else report
+        label = (
+            os.path.relpath(report, self.root)
+            if report.startswith(self.root)
+            else report
+        )
         with open(report, encoding="utf-8", errors="replace") as f:
             lines = f.read().split("\n")
         for lineno, line in enumerate(lines, start=1):
@@ -169,17 +179,23 @@ class Sweeper:
                 cls, reason = self.classify(m.group(0), path, end, slash=True)
                 counts[cls] += 1
                 if cls != "OK":
-                    findings.append(f"{label}:{lineno}: {m.group(0)} -> {cls} ({reason})")
+                    findings.append(
+                        f"{label}:{lineno}: {m.group(0)} -> {cls} ({reason})"
+                    )
             for m in BARE_RE.finditer(line):
                 name, end = m.group(1), int(m.group(3) or m.group(2))
                 cls, reason = self.classify(m.group(0), name, end, slash=False)
                 counts[cls] += 1
                 if cls != "OK":
-                    findings.append(f"{label}:{lineno}: {m.group(0)} -> {cls} ({reason})")
+                    findings.append(
+                        f"{label}:{lineno}: {m.group(0)} -> {cls} ({reason})"
+                    )
         return findings, counts
 
 
-def run(files: list[str], root: str, libs_root: str) -> tuple[list[str], collections.Counter]:
+def run(
+    files: list[str], root: str, libs_root: str
+) -> tuple[list[str], collections.Counter]:
     sweeper = Sweeper(root, libs_root)
     findings: list[str] = []
     counts: collections.Counter = collections.Counter()
@@ -204,15 +220,19 @@ def self_test() -> int:
     with tempfile.TemporaryDirectory() as tmp:
         root = os.path.join(tmp, "root")
         libs = os.path.join(tmp, "libs")
-        for d in ("internal/server", "internal/domain", "internal/web", "docs/review/libs"):
+        for d in (
+            "internal/server",
+            "internal/domain",
+            "internal/web",
+            "docs/review/libs",
+        ):
             os.makedirs(os.path.join(root, d))
         for d in ("go-fixture", "go-other/nested", "go-clone/nested"):
             os.makedirs(os.path.join(libs, d))
 
         def put(path: str, n: int, marker: str) -> None:
             with open(path, "w", encoding="utf-8") as f:
-                for i in range(1, n + 1):
-                    f.write(f"line {i} {marker}\n")
+                f.writelines(f"line {i} {marker}\n" for i in range(1, n + 1))
 
         put(os.path.join(root, "internal/server/a.go"), 100, "repo")
         put(os.path.join(root, "internal/domain/dup.go"), 10, "one")
@@ -280,12 +300,18 @@ def main(argv: list[str]) -> int:
         prog="citation-sweep.py",
         description="verify file:line citations in the fleet-libs reports",
     )
-    ap.add_argument("files", nargs="*", help="report files (default: docs/review/libs/*.md)")
-    ap.add_argument("--root", default=default_root, help="repo root (default: this script's repo)")
+    ap.add_argument(
+        "files", nargs="*", help="report files (default: docs/review/libs/*.md)"
+    )
+    ap.add_argument(
+        "--root", default=default_root, help="repo root (default: this script's repo)"
+    )
     ap.add_argument(
         "--libs-root", default=DEFAULT_LIBS_ROOT, help="fleet root for <lib>/… cites"
     )
-    ap.add_argument("--self-test", action="store_true", help="run the fixture self-test")
+    ap.add_argument(
+        "--self-test", action="store_true", help="run the fixture self-test"
+    )
     args = ap.parse_args(argv)
 
     if args.self_test:
@@ -294,7 +320,11 @@ def main(argv: list[str]) -> int:
     files: list[str] = []
     if args.files:
         for name in args.files:
-            p = name if os.path.isabs(name) or os.path.exists(name) else os.path.join(args.root, name)
+            p = (
+                name
+                if os.path.isabs(name) or os.path.exists(name)
+                else os.path.join(args.root, name)
+            )
             if not os.path.isfile(p):
                 print(f"citation-sweep: no such file: {name}", file=sys.stderr)
                 return 2
