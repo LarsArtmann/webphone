@@ -9,7 +9,8 @@
 > resolved) and the 38 rows of the
 > `2026-11-23_00-52` status report. Every open and blocked row was re-verified
 > against code, CHANGELOG or the live system by three inventory passes
-> (`/tmp/pareto/inv-1.md` … `inv-3.md`) and spot-checked by the orchestrator.
+> (`2026-11-24_01-24_SUPERB-post-deploy-pareto-replan.inventory.md`, beside
+> this file) and spot-checked by the orchestrator.
 > **16 unstruck `- [ ]` rows are live, 3 are already done.** Customer = the
 > owner + the users of the live pbx.artmann.tech deployment (v2.15.0, live
 > since 2026-11-22 14:37Z). L-numbers cite TODO_LIST @ `3427c887`, before this
@@ -209,7 +210,7 @@ Totals: 27 tasks, 1,575 minutes (26.25 h). Tier minutes: 1% = 90, 4% = 235,
 | m09.2 | Self-test fixture: a `## [0.8.0]` heading with no tag → must report UNTAGGED                                                                                                                                   | 12  | T09 |
 | m09.3 | Re-run the sweep over the 24 repos and their submodule CHANGELOGs; adjudicate every finding                                                                                                                    | 10  | T09 |
 | m09.4 | Registry sweep-log line + commit (the self-test in the message)                                                                                                                                                | 11  | T09 |
-| m10.1 | Port the throwaway sweep to `scripts/citation-sweep.py` (repo-relative, absolute, `<lib>/`-qualified against `~/projects`, unique-basename, en-dash ranges)                                                    | 12  | T10 |
+| m10.1 | Port the throwaway sweep (attached to the inventory file) to `scripts/citation-sweep.py` (repo-relative, absolute, `<lib>/`-qualified against `~/projects`, unique-basename, en-dash ranges)                   | 12  | T10 |
 | m10.2 | Self-test: a fixture report with one good, one stale, one library-qualified cite                                                                                                                               | 12  | T10 |
 | m10.3 | Call it at the tail of `scripts/audit-verify.sh` as an advisory lane (never gating until green on the corpus)                                                                                                  | 10  | T10 |
 | m10.4 | Run on the 25 reports; fix the 4 basename-ambiguous cites with directory-qualified paths                                                                                                                       | 12  | T10 |
