@@ -16,7 +16,7 @@ front matter does not carry their history (one home per fact, per the rule above
 
 ### 2026-11-24 fleet-libs re-audit harvest (from the 2026-11-23_00-52 status report §f; ledger: docs/planning/2026-11-24_01-24_SUPERB-post-deploy-pareto-replan.md §6)
 
-- [ ] **Vulnerability id fix** (00-52 §f 2; plan T07): `GO-2026-97054` is wrong — the source says `GO-2026-6859` / `CVE-2026-97054` (`httputil/CHANGELOG.md:12`); fix `AGENTS.md:12`, `docs/review/libs/index.html:1023` and `:1082`.
+- ~~**Vulnerability id fix** (00-52 §f 2; plan T07): `GO-2026-97054` is wrong — the source says `GO-2026-6859` / `CVE-2026-97054` (`httputil/CHANGELOG.md:12`); fix `AGENTS.md:12`, `docs/review/libs/index.html:1023` and `:1082`.~~ → done 2026-11-24 — AGENTS:12 landed with the living-doc batch (`586ff894`), both index.html sites with the T07 index reconciliation (`9546b9e5`: vuln id corrected ×2, plus the go-health→go-error-family RegisterStdlibDefaults move, the 14-limit/14-Query Strengths counts, the metaengine/v4/cap.go path, the templ FULLY-RULED + etag v0.6.2 card updates); `rg GO-2026-97054` now matches only historical task text (the plan + the 00-52 report).
 - ~~**`scripts/ci-verdict.sh` pages past the watch lane** (00-52 §f 3; T04): the `head_sha` query reads one page; the 15-minute `watch` lane pushed the CI run off it, so the red tip `10327ed8` answered "no CI-WORKFLOW run" for 31 h.~~ → done 2026-11-24 (`362956ab`): both query sites paginate until `total_count` is covered; PAGE_CAP 20 answers greppable `PAGE-CAP-EXCEEDED` rc 3; self-test 11/11 (page-2 fixtures proven failing pre-fix); live rc verified `10327ed8`→2 RED, `94157138`→0.
 - [ ] **Fleet-libs index reconciliation** (00-52 §f 4–6; T07): the appendix block (stale date label; dead `metaengine/cap.go` path), Strengths ("8 keyed rate limiters", "11 Query declarations"), Findings cards 3/4/5, and the go-health row's misplaced `RegisterStdlibDefaults`.
 - [ ] **Read-through of the 22 subagent-written report bodies** (00-52 §f 9, 22, 29; T11, T12): prose claims, score inputs, the dprint reflow, one provenance header line each.
@@ -33,6 +33,8 @@ front matter does not carry their history (one home per fact, per the rule above
 - [ ] **Owner: four scope calls** (00-52 §f 26, 28, 32, 38; T01): the `idemtest` companion-rule exemption; submodule-exhaustive scoring for the `**` families; an on-disk AuditLog read projection; a separate `httputil-endpoints.md` or not.
 
 ### 2026-11-24 report-harvest batch (from the 2026-11-22 14-09, 15-59 and 17-39 status reports' §f; ledger in the 2026-11-24_01-24 pareto plan §6)
+
+- ~~**06-50 §f 22 (c-6): the faxCopyKeys extraction deferred the full `go test -count=1 ./...` + island gates to a later run** (scoped suites only: fax + views + server green, `nix fmt` 0 changed)~~ → done 2026-11-24 (harvested + discharged by the pareto session): the full suite ran green at the extraction-bearing tree (sole non-ok line the no-test-files notice; island node specs 0 failed/skipped; `tsc -p . --noEmit` clean); the report item is annotated resolved in place.
 
 - [ ] **go-structure-linter #13** (14-09 §f; T27) (repo: go-structure-linter): skip `*_test.go` in `isTestDataFile`.
 - [ ] **docs-health `annotate.go`: per-cell table strikes** (14-09 §f) (repo: SKILLS): a 120-minute change to the skill; rides the next docs-health visit.

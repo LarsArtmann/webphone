@@ -206,24 +206,24 @@ baseline — and that design is what (e-4) puts on the owner's desk.
 21. Extraction-shadow groups (the 10-28 lesson "a duplicated CALL is the
     extraction's shadow"): add the class note to the registry PROTOCOL section so
     future sweeps stop re-arguing them.
-22. Full `go test -count=1 ./...` + island gates ride the next battery (c-6).
-23. When the daemon pushes, confirm the fmt-repair diff landed canonical markdown
+    ~~22. Full `go test -count=1 ./...` + island gates ride the next battery (c-6).~~ done 2026-11-24 — the deferred full gates RAN GREEN the same day (pareto session): `go test -count=1 ./...` over the extraction-bearing tree (sole non-ok line the no-test-files notice), island node specs 0 failed/skipped, `tsc -p . --noEmit` clean
+22. When the daemon pushes, confirm the fmt-repair diff landed canonical markdown
     (battery-on-commit lesson: quote the commit sha in any posture claim).
-24. Keep `.crush/shell-output/output-917265081.log` (the paste's raw evidence)
+23. Keep `.crush/shell-output/output-917265081.log` (the paste's raw evidence)
     until the next sweep supersedes it — it is the only byte-exact record of the
     owner's run.
-25. If g1 lands as "upgrade": schedule it as its OWN train (one train, one baseline
+24. If g1 lands as "upgrade": schedule it as its OWN train (one train, one baseline
     write — the 11-09 doctrine), never as a rider.
-26. If g1 lands as "advisory": define where the advisory report lands (docs/?/
+25. If g1 lands as "advisory": define where the advisory report lands (docs/?/
     .crush/?) so it doesn't entomb.
-27. The untracked file in the FORK repo's checkout (`docs/status/2026-11-24_06-44_docs-health-…`,
+26. The untracked file in the FORK repo's checkout (`docs/status/2026-11-24_06-44_docs-health-…`,
     another session's docs-health audit) — leave alone; cross-session awareness
     only.
-28. CHANGELOG: when the release dance next cuts, fold today's `faxCopyKeys` entry
+27. CHANGELOG: when the release dance next cuts, fold today's `faxCopyKeys` entry
     into the release notes wording.
-29. Re-check that the extraction's sweep-log claim "no baseline write owed" holds
+28. Re-check that the extraction's sweep-log claim "no baseline write owed" holds
     at next sweep (the pinned gate's universe must still be 0-new at HEAD+1).
-30. Teach the next session the one-line version of this finding: "the gate's
+29. Teach the next session the one-line version of this finding: "the gate's
     0-new is version-relative truth; the local detector sees a different,
     larger universe" — it is now a standing-class fact worth a registry
     protocol sentence.
