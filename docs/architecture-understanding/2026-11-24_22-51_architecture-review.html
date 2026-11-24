@@ -893,9 +893,9 @@
           <h1>Post-release re-score: the hub's runway is spent</h1>
           <p class="subtitle">
             Seventh in the series, five days and one release (v2.15.0) after #6.
-            Every #6 claim re-measured at HEAD <code>c592dd22</code>, the hub's
-            remaining mass dissected file by file, and the client side measured
-            for the first time.
+            #6's structural claims re-measured at HEAD <code>c592dd22</code>, the
+            hub's remaining mass dissected file by file, and the client side
+            measured for the first time.
           </p>
           <div class="meta">
             <span class="tag amber">Scope: internal/* + cmd + client assets</span>
@@ -960,7 +960,8 @@
           <h2><span class="num">01</span>Prior deltas verified</h2>
           <p>
             #6's roadmap, re-probed at HEAD. Two items executed, one stands as
-            policy with no motion, one is tracked elsewhere.
+            policy with no motion, one is tracked elsewhere; #6's F5 watch
+            item is not yet due.
           </p>
           <div class="table-wrap">
             <table class="compare">
@@ -1908,8 +1909,9 @@
             </p>
             <p>
               <strong>Impact.</strong> Small in data terms: one aggregate
-              count, no rows. It is still the first data read through the
-              handle, and it makes platform import store for one metrics line.
+              count, no rows. It is still the one data read through a handle
+              reserved for readiness, and it makes platform import store for
+              one metrics line.
               A prose invariant that is already false teaches readers that the
               next one is optional too.
             </p>
@@ -2180,6 +2182,51 @@
             rows. New items are harvested into TODO_LIST under the section
             named in the appendix.
           </p>
+          <h3 id="roadmap-levers">What would move the lowest scores</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Dimension</th>
+                  <th>Today</th>
+                  <th>What it would take</th>
+                  <th>Finding</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Scalability</td>
+                  <td>4.0</td>
+                  <td>
+                    A hub with runway again, a second click down in the ledger,
+                    and a ceiling on the client mass. Ripple is already small;
+                    the score is capped by ceilings, not by coupling.
+                  </td>
+                  <td>F6, F7</td>
+                </tr>
+                <tr>
+                  <td>Service orientation</td>
+                  <td>4.0</td>
+                  <td>
+                    One boot recipe that makes each aggregate bootable by name
+                    (the CLI one-shots already do it by hand), and one module
+                    that owns the machine contracts behind a three-function
+                    API. Data ownership is already one owner per database.
+                  </td>
+                  <td>F9, F6</td>
+                </tr>
+                <tr>
+                  <td>Composability</td>
+                  <td>4.5</td>
+                  <td>
+                    Aggregate number 12 as a one-list addition, and a kernel a
+                    reader can see.
+                  </td>
+                  <td>F9, F11</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
           <div class="migration-step">
             <div class="migration-num">1</div>
             <div class="migration-content">
@@ -2440,6 +2487,12 @@
             Generated 2026-11-24 22-51 CET &middot; every probe value
             measured this session at HEAD c592dd22 &middot; series home:
             docs/architecture-understanding/INDEX.md
+          </p>
+          <p>
+            Amendment, same session (22:54 CET): added the "What would move
+            the lowest scores" table to &sect;06, corrected the subtitle's
+            "every claim" to "structural claims", and completed the &sect;01
+            lead-in count. An auto-commit had already landed the first splice.
           </p>
         </footer>
       </main>

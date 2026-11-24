@@ -22,7 +22,7 @@ front matter does not carry their history (one home per fact, per the rule above
 - [ ] **Readiness-only DB rule: close the violation and pin it** (F8): `platform/metrics.go` reads `store.CountSessions` through `platform.Deps.DB`; move the count behind `session.Store`, drop `DB` from platform.Deps, add the arch pin. `auth:` convention applies. Effort S.
 - [ ] **One home for the journal boot recipe** (F9): six `system.DeploymentConfig` literals (app + five cqrs helpers) → one helper; one full domain list consumed by `app.NewCqrs` (11 decls) and `cqrs.NewCoreSystem` (10); two CLI one-shots compose through app-owned builders. Effort S to M.
 - [ ] **Name the journal kernel** (F11): move the eight shared helpers out of aggregate files (`dispatchOwnerCommand` in dialwindows.go, `humanScaleVolume` in threadsviews.go) and `NewCoreSystem` into one file; in-package motion. Effort S.
-- [ ] **Test-drain row precedent is wrong** (F10): `server/auth` has 0 test files; the carve pattern that moved tests is api (5) and hooks (7). Reword the standing-policy row; the next carve carries its tests. Effort S.
+- [ ] **Test-drain row precedent is half right** (F10): `server/auth` has 0 test files; the carves that moved tests are api (5), hooks (7) and platform (5). Reword the standing-policy row; the next carve carries its tests. Effort S.
 
 ### 2026-11-24 fleet-libs re-audit harvest (from the 2026-11-23_00-52 status report §f; ledger: docs/planning/2026-11-24_01-24_SUPERB-post-deploy-pareto-replan.md §6)
 
