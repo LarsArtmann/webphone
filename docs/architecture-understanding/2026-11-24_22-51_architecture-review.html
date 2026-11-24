@@ -1776,6 +1776,77 @@
             past the server's per-file ceiling. 57 spec files with 12,148
             lines cover the island.
           </p>
+
+          <h3 id="ev-concepts">03.9 Domain concepts to modules</h3>
+          <p>
+            The glossary's concepts mapped to the packages that carry them.
+            Each concept is layer-sliced across five to seven packages and
+            joined by one gate interface per aggregate.
+          </p>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Concept</th>
+                  <th>Vocabulary (domain)</th>
+                  <th>Journal (cqrs)</th>
+                  <th>Gate (readmodels)</th>
+                  <th>Transport and HTTP</th>
+                  <th>View</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Thread, bubble</td>
+                  <td>events, thread, threadfacts, message, delivery</td>
+                  <td>8 files</td>
+                  <td><code>ThreadGate</code></td>
+                  <td>messaging, server/hooks, server root</td>
+                  <td>messages.templ (794 lines)</td>
+                </tr>
+                <tr>
+                  <td>Fax job</td>
+                  <td>fax</td>
+                  <td>2 files</td>
+                  <td><code>FaxGate</code></td>
+                  <td>fax, server/hooks, server root</td>
+                  <td>fax.templ (206)</td>
+                </tr>
+                <tr>
+                  <td>Personal contact</td>
+                  <td>contact</td>
+                  <td>1 file</td>
+                  <td><code>ContactGate</code></td>
+                  <td>server/api</td>
+                  <td>contacts.templ (108)</td>
+                </tr>
+                <tr>
+                  <td>Transcript, note, review</td>
+                  <td>transcript, callnote, callreview, disposition</td>
+                  <td>4 files</td>
+                  <td>
+                    <code>TranscriptGate</code>, <code>NotesGate</code>,
+                    <code>ReviewsGate</code>
+                  </td>
+                  <td>server/api, server root</td>
+                  <td>history.templ (343)</td>
+                </tr>
+                <tr>
+                  <td>Line, session</td>
+                  <td>ids, plus authmap.Line</td>
+                  <td>none: sessions stay SQL (store, session)</td>
+                  <td><code>session.Store</code></td>
+                  <td>server/auth (8 files)</td>
+                  <td>island session.js</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            Reading: the gate is the contract. The layers behind a gate can
+            move (F6's contracts module, F9's boot recipe) without the concept
+            noticing, which is why ripple stays at one to four packages.
+          </p>
         </section>
 
         <section id="findings">
@@ -1993,8 +2064,9 @@
               #6. By name the root holds 25 Session, 13 Passkey, 9 Login and 8
               SSO test functions. The standing TODO row cites "the
               auth/platform carve pattern" as the precedent for tests moving
-              with their surfaces. That precedent is api (5 test files) and
-              hooks (7 files, 674 lines). Auth moved none.
+              with their surfaces. Three of the four carves did carry tests on
+              their carve day: api (5 files), hooks (7 files, 674 lines) and
+              platform (5 files, 236 lines). Auth carried none.
             </p>
             <p>
               <strong>Impact.</strong> An auth change recompiles the root test
@@ -2004,10 +2076,11 @@
             </p>
             <div class="callout callout-teal">
               <strong>Fix: correct the precedent and make the next carve carry its tests</strong>
-              Reword the policy row (api and hooks are the precedent, not
-              auth) and add "tests ride the carve" as a checklist line on the
-              next carve. F6's contracts move takes wirecontracts_test.go and
-              wirefixtures_test.go (173 lines) out of the root.
+              Reword the policy row (api, hooks and platform are the
+              precedent, auth is not) and add "tests ride the carve" as a
+              checklist line on the next carve. F6's contracts move takes
+              wirecontracts_test.go and wirefixtures_test.go (173 lines) out of
+              the root.
             </div>
             <p>
               <strong>Effort</strong> S for the wording; the motion rides F6.
@@ -2296,7 +2369,8 @@
             <div class="migration-content">
               <h4>Standing: correct the test-drain precedent; keep the owner prompts alive</h4>
               <p>
-                Reword the policy row to cite api and hooks, not auth (F10);
+                Reword the policy row to cite api, hooks and
+                platform, not auth (F10);
                 the next carve carries its tests. The DOMAIN_LANGUAGE call
                 (ROADMAP, also closes F12) and the &sect;5 DROP row (TODO_LIST)
                 need no new work.
@@ -2491,8 +2565,9 @@
           <p>
             Amendment, same session (22:54 CET): added the "What would move
             the lowest scores" table to &sect;06, corrected the subtitle's
-            "every claim" to "structural claims", and completed the &sect;01
-            lead-in count. An auto-commit had already landed the first splice.
+            "every claim" to "structural claims", completed the &sect;01
+            lead-in count, and added the &sect;03.9 concept-to-module map.
+            Auto-commits had already landed the earlier splices.
           </p>
         </footer>
       </main>
