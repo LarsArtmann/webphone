@@ -41,8 +41,9 @@ type FaxPanelProps struct {
 }
 
 templ FaxPanel(props FaxPanelProps) {
+	{{ subtitle, _ := faxCopyKeys(props.Capability) }}
 	<section class="wp-panel" id="fax-panel">
-		@panelHead(props.Lang, "tab.fax", faxSubtitleKey(props.Capability))
+		@panelHead(props.Lang, "tab.fax", subtitle)
 		@panelError(props.Error)
 		@identityLine(props.Lang, props.Identity)
 		if props.Capability.Send {
@@ -84,19 +85,21 @@ templ FaxPanel(props FaxPanelProps) {
 	</section>
 }
 
-// faxSubtitleKey picks the panel subtitle: the plain one only when BOTH
-// directions exist (byte-identical default), otherwise a line that states
-// which half is missing. One home for the mapping.
-func faxSubtitleKey(cap FaxCapability) string {
+// faxCopyKeys derives BOTH capability copy keys — the panel subtitle and
+// the empty state — from one state mapping so the two families cannot
+// drift apart: the plain key only when BOTH directions exist
+// (byte-identical default), otherwise a suffix naming the missing half.
+// The keys stay literal per family; the i18n unused-key scan needs them.
+func faxCopyKeys(cap FaxCapability) (subtitle, empty string) {
 	switch {
 	case cap.Send && cap.Receive:
-		return "fax.subtitle"
+		return "fax.subtitle", "fax.empty"
 	case cap.Send:
-		return "fax.subtitle.noreceive"
+		return "fax.subtitle.noreceive", "fax.empty.noreceive"
 	case cap.Receive:
-		return "fax.subtitle.nosend"
+		return "fax.subtitle.nosend", "fax.empty.nosend"
 	default:
-		return "fax.subtitle.off"
+		return "fax.subtitle.off", "fax.empty.off"
 	}
 }
 
@@ -128,25 +131,12 @@ templ faxUnavailableNotice(lang Lang, key string) {
 // when the send form is absent — and an SSE payload must agree with the
 // full render (the Notifier carries the same boot-time flags).
 templ FaxList(jobs []domain.FaxJob, contacts CRMContacts, cap FaxCapability, lang Lang) {
+	{{ _, emptyKey := faxCopyKeys(cap) }}
 	if len(jobs) == 0 {
-		@display.EmptyState(display.EmptyStateProps{Title: T(lang, faxEmptyKey(cap)), Icon: icons.Document, Class: "wp-empty-state"})
+		@display.EmptyState(display.EmptyStateProps{Title: T(lang, emptyKey), Icon: icons.Document, Class: "wp-empty-state"})
 	}
 	for _, job := range jobs {
 		@FaxRow(job, contacts, lang)
-	}
-}
-
-// faxEmptyKey is the one home of the empty-state copy mapping.
-func faxEmptyKey(cap FaxCapability) string {
-	switch {
-	case cap.Send && cap.Receive:
-		return "fax.empty"
-	case cap.Send:
-		return "fax.empty.noreceive"
-	case cap.Receive:
-		return "fax.empty.nosend"
-	default:
-		return "fax.empty.off"
 	}
 }
 

@@ -66,11 +66,12 @@ func FaxPanel(props FaxPanelProps) templ.Component {
 		}
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
+		subtitle, _ := faxCopyKeys(props.Capability)
 		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 1, "<section class=\"wp-panel\" id=\"fax-panel\">")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = panelHead(props.Lang, "tab.fax", faxSubtitleKey(props.Capability)).Render(ctx, templ_7745c5c3_Buffer)
+		templ_7745c5c3_Err = panelHead(props.Lang, "tab.fax", subtitle).Render(ctx, templ_7745c5c3_Buffer)
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -106,7 +107,7 @@ func FaxPanel(props FaxPanelProps) templ.Component {
 			var templ_7745c5c3_Var2 string
 			templ_7745c5c3_Var2, templ_7745c5c3_Err = templruntime.NewAttributeExpression(T(props.Lang, "fax.document.label")).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/fax.templ`, Line: 67, Col: 126}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/fax.templ`, Line: 68, Col: 126}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var2)
 			if templ_7745c5c3_Err != nil {
@@ -156,19 +157,21 @@ func FaxPanel(props FaxPanelProps) templ.Component {
 	})
 }
 
-// faxSubtitleKey picks the panel subtitle: the plain one only when BOTH
-// directions exist (byte-identical default), otherwise a line that states
-// which half is missing. One home for the mapping.
-func faxSubtitleKey(cap FaxCapability) string {
+// faxCopyKeys derives BOTH capability copy keys — the panel subtitle and
+// the empty state — from one state mapping so the two families cannot
+// drift apart: the plain key only when BOTH directions exist
+// (byte-identical default), otherwise a suffix naming the missing half.
+// The keys stay literal per family; the i18n unused-key scan needs them.
+func faxCopyKeys(cap FaxCapability) (subtitle, empty string) {
 	switch {
 	case cap.Send && cap.Receive:
-		return "fax.subtitle"
+		return "fax.subtitle", "fax.empty"
 	case cap.Send:
-		return "fax.subtitle.noreceive"
+		return "fax.subtitle.noreceive", "fax.empty.noreceive"
 	case cap.Receive:
-		return "fax.subtitle.nosend"
+		return "fax.subtitle.nosend", "fax.empty.nosend"
 	default:
-		return "fax.subtitle.off"
+		return "fax.subtitle.off", "fax.empty.off"
 	}
 }
 
@@ -214,7 +217,7 @@ func faxUnavailableNotice(lang Lang, key string) templ.Component {
 		var templ_7745c5c3_Var4 string
 		templ_7745c5c3_Var4, templ_7745c5c3_Err = templ.JoinStringErrs(T(lang, key))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/fax.templ`, Line: 122, Col: 58}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/fax.templ`, Line: 125, Col: 58}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var4))
 		if templ_7745c5c3_Err != nil {
@@ -250,8 +253,9 @@ func FaxList(jobs []domain.FaxJob, contacts CRMContacts, cap FaxCapability, lang
 		}
 		ctx = templ.InitializeContext(ctx)
 		ctx = templ.ClearChildren(ctx)
+		_, emptyKey := faxCopyKeys(cap)
 		if len(jobs) == 0 {
-			templ_7745c5c3_Err = display.EmptyState(display.EmptyStateProps{Title: T(lang, faxEmptyKey(cap)), Icon: icons.Document, Class: "wp-empty-state"}).Render(ctx, templ_7745c5c3_Buffer)
+			templ_7745c5c3_Err = display.EmptyState(display.EmptyStateProps{Title: T(lang, emptyKey), Icon: icons.Document, Class: "wp-empty-state"}).Render(ctx, templ_7745c5c3_Buffer)
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
@@ -264,20 +268,6 @@ func FaxList(jobs []domain.FaxJob, contacts CRMContacts, cap FaxCapability, lang
 		}
 		return nil
 	})
-}
-
-// faxEmptyKey is the one home of the empty-state copy mapping.
-func faxEmptyKey(cap FaxCapability) string {
-	switch {
-	case cap.Send && cap.Receive:
-		return "fax.empty"
-	case cap.Send:
-		return "fax.empty.noreceive"
-	case cap.Receive:
-		return "fax.empty.nosend"
-	default:
-		return "fax.empty.off"
-	}
 }
 
 func FaxRow(job domain.FaxJob, contacts CRMContacts, lang Lang) templ.Component {
@@ -356,7 +346,7 @@ func FaxRow(job domain.FaxJob, contacts CRMContacts, lang Lang) templ.Component 
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(formatStamp(lang, job.CreatedAt))
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/fax.templ`, Line: 161, Col: 38}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/fax.templ`, Line: 151, Col: 38}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -369,7 +359,7 @@ func FaxRow(job domain.FaxJob, contacts CRMContacts, lang Lang) templ.Component 
 		var templ_7745c5c3_Var10 string
 		templ_7745c5c3_Var10, templ_7745c5c3_Err = templ.JoinStringErrs(" ")
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/fax.templ`, Line: 162, Col: 9}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/fax.templ`, Line: 152, Col: 9}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var10))
 		if templ_7745c5c3_Err != nil {
@@ -383,7 +373,7 @@ func FaxRow(job domain.FaxJob, contacts CRMContacts, lang Lang) templ.Component 
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templ.JoinStringErrs(" · " + fmtInt(job.Pages) + T(lang, "fax.pages"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/fax.templ`, Line: 165, Col: 56}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/fax.templ`, Line: 155, Col: 56}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var11))
 			if templ_7745c5c3_Err != nil {
@@ -402,7 +392,7 @@ func FaxRow(job domain.FaxJob, contacts CRMContacts, lang Lang) templ.Component 
 			var templ_7745c5c3_Var12 string
 			templ_7745c5c3_Var12, templ_7745c5c3_Err = templ.JoinStringErrs(job.Error)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/fax.templ`, Line: 168, Col: 52}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/fax.templ`, Line: 158, Col: 52}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var12))
 			if templ_7745c5c3_Err != nil {
@@ -435,7 +425,7 @@ func FaxRow(job domain.FaxJob, contacts CRMContacts, lang Lang) templ.Component 
 			var templ_7745c5c3_Var13 string
 			templ_7745c5c3_Var13, templ_7745c5c3_Err = templruntime.NewAttributeExpression("/fax/" + job.ID.String() + "/resend").Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/fax.templ`, Line: 179, Col: 52}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/fax.templ`, Line: 169, Col: 52}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var13)
 			if templ_7745c5c3_Err != nil {
@@ -448,7 +438,7 @@ func FaxRow(job domain.FaxJob, contacts CRMContacts, lang Lang) templ.Component 
 			var templ_7745c5c3_Var14 string
 			templ_7745c5c3_Var14, templ_7745c5c3_Err = templ.JoinStringErrs(T(lang, "fax.resend"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/fax.templ`, Line: 182, Col: 28}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/fax.templ`, Line: 172, Col: 28}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var14))
 			if templ_7745c5c3_Err != nil {
@@ -467,7 +457,7 @@ func FaxRow(job domain.FaxJob, contacts CRMContacts, lang Lang) templ.Component 
 			var templ_7745c5c3_Var15 string
 			templ_7745c5c3_Var15, templ_7745c5c3_Err = templruntime.NewAttributeExpression("/fax/" + job.ID.String() + "/document").ResolveURL(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/fax.templ`, Line: 185, Col: 69}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/fax.templ`, Line: 175, Col: 69}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var15)
 			if templ_7745c5c3_Err != nil {
@@ -480,7 +470,7 @@ func FaxRow(job domain.FaxJob, contacts CRMContacts, lang Lang) templ.Component 
 			var templ_7745c5c3_Var16 string
 			templ_7745c5c3_Var16, templ_7745c5c3_Err = templ.JoinStringErrs(T(lang, "fax.pdf"))
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/fax.templ`, Line: 185, Col: 101}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/fax.templ`, Line: 175, Col: 101}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var16))
 			if templ_7745c5c3_Err != nil {
@@ -592,7 +582,7 @@ func FaxSteps(job domain.FaxJob, lang Lang) templ.Component {
 			var templ_7745c5c3_Var21 string
 			templ_7745c5c3_Var21, templ_7745c5c3_Err = templruntime.NewAttributeExpression(faxStatusText(job.Status, lang) + " · " + formatStamp(lang, job.UpdatedAt)).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/fax.templ`, Line: 221, Col: 85}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views/fax.templ`, Line: 211, Col: 85}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var21)
 			if templ_7745c5c3_Err != nil {
