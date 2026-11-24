@@ -10,12 +10,22 @@
 #
 # The untagged-release sweep (the dashboard v0.13.0 class: the release
 # commit pushed, the tag missing) keys on CHANGELOG.md files: the newest
-# `## [vX.Y.Z]` heading of every CHANGELOG in a repo must have a
-# matching remote tag. Go resolves exactly ONE tag form per module:
+# version heading of every CHANGELOG in a repo must have a matching
+# remote tag. Go resolves exactly ONE tag form per module:
 # <module-path-minus-major-suffix>/vX.Y.Z — for catalog/v4 that is
 # catalog/v4.15.0, NOT catalog/v4/v4.15.0 (the 2026-11-13 incident: the
 # release script cut the suffixed shape, the proxy could not see the
 # release, and the old two-form heuristic here read it as tagged).
+#
+# The 2026-11-22 blind-spot class: this script's heading regex required
+# a `v` prefix (`## [v1.2.3]`), so the 20 of 24 fleet repos whose
+# CHANGELOGs write `## [1.2.3]` SILENTLY produced zero findings — a
+# skipped repo was indistinguishable from a tagged one. The heading now
+# tolerates the optional `v`, and every sweep ends with a COVERAGE line
+# (repos swept vs skipped and WHY; CHANGELOGs checked vs skipped) so a
+# silent skip can no longer hide a missing tag. Vendored trees (vendor/,
+# node_modules/, .pnpm/) are excluded: a vendored CHANGELOG's tags live
+# in its own repo, never in the host's remote.
 #
 # Usage:
 #   scripts/fleet-tags.sh [--repos dir...]      sweep; findings to stdout
@@ -24,17 +34,37 @@
 set -euo pipefail
 
 repo_latest_version() {
-	# The newest version heading of one CHANGELOG: `## [v1.2.3]` (date or
-	# link suffix tolerated). Empty when the file carries no version section.
-	sed -n 's/^## \[\(v[0-9][0-9.]*[^]]*\)\].*/\1/p' "$1" 2>/dev/null | head -1 | sed 's/].*//; s/^v//' | sed 's/^/v/' | head -1 || true
+	# The newest version heading of one CHANGELOG: `## [v1.2.3]` OR
+	# `## [1.2.3]` (the optional `v`, 20-of-24 fleet repos write the bare
+	# form; date or link suffixes tolerated). Empty when the file carries
+	# no version-shaped section.
+	sed -n 's/^## \[\(v\{0,1\}[0-9][0-9.]*[^]]*\)\].*/\1/p' "$1" 2>/dev/null |
+		head -1 | sed 's/].*//; s/^v//; s/^/v/' | head -1 || true
 }
+
+# Coverage counters (globals: sweep_repo runs in the caller's shell so
+# the main loop can aggregate; the self-test exercises the same path).
+changelogs_seen=0
+changelogs_checked=0
+changelogs_no_version=0
+REPOS_SWEPT=0
+REPOS_SKIPPED_NOCHANGELOG=0
+REPOS_SKIPPED_NOGIT=0
+REPOS_SKIPPED_NOORIGIN=0
+REPOS_SKIPPED_LSREMOTE=0
 
 sweep_repo() {
 	repo="$1"
 	offline="$2"
-	find "$repo" -name CHANGELOG.md -type f -not -path "*/node_modules/*" -not -path "*/.pnpm/*" 2>/dev/null | while read -r changelog; do
+	while IFS= read -r changelog; do
+		changelogs_seen=$((changelogs_seen + 1))
 		version="$(repo_latest_version "$changelog")"
-		[ -n "$version" ] || continue
+		if [ -z "$version" ]; then
+			echo "SKIP (no version heading): $changelog" >&2
+			changelogs_no_version=$((changelogs_no_version + 1))
+			continue
+		fi
+		changelogs_checked=$((changelogs_checked + 1))
 		dir="$(dirname "$changelog")"
 		label="<root>"
 		tags=("$version")
@@ -53,6 +83,7 @@ sweep_repo() {
 			tags=("$prefix/$version")
 		fi
 		found=0
+		unreachable=0
 		for tag in "${tags[@]}"; do
 			if [ "$offline" = "1" ]; then
 				if git -C "$repo" rev-parse -q --verify "refs/tags/$tag" >/dev/null 2>&1; then
@@ -60,7 +91,14 @@ sweep_repo() {
 					break
 				fi
 			else
-				if git -C "$repo" ls-remote origin "refs/tags/$tag" 2>/dev/null | grep -q .; then
+				if ! remote_tags="$(git -C "$repo" ls-remote origin "refs/tags/$tag" 2>/dev/null)"; then
+					# The remote could not be asked (network, auth): NOT a
+					# finding — say so instead of inventing an untagged
+					# verdict (the old pipe swallowed the failure).
+					unreachable=1
+					continue
+				fi
+				if [ -n "$remote_tags" ]; then
 					found=1
 					break
 				fi
@@ -70,11 +108,55 @@ sweep_repo() {
 		if [ "$found" = "1" ]; then
 			continue
 		fi
+		if [ "$unreachable" = "1" ] && [ "$offline" != "1" ]; then
+			echo "SKIP (ls-remote failed): $repo ($label)" >&2
+			REPOS_SKIPPED_LSREMOTE=$((REPOS_SKIPPED_LSREMOTE + 1))
+			continue
+		fi
 		printf 'UNTAGGED\t%s\t%s\t%s\n' "$repo" "$label" "${display_tag:-$version}"
-	done
+	done < <(find "$repo" -name CHANGELOG.md -type f -not -path "*/node_modules/*" -not -path "*/.pnpm/*" -not -path "*/vendor/*" 2>/dev/null)
+}
+
+sweep_one_repo() {
+	# Repo-level gatekeeping — why a repo is skipped must be said, never
+	# implied by silence: not a git repo, no origin remote (remote mode),
+	# or no CHANGELOG.md at all.
+	repo="$1"
+	offline="$2"
+	[ -d "$repo/.git" ] || [ -f "$repo/.git" ] || {
+		echo "SKIP (not a git repo): $repo" >&2
+		REPOS_SKIPPED_NOGIT=$((REPOS_SKIPPED_NOGIT + 1))
+		return 0
+	}
+	if [ "$offline" != "1" ]; then
+		git -C "$repo" remote get-url origin >/dev/null 2>&1 || {
+			echo "SKIP (no origin remote): $repo" >&2
+			REPOS_SKIPPED_NOORIGIN=$((REPOS_SKIPPED_NOORIGIN + 1))
+			return 0
+		}
+	fi
+	seen_before="$changelogs_seen"
+	sweep_repo "$repo" "$offline" || return 1
+	if [ "$changelogs_seen" = "$seen_before" ]; then
+		echo "SKIP (no CHANGELOG): $repo" >&2
+		REPOS_SKIPPED_NOCHANGELOG=$((REPOS_SKIPPED_NOCHANGELOG + 1))
+	else
+		REPOS_SWEPT=$((REPOS_SWEPT + 1))
+	fi
+}
+
+coverage_line() {
+	printf 'COVERAGE: swept %s/%s repos (%s CHANGELOGs checked, %s skipped: no version heading)' \
+		"$REPOS_SWEPT" "$REPOS_TOTAL" "$changelogs_checked" "$changelogs_no_version"
+	printf '; skipping: %s no CHANGELOG, %s not a git repo, %s no origin remote, %s ls-remote failed' \
+		"$REPOS_SKIPPED_NOCHANGELOG" "$REPOS_SKIPPED_NOGIT" "$REPOS_SKIPPED_NOORIGIN" "$REPOS_SKIPPED_LSREMOTE"
+	printf '; mode=%s\n' "$([ "$offline" = 1 ] && echo offline || echo remote)"
 }
 
 self_test() {
+	here="$(pwd)"
+	self="$0"
+	case "$self" in /*) ;; *) self="$here/$self" ;; esac
 	tmp="$(mktemp -d)"
 	trap 'rm -rf "$tmp"' EXIT
 	# Fixture repo: a tagged root release, an UNTAGGED root release, and
@@ -125,7 +207,33 @@ self_test() {
 		echo "self-test FAILED: the tagged v1.2.3 was flagged" >&2
 		return 1
 	fi
-	echo "self-test: 5 checks green (untagged root, untagged nested, wrong-shape-tagged FLAGGED, resolvable-tagged-not-flagged, tagged-root-not-flagged)"
+	# Case 6 (the 2026-11-22 blind spot): a CHANGELOG heading WITHOUT the
+	# `v` and no matching tag must be reported UNTAGGED — not silently
+	# skipped — and the sweep must COUNT it in its COVERAGE line, proven
+	# end-to-end through the script's own main path.
+	git init -q "$tmp/bare"
+	git -C "$tmp/bare" config user.email t@t
+	git -C "$tmp/bare" config user.name t
+	printf '## [0.8.0] - 2026-05-05\nno-v heading, never tagged\n' >"$tmp/bare/CHANGELOG.md"
+	git -C "$tmp/bare" add CHANGELOG.md
+	git -C "$tmp/bare" commit -q -m "root 0.8.0 untagged, heading without v"
+	bare_out="$(cd "$tmp" && bash "$self" --offline --repos "$tmp/bare" 2>/dev/null)" || {
+		echo "self-test FAILED: bare-heading repo sweep exited nonzero" >&2
+		return 1
+	}
+	if ! printf '%s\n' "$bare_out" | grep -q "$(printf 'UNTAGGED\t%s\t<root>\tv0.8.0' "$tmp/bare")"; then
+		echo "self-test FAILED: the no-v 0.8.0 heading was not reported UNTAGGED (the old silent skip)" >&2
+		echo "--- got ---" >&2
+		printf '%s\n' "$bare_out" >&2
+		return 1
+	fi
+	if ! printf '%s\n' "$bare_out" | grep -q '^COVERAGE: swept 1/1 repos (1 CHANGELOGs checked, 0 skipped: no version heading)'; then
+		echo "self-test FAILED: COVERAGE line does not count the no-v repo as swept and checked" >&2
+		echo "--- got ---" >&2
+		printf '%s\n' "$bare_out" >&2
+		return 1
+	fi
+	echo "self-test: 6 checks green (untagged root, untagged nested, wrong-shape-tagged FLAGGED, resolvable-tagged-not-flagged, tagged-root-not-flagged, heading-without-v reported UNTAGGED + counted)"
 }
 
 case "${1:-}" in
@@ -147,11 +255,10 @@ fi
 shift
 
 status=0
+REPOS_TOTAL=0
 for repo in "$@"; do
-	[ -d "$repo/.git" ] || [ -f "$repo/.git" ] || {
-		echo "SKIP (not a git repo): $repo" >&2
-		continue
-	}
-	sweep_repo "$repo" "$offline" || status=1
+	REPOS_TOTAL=$((REPOS_TOTAL + 1))
+	sweep_one_repo "$repo" "$offline" || status=1
 done
+coverage_line
 exit $status
