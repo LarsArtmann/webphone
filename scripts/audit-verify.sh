@@ -143,6 +143,23 @@ echo
 echo "audit-verify: $total_pass passed, $total_fail failed of $total_cmds commands"
 if [ "$total_fail" -gt 0 ]; then
 	printf '%s\n' "${failed[@]}"
+fi
+
+# Advisory citation lane (2026-11-24): re-resolve every file:line cite the
+# reports carry, AFTER the greppable summary above. Advisory on purpose —
+# the corpus only reached zero bad cites today, and a rotted cite must
+# never mask a failed verify claim (or keep this script from reporting
+# one). Never gates the exit code; adopt as a gate only when it is green
+# on the whole corpus by construction.
+echo
+echo "advisory: citation sweep — scripts/citation-sweep.py (never gates this script)"
+python3 scripts/citation-sweep.py
+_adv=$?
+if [ "$_adv" -ne 0 ]; then
+	echo "advisory: citation sweep exit $_adv — fix the REPORT (cite moved) or the TREE (claim broke), never the harness"
+fi
+
+if [ "$total_fail" -gt 0 ]; then
 	exit 1
 fi
 exit 0
