@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`faxCopyKeys` — the fax capability copy-key mapping is ONE home
+  (dedup sweep)**: the panel-subtitle and empty-state key switches
+  (`faxSubtitleKey`/`faxEmptyKey`) were structural twins differing only
+  in the key-family prefix, so a capability-axis change had to land in
+  both. One switch now derives both families in lockstep; rendered
+  bytes unchanged (pinned by the fax capability tests in all four
+  states × both languages).
 - **`scripts/citation-sweep.py` — fleet-libs citation sweep (pareto T10)**:
   every `file:line` cite in docs/review/libs/*.md re-resolved against the
   tree (checkout-relative, absolute, `<lib>/`-qualified against ~/projects with
