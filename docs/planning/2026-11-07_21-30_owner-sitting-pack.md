@@ -1,5 +1,88 @@
 # Owner sitting pack — every open ruling in one dated agenda (2026-11-07)
 
+## Top 12 for the next sitting (prepared 2026-11-24)
+
+Refreshed after the v2.15.0 deploy (live on pbx.artmann.tech since
+2026-11-22 14:37Z). The twelve below are ordered by customer value and fold
+in every owner ask the pack predates (the SMS ritual, the Kith seam, the
+passkey/xml_curl/ASR gates, the trunk legs, the two UI taste calls, the
+fleet-libs scope calls). Answer by number — one line each; every row carries
+a default, so a tired "yes/go/defaults" per row is a complete answer. The
+lettered sections below remain the full record; struck ones are already
+answered elsewhere.
+
+| #  | Ask (one sentence is enough)                                                                                                                        | Recommendation (one reason that matters)                                                                                    | Unblocks (TODO row or plan task)                                                                                       | Owner min | Lands in                                           |
+| -- | --------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | --------- | -------------------------------------------------- |
+| 1  | Provision the prod capture creds (`WEBPHONE_CAPTURE_EXTENSION`/`_PASSWORD`) — asked twice before; this is ask four                                  | Set two env values — zero risk, and the whole prod quality loop has waited on them since 2026-11-10                         | T05 authenticated capture → ugliness inventory → first fix chain; night pair; ring-guard (TODO T05 row; §G8; batch Q6) | 5         | §G8 below (same ask — answer there)                |
+| 2  | Mint the Kith API token, run `push-secrets.sh`, deploy the pbx-artmann train (issue #9 acceptance)                                                  | Do it — the webphone side shipped and is verified; caller names on inbound calls are the last mile                          | Kith CRM live e2e: inbound caller name + `call_logged` journals (TODO § issue #9 + SUPERB execution tails)             | 15        | TODO issue-#9 row (record the verdict there)       |
+| 3  | Run the SMS-422 ssh ritual on the host (journal `telnyx-webhooks`, fix creds, send a test SMS)                                                      | Follow the OWNER TRIAGE PACK §4 decision tree — outbound SMS on prod has answered 422 since 2026-09-19                      | Working outbound SMS on prod + the rejection-banner live check (TODO § Outbound SMS bridge failure)                    | 15        | TODO sms-422 row + the stack runbook               |
+| 4  | Mobile bottom bar: all 8 slots or 5 + More? And what ships next: T2 per-page layouts or T3 presence workspace?                                      | 5 + More (readable labels at 390px), T2 first (generic panels undersell the rail) — both "answers" were retracted 11-21     | The UI train's order and the mobile bar rebuild (TODO UI-train rows; ROADMAP § Open questions)                         | 2         | this sheet; T02 transcribes to TODO_LIST + ROADMAP |
+| 5  | Flip the passkey switch on prod, then the fail-closed password-file drill                                                                           | GO — the VM proofs are green; the drill is one dropped file on a staged window                                              | Passkey live + the 4 outstanding owner calls (TODO passkey cluster; pbx-artmann TODO §1)                               | 20        | TODO passkey row                                   |
+| 6  | Cut the directory over to `xml_curl` (operator + ring groups named in `staticFallbackExtensions`)                                                   | GO staged — backup, rehearse the <2-min rollback drill once, then the live proofs (this answers §E8's static-list half too) | T13/T15 cutover cluster: derived SIP creds, logout revocation, live proofs (TODO § OWNER-GATED cutover)                | 30        | TODO cutover cluster + §E8 below                   |
+| 7  | Trunk legs: send the Telnyx #832080 reply (paste ready), one real inbound call, the talk-budget number, hikaru's passkey enroll, the first real fax | One window, five legs — FINDINGS.md is paste-ready; C5's lift day then closes the six-week screening                        | Real PSTN in/out, first fax, row-33/34/35 confirmations (TODO § trunk truth rows + C5 lift day)                        | 45        | TODO trunk rows (+ C5 lift day row)                |
+| 8  | ASR gates: first-live provider (Speaches vs throwaway key) and the #48 remote-leg-only default                                                      | Speaches + remote-leg-only — no audio leaves the box, which is also the #48 privacy answer                                  | M1/M2/M4/M6 gates + #48 (TODO § ASR follow-ups; batch Q14)                                                             | 5         | TODO ASR rows (M1 + #48)                           |
+| 9  | CRM Q1/Q2: message bodies into the CRM timeline? An actionable strip from the phone?                                                                | Defaults stand — bodies stay local, the strip stays read-only; "defaults" closes both                                       | The CRM data-mesh scope before the Kith push grows (TODO § Owner questions; batch Q7/Q8)                               | 2         | TODO CRM owner-questions row                       |
+| 10 | GO the D2 veto-window and D3 agent-liveness builds? Both designs are ready                                                                          | GO both as designed — or defer in one word; each is one stack train after the GO                                            | HITL rung L2 (held drafts + countdown chip) and L3 (agent registry, scoped tokens) (TODO D2/D3 rows)                   | 3         | TODO D2/D3 rows                                    |
+| 11 | One live call on the stack: accept→speak sub-second, indicator at ring, warm release                                                                | Book the 10 minutes — code and gates are green since 2026-10-01; only the live ritual is missing                            | Mic-prewarm closeout verdict (TODO § Mic pre-warm live verification)                                                   | 10        | TODO mic-prewarm row                               |
+| 12 | `/health`: the signed-in card check + the exposure-policy call (§E7's ratify folds in here)                                                         | Keep the 403 fence + operator-SSO shape as the policy; the signed-in check is one browser look                              | The /health closeout and the ROADMAP bullet (TODO § /health; §E7 below)                                                | 10        | TODO /health row (+ §E7's ratify)                  |
+
+**Total owner minutes for the twelve: 162** (rows 2+3 can ride one host
+window; 6+7 want separate windows).
+
+### Everything else (grouped so nothing is lost)
+
+**≤ 5 minutes each** — mostly one-word ratifies of the shipped state:
+B4, B5, B8, E5, E14, C9, F25, F27, A1, A2 (a bare "yes" blesses what ships);
+A4(a) keep-REJECT-out-of-missed; §G6 (ratify `max_file_size: 1500`); §G4/D15
+(DOMAIN_LANGUAGE ratify); §G5 (ratify the proposed §5 DROP window after
+2027-01-01); the fleet-libs four scope calls (TODO 2026-11-24 harvest:
+`idemtest` exemption, submodule-exhaustive scoring, on-disk AuditLog
+projection, the `httputil-endpoints.md` question); §G2's remaining half (fire
+bump trains (2)–(4) or hold); D16 (the error family as the standing shape);
+L1856 eyeball the D2 diagram pair; L1951 AGENTS strong-id one-liner (or
+decline as redundant).
+
+**≤ 15 minutes each**: §G1 deepening pick (1–5); §G3 pbx-lens register
+(a)–(e); L1124 paperless seam shape (Brief 1); L1821 visual-harness §g1
+(persistence + vision provider/key); L1742 systemd liveness posture;
+L1712 BD003 enforcement posture; L1678 (A1.7 out-of-order verdict + g3
+sequencing); L1920 cqrs-lint decision set; L1905 sendfile
+measure-or-wont-implement; the Android v0.2.3 release decision; two
+ROADMAP-routed calls the pack never held: native Linux desktop still wanted,
+and QMD indexing of webphone docs; the ring-group-path ruling (§g-1, L1864);
+L1778 announcement channel pick.
+
+**Longer — book a window**: D12 file the docs-gates drafts (owner review
+tick, then file, +30); L1692 drop the pma unit's `core.hooksPath` override
+(nix-config edit); L1705 daemon dep-lane config (stop bumping go.mod/go.sum);
+L1564 Matrix E2EE rulings (P1/P2/P3 + crypto-store backup + trust posture);
+L1561 group-rooms ruling (= §B1); L1553 chat-network stack deploy legs;
+L1279 host-leg verdicts (ssh); L394 host diagnostics (only if a play failure
+reproduces); L1878 quiet-host baseline hygiene; C11 PSI watcher (ops window);
+B7 one-time chmod + fresh backup (ops window); L1876 watcher fire-drill
+(ssh); the L1864 ring proof (needs a registered push device).
+
+### What changed since this pack was written (2026-11-07)
+
+- **v2.15.0 is deployed** — the owner activated 2026-11-22 14:37Z (live
+  `/version` v2.15.0 @ `75913f1a`); §G7 is answered by that fact and §G2's
+  "after v2.15.0 tags" precondition is met (train (1), the go-cqrs-lite
+  engine wave, fired 2026-11-20).
+- **The brand is green** — owner veto 2026-11-11 ~15:15 against the indigo
+  draft; content-first mobile ordering landed the same day; "the bar is the
+  owner's eyes" is AGENTS § Owner decisions standing law.
+- **The shell is a grouped left sidebar rail** (2026-11-15), superseding the
+  pill strip; and the mobile-bar + T2/T3 "answers" were RETRACTED
+  2026-11-21 (assistant-authored, never given) — that pair is open again and
+  sits at sheet row 4.
+- **Ticked since the pack was written** (struck inline below, evidence
+  there): A3 and A5 (2026-11-08), D1/D7 and the §F rows F1–F4/F12/F14/F29
+  (the 2026-10-11 ratification sitting + standing registry/AGENTS records —
+  the pack's consolidation missed them), D10 (premise gone: buildflow #91
+  shipped the configurable cap), G7 (the deploy itself).
+
+---
+
 > **REVISED 2026-11-08 02:50 CET** (second edition): the first draft was
 > audited before delivery and had real defects — an E-group numbering hole, an
 > answer template that lagged the IDs, ten ROADMAP rulings missing, and the
@@ -7,7 +90,12 @@
 > moved from "question" to "incident": B4 was executed as a fix this session
 > because it was a bug, not a choice.
 
-**Status:** PACK (answers owed) · **Owner time to clear it:** ~60 min ·
+**Status:** PACK (answers owed) — **refreshed 2026-11-24: 53 of 58 lettered
+rulings still open** (A3/A5/D1/D7 ticked with evidence, D10 premise gone —
+struck inline below); §F: 29 of 38; §G: 7 of 8. **Start at the Top-12 sheet**
+above: it holds the twelve highest-value asks plus everything the pack
+predates. Original edition status: PACK (answers owed) · **Owner time to
+clear it:** ~60 min ·
 **Evidence verified at** the paperless-parity train (2026-11-08 02:50): every
 `Evidence:` path in the source index was `-e`-checked this session, the config
 keys cited exist in `internal/config/config.go`, and the buildflow posture
@@ -39,6 +127,8 @@ recommendations.
 Answer inline in the block below, one line per ID. `GO` / `NO-GO` for binaries;
 the option number for multi-way calls; `defer` is always legal and always means
 "the status quo continues to ship". For §F either `F: all yes` or pick rows.
+For the Top-12 sheet answer by row number (`1: … 12:`); the same one-line
+contract applies.
 
 ```text
 A1:   A2:   A3:   A4:   A5:   A6:   A7:
@@ -79,7 +169,13 @@ delivery — while fax's `transmitted` has a real egress event behind it.
   contract forbids.
 - **Evidence:** AGENTS.md § Gateway seam; `internal/gateway`
 
-### A3. Provider-failure retryability
+### ~~A3. Provider-failure retryability~~
+
+→ done 2026-11-08 — shipped exactly as recommended: provider verdicts stay
+terminal and the rule is stated in `docs/error-contract.md` (§ "An outbound
+send that reaches a provider verdict has THREE failure kinds"; commit
+`1e999de5`, "state the provider-failure terminality rule in the error
+contract"). Nothing owed.
 
 Today only `transient` failures render a Retry affordance; a provider verdict
 (bad number, blocked, carrier reject) is terminal and the user re-composes.
@@ -93,6 +189,11 @@ Fax `Resend` is the counter-example: it reuses the stored document.
 
 ### A4. Missed-call semantics + badge clearing
 
+→ (b) done 2026-11-08 — the badge now clears when the _Recent calls_ panel
+lands, whatever the door (CHANGELOG "The missed-calls badge clears when the
+Recent calls panel lands (2026-11-08, pack A4b)"; ROADMAP marks the row
+HALF-ANSWERED). Still owed at the sitting: the (a) ratify — one word.
+
 Two sub-questions, one recommendation. (a) A deliberately REJECTED incoming
 call does not count as missed today (`wp:call-missed` never fires). (b) The
 missed badge clears on History tab click, not when the island's _Recent calls_
@@ -105,7 +206,13 @@ panel opens.
   badge the user must then clear manually; (b) leaving it means a badge
   survives a panel the user already read.
 
-### A5. Search `?q=` URL semantics
+### ~~A5. Search `?q=` URL semantics~~
+
+→ done 2026-11-08 — shipped as recommended: the debounced search fetch pushes
+`/messages?q=…`, so a typed search is shareable and back unwinds the query
+stepwise (CHANGELOG "The thread search is shareable (2026-11-08, pack A5)";
+ROADMAP § Open questions: "ANSWERED 2026-11-08 (pack A5, pushed)"). Nothing
+owed.
 
 A typed message search is ephemeral today. Deep-linking it would push `?q=`
 into history so back-button unwinds filters.
@@ -398,7 +505,13 @@ The box tripped the no-heavy-builds gate 6× in 60 min once (freeze class); a
 
 ## D. Tooling & process — how we work (18 rulings)
 
-### D1. Art-dupl ritual baseline: `-t 1` or `-t 3`? (FIFTH surfacing — close it)
+### ~~D1. Art-dupl ritual baseline: `-t 1` or `-t 3`? (FIFTH surfacing — close it)~~
+
+→ done 2026-10-11 — the owner sitting RATIFIED `-t 1` as THE baseline
+(`docs/dedup-registry.md` § Protocol step 1, "RATIFIED baseline `-t 1`"; the
+FIFTH surfacing retires: the registry is the home and its protocol says do
+not re-litigate). `-t 3 --type-aware` remains the readable ritual scan, as
+this row recommended — the two answers to different questions.
 
 `-t 1` is the ratified CI baseline (deepest sweep, zero harmful clones);
 `-t 3 --type-aware` is the ritual baseline (43–45 shown groups, mostly idiom
@@ -470,7 +583,13 @@ fleet-wide.
   builds is advisory against its most frequent committer.
 - **Cost of the other branch:** guards that do not guard.
 
-### D7. Push-lag policy: at what lag is the pusher BROKEN, not slow? **[ratify + extend]**
+### ~~D7. Push-lag policy: at what lag is the pusher BROKEN, not slow? **[ratify + extend]**~~
+
+→ done — the 60-min bar is RATIFIED 2026-10-11 (AGENTS § Conventions,
+"Manual-push bar (RATIFIED 2026-10-11)"), and the 30-min line is live:
+`scripts/push-stall-watch.sh` takes `--threshold-minutes` and the deployed
+watch lane fires STALL at 30 (AGENTS § Commands, "fires STALL at 30" — the
+2026-10-27 40-min stall class). Nothing owed.
 
 The ratified bar is 60 minutes from the oldest unpushed commit
 (`scripts/push-stall-watch.sh`), with a warn-only 30-min line available.
@@ -500,7 +619,13 @@ is regenerated only from THIS checkout (host-absolute ids, upstream #13).
 - **Recommend:** ratify per-finding accepts as the shape. D10 is the separate
   real question.
 
-### D10. `file-size-check`'s hardcoded 350-line cap (plan posture call 2)
+### ~~D10. `file-size-check`'s hardcoded 350-line cap (plan posture call 2)~~
+
+→ superseded 2026-11-21 — the premise died: BuildFlow shipped the
+configurable cap (buildflow #91's `max_file_size`), and webphone set
+`max_file_size: 1500` in `.buildflow.yml:81` with the rationale comment
+(verified twice in full no-cache batteries, 47 findings → 0). The live act
+moved to §G6 (ratify the 1500 default).
 
 46 files exceed it. Accepting them per-finding keeps the gate meaningful but
 freezes a number nobody chose.
@@ -742,46 +867,46 @@ Answer `F: all yes` (the recommendation in every row is the status quo or a
 no-op) or list exceptions. Rows carrying the same ruling as a lettered ID are
 marked "same as" — one answer covers both.
 
-| #   | Ruling                                                                        | Recommendation                                                                                                                 |
-| --- | ----------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
-| F1  | Registry ratification: `docs/dedup-registry.md` is THE home for clone rulings | yes                                                                                                                            |
-| F2  | `settingsRow` build-or-retire                                                 | retire (the row keeps outliving the helper — FOURTH surfacing)                                                                 |
-| F3  | Suppression-bucket doc: what `art-dupl` "filtered suppressed" hides           | document in dedup-registry, not upstream                                                                                       |
-| F4  | Dedup suppression-SCOPE: shown-only vs periodic suppressed-set audit          | periodic quarterly audit (already the AGENTS rule)                                                                             |
-| F5  | Webhook 400 body-text dependents                                              | none exist; ratify the current validation precedence as final                                                                  |
-| F6  | `msg/`→`message/` idem-key rename                                             | ratify (in-memory only, no persistence, no external reader)                                                                    |
-| F7  | `auth:`-prefix × daemon-sweep interface                                       | manual `auth:` commit before the sweep window; a daemon `chore:` is acceptable only when the pinned session suite provably ran |
-| F8  | devShell tool additions (dprint/prettier/ruff/lychee)                         | yes — silences 4 buildflow warnings                                                                                            |
-| F9  | lychee authenticate-vs-exclude policy                                         | exclude archived dirs (the buildflow warn names the exact config)                                                              |
-| F10 | Docs-only express-push ratification                                           | yes, bounded by the 60-min bar                                                                                                 |
-| F11 | Mixin/dupe detector-policy home                                               | dedup-registry sweep-log only (no AGENTS promotion)                                                                            |
-| F12 | `config.CRM`/`Paperless` URL+Token twin standing ruling                       | keep per-seam both-or-neither (baselined; detector noise routed upstream)                                                      |
-| F13 | `vcard.Card`/`SharedContact`/`apiSharedContact` triad rejection               | ratify                                                                                                                         |
-| F14 | `errorfamily.Join` gap                                                        | keep the 4 reasoned nolint aggregate sites; no upstream constructor                                                            |
-| F15 | Routed-as-resolved → archive for owner-gated plans                            | ratify (four plans already archived this way)                                                                                  |
-| F16 | Train-level `v` verdict markers as the annotation hash bar                    | ratify (six sweeps running)                                                                                                    |
-| F17 | Check-rows marker-cell baseline for the 37 pre-canon archived files           | accept as-is (closed history)                                                                                                  |
-| F18 | Push-lag threshold policy                                                     | same as D7                                                                                                                     |
-| F19 | Release cadence / pin policy                                                  | same as E14                                                                                                                    |
-| F20 | AGENTS restructure permission                                                 | same as D14                                                                                                                    |
-| F21 | Existing prod data chmod / re-backup                                          | same as B7                                                                                                                     |
-| F22 | `destDir`/`dataDir` nesting legality                                          | same as C7                                                                                                                     |
-| F23 | Stack verification timing                                                     | same as C8                                                                                                                     |
-| F24 | One-time force-push exception shape                                           | same as C9                                                                                                                     |
-| F25 | Release.sh load-gate default (`load >= 8` refuses)                            | ratify the conservative default; E2E auto-retry rejected (masks regressions)                                                   |
-| F26 | g2 KVM-timeout                                                                | keep the current VM-test timeout; raise only on two consecutive infra-flake runs                                               |
-| F27 | Templ-components history-blemish disclosure                                   | keep the acknowledged-and-fixed disclosure posture                                                                             |
-| F28 | Self-send train-C semantics                                                   | ratify current (owner-DID self-sends refused locally after persist)                                                            |
-| F29 | CRM policy trio (names/deep-links/context surfaces)                           | ratify as shipped (data-mesh, read-only, context on single-contact surfaces)                                                   |
-| F30 | Missed-call REJECT semantics                                                  | same as A4                                                                                                                     |
-| F31 | Search `?q=` URL semantics                                                    | same as A5                                                                                                                     |
-| F32 | Store `Must*` panic policy                                                    | same as D3                                                                                                                     |
-| F33 | Helper micro-test bar                                                         | same as D2                                                                                                                     |
-| F34 | Coverage teeth                                                                | same as C5                                                                                                                     |
-| F35 | CI-bar subset policy                                                          | same as C4                                                                                                                     |
-| F36 | Daemon-format coupling note home                                              | same as D13                                                                                                                    |
-| F37 | Cross-session gate protocol                                                   | same as D18                                                                                                                    |
-| F38 | erraudit `tree` dedupe upstream ask                                           | same as D17                                                                                                                    |
+| #       | Ruling                                                                            | Recommendation                                                                                                                                                                                                                                            |
+| ------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~~F1~~  | ~~Registry ratification: `docs/dedup-registry.md` is THE home for clone rulings~~ | ~~yes~~ → done 2026-10-11 — the owner sitting ratified the registry as the ONE home (dedup-registry.md sweep-log)                                                                                                                                         |
+| ~~F2~~  | ~~`settingsRow` build-or-retire~~                                                 | ~~retire (the row keeps outliving the helper — FOURTH surfacing)~~ → superseded 2026-10-11/12 — the owner ruled BUILD (10-11 sitting) and the ADOPTION was EXECUTED 2026-10-12 (dedup-registry.md rulings #1/#2; this row's "retire" recommendation lost) |
+| ~~F3~~  | ~~Suppression-bucket doc: what `art-dupl` "filtered suppressed" hides~~           | ~~document in dedup-registry, not upstream~~ → done — documented in the registry's sweep-log (the t3 phantom universe: 2026-10-27 + 2026-11-04 entries)                                                                                                   |
+| ~~F4~~  | ~~Dedup suppression-SCOPE: shown-only vs periodic suppressed-set audit~~          | ~~periodic quarterly audit (already the AGENTS rule)~~ → done 2026-10-11 — quarterly audit ruled; registry protocol step 1 carries it (next due 2027-01-11)                                                                                               |
+| F5      | Webhook 400 body-text dependents                                                  | none exist; ratify the current validation precedence as final                                                                                                                                                                                             |
+| F6      | `msg/`→`message/` idem-key rename                                                 | ratify (in-memory only, no persistence, no external reader)                                                                                                                                                                                               |
+| F7      | `auth:`-prefix × daemon-sweep interface                                           | manual `auth:` commit before the sweep window; a daemon `chore:` is acceptable only when the pinned session suite provably ran                                                                                                                            |
+| F8      | devShell tool additions (dprint/prettier/ruff/lychee)                             | yes — silences 4 buildflow warnings                                                                                                                                                                                                                       |
+| F9      | lychee authenticate-vs-exclude policy                                             | exclude archived dirs (the buildflow warn names the exact config)                                                                                                                                                                                         |
+| F10     | Docs-only express-push ratification                                               | yes, bounded by the 60-min bar                                                                                                                                                                                                                            |
+| F11     | Mixin/dupe detector-policy home                                                   | dedup-registry sweep-log only (no AGENTS promotion)                                                                                                                                                                                                       |
+| ~~F12~~ | ~~`config.CRM`/`Paperless` URL+Token twin standing ruling~~                       | ~~keep per-seam both-or-neither (baselined; detector noise routed upstream)~~ → done 2026-10-11 — ruled "stays two seams, noise routed upstream" (dedup-registry.md sweep-log)                                                                            |
+| F13     | `vcard.Card`/`SharedContact`/`apiSharedContact` triad rejection                   | ratify                                                                                                                                                                                                                                                    |
+| ~~F14~~ | ~~`errorfamily.Join` gap~~                                                        | ~~keep the 4 reasoned nolint aggregate sites; no upstream constructor~~ → done — standing registry ruling since 2026-10-27 (deferred extraction; FOURTH-aggregate trigger verified unfired 2026-11-04, dedup-registry.md sweep-log)                       |
+| F15     | Routed-as-resolved → archive for owner-gated plans                                | ratify (four plans already archived this way)                                                                                                                                                                                                             |
+| F16     | Train-level `v` verdict markers as the annotation hash bar                        | ratify (six sweeps running)                                                                                                                                                                                                                               |
+| F17     | Check-rows marker-cell baseline for the 37 pre-canon archived files               | accept as-is (closed history)                                                                                                                                                                                                                             |
+| ~~F18~~ | ~~Push-lag threshold policy~~                                                     | ~~same as D7~~ → done — see D7 (60-min bar RATIFIED 2026-10-11; the 30-min STALL line live)                                                                                                                                                               |
+| F19     | Release cadence / pin policy                                                      | same as E14                                                                                                                                                                                                                                               |
+| F20     | AGENTS restructure permission                                                     | same as D14                                                                                                                                                                                                                                               |
+| F21     | Existing prod data chmod / re-backup                                              | same as B7                                                                                                                                                                                                                                                |
+| F22     | `destDir`/`dataDir` nesting legality                                              | same as C7                                                                                                                                                                                                                                                |
+| F23     | Stack verification timing                                                         | same as C8                                                                                                                                                                                                                                                |
+| F24     | One-time force-push exception shape                                               | same as C9                                                                                                                                                                                                                                                |
+| F25     | Release.sh load-gate default (`load >= 8` refuses)                                | ratify the conservative default; E2E auto-retry rejected (masks regressions)                                                                                                                                                                              |
+| F26     | g2 KVM-timeout                                                                    | keep the current VM-test timeout; raise only on two consecutive infra-flake runs                                                                                                                                                                          |
+| F27     | Templ-components history-blemish disclosure                                       | keep the acknowledged-and-fixed disclosure posture                                                                                                                                                                                                        |
+| F28     | Self-send train-C semantics                                                       | ratify current (owner-DID self-sends refused locally after persist)                                                                                                                                                                                       |
+| ~~F29~~ | ~~CRM policy trio (names/deep-links/context surfaces)~~                           | ~~ratify as shipped (data-mesh, read-only, context on single-contact surfaces)~~ → done — the data-mesh ruling 2026-10-29 is recorded doctrine (AGENTS § CRM seam; TODO_LIST owner-questions row cites it)                                                |
+| F30     | Missed-call REJECT semantics                                                      | same as A4                                                                                                                                                                                                                                                |
+| ~~F31~~ | ~~Search `?q=` URL semantics~~                                                    | ~~same as A5~~ → done 2026-11-08 — see A5 (shipped as recommended)                                                                                                                                                                                        |
+| F32     | Store `Must*` panic policy                                                        | same as D3                                                                                                                                                                                                                                                |
+| F33     | Helper micro-test bar                                                             | same as D2                                                                                                                                                                                                                                                |
+| F34     | Coverage teeth                                                                    | same as C5                                                                                                                                                                                                                                                |
+| F35     | CI-bar subset policy                                                              | same as C4                                                                                                                                                                                                                                                |
+| F36     | Daemon-format coupling note home                                                  | same as D13                                                                                                                                                                                                                                               |
+| F37     | Cross-session gate protocol                                                       | same as D18                                                                                                                                                                                                                                               |
+| F38     | erraudit `tree` dedupe upstream ask                                               | same as D17                                                                                                                                                                                                                                               |
 
 ---
 
@@ -857,7 +982,9 @@ Armed at latest (behind upstream): (1) go-cqrs-lite engine wave
 SDKs ×5 + retiring the TimingScale band-aid via `idempotency.WithClock`.
 Each rides `go mod tidy` → vendorHash re-pin → CI-watch. Recommendation:
 **fire (1)–(3) sequentially after v2.15.0 tags**, (4) last (it deletes
-code). Holding is legal; nothing is security-red.
+code). Holding is legal; nothing is security-red. NOTE 2026-11-24: train (1)
+(the go-cqrs-lite engine wave) already fired 2026-11-20 and v2.15.0 tagged +
+deployed 2026-11-22 — the live question is the timing of (2)–(4) only.
 
 ### G3. pbx-lens register — five questions for the read-only lens seam **[per-question]**
 
@@ -891,7 +1018,11 @@ after a proven export. Recommendation: **set a date ≥ 2 weeks out**, run
 the ONE governor; the per-file cap is the backstop at the same number).
 Verified twice in full no-cache batteries: 47 findings → 0. Overridable.
 
-### G7. v2.15.0 deploy authorization (the 00-51 §g Q2) **[GO / defer]**
+### ~~G7. v2.15.0 deploy authorization (the 00-51 §g Q2) **[GO / defer]**~~
+
+→ done 2026-11-22 — the owner activated the deploy at 14:37:11Z: live
+`/version` answers v2.15.0 @ `75913f1a`, the pbx-artmann CHANGELOG carries
+the deploy ledger and the no-ssh readback ran 97 pass / 0 fail. Nothing owed.
 
 The fold is on main; the release train stalled pre-tag on host load.
 GO = run the runbook (release.sh from a clean clone, stack relock,
