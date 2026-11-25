@@ -1,6 +1,6 @@
 # Architecture review #7 — session status
 
-> Claims verified as of **00:58 CET 2026-11-25** (push/CI statements rot
+> Claims verified as of **01:04 CET 2026-11-25** (push/CI statements rot
 > fastest). Session: one order, "review this project and create a .html
 > report from a Software Architect perspective", executed with the
 > architecture-review skill as series #7; the sitting ran from 2026-11-24
@@ -17,12 +17,13 @@
 > later commit; the arch suite (15 PASS); the review report's integrity
 > checks on the final file (`check.py`: balanced tags, 26 unique ids, 8
 > anchors; `recount.py`: 144 of 144); renders at 1440px (eleven slices),
-> 820px, 1024px and 390px (four slices), plus a text-level overflow probe at
-> six widths; `scripts/ci-verdict.sh --self-test` (12 of 12) and four live
-> shas; `dprint check` rc 0; five docs-gates pre-flights, all SAFE;
+> 820px and 390px (four slices), plus a text-level overflow probe at six
+> widths (320 to 1440); `scripts/ci-verdict.sh --self-test` (12 of 12) and
+> four live shas; `dprint check` rc 0; five docs-gates pre-flights, all
+> SAFE; `scripts/push-stall-watch.sh --no-fetch`;
 > `scripts/docs-gates.sh --check` (PASS at 22:53 and 22:57 on 2026-11-24,
-> and in a scratch clone on this tree's content at 00:56 on 2026-11-25, every gate PASS); `python3 scripts/status-index.py --check` rc 0; the git
-> state read at 00:58 (`git ls-remote origin main`,
+> and on the landed tree at 01:04 on 2026-11-25, every gate PASS); `python3 scripts/status-index.py --check` rc 0; the git
+> state read at 01:04 (`git ls-remote origin main`,
 > `git reflog show origin/main --date=iso`,
 > `gh api repos/LarsArtmann/webphone/actions/runs/45501299454`).
 >
@@ -35,7 +36,7 @@
 > regenerated); a phone narrower than 390px (the stat cards overflow there,
 > d-20).
 >
-> `git rev-parse --short HEAD` at report time: `53686f32`.
+> `git rev-parse --short HEAD` at report time: `77e29b38`.
 
 ## a) FULLY DONE
 
@@ -71,10 +72,10 @@
    render slices, one 820px render and four 390px slices inspected.
 6. **Phone-width check of the review report** — a text-level probe at six
    widths found one "Where" line (F9) widening the page to 503px at 390px;
-   six `<wbr>` break opportunities fixed it (390, 820, 1024 and 1440 now
-   read clean). The footer carries a dated amendment note.
+   six `<wbr>` break opportunities fixed it (the probe reads clean at 390,
+   820, 1024 and 1440). The footer carries a dated amendment note.
 7. **Docs battery on the changed tree** — "PASS — formatted + all doc gates
-   green" at 22:53 and 22:57 on 2026-11-24, and in a scratch clone on this tree's content at 00:56 on 2026-11-25, every gate PASS.
+   green" at 22:53 and 22:57 on 2026-11-24, and on the landed tree at 01:04 on 2026-11-25, every gate PASS.
 8. **Full test suite green** as a byproduct of the coverage pass: 37
    packages ok, 0 failed.
 9. **Push and CI for the review chain** — the daemon pushed the three
@@ -103,13 +104,12 @@
 
 ## b) PARTIALLY DONE (in flight)
 
-1. **This report's own push and CI verdict** — `53686f32` (2026-11-24
-   23:31:05) and the correction commits sit unpushed at 00:58;
-   `origin/main` reads `e23d35ac`. The manual-push bar opens 60 minutes
-   after 23:31:05; it was neither reached nor invoked (the instruction to
-   wait). Remaining: the push (daemon or bar), then
-   `scripts/ci-verdict.sh <sha>` to GREEN. Effort S. Blocker: none
-   technical.
+1. **This report's own push and CI verdict** — At 01:04, 2 commit(s) sit unpushed, the oldest `53686f32` (23:31, 93 minutes old), the newest `77e29b38`; `origin/main` reads `e23d35ac` and `scripts/push-stall-watch.sh --no-fetch` reads STALL.
+   The manual-push bar opened at 00:31:05 on 2026-11-25 (60 minutes after
+   `53686f32`) and was not invoked: the harness forbids a push without an
+   explicit instruction, and the order was to wait. Remaining after that
+   reading: the push, then `scripts/ci-verdict.sh <sha>` to GREEN. Effort S.
+   Blocker: none technical.
 2. **Narrative commit** — none was written (the harness forbids commits
    without an explicit request), so the review chain rides three heuristic
    "chore: auto-commit" commits and this report rides more. The review
@@ -123,7 +123,8 @@
    not list it, the docs-gates battery does not read it, and the wrapper's
    `status-f-section` gate picks it as "newest" because it sorts every
    `*.md`. It is rename-ready: a convention-named copy of this file read "0
-   unharvested" in a scratch clone. The call is g-3.
+   unharvested" in a scratch clone. The file stays at that path until you
+   say otherwise.
 5. **Series D2 pair** — not refreshed (not requested); the 2026-11-19 pair
    predates two edges. Now an open TODO row.
 6. **Review tooling** — the AST coupling tool, the coverage merge and the
@@ -199,9 +200,9 @@ is blocked except F6, which waits on the ruling in g-1.
     went into the repo before its correction list was applied and the
     daemon committed it as `53686f32`. It claimed twelve desktop slices
     (eleven), a `cmp` at 23:15 (23:14), and three unpushed commits that the
-    daemon had pushed four minutes before that commit. It also bound one
-    item to a TODO row that was already struck. Corrected in place here;
-    the struck row's item is a new TODO row now.
+    daemon had pushed at 23:28:43, two minutes before that commit. It also
+    bound one item to a TODO row that was already struck. Corrected in
+    place here; the struck row's item is a new TODO row now.
 12. **The review report overflowed on a phone.** The draft listed a
     phone-width render as "not verified"; doing it found one "Where" line
     (F9) widening the page to 503px at 390px. Fixed with `<wbr>` (a-6).
@@ -218,7 +219,7 @@ is blocked except F6, which waits on the ruling in g-1.
 17. Noticed: **the daemon's push leg waited 35 minutes** (22:53:18 →
     23:28:43) with three commits waiting. Under the 60-minute bar, so no
     issue was filed; TODO_LIST § "Daemon push-stall forensics" and the
-    ROADMAP "Push-lag policy" question own the topic.
+    ROADMAP "Push-lag policy" question own the topic. At 01:04, 2 commit(s) sit unpushed, the oldest `53686f32` (23:31, 93 minutes old), the newest `77e29b38`; `origin/main` reads `e23d35ac` and `scripts/push-stall-watch.sh --no-fetch` reads STALL.
 18. Noticed: **two definitions of "newest report".** `scripts/docs-gates.sh`
     (`status_f_gate`) sorts every `docs/status/*.md`; the battery and
     `scripts/status-index.py` read `report_glob` (`2*.md`). The two agree
@@ -235,6 +236,11 @@ is blocked except F6, which waits on the ruling in g-1.
 21. Noticed: **the status-report skill contradicts itself** — its Output
     section lists four HTML steps under a `.md` default. Harvested
     (repo: SKILLS).
+22. **The landing script forgot the fixed script.** The one-call landing
+    copied every rehearsed file except `scripts/ci-verdict.sh`; the
+    byte-parity check against the rehearsal clone caught it, and the copy
+    landed at 00:58, before any commit. A landing needs a parity check,
+    not a checklist.
 
 ## e) WHAT WE SHOULD IMPROVE
 
@@ -260,8 +266,9 @@ is blocked except F6, which waits on the ruling in g-1.
    and one aggregate list (F9); correct the test-drain precedent (F10);
    name the cqrs kernel (F11); settle "hub" with the glossary call (F12).
 8. **Daemon push lag.** Two reports in one day describe a slow or dead push
-   leg; tonight's 35-minute lag stayed under the bar. The ROADMAP
-   "Push-lag policy" question decides whether a watchdog is due.
+   leg; the review chain's 35-minute lag stayed under the bar, and the next
+   batch crossed it (b-1). The ROADMAP "Push-lag policy" question decides
+   whether a watchdog is due.
 9. **A zero-row case in every script's self-test.** The paging rewrite was
    verified against a flooded listing and never against an empty one.
 10. **One rule for "which report is newest".** `report_glob` in three
@@ -314,11 +321,11 @@ Open, in execution order (each names its TODO_LIST or ROADMAP home):
 
 Standing rules and housekeeping (no row; each names where it lives):
 
-38. **Daemon push lag** — TODO_LIST § "Daemon push-stall forensics" and the ROADMAP "Push-lag policy" question; tonight's lag was 35m25s, under the bar.
+38. **Daemon push lag** — TODO_LIST § "Daemon push-stall forensics" and the ROADMAP "Push-lag policy" question; the review chain's lag was 35m25s, the report batch crossed the bar at 00:31:05 (b-1).
 39. **Re-measure `audit_max` and `generic_df`** at the next sweep — the rule lives in AGENTS.md (docs-gates bullet).
 40. **`/tmp/archreview` is kept** until item 30 lands: it is the only copy of the review tooling, and `/tmp` dies at reboot.
 
-40 rows: 13 landed, 24 open, 3 standing. The name of this file is not a task; it is the owner call in g-3.
+40 rows: 13 landed, 24 open, 3 standing. The name of this file is not a task; see b-4 and the Handoff.
 
 ## g) THREE QUESTIONS I CANNOT FIGURE OUT MYSELF
 
@@ -328,16 +335,22 @@ Standing rules and housekeeping (no row; each names where it lives):
    amends the 2026-11-12 "four carves plus the budget" end state. Carve, or
    ride the pin again? I measured the seam; whether the end-state ruling
    moves is yours.
-2. **The glossary.** `docs/DOMAIN_LANGUAGE.md` has carried its
+2. **The push.** At 01:04, 2 commit(s) sit unpushed, the oldest `53686f32` (23:31, 93 minutes old), the newest `77e29b38`; `origin/main` reads `e23d35ac` and `scripts/push-stall-watch.sh --no-fetch` reads STALL. The manual-push bar is open (anchor: the
+   first unpushed commit, `53686f32`, 2026-11-24 23:31:05). Order the
+   push and the CI watch, or leave it to the daemon?
+3. **The glossary.** `docs/DOMAIN_LANGUAGE.md` has carried its
    ratify-or-delete memo unanswered since 2026-10-14. Ratify it (and keep
    "hub" for the SSE broadcaster, F12), or delete it and let the code stay
    the only vocabulary?
-3. **This report's name.** `docs/status/archreview-status.md` sits outside
-   the `2*.md` report glob: no index row, no freshness check, and the
-   wrapper's precondition gate reads a different "newest" than the battery.
-   Keep it outside by intent, or rename it to the timestamped convention so
-   the index and the gates read it? It is rename-ready either way.
 
 ## Handoff
 
-Stopped on instruction after this report. Waiting for instructions.
+Stopped on instruction after this report. Nothing was pushed by hand.
+
+- This file stays at `docs/status/archreview-status.md` (your path), which
+  sits outside the `2*.md` report glob: no index row, no freshness check.
+  One `git mv` to a timestamped name puts it back inside both; it is
+  rename-ready (b-4).
+- `/tmp/archreview` is kept: the only copy of the review tooling (row 30).
+- The review report's amendments are in its footer; the corrections of this
+  report landed in `77e29b38` and the commits after it.
