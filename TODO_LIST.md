@@ -32,6 +32,10 @@ front matter does not carry their history (one home per fact, per the rule above
 - [ ] **SKILLS: editorial template at phone width** (archreview-status §f 34) (repo: SKILLS): the two-column stat cards need a 390px viewport (six-character values at 2.6rem) and `.where` does not wrap long paths; report #7 carries a `<wbr>` patch for one line. Effort S.
 - [ ] **SKILLS: architecture-review method notes** (archreview-status §f 35) (repo: SKILLS): recount before the first splice; the profile-merge note; a kept home for render slices or drop that step from the checklist. Effort S.
 - [ ] **SKILLS: status-report Output section** (archreview-status §f 36) (repo: SKILLS): four HTML steps sit under the `.md` default. Effort S.
+- [ ] **Landing script with parity by construction** (self-review status §f 36): rehearse in a shared clone, take the file list from the clone's `git diff --name-only`, refuse a dirty or moved base, pre-flight on the pristine tree, land in one call, prove byte parity; the 2026-11-25 landing forgot one file until its parity check caught it. Effort S.
+- [ ] **CI leg for `scripts/ci-verdict.sh --self-test`** (self-review status §f 37): no CI job runs the script; the zero-run crash of 2026-11-24 shipped without a red. Effort S.
+- [ ] **Six-width overflow probe as a repo script** (self-review status §f 38): the text-level probe that found report #7's phone-width overflow lives under `/tmp/archreview`; make it a mechanical gate for `docs/` HTML reports and run it over the series' earlier reports. Effort S.
+- [ ] **Lessons batch: the review-7 landing** (self-review status §f 39): a zero-row case in every self-test; a report cannot carry its own landing; the file list from the rehearsal diff; an iframe for viewports under 500px (headless Chromium clamps the window); the freshness gate's accidental token overlap; a typed backslash-n from the edit tool. Effort S.
 
 ### 2026-11-24 fleet-libs re-audit harvest (from the 2026-11-23_00-52 status report §f; ledger: docs/planning/2026-11-24_01-24_SUPERB-post-deploy-pareto-replan.md §6)
 
