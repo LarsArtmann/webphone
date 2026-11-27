@@ -1663,7 +1663,7 @@ evidence in the 16-50 plan + its execution status). Open rows:
       degrade-to-single-line parse already covers the label loss.
       **Priority:** Low ·
       **Effort:** M→S (build-time half done).
-- [ ] **Wire-fixture follow-ups (deferred, with triggers)** — (a) the
+- ~~**Wire-fixture follow-ups (deferred, with triggers)** — (a) the
       android-side loopback live-check script: boot a loopback webphone
       and drive the app's real decoders against its LIVE `/api/session`
       + `/config.js` answers (fixtures pin the shape, this would pin a
@@ -1685,7 +1685,13 @@ evidence in the 16-50 plan + its execution status). Open rows:
       drift. Verdict: pin those two keys at the next
       config.js-touching train, or let the runtime digest handshake
       (the row above) subsume the fixture; trigger (a) stays unfired
-      (device train still operator-blocked). **Priority:** Low · **Effort:** S each.
+      (device train still operator-blocked). **Priority:** Low · **Effort:** S each.~~
+  → done 2026-11-27 (pareto T16) — BOTH triggers fired and answered: leg (a) landed
+  in webphone-android `e8ab38c` (CI green: the env-gated Robolectric suite drives
+  the real decoders against a live loopback boot — nosurf CSRF dance, 201 mint,
+  resume — plus `scripts/loopback-live-check.sh` with a config.js self-check;
+  verify-gate nine steps green); leg (b) landed `3dd89c70`
+  (`TestConfigJSPinsTheAndroidReadKeys` pins `sipDomain`+`websocketPath`).
 - [x] **DONE 2026-11-04 (ETag half): /openapi.json conditional GET** —
       the go-etag/server middleware serves bodyless 304 revalidation on
       `/openapi.json` + `/manifest.webmanifest` (mount is the skip set;
@@ -1861,7 +1867,10 @@ MMS-outbound, pbx-artmann FEATURES:87 stale text); the 2026-10-23 404-health
 stack residues (a dashboard-on VM test leg — boots the stack with
 `webphone.dashboard.enable = true` and asserts the page renders through the
 vhost fence — and the app's styled-404 shape rule in `tests/browser-e2e.py`,
-grep-verified absent 2026-11-08). No assistant ssh — verified
+grep-verified absent 2026-11-08 → both 404-health legs DONE 2026-11-27
+(stack `aaf3df1`: the `telephony-webphone-dashboard` VM suite + the
+styled-404 arm first in the E2E main(); both suites rc=0 on the landed
+tree). No assistant ssh — verified
 handovers only. Evidence: owner command sheet
 `docs/planning/2026-09-24_19-25_owner-terminal-command-sheet.md`.
 
