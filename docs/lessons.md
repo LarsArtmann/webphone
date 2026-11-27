@@ -1364,3 +1364,38 @@ session's 2026-11-15 pass. Two classes:
   will run — a check CI's fast lane skips is a check nobody ran, and
   the preflight battery exists precisely so the RELEASE is not the
   first full `nix flake check` since the last tag.
+
+## Fleet-audit tooling blind spots (2026-11-27, pareto T15 — from the 2026-11-23 00-52 self-review)
+
+- **Never hand-roll a tag-table query.** The 00-52 auditor reintroduced
+  the awk-mangle bug a SECOND time (an ad-hoc awk over `git ls-remote`
+  mangles the submodule tag shapes — the `catalog/v4/v4.15.0` form is
+  inert in Go, and a refspec that ignores shape "finds" tags that
+  cannot be resolved). `scripts/fleet-tags.sh` exists precisely so
+  nobody hand-rolls this; the rule is to call the script, and when its
+  output is not the shape you need, EXTEND the script (T09's
+  exact-refspec mode ask), not the query.
+- **A sweep that answers nothing for a class must COUNT that class.**
+  fleet-tags silently skipped every CHANGELOG heading without a
+  leading `v` — 20 of 24 repos were "swept" unswept. The fix is
+  threefold and generalizes: bare headings report UNTAGGED (never a
+  silent skip), the COVERAGE line names swept/skipped counts with
+  reasons, and a self-test fixture pins the class.
+- **A one-page API read goes blind on a busy tip.** `ci-verdict.sh`
+  read ONE page of `actions/runs?head_sha=`; the */15 watch lane fills
+  that page after ~25 h on one tip, so the CI run fell off page one
+  and the script answered NO-RUN for a RED tip — `10327ed8` sat red
+  31 h while the "authority" said no data (fixed 2026-11-24,
+  `362956ab`: paginate to `total_count`, greppable PAGE-CAP-EXCEEDED
+  at the cap, self-test with 100 watch rows ahead of one CI row). The
+  general rule: any verdict that can answer "no data" owes a paginated
+  read and a self-test that plants the crowding case.
+- **Relayed facts are unverified leads.** The 00-52 auditor relayed
+  stamped facts from subagent summaries and shipped one wrong
+  identifier (GO-2026-97054 vs the real GO-2026-6859) and one
+  cross-report contamination (the go-health row carrying
+  go-error-family's finding — a 100/100 row contradicting itself).
+  The fix is posture, not diligence: re-derive every relayed
+  identifier against the source before writing it as fact, and mark
+  relayed details in briefs as unverified leads so the receiving
+  agent's contract includes the check.
