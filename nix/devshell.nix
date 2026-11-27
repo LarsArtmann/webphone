@@ -24,6 +24,27 @@
       };
     in
     {
+      # The Go LSP pair as ONE prebuilt output, for the project crushrc
+      # (`scripts/lsp.sh` execs `$out/bin/gopls` straight from the store).
+      # Why not `nix develop -c gopls` (the 2026-11-21..27 outage): every
+      # server start then re-fetched and re-evaluated the flake — contending
+      # for the flake's fetch lock against every other session's start —
+      # AND the shellHook's banner lands on stdout, i.e. on the LSP wire
+      # ahead of the first JSON-RPC frame, so the client closed the stream
+      # ("initialize request failed: jsonrpc2: connection is closed") on
+      # every attempt. Same Go pin and GOTOOLCHAIN policy as the shells:
+      # scripts/lsp.sh exports GOTOOLCHAIN=local itself.
+      packages.go-lsp = pkgs.buildEnv {
+        name = "webphone-go-lsp";
+        paths = [
+          pkgs.go_1_27
+          pkgs.gopls
+          pkgs.golangci-lint-langserver
+          # gopls drives the templ codegen through the go.mod-pinned CLI.
+          config.packages.templ
+        ];
+      };
+
       devShells.default = pkgs.mkShellNoCC {
         packages = [
           config.treefmt.build.wrapper
@@ -90,12 +111,16 @@
         # Discoverability (2026-10-28): the three gates a contributor needs
         # are not guessable from the package list — the type gate is not a
         # `go` subcommand, and the island specs run under node.
+        # STDERR on purpose (2026-11-27): `nix develop -c <cmd>` runs this
+        # hook too, and anything echoed to stdout lands on <cmd>'s stdout —
+        # a protocol-speaking child (an LSP server on stdio) then dies on
+        # the banner as its first frame.
         shellHook = ''
-          echo "webphone dev shell — $(go version | cut -d' ' -f3)"
-          echo "  type gate : tsc -p . --noEmit        (the ONLY authority; see docs/type-gate.md)"
-          echo "  island    : node --test --test-force-exit internal/web/assets/island-tests/*.test.mjs"
-          echo "  go tests  : go test -count=1 ./..."
-          echo "  format    : nix fmt      everything: nix flake check"
+          echo "webphone dev shell — $(go version | cut -d' ' -f3)" >&2
+          echo "  type gate : tsc -p . --noEmit        (the ONLY authority; see docs/type-gate.md)" >&2
+          echo "  island    : node --test --test-force-exit internal/web/assets/island-tests/*.test.mjs" >&2
+          echo "  go tests  : go test -count=1 ./..." >&2
+          echo "  format    : nix fmt      everything: nix flake check" >&2
         '';
       };
 
