@@ -64,3 +64,9 @@ rg -n "go-health v" go.mod                                               # expec
 rg -n "WithCriticalServices" internal/app/app.go internal/server/server.go   # expect >= 2
 rg -n "TestCRMLegGatesReadinessDeliberately" internal/app/health_crm_test.go # the per-surface criticality pin
 ```
+
+## Index-cell adjudications (2026-11-27 tighten train)
+
+### From the index verdict cell (go-health)
+
+CoerceValidUTF8 wave landed 2026-11-04; v0.10.0 is the Routes release (breaking DefaultRoutes()/WithVersion — inert for webphone, 0 hits, which is why the bump landed untouched);

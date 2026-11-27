@@ -81,3 +81,9 @@ rg -n "httputil.NewServer" cmd/webphone/main.go           # lifecycle
 go test ./internal/server/ -run TestHttpspec -v           # conformance pin
 go test ./internal/server/ -run TestSessionCreationBodyCap # the cap-engagement pin
 ```
+
+## Index-cell adjudications (2026-11-27 tighten train)
+
+### From the index verdict cell (httputil)
+
+MaxBodySize adopted 2026-11-04 (16 route mounts now; two ruled one-home funnels); v1.9.0 landed 2026-11-21 (train 4); upstream [Unreleased] flags GO-2026-6859 / CVE-2026-97054 (MaxBytesReader crash, fixed go1.27.4) — the go1.27.4 toolchain roll is the one forward action

@@ -59,3 +59,9 @@ rg -n "\"/health\"" internal/server/server.go | head -3
 rg -n "WithMiddleware" internal/app/dashboard.go | wc -l        # expect 0 (fence stays at the proxy)
 rg -n "func TestDashboardEnableWarnsTheFenceIsTheProxy" internal/app/app_test.go   # expect 1
 ```
+
+## Index-cell adjudications (2026-11-27 tighten train)
+
+### From the index verdict cell (go-health-dashboard)
+
+the auth seam (WithMiddleware) is the one open decision — and upstream is building native OIDC login (WithOIDC, stdlib-only, in [Unreleased]) which becomes the first in-process fence alternative when tagged; v0.13.3 LANDED 2026-11-13 with the data-nonce root bridge and retired the /health unsafe-eval CSP token the same day

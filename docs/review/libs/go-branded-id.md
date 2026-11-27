@@ -45,3 +45,9 @@ rg -n "\.Compare\(|\.Or\(" internal/ --type go | grep -vE "cmp\.|strings\.Compar
 rg -n "go-branded-id" go.mod                             # DIRECT pin v0.7.1 (v0.8.0 ride adjudicated: next deps train)
 git -C /home/lars/projects/go-branded-id tag --list "v*" --sort=-v:refname | head -1   # expect v0.8.0 (root-module tags; `describe` now answers linter/vX.Y.Z — the sub-module out-tags the root)
 ```
+
+## Index-cell adjudications (2026-11-27 tighten train)
+
+### From the index verdict cell (go-branded-id)
+
+the 09-24 gaps re-ruled DELIBERATE; v0.8.0 (2026-11-21) is a zero-API go-floor bump — ride the next deps train, no standalone commit warranted while the wire is pinned green

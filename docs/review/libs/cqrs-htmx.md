@@ -86,3 +86,9 @@ rg -n "cqrshtmx\.CSPBuilder|RecommendedSecurityStackWithCSP|RecommendedSecurityM
 rg -n "usermgmt/oauth2" go.mod go.sum | wc -l             # expect 0 (go-jose non-exposure)
 rg -n "go-jose" go.sum | wc -l                            # expect 2 (v4.1.8 fixed, via the root train)
 ```
+
+## Index-cell adjudications (2026-11-27 tighten train)
+
+### From the index verdict cell (cqrs-htmx)
+
+setup stays rejected; loginpage v4.18.0 ExtraSection ADOPTED 2026-11-11 (/login = the auth front door in every mode); the 2026-11-21 family train is 4 tags ahead (root/usermgmt/loginpage/identity-model) — every new capability adjudicated N/A or passive (CSPBuilder, FlashErrorHandler, httperr.Retryable, K2 idempotency guard), bump on the next deps train; the AuditLog refresh trigger fired (bounded 10k ring) and stays declined — ephemeral storage changes nothing

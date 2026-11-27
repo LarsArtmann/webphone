@@ -24,3 +24,9 @@ rg -n "sdk\\." internal/paperless/paperless.go | wc -l      # expect >= 6 (typed
 rg -n "TagID|DocumentTypeID|CustomFieldID" internal/paperless/paperless.go | head -4   # SDK brands, no local duplicates
 rg -n "go-paperless" go.mod                                 # DIRECT pin v0.5.3
 ```
+
+## Index-cell adjudications (2026-11-27 tighten train)
+
+### From the index verdict cell (go-paperless)
+
+write-only provenance, blob store stays the storage truth; v0.5.3 landed 2026-11-20 (train 4) — CI/docs-only for the consumed surface

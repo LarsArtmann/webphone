@@ -80,3 +80,9 @@ rg -n "system.RawQuery\(" internal/cqrs/ --glob '!*_test.go' | wc -l          # 
 rg -n "ApplyBatch|TrimPlannedBefore|AutoInsertTyped" internal/ cmd/ --glob '*.go' | wc -l  # expect 0 (engine-wave capabilities on HOLD)
 rg -n "catalogopenapi.NewExporter|asyncapi.NewExporter|eventcatalog.NewExporter" internal/server/apidocs.go internal/server/wirecontracts.go cmd/webphone/catalog.go
 ```
+
+## Index-cell adjudications (2026-11-27 tighten train)
+
+### From the index verdict cell (go-cqrs-lite)
+
+11+ decider aggregates on the system composition root, snapshots (D8), TrimStream retention, WithCapPerGroup declarative caps; the 2026-11-20 engine wave (system v4.19.0, metaengine v4.26.0, sqliteengine v4.9.1) closed the catalog holdout — every module at remote latest; upstream [Unreleased] carries the core/v5 pre-tag finalization (the next structural migration, now the live forward item)

@@ -24,3 +24,9 @@ rg -n "flightrecorder\\." internal/app/flightrecorder.go | wc -l   # expect >= 8
 rg -n "TraceRecorder" internal/server/server.go | head -3          # the seam lives server-side, framework-free
 rg -n "go-flightrecorder" go.mod                                   # DIRECT pin v0.2.1
 ```
+
+## Index-cell adjudications (2026-11-27 tighten train)
+
+### From the index verdict cell (go-flightrecorder)
+
+the server seam keeps the framework out of handlers
