@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "@eventcatalog/core": "^5.18.1"
+    "@eventcatalog/core": "^5.20.0"
   },
   "description": "Webphone event catalog",
   "name": "webphone",
