@@ -1803,7 +1803,7 @@ OWNER-calls batch session (decisions, one sitting — briefing at `docs/planning
 
 Post the release announcements (drafts for v2.1.0–v2.3.0, v2.5.0, v2.6.0 AND v2.7.0 at `docs/announcements/`; owner picks channel(s), approves wording, decides the disclosure posture — fix-acknowledged, no exploit detail)
 
-**Evidence:** v2.8.0 drafts A/B/C = `docs/announcements/2026-09-30_v2-8-0_drafts.md` (covers the merged 2.7.0+2.8.0 story); v2.7.0 drafts annotated superseded, links repointed; gh object for v2.8.0 verified published 2026-10-01
+**Evidence:** v2.8.0 drafts A/B/C = `docs/announcements/2026-09-30_v2-8-0_drafts.md` (covers the merged 2.7.0+2.8.0 story); v2.7.0 drafts annotated superseded, links repointed; gh object for v2.8.0 verified published 2026-10-01. The v2.9.x+ trigger FIRED, refresh leg ANSWERED 2026-11-27 (pareto T20): consolidated drafts A/B for v2.9.0→v2.15.0 at `docs/announcements/2026-11-27_v2-9-0_v2-15-0_drafts.md`; posting, channels and tone stay the owner's.
 
 ### Standing watches
 
