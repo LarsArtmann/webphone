@@ -283,8 +283,8 @@ skip_steps:
   # RESTATE the whole compiled policy set (hand-curated drift), and
   # BuildFlow has no per-rule demotion key (only error_rules, which
   # elevates). The upstream ask — a justified-exemption mechanism or a
-  # coturn exception in the compiled policy — is filed on
-  # LarsArtmann/library-policy; UNSKIP when it ships.
+  # coturn exception in the compiled policy — is FILED as
+  # LarsArtmann/library-policy#80; UNSKIP when it ships.
   - library-policy
   # go-structure-linter UNSKIPPED 2026-10-09 (SUPERB plan A5): the go-version
   # rule is detect-only in v0.11.3 (flake-owned toolchain pins are no longer

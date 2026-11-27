@@ -177,3 +177,29 @@ func turnPairVerifies(secret, username, credential string) bool {
 	mac.Write([]byte(username))
 	return hmac.Equal([]byte(credential), []byte(base64.StdEncoding.EncodeToString(mac.Sum(nil))))
 }
+
+// TestConfigJSPinsTheAndroidReadKeys is wire fixture (b) (pareto T16):
+// the webphone-android shell regex-reads exactly `sipDomain` and
+// `websocketPath` out of the served text, so a rename would silently
+// blind the consumer — the two keys are pinned present (values stay
+// deployment config; the pin is the KEY NAMES, anonymous payload like
+// the real boot probe).
+func TestConfigJSPinsTheAndroidReadKeys(t *testing.T) {
+	server := newTestServerWithConfig(t, "", nil)
+	anon := clientFor(t, server)
+
+	resp, body := anon.do(http.MethodGet, "/config.js", nil, "")
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("config.js status %d", resp.StatusCode)
+	}
+	payload := strings.TrimSpace(strings.TrimSuffix(strings.TrimSpace(strings.TrimPrefix(string(body), "window.PBX_CONFIG =")), ";"))
+	var parsed map[string]any
+	if err := json.Unmarshal([]byte(payload), &parsed); err != nil {
+		t.Fatalf("config.js payload is not JSON: %v\n%s", err, payload)
+	}
+	for _, key := range []string{"sipDomain", "websocketPath"} {
+		if _, ok := parsed[key]; !ok {
+			t.Errorf("/config.js lost %q — the android shell regex-reads it verbatim", key)
+		}
+	}
+}

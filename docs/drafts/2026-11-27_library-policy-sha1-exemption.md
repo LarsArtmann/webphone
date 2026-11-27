@@ -1,6 +1,6 @@
 # library-policy upstream ask — crypto/sha1 exemption mechanism
 
-Filed 2026-11-27 (pareto T08 deps train hit it). Target: LarsArtmann/library-policy.
+Filed 2026-11-27 (pareto T08 deps train hit it). FILED: LarsArtmann/library-policy#80.
 
 ## Title
 
@@ -8,7 +8,7 @@ crypto/sha1 ban has no exemption path; coturn TURN REST credentials are HMAC-SHA
 
 ## Body
 
-```markdown
+````markdown
 > [!NOTE]
 > This filing was drafted by GLM-5.3 via Crush from an AI-run investigation, not at my request. When the failure traces to an external report, that source is linked in the body.
 >
@@ -25,6 +25,7 @@ BuildFlow's `library-policy` provider (restored 2026-11-23 as a v3 provider) run
 ```go
 mac := hmac.New(sha1.New, []byte(secret))
 ```
+````
 
 coturn validates exactly `base64(HMAC-SHA1(secret, unix-expiry-username))`; SHA-256 would break every TURN server behind that config. The finding is real as written — the import IS `crypto/sha1` — but it is protocol-mandated, and none of the existing suppression paths reach it:
 
@@ -48,4 +49,6 @@ Any of the three lets webphone un-skip the tool (currently skipped with a dated 
 Environment: library-policy `policies/security.go` at `321255c`; BuildFlow `ff4aaa4`; webphone at `b95db765`.
 
 💘 Generated with Crush
+
+```
 ```
