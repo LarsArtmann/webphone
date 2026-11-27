@@ -16,9 +16,9 @@ require (
 	github.com/larsartmann/cqrs-htmx/usermgmt/v4 v4.21.0
 	github.com/larsartmann/cqrs-htmx/usermgmt/webauthn/v4 v4.13.0
 	github.com/larsartmann/cqrs-htmx/v4 v4.19.0
-	github.com/larsartmann/go-atomic-write v0.6.2
+	github.com/larsartmann/go-atomic-write v0.7.0
 	github.com/larsartmann/go-branded-id v0.8.0
-	github.com/larsartmann/go-codec v0.3.3
+	github.com/larsartmann/go-codec v0.3.4
 	github.com/larsartmann/go-cqrs-lite/catalog/v4 v4.15.0
 	github.com/larsartmann/go-cqrs-lite/command/v4 v4.14.1
 	github.com/larsartmann/go-cqrs-lite/decider/v4 v4.8.0
@@ -51,7 +51,7 @@ require (
 	github.com/samber/do/v2 v2.1.0
 	github.com/sixafter/nanoid v1.67.0
 	golang.org/x/oauth2 v0.38.0
-	modernc.org/sqlite v1.62.0
+	modernc.org/sqlite v1.63.0
 )
 
 require (
