@@ -73,8 +73,8 @@
 21. T17: stack window B slice 1 (fs-directory operatorWatchedUnits, secretFile fixture, answer-count helper, sipcred vector, suite merge).
 22. T18: drain slice 1 (L1889/L1908/L1941; annotate gates first, ratchet DOWN).
 23. T19: stack residues slice 1 (paperless module option + module-check, deploy.md secret column, demo-call recipe).
-24. T25: stack task (plan spec).
-25. T26: task (plan spec).
+24. T25: chat-network stack slice 1 — signal-cli unit + QR bootstrap + homeserver choice (plan L1553).
+25. T26: status-report drain slice 2 (the 11-19…11-22 cohort) riding the 18-08 report drain train (plan L1889).
 26. T27 LAST (the 1.27.4 roll inside stays nixpkgs-gated — do the ungated half).
 27. Re-run the REAL-repo full buildflow at current main (the sha1 skip + baseline match on the canonical path — confirm rc=0 where the baseline paths bind).
 28. Watch library-policy#80: on ship, UNSKIP library-policy in `.buildflow.yml` and delete the skip comment (the reopen trigger is written there).
