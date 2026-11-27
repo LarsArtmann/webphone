@@ -1,5 +1,7 @@
 # go-branded-id — adjacent library audit (closeout T23)
 
+_Produced by F (subagents 18-22) of the 2026-11-22 full-fleet re-audit's fan-out (runbook step 7); every other line is the audit's own._
+
 **Verdict:** the type-safety substrate is adopted exactly where it pays — six branded ids typed as `id.ID[Brand, nanoid.ID]`, the raw-value JSON wire contract, and the opt-in linter (BD003) clean since 2026-10-25. The two boundaries the 2026-09-24 audit flagged as gaps (hand-rolled parse, hand-rolled SQL conversion) are RULED DELIBERATE at this audit: the domain owns invariants the library's generic seams do not express — prefix-tolerant parsing with a 21-char nanoid shape check and a Corruption-classed error, and rows that must not mint ids from unvalidated strings.
 **Pin:** v0.7.1 (direct) · **Latest:** v0.8.0 (2026-11-21; zero-API go-floor bump — adjudicated in the re-verify: ride the next deps train) · **Currency:** one minor behind, deliberately · **Status:** direct dep (local checkout rides v0.8.0 + linter/v0.6.1)
 **Audited:** 2026-11-04 · 2026-11-22 re-verify · **Prior reports:** [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html) (68/100 — "parse hand-rolled", "SQL Valuer/Scanner unused"). **Movement: → 74 at this audit (+6 — the flagged gaps re-ruled deliberate; the linter adoption landed)**.

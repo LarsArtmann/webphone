@@ -1,5 +1,7 @@
 # go-credentials-store — library utilization audit
 
+_Produced by F (subagents 18-22) of the 2026-11-22 full-fleet re-audit's fan-out (runbook step 7); every other line is the audit's own._
+
 **Verdict:** NO-GO — it is a stateful credential _service_ (encrypted store, master keys, audit trail, admin UI) for personal infrastructure; webphone's threat model delegates secret-keeping to the platform (systemd `LoadCredential` + the NixOS secrets pipeline) and reads credentials fail-closed at use. **Adoption: n/a (absent, by decision).**
 **Pin:** none (absent from go.mod) · **Latest:** v0.4.3 (re-verified 2026-11-22; the v0.4.2→v0.4.3 delta is a templ v0.3.1100 coordinated regeneration — the attribute-sanitization consumer half of GHSA-94c2-xg24-pwhv — plus a fleet-aligned cmdguard v5.1.0 bump: adminui/release hardening, **no change to the stateful-service shape this ruling declines**; the v0.4 line through v0.4.2 was adminui host-nav links, a CSP-nonce bridge, generator-pinned templ regeneration, and a consumer-simulation pre-tag gate) · **Status:** not a dependency
 **Audited:** 2026-11-04 · 2026-11-22 re-verify · **Prior reports:** none (first audit).

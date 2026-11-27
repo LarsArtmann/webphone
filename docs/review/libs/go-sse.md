@@ -1,5 +1,7 @@
 # go-sse — library utilization audit
 
+_Produced by D (subagents 10-13) of the 2026-11-22 full-fleet re-audit's fan-out (runbook step 7); every other line is the audit's own._
+
 **Verdict:** thin by architecture — cqrs-htmx's `Broadcaster` wraps this library, and webphone touches the wrapped surface; the test kit pins the SSE wire contract (called "the single best test-integration in the repo" by the 09-24 audit). **Adoption 67/100 (moderate)** — 2 of 3 applicable rows.
 **Pin:** v0.7.0 + `go-sse/ssetest` v0.5.0 (direct); `go-sse/sseparse` v0.2.1 (indirect) · **Latest:** v0.7.0 / ssetest v0.5.0 · **Currency:** current (v0.7.0 LANDED 2026-11-05 — the blocked 2026-11-04 bump completed once the cqrs-htmx wave published; see errata) · **Status:** direct dep
 **Audited:** 2026-11-04 · 2026-11-22 re-verify · **Bump landed:** 2026-11-05 · **Prior reports:** [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html) (72/100 at v0.6.0). **Movement: 67 at the 2026-11-04 audit (the BLOCKED bump cost the currency points the 09-24 score carried) → still 67 after the landing: the score is rubric-bound (2.0/3 capability rows; Last-Event-ID replay remains a deliberate MISS), and the landing heals the currency axis, not the row math.**

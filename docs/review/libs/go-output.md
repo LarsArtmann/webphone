@@ -1,5 +1,7 @@
 # go-output — library utilization audit
 
+_Produced by F (subagents 18-22) of the 2026-11-22 full-fleet re-audit's fan-out (runbook step 7); every other line is the audit's own._
+
 **Verdict:** NO-GO — a strong "write once, render anywhere" data-rendering library with no data-rendering consumer in this product; webphone's CLI prints single lines, and its one rich report (the boot report) is a designed product artifact, not tabular data. **Adoption: n/a (absent, by decision).**
 **Pin:** none (absent from go.mod) · **Latest:** family tag `bdd/v0.38.7` (unchanged 2026-11-22; [Unreleased] empty) · **Status:** not a dependency
 **Audited:** 2026-11-04 · 2026-11-22 re-verify · **Prior reports:** none (first audit).

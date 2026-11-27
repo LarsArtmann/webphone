@@ -1,5 +1,7 @@
 # cmdguard — library utilization audit
 
+_Produced by B (subagents 3-5) of the 2026-11-22 full-fleet re-audit's fan-out (runbook step 7); every other line is the audit's own._
+
 **Verdict:** NO-GO — webphone is a single-binary server whose process front is a systemd unit, not a terminal; the CLI surface is four ritual one-shots (`-enroll-passkey`, `catalog`, `contracts`, `export-legacy` — the fourth comes from the 2026-11-14 T14 export-or-confirm design, in-tree by 2026-11-20, and was hand-rolled without a framework pull, confirming the shape) behind a ~25-line hand dispatch, and the boot-failure surface is a DESIGNED artifact (the five-part operator contract) that a framework's error printer would bypass. Adopting the Cobra wrapper would buy typed flags nobody types on, styled output nobody looks at, and a SECOND composition root beside internal/app's samber/do container. **Adoption: n/a (absent, by decision).**
 **Pin:** none (absent from go.mod) · **Latest:** v5.1.0 (2026-11-11: `WithStrictPositionalArgs`/`WithArgsPassthrough`, concurrency-safe Builder; the v5 line opened 2026-11-08 — v4 retired at v4.3.1, frozen on `release/v4`) — UNCHANGED at the 2026-11-22 re-verify; the cmdguard-lint submodule moved to v0.4.0 (2026-11-21) and `[Unreleased]` is docs/website/fleet-tooling work with no bearing on this ruling (below) · **Status:** not a dependency
 **Audited:** 2026-11-11 · **2026-11-22 re-verify** (currency held; Unreleased intent summarized; one-shot count re-measured at 4) · **Prior reports:** none (first audit).

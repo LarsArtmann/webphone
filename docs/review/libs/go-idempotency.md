@@ -1,5 +1,7 @@
 # go-idempotency — library utilization audit
 
+_Produced by E (subagents 14-17) of the 2026-11-22 full-fleet re-audit's fan-out (runbook step 7); every other line is the audit's own._
+
 **Verdict:** NO-GO for PROD semantics, reasoned and standing — webphone's idempotency semantics are deliberately different (check-first / record-on-success), and the runtime capability already lives in webphone's stack via metaengine's `DedupStore`. But the library is no longer absent: its **contract suite is a TEST-side consumer** since the T18 train — the 18-invariant suite audits the REAL journal-backed window, which is exactly the "residual value" this report first filed as optional. **Adoption: test-side contract pin (LANDED 2026-11-04); prod stays by-decision absent.**
 **Pin:** v0.6.0 (go.mod:39, **direct require since the T18 contract pin**; previously `// indirect`; walked v0.3.2 → v0.4.0 → v0.5.0 → v0.6.0 by the 2026-11-18 fleet treadmill) · **Latest:** v0.6.0 · **Currency:** current · **Status:** direct (test-only) — `internal/server/hooks/idempotency_contract_test.go` is the sole import; prod consumption stays transitive via cqrs-htmx (root + usermgmt) and go-cqrs-lite/middleware
 **Audited:** 2026-11-04 · **Updated:** 2026-11-13 (the T18 test-side adoption recorded — it landed 23:33 the same day this report was written and the body never learned it; prod verdict unchanged). · **Re-verified:** 2026-11-22 (v0.6.0 currency + premise re-audit — NO-GO unchanged, test-side value grew). · **Prior reports:** none (first audit).

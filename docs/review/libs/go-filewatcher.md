@@ -1,5 +1,7 @@
 # go-filewatcher — library utilization audit
 
+_Produced by F (subagents 18-22) of the 2026-11-22 full-fleet re-audit's fan-out (runbook step 7); every other line is the audit's own._
+
 **Verdict:** NO-GO — webphone has nothing to watch. Config is boot-immutable, secrets are per-use reads or systemd `LoadCredential`, rotation is restart-by-doctrine. **Adoption: n/a (absent, by decision).**
 **Pin:** none (absent from go.mod) · **Latest:** v2.5.0 (re-verified against remote tags 2026-11-13 and 2026-11-22 — unchanged; the v2.4.3→v2.5.0 delta adds `Healthy()` + an introspectable circuit breaker — service-integration surface for hosts that run watchers; **the nothing-to-watch premise is unchanged**) · **Status:** not a dependency (fsnotify v1.10.1 rides indirect via koanf's file provider)
 **Audited:** 2026-11-04 · 2026-11-22 re-verify · **Prior reports:** none (first audit).

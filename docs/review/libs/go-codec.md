@@ -1,5 +1,7 @@
 # go-codec — library utilization audit
 
+_Produced by C (subagents 6-9) of the 2026-11-22 full-fleet re-audit's fan-out (runbook step 7); every other line is the audit's own._
+
 **Verdict:** NO-GO for direct PROD adoption stands — it is the event-store payload codec layer, and webphone's HTTP/JSON surfaces are not codec territory. The journal's wire vocabulary is now imported TEST-side to pin retention-tombstone replay compatibility. **Adoption: n/a (prod indirect by design + one test-side import).**
 **Pin:** v0.3.3 (direct require since 2026-11-11 — the test import below) · **Latest:** v0.3.3 · **Currency:** current · **Status:** direct (test-only), prod stays indirect (a direct require of every cqrs-htmx module and most go-cqrs-lite modules — metaengine/v4/encoded.go:12 is the engine's import webphone rides; webphone pins metaengine/v4 v4.26.0, go.mod:28)
 **Audited:** 2026-11-04 · **Updated:** 2026-11-11 (the D014 tombstone wire pin) · **2026-11-22 re-verify** — pin still v0.3.3 = latest; [Unreleased] CI-only; verdict unchanged. · **Prior reports:** none (first audit).

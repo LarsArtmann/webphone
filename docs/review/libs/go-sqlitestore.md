@@ -1,5 +1,7 @@
 # go-sqlitestore — adjacent library audit (closeout T24)
 
+_Produced by orchestrator of the 2026-11-22 full-fleet re-audit's fan-out (runbook step 7); every other line is the audit's own._
+
 **Verdict:** transitive-only, correctly: zero webphone imports — the module rides in through cqrs-htmx (usermgmt v4.20.0, loginpage v4.18.0 at the 2026-11-22 pins) and go-cqrs-lite/projectionhost. Webphone's own sqlite story has two deliberate homes (the hand ladder in `internal/store/db.go` for the app database; metaengine's sqliteengine for readmodels.db), and a third store abstraction would be a second home for the same fact.
 **Pin:** v0.1.1 (indirect) · **Latest:** v0.1.1 · **Currency:** current at the pin (the 2026-11-22 re-verify: upstream `[Unreleased]` is tests + docs only — direct write-lock/busy-timeout test coverage and a documentation set; zero runtime delta, the ride-in premise is untouched) · **Status:** indirect-only
 **Audited:** 2026-11-04 · **re-verified:** 2026-11-13, 2026-11-22 · **Prior reports:** none.

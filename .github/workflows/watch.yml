@@ -47,8 +47,8 @@ jobs:
         run: scripts/main-red-watch.sh
 
       # Step name pinned: scripts/audit-red-watch.sh reads it back via
-      # `gh run view --jq` for the tip-unchanged skip.
-      - name: audit-red-watch (fleet-audit rot: audit-verify.sh replay -> per-report issue)
+      # gh run view --jq for the tip-unchanged skip.
+      - name: audit-red-watch (fleet-audit rot replay, per-report issue)
         run: scripts/audit-red-watch.sh
 
       - name: daemon-audit (guarded files / drift in the tip auto-commit)

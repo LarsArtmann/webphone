@@ -1,5 +1,7 @@
 # go-atomic-write — library utilization audit
 
+_Produced by E (subagents 14-17) of the 2026-11-22 full-fleet re-audit's fan-out (runbook step 7); every other line is the audit's own._
+
 **Verdict:** the sharpest NEW finding of this audit series: webphone's one runtime file-write path persisted user data with a bare `os.WriteFile` — no fsync, no atomic rename — while this library exists precisely for that. **Adoption: LANDED 2026-11-04 (v0.6.2) — `blob.Save` rides `WriteWithPerm(…, 0o640)`, both CLI spec writers ride `WriteIfChanged`; vendorHash re-pinned in the same train.**
 **Pin:** v0.6.2 · **Latest:** v0.6.2 (local checkout tag) · **Status:** direct dependency
 **Audited:** 2026-11-04 · **Re-verified:** 2026-11-22 (currency + `[Unreleased]` read — verdict unchanged). · **Prior reports:** none (first audit).

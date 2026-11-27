@@ -1,5 +1,7 @@
 # go-daemon — library utilization audit
 
+_Produced by F (subagents 18-22) of the 2026-11-22 full-fleet re-audit's fan-out (runbook step 7); every other line is the audit's own._
+
 **Verdict:** NO-GO — the name misleads: this is NOT daemonization (fork/daemonize is an explicit non-goal upstream); it is mechanism-layer plumbing for unix-socket services, and every slice it offers is already owned by webphone code or its platform. **Adoption: n/a (absent, by decision).**
 **Pin:** none (absent from go.mod) · **Latest:** v0.4.0 (unchanged 2026-11-22; [Unreleased] queues codec work only — see re-verify) · **Status:** not a dependency
 **Audited:** 2026-11-04 · 2026-11-22 re-verify · **Prior reports:** none (first audit).

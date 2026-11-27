@@ -1,5 +1,7 @@
 # go-retry — library utilization audit
 
+_Produced by E (subagents 14-17) of the 2026-11-22 full-fleet re-audit's fan-out (runbook step 7); every other line is the audit's own._
+
 **Verdict:** partial fit, ADOPTED on the fitting half (2026-11-04, closeout T17): the chat reconnect loops now ride `retry.ComputeDelay` (exponential + ≤50% additive jitter, hard-capped, saturation-hardened) instead of the hand-rolled deterministic doubling, and gate on `errorfamily.Classify` so Rejections stop the loop LOUDLY. The bounded-attempts model (`retry.Do`) still fits nothing — a reconnect loop cannot exhaust — and stays declined.
 **Pin:** v0.9.0 (go.mod:41, **DIRECT since 2026-11-04**; previously indirect via go-paperless + go-cqrs-lite/middleware) · **Latest:** v0.9.0 · **Currency:** current · **Status:** direct dep
 **Audited:** 2026-11-04 · **Re-verified:** 2026-11-22 (currency + `[Unreleased]` read — verdict unchanged). · **Prior reports:** none (first audit).

@@ -78,7 +78,7 @@ PY
 	)
 	[ -n "$pid" ] || return 1
 	local step
-	step=$(gh run view "$pid" --json jobs --jq '[.jobs[].steps[] | select(.name == "audit-red-watch (fleet-audit rot)") | .conclusion] | first // empty' 2>/dev/null) || return 1
+	step=$(gh run view "$pid" --json jobs --jq '[.jobs[].steps[] | select(.name == "audit-red-watch (fleet-audit rot replay, per-report issue)") | .conclusion] | first // empty' 2>/dev/null) || return 1
 	[ "$step" = "success" ]
 }
 

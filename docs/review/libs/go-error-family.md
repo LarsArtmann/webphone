@@ -1,5 +1,7 @@
 # go-error-family — library utilization audit
 
+_Produced by E (subagents 14-17) of the 2026-11-22 full-fleet re-audit's fan-out (runbook step 7); every other line is the audit's own._
+
 **Verdict:** the backbone of webphone's error culture; deep and deliberate. **Adoption 64/100 (moderate)** — 7 of 11 applicable rows fully leveraged (inputs below).
 **Pin:** v0.12.0 (go.mod:33) · **Latest:** v0.12.0 · **Currency:** current · **Status:** direct dep
 **Audited:** 2026-11-04 · **Re-verified:** 2026-11-22 (counts refreshed at 126 import files — score unchanged at 64/100). · **Prior reports:** [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html) (58/100 at v0.10.1 — superseded by this one; adoption roughly doubled since). **Movement: → 64 at this audit (+6); held at 64 through the 2026-11-22 re-verify**.

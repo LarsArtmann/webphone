@@ -1,5 +1,7 @@
 # go-health — library utilization audit
 
+_Produced by D (subagents 10-13) of the 2026-11-22 full-fleet re-audit's fan-out (runbook step 7); every other line is the audit's own._
+
 **Verdict:** exactly the composition the 09-24 audit praised — injector-discovered probe, one readiness truth, zero duplication. The response-sanitization gap **LANDED 2026-11-04** (bumped + the library applies `CoerceValidUTF8` at its own write seam). **Adoption 100/100 (top band, post-bump)** — 6 of 6 applicable rows.
 **Pin:** v0.10.0 (go.mod) · **Latest:** v0.10.0 · **Currency:** current · **Status:** direct dep (bumped v0.9.0 on 2026-11-04 with go-health-dashboard v0.13.0 — the coordinated wave's consumer side, whose stalled release the closeout train completed by tagging the untagged release commit; then v0.9.0 → v0.10.0 on 2026-11-05 riding the templ-wave train — the dashboard's v0.13.2 requires go-health v0.10.0. The v0.9.0→v0.10.0 delta is the Routes release — method-qualified `DefaultRoutes()`, `Routes.Version` + the registration-time panic without a `WithVersion` stamp, breaking for route-registration consumers but consumed by none here (webphone hand-wires its handlers) — plus CI-decl fixes: webphone's build and full suite passed untouched)
 **Audited:** 2026-11-04 · 2026-11-22 re-verify · **Prior reports:** [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html) (80/100 at v0.3.0). **Movement: → 100 at this audit (+20 — the v0.9.0 wave landed same-day and the readiness wiring verified at the ceiling)**.

@@ -1,5 +1,7 @@
 # httputil/server_timing — library utilization audit
 
+_Produced by C (subagents 6-9) of the 2026-11-22 full-fleet re-audit's fan-out (runbook step 7); every other line is the audit's own._
+
 **Verdict:** wired exactly as designed (env-gated edge middleware on an SSE-safe writer); named spans unused. **Adoption 67/100 (moderate)** — 2 of 3 applicable rows.
 **Pin:** v1.0.3 (go.mod:45) · **Latest:** v1.0.3 · **Currency:** current · **Status:** direct dep (separate module of the httputil repo)
 **Audited:** 2026-11-04 · **2026-11-22 re-verify** — pin v1.0.3 still the latest; zero commits under `server_timing/` since the tag; verdict holds at 67/100. · **Prior reports:** covered inside [httputil](httputil.md) and the [2026-09-24 fleet stack audit](../../research/2026-09-24_larsartmann-stack-deep-dive.html).
