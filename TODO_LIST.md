@@ -1664,34 +1664,34 @@ evidence in the 16-50 plan + its execution status). Open rows:
       **Priority:** Low ·
       **Effort:** M→S (build-time half done).
 - ~~**Wire-fixture follow-ups (deferred, with triggers)** — (a) the
-      android-side loopback live-check script: boot a loopback webphone
-      and drive the app's real decoders against its LIVE `/api/session`
-      + `/config.js` answers (fixtures pin the shape, this would pin a
-      deployment; trigger: device-train prep wanting deployment-level
-      proof); (b) CONSIDER a `/config.js` key fixture pinning
-      `sipDomain`/`websocketPath` in the same sync (trigger: the first
-      config.js key drift or a second config consumer — the android
-      repo owns the regex reads). BOTH TRIGGERS RE-CHECKED UNFIRED
-      2026-11-13 (pareto T20; config.js keys stable, no second
-      consumer, first device train still operator-blocked) — the
-      handover pack (docs/planning/2026-11-13_16-40_android-handover-pack.md)
-      carries the check + the line-picking/CallStyle contracts. Rows mirrored in webphone-android's
-      TODO_LIST; the KMP spike stays deferred per the 2026-11-08
-      preflight (quiet-repo gate). TRIGGER (b) RE-EVALUATED 2026-11-21
-      (T20): the `contacts` key DID leave the served `/config.js`
-      (2026-11-13, `a3e9c4d2` — shared contacts moved to the
-      session-gated lane), but android regex-reads exactly
-      `sipDomain`/`websocketPath`, which are stable — consumer-neutral
-      drift. Verdict: pin those two keys at the next
-      config.js-touching train, or let the runtime digest handshake
-      (the row above) subsume the fixture; trigger (a) stays unfired
-      (device train still operator-blocked). **Priority:** Low · **Effort:** S each.~~
-  → done 2026-11-27 (pareto T16) — BOTH triggers fired and answered: leg (a) landed
-  in webphone-android `e8ab38c` (CI green: the env-gated Robolectric suite drives
-  the real decoders against a live loopback boot — nosurf CSRF dance, 201 mint,
-  resume — plus `scripts/loopback-live-check.sh` with a config.js self-check;
-  verify-gate nine steps green); leg (b) landed `3dd89c70`
-  (`TestConfigJSPinsTheAndroidReadKeys` pins `sipDomain`+`websocketPath`).
+  android-side loopback live-check script: boot a loopback webphone
+  and drive the app's real decoders against its LIVE `/api/session`
+  - `/config.js` answers (fixtures pin the shape, this would pin a
+    deployment; trigger: device-train prep wanting deployment-level
+    proof); (b) CONSIDER a `/config.js` key fixture pinning
+    `sipDomain`/`websocketPath` in the same sync (trigger: the first
+    config.js key drift or a second config consumer — the android
+    repo owns the regex reads). BOTH TRIGGERS RE-CHECKED UNFIRED
+    2026-11-13 (pareto T20; config.js keys stable, no second
+    consumer, first device train still operator-blocked) — the
+    handover pack (docs/planning/2026-11-13_16-40_android-handover-pack.md)
+    carries the check + the line-picking/CallStyle contracts. Rows mirrored in webphone-android's
+    TODO_LIST; the KMP spike stays deferred per the 2026-11-08
+    preflight (quiet-repo gate). TRIGGER (b) RE-EVALUATED 2026-11-21
+    (T20): the `contacts` key DID leave the served `/config.js`
+    (2026-11-13, `a3e9c4d2` — shared contacts moved to the
+    session-gated lane), but android regex-reads exactly
+    `sipDomain`/`websocketPath`, which are stable — consumer-neutral
+    drift. Verdict: pin those two keys at the next
+    config.js-touching train, or let the runtime digest handshake
+    (the row above) subsume the fixture; trigger (a) stays unfired
+    (device train still operator-blocked). **Priority:** Low · **Effort:** S each.~~
+    → done 2026-11-27 (pareto T16) — BOTH triggers fired and answered: leg (a) landed
+    in webphone-android `e8ab38c` (CI green: the env-gated Robolectric suite drives
+    the real decoders against a live loopback boot — nosurf CSRF dance, 201 mint,
+    resume — plus `scripts/loopback-live-check.sh` with a config.js self-check;
+    verify-gate nine steps green); leg (b) landed `3dd89c70`
+    (`TestConfigJSPinsTheAndroidReadKeys` pins `sipDomain`+`websocketPath`).
 - [x] **DONE 2026-11-04 (ETag half): /openapi.json conditional GET** —
       the go-etag/server middleware serves bodyless 304 revalidation on
       `/openapi.json` + `/manifest.webmanifest` (mount is the skip set;
