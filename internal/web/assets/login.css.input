@@ -53,6 +53,16 @@
   --color-blue-800: var(--accent);
   --color-blue-900: var(--accent);
 
+  /* templ-components v1.27.2 renamed its palette blue-* → accent-*;
+     same green mapping, kept in lockstep with the blue family above. */
+  --color-accent-100: color-mix(in oklab, var(--accent) 15%, transparent);
+  --color-accent-300: var(--accent-strong);
+  --color-accent-400: var(--accent-strong);
+  --color-accent-500: var(--accent-strong);
+  --color-accent-600: var(--accent);
+  --color-accent-800: var(--accent);
+  --color-accent-900: var(--accent);
+
   /* Neutral family: deliberately NOT remapped — see the header comment.
      Tailwind's default gray palette renders the library's light/dark
      design correctly; the shell's token remap would invert dark mode. */

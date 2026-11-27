@@ -106,6 +106,16 @@
     --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
     --default-font-family: var(--font-sans);
     --default-mono-font-family: var(--font-mono);
+    --color-accent-100: var(--accent);
+    @supports (color: color-mix(in lab, red, red)) {
+      --color-accent-100: color-mix(in oklab, var(--accent) 15%, transparent);
+    }
+    --color-accent-300: var(--accent-strong);
+    --color-accent-400: var(--accent-strong);
+    --color-accent-500: var(--accent-strong);
+    --color-accent-600: var(--accent);
+    --color-accent-800: var(--accent);
+    --color-accent-900: var(--accent);
   }
 }
 @layer base {
@@ -682,6 +692,18 @@
   .border-red-200 {
     border-color: var(--color-red-200);
   }
+  .bg-accent-100 {
+    background-color: var(--accent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--accent) 15%, transparent);
+    }
+  }
+  .bg-accent-500 {
+    background-color: var(--accent-strong);
+  }
+  .bg-accent-600 {
+    background-color: var(--accent);
+  }
   .bg-amber-100 {
     background-color: var(--color-amber-100);
   }
@@ -702,12 +724,6 @@
     background-color: var(--accent);
     @supports (color: color-mix(in lab, red, red)) {
       background-color: color-mix(in oklab, var(--accent) 10%, transparent);
-    }
-  }
-  .bg-blue-100 {
-    background-color: var(--accent);
-    @supports (color: color-mix(in lab, red, red)) {
-      background-color: color-mix(in oklab, var(--accent) 15%, transparent);
     }
   }
   .bg-blue-500 {
@@ -852,6 +868,12 @@
   }
   .whitespace-nowrap {
     white-space: nowrap;
+  }
+  .text-accent-600 {
+    color: var(--accent);
+  }
+  .text-accent-800 {
+    color: var(--accent);
   }
   .text-amber-700 {
     color: var(--warn);
@@ -1076,6 +1098,9 @@
     color: var(--color-gray-400);
   }
   @media (hover: hover) {
+    .hover\:bg-accent-500:hover {
+      background-color: var(--accent-strong);
+    }
     .hover\:bg-amber-50:hover {
       background-color: var(--warn);
     }
@@ -1120,7 +1145,7 @@
     .hover\:bg-red-500:hover {
       background-color: var(--danger);
     }
-    .hover\:text-blue-500:hover {
+    .hover\:text-accent-500:hover {
       color: var(--accent-strong);
     }
     .hover\:text-gray-900:hover {
@@ -1221,6 +1246,9 @@
   .focus-visible\:outline-offset-2:focus-visible {
     outline-offset: 2px;
   }
+  .focus-visible\:outline-accent-600:focus-visible {
+    outline-color: var(--accent);
+  }
   .focus-visible\:outline-amber-600:focus-visible {
     outline-color: var(--warn);
   }
@@ -1311,6 +1339,25 @@
     .dark *
   ) {
     border-color: var(--danger);
+  }
+  .dark\:bg-accent-500:where(
+    :root[data-theme="dark"],
+    :root[data-theme="dark"] *,
+    .dark,
+    .dark *
+  ) {
+    background-color: var(--accent-strong);
+  }
+  .dark\:bg-accent-900\/30:where(
+    :root[data-theme="dark"],
+    :root[data-theme="dark"] *,
+    .dark,
+    .dark *
+  ) {
+    background-color: var(--accent);
+    @supports (color: color-mix(in lab, red, red)) {
+      background-color: color-mix(in oklab, var(--accent) 30%, transparent);
+    }
   }
   .dark\:bg-amber-900\/30:where(
     :root[data-theme="dark"],
@@ -1414,6 +1461,22 @@
     @supports (color: color-mix(in lab, red, red)) {
       background-color: color-mix(in oklab, var(--danger) 30%, transparent);
     }
+  }
+  .dark\:text-accent-300:where(
+    :root[data-theme="dark"],
+    :root[data-theme="dark"] *,
+    .dark,
+    .dark *
+  ) {
+    color: var(--accent-strong);
+  }
+  .dark\:text-accent-400:where(
+    :root[data-theme="dark"],
+    :root[data-theme="dark"] *,
+    .dark,
+    .dark *
+  ) {
+    color: var(--accent-strong);
   }
   .dark\:text-amber-300:where(
     :root[data-theme="dark"],
@@ -1672,6 +1735,14 @@
     background-color: var(--accent);
   }
   @media (hover: hover) {
+    .dark\:hover\:bg-accent-400:where(
+        :root[data-theme="dark"],
+        :root[data-theme="dark"] *,
+        .dark,
+        .dark *
+      ):hover {
+      background-color: var(--accent-strong);
+    }
     .dark\:hover\:bg-amber-900\/20:where(
         :root[data-theme="dark"],
         :root[data-theme="dark"] *,
@@ -1768,7 +1839,7 @@
         background-color: color-mix(in oklab, var(--danger) 20%, transparent);
       }
     }
-    .dark\:hover\:text-blue-300:where(
+    .dark\:hover\:text-accent-300:where(
         :root[data-theme="dark"],
         :root[data-theme="dark"] *,
         .dark,
@@ -1824,6 +1895,14 @@
       .dark *
     ):focus {
     --tw-ring-offset-color: var(--color-gray-900);
+  }
+  .dark\:focus-visible\:outline-accent-500:where(
+      :root[data-theme="dark"],
+      :root[data-theme="dark"] *,
+      .dark,
+      .dark *
+    ):focus-visible {
+    outline-color: var(--accent-strong);
   }
   .dark\:focus-visible\:outline-amber-400:where(
       :root[data-theme="dark"],

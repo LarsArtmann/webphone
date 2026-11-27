@@ -272,6 +272,20 @@ exclude:
 # each entry.
 skip_steps:
   - pytest-test
+  # library-policy SKIPPED 2026-11-27 (deps-train T08 hit it): the tool
+  # arrived as a v3 provider on 2026-11-23 with its rules COMPILED IN and
+  # its crypto/sha1 ban at error severity — but webphone's one crypto/sha1
+  # site (internal/server/platform/configjs.go turnRESTCredentials) is the
+  # coturn REST credential protocol, which validates exactly
+  # base64(HMAC-SHA1(secret, username)); SHA-256 would break every TURN
+  # server. The exclude list cannot reach the external binary (it walks the
+  # workdir itself, verified), a repo-side library-policy.yaml would
+  # RESTATE the whole compiled policy set (hand-curated drift), and
+  # BuildFlow has no per-rule demotion key (only error_rules, which
+  # elevates). The upstream ask — a justified-exemption mechanism or a
+  # coturn exception in the compiled policy — is filed on
+  # LarsArtmann/library-policy; UNSKIP when it ships.
+  - library-policy
   # go-structure-linter UNSKIPPED 2026-10-09 (SUPERB plan A5): the go-version
   # rule is detect-only in v0.11.3 (flake-owned toolchain pins are no longer
   # rewritten); assets-directory/golangci-config moved to rule-level
