@@ -14,5 +14,5 @@
 # Resolved through `git rev-parse --show-toplevel` so the command also works
 # for a session opened in a SUBDIRECTORY of the repo (a relative --command
 # is evaluated against the session's working directory).
-lsp add gopls --command bash --args -c --args 'exec "$(git rev-parse --show-toplevel)/scripts/lsp.sh" gopls serve'
-lsp add golangci_lint_ls --command bash --args -c --args 'exec "$(git rev-parse --show-toplevel)/scripts/lsp.sh" golangci-lint-langserver'
+lsp add gopls --command bash --args -c --args 'exec "$(git rev-parse --show-toplevel)/scripts/lsp.sh" gopls serve' --timeout 60
+lsp add golangci_lint_ls --command bash --args -c --args 'exec "$(git rev-parse --show-toplevel)/scripts/lsp.sh" golangci-lint-langserver' --timeout 60
