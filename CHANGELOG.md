@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **The watch lane replays the fleet-audit verify blocks (pareto
+  T05)**: a new `audit-red-watch.sh` observer runs `audit-verify.sh` on
+  the */15 schedule, so a rotted verify claim in `docs/review/libs/`
+  is caught the day it breaks instead of at the next manual sweep — one
+  tracker issue per failing report (exact-title dedup on the LIST api),
+  with a tip-unchanged skip that reuses the watch lane's own run
+  history (same HEAD with a prior green audit step skips the replay).
+  The four missed red windows got their structural answer filed as the
+  pma detection-lane ask (projects-management-automation#355).
+
 - **Deps train: the cqrs-htmx family + templ-components v1.27.2 (pareto
   T08)**: cqrs-htmx root v4.18.1→v4.19.0, usermgmt v4.20.0→v4.21.0,
   the login-door module →v4.19.0, the identity model →v4.18.0, the id

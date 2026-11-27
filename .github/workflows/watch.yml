@@ -31,7 +31,7 @@ permissions:
 
 jobs:
   observers:
-    name: main-red-watch + daemon-audit
+    name: main-red-watch + daemon-audit + audit-red-watch
     runs-on: ubuntu-latest
     timeout-minutes: 10
     env:
@@ -45,6 +45,11 @@ jobs:
 
       - name: main-red-watch (red main -> tracked issue with a draft ledger row)
         run: scripts/main-red-watch.sh
+
+      # Step name pinned: scripts/audit-red-watch.sh reads it back via
+      # `gh run view --jq` for the tip-unchanged skip.
+      - name: audit-red-watch (fleet-audit rot: audit-verify.sh replay -> per-report issue)
+        run: scripts/audit-red-watch.sh
 
       - name: daemon-audit (guarded files / drift in the tip auto-commit)
         run: scripts/daemon-audit.sh --file-issue
