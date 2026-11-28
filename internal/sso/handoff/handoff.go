@@ -143,7 +143,7 @@ const (
 // return link must echo and the digest of the proof its ticket will
 // demand.
 type Marker struct {
-	AppState   string
+	AppState    string
 	ProofDigest [sha256.Size]byte
 }
 

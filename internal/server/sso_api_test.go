@@ -80,7 +80,9 @@ func cookieFor(name, value string) *http.Cookie {
 func TestSSOOffAnswersTheStyled404(t *testing.T) {
 	server := newTestServer(t) // standard fixture: no SSO
 	client := server.Client()
-	for _, path := range []string{"/api/auth/oauth2/begin", "/api/auth/oauth2/callback"} {
+	// The handoff's two routes join the off-mode 404 set: a server with
+	// the OIDC seam off answers exactly like one that predates them.
+	for _, path := range []string{"/api/auth/oauth2/begin", "/api/auth/oauth2/callback", "/api/auth/oauth2/shell", "/api/auth/oauth2/finish?ticket=x"} {
 		resp, err := client.Get(server.URL + path)
 		if err != nil {
 			t.Fatalf("GET %s: %v", path, err)
@@ -354,6 +356,7 @@ func TestSSOErrorCodeVocabulary(t *testing.T) {
 		"sso.state.mismatch":            "stale",
 		"sso.nonce.mismatch":            "stale",
 		"sso.attempt.missing":           "stale",
+		"sso.handoff.ticket":            "stale",
 		"sso.client_secret.read":        "config",
 		"sso.client_secret.empty":       "config",
 		"sso.exchange":                  "config",

@@ -2,6 +2,7 @@ package handoff
 
 import (
 	"crypto/sha256"
+	"encoding/base64"
 	"net/url"
 	"regexp"
 	"strings"
@@ -148,13 +149,12 @@ func TestLedgerSweepsTheDeadAndCapsTheLive(t *testing.T) {
 
 func TestRedeemRefusesMalformedTicketsUnhashed(t *testing.T) {
 	tickets := NewTickets()
-	before := 0
 	for _, ticket := range []string{"", "short", strings.Repeat("t", 129), strings.Repeat("t", 42) + "+", strings.Repeat("t", 42) + "="} {
 		if _, verdict := tickets.Redeem(ticket, [sha256.Size]byte{}); verdict != UnknownTicket {
 			t.Errorf("redeem(%q) verdict = %v, want UnknownTicket", ticket, verdict)
 		}
 	}
-	if len(tickets.live) != before {
+	if len(tickets.live) != 0 {
 		t.Errorf("a malformed ticket touched the ledger (%d entries)", len(tickets.live))
 	}
 }
@@ -169,23 +169,23 @@ func TestParseAttemptValidatesTheWire(t *testing.T) {
 	if marker.AppState != nonce || marker.ProofDigest != sha256.Sum256([]byte(proof)) {
 		t.Errorf("marker = %+v, want the nonce and the proof's digest", marker)
 	}
-	if _, ok := ParseMarker(marker.CookieValue()); !ok || ok && marker.AppState != nonce {
+	if _, ok := ParseMarker(marker.CookieValue()); !ok {
 		t.Errorf("the marker's cookie value %q does not round-trip", marker.CookieValue())
 	}
 
 	shape := func(size int) string { return strings.Repeat("s", size) }
 	for name, query := range map[string]url.Values{
-		"an unknown shell":       {ShellParam: {"ios"}, AppStateParam: {nonce}, ProofParam: {proof}},
-		"a missing shell":        {AppStateParam: {nonce}, ProofParam: {proof}},
-		"a capitalized shell":    {ShellParam: {"Android"}, AppStateParam: {nonce}, ProofParam: {proof}},
-		"a missing nonce":        {ShellParam: {Android}, ProofParam: {proof}},
-		"a short nonce":          {ShellParam: {Android}, AppStateParam: {shape(15)}, ProofParam: {proof}},
-		"an oversized nonce":     {ShellParam: {Android}, AppStateParam: {shape(129)}, ProofParam: {proof}},
-		"a nonce off-alphabet":   {ShellParam: {Android}, AppStateParam: {"n+" + nonce}, ProofParam: {proof}},
-		"a missing proof":        {ShellParam: {Android}, AppStateParam: {nonce}},
-		"a short proof":          {ShellParam: {Android}, AppStateParam: {nonce}, ProofParam: {shape(15)}},
-		"a proof with padding":   {ShellParam: {Android}, AppStateParam: {nonce}, ProofParam: {proof + "="}},
-		"an empty shell marker":  {ShellParam: {""}, AppStateParam: {nonce}, ProofParam: {proof}},
+		"an unknown shell":      {ShellParam: {"ios"}, AppStateParam: {nonce}, ProofParam: {proof}},
+		"a missing shell":       {AppStateParam: {nonce}, ProofParam: {proof}},
+		"a capitalized shell":   {ShellParam: {"Android"}, AppStateParam: {nonce}, ProofParam: {proof}},
+		"a missing nonce":       {ShellParam: {Android}, ProofParam: {proof}},
+		"a short nonce":         {ShellParam: {Android}, AppStateParam: {shape(15)}, ProofParam: {proof}},
+		"an oversized nonce":    {ShellParam: {Android}, AppStateParam: {shape(129)}, ProofParam: {proof}},
+		"a nonce off-alphabet":  {ShellParam: {Android}, AppStateParam: {"n+" + nonce}, ProofParam: {proof}},
+		"a missing proof":       {ShellParam: {Android}, AppStateParam: {nonce}},
+		"a short proof":         {ShellParam: {Android}, AppStateParam: {nonce}, ProofParam: {shape(15)}},
+		"a proof with padding":  {ShellParam: {Android}, AppStateParam: {nonce}, ProofParam: {proof + "="}},
+		"an empty shell marker": {ShellParam: {""}, AppStateParam: {nonce}, ProofParam: {proof}},
 	} {
 		_, err := ParseAttempt(query)
 		if err == nil {
@@ -208,29 +208,27 @@ func TestParseMarkerRefusesWhatTheServerDidNotWrite(t *testing.T) {
 	if !ok {
 		t.Fatalf("a well-formed marker: %q", nonce+"."+digest)
 	}
-	want := [sha256.Size]byte{}
-	for i, c := range []byte(strings.Repeat("d", 43)) {
-		_ = i
-		_ = c
+	raw, err := base64.RawURLEncoding.DecodeString(digest)
+	if err != nil {
+		t.Fatal(err)
 	}
-	_ = want
-	if marker.AppState != nonce {
-		t.Errorf("nonce = %q, want %q", marker.AppState, nonce)
+	if marker.AppState != nonce || marker.ProofDigest != [sha256.Size]byte(raw) {
+		t.Errorf("marker = %+v, want the nonce and the decoded digest", marker)
 	}
-	if marker.ProofDigest != ProofDigest("") && false {
-		t.Error("unreachable")
+	if marker.CookieValue() != nonce+"."+digest {
+		t.Errorf("cookie value = %q, want the bytes that were parsed", marker.CookieValue())
 	}
 	for name, value := range map[string]string{
-		"empty":                "",
-		"no separator":         nonce,
-		"an empty nonce":       "." + digest,
-		"a short nonce":        "short." + digest,
+		"empty":                 "",
+		"no separator":          nonce,
+		"an empty nonce":        "." + digest,
+		"a short nonce":         "short." + digest,
 		"an off-alphabet nonce": nonce + "+." + digest,
-		"an empty digest":      nonce + ".",
-		"a short digest":       nonce + ".short",
-		"an off-alphabet hash": nonce + "." + strings.Repeat("d", 42) + "+",
-		"padded digest":        nonce + "." + digest + "=",
-		"a second separator":   nonce + "." + digest + ".extra",
+		"an empty digest":       nonce + ".",
+		"a short digest":        nonce + ".short",
+		"an off-alphabet hash":  nonce + "." + strings.Repeat("d", 42) + "+",
+		"padded digest":         nonce + "." + digest + "=",
+		"a second separator":    nonce + "." + digest + ".extra",
 	} {
 		if _, ok := ParseMarker(value); ok {
 			t.Errorf("%s: accepted %q", name, value)
