@@ -2,7 +2,6 @@ package handoff
 
 import (
 	"crypto/sha256"
-	"encoding/base64"
 	"net/url"
 	"regexp"
 	"strings"
@@ -203,32 +202,27 @@ func TestParseAttemptValidatesTheWire(t *testing.T) {
 
 func TestParseMarkerRefusesWhatTheServerDidNotWrite(t *testing.T) {
 	nonce := strings.Repeat("n", 43)
-	digest := strings.Repeat("d", 43)
-	marker, ok := ParseMarker(nonce + "." + digest)
+	want := Marker{AppState: nonce, ProofDigest: ProofDigest("proof")}
+	digest := digestEncoding.EncodeToString(want.ProofDigest[:])
+	marker, ok := ParseMarker(want.CookieValue())
 	if !ok {
-		t.Fatalf("a well-formed marker: %q", nonce+"."+digest)
+		t.Fatalf("a well-formed marker: %q", want.CookieValue())
 	}
-	raw, err := base64.RawURLEncoding.DecodeString(digest)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if marker.AppState != nonce || marker.ProofDigest != [sha256.Size]byte(raw) {
-		t.Errorf("marker = %+v, want the nonce and the decoded digest", marker)
-	}
-	if marker.CookieValue() != nonce+"."+digest {
-		t.Errorf("cookie value = %q, want the bytes that were parsed", marker.CookieValue())
+	if marker != want {
+		t.Errorf("marker = %+v, want %+v (the parse is the codec's inverse)", marker, want)
 	}
 	for name, value := range map[string]string{
-		"empty":                 "",
-		"no separator":          nonce,
-		"an empty nonce":        "." + digest,
-		"a short nonce":         "short." + digest,
-		"an off-alphabet nonce": nonce + "+." + digest,
-		"an empty digest":       nonce + ".",
-		"a short digest":        nonce + ".short",
-		"an off-alphabet hash":  nonce + "." + strings.Repeat("d", 42) + "+",
-		"padded digest":         nonce + "." + digest + "=",
-		"a second separator":    nonce + "." + digest + ".extra",
+		"empty":                   "",
+		"no separator":            nonce,
+		"an empty nonce":          "." + digest,
+		"a short nonce":           "short." + digest,
+		"an off-alphabet nonce":   nonce + "+." + digest,
+		"an empty digest":         nonce + ".",
+		"a short digest":          nonce + ".short",
+		"an off-alphabet hash":    nonce + "." + strings.Repeat("d", 42) + "+",
+		"padded digest":           nonce + "." + digest + "=",
+		"non-canonical digest bits": nonce + "." + strings.Repeat("d", 43),
+		"a second separator":      nonce + "." + digest + ".extra",
 	} {
 		if _, ok := ParseMarker(value); ok {
 			t.Errorf("%s: accepted %q", name, value)
