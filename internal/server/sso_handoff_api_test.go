@@ -126,6 +126,19 @@ func cookieNamed(resp *http.Response, name string) *http.Cookie {
 	return nil
 }
 
+// authCookies counts the response's cookies besides the CSRF
+// middleware's own token, which every answer through the protected mux
+// carries and which is not the auth surface's to answer with.
+func authCookies(resp *http.Response) int {
+	count := 0
+	for _, cookie := range resp.Cookies() {
+		if cookie.Name != "csrf_token" {
+			count++
+		}
+	}
+	return count
+}
+
 // doBounce hands a well-formed shell attempt through to its return link
 // and returns the bounce response and the link.
 func doBounce(t *testing.T, stub *ssoStub) (*testServer, *http.Client, *http.Response, *url.URL) {
@@ -152,8 +165,8 @@ func TestSSOShellProbeAdvertisesTheContract(t *testing.T) {
 	if got := resp.Header.Get("Cache-Control"); got != "no-store" {
 		t.Errorf("probe: Cache-Control = %q, want no-store (a stack that upgrades must flip the shell's lane)", got)
 	}
-	if len(resp.Cookies()) != 0 {
-		t.Errorf("probe: set %d cookie(s), want none (it hands out nothing)", len(resp.Cookies()))
+	if authCookies(resp) != 0 {
+		t.Errorf("probe: set %d cookie(s), want none (it hands out nothing)", authCookies(resp))
 	}
 }
 
@@ -219,8 +232,8 @@ func TestSSOBeginShellFormRefusesMalformedHandshakes(t *testing.T) {
 			if strings.Contains(string(body), "sso.handoff") {
 				t.Errorf("body %q leaks the internal error code (it belongs in the journal)", body)
 			}
-			if len(resp.Cookies()) != 0 {
-				t.Errorf("a refused handshake set %d cookie(s), want none", len(resp.Cookies()))
+			if authCookies(resp) != 0 {
+				t.Errorf("a refused handshake set %d cookie(s), want none", authCookies(resp))
 			}
 			if stub.challenges != 0 {
 				t.Errorf("a refused handshake cost %d IdP challenge(s), want none", stub.challenges)
@@ -239,8 +252,8 @@ func TestSSOBeginPlainFormExpiresAPlantedShellMarker(t *testing.T) {
 		t.Fatalf("plain begin: %v", err)
 	}
 	_ = resp.Body.Close()
-	if cookieNamed(resp, "wp_sso_shell") != nil || len(resp.Cookies()) != 3 {
-		t.Errorf("a plain begin set %d cookie(s) including a shell marker, want exactly the three attempt cookies", len(resp.Cookies()))
+	if cookieNamed(resp, "wp_sso_shell") != nil || authCookies(resp) != 3 {
+		t.Errorf("a plain begin set %d cookie(s) including a shell marker, want exactly the three attempt cookies", authCookies(resp))
 	}
 
 	// A cross-site navigation to the shell form can plant the marker in

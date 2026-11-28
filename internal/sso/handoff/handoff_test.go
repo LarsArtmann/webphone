@@ -112,21 +112,23 @@ func TestLedgerSweepsTheDeadAndCapsTheLive(t *testing.T) {
 	now := start
 	tickets := frozenLedger(&now)
 	proof := ProofDigest(strings.Repeat("p", 43))
-	oldest, err := tickets.Issue(testIdentity(), proof)
-	if err != nil {
-		t.Fatalf("issue: %v", err)
-	}
-	for len(tickets.live) < ledgerCap {
-		if _, err := tickets.Issue(testIdentity(), proof); err != nil {
+	// One issue per second, so "dies first" and "issued first" are the
+	// same order they are on a real clock.
+	issue := func() string {
+		now = now.Add(time.Second)
+		ticket, err := tickets.Issue(testIdentity(), proof)
+		if err != nil {
 			t.Fatalf("issue: %v", err)
 		}
+		return ticket
+	}
+	oldest := issue()
+	for len(tickets.live) < ledgerCap {
+		issue()
 	}
 	// At the cap the next issue evicts the entry that dies first: the
 	// oldest, never the newcomer.
-	newest, err := tickets.Issue(testIdentity(), proof)
-	if err != nil {
-		t.Fatalf("issue at the cap: %v", err)
-	}
+	newest := issue()
 	if len(tickets.live) != ledgerCap {
 		t.Fatalf("ledger holds %d entries at the cap, want %d", len(tickets.live), ledgerCap)
 	}
@@ -138,10 +140,8 @@ func TestLedgerSweepsTheDeadAndCapsTheLive(t *testing.T) {
 	}
 	// Past the TTL every parked entry is dead, and the next issue sweeps
 	// them all: nothing lingers until a janitor remembers it.
-	now = start.Add(ticketTTL + time.Second)
-	if _, err := tickets.Issue(testIdentity(), proof); err != nil {
-		t.Fatalf("issue after the TTL: %v", err)
-	}
+	now = start.Add(ledgerCap*time.Second + ticketTTL)
+	issue()
 	if len(tickets.live) != 1 {
 		t.Errorf("ledger holds %d entries after the sweep, want 1", len(tickets.live))
 	}
