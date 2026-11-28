@@ -9,11 +9,32 @@ import (
 )
 
 // ssoBegin starts the authorization-code + PKCE dance: mint the attempt's
-// secrets, park them in cookies, and hand the browser to the IdP.
+// secrets, park them in cookies, and hand the browser to the IdP. The
+// shell form (sso_handoff.go) additionally marks the attempt as a native
+// shell's, so the callback bounces a ticket instead of a cookie.
 func (a *Handlers) SSOBegin(w http.ResponseWriter, r *http.Request) {
 	if a.deps.SSO == nil {
 		http.NotFound(w, r)
 		return
+	}
+	query := r.URL.Query()
+	var marker shellMarker
+	handoff := query.Has(shellParam)
+	if handoff {
+		var err error
+		if marker, err = shellAttempt(query); err != nil {
+			a.handoffRefused(w, r, http.StatusBadRequest,
+				"Sign-in refused: this sign-in link is not a complete handoff (an unknown shell, or a malformed nonce or proof). Start the sign-in again from the app.",
+				err, "begin shell sign-in")
+			return
+		}
+	} else if _, err := r.Cookie(SSOShellCookie); err == nil {
+		// A plain begin inherits no shell marker. One can only be planted
+		// by a cross-site navigation to the shell form (a top-level GET
+		// sets cookies like any navigation), and a browser login that then
+		// bounced to a private-use scheme would fail silently: the browser
+		// lane expires whatever it finds.
+		a.clearSSOCookie(w, SSOShellCookie)
 	}
 	challenge, err := a.deps.SSO.Challenge(r.Context())
 	if err != nil {
@@ -23,6 +44,9 @@ func (a *Handlers) SSOBegin(w http.ResponseWriter, r *http.Request) {
 	a.setSSOCookie(w, SSOStateCookie, challenge.State)
 	a.setSSOCookie(w, SSONonceCookie, challenge.Nonce)
 	a.setSSOCookie(w, SSOVerifierCookie, challenge.Verifier)
+	if handoff {
+		a.setSSOCookie(w, SSOShellCookie, marker.cookieValue())
+	}
 	// The browser leaves for the IdP: no referrer (the authorize URL
 	// carries the state; it must not leak through third-party scripts on
 	// our own page) and no caching of the redirect itself.
@@ -79,6 +103,29 @@ func (a *Handlers) SSOCallback(w http.ResponseWriter, r *http.Request) {
 	if !a.verifyDirectoryCredentials(w, r, extension, password) {
 		return
 	}
+	// A shell attempt delivers nothing to THIS browser: it may be the
+	// shell's own Custom Tab, whose jar the shell cannot read. The IdP's
+	// verdict is parked under a one-time ticket and bounced off the
+	// shell's return address instead (sso_handoff.go owns the contract).
+	if cookie, err := r.Cookie(SSOShellCookie); err == nil {
+		a.clearSSOCookie(w, SSOShellCookie)
+		marker, ok := parseShellMarker(cookie.Value)
+		if !ok {
+			a.ssoFailed(w, r, errorfamily.NewRejection("sso.handoff.request",
+				"the "+SSOShellCookie+" cookie does not carry a well-formed shell marker"), "read shell marker")
+			return
+		}
+		ticket, err := a.handoffs.issue(handoffIdentity{extension: extension, password: password, email: mapped.Email}, marker.proof)
+		if err != nil {
+			slog.Error("webphone: oidc handoff ticket issue failed", "error", err, "extension", extension.String())
+			http.Error(w, "could not hand the sign-in to the app", http.StatusInternalServerError)
+			return
+		}
+		slog.Info("webphone: oidc handoff ticket issued", "shell", shellAndroid, "extension", extension.String())
+		w.Header().Set("Cache-Control", "no-store")
+		http.Redirect(w, r, shellReturnURL(ticket, marker.appState), http.StatusSeeOther)
+		return
+	}
 	// The session remembers WHO minted it (the multi-user substrate):
 	// passkey and OIDC logins carry the same identity field.
 	if _, err := a.mintSession(w, r, extension, password, mapped.Email); err != nil {
@@ -106,7 +153,6 @@ func (a *Handlers) ssoFailed(w http.ResponseWriter, r *http.Request, err error, 
 	w.Header().Set("Cache-Control", "no-store")
 	http.Redirect(w, r, "/login?sso_error="+SSOErrorCode(err), http.StatusSeeOther)
 }
-
 // SSOErrorCode maps a failure onto the browser-visible reason
 // vocabulary (the ?sso_error= short codes): the browser gets an
 // actionable sentence, never an internal error string. Exported: the
@@ -121,7 +167,7 @@ func SSOErrorCode(err error) string {
 		return "unverified"
 	case "sso.groups_denied":
 		return "groups"
-	case "sso.state.mismatch", "sso.nonce.mismatch", "sso.attempt.missing":
+	case "sso.state.mismatch", "sso.nonce.mismatch", "sso.attempt.missing", "sso.handoff.ticket":
 		return "stale"
 	case "sso.client_secret.read", "sso.client_secret.empty", "sso.exchange":
 		return "config"
