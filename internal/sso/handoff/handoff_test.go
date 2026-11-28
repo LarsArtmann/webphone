@@ -212,17 +212,17 @@ func TestParseMarkerRefusesWhatTheServerDidNotWrite(t *testing.T) {
 		t.Errorf("marker = %+v, want %+v (the parse is the codec's inverse)", marker, want)
 	}
 	for name, value := range map[string]string{
-		"empty":                   "",
-		"no separator":            nonce,
-		"an empty nonce":          "." + digest,
-		"a short nonce":           "short." + digest,
-		"an off-alphabet nonce":   nonce + "+." + digest,
-		"an empty digest":         nonce + ".",
-		"a short digest":          nonce + ".short",
-		"an off-alphabet hash":    nonce + "." + strings.Repeat("d", 42) + "+",
-		"padded digest":           nonce + "." + digest + "=",
+		"empty":                     "",
+		"no separator":              nonce,
+		"an empty nonce":            "." + digest,
+		"a short nonce":             "short." + digest,
+		"an off-alphabet nonce":     nonce + "+." + digest,
+		"an empty digest":           nonce + ".",
+		"a short digest":            nonce + ".short",
+		"an off-alphabet hash":      nonce + "." + strings.Repeat("d", 42) + "+",
+		"padded digest":             nonce + "." + digest + "=",
 		"non-canonical digest bits": nonce + "." + strings.Repeat("d", 43),
-		"a second separator":      nonce + "." + digest + ".extra",
+		"a second separator":        nonce + "." + digest + ".extra",
 	} {
 		if _, ok := ParseMarker(value); ok {
 			t.Errorf("%s: accepted %q", name, value)

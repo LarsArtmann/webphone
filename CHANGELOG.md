@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Native-shell sign-in handoff (the Android call shell's Pocket ID
+  login)**: a native shell cannot finish the OIDC dance inside an
+  embedded WebView — Pocket ID is passkey-only and a WebView's WebAuthn
+  origin is the app's, not the web's — so the shell now hands the dance
+  to the system browser and the server hands the finished sign-in back.
+  `GET /api/auth/oauth2/shell` advertises the contract (204; a server
+  that predates it keeps answering 404), `begin?shell=android&app_state=
+  …&proof=…` marks the attempt, the callback answers a one-time ticket
+  at the shell's return address (`cloud.larsartmann.webphone://auth/
+  finish`) instead of a session cookie, and `GET /api/auth/oauth2/finish`
+  redeems it: single use, five minutes, bound to the proof only the
+  shell holds (a rogue app that catches the return link gets nothing)
+  and refused to any request without the `X-WebPhone-Shell` header (a
+  cross-site page cannot spend a ticket). A plain browser sign-in is
+  byte-identical. The ledger is in memory (`internal/sso/handoff`); a
+  server restart voids pending handoffs and the shell lands on the
+  login card's own "attempt expired" sentence. Error codes
+  `sso.handoff.{request,ticket,proof,entropy}`.
+
 ### Changed
 
 - **The watch lane replays the fleet-audit verify blocks (pareto
