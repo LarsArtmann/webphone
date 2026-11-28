@@ -30,6 +30,7 @@ import (
 	"github.com/larsartmann/webphone/internal/pbx"
 	"github.com/larsartmann/webphone/internal/session"
 	"github.com/larsartmann/webphone/internal/sso"
+	"github.com/larsartmann/webphone/internal/sso/handoff"
 	"github.com/larsartmann/webphone/internal/textagent"
 	"github.com/larsartmann/webphone/internal/userauth"
 	"github.com/larsartmann/webphone/internal/web/views"
@@ -127,16 +128,16 @@ type Handlers struct {
 	// failed loudly at boot).
 	loginPage *loginpage.Handler
 	// handoffs is the ledger of live sign-in handoff tickets (the
-	// native-shell lane, sso_handoff.go). Per hub, so every composition
-	// (and every test server) keeps its own.
-	handoffs *handoffTickets
+	// native-shell lane; the ledger itself is internal/sso/handoff). Per
+	// hub, so every composition (and every test server) keeps its own.
+	handoffs *handoff.Tickets
 }
 
 // New wires the auth hub. The server's New builds the narrowed Deps, its
 // own Server implementation, the cookie policies and the library login
 // page, then mounts the routes through the returned hub.
 func New(deps Deps, server Server, cookies session.CookiePolicy, csrfCfg httputil.CSRFConfig, loginPage *loginpage.Handler) *Handlers {
-	return &Handlers{deps: deps, server: server, cookies: cookies, csrfCfg: csrfCfg, loginPage: loginPage, handoffs: newHandoffTickets()}
+	return &Handlers{deps: deps, server: server, cookies: cookies, csrfCfg: csrfCfg, loginPage: loginPage, handoffs: handoff.NewTickets()}
 }
 
 // NewLoginPage builds the library login page over the embedded identity

@@ -6,6 +6,8 @@ import (
 	"net/http"
 
 	"github.com/larsartmann/go-error-family"
+
+	"github.com/larsartmann/webphone/internal/sso/handoff"
 )
 
 // ssoBegin starts the authorization-code + PKCE dance: mint the attempt's
@@ -18,23 +20,23 @@ func (a *Handlers) SSOBegin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	query := r.URL.Query()
-	var marker shellMarker
-	handoff := query.Has(shellParam)
-	if handoff {
+	var marker handoff.Marker
+	shellForm := query.Has(handoff.ShellParam)
+	if shellForm {
 		var err error
-		if marker, err = shellAttempt(query); err != nil {
+		if marker, err = handoff.ParseAttempt(query); err != nil {
 			a.handoffRefused(w, r, http.StatusBadRequest,
 				"Sign-in refused: this sign-in link is not a complete handoff (an unknown shell, or a malformed nonce or proof). Start the sign-in again from the app.",
 				err, "begin shell sign-in")
 			return
 		}
-	} else if _, err := r.Cookie(SSOShellCookie); err == nil {
+	} else if _, err := r.Cookie(handoff.ShellCookie); err == nil {
 		// A plain begin inherits no shell marker. One can only be planted
 		// by a cross-site navigation to the shell form (a top-level GET
 		// sets cookies like any navigation), and a browser login that then
 		// bounced to a private-use scheme would fail silently: the browser
 		// lane expires whatever it finds.
-		a.clearSSOCookie(w, SSOShellCookie)
+		a.clearSSOCookie(w, handoff.ShellCookie)
 	}
 	challenge, err := a.deps.SSO.Challenge(r.Context())
 	if err != nil {
@@ -44,8 +46,8 @@ func (a *Handlers) SSOBegin(w http.ResponseWriter, r *http.Request) {
 	a.setSSOCookie(w, SSOStateCookie, challenge.State)
 	a.setSSOCookie(w, SSONonceCookie, challenge.Nonce)
 	a.setSSOCookie(w, SSOVerifierCookie, challenge.Verifier)
-	if handoff {
-		a.setSSOCookie(w, SSOShellCookie, marker.cookieValue())
+	if shellForm {
+		a.setSSOCookie(w, handoff.ShellCookie, marker.CookieValue())
 	}
 	// The browser leaves for the IdP: no referrer (the authorize URL
 	// carries the state; it must not leak through third-party scripts on
@@ -107,23 +109,23 @@ func (a *Handlers) SSOCallback(w http.ResponseWriter, r *http.Request) {
 	// shell's own Custom Tab, whose jar the shell cannot read. The IdP's
 	// verdict is parked under a one-time ticket and bounced off the
 	// shell's return address instead (sso_handoff.go owns the contract).
-	if cookie, err := r.Cookie(SSOShellCookie); err == nil {
-		a.clearSSOCookie(w, SSOShellCookie)
-		marker, ok := parseShellMarker(cookie.Value)
+	if cookie, err := r.Cookie(handoff.ShellCookie); err == nil {
+		a.clearSSOCookie(w, handoff.ShellCookie)
+		marker, ok := handoff.ParseMarker(cookie.Value)
 		if !ok {
 			a.ssoFailed(w, r, errorfamily.NewRejection("sso.handoff.request",
-				"the "+SSOShellCookie+" cookie does not carry a well-formed shell marker"), "read shell marker")
+				"the "+handoff.ShellCookie+" cookie does not carry a well-formed shell marker"), "read shell marker")
 			return
 		}
-		ticket, err := a.handoffs.issue(handoffIdentity{extension: extension, password: password, email: mapped.Email}, marker.proof)
+		ticket, err := a.handoffs.Issue(handoff.Identity{Extension: extension, Password: password, Email: mapped.Email}, marker.ProofDigest)
 		if err != nil {
 			slog.Error("webphone: oidc handoff ticket issue failed", "error", err, "extension", extension.String())
 			http.Error(w, "could not hand the sign-in to the app", http.StatusInternalServerError)
 			return
 		}
-		slog.Info("webphone: oidc handoff ticket issued", "shell", shellAndroid, "extension", extension.String())
+		slog.Info("webphone: oidc handoff ticket issued", "shell", handoff.Android, "extension", extension.String())
 		w.Header().Set("Cache-Control", "no-store")
-		http.Redirect(w, r, shellReturnURL(ticket, marker.appState), http.StatusSeeOther)
+		http.Redirect(w, r, handoff.ReturnURL(ticket, marker.AppState), http.StatusSeeOther)
 		return
 	}
 	// The session remembers WHO minted it (the multi-user substrate):
@@ -150,7 +152,7 @@ func (a *Handlers) ssoFailed(w http.ResponseWriter, r *http.Request, err error, 
 	a.clearSSOCookie(w, SSOStateCookie)
 	a.clearSSOCookie(w, SSONonceCookie)
 	a.clearSSOCookie(w, SSOVerifierCookie)
-	a.clearSSOCookie(w, SSOShellCookie)
+	a.clearSSOCookie(w, handoff.ShellCookie)
 	w.Header().Set("Cache-Control", "no-store")
 	http.Redirect(w, r, "/login?sso_error="+SSOErrorCode(err), http.StatusSeeOther)
 }
