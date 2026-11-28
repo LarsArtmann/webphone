@@ -125,6 +125,12 @@ const (
 // a hostile value before it is hashed or compared).
 var secretShape = regexp.MustCompile(`^[A-Za-z0-9_-]{16,128}$`)
 
+// digestEncoding is the proof digest's text form inside the shell cookie.
+// It decodes STRICTLY (non-zero trailing padding bits are refused), so
+// the marker's parse door rejects every encoding this server did not
+// write.
+var digestEncoding = base64.RawURLEncoding.Strict()
+
 const (
 	// ticketTTL is how long a parked identity waits for its shell. The
 	// shell redeems within a second or two of the bounce; the rest is
@@ -149,7 +155,7 @@ type Marker struct {
 
 // CookieValue encodes the marker for the shell cookie.
 func (m Marker) CookieValue() string {
-	return m.AppState + "." + base64.RawURLEncoding.EncodeToString(m.ProofDigest[:])
+	return m.AppState + "." + digestEncoding.EncodeToString(m.ProofDigest[:])
 }
 
 // ParseMarker is the cookie's parse door: false for every value this
@@ -160,7 +166,7 @@ func ParseMarker(value string) (Marker, bool) {
 	if !found || !secretShape.MatchString(nonce) {
 		return Marker{}, false
 	}
-	raw, err := base64.RawURLEncoding.DecodeString(digest)
+	raw, err := digestEncoding.DecodeString(digest)
 	if err != nil || len(raw) != sha256.Size {
 		return Marker{}, false
 	}
