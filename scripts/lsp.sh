@@ -25,7 +25,7 @@
 set -euo pipefail
 
 TOOL=${1:-}
-if (( $# > 0 )); then
+if (($# > 0)); then
 	shift
 fi
 case "$TOOL" in

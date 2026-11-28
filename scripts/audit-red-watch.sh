@@ -29,7 +29,10 @@ for arg in "$@"; do
 	case "$arg" in
 	--dry-run) DRY_RUN=1 ;;
 	--self-test) self_test_mode=1 ;;
-	*) echo "unknown arg $arg" >&2; exit 2 ;;
+	*)
+		echo "unknown arg $arg" >&2
+		exit 2
+		;;
 	esac
 done
 
@@ -63,7 +66,8 @@ prior_audit_passed_at_this_tip() {
 	local past
 	past=$(gh run list --workflow watch --status completed --json databaseId,headSha --limit 20 2>/dev/null) || return 1
 	local pid
-	pid=$(GH_JSON="$past" SHA="$this_sha" THIS="$GITHUB_RUN_ID" python3 - <<'PY'
+	pid=$(
+		GH_JSON="$past" SHA="$this_sha" THIS="$GITHUB_RUN_ID" python3 - <<'PY'
 import json, os
 runs = json.loads(os.environ.get("GH_JSON") or "[]")
 sha = os.environ["SHA"]
