@@ -150,9 +150,11 @@ func (a *Handlers) ssoFailed(w http.ResponseWriter, r *http.Request, err error, 
 	a.clearSSOCookie(w, SSOStateCookie)
 	a.clearSSOCookie(w, SSONonceCookie)
 	a.clearSSOCookie(w, SSOVerifierCookie)
+	a.clearSSOCookie(w, SSOShellCookie)
 	w.Header().Set("Cache-Control", "no-store")
 	http.Redirect(w, r, "/login?sso_error="+SSOErrorCode(err), http.StatusSeeOther)
 }
+
 // SSOErrorCode maps a failure onto the browser-visible reason
 // vocabulary (the ?sso_error= short codes): the browser gets an
 // actionable sentence, never an internal error string. Exported: the

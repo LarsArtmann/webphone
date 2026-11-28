@@ -571,10 +571,6 @@ func New(deps Deps) http.Handler {
 		// The passkey login ceremonies at the usermgmt-canonical paths
 		// the library page's JS drives (usermgmt's pinned wire
 		// contract; the handlers are webphone's session-minting own).
-		// Login ceremonies share the login flood budget (email probing
-		// is password-guessing class); enrollment rides its own bucket
-		// (the one-time token is the real gate, the bucket only fences
-		// runaway clients).
 		protected.Handle("POST /api/auth/webauthn/login/begin",
 			h.loginLimiter.Middleware()(httputil.MaxBodySize(api.JSONBodyLimit)(http.HandlerFunc(authHub.PasskeyBeginLogin))))
 		protected.Handle("POST /api/auth/webauthn/login/finish",
@@ -597,15 +593,17 @@ func New(deps Deps) http.Handler {
 		// owner-matched against the session extension's mapping.
 		protected.HandleFunc("DELETE /api/passkeys/{id}", authHub.RevokePasskey)
 	}
-	// The OIDC/SSO login surface (Pocket ID): registered ONLY when the
-	// seam is wired. GET-only navigations (the island's SSO link and the
-	// IdP's redirect back), so they share the login flood budget and the
-	// CSRF wrapper's safe-method pass-through — no form, no token.
+	// The OIDC/SSO login surface (Pocket ID), ONLY when the seam is wired
+	// (GET-only navigations; the probe hands out nothing: anonymous bucket).
 	if deps.SSO != nil {
 		protected.Handle("GET /api/auth/oauth2/begin",
 			h.loginLimiter.Middleware()(http.HandlerFunc(authHub.SSOBegin)))
 		protected.Handle("GET /api/auth/oauth2/callback",
 			h.loginLimiter.Middleware()(http.HandlerFunc(authHub.SSOCallback)))
+		protected.Handle("GET /api/auth/oauth2/shell",
+			h.csrfLimiter.Middleware()(http.HandlerFunc(authHub.SSOShellProbe)))
+		protected.Handle("GET /api/auth/oauth2/finish",
+			h.loginLimiter.Middleware()(http.HandlerFunc(authHub.SSOFinish)))
 	}
 	// GET is the island's boot resume: a live cookie gets its SIP
 	// credentials back and the page opens signed-in, no form. Read-only
