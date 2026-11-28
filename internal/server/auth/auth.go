@@ -126,13 +126,17 @@ type Handlers struct {
 	// nil keeps /login on the styled 404 (mode off, or the page build
 	// failed loudly at boot).
 	loginPage *loginpage.Handler
+	// handoffs is the ledger of live sign-in handoff tickets (the
+	// native-shell lane, sso_handoff.go). Per hub, so every composition
+	// (and every test server) keeps its own.
+	handoffs *handoffTickets
 }
 
 // New wires the auth hub. The server's New builds the narrowed Deps, its
 // own Server implementation, the cookie policies and the library login
 // page, then mounts the routes through the returned hub.
 func New(deps Deps, server Server, cookies session.CookiePolicy, csrfCfg httputil.CSRFConfig, loginPage *loginpage.Handler) *Handlers {
-	return &Handlers{deps: deps, server: server, cookies: cookies, csrfCfg: csrfCfg, loginPage: loginPage}
+	return &Handlers{deps: deps, server: server, cookies: cookies, csrfCfg: csrfCfg, loginPage: loginPage, handoffs: newHandoffTickets()}
 }
 
 // NewLoginPage builds the library login page over the embedded identity
