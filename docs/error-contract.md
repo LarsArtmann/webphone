@@ -593,9 +593,9 @@ a deliberate code change, regenerate:
 | sso.email_unverified                         | Rejection                  | internal/sso/sso.go                 |
 | sso.exchange                                 | Rejection                  | internal/sso/sso.go                 |
 | sso.groups_denied                            | Rejection                  | internal/sso/sso.go                 |
-| sso.handoff.entropy                          | Infrastructure             | internal/server/auth/sso_handoff.go |
+| sso.handoff.entropy                          | Infrastructure             | internal/sso/handoff/handoff.go     |
 | sso.handoff.proof                            | Rejection                  | internal/server/auth/sso_handoff.go |
-| sso.handoff.request                          | Rejection                  | internal/server/auth/sso_handoff.go |
+| sso.handoff.request                          | Rejection                  | internal/server/auth/sso_api.go     |
 | sso.handoff.ticket                           | Rejection                  | internal/server/auth/sso_handoff.go |
 | sso.id_token                                 | Rejection                  | internal/sso/sso.go                 |
 | sso.id_token.verify                          | Rejection                  | internal/sso/sso.go                 |
